@@ -1,0 +1,5 @@
+Django>=6.1,<6.2
+gunicorn
+whitenoise
+boto3
+mysqlclient

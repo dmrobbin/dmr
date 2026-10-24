@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Home</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 40rem; margin: 4rem auto; padding: 0 1rem; line-height: 1.5; }
+    .button { display: inline-block; padding: .75rem 1.5rem; background: #2563eb; color: #fff; text-decoration: none; border-radius: .5rem; }
+    .button:hover { background: #1d4ed8; }
+  </style>
+</head>
+<body>
+  <h1>Welcome</h1>
+  <p>This is a test site.</p>
+  {% if document %}
+    <p><a class="button" href="{% url 'download' %}">Download {{ document.title }} (PDF)</a></p>
+  {% else %}
+    <p><em>No document is available right now.</em></p>
+  {% endif %}
+</body>
+</html>
