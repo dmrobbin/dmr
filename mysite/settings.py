@@ -88,7 +88,7 @@ if os.environ.get("DB_HOST"):
             "PASSWORD": os.environ["DB_PASSWORD"],
             "HOST": os.environ["DB_HOST"],
             "PORT": os.environ.get("DB_PORT", "3306"),
-            "OPTIONS": {"charset": "utf8mb4"},
+            "OPTIONS": {"charset": "utf8mb4", "connect_timeout": 10},
         }
     }
 else:
