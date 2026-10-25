@@ -1,0 +1,57 @@
+name: Deploy to Elastic Beanstalk
+
+on:
+  push:
+    branches: [main]
+
+# id-token: write is required for OIDC authentication
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-2
+  EB_APP: darylsite
+  EB_ENV: mysite-env
+  EB_BUCKET: elasticbeanstalk-us-east-2-804260298130
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::804260298130:role/github-actions-eb-deploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build bundle from committed files
+        run: git archive --format=zip -o bundle.zip HEAD
+
+      - name: Upload and deploy
+        run: |
+          VERSION="gh-${GITHUB_SHA::12}"
+          aws s3 cp bundle.zip "s3://$EB_BUCKET/$EB_APP/$VERSION.zip"
+          aws elasticbeanstalk create-application-version \
+            --application-name "$EB_APP" --version-label "$VERSION" \
+            --source-bundle S3Bucket="$EB_BUCKET",S3Key="$EB_APP/$VERSION.zip"
+          START=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          aws elasticbeanstalk update-environment \
+            --environment-name "$EB_ENV" --version-label "$VERSION"
+          aws elasticbeanstalk wait environment-updated --environment-name "$EB_ENV"
+          # The environment returns to Ready even when the deploy failed, so
+          # check that the new version is live and nothing logged an error.
+          DEPLOYED=$(aws elasticbeanstalk describe-environments --environment-names "$EB_ENV" \
+            --query "Environments[0].VersionLabel" --output text)
+          [ "$DEPLOYED" = "$VERSION" ] || { echo "Deploy failed: environment is on $DEPLOYED"; exit 1; }
+          ERRORS=$(aws elasticbeanstalk describe-events --environment-name "$EB_ENV" \
+            --start-time "$START" --severity ERROR --query "Events[].Message" --output text)
+          [ -z "$ERRORS" ] || { echo "Deploy failed: $ERRORS"; exit 1; }
+
+      - name: Smoke test
+        run: curl -fsS -o /dev/null https://darylsite.com/
