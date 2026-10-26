@@ -4,5 +4,5 @@ from . import views
 
 urlpatterns = [
     path("", views.home, name="home"),
-    path("download/", views.download, name="download"),
+    path("download/<int:pk>/", views.download, name="download"),
 ]

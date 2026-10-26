@@ -16,7 +16,7 @@ class Document(models.Model):
     )
     is_active = models.BooleanField(
         default=True,
-        help_text="The home page offers the newest active document",
+        help_text="Only active documents are offered on the home page",
     )
     created = models.DateTimeField(auto_now_add=True)
 
@@ -29,3 +29,9 @@ class Document(models.Model):
     @property
     def download_name(self):
         return self.filename or self.s3_key.rsplit("/", 1)[-1]
+
+    @property
+    def file_type(self):
+        """Extension after the last '.' in the key's file name, e.g. 'pdf'."""
+        name = self.s3_key.rsplit("/", 1)[-1]
+        return name.rsplit(".", 1)[-1].lower() if "." in name else ""

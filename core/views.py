@@ -2,23 +2,23 @@ import boto3
 from botocore.config import Config
 from django.conf import settings
 from django.http import Http404
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from .models import Document
 
 
-def current_document():
-    return Document.objects.filter(is_active=True).first()
+def active_documents():
+    return Document.objects.filter(is_active=True)
 
 
 def home(request):
-    return render(request, "core/home.html", {"document": current_document()})
+    return render(request, "core/home.html", {"documents": active_documents()})
 
 
-def download(request):
+def download(request, pk):
     """Redirect to a short-lived presigned S3 URL so the bucket can stay private."""
-    document = current_document()
-    if document is None or not settings.AWS_S3_BUCKET:
+    document = get_object_or_404(active_documents(), pk=pk)
+    if not settings.AWS_S3_BUCKET:
         raise Http404("No document available")
 
     s3 = boto3.client(

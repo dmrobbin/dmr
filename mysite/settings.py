@@ -11,6 +11,23 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def load_dotenv(path):
+    """Load NAME=value lines from a local .env file (gitignored, so never on EB).
+
+    Variables already set in the real environment take precedence.
+    """
+    if not path.is_file():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            name, value = line.split("=", 1)
+            os.environ.setdefault(name.strip(), value.strip().strip("\"'"))
+
+
+load_dotenv(BASE_DIR / ".env")
+
+
 def env_list(name, default=""):
     return [v.strip() for v in os.environ.get(name, default).split(",") if v.strip()]
 
