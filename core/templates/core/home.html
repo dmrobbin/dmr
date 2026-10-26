@@ -25,10 +25,19 @@
   </header>
 
   <main class="container">
-    <section class="hero">
-      <h1>Hi, I'm Daryl.</h1>
-      <p>Welcome to my corner of the internet. Find me on GitHub and LinkedIn, or grab one of the documents below.</p>
-    </section>
+    {% if featured %}
+      <section class="featured" aria-label="{{ featured.title }}">
+        <iframe class="featured-viewer" src="{% url 'view_document' featured.pk %}" title="{{ featured.title }}"></iframe>
+        <p class="featured-open">
+          <a href="{% url 'view_document' featured.pk %}" target="_blank" rel="noopener">Open {{ featured.title }} in a new tab</a>
+        </p>
+      </section>
+    {% else %}
+      <section class="hero">
+        <h1>Hi, I'm Daryl.</h1>
+        <p>Welcome to my corner of the internet. Find me on GitHub and LinkedIn, or grab one of the documents below.</p>
+      </section>
+    {% endif %}
 
     <section class="documents" aria-labelledby="documents-heading">
       <h2 id="documents-heading">Documents</h2>
