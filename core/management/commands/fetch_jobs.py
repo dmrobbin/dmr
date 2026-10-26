@@ -80,7 +80,8 @@ class Command(BaseCommand):
         if JobLead.objects.filter(title__iexact=job["title"], company__iexact=job["company"]).exists():
             return False
         if not dry_run:
-            fields = {k: v for k, v in job.items() if k not in ("min_salary", "max_salary")}
-            fields["application_link"] = fields["application_link"][:1000]
+            fields = job | {"application_link": job["application_link"][:1000]}
+            for pay in ("min_salary", "max_salary"):
+                fields[pay] = round(job[pay]) if job[pay] else None
             JobLead.objects.create(**fields)
         return True

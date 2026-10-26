@@ -27,7 +27,8 @@
   <main class="container">
     {% if featured %}
       <section class="featured" aria-label="{{ featured.title }}">
-        <iframe class="featured-viewer" src="{% url 'view_document' featured.pk %}" title="{{ featured.title }}"></iframe>
+        {# toolbar=0 hides the PDF viewer's draw/annotate tools (Chrome, Edge, Safari); the file itself can't be changed either way. #}
+        <iframe class="featured-viewer" src="{% url 'view_document' featured.pk %}#toolbar=0&amp;navpanes=0&amp;view=FitH" title="{{ featured.title }}"></iframe>
         <p class="featured-open">
           <a href="{% url 'view_document' featured.pk %}" target="_blank" rel="noopener">Open {{ featured.title }} in a new tab</a>
         </p>

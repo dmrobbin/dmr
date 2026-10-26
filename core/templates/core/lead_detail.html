@@ -1,0 +1,54 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}{{ lead.title }}{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'dashboard' %}">← All leads</a></p>
+  <h1>{{ lead.title }}</h1>
+  <p class="lead-meta">
+    {{ lead.company|default:"Unknown company" }}
+    · {% if lead.is_remote %}Remote{% else %}{{ lead.location|default:"Location not listed" }}{% endif %}
+    · {{ lead.expected_compensation|default:"Pay not listed" }}
+    · {{ lead.get_status_display }}
+  </p>
+  <p class="lead-actions">
+    {% if lead.application_link %}<a class="button-small" href="{{ lead.application_link }}" target="_blank" rel="noopener">Apply</a>{% endif %}
+    <a class="button-small secondary" href="{% url 'admin:core_joblead_change' lead.pk %}">Edit lead</a>
+  </p>
+
+  <section class="lead-files" aria-labelledby="files-heading">
+    <h2 id="files-heading">Files</h2>
+    <p class="muted">S3 folder: <code>{{ lead.custom_resume|default:"none" }}</code></p>
+    {% if files_error %}
+      <p class="empty">{{ files_error }}</p>
+    {% elif files %}
+      <ul class="file-list">
+        {% for file in files %}
+          <li>
+            <span class="file-name">{{ file.name }}</span>
+            <span class="muted">{{ file.size|filesizeformat }} · {{ file.modified|date:"M j, Y" }}</span>
+            <a class="button-small" href="{% url 'lead_file' lead.pk %}?name={{ file.name|urlencode }}">Download</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty">No files yet.</p>
+    {% endif %}
+
+    {% if not files_error %}
+      <form class="upload-form" method="post" action="{% url 'lead_upload' lead.pk %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="file" required>
+        <button type="submit">Upload</button>
+      </form>
+      <p class="muted small">A file with the same name as an existing one replaces it.</p>
+    {% endif %}
+  </section>
+
+  {% if lead.summary %}
+    <section class="lead-summary" aria-labelledby="summary-heading">
+      <h2 id="summary-heading">Description</h2>
+      <div class="summary-text">{{ lead.summary|linebreaks }}</div>
+    </section>
+  {% endif %}
+{% endblock %}

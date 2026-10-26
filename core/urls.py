@@ -7,4 +7,7 @@ urlpatterns = [
     path("download/<int:pk>/", views.download, name="download"),
     path("view/<int:pk>/", views.view_document, name="view_document"),
     path("dashboard/", views.dashboard, name="dashboard"),
+    path("dashboard/leads/<int:pk>/", views.lead_detail, name="lead_detail"),
+    path("dashboard/leads/<int:pk>/file/", views.lead_file, name="lead_file"),
+    path("dashboard/leads/<int:pk>/upload/", views.lead_upload, name="lead_upload"),
 ]

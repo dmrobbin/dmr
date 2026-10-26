@@ -1,70 +1,56 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex, nofollow">
-  <title>Dashboard · Daryl Robbin</title>
-  <link rel="stylesheet" href="{% static 'core/site.css' %}">
-</head>
-<body>
-  <header class="site-header">
-    <div class="container">
-      <a class="brand" href="{% url 'home' %}">Daryl Robbin</a>
-      <form class="logout" method="post" action="{% url 'admin:logout' %}">
-        {% csrf_token %}
-        <a href="{% url 'admin:core_joblead_add' %}">Add lead</a>
-        <button type="submit">Log out</button>
-      </form>
+{% extends "core/dashboard_base.html" %}
+
+{% block content %}
+  <h1>Job leads</h1>
+
+  <form class="lead-filters" method="get">
+    <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+    <label>Title <input type="search" name="title" value="{{ filters.title }}" placeholder="e.g. backend"></label>
+    <label>Company <input type="search" name="company" value="{{ filters.company }}" placeholder="e.g. Netflix"></label>
+    <label class="toggle">
+      <input type="checkbox" name="has_pay" value="1" {% if filters.has_pay %}checked{% endif %} onchange="this.form.submit()">
+      Pay listed only
+    </label>
+    <button type="submit">Search</button>
+    {% if filtered %}<a href="{% url 'dashboard' %}{% if request.GET.sort %}?sort={{ request.GET.sort|urlencode }}{% endif %}">Clear</a>{% endif %}
+  </form>
+
+  <p class="lead-count">{{ job_leads|length }} lead{{ job_leads|length|pluralize }}</p>
+
+  {% if job_leads %}
+    <div class="table-wrap">
+      <table class="lead-table">
+        <thead>
+          <tr>
+            {% for column in columns %}
+              <th><a class="sort{% if column.arrow %} active{% endif %}" href="{% querystring sort=column.sort %}">{{ column.label }}{% if column.arrow %} <span aria-hidden="true">{{ column.arrow }}</span>{% endif %}</a></th>
+            {% endfor %}
+            <th>Links</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lead in job_leads %}
+            <tr>
+              <td><a class="lead-title" href="{% url 'lead_detail' lead.pk %}">{{ lead.title }}</a></td>
+              <td>{{ lead.company|default:"—" }}</td>
+              <td>{% if lead.is_remote %}Remote{% else %}{{ lead.location|default:"—" }}{% endif %}</td>
+              <td>{{ lead.expected_compensation|default:"—" }}</td>
+              <td>{{ lead.source|default:"—" }}</td>
+              <td>{{ lead.get_status_display }}</td>
+              <td>{{ lead.created|date:"M j" }}</td>
+              <td class="links">
+                {% if lead.application_link %}<a href="{{ lead.application_link }}" target="_blank" rel="noopener">Apply</a>{% endif %}
+                <a href="{% url 'lead_detail' lead.pk %}">Files</a>
+                <a href="{% url 'admin:core_joblead_change' lead.pk %}">Edit</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-  </header>
-
-  <main class="container dashboard">
-    <h1>Job search</h1>
-
-    <section aria-labelledby="leads-heading">
-      <h2 id="leads-heading">Job leads</h2>
-      {% if job_leads %}
-        <div class="table-wrap">
-          <table class="lead-table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Company</th>
-                <th>Location</th>
-                <th>Compensation</th>
-                <th>Source</th>
-                <th>Status</th>
-                <th>Links</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for lead in job_leads %}
-                <tr>
-                  <td>{{ lead.title }}</td>
-                  <td>{{ lead.company|default:"—" }}</td>
-                  <td>{% if lead.is_remote %}Remote{% else %}{{ lead.location|default:"—" }}{% endif %}</td>
-                  <td>{{ lead.expected_compensation|default:"—" }}</td>
-                  <td>{{ lead.source|default:"—" }}</td>
-                  <td>{{ lead.get_status_display }}</td>
-                  <td class="links">
-                    {% if lead.application_link %}<a href="{{ lead.application_link }}" target="_blank" rel="noopener">Apply</a>{% endif %}
-                    <a href="{% url 'admin:core_joblead_change' lead.pk %}">Edit</a>
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% else %}
-        <p class="empty">No job leads yet.</p>
-      {% endif %}
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <div class="container">&copy; {% now "Y" %} Daryl Robbin</div>
-  </footer>
-</body>
-</html>
+  {% elif filtered %}
+    <p class="empty">No job leads match these filters.</p>
+  {% else %}
+    <p class="empty">No job leads yet.</p>
+  {% endif %}
+{% endblock %}

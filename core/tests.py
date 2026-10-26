@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 from io import StringIO
 
 from botocore.exceptions import ClientError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -43,7 +44,7 @@ class FeaturedDocumentTests(TestCase):
     def test_home_embeds_document_1_instead_of_welcome_text(self):
         document = Document.objects.create(pk=1, title="Resume", s3_key="docs/resume.pdf")
         response = self.client.get(reverse("home"))
-        self.assertContains(response, f'<iframe class="featured-viewer" src="{reverse("view_document", args=[document.pk])}"')
+        self.assertContains(response, f'<iframe class="featured-viewer" src="{reverse("view_document", args=[document.pk])}#toolbar=0')
         self.assertNotContains(response, "Hi, I'm Daryl.")
 
     def test_home_falls_back_to_welcome_text_without_document_1(self):
@@ -57,7 +58,7 @@ class FeaturedDocumentTests(TestCase):
         document = Document.objects.create(title="Resume", s3_key="docs/resume.pdf")
         fake_s3 = MagicMock()
         fake_s3.generate_presigned_url.return_value = "https://example.com/signed"
-        with patch("core.views.boto3.client", return_value=fake_s3):
+        with patch("core.s3.boto3.client", return_value=fake_s3):
             response = self.client.get(reverse("view_document", args=[document.pk]))
         self.assertRedirects(response, "https://example.com/signed", fetch_redirect_response=False)
         self.assertEqual(response["X-Frame-Options"], "SAMEORIGIN")
@@ -76,7 +77,7 @@ class DownloadTests(TestCase):
         document = Document.objects.create(title="Guide", s3_key="docs/guide.pdf")
         fake_s3 = MagicMock()
         fake_s3.generate_presigned_url.return_value = "https://example.com/signed"
-        with patch("core.views.boto3.client", return_value=fake_s3):
+        with patch("core.s3.boto3.client", return_value=fake_s3):
             response = self.client.get(reverse("download", args=[document.pk]))
         self.assertRedirects(response, "https://example.com/signed", fetch_redirect_response=False)
         kwargs = fake_s3.generate_presigned_url.call_args.kwargs
@@ -205,7 +206,7 @@ class ResumeFolderTests(TestCase):
     @override_settings(AWS_S3_BUCKET="my-bucket")
     def test_creates_folder_object_in_s3_once(self):
         fake_s3 = MagicMock()
-        with patch("core.models.boto3.client", return_value=fake_s3):
+        with patch("core.s3.boto3.client", return_value=fake_s3):
             lead = JobLead.objects.create(title="Engineer", company="Acme")
             lead.status = JobLead.Status.APPLIED
             lead.save()
@@ -215,10 +216,104 @@ class ResumeFolderTests(TestCase):
     def test_s3_failure_does_not_block_saving(self):
         fake_s3 = MagicMock()
         fake_s3.put_object.side_effect = ClientError({"Error": {"Code": "AccessDenied"}}, "PutObject")
-        with patch("core.models.boto3.client", return_value=fake_s3), self.assertLogs("core.models", "ERROR"):
+        with patch("core.s3.boto3.client", return_value=fake_s3), self.assertLogs("core.models", "ERROR"):
             JobLead.objects.create(title="Engineer", company="Acme")
         self.assertEqual(JobLead.objects.count(), 1)
 
     def test_manually_entered_path_is_kept(self):
         lead = JobLead.objects.create(title="Engineer", custom_resume="resumes/mine.pdf")
         self.assertEqual(lead.custom_resume, "resumes/mine.pdf")
+
+
+class DashboardListTests(TestCase):
+    def setUp(self):
+        self.client.force_login(User.objects.create_user("daryl", password="x", is_staff=True))
+        JobLead.objects.create(title="Backend Engineer", company="Acme", expected_compensation="$150k",
+                               min_salary=150000)
+        JobLead.objects.create(title="Frontend Engineer", company="Zeta", expected_compensation="$120k–$200k",
+                               min_salary=120000, max_salary=200000)
+        JobLead.objects.create(title="Platform Engineer", company="Netflix")
+
+    def titles(self, **params):
+        response = self.client.get(reverse("dashboard"), params)
+        return [lead.title for lead in response.context["job_leads"]]
+
+    def test_sort_by_title_both_directions(self):
+        self.assertEqual(self.titles(sort="title"), ["Backend Engineer", "Frontend Engineer", "Platform Engineer"])
+        self.assertEqual(self.titles(sort="-title"), ["Platform Engineer", "Frontend Engineer", "Backend Engineer"])
+
+    def test_sort_by_pay_uses_top_of_range_and_puts_unlisted_last(self):
+        self.assertEqual(self.titles(sort="-pay"), ["Frontend Engineer", "Backend Engineer", "Platform Engineer"])
+        self.assertEqual(self.titles(sort="pay"), ["Backend Engineer", "Frontend Engineer", "Platform Engineer"])
+
+    def test_unknown_sort_falls_back_to_newest(self):
+        self.assertEqual(self.titles(sort="password")[0], "Platform Engineer")
+
+    def test_title_and_company_search(self):
+        self.assertEqual(self.titles(title="backend"), ["Backend Engineer"])
+        self.assertEqual(self.titles(company="NET"), ["Platform Engineer"])
+        self.assertEqual(self.titles(title="engineer", company="zeta"), ["Frontend Engineer"])
+
+    def test_pay_listed_toggle(self):
+        self.assertEqual(sorted(self.titles(has_pay="1")), ["Backend Engineer", "Frontend Engineer"])
+
+    def test_sort_links_keep_filters(self):
+        response = self.client.get(reverse("dashboard"), {"title": "engineer", "sort": "title"})
+        self.assertContains(response, "?title=engineer&amp;sort=-title")
+
+
+@override_settings(AWS_S3_BUCKET="my-bucket")
+class LeadFilesTests(TestCase):
+    def setUp(self):
+        self.client.force_login(User.objects.create_user("daryl", password="x", is_staff=True))
+        self.fake_s3 = MagicMock()
+        patcher = patch("core.s3.boto3.client", return_value=self.fake_s3)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.lead = JobLead.objects.create(title="Engineer", company="Acme")
+
+    def test_detail_lists_files_but_not_the_folder_marker(self):
+        from datetime import datetime, timezone
+        when = datetime(2026, 10, 1, tzinfo=timezone.utc)
+        self.fake_s3.list_objects_v2.return_value = {"Contents": [
+            {"Key": "docs/engineer/acme/", "Size": 0, "LastModified": when},
+            {"Key": "docs/engineer/acme/resume.pdf", "Size": 2048, "LastModified": when},
+        ]}
+        response = self.client.get(reverse("lead_detail", args=[self.lead.pk]))
+        self.assertEqual([f["name"] for f in response.context["files"]], ["resume.pdf"])
+        self.assertContains(response, f'{reverse("lead_file", args=[self.lead.pk])}?name=resume.pdf')
+        self.fake_s3.list_objects_v2.assert_called_with(Bucket="my-bucket", Prefix="docs/engineer/acme/", Delimiter="/")
+
+    def test_download_presigns_file_in_lead_folder(self):
+        self.fake_s3.generate_presigned_url.return_value = "https://example.com/signed"
+        response = self.client.get(reverse("lead_file", args=[self.lead.pk]), {"name": "resume.pdf"})
+        self.assertRedirects(response, "https://example.com/signed", fetch_redirect_response=False)
+        params = self.fake_s3.generate_presigned_url.call_args.kwargs["Params"]
+        self.assertEqual(params["Key"], "docs/engineer/acme/resume.pdf")
+        self.assertTrue(params["ResponseContentDisposition"].startswith("attachment;"))
+
+    def test_download_rejects_paths_outside_the_folder(self):
+        response = self.client.get(reverse("lead_file", args=[self.lead.pk]), {"name": "../../Daryl-Robbin-Resume.pdf"})
+        self.assertEqual(response.status_code, 404)
+
+    def test_upload_puts_file_in_lead_folder(self):
+        upload = SimpleUploadedFile("My Resume.pdf", b"%PDF-1.4", content_type="application/pdf")
+        response = self.client.post(reverse("lead_upload", args=[self.lead.pk]), {"file": upload})
+        self.assertRedirects(response, reverse("lead_detail", args=[self.lead.pk]), fetch_redirect_response=False)
+        args, kwargs = self.fake_s3.upload_fileobj.call_args
+        self.assertEqual(args[1:], ("my-bucket", "docs/engineer/acme/My_Resume.pdf"))
+        self.assertEqual(kwargs["ExtraArgs"], {"ContentType": "application/pdf"})
+
+    def test_upload_failure_shows_message(self):
+        self.fake_s3.upload_fileobj.side_effect = ClientError({"Error": {"Code": "AccessDenied"}}, "PutObject")
+        self.fake_s3.list_objects_v2.return_value = {}
+        upload = SimpleUploadedFile("resume.pdf", b"%PDF-1.4")
+        response = self.client.post(reverse("lead_upload", args=[self.lead.pk]), {"file": upload}, follow=True)
+        self.assertContains(response, "Upload failed")
+
+    def test_file_pages_require_staff(self):
+        self.client.logout()
+        for url in (reverse("lead_detail", args=[self.lead.pk]), reverse("lead_file", args=[self.lead.pk])):
+            self.assertEqual(self.client.get(url).status_code, 302)
+        self.assertEqual(self.client.post(reverse("lead_upload", args=[self.lead.pk])).status_code, 302)
+        self.fake_s3.upload_fileobj.assert_not_called()

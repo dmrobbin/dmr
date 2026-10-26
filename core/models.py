@@ -1,10 +1,11 @@
 import logging
 
-import boto3
 from botocore.exceptions import BotoCoreError, ClientError
 from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
+
+from . import s3
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +66,8 @@ class JobLead(models.Model):
         blank=True,
         help_text="Free text, e.g. '$140k-160k + equity'",
     )
+    min_salary = models.PositiveIntegerField(null=True, blank=True, help_text="Annual, in dollars; used for sorting")
+    max_salary = models.PositiveIntegerField(null=True, blank=True, help_text="Annual, in dollars; used for sorting")
     summary = models.TextField(blank=True)
     application_link = models.URLField(max_length=1000, blank=True)
     source = models.CharField(
@@ -118,9 +121,7 @@ def create_s3_folder(prefix):
     if not settings.AWS_S3_BUCKET:
         return
     try:
-        boto3.client("s3", region_name=settings.AWS_REGION).put_object(
-            Bucket=settings.AWS_S3_BUCKET, Key=prefix, Body=b""
-        )
+        s3.create_folder(prefix)
     except (BotoCoreError, ClientError):
         logger.exception("Could not create S3 folder %s", prefix)
 

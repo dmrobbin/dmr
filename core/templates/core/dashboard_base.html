@@ -1,0 +1,37 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% block title %}Dashboard{% endblock %} · Daryl Robbin</title>
+  <link rel="stylesheet" href="{% static 'core/site.css' %}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="{% url 'dashboard' %}">Job search</a>
+      <form class="logout" method="post" action="{% url 'admin:logout' %}">
+        {% csrf_token %}
+        <a href="{% url 'admin:core_joblead_add' %}">Add lead</a>
+        <a href="{% url 'home' %}">Public site</a>
+        <button type="submit">Log out</button>
+      </form>
+    </div>
+  </header>
+
+  <main class="container dashboard">
+    {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}<li class="message {{ message.tags }}">{{ message }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">&copy; {% now "Y" %} Daryl Robbin</div>
+  </footer>
+</body>
+</html>
