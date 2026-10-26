@@ -1,0 +1,11 @@
+{# Checkbox that saves as soon as it's clicked. Expects `lead`; optional `label`. #}
+<form class="applied-toggle" method="post" action="{% url 'lead_applied' lead.pk %}">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+  <label>
+    <input type="checkbox" name="applied" value="1" {% if lead.applied %}checked{% endif %} onchange="this.form.submit()"
+           aria-label="Applied to {{ lead.title }}{% if lead.company %} at {{ lead.company }}{% endif %}">
+    {% if label %}<span>{{ label }}</span>{% endif %}
+  </label>
+  <noscript><button type="submit">Save</button></noscript>
+</form>

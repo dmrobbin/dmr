@@ -82,6 +82,7 @@ class JobLead(models.Model):
                   "Set automatically when the lead is created.",
     )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.NEW)
+    applied = models.BooleanField(default=False, help_text="Applied leads are hidden on the dashboard by default")
     external_id = models.CharField(
         max_length=255,
         unique=True,

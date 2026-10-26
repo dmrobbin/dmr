@@ -257,6 +257,28 @@ class DashboardListTests(TestCase):
     def test_pay_listed_toggle(self):
         self.assertEqual(sorted(self.titles(has_pay="1")), ["Backend Engineer", "Frontend Engineer"])
 
+    def test_applied_leads_hidden_unless_toggled(self):
+        JobLead.objects.filter(title="Backend Engineer").update(applied=True)
+        self.assertNotIn("Backend Engineer", self.titles())
+        self.assertIn("Backend Engineer", self.titles(show_applied="1"))
+
+    def test_applied_checkbox_saves_and_returns_to_same_view(self):
+        lead = JobLead.objects.get(title="Backend Engineer")
+        back = reverse("dashboard") + "?sort=title"
+        response = self.client.post(reverse("lead_applied", args=[lead.pk]), {"applied": "1", "next": back})
+        self.assertRedirects(response, back, fetch_redirect_response=False)
+        lead.refresh_from_db()
+        self.assertTrue(lead.applied)
+        # An unticked checkbox sends nothing, which means "not applied".
+        self.client.post(reverse("lead_applied", args=[lead.pk]), {"next": back})
+        lead.refresh_from_db()
+        self.assertFalse(lead.applied)
+
+    def test_applied_checkbox_ignores_offsite_redirects(self):
+        lead = JobLead.objects.get(title="Backend Engineer")
+        response = self.client.post(reverse("lead_applied", args=[lead.pk]), {"applied": "1", "next": "https://evil.example"})
+        self.assertRedirects(response, reverse("dashboard"), fetch_redirect_response=False)
+
     def test_sort_links_keep_filters(self):
         response = self.client.get(reverse("dashboard"), {"title": "engineer", "sort": "title"})
         self.assertContains(response, "?title=engineer&amp;sort=-title")

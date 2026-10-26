@@ -231,3 +231,7 @@ a { color: inherit; }
   .lead-filters input[type="search"], .upload-form input[type="file"] { min-width: 0; width: 100%; }
   .lead-filters label { width: 100%; }
 }
+.applied-toggle { display: inline-flex; margin: 0; }
+.applied-toggle label { display: inline-flex; align-items: center; gap: .5rem; cursor: pointer; }
+.applied-toggle input[type="checkbox"] { accent-color: var(--accent); width: 1rem; height: 1rem; cursor: pointer; }
+.lead-actions { align-items: center; }

@@ -6,6 +6,8 @@ from django.db.models import F
 from django.db.models.functions import Coalesce
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.text import get_valid_filename
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
@@ -77,6 +79,9 @@ def dashboard(request):
     title = request.GET.get("title", "").strip()
     company = request.GET.get("company", "").strip()
     has_pay = request.GET.get("has_pay") == "1"
+    show_applied = request.GET.get("show_applied") == "1"
+    if not show_applied:
+        leads = leads.filter(applied=False)
     if title:
         leads = leads.filter(title__icontains=title)
     if company:
@@ -106,8 +111,8 @@ def dashboard(request):
     return render(request, "core/dashboard.html", {
         "job_leads": leads,
         "columns": columns,
-        "filters": {"title": title, "company": company, "has_pay": has_pay},
-        "filtered": bool(title or company or has_pay),
+        "filters": {"title": title, "company": company, "has_pay": has_pay, "show_applied": show_applied},
+        "filtered": bool(title or company or has_pay or show_applied),
     })
 
 
@@ -135,6 +140,19 @@ def lead_file(request, pk):
     if not settings.AWS_S3_BUCKET or not name or "/" in name or not lead.custom_resume.endswith("/"):
         raise Http404("No such file")
     return redirect(s3.presigned_url(lead.custom_resume + name, "attachment", name))
+
+
+@staff_member_required
+@require_POST
+def lead_applied(request, pk):
+    """Tick or untick a lead's 'applied' box, then go back to the page it was changed on."""
+    lead = get_object_or_404(JobLead, pk=pk)
+    lead.applied = request.POST.get("applied") == "1"
+    lead.save(update_fields=["applied"])
+    next_url = request.POST.get("next", "")
+    if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        next_url = reverse("dashboard")
+    return redirect(next_url)
 
 
 @staff_member_required

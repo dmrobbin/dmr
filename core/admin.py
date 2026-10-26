@@ -11,9 +11,9 @@ class DocumentAdmin(admin.ModelAdmin):
 
 @admin.register(JobLead)
 class JobLeadAdmin(admin.ModelAdmin):
-    list_display = ("title", "company", "location", "expected_compensation", "status", "source", "created")
-    list_filter = ("status", "is_remote")
-    list_editable = ("status",)
+    list_display = ("title", "company", "location", "expected_compensation", "status", "applied", "source", "created")
+    list_filter = ("applied", "status", "is_remote")
+    list_editable = ("status", "applied")
     search_fields = ("title", "company", "summary", "source")
 
 

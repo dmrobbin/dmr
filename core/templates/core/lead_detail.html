@@ -14,6 +14,7 @@
   <p class="lead-actions">
     {% if lead.application_link %}<a class="button-small" href="{{ lead.application_link }}" target="_blank" rel="noopener">Apply</a>{% endif %}
     <a class="button-small secondary" href="{% url 'admin:core_joblead_change' lead.pk %}">Edit lead</a>
+    {% include "core/applied_toggle.html" with label="Applied" %}
   </p>
 
   <section class="lead-files" aria-labelledby="files-heading">
