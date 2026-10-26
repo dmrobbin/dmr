@@ -36,10 +36,16 @@ jobs:
       - name: Upload and deploy
         run: |
           VERSION="gh-${GITHUB_SHA::12}"
-          aws s3 cp bundle.zip "s3://$EB_BUCKET/$EB_APP/$VERSION.zip"
-          aws elasticbeanstalk create-application-version \
-            --application-name "$EB_APP" --version-label "$VERSION" \
-            --source-bundle S3Bucket="$EB_BUCKET",S3Key="$EB_APP/$VERSION.zip"
+          # A re-run of the same commit reuses the version created the first time.
+          EXISTING=$(aws elasticbeanstalk describe-application-versions \
+            --application-name "$EB_APP" --version-labels "$VERSION" \
+            --query "length(ApplicationVersions)" --output text)
+          if [ "$EXISTING" = "0" ]; then
+            aws s3 cp bundle.zip "s3://$EB_BUCKET/$EB_APP/$VERSION.zip"
+            aws elasticbeanstalk create-application-version \
+              --application-name "$EB_APP" --version-label "$VERSION" \
+              --source-bundle S3Bucket="$EB_BUCKET",S3Key="$EB_APP/$VERSION.zip"
+          fi
           START=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           aws elasticbeanstalk update-environment \
             --environment-name "$EB_ENV" --version-label "$VERSION"
