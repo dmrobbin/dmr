@@ -257,10 +257,10 @@ class DashboardListTests(TestCase):
     def test_pay_listed_toggle(self):
         self.assertEqual(sorted(self.titles(has_pay="1")), ["Backend Engineer", "Frontend Engineer"])
 
-    def test_applied_leads_hidden_unless_toggled(self):
+    def test_applied_leads_hidden_by_default_and_toggle_shows_only_them(self):
         JobLead.objects.filter(title="Backend Engineer").update(applied=True)
         self.assertNotIn("Backend Engineer", self.titles())
-        self.assertIn("Backend Engineer", self.titles(show_applied="1"))
+        self.assertEqual(self.titles(only_applied="1"), ["Backend Engineer"])
 
     def test_applied_checkbox_saves_and_returns_to_same_view(self):
         lead = JobLead.objects.get(title="Backend Engineer")

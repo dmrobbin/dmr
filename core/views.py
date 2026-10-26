@@ -79,9 +79,9 @@ def dashboard(request):
     title = request.GET.get("title", "").strip()
     company = request.GET.get("company", "").strip()
     has_pay = request.GET.get("has_pay") == "1"
-    show_applied = request.GET.get("show_applied") == "1"
-    if not show_applied:
-        leads = leads.filter(applied=False)
+    # Applied leads are hidden by default; the toggle switches to showing only them.
+    only_applied = request.GET.get("only_applied") == "1"
+    leads = leads.filter(applied=only_applied)
     if title:
         leads = leads.filter(title__icontains=title)
     if company:
@@ -111,8 +111,8 @@ def dashboard(request):
     return render(request, "core/dashboard.html", {
         "job_leads": leads,
         "columns": columns,
-        "filters": {"title": title, "company": company, "has_pay": has_pay, "show_applied": show_applied},
-        "filtered": bool(title or company or has_pay or show_applied),
+        "filters": {"title": title, "company": company, "has_pay": has_pay, "only_applied": only_applied},
+        "filtered": bool(title or company or has_pay or only_applied),
     })
 
 

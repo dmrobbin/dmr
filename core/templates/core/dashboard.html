@@ -12,8 +12,8 @@
       Pay listed only
     </label>
     <label class="toggle">
-      <input type="checkbox" name="show_applied" value="1" {% if filters.show_applied %}checked{% endif %} onchange="this.form.submit()">
-      Show already applied
+      <input type="checkbox" name="only_applied" value="1" {% if filters.only_applied %}checked{% endif %} onchange="this.form.submit()">
+      Show only applied
     </label>
     <button type="submit">Search</button>
     {% if filtered %}<a href="{% url 'dashboard' %}{% if request.GET.sort %}?sort={{ request.GET.sort|urlencode }}{% endif %}">Clear</a>{% endif %}
