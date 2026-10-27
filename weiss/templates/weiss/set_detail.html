@@ -1,13 +1,24 @@
 {% extends "weiss/base.html" %}
 
-{% block title %}{{ expansion }}{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 
 {% block weiss_content %}
   <p class="back"><a href="{% url 'weiss:sets' %}">← All sets</a></p>
-  <h1>{{ expansion }}</h1>
+  <div class="page-title-row">
+    <h1>{{ title }}</h1>
+    {% if series %}<a class="button-small" href="{% url 'weiss:series' series %}">All {{ series }} cards →</a>{% endif %}
+  </div>
 
   <form class="lead-filters" method="get">
     <label>Name <input type="search" name="name" value="{{ filters.name }}" placeholder="e.g. Elegg"></label>
+    {% if series_page %}
+      <label>Set
+        <select name="set" onchange="this.form.submit()">
+          <option value="">Any</option>
+          {% for expansion_id, expansion in sets %}<option value="{{ expansion_id }}"{% if filters.set == expansion_id|stringformat:"d" %} selected{% endif %}>{{ expansion }}</option>{% endfor %}
+        </select>
+      </label>
+    {% endif %}
     <label>Color
       <select name="color" onchange="this.form.submit()">
         <option value="">Any</option>
@@ -38,7 +49,7 @@
       </select>
     </label>
     <button type="submit">Search</button>
-    {% if filtered %}<a href="{% url 'weiss:set' expansion_id %}{% if filters.sort != 'serial' %}?sort={{ filters.sort|urlencode }}{% endif %}">Clear</a>{% endif %}
+    {% if filtered %}<a href="{{ clear_url }}{% if filters.sort != 'serial' %}?sort={{ filters.sort|urlencode }}{% endif %}">Clear</a>{% endif %}
   </form>
 
   <p class="lead-count">{{ cards|length }} of {{ total }} card{{ total|pluralize }}</p>
@@ -54,6 +65,7 @@
               {% with price=card.tcgplayer_price %}{% if price.market_price is not None %}<span class="card-price">${{ price.market_price|floatformat:2 }}</span>{% endif %}{% endwith %}
             </span>
             <span class="muted">{{ card.serial_number }} · {{ card.rarity }}</span>
+            {% if series_page %}<span class="muted small">{{ card.expansion }}</span>{% endif %}
           </a>
           {% include "weiss/qty_controls.html" %}
           {% include "weiss/card_peek.html" %}

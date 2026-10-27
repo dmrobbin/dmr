@@ -207,6 +207,26 @@ class CardPagesTests(TestCase):
         self.assertContains(response, "NIK/S135-E001")
         self.assertContains(response, reverse("weiss:set", args=[290]))
 
+    def test_series_page_spans_every_set_with_the_same_filters(self):
+        Card.objects.create(serial_number="NIK/S117-E001", name="Rapi", color="Red", level=0,
+                            expansion="NIKKE Vol.1", expansion_id=270)
+        url = reverse("weiss:series", args=["NIK"])
+        response = self.client.get(url)
+        self.assertEqual(sorted(c.name for c in response.context["cards"]), ["Anis", "Elegg", "Footstep", "Rapi"])
+        self.assertEqual(response.context["sets"], [(290, "NIKKE Vol.2"), (270, "NIKKE Vol.1")])
+        names = lambda **p: sorted(c.name for c in self.client.get(url, p).context["cards"])
+        self.assertEqual(names(color="Red", level="0"), ["Anis", "Rapi"])
+        self.assertEqual(names(set="270"), ["Rapi"])
+        self.assertEqual(self.client.get(url, {"sort": "-level"}).context["cards"][0].name, "Elegg")
+        self.assertEqual(self.client.get(reverse("weiss:series", args=["XYZ"])).status_code, 404)
+
+    def test_set_and_card_pages_link_to_their_series(self):
+        series_url = reverse("weiss:series", args=["NIK"])
+        self.assertContains(self.client.get(reverse("weiss:set", args=[290])), series_url)
+        card = Card.objects.get(name="Elegg")
+        self.assertContains(self.client.get(reverse("weiss:card", args=[card.pk])), series_url)
+        self.assertContains(self.client.get(reverse("weiss:sets"), {"code": "NIK"}), series_url)
+
     def test_pages_require_staff(self):
         self.client.logout()
         for url in (reverse("weiss:sets"), reverse("weiss:set", args=[290])):
@@ -624,3 +644,37 @@ class FetchNewSetsTests(TestCase):
         fake_call, output = self.run_command()
         fake_call.assert_not_called()
         self.assertIn("already saved", output)
+
+
+class RefreshPricesTests(TestCase):
+    def setUp(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+        fresh = Card.objects.create(serial_number="A/1", name="a", expansion="Fresh", expansion_id=1)
+        stale = Card.objects.create(serial_number="B/1", name="b", expansion="Stale", expansion_id=2)
+        Card.objects.create(serial_number="C/1", name="c", expansion="Never priced", expansion_id=3)
+        CardPrice.objects.create(card=fresh, market_price="1")
+        CardPrice.objects.create(card=stale, market_price="1")
+        CardPrice.objects.filter(card=stale).update(fetched_at=timezone.now() - timedelta(hours=30))
+
+    def run_command(self, *args):
+        out = StringIO()
+        with patch("weiss.management.commands.fetch_new_sets.expansions", return_value=[(1, "Fresh"), (2, "Stale"), (3, "x")]), \
+                patch("weiss.management.commands.fetch_new_sets.call_command") as fake_call:
+            call_command("fetch_new_sets", *args, stdout=out)
+        return fake_call, out.getvalue()
+
+    def test_refreshes_only_sets_priced_over_20_hours_ago_or_never(self):
+        fake_call, output = self.run_command("--refresh-prices")
+        self.assertEqual([c.kwargs["expansion"] for c in fake_call.call_args_list], [2, 3])
+        self.assertIn("Refreshing prices for 2 sets: 2, 3", output)
+
+    def test_without_the_option_prices_are_left_alone(self):
+        fake_call, _ = self.run_command()
+        fake_call.assert_not_called()
+
+    def test_dry_run_lists_without_refreshing(self):
+        fake_call, output = self.run_command("--refresh-prices", "--dry-run")
+        fake_call.assert_not_called()
+        self.assertIn("Refreshing prices for 2 sets", output)

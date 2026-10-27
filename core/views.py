@@ -13,6 +13,7 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
 
 from . import s3
+from .access import has_weiss_access
 from .models import Document, JobLead
 
 # The document shown inline at the top of the home page.
@@ -72,9 +73,15 @@ SORTABLE_COLUMNS = [
 ]
 
 
-@staff_member_required
 def dashboard(request):
-    """Private job-search dashboard; anyone not logged in as staff is sent to the admin login."""
+    """Private job-search dashboard for staff; Weiss-only users are sent to the card pages."""
+    if not request.user.is_staff and has_weiss_access(request.user):
+        return redirect("weiss:sets")
+    return job_dashboard(request)
+
+
+@staff_member_required
+def job_dashboard(request):
     leads = JobLead.objects.all()
     title = request.GET.get("title", "").strip()
     company = request.GET.get("company", "").strip()

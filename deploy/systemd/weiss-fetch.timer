@@ -1,0 +1,11 @@
+# Run weiss-fetch.service 15 minutes after boot, then again 2 hours after each run finishes.
+[Unit]
+Description=Fetch new Weiss Schwarz sets every 2 hours (measured from the end of the last run)
+
+[Timer]
+OnBootSec=15min
+OnUnitInactiveSec=1h
+Unit=weiss-fetch.service
+
+[Install]
+WantedBy=timers.target

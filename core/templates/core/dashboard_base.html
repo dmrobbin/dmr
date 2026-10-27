@@ -13,12 +13,15 @@
     <div class="container">
       {% with section=request.resolver_match.namespace %}
       <nav class="dash-tabs" aria-label="Dashboard sections">
-        <a href="{% url 'dashboard' %}"{% if section != "weiss" %} class="current" aria-current="page"{% endif %}>Job leads</a>
-        <a href="{% url 'weiss:sets' %}"{% if section == "weiss" %} class="current" aria-current="page"{% endif %}>Weiss cards</a>
+        {% if user.is_staff %}<a href="{% url 'dashboard' %}"{% if section != "weiss" %} class="current" aria-current="page"{% endif %}>Job leads</a>{% endif %}
+        {% with playing=request.resolver_match.url_name|slice:":5" %}
+        <a href="{% url 'weiss:sets' %}"{% if section == "weiss" and playing != "play_" %} class="current" aria-current="page"{% endif %}>Weiss cards</a>
+        <a href="{% url 'weiss:play_rooms' %}"{% if playing == "play_" %} class="current" aria-current="page"{% endif %}>Play</a>
+        {% endwith %}
       </nav>
-      <form class="logout" method="post" action="{% url 'admin:logout' %}">
+      <form class="logout" method="post" action="{% url 'logout' %}">
         {% csrf_token %}
-        {% if section != "weiss" %}<a href="{% url 'admin:core_joblead_add' %}">Add lead</a>{% endif %}
+        {% if user.is_staff and section != "weiss" %}<a href="{% url 'admin:core_joblead_add' %}">Add lead</a>{% endif %}
         <a href="{% url 'home' %}">Public site</a>
         <button type="submit">Log out</button>
       </form>

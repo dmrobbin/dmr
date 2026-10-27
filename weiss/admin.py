@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Card, CardList, CardListEntry, CardPrice
+from .models import Card, CardList, CardListEntry, CardPrice, GameRoom
 
 
 class CardPriceInline(admin.TabularInline):
@@ -37,3 +37,10 @@ class CardListAdmin(admin.ModelAdmin):
     list_filter = ("user",)
     search_fields = ("name",)
     inlines = [CardListEntryInline]
+
+
+@admin.register(GameRoom)
+class GameRoomAdmin(admin.ModelAdmin):
+    list_display = ("__str__", "status", "version", "updated")
+    list_filter = ("status",)
+    readonly_fields = ("invite_token", "version", "created", "updated")

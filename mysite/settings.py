@@ -147,6 +147,10 @@ AWS_REGION = os.environ.get("AWS_REGION", "us-west-2")
 DOWNLOAD_LINK_SECONDS = 300  # how long a presigned download link stays valid
 IMAGE_LINK_SECONDS = 3600  # images shown on a page, so they keep loading while it's open
 
+# --- Accounts ---------------------------------------------------------------
+LOGIN_URL = "login"
+LOGOUT_REDIRECT_URL = "home"
+
 # --- Job search APIs (used by `manage.py fetch_jobs`) ------------------------
 JSEARCH_API_KEY = os.environ.get("JSEARCH_API_KEY", "")
 SERPAPI_API_KEY = os.environ.get("SERPAPI_API_KEY", "")

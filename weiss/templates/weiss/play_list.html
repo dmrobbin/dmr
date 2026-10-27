@@ -1,0 +1,28 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Play{% endblock %}
+
+{% block content %}
+  <h1>Play Weiss Schwarz</h1>
+  <form method="post" action="{% url 'weiss:play_create' %}" class="list-actions">
+    {% csrf_token %}
+    <button type="submit" class="button-small">New room</button>
+    <span class="muted small">You'll get a link to send to your opponent.</span>
+  </form>
+  {% if rooms %}
+    <ul class="set-list">
+      {% for room in rooms %}
+        <li>
+          <a href="{% url 'weiss:play_room' room.pk %}">
+            <span class="set-name">
+              {% if room.host == user %}You vs {{ room.guest.username|default:"(waiting for opponent)" }}{% else %}{{ room.host.username }} vs you{% endif %}
+            </span>
+            <span class="muted">{{ room.get_status_display }} · updated {{ room.updated|timesince }} ago</span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty">No rooms yet.</p>
+  {% endif %}
+{% endblock %}

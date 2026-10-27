@@ -339,3 +339,95 @@ class LeadFilesTests(TestCase):
             self.assertEqual(self.client.get(url).status_code, 302)
         self.assertEqual(self.client.post(reverse("lead_upload", args=[self.lead.pk])).status_code, 302)
         self.fake_s3.upload_fileobj.assert_not_called()
+
+
+class InvitationTests(TestCase):
+    def setUp(self):
+        from .models import Invitation
+        self.admin_user = User.objects.create_superuser("daryl", password="x")
+        self.invitation = Invitation.objects.create(note="Sam", created_by=self.admin_user)
+        self.url = reverse("accept_invitation", args=[self.invitation.token])
+
+    def signup(self, username="sam", password="a-Long-enough-pass-42"):
+        return self.client.post(self.url, {"username": username, "password1": password, "password2": password})
+
+    def test_admin_creates_invitation_and_sees_link(self):
+        self.client.force_login(self.admin_user)
+        response = self.client.post(reverse("admin:core_invitation_add"),
+                                    {"note": "Alex", "expires_at_0": "2099-01-01", "expires_at_1": "00:00:00"})
+        from .models import Invitation
+        invitation = Invitation.objects.get(note="Alex")
+        self.assertRedirects(response, reverse("admin:core_invitation_change", args=[invitation.pk]),
+                             fetch_redirect_response=False)
+        self.assertEqual(invitation.created_by, self.admin_user)
+        page = self.client.get(reverse("admin:core_invitation_change", args=[invitation.pk]))
+        self.assertContains(page, f"http://testserver/invite/{invitation.token}/")
+
+    def test_signup_creates_weiss_user_logs_in_and_uses_up_the_link(self):
+        from .access import WEISS_GROUP
+        response = self.signup()
+        self.assertRedirects(response, reverse("weiss:sets"), fetch_redirect_response=False)
+        user = User.objects.get(username="sam")
+        self.assertFalse(user.is_staff)
+        self.assertTrue(user.groups.filter(name=WEISS_GROUP).exists())
+        self.invitation.refresh_from_db()
+        self.assertEqual(self.invitation.user, user)
+        self.assertEqual(self.invitation.status, "Accepted")
+        # Used once: the link no longer works, even after logging out.
+        self.client.logout()
+        self.assertEqual(self.client.get(self.url).status_code, 410)
+        self.signup(username="sam2")
+        self.assertFalse(User.objects.filter(username="sam2").exists())
+
+    def test_weak_password_or_taken_username_is_rejected(self):
+        self.assertContains(self.signup(password="123"), "form-error")
+        User.objects.create_user("taken", password="x")
+        self.assertContains(self.signup(username="taken"), "form-error")
+        self.invitation.refresh_from_db()
+        self.assertIsNone(self.invitation.accepted_at)
+
+    def test_expired_and_unknown_links(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+        self.invitation.expires_at = timezone.now() - timedelta(minutes=1)
+        self.invitation.save()
+        self.assertContains(self.client.get(self.url), "expired", status_code=410)
+        self.assertEqual(self.client.get(reverse("accept_invitation", args=["nope"])).status_code, 404)
+
+
+class WeissOnlyAccessTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth.models import Group
+
+        from .access import WEISS_GROUP
+        self.member = User.objects.create_user("sam", password="pw-for-sam-123")
+        self.member.groups.add(Group.objects.get_or_create(name=WEISS_GROUP)[0])
+
+    def test_weiss_user_sees_weiss_pages_but_not_job_dashboard_or_admin(self):
+        self.client.force_login(self.member)
+        response = self.client.get(reverse("weiss:sets"))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, ">Job leads<")
+        self.assertRedirects(self.client.get(reverse("dashboard")), reverse("weiss:sets"))
+        lead = JobLead.objects.create(title="Secret job")
+        self.assertEqual(self.client.get(reverse("lead_detail", args=[lead.pk])).status_code, 302)
+        self.assertNotEqual(self.client.get("/admin/").status_code, 200)
+
+    def test_plain_user_without_group_gets_nothing(self):
+        self.client.force_login(User.objects.create_user("nobody", password="x"))
+        response = self.client.get(reverse("weiss:sets"))
+        self.assertRedirects(response, f"{reverse('login')}?next={reverse('weiss:sets')}", fetch_redirect_response=False)
+
+    def test_login_page_sends_each_kind_of_user_to_their_area(self):
+        response = self.client.post(reverse("login"), {"username": "sam", "password": "pw-for-sam-123"})
+        self.assertRedirects(response, reverse("weiss:sets"), fetch_redirect_response=False)
+        self.client.logout()
+        User.objects.create_user("boss", password="pw-for-boss-123", is_staff=True)
+        response = self.client.post(reverse("login"), {"username": "boss", "password": "pw-for-boss-123"})
+        self.assertRedirects(response, reverse("dashboard"), fetch_redirect_response=False)
+
+    def test_logout(self):
+        self.client.force_login(self.member)
+        self.assertRedirects(self.client.post(reverse("logout")), reverse("home"), fetch_redirect_response=False)
+        self.assertNotEqual(self.client.get(reverse("weiss:sets")).status_code, 200)

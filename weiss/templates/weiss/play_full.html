@@ -1,0 +1,9 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Room full{% endblock %}
+
+{% block content %}
+  <h1>This room is full</h1>
+  <p class="muted">Someone else already took the second seat. Ask {{ room.host.username }} for a new room link.</p>
+  <p><a class="button-small" href="{% url 'weiss:play_rooms' %}">Your rooms</a></p>
+{% endblock %}

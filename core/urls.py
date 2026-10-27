@@ -1,11 +1,14 @@
 from django.urls import path
 
-from . import views
+from . import accounts, views
 
 urlpatterns = [
     path("", views.home, name="home"),
     path("download/<int:pk>/", views.download, name="download"),
     path("view/<int:pk>/", views.view_document, name="view_document"),
+    path("login/", accounts.SiteLoginView.as_view(), name="login"),
+    path("logout/", accounts.SiteLogoutView.as_view(), name="logout"),
+    path("invite/<str:token>/", accounts.accept_invitation, name="accept_invitation"),
     path("dashboard/", views.dashboard, name="dashboard"),
     path("dashboard/leads/<int:pk>/", views.lead_detail, name="lead_detail"),
     path("dashboard/leads/<int:pk>/file/", views.lead_file, name="lead_file"),

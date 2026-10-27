@@ -1,0 +1,19 @@
+# Fetch cards and prices for up to 10 Weiss Schwarz sets that have not been saved yet, then
+# refresh prices for saved sets last priced over 20 hours ago (TCGCSV updates daily).
+# Started by weiss-fetch.timer; installed by .platform/hooks/postdeploy/02_weiss_fetch_timer.sh.
+[Unit]
+Description=Fetch new Weiss Schwarz sets
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Leading "-": a failed run is logged but still counts as finished, so the timer keeps going.
+ExecStart=-/bin/bash /var/app/current/go_time.sh fetch_new_sets --count 10 --delay 3 --refresh-prices
+StandardOutput=append:/var/log/weiss-fetch.log
+StandardError=append:/var/log/weiss-fetch.log
+# Ten sets can take a couple of hours; don't let systemd's default 90s timeout kill it.
+TimeoutStartSec=8h
+# Background job: give the web server priority for CPU and disk.
+Nice=10
+IOSchedulingClass=idle

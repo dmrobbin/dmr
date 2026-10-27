@@ -1,0 +1,28 @@
+{% extends "core/account_base.html" %}
+
+{% block title %}Create your account{% endblock %}
+
+{% block content %}
+  {% if unusable %}
+    <h1>This invitation can't be used</h1>
+    <p class="muted">It has {% if invitation.accepted_at %}already been used{% else %}expired{% endif %}. Ask for a new link.</p>
+  {% elif signed_in %}
+    <h1>You're already logged in</h1>
+    <p class="muted">You're logged in as <strong>{{ user.username }}</strong>. Log out first to create a new account with this invitation.</p>
+    <form method="post" action="{% url 'logout' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="button-small">Log out</button></form>
+  {% else %}
+    <h1>Create your account</h1>
+    <p class="muted">Choose a username and password. This invitation can be used once and expires {{ invitation.expires_at|date:"M j, Y" }}.</p>
+    <form class="account-form" method="post">
+      {% csrf_token %}
+      {% if form.non_field_errors %}<p class="form-error">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+      {% for field in form %}
+        <label>{{ field.label }} {{ field }}
+          {% for error in field.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+        </label>
+        {% if field.name == "password1" %}<details class="small muted"><summary>Password rules</summary>{{ field.help_text|safe }}</details>{% endif %}
+      {% endfor %}
+      <button type="submit">Create account</button>
+    </form>
+  {% endif %}
+{% endblock %}

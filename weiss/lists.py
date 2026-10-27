@@ -9,7 +9,6 @@ forms work as ordinary posts that redirect back.
 from decimal import Decimal
 
 from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
 from django.db import transaction
 from django.db.models import Sum
 from django.http import JsonResponse
@@ -18,6 +17,8 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
+
+from core.access import weiss_access_required
 
 from .models import Card, CardList, CardListEntry
 from .views import with_image_urls
@@ -131,13 +132,13 @@ def change_quantity(card_list, card, delta):
     return quantity
 
 
-@staff_member_required
+@weiss_access_required
 def list_index(request):
     lists = CardList.objects.filter(user=request.user).annotate(total=Sum("entries__quantity"))
     return render(request, "weiss/list_index.html", {"lists": lists})
 
 
-@staff_member_required
+@weiss_access_required
 @require_POST
 def list_create(request):
     name = request.POST.get("name", "").strip()[:100]
@@ -151,7 +152,7 @@ def list_create(request):
     return respond(request, reverse("weiss:list", args=[card_list.pk]))
 
 
-@staff_member_required
+@weiss_access_required
 @require_POST
 def list_edit(request, pk):
     card_list = get_object_or_404(CardList, pk=pk, user=request.user)
@@ -159,14 +160,14 @@ def list_edit(request, pk):
     return respond(request, reverse("weiss:sets"))
 
 
-@staff_member_required
+@weiss_access_required
 @require_POST
 def list_stop_editing(request):
     request.session.pop(SESSION_KEY, None)
     return respond(request, reverse("weiss:sets"))
 
 
-@staff_member_required
+@weiss_access_required
 @require_POST
 def list_change(request, pk):
     """Change how many copies of a card a list has: delta=1 adds one, delta=-1 removes one."""
@@ -185,7 +186,7 @@ def list_change(request, pk):
     return respond(request, fallback, card=card.pk, quantity=quantity)
 
 
-@staff_member_required
+@weiss_access_required
 def list_detail(request, pk):
     card_list = get_object_or_404(CardList, pk=pk, user=request.user)
     entries = list(card_list.entries.select_related("card").prefetch_related("card__prices")
@@ -201,7 +202,7 @@ def list_detail(request, pk):
     })
 
 
-@staff_member_required
+@weiss_access_required
 @require_POST
 def list_rename(request, pk):
     card_list = get_object_or_404(CardList, pk=pk, user=request.user)
@@ -212,7 +213,7 @@ def list_rename(request, pk):
     return redirect("weiss:list", pk=card_list.pk)
 
 
-@staff_member_required
+@weiss_access_required
 @require_POST
 def list_delete(request, pk):
     card_list = get_object_or_404(CardList, pk=pk, user=request.user)

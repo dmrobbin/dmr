@@ -1,8 +1,11 @@
 import logging
+import secrets
+from datetime import timedelta
 
 from botocore.exceptions import BotoCoreError, ClientError
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from django.utils.text import slugify
 
 from . import s3
@@ -145,3 +148,44 @@ class JobSearch(models.Model):
     def __str__(self):
         where = "remote" if self.remote_only else (self.location or "anywhere")
         return f"{self.query} ({where})"
+
+
+def default_invitation_expiry():
+    return timezone.now() + timedelta(days=7)
+
+
+def new_invitation_token():
+    return secrets.token_urlsafe(32)
+
+
+class Invitation(models.Model):
+    """A single-use link that lets someone create an account with Weiss-only access."""
+
+    token = models.CharField(max_length=64, unique=True, default=new_invitation_token, editable=False)
+    note = models.CharField(max_length=200, blank=True, help_text="Who it's for, e.g. 'Sam from the card shop'")
+    created_by = models.ForeignKey(
+        "auth.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="invitations_sent", editable=False
+    )
+    created = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(default=default_invitation_expiry)
+    accepted_at = models.DateTimeField(null=True, blank=True, editable=False)
+    user = models.OneToOneField(
+        "auth.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="invitation", editable=False,
+        help_text="The account created from this invitation",
+    )
+
+    class Meta:
+        ordering = ["-created"]
+
+    def __str__(self):
+        return self.note or f"Invitation {self.pk}"
+
+    @property
+    def is_usable(self):
+        return self.accepted_at is None and self.expires_at > timezone.now()
+
+    @property
+    def status(self):
+        if self.accepted_at:
+            return "Accepted"
+        return "Open" if self.is_usable else "Expired"

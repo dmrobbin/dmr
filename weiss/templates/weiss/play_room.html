@@ -1,0 +1,103 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}{% if opponent %}vs {{ opponent.username }}{% else %}New room{% endif %}{% endblock %}
+
+{% block content %}
+  {% if room.status == "setup" %}
+    <p class="back"><a href="{% url 'weiss:play_rooms' %}">← Your rooms</a></p>
+    <h1>{% if opponent %}You vs {{ opponent.username }}{% else %}New room{% endif %}</h1>
+
+    <section class="play-setup">
+      {% if seat == "host" %}
+        <div class="setup-step">
+          <h2>1. Invite your opponent</h2>
+          {% if room.guest %}
+            <p>{{ room.guest.username }} has joined.</p>
+          {% else %}
+            <p class="muted small">Send this link. The first person with Weiss access to open it takes the other seat.</p>
+            <div class="panel-row">
+              <input type="text" value="{{ invite_url }}" readonly onclick="this.select()" aria-label="Invite link">
+              <button type="button" onclick="navigator.clipboard.writeText('{{ invite_url|escapejs }}'); this.textContent='Copied'">Copy</button>
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <div class="setup-step">
+        <h2>{% if seat == "host" %}2. {% endif %}Choose your deck</h2>
+        {% if decks %}
+          <form method="post" action="{% url 'weiss:play_deck' room.pk %}" class="panel-row">
+            {% csrf_token %}
+            <select name="deck" aria-label="Deck">
+              {% for deck in decks %}<option value="{{ deck.pk }}"{% if deck == my_deck %} selected{% endif %}>{{ deck.name }}</option>{% endfor %}
+            </select>
+            <button type="submit">{% if my_deck %}Change{% else %}Use this deck{% endif %}</button>
+          </form>
+          {% if my_deck %}<p class="small muted">Using “{{ my_deck.name }}” ({{ my_deck.card_count }} cards).</p>{% endif %}
+        {% else %}
+          <p class="empty">You don't have any card lists yet. <a href="{% url 'weiss:sets' %}">Make one</a>, then come back.</p>
+        {% endif %}
+      </div>
+
+      <div class="setup-step">
+        <h2>{% if seat == "host" %}3. {% endif %}Start</h2>
+        <ul class="setup-status small">
+          <li>{{ room.host.username }}: {% if room.host_deck %}ready{% else %}choosing a deck…{% endif %}</li>
+          <li>{% if room.guest %}{{ room.guest.username }}: {% if room.guest_deck %}ready{% else %}choosing a deck…{% endif %}{% else %}Waiting for an opponent…{% endif %}</li>
+        </ul>
+        {% if seat == "host" %}
+          <form method="post" action="{% url 'weiss:play_start' room.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="button-small"{% if not room.guest or not room.host_deck or not room.guest_deck %} disabled{% endif %}>Start game</button>
+          </form>
+        {% else %}
+          <p class="muted small">{{ room.host.username }} will start the game once you've both chosen decks.</p>
+        {% endif %}
+      </div>
+
+      {% if seat == "host" %}
+        <form method="post" action="{% url 'weiss:play_delete' room.pk %}" onsubmit="return confirm('Delete this room?')">
+          {% csrf_token %}<button type="submit" class="button-small danger">Delete room</button>
+        </form>
+      {% endif %}
+    </section>
+    <script>
+      // Reload when the other player joins, picks a deck, or the host starts the game.
+      (() => {
+        let version = "{{ room.version }}";
+        setInterval(async () => {
+          const response = await fetch("{% url 'weiss:play_state' room.pk %}?v=" + version, { credentials: "same-origin" });
+          if (response.status === 200) window.location.reload();
+        }, 2000);
+      })();
+    </script>
+  {% else %}
+    <div id="play" class="play"
+         data-state-url="{% url 'weiss:play_state' room.pk %}"
+         data-action-url="{% url 'weiss:play_action' room.pk %}"
+         data-csrf="{{ csrf_token }}">
+      <div class="play-board" data-board><p class="muted">Loading the table…</p></div>
+      <aside class="play-side">
+        <div class="play-preview" data-preview><p class="muted small">Hover over a card to see it here.</p></div>
+        <div class="play-controls" data-controls></div>
+        <div class="play-log" data-log aria-live="polite"></div>
+        <form class="panel-row play-chat" data-chat>
+          <input type="text" name="text" maxlength="300" placeholder="Message" aria-label="Chat message">
+          <button type="submit">Send</button>
+        </form>
+        {% if seat == "host" %}
+          <form method="post" action="{% url 'weiss:play_start' room.pk %}" onsubmit="return confirm('Start a new game with the same decks?')">
+            {% csrf_token %}<button type="submit" class="link-button">Rematch (reshuffle and deal again)</button>
+          </form>
+          <form method="post" action="{% url 'weiss:play_reset' room.pk %}" onsubmit="return confirm('End this game and go back to choosing decks?')">
+            {% csrf_token %}<button type="submit" class="link-button">Change decks</button>
+          </form>
+        {% endif %}
+      </aside>
+      <div class="play-menu" data-menu hidden></div>
+      <div class="play-modal" data-modal hidden></div>
+    </div>
+    <script src="{% static 'weiss/play.js' %}" defer></script>
+  {% endif %}
+{% endblock %}

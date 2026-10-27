@@ -1,3 +1,5 @@
+import secrets
+
 from django.db import models
 
 
@@ -99,3 +101,45 @@ class CardListEntry(models.Model):
 
     def __str__(self):
         return f"{self.quantity}× {self.card}"
+
+
+def new_room_token():
+    return secrets.token_urlsafe(24)
+
+
+class GameRoom(models.Model):
+    """A two-player table. The host shares an invite link; whoever opens it first takes the other seat."""
+
+    MAX_OPEN_ROOMS = 20  # per host
+
+    class Status(models.TextChoices):
+        SETUP = "setup", "Choosing decks"
+        PLAYING = "playing", "Playing"
+
+    host = models.ForeignKey("auth.User", on_delete=models.CASCADE, related_name="rooms_hosted")
+    guest = models.ForeignKey("auth.User", on_delete=models.SET_NULL, null=True, blank=True,
+                              related_name="rooms_joined")
+    invite_token = models.CharField(max_length=64, unique=True, default=new_room_token, editable=False)
+    host_deck = models.ForeignKey(CardList, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    guest_deck = models.ForeignKey(CardList, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.SETUP)
+    state = models.JSONField(default=dict, blank=True, help_text="See weiss.game for the format")
+    version = models.PositiveIntegerField(default=0, help_text="Goes up on every change, so browsers can poll cheaply")
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated"]
+
+    def __str__(self):
+        return f"{self.host} vs {self.guest or '(open seat)'}"
+
+    def seat_of(self, user):
+        if user.pk == self.host_id:
+            return "host"
+        if user.pk == self.guest_id:
+            return "guest"
+        return None
+
+    def opponent_of(self, user):
+        return self.guest if user.pk == self.host_id else self.host

@@ -21,6 +21,7 @@
     </label>
     <button type="submit">Search</button>
     {% if filtered %}<a href="{% url 'weiss:sets' %}{% if filters.sort != '-number' %}?sort={{ filters.sort|urlencode }}{% endif %}">Clear</a>{% endif %}
+    {% if filters.code %}<a href="{% url 'weiss:series' filters.code %}">All {{ filters.code }} cards →</a>{% endif %}
   </form>
 
   {% if sets %}

@@ -3,7 +3,10 @@
 {% block title %}{{ card.name }}{% endblock %}
 
 {% block weiss_content %}
-  <p class="back"><a href="{% url 'weiss:set' card.expansion_id %}">← {{ card.expansion }}</a></p>
+  <p class="back">
+    <a href="{% url 'weiss:set' card.expansion_id %}">← {{ card.expansion }}</a>
+    · <a href="{% url 'weiss:series' series %}">All {{ series }} cards</a>
+  </p>
   <div class="card-detail">
     {% if card.image_src %}<img class="card-image" src="{{ card.image_src }}" alt="{{ card.name }}">{% endif %}
     <div>
@@ -43,7 +46,7 @@
       {% if card.flavor_text %}<p class="card-flavor">{{ card.flavor_text|linebreaksbr }}</p>{% endif %}
       <p class="muted small">
         {% if card.image_s3_key %}Image: <code>{{ card.image_s3_key }}</code>{% else %}Image not copied to S3 yet{% endif %}
-        · <a href="{% url 'admin:weiss_card_change' card.pk %}">Edit in admin</a>
+        {% if user.is_staff %}· <a href="{% url 'admin:weiss_card_change' card.pk %}">Edit in admin</a>{% endif %}
       </p>
     </div>
   </div>
