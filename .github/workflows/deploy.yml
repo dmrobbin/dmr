@@ -49,7 +49,15 @@ jobs:
           START=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           aws elasticbeanstalk update-environment \
             --environment-name "$EB_ENV" --version-label "$VERSION"
-          aws elasticbeanstalk wait environment-updated --environment-name "$EB_ENV"
+          # The CLI's built-in waiter gives up after ~6.5 minutes, which a busy t3.micro can exceed.
+          for attempt in $(seq 1 90); do
+            STATUS=$(aws elasticbeanstalk describe-environments --environment-names "$EB_ENV" \
+              --query "Environments[0].Status" --output text)
+            [ "$STATUS" = "Ready" ] && break
+            echo "Environment is $STATUS; waiting ($attempt/90)..."
+            sleep 20
+          done
+          [ "$STATUS" = "Ready" ] || { echo "Deploy still not finished after 30 minutes"; exit 1; }
           # The environment returns to Ready even when the deploy failed, so
           # check that the new version is live and nothing logged an error.
           DEPLOYED=$(aws elasticbeanstalk describe-environments --environment-names "$EB_ENV" \
