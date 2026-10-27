@@ -160,6 +160,13 @@ class CardPagesTests(TestCase):
         self.assertEqual(self.names(level="none"), ["Footstep"])
         self.assertEqual(self.names(color="Red", level="0"), ["Anis"])
 
+    def test_search_by_card_text(self):
+        Card.objects.filter(name="Elegg").update(description="【AUTO】 When this card is placed on stage, draw 1 card.")
+        Card.objects.filter(name="Anis").update(description="【CONT】 All your other characters get +500 power.")
+        self.assertEqual(self.names(text="DRAW 1"), ["Elegg"])
+        self.assertEqual(self.names(text="power", color="Red"), ["Anis"])
+        self.assertEqual(self.names(text="nothing like this"), [])
+
     def serials(self, **params):
         response = self.client.get(reverse("weiss:set", args=[290]), params)
         return [card.serial_number[-4:] for card in response.context["cards"]]
@@ -393,6 +400,23 @@ class ListExpansionsTests(TestCase):
         with patch("weiss.scraper.fetch_html", return_value=page("card_character.html")):
             call_command("list_expansions", "--card", "NIK/S135-E001S", stdout=out)
         self.assertIn("Expansion 290: GODDESS OF VICTORY: NIKKE Vol.2", out.getvalue())
+
+    def test_export_writes_a_spreadsheet_friendly_csv(self):
+        import csv
+        import tempfile
+        Card.objects.create(serial_number="NIK/S135-E001", name="Elegg", expansion="x", expansion_id=290)
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "expansions.csv"
+            with patch("weiss.scraper.fetch_html", return_value=self.PAGE):
+                call_command("export_expansions", "-o", str(path), stdout=StringIO())
+            with open(path, encoding="utf-8-sig", newline="") as f:
+                rows = list(csv.reader(f))
+        self.assertEqual(rows, [
+            ["Expansion number", "Name", "Saved on site", "Cards saved"],
+            ["290", "GODDESS OF VICTORY: NIKKE Vol.2", "yes", "1"],
+            ["252", "Booster Pack GODDESS OF VICTORY: NIKKE", "no", "0"],
+            ["70", "Accel・World", "no", "0"],
+        ])
 
 
 class ImageUrlTests(TestCase):

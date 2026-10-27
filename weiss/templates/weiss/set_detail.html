@@ -11,6 +11,7 @@
 
   <form class="lead-filters" method="get">
     <label>Name <input type="search" name="name" value="{{ filters.name }}" placeholder="e.g. Elegg"></label>
+    <label>Card text <input type="search" name="text" value="{{ filters.text }}" placeholder="e.g. draw 1 card"></label>
     {% if series_page %}
       <label>Set
         <select name="set" onchange="this.form.submit()">

@@ -135,12 +135,15 @@ def card_browser(request, pool, template_context):
     the page covers; the filter dropdowns offer only values found in it."""
     cards = pool
     name = request.GET.get("name", "").strip()
+    text = request.GET.get("text", "").strip()
     color = request.GET.get("color", "")
     level = request.GET.get("level", "")
     cost = request.GET.get("cost", "")
     expansion = request.GET.get("set", "")
     if name:
         cards = cards.filter(name__icontains=name)
+    if text:
+        cards = cards.filter(description__icontains=text)
     if color:
         cards = cards.filter(color=color)
     cards = filter_number(cards, "level", level)
@@ -166,8 +169,9 @@ def card_browser(request, pool, template_context):
         "levels": values_in(pool, "level"),
         "costs": values_in(pool, "cost"),
         "sort_options": [(value, label) for value, label, _ in CARD_SORTS],
-        "filters": {"name": name, "color": color, "level": level, "cost": cost, "set": expansion, "sort": sort},
-        "filtered": bool(name or color or level or cost or expansion),
+        "filters": {"name": name, "text": text, "color": color, "level": level, "cost": cost, "set": expansion,
+                    "sort": sort},
+        "filtered": bool(name or text or color or level or cost or expansion),
     })
 
 
