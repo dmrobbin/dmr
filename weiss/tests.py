@@ -594,3 +594,33 @@ class CardListTests(TestCase):
     def test_no_panel_outside_weiss_pages(self):
         self.create_list()
         self.assertNotIn("editing_list", self.client.get(reverse("dashboard")).context)
+
+
+class FetchNewSetsTests(TestCase):
+    AVAILABLE = [(252, "NIKKE"), (290, "NIKKE Vol.2"), (100, "Old"), (278, "OSK Vol.2"), (230, "OSK"), (229, "OSK TD")]
+
+    def run_command(self, *args):
+        out = StringIO()
+        with patch("weiss.management.commands.fetch_new_sets.expansions", return_value=self.AVAILABLE), \
+                patch("weiss.management.commands.fetch_new_sets.call_command") as fake_call:
+            call_command("fetch_new_sets", *args, stdout=out)
+        return fake_call, out.getvalue()
+
+    def test_fetches_newest_unsaved_sets_first(self):
+        Card.objects.create(serial_number="NIK/S135-E001", name="x", expansion="NIKKE Vol.2", expansion_id=290)
+        fake_call, _ = self.run_command("--count", "3")
+        self.assertEqual(fake_call.call_args.args, ("fetch_sets", "278", "252", "230"))
+
+    def test_dry_run_only_lists(self):
+        fake_call, output = self.run_command("--dry-run", "--count", "2")
+        fake_call.assert_not_called()
+        self.assertIn("  290  NIKKE Vol.2", output)
+        self.assertIn("  278  OSK Vol.2", output)
+        self.assertNotIn("252", output)
+
+    def test_nothing_new(self):
+        for number, name in self.AVAILABLE:
+            Card.objects.create(serial_number=f"X/{number}", name="x", expansion=name, expansion_id=number)
+        fake_call, output = self.run_command()
+        fake_call.assert_not_called()
+        self.assertIn("already saved", output)
