@@ -1,0 +1,22 @@
+{% extends "weiss/base.html" %}
+
+{% block title %}Card lists{% endblock %}
+
+{% block weiss_content %}
+  <p class="back"><a href="{% url 'weiss:sets' %}">← All sets</a></p>
+  <h1>Card lists</h1>
+  {% if lists %}
+    <ul class="set-list">
+      {% for card_list in lists %}
+        <li>
+          <a href="{% url 'weiss:list' card_list.pk %}">
+            <span class="set-name">{{ card_list.name }}</span>
+            <span class="muted">{{ card_list.total|default:0 }} / {{ max_cards }} cards · updated {{ card_list.updated|date:"M j" }}</span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty">No lists yet. Create one in the panel on the right.</p>
+  {% endif %}
+{% endblock %}

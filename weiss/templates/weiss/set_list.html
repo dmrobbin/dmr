@@ -1,21 +1,44 @@
-{% extends "core/dashboard_base.html" %}
+{% extends "weiss/base.html" %}
 
 {% block title %}Weiss Schwarz cards{% endblock %}
 
-{% block content %}
+{% block weiss_content %}
   <h1>Weiss Schwarz sets</h1>
+
+  <form class="lead-filters" method="get">
+    <label>Set name <input type="search" name="name" value="{{ filters.name }}" placeholder="e.g. oshi no ko"></label>
+    <label>Expansion # <input type="search" name="number" value="{{ filters.number }}" inputmode="numeric" placeholder="e.g. 290" class="narrow"></label>
+    <label>Series
+      <select name="code" onchange="this.form.submit()">
+        <option value="">All</option>
+        {% for code in codes %}<option value="{{ code }}"{% if filters.code == code %} selected{% endif %}>{{ code }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Sort
+      <select name="sort" onchange="this.form.submit()">
+        {% for value, label in sort_options %}<option value="{{ value }}"{% if filters.sort == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <button type="submit">Search</button>
+    {% if filtered %}<a href="{% url 'weiss:sets' %}{% if filters.sort != '-number' %}?sort={{ filters.sort|urlencode }}{% endif %}">Clear</a>{% endif %}
+  </form>
+
   {% if sets %}
-    <ul class="set-list">
+    <p class="lead-count">{{ sets|length }} set{{ sets|length|pluralize }}</p>
+    <ul class="set-grid">
       {% for set in sets %}
         <li>
           <a href="{% url 'weiss:set' set.expansion_id %}">
+            {% if set.cover.image_src %}<img src="{{ set.cover.image_src }}" alt="" loading="lazy">{% else %}<span class="set-cover-missing" aria-hidden="true"></span>{% endif %}
             <span class="set-name">{{ set.name }}</span>
-            <span class="muted">Expansion {{ set.expansion_id }} · {{ set.cards }} card{{ set.cards|pluralize }}</span>
+            <span class="muted">#{{ set.expansion_id }} · {{ set.code }} · {{ set.cards }} card{{ set.cards|pluralize }}</span>
           </a>
         </li>
       {% endfor %}
     </ul>
+  {% elif filtered %}
+    <p class="empty">No sets match these filters.</p>
   {% else %}
-    <p class="empty">No cards saved yet. Run <code>manage.py fetch_cards --expansion &lt;number&gt;</code> to add a set.</p>
+    <p class="empty">No cards saved yet. Run <code>manage.py fetch_sets &lt;expansion number&gt;</code> to add a set.</p>
   {% endif %}
 {% endblock %}

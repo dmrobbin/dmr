@@ -1,0 +1,12 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block content %}
+  <div class="weiss-layout">
+    <div class="weiss-main">{% block weiss_content %}{% endblock %}</div>
+    <aside class="list-panel" aria-label="Card lists" data-list-panel>
+      {% include "weiss/list_panel.html" %}
+    </aside>
+  </div>
+  <script src="{% static 'weiss/lists.js' %}" defer></script>
+{% endblock %}

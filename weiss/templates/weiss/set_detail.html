@@ -1,8 +1,8 @@
-{% extends "core/dashboard_base.html" %}
+{% extends "weiss/base.html" %}
 
 {% block title %}{{ expansion }}{% endblock %}
 
-{% block content %}
+{% block weiss_content %}
   <p class="back"><a href="{% url 'weiss:sets' %}">← All sets</a></p>
   <h1>{{ expansion }}</h1>
 
@@ -41,6 +41,7 @@
             </span>
             <span class="muted">{{ card.serial_number }} · {{ card.rarity }}</span>
           </a>
+          {% include "weiss/qty_controls.html" %}
         </li>
       {% endfor %}
     </ul>

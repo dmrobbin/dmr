@@ -65,3 +65,37 @@ class CardPrice(models.Model):
 
     def __str__(self):
         return f"{self.card.serial_number}: {self.market_price or '—'} ({self.get_source_display()})"
+
+
+class CardList(models.Model):
+    """A user's named list of cards (a deck, a want list, ...), with any number of copies per card."""
+
+    MAX_LISTS_PER_USER = 100
+    MAX_CARDS = 100  # total copies across the whole list
+
+    user = models.ForeignKey("auth.User", on_delete=models.CASCADE, related_name="card_lists")
+    name = models.CharField(max_length=100)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated"]
+
+    def __str__(self):
+        return self.name
+
+    def card_count(self):
+        return self.entries.aggregate(total=models.Sum("quantity"))["total"] or 0
+
+
+class CardListEntry(models.Model):
+    card_list = models.ForeignKey(CardList, on_delete=models.CASCADE, related_name="entries")
+    card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name="list_entries")
+    quantity = models.PositiveSmallIntegerField(default=1)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["card_list", "card"], name="one_entry_per_card_per_list")]
+        verbose_name_plural = "card list entries"
+
+    def __str__(self):
+        return f"{self.quantity}× {self.card}"

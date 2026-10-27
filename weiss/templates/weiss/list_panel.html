@@ -1,0 +1,68 @@
+{# Side panel on every Weiss page; re-rendered and swapped in by lists.js after each change. #}
+{% with next=panel_next|default:request.get_full_path %}
+<h2>Card lists</h2>
+{% if panel_error %}<p class="panel-error" role="alert">{{ panel_error }}</p>{% endif %}
+
+{% if editing_list %}
+  <div class="panel-editing">
+    <p class="muted small panel-label">Adding cards to</p>
+    <p class="panel-list-name"><a href="{% url 'weiss:list' editing_list.pk %}">{{ editing_list.name }}</a></p>
+    <p class="list-counter" aria-live="polite"><strong>{{ editing_count }}</strong> / {{ max_cards }} cards</p>
+    <div class="meter{% if editing_full %} full{% endif %}"><span style="width: {% widthratio editing_count max_cards 100 %}%"></span></div>
+    {% if editing_full %}<p class="small muted">This list is full.</p>{% endif %}
+    {% if editing_entries %}
+      <p class="list-total">
+        <span>Total</span>
+        <span><strong>~${{ editing_total|floatformat:2 }}</strong> <span class="muted small">approx.</span></span>
+      </p>
+      {% if editing_unpriced %}<p class="small muted list-total-note">Not counting {{ editing_unpriced }} card{{ editing_unpriced|pluralize }} without a price.</p>{% endif %}
+    {% endif %}
+    {% if editing_entries %}
+      <ul class="panel-entries">
+        {% for entry in editing_entries %}
+          <li>
+            <a href="{% url 'weiss:card' entry.card.pk %}" class="panel-entry-name">{{ entry.card.name }}</a>
+            <span class="muted small">{{ entry.card.serial_number }}{% if entry.line_total is not None %} · <span class="line-total">~${{ entry.line_total|floatformat:2 }}</span>{% endif %}</span>
+            {% include "weiss/qty_controls.html" with card=entry.card %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty small">Use the + buttons on cards to add them.</p>
+    {% endif %}
+    <form method="post" action="{% url 'weiss:list_stop_editing' %}" data-list-form="reload">
+      {% csrf_token %}<input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" class="button-small secondary">Done editing</button>
+    </form>
+  </div>
+{% endif %}
+
+<form class="panel-new-list" method="post" action="{% url 'weiss:list_create' %}" data-list-form="reload">
+  {% csrf_token %}<input type="hidden" name="next" value="{{ next }}">
+  <label for="new-list-name" class="small muted">New list</label>
+  <div class="panel-row">
+    <input id="new-list-name" type="text" name="name" maxlength="100" placeholder="e.g. OSK deck" required{% if lists_full %} disabled{% endif %}>
+    <button type="submit"{% if lists_full %} disabled{% endif %}>Create</button>
+  </div>
+  {% if lists_full %}<p class="small muted">You have {{ max_lists }} lists, the most allowed.</p>{% endif %}
+</form>
+
+{% if card_lists %}
+  <p class="small muted panel-label">Your lists ({{ card_lists|length }}/{{ max_lists }})</p>
+  <ul class="panel-lists">
+    {% for card_list in card_lists %}
+      <li{% if card_list.pk == editing_list.pk %} class="current"{% endif %}>
+        <a href="{% url 'weiss:list' card_list.pk %}">{{ card_list.name }}</a>
+        <span class="muted small">{{ card_list.total|default:0 }}</span>
+        {% if card_list.pk != editing_list.pk %}
+          <form method="post" action="{% url 'weiss:list_edit' card_list.pk %}" data-list-form="reload">
+            {% csrf_token %}<input type="hidden" name="next" value="{{ next }}">
+            <button type="submit" class="link-button">Edit</button>
+          </form>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+  <p class="small"><a href="{% url 'weiss:lists' %}">Manage lists</a></p>
+{% endif %}
+{% endwith %}

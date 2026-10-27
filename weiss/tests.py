@@ -7,7 +7,7 @@ from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import Card, CardPrice
+from .models import Card, CardList, CardListEntry, CardPrice
 from .scraper import expansion_serials, parse_card
 
 TESTDATA = Path(__file__).parent / "testdata"
@@ -120,10 +120,35 @@ class CardPagesTests(TestCase):
         response = self.client.get(reverse("weiss:set", args=[290]), params)
         return sorted(card.name for card in response.context["cards"])
 
-    def test_set_list_groups_cards_by_expansion(self):
+    def set_ids(self, **params):
+        return [s["expansion_id"] for s in self.client.get(reverse("weiss:sets"), params).context["sets"]]
+
+    def test_set_list_groups_cards_by_expansion_newest_first(self):
         response = self.client.get(reverse("weiss:sets"))
-        self.assertEqual([(s["expansion_id"], s["cards"]) for s in response.context["sets"]], [(290, 3), (100, 1)])
+        self.assertEqual([(s["expansion_id"], s["cards"], s["code"]) for s in response.context["sets"]],
+                         [(290, 3, "NIK"), (100, 1, "OSK")])
         self.assertContains(response, reverse("weiss:set", args=[290]))
+
+    def test_set_list_sorting(self):
+        self.assertEqual(self.set_ids(sort="number"), [100, 290])
+        self.assertEqual(self.set_ids(sort="name"), [290, 100])  # "NIKKE Vol.2" before "Other"
+        self.assertEqual(self.set_ids(sort="-cards"), [290, 100])
+        self.assertEqual(self.set_ids(sort="bogus"), [290, 100])
+
+    def test_set_list_search_by_name_number_and_series(self):
+        self.assertEqual(self.set_ids(name="nikke"), [290])
+        self.assertEqual(self.set_ids(number="10"), [100])
+        self.assertEqual(self.set_ids(code="OSK"), [100])
+        self.assertEqual(self.client.get(reverse("weiss:sets")).context["codes"], ["NIK", "OSK"])
+
+    def test_cover_is_first_card_of_the_main_print_run(self):
+        # A Vol.1 promo sorts before Vol.2's own cards but shouldn't be the cover.
+        for serial in ["OSK/S107-PE02S", "OSK/S121-E002", "OSK/S121-E001"]:
+            Card.objects.create(serial_number=serial, name=serial, expansion="Vol.2", expansion_id=278,
+                                image_url=f"https://en.ws-tcg.com/{serial}.png")
+        sets = {s["expansion_id"]: s for s in self.client.get(reverse("weiss:sets")).context["sets"]}
+        self.assertEqual(sets[278]["cover"].serial_number, "OSK/S121-E001")
+        self.assertEqual(sets[290]["cover"].serial_number, "NIK/S135-E001")
 
     def test_set_page_shows_only_that_set(self):
         self.assertEqual(self.names(), ["Anis", "Elegg", "Footstep"])
@@ -421,3 +446,123 @@ class GroupMatchingByCardNumberTests(TestCase):
         self.assertEqual(CardPrice.objects.count(), 3)
         self.assertNotIn("couldn't find", out.getvalue())
 
+
+
+class CardListTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth.models import User
+        self.user = User.objects.create_user("daryl", password="x", is_staff=True)
+        self.other = User.objects.create_user("other", password="x", is_staff=True)
+        self.client.force_login(self.user)
+        base = {"expansion": "NIKKE Vol.2", "expansion_id": 290}
+        self.elegg = Card.objects.create(serial_number="NIK/S135-E001", name="Elegg", **base)
+        self.anis = Card.objects.create(serial_number="NIK/S135-E002", name="Anis", **base)
+
+    def create_list(self, name="Deck"):
+        self.client.post(reverse("weiss:list_create"), {"name": name})
+        return CardList.objects.get(user=self.user, name=name)
+
+    def change(self, card_list, card, delta=1, json=False):
+        headers = {"HTTP_ACCEPT": "application/json"} if json else {}
+        return self.client.post(reverse("weiss:list_change", args=[card_list.pk]),
+                                {"card": card.pk, "delta": delta, "next": "/dashboard/weiss/"}, **headers)
+
+    def test_creating_a_list_starts_editing_it(self):
+        deck = self.create_list()
+        response = self.client.get(reverse("weiss:set", args=[290]))
+        self.assertEqual(response.context["editing_list"], deck)
+        self.assertContains(response, 'data-qty-for="%d"' % self.elegg.pk)
+
+    def test_add_copies_and_remove_down_to_zero(self):
+        deck = self.create_list()
+        for _ in range(3):
+            self.change(deck, self.elegg)
+        self.change(deck, self.anis)
+        self.assertEqual(deck.card_count(), 4)
+        self.assertEqual(deck.entries.get(card=self.elegg).quantity, 3)
+        for _ in range(3):
+            self.change(deck, self.elegg, delta=-1)
+        self.assertFalse(deck.entries.filter(card=self.elegg).exists())
+        self.change(deck, self.anis, delta=-1)
+        self.change(deck, self.anis, delta=-1)  # removing from zero stays at zero
+        self.assertEqual(deck.card_count(), 0)
+
+    def test_json_response_has_running_count_and_panel(self):
+        deck = self.create_list()
+        self.change(deck, self.elegg)
+        data = self.change(deck, self.elegg, json=True).json()
+        self.assertEqual((data["ok"], data["count"], data["quantity"], data["full"]), (True, 2, 2, False))
+        self.assertIn("<strong>2</strong> / 100 cards", data["panel"])
+        # Forms in the swapped-in panel point back at the page, not at the endpoint.
+        self.assertIn('name="next" value="/dashboard/weiss/"', data["panel"])
+
+    def test_panel_totals_prices_like_a_cart(self):
+        deck = self.create_list()
+        CardPrice.objects.create(card=self.elegg, market_price="1.25")
+        self.change(deck, self.elegg)
+        self.change(deck, self.anis)
+        panel = self.change(deck, self.elegg, json=True).json()["panel"]
+        self.assertIn("<strong>~$2.50</strong>", panel)
+        self.assertIn("approx.", panel)
+        self.assertIn('<span class="line-total">~$2.50</span>', panel)
+        self.assertIn("Not counting 1 card without a price.", panel)
+
+    def test_list_caps_at_100_cards(self):
+        deck = self.create_list()
+        CardListEntry.objects.create(card_list=deck, card=self.elegg, quantity=99)
+        self.assertTrue(self.change(deck, self.anis, json=True).json()["full"])
+        response = self.change(deck, self.anis, json=True)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("already has 100 cards", response.json()["error"])
+        self.assertEqual(deck.card_count(), 100)
+
+    def test_user_caps_at_100_lists(self):
+        CardList.objects.bulk_create([CardList(user=self.user, name=f"List {i}") for i in range(100)])
+        response = self.client.post(reverse("weiss:list_create"), {"name": "One more"}, HTTP_ACCEPT="application/json")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(CardList.objects.filter(user=self.user).count(), 100)
+
+    def test_lists_are_private_to_their_owner(self):
+        theirs = CardList.objects.create(user=self.other, name="Theirs")
+        self.assertEqual(self.client.get(reverse("weiss:list", args=[theirs.pk])).status_code, 404)
+        self.assertEqual(self.change(theirs, self.elegg).status_code, 404)
+        self.assertEqual(self.client.post(reverse("weiss:list_edit", args=[theirs.pk])).status_code, 404)
+        self.assertNotContains(self.client.get(reverse("weiss:sets")), "Theirs")
+
+    def test_switching_stopping_renaming_and_deleting(self):
+        deck = self.create_list("Deck")
+        wants = self.create_list("Wants")
+        self.client.post(reverse("weiss:list_edit", args=[deck.pk]))
+        self.assertEqual(self.client.get(reverse("weiss:sets")).context["editing_list"], deck)
+        self.client.post(reverse("weiss:list_stop_editing"))
+        self.assertIsNone(self.client.get(reverse("weiss:sets")).context["editing_list"])
+        self.client.post(reverse("weiss:list_rename", args=[wants.pk]), {"name": "Want list"})
+        wants.refresh_from_db()
+        self.assertEqual(wants.name, "Want list")
+        self.client.post(reverse("weiss:list_edit", args=[wants.pk]))
+        self.client.post(reverse("weiss:list_delete", args=[wants.pk]))
+        self.assertFalse(CardList.objects.filter(pk=wants.pk).exists())
+        self.assertIsNone(self.client.get(reverse("weiss:sets")).context["editing_list"])
+
+    def test_add_cards_button_edits_the_list_and_goes_to_the_sets_page(self):
+        deck = self.create_list("Deck")
+        self.create_list("Other")  # now editing "Other"
+        response = self.client.get(reverse("weiss:list", args=[deck.pk]))
+        self.assertContains(response, f'<input type="hidden" name="next" value="{reverse("weiss:sets")}">')
+        response = self.client.post(reverse("weiss:list_edit", args=[deck.pk]), {"next": reverse("weiss:sets")})
+        self.assertRedirects(response, reverse("weiss:sets"))
+        self.assertEqual(response.wsgi_request.session["weiss_editing_list"], deck.pk)
+
+    def test_list_page_totals_market_value(self):
+        deck = self.create_list()
+        CardListEntry.objects.create(card_list=deck, card=self.elegg, quantity=4)
+        CardListEntry.objects.create(card_list=deck, card=self.anis, quantity=1)
+        CardPrice.objects.create(card=self.elegg, market_price="1.25")
+        response = self.client.get(reverse("weiss:list", args=[deck.pk]))
+        self.assertContains(response, "5 / 100 cards")
+        self.assertContains(response, "~$5.00 approx. TCGplayer market value (1 card without a price)")
+        self.assertContains(response, "4× Elegg")
+
+    def test_no_panel_outside_weiss_pages(self):
+        self.create_list()
+        self.assertNotIn("editing_list", self.client.get(reverse("dashboard")).context)

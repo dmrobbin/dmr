@@ -1,0 +1,50 @@
+{% extends "weiss/base.html" %}
+
+{% block title %}{{ card_list.name }}{% endblock %}
+
+{% block weiss_content %}
+  <p class="back"><a href="{% url 'weiss:lists' %}">← All lists</a></p>
+  <h1>{{ card_list.name }}</h1>
+  <p class="lead-meta">
+    {{ count }} / {{ max_cards }} cards
+    {% if value %} · ~${{ value|floatformat:2 }} approx. TCGplayer market value{% if unpriced %} ({{ unpriced }} card{{ unpriced|pluralize }} without a price){% endif %}{% endif %}
+  </p>
+
+  <div class="list-actions">
+    {# A plain post: start (or keep) editing this list, then go browse the sets. #}
+    <form method="post" action="{% url 'weiss:list_edit' card_list.pk %}">
+      {% csrf_token %}<input type="hidden" name="next" value="{% url 'weiss:sets' %}">
+      <button type="submit" class="button-small">Add cards to this list</button>
+    </form>
+    <form class="panel-row" method="post" action="{% url 'weiss:list_rename' card_list.pk %}">
+      {% csrf_token %}
+      <input type="text" name="name" value="{{ card_list.name }}" maxlength="100" required aria-label="List name">
+      <button type="submit" class="button-small secondary">Rename</button>
+    </form>
+    <form method="post" action="{% url 'weiss:list_delete' card_list.pk %}"
+          onsubmit="return confirm('Delete “{{ card_list.name|escapejs }}”? This can’t be undone.')">
+      {% csrf_token %}
+      <button type="submit" class="button-small danger">Delete list</button>
+    </form>
+  </div>
+
+  {% if entries %}
+    <ul class="card-grid">
+      {% for entry in entries %}
+        <li>
+          <a href="{% url 'weiss:card' entry.card.pk %}">
+            {% if entry.card.image_src %}<img src="{{ entry.card.image_src }}" alt="{{ entry.card.name }}" loading="lazy">{% endif %}
+            <span class="card-title-row">
+              <span class="card-name">{{ entry.quantity }}× {{ entry.card.name }}</span>
+              {% with price=entry.card.tcgplayer_price %}{% if price.market_price is not None %}<span class="card-price">${{ price.market_price|floatformat:2 }}</span>{% endif %}{% endwith %}
+            </span>
+            <span class="muted">{{ entry.card.serial_number }} · {{ entry.card.rarity }}</span>
+          </a>
+          {% if editing_list.pk == card_list.pk %}{% include "weiss/qty_controls.html" with card=entry.card %}{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty">This list is empty. Click “Add cards to this list”, then browse a set and use the + buttons.</p>
+  {% endif %}
+{% endblock %}

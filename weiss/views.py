@@ -1,6 +1,7 @@
+from collections import Counter, defaultdict
+
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
-from django.db.models import Count, Max
 from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 
@@ -19,15 +20,83 @@ def with_image_urls(cards):
     return cards
 
 
+SET_SORTS = {
+    "number": lambda s: s["expansion_id"],
+    "name": lambda s: s["name"].lower(),
+    "cards": lambda s: s["cards"],
+}
+
+
+def series_code(serial_number):
+    """'OSK/S107-TE01' -> 'OSK'."""
+    return serial_number.split("/", 1)[0]
+
+
+def summarize_sets():
+    """One dict per saved expansion: number, name, series code, card count and cover card serial.
+
+    The cover is the lowest serial among the set's main print run (the most common 'OSK/S121'-style
+    prefix), so a promo from another set packed into this one doesn't become its cover.
+    """
+    serials = defaultdict(list)
+    names = {}
+    for expansion_id, name, serial in Card.objects.exclude(expansion_id=None).values_list(
+        "expansion_id", "expansion", "serial_number"
+    ):
+        serials[expansion_id].append(serial)
+        names[expansion_id] = name
+    sets = []
+    for expansion_id, set_serials in serials.items():
+        main_prefix = Counter(s.split("-", 1)[0] for s in set_serials).most_common(1)[0][0]
+        sets.append({
+            "expansion_id": expansion_id,
+            "name": names[expansion_id],
+            "code": Counter(series_code(s) for s in set_serials).most_common(1)[0][0],
+            "cards": len(set_serials),
+            "cover_serial": min(s for s in set_serials if s.split("-", 1)[0] == main_prefix),
+        })
+    return sets
+
+
 @staff_member_required
 def set_list(request):
-    sets = (
-        Card.objects.exclude(expansion_id=None)
-        .values("expansion_id")
-        .annotate(name=Max("expansion"), cards=Count("id"))
-        .order_by("-expansion_id")
-    )
-    return render(request, "weiss/set_list.html", {"sets": sets})
+    sets = summarize_sets()
+    codes = sorted({s["code"] for s in sets})
+
+    name = request.GET.get("name", "").strip()
+    number = request.GET.get("number", "").strip()
+    code = request.GET.get("code", "")
+    if name:
+        sets = [s for s in sets if name.lower() in s["name"].lower()]
+    if number:
+        sets = [s for s in sets if str(s["expansion_id"]).startswith(number)]
+    if code:
+        sets = [s for s in sets if s["code"] == code]
+
+    sort = request.GET.get("sort", "-number")
+    if sort.removeprefix("-") not in SET_SORTS:
+        sort = "-number"
+    sets.sort(key=SET_SORTS[sort.removeprefix("-")], reverse=sort.startswith("-"))
+
+    covers = {card.serial_number: card for card in with_image_urls(
+        Card.objects.filter(serial_number__in=[s["cover_serial"] for s in sets])
+    )}
+    for s in sets:
+        s["cover"] = covers.get(s["cover_serial"])
+
+    return render(request, "weiss/set_list.html", {
+        "sets": sets,
+        "codes": codes,
+        "sort_options": [
+            ("-number", "Expansion number, newest first"),
+            ("number", "Expansion number, oldest first"),
+            ("name", "Name, A–Z"),
+            ("-name", "Name, Z–A"),
+            ("-cards", "Most cards"),
+        ],
+        "filters": {"name": name, "number": number, "code": code, "sort": sort},
+        "filtered": bool(name or number or code),
+    })
 
 
 @staff_member_required

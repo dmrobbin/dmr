@@ -1,8 +1,8 @@
-{% extends "core/dashboard_base.html" %}
+{% extends "weiss/base.html" %}
 
 {% block title %}{{ card.name }}{% endblock %}
 
-{% block content %}
+{% block weiss_content %}
   <p class="back"><a href="{% url 'weiss:set' card.expansion_id %}">← {{ card.expansion }}</a></p>
   <div class="card-detail">
     {% if card.image_src %}<img class="card-image" src="{{ card.image_src }}" alt="{{ card.name }}">{% endif %}
@@ -21,6 +21,12 @@
         </p>
       {% endif %}
       {% endwith %}
+      {% if editing_list %}
+        <div class="card-list-controls">
+          <span class="muted small">In “{{ editing_list.name }}”</span>
+          {% include "weiss/qty_controls.html" %}
+        </div>
+      {% endif %}
       <dl class="card-stats">
         <dt>Card type</dt><dd>{{ card.card_type|default:"—" }}</dd>
         <dt>Rarity</dt><dd>{{ card.rarity|default:"—" }}</dd>

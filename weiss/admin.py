@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Card, CardPrice
+from .models import Card, CardList, CardListEntry, CardPrice
 
 
 class CardPriceInline(admin.TabularInline):
@@ -23,3 +23,17 @@ class CardPriceAdmin(admin.ModelAdmin):
     list_filter = ("source", "card__expansion")
     search_fields = ("card__serial_number", "card__name")
     raw_id_fields = ("card",)
+
+
+class CardListEntryInline(admin.TabularInline):
+    model = CardListEntry
+    extra = 0
+    raw_id_fields = ("card",)
+
+
+@admin.register(CardList)
+class CardListAdmin(admin.ModelAdmin):
+    list_display = ("name", "user", "updated")
+    list_filter = ("user",)
+    search_fields = ("name",)
+    inlines = [CardListEntryInline]
