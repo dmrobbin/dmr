@@ -45,7 +45,11 @@ class Command(BaseCommand):
             serials = options["card"]
 
         if options["skip_existing"]:
-            existing = set(Card.objects.filter(serial_number__in=serials).values_list("serial_number", flat=True))
+            existing = Card.objects.filter(serial_number__in=serials)
+            if settings.AWS_S3_BUCKET:
+                # A card whose image never made it to S3 (e.g. the download failed) isn't done yet.
+                existing = existing.exclude(image_s3_key="", image_url__gt="")
+            existing = set(existing.values_list("serial_number", flat=True))
             serials = [s for s in serials if s not in existing]
             self.stdout.write(f"Skipping {len(existing)} cards already saved.")
 

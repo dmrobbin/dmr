@@ -1,8 +1,9 @@
 """Read card details from the official English card list at en.ws-tcg.com."""
 import re
 import time
-from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urljoin
+from http.client import HTTPException
+from urllib.error import HTTPError
+from urllib.parse import quote, urlencode, urljoin
 from urllib.request import Request, urlopen
 
 from bs4 import BeautifulSoup
@@ -16,16 +17,25 @@ class ScraperError(Exception):
     pass
 
 
+def safe_url(url):
+    """Percent-encode characters URLs can't contain, like the spaces in 'OSK_S107_E086 (E).png'.
+
+    '%' is left alone so an already-encoded URL isn't encoded twice.
+    """
+    return quote(url, safe=":/?#[]@!$&'()*+,;=%~")
+
+
 def fetch(path, params=None):
     """GET a page (or image) from the card site and return (bytes, content type)."""
-    url = urljoin(BASE_URL, path) + (f"?{urlencode(params)}" if params else "")
+    url = safe_url(urljoin(BASE_URL, path)) + (f"?{urlencode(params)}" if params else "")
     try:
         with urlopen(Request(url, headers={"User-Agent": USER_AGENT}), timeout=30) as response:
             return response.read(), response.headers.get_content_type()
     except HTTPError as exc:
         raise ScraperError(f"HTTP {exc.code} for {url}") from exc
-    except URLError as exc:
-        raise ScraperError(f"{exc.reason} for {url}") from exc
+    except (OSError, HTTPException, ValueError) as exc:
+        # Network errors, timeouts and malformed URLs; one bad card shouldn't stop a whole run.
+        raise ScraperError(f"{exc} for {url}") from exc
 
 
 def fetch_html(path, params=None):
@@ -127,5 +137,5 @@ def parse_card(soup):
         "soul": len(soul_icons) if soul_icons else number(fields.get("Soul")),
         "description": card_text(details.select_one(".p-cards__detail p")),
         "flavor_text": card_text(details.select_one(".p-cards__detail-serif p")),
-        "image_url": urljoin(BASE_URL, image["src"]) if image else "",
+        "image_url": safe_url(urljoin(BASE_URL, image["src"])) if image else "",
     }

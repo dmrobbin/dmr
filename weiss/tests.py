@@ -319,3 +319,41 @@ class ListExpansionsTests(TestCase):
         with patch("weiss.scraper.fetch_html", return_value=page("card_character.html")):
             call_command("list_expansions", "--card", "NIK/S135-E001S", stdout=out)
         self.assertIn("Expansion 290: GODDESS OF VICTORY: NIKKE Vol.2", out.getvalue())
+
+
+class ImageUrlTests(TestCase):
+    def test_spaces_in_image_paths_are_encoded_once(self):
+        from .scraper import safe_url
+        url = "https://en.ws-tcg.com/wordpress/wp-content/images/cardimages/updates/errata/OSK_S107_E086 (E).png"
+        self.assertEqual(safe_url(url), url.replace(" ", "%20"))
+        self.assertEqual(safe_url(safe_url(url)), safe_url(url))
+
+    def test_bad_url_becomes_scraper_error(self):
+        from http.client import InvalidURL
+
+        from .scraper import ScraperError, fetch
+        with patch("weiss.scraper.urlopen", side_effect=InvalidURL("bad")), self.assertRaises(ScraperError):
+            fetch("/x.png")
+
+
+@override_settings(AWS_S3_BUCKET="my-bucket")
+class FetchCardsRecoveryTests(TestCase):
+    def setUp(self):
+        for target in ("core.s3.boto3.client", "weiss.management.commands.fetch_cards.time.sleep"):
+            patcher = patch(target)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def test_image_failure_skips_that_card_and_skip_existing_retries_it(self):
+        from .scraper import ScraperError
+        out = StringIO()
+        with patch("weiss.scraper.fetch_html", return_value=page("card_character.html")), \
+                patch("weiss.management.commands.fetch_cards.fetch", side_effect=ScraperError("boom")):
+            call_command("fetch_cards", "--card", "NIK/S135-E001S", stdout=out, stderr=out)
+        self.assertIn("NIK/S135-E001S: boom", out.getvalue())
+        self.assertEqual(Card.objects.get().image_s3_key, "")
+
+        with patch("weiss.scraper.fetch_html", return_value=page("card_character.html")), \
+                patch("weiss.management.commands.fetch_cards.fetch", return_value=(b"PNG", "image/png")):
+            call_command("fetch_cards", "--card", "NIK/S135-E001S", "--skip-existing", stdout=StringIO())
+        self.assertEqual(Card.objects.get().image_s3_key, "weiss/290/NIK-S135-E001S.png")
