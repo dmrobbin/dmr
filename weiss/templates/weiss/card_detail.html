@@ -1,0 +1,44 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}{{ card.name }}{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:set' card.expansion_id %}">← {{ card.expansion }}</a></p>
+  <div class="card-detail">
+    {% if card.image_src %}<img class="card-image" src="{{ card.image_src }}" alt="{{ card.name }}">{% endif %}
+    <div>
+      <p class="muted card-serial">{{ card.serial_number }}</p>
+      {% with price=card.tcgplayer_price %}
+      <div class="card-title-row">
+        <h1>{{ card.name }}</h1>
+        {% if price.market_price is not None %}<span class="card-price">${{ price.market_price|floatformat:2 }}</span>{% endif %}
+      </div>
+      {% if price %}
+        <p class="muted small card-price-note">
+          TCGplayer market price{% if price.low_price is not None %} · lowest listing ${{ price.low_price|floatformat:2 }}{% endif %}
+          · updated {{ price.fetched_at|date:"M j, Y" }}
+          {% if price.product_url %}· <a href="{{ price.product_url }}" target="_blank" rel="noopener">View on TCGplayer</a>{% endif %}
+        </p>
+      {% endif %}
+      {% endwith %}
+      <dl class="card-stats">
+        <dt>Card type</dt><dd>{{ card.card_type|default:"—" }}</dd>
+        <dt>Rarity</dt><dd>{{ card.rarity|default:"—" }}</dd>
+        <dt>Side</dt><dd>{{ card.side|default:"—" }}</dd>
+        <dt>Color</dt><dd>{{ card.color|default:"—" }}</dd>
+        <dt>Level</dt><dd>{{ card.level|default_if_none:"—" }}</dd>
+        <dt>Cost</dt><dd>{{ card.cost|default_if_none:"—" }}</dd>
+        <dt>Power</dt><dd>{{ card.power|default_if_none:"—" }}</dd>
+        <dt>Soul</dt><dd>{{ card.soul|default_if_none:"—" }}</dd>
+        <dt>Trigger</dt><dd>{{ card.trigger|default:"—" }}</dd>
+        <dt>Traits</dt><dd>{{ card.traits|default:"—" }}</dd>
+      </dl>
+      {% if card.description %}<div class="card-text">{{ card.description|linebreaksbr }}</div>{% endif %}
+      {% if card.flavor_text %}<p class="card-flavor">{{ card.flavor_text|linebreaksbr }}</p>{% endif %}
+      <p class="muted small">
+        {% if card.image_s3_key %}Image: <code>{{ card.image_s3_key }}</code>{% else %}Image not copied to S3 yet{% endif %}
+        · <a href="{% url 'admin:weiss_card_change' card.pk %}">Edit in admin</a>
+      </p>
+    </div>
+  </div>
+{% endblock %}

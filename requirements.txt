@@ -3,3 +3,4 @@ gunicorn
 whitenoise
 boto3
 mysqlclient
+beautifulsoup4

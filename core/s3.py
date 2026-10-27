@@ -20,6 +20,17 @@ def presigned_url(key, disposition, filename, content_type=None):
     return client().generate_presigned_url("get_object", Params=params, ExpiresIn=settings.DOWNLOAD_LINK_SECONDS)
 
 
+def presigned_image_urls(keys):
+    """Inline links for many objects at once (e.g. a page of card images), sharing one client."""
+    s3 = client()
+    return {
+        key: s3.generate_presigned_url(
+            "get_object", Params={"Bucket": settings.AWS_S3_BUCKET, "Key": key}, ExpiresIn=settings.IMAGE_LINK_SECONDS
+        )
+        for key in keys
+    }
+
+
 def list_files(prefix):
     """Files directly inside a 'folder' prefix, newest first, as dicts with name, key, size and modified."""
     response = client().list_objects_v2(Bucket=settings.AWS_S3_BUCKET, Prefix=prefix, Delimiter="/")

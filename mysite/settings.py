@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "core",
+    "weiss",
 ]
 
 MIDDLEWARE = [
@@ -143,9 +144,13 @@ STORAGES = {
 AWS_S3_BUCKET = os.environ.get("AWS_S3_BUCKET", "")
 AWS_REGION = os.environ.get("AWS_REGION", "us-west-2")
 DOWNLOAD_LINK_SECONDS = 300  # how long a presigned download link stays valid
+IMAGE_LINK_SECONDS = 3600  # images shown on a page, so they keep loading while it's open
 
 # --- Job search APIs (used by `manage.py fetch_jobs`) ------------------------
 JSEARCH_API_KEY = os.environ.get("JSEARCH_API_KEY", "")
 SERPAPI_API_KEY = os.environ.get("SERPAPI_API_KEY", "")
 JOB_MIN_SALARY = int(os.environ.get("JOB_MIN_SALARY", "90000"))
 JOB_RESUME_PREFIX = "docs/"  # each lead gets a <prefix><job-title>/<company>/ folder for its resume
+
+# --- Weiss Schwarz cards (used by `manage.py fetch_cards`) -------------------
+WEISS_S3_PREFIX = "weiss/"  # card images go to <prefix><expansion number>/<serial>.png

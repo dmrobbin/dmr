@@ -11,13 +11,18 @@
 <body>
   <header class="site-header">
     <div class="container">
-      <a class="brand" href="{% url 'dashboard' %}">Job search</a>
+      {% with section=request.resolver_match.namespace %}
+      <nav class="dash-tabs" aria-label="Dashboard sections">
+        <a href="{% url 'dashboard' %}"{% if section != "weiss" %} class="current" aria-current="page"{% endif %}>Job leads</a>
+        <a href="{% url 'weiss:sets' %}"{% if section == "weiss" %} class="current" aria-current="page"{% endif %}>Weiss cards</a>
+      </nav>
       <form class="logout" method="post" action="{% url 'admin:logout' %}">
         {% csrf_token %}
-        <a href="{% url 'admin:core_joblead_add' %}">Add lead</a>
+        {% if section != "weiss" %}<a href="{% url 'admin:core_joblead_add' %}">Add lead</a>{% endif %}
         <a href="{% url 'home' %}">Public site</a>
         <button type="submit">Log out</button>
       </form>
+      {% endwith %}
     </div>
   </header>
 

@@ -1,0 +1,50 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}{{ expansion }}{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:sets' %}">← All sets</a></p>
+  <h1>{{ expansion }}</h1>
+
+  <form class="lead-filters" method="get">
+    <label>Name <input type="search" name="name" value="{{ filters.name }}" placeholder="e.g. Elegg"></label>
+    <label>Color
+      <select name="color" onchange="this.form.submit()">
+        <option value="">Any</option>
+        {% for color in colors %}<option value="{{ color }}"{% if filters.color == color %} selected{% endif %}>{{ color }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Level
+      <select name="level" onchange="this.form.submit()">
+        <option value="">Any</option>
+        {% for level in levels %}
+          {% if level is None %}<option value="none"{% if filters.level == "none" %} selected{% endif %}>No level (climax)</option>
+          {% else %}<option value="{{ level }}"{% if filters.level == level|stringformat:"d" %} selected{% endif %}>{{ level }}</option>{% endif %}
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit">Search</button>
+    {% if filtered %}<a href="{% url 'weiss:set' expansion_id %}">Clear</a>{% endif %}
+  </form>
+
+  <p class="lead-count">{{ cards|length }} of {{ total }} card{{ total|pluralize }}</p>
+
+  {% if cards %}
+    <ul class="card-grid">
+      {% for card in cards %}
+        <li>
+          <a href="{% url 'weiss:card' card.pk %}">
+            {% if card.image_src %}<img src="{{ card.image_src }}" alt="{{ card.name }}" loading="lazy">{% endif %}
+            <span class="card-title-row">
+              <span class="card-name">{{ card.name }}</span>
+              {% with price=card.tcgplayer_price %}{% if price.market_price is not None %}<span class="card-price">${{ price.market_price|floatformat:2 }}</span>{% endif %}{% endwith %}
+            </span>
+            <span class="muted">{{ card.serial_number }} · {{ card.rarity }}</span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty">No cards match these filters.</p>
+  {% endif %}
+{% endblock %}

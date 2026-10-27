@@ -1,0 +1,21 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Weiss Schwarz cards{% endblock %}
+
+{% block content %}
+  <h1>Weiss Schwarz sets</h1>
+  {% if sets %}
+    <ul class="set-list">
+      {% for set in sets %}
+        <li>
+          <a href="{% url 'weiss:set' set.expansion_id %}">
+            <span class="set-name">{{ set.name }}</span>
+            <span class="muted">Expansion {{ set.expansion_id }} · {{ set.cards }} card{{ set.cards|pluralize }}</span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty">No cards saved yet. Run <code>manage.py fetch_cards --expansion &lt;number&gt;</code> to add a set.</p>
+  {% endif %}
+{% endblock %}
