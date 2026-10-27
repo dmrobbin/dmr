@@ -292,3 +292,30 @@ class FetchSetsCommandTests(TestCase):
         fake_call.assert_called_once()
         kwargs = fake_call.call_args.kwargs
         self.assertEqual((kwargs["expansion"], kwargs["dry_run"], kwargs["delay"]), (290, True, 2.0))
+
+
+class ListExpansionsTests(TestCase):
+    PAGE = BeautifulSoup(
+        '<select id="expansion_select"><option value="">All</option>'
+        '<option value="252">Booster Pack GODDESS OF VICTORY: NIKKE</option>'
+        '<option value="290">GODDESS OF VICTORY: NIKKE Vol.2</option>'
+        '<option value="70">Accel・World</option></select>',
+        "html.parser",
+    )
+
+    def test_search_by_name_marks_saved_sets(self):
+        Card.objects.create(serial_number="NIK/S135-E001", name="Elegg", expansion="x", expansion_id=290)
+        out = StringIO()
+        with patch("weiss.scraper.fetch_html", return_value=self.PAGE):
+            call_command("list_expansions", "nikke", stdout=out)
+        self.assertEqual(out.getvalue().splitlines(), [
+            "  252  Booster Pack GODDESS OF VICTORY: NIKKE",
+            "  290  GODDESS OF VICTORY: NIKKE Vol.2   (saved)",
+            "2 expansions.",
+        ])
+
+    def test_card_lookup_shows_its_expansion(self):
+        out = StringIO()
+        with patch("weiss.scraper.fetch_html", return_value=page("card_character.html")):
+            call_command("list_expansions", "--card", "NIK/S135-E001S", stdout=out)
+        self.assertIn("Expansion 290: GODDESS OF VICTORY: NIKKE Vol.2", out.getvalue())

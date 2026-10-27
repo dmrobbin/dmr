@@ -51,6 +51,19 @@ def expansion_serials(expansion_id, delay=1.0):
         time.sleep(delay)
 
 
+def expansions():
+    """Every expansion on the site as (number, name), from the card search form's dropdown."""
+    soup = fetch_html("/cardlist/")
+    select = soup.select_one("select#expansion_select") or soup.select_one("select#expansion")
+    if not select:
+        raise ScraperError("Couldn't find the expansion list on the card search page")
+    return [
+        (int(option["value"]), option.get_text(strip=True))
+        for option in select.find_all("option")
+        if option.get("value", "").isdigit()
+    ]
+
+
 def icon_name(img):
     """Icons are images like .../partimages/soul.gif; the file name is the icon, e.g. 'soul'."""
     return img["src"].rsplit("/", 1)[-1].rsplit(".", 1)[0]
