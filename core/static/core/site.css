@@ -36,6 +36,7 @@ a { color: inherit; }
   background: color-mix(in srgb, var(--surface) 85%, transparent);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
+  z-index: 15;
 }
 .site-header .container {
   display: flex;
@@ -161,6 +162,20 @@ a { color: inherit; }
 .lead-table .lead-title:hover { color: var(--accent); }
 
 .lead-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem 1rem; margin: 0 0 1rem; font-size: .9rem; }
+/* Search and sort stay pinned under the site header while the results scroll. */
+.lead-filters {
+  position: sticky;
+  top: 4rem;
+  z-index: 10;
+  margin-inline: -.75rem;
+  padding: .6rem .75rem .75rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+@media (max-width: 40rem) {
+  /* On phones the header wraps and the filters stack, so pinning them would cover most of the screen. */
+  .lead-filters { position: static; margin-inline: 0; padding: 0; border-bottom: none; }
+}
 .lead-filters label { display: flex; flex-direction: column; gap: .3rem; color: var(--muted); }
 .lead-filters label.toggle { flex-direction: row; align-items: center; gap: .5rem; padding-bottom: .45rem; color: var(--text); cursor: pointer; }
 .lead-filters input[type="search"], .upload-form input[type="file"] {
