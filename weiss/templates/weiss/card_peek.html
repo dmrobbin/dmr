@@ -1,0 +1,20 @@
+{# Details shown beside a card while hovering it in a set grid (positioned by peek.js). Expects `card`. #}
+<div class="card-peek" role="tooltip" hidden>
+  {% if card.image_src %}<img src="{{ card.image_src }}" alt="" loading="lazy">{% endif %}
+  <div class="card-peek-body">
+    <p class="muted small card-peek-serial">{{ card.serial_number }}</p>
+    <div class="card-title-row">
+      <p class="card-peek-name">{{ card.name }}</p>
+      {% with price=card.tcgplayer_price %}{% if price.market_price is not None %}<span class="card-price">${{ price.market_price|floatformat:2 }}</span>{% endif %}{% endwith %}
+    </div>
+    <dl class="card-stats">
+      <dt>Type</dt><dd>{{ card.card_type|default:"—" }} · {{ card.rarity|default:"—" }}</dd>
+      <dt>Color</dt><dd>{{ card.color|default:"—" }} · {{ card.side|default:"—" }}</dd>
+      <dt>Level / Cost</dt><dd>{{ card.level|default_if_none:"—" }} / {{ card.cost|default_if_none:"—" }}</dd>
+      <dt>Power / Soul</dt><dd>{{ card.power|default_if_none:"—" }} / {{ card.soul|default_if_none:"—" }}</dd>
+      <dt>Trigger</dt><dd>{{ card.trigger|default:"—" }}</dd>
+      {% if card.traits %}<dt>Traits</dt><dd>{{ card.traits }}</dd>{% endif %}
+    </dl>
+    {% if card.description %}<div class="card-peek-text">{{ card.description|linebreaksbr }}</div>{% endif %}
+  </div>
+</div>

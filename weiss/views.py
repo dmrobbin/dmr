@@ -2,6 +2,7 @@ from collections import Counter, defaultdict
 
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
+from django.db.models import F, Max
 from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 
@@ -99,6 +100,35 @@ def set_list(request):
     })
 
 
+# Card sort options on a set page: (value, label, ordering field). Blank values always go last.
+CARD_SORTS = [
+    ("serial", "Card number", "serial_number"),
+    ("level", "Level, low to high", "level"),
+    ("-level", "Level, high to low", "-level"),
+    ("cost", "Cost, low to high", "cost"),
+    ("-cost", "Cost, high to low", "-cost"),
+    ("power", "Power, low to high", "power"),
+    ("-power", "Power, high to low", "-power"),
+    ("-price", "Price, high to low", "-price"),
+    ("price", "Price, low to high", "price"),
+    ("name", "Name, A–Z", "name"),
+]
+
+
+def filter_number(cards, field, value):
+    """Filter on level or cost: a number, or 'none' for cards without one (e.g. climaxes)."""
+    if value == "none":
+        return cards.filter(**{field: None})
+    if value.isdigit():
+        return cards.filter(**{field: int(value)})
+    return cards
+
+
+def values_in(cards, field):
+    """The distinct values of a numeric field in a set, with None (no value) last."""
+    return sorted(set(cards.values_list(field, flat=True)), key=lambda v: (v is None, v))
+
+
 @staff_member_required
 def set_detail(request, expansion_id):
     in_set = Card.objects.filter(expansion_id=expansion_id)
@@ -110,26 +140,35 @@ def set_detail(request, expansion_id):
     name = request.GET.get("name", "").strip()
     color = request.GET.get("color", "")
     level = request.GET.get("level", "")
+    cost = request.GET.get("cost", "")
     if name:
         cards = cards.filter(name__icontains=name)
     if color:
         cards = cards.filter(color=color)
-    if level == "none":
-        cards = cards.filter(level=None)
-    elif level.isdigit():
-        cards = cards.filter(level=int(level))
+    cards = filter_number(cards, "level", level)
+    cards = filter_number(cards, "cost", cost)
 
-    levels = sorted(set(in_set.values_list("level", flat=True)), key=lambda lv: (lv is None, lv))
-    cards = cards.prefetch_related("prices")
+    sort = request.GET.get("sort", "serial")
+    orderings = {value: field for value, _, field in CARD_SORTS}
+    if sort not in orderings:
+        sort = "serial"
+    field = orderings[sort]
+    cards = cards.annotate(price=Max("prices__market_price"))
+    expression = F(field.removeprefix("-"))
+    expression = expression.desc(nulls_last=True) if field.startswith("-") else expression.asc(nulls_last=True)
+    cards = cards.order_by(expression, "serial_number").prefetch_related("prices")
+
     return render(request, "weiss/set_detail.html", {
         "expansion_id": expansion_id,
         "expansion": first.expansion,
         "total": in_set.count(),
         "cards": with_image_urls(cards),
         "colors": sorted(set(in_set.exclude(color="").values_list("color", flat=True))),
-        "levels": levels,
-        "filters": {"name": name, "color": color, "level": level},
-        "filtered": bool(name or color or level),
+        "levels": values_in(in_set, "level"),
+        "costs": values_in(in_set, "cost"),
+        "sort_options": [(value, label) for value, label, _ in CARD_SORTS],
+        "filters": {"name": name, "color": color, "level": level, "cost": cost, "sort": sort},
+        "filtered": bool(name or color or level or cost),
     })
 
 

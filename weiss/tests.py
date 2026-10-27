@@ -160,6 +160,28 @@ class CardPagesTests(TestCase):
         self.assertEqual(self.names(level="none"), ["Footstep"])
         self.assertEqual(self.names(color="Red", level="0"), ["Anis"])
 
+    def serials(self, **params):
+        response = self.client.get(reverse("weiss:set", args=[290]), params)
+        return [card.serial_number[-4:] for card in response.context["cards"]]
+
+    def test_filter_by_cost(self):
+        Card.objects.filter(name="Elegg").update(cost=1)
+        Card.objects.filter(name="Anis").update(cost=0)
+        self.assertEqual(self.names(cost="1"), ["Elegg"])
+        self.assertEqual(self.names(cost="none"), ["Footstep"])
+        self.assertEqual(self.client.get(reverse("weiss:set", args=[290])).context["costs"], [0, 1, None])
+
+    def test_sort_by_cost_level_and_price_with_blanks_last(self):
+        Card.objects.filter(name="Elegg").update(cost=2)
+        Card.objects.filter(name="Anis").update(cost=0)
+        self.assertEqual(self.serials(), ["E001", "E002", "E120"])
+        self.assertEqual(self.serials(sort="cost"), ["E002", "E001", "E120"])
+        self.assertEqual(self.serials(sort="-cost"), ["E001", "E002", "E120"])
+        self.assertEqual(self.serials(sort="-level"), ["E001", "E002", "E120"])
+        CardPrice.objects.create(card=Card.objects.get(name="Anis"), market_price="3.00")
+        self.assertEqual(self.serials(sort="-price")[0], "E002")
+        self.assertEqual(self.serials(sort="bogus"), ["E001", "E002", "E120"])
+
     def test_filter_options_come_from_the_set(self):
         response = self.client.get(reverse("weiss:set", args=[290]))
         self.assertEqual(response.context["colors"], ["Red", "Yellow"])
@@ -283,7 +305,13 @@ class PriceDisplayTests(TestCase):
 
     def test_set_page_shows_price_next_to_name(self):
         response = self.client.get(reverse("weiss:set", args=[290]))
-        self.assertContains(response, '<span class="card-price">$1.25</span>', count=1)
+        # Once next to the name in the grid, once in that card's hover details.
+        self.assertContains(response, '<span class="card-price">$1.25</span>', count=2)
+
+    def test_set_page_has_hover_details_for_each_card(self):
+        response = self.client.get(reverse("weiss:set", args=[290]))
+        self.assertContains(response, 'class="card-peek" role="tooltip" hidden', count=2)
+        self.assertContains(response, "weiss/peek.js")
 
     def test_card_page_shows_price_and_tcgplayer_link(self):
         response = self.client.get(reverse("weiss:card", args=[self.card.pk]))

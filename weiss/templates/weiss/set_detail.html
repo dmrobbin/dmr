@@ -23,8 +23,22 @@
         {% endfor %}
       </select>
     </label>
+    <label>Cost
+      <select name="cost" onchange="this.form.submit()">
+        <option value="">Any</option>
+        {% for cost in costs %}
+          {% if cost is None %}<option value="none"{% if filters.cost == "none" %} selected{% endif %}>No cost (climax)</option>
+          {% else %}<option value="{{ cost }}"{% if filters.cost == cost|stringformat:"d" %} selected{% endif %}>{{ cost }}</option>{% endif %}
+        {% endfor %}
+      </select>
+    </label>
+    <label>Sort
+      <select name="sort" onchange="this.form.submit()">
+        {% for value, label in sort_options %}<option value="{{ value }}"{% if filters.sort == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </label>
     <button type="submit">Search</button>
-    {% if filtered %}<a href="{% url 'weiss:set' expansion_id %}">Clear</a>{% endif %}
+    {% if filtered %}<a href="{% url 'weiss:set' expansion_id %}{% if filters.sort != 'serial' %}?sort={{ filters.sort|urlencode }}{% endif %}">Clear</a>{% endif %}
   </form>
 
   <p class="lead-count">{{ cards|length }} of {{ total }} card{{ total|pluralize }}</p>
@@ -32,7 +46,7 @@
   {% if cards %}
     <ul class="card-grid">
       {% for card in cards %}
-        <li>
+        <li data-peek>
           <a href="{% url 'weiss:card' card.pk %}">
             {% if card.image_src %}<img src="{{ card.image_src }}" alt="{{ card.name }}" loading="lazy">{% endif %}
             <span class="card-title-row">
@@ -42,6 +56,7 @@
             <span class="muted">{{ card.serial_number }} · {{ card.rarity }}</span>
           </a>
           {% include "weiss/qty_controls.html" %}
+          {% include "weiss/card_peek.html" %}
         </li>
       {% endfor %}
     </ul>
@@ -49,3 +64,5 @@
     <p class="empty">No cards match these filters.</p>
   {% endif %}
 {% endblock %}
+
+{% block weiss_scripts %}{% load static %}<script src="{% static 'weiss/peek.js' %}" defer></script>{% endblock %}
