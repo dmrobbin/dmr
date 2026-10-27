@@ -195,9 +195,10 @@ def fake_tcgcsv(path):
 @patch("weiss.tcgcsv.get", side_effect=fake_tcgcsv)
 class TcgcsvTests(TestCase):
     def test_find_group_ignores_case_and_spacing(self, _):
-        from .tcgcsv import find_group
-        self.assertEqual(find_group("goddess of victory:  NIKKE Vol.2 ")["groupId"], 24696)
-        self.assertIsNone(find_group("Unknown Set"))
+        from .tcgcsv import find_groups
+        [(group, overlap)] = find_groups("goddess of victory:  NIKKE Vol.2 ", ["NIK/S135-E032"])
+        self.assertEqual((group["groupId"], overlap), (24696, 1))
+        self.assertEqual(find_groups("Unknown Set", ["XYZ/S01-001"]), [])
 
     def test_card_prices_keyed_by_number_preferring_normal_printing(self, _):
         from .tcgcsv import card_prices
@@ -357,3 +358,66 @@ class FetchCardsRecoveryTests(TestCase):
                 patch("weiss.management.commands.fetch_cards.fetch", return_value=(b"PNG", "image/png")):
             call_command("fetch_cards", "--card", "NIK/S135-E001S", "--skip-existing", stdout=StringIO())
         self.assertEqual(Card.objects.get().image_s3_key, "weiss/290/NIK-S135-E001S.png")
+
+
+OSK_GROUPS = [
+    {"groupId": 23507, "name": "[OSHI NO KO]", "abbreviation": "OSK"},
+    {"groupId": 24530, "name": "[OSHI NO KO] Vol.2", "abbreviation": "OSK"},
+    {"groupId": 999, "name": "Unrelated", "abbreviation": "ABC/S01"},
+]
+OSK_NUMBERS = {
+    # TCGplayer lists some numbers with the rarity appended.
+    23507: ["OSK/S107-E001 RR", "OSK/S107-E002 RR", "OSK/S107-T01 TD", "OSK/S107-T02 TD"],
+    24530: ["OSK/S121-E001", "OSK/S121-E002"],
+    999: ["ABC/S01-001"],
+}
+
+
+def fake_osk_tcgcsv(path):
+    if path.endswith("/groups"):
+        return OSK_GROUPS
+    group_id = int(path.split("/")[1])
+    if path.endswith("/prices"):
+        return [{"productId": i, "subTypeName": "Normal", "marketPrice": 1.0, "lowPrice": None,
+                 "midPrice": None, "highPrice": None} for i, _ in enumerate(OSK_NUMBERS[group_id])]
+    return [{"productId": i, "url": "", "extendedData": [{"name": "Number", "value": n}]}
+            for i, n in enumerate(OSK_NUMBERS[group_id])]
+
+
+@patch("weiss.tcgcsv.get", side_effect=fake_osk_tcgcsv)
+class GroupMatchingByCardNumberTests(TestCase):
+    """The official site's set names don't match TCGplayer's (e.g. the trial deck lives in the booster's group)."""
+
+    def test_official_names_find_the_group_holding_their_cards(self, _):
+        from .tcgcsv import find_groups
+        cases = [
+            ("[TD] 【OSHI NO KO】", ["OSK/S107-T01", "OSK/S107-T02"], 23507),
+            ("【OSHI NO KO】", ["OSK/S107-E001", "OSK/S107-E002"], 23507),
+            ("Booster Pack 【OSHI NO KO】 Vol.2", ["OSK/S121-E001", "OSK/S121-E002"], 24530),
+        ]
+        for name, serials, expected in cases:
+            with self.subTest(name):
+                group, overlap = find_groups(name, serials)[0]
+                self.assertEqual((group["groupId"], overlap), (expected, 2))
+
+    def test_cards_listed_under_another_group_still_get_prices(self, _):
+        # A Vol.1 promo packed in Vol.2 boxes: the Vol.2 set's cards span both TCGplayer groups.
+        for serial in ["OSK/S121-E001", "OSK/S121-E002", "OSK/S107-E001"]:
+            Card.objects.create(serial_number=serial, name=serial, expansion="Booster Pack 【OSHI NO KO】 Vol.2",
+                                expansion_id=278)
+        call_command("fetch_prices", "--expansion", "278", stdout=StringIO())
+        self.assertEqual(CardPrice.objects.count(), 3)
+
+    def test_fetch_prices_all_prices_each_osk_set(self, _):
+        for expansion_id, name, serials in [
+            (1, "[TD] 【OSHI NO KO】", ["OSK/S107-T01"]),
+            (2, "【OSHI NO KO】", ["OSK/S107-E001"]),
+            (3, "Booster Pack 【OSHI NO KO】 Vol.2", ["OSK/S121-E001"]),
+        ]:
+            for serial in serials:
+                Card.objects.create(serial_number=serial, name=serial, expansion=name, expansion_id=expansion_id)
+        out = StringIO()
+        call_command("fetch_prices", "--all", stdout=out, stderr=out)
+        self.assertEqual(CardPrice.objects.count(), 3)
+        self.assertNotIn("couldn't find", out.getvalue())
+

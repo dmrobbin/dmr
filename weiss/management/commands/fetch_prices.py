@@ -36,17 +36,23 @@ class Command(BaseCommand):
     def update_set(self, expansion_id, group_id, dry_run):
         cards = list(Card.objects.filter(expansion_id=expansion_id))
         name = cards[0].expansion
-        if not group_id:
-            group = tcgcsv.find_group(name)
-            if not group:
+        if group_id:
+            group_ids, label = [group_id], f"group #{group_id}"
+        else:
+            found = tcgcsv.find_groups(name, [card.serial_number for card in cards])
+            if not found:
                 self.stderr.write(self.style.ERROR(
-                    f"{name}: no TCGplayer set with that name. Find its group ID on "
+                    f"{name}: couldn't find these cards on TCGplayer. Find the set's group ID on "
                     f"https://tcgcsv.com/tcgplayer/{tcgcsv.WEISS_CATEGORY_ID}/groups and pass --group."
                 ))
                 return
-            group_id = group["groupId"]
+            group_ids = [group["groupId"] for group, _ in found]
+            label = ", ".join(f"{group['name']} #{group['groupId']}" for group, _ in found)
 
-        prices = tcgcsv.card_prices(group_id)
+        # The best-matching group wins when a card number appears in more than one.
+        prices = {}
+        for gid in reversed(group_ids):
+            prices.update(tcgcsv.card_prices(gid))
         matched = [card for card in cards if card.serial_number in prices]
         for card in matched:
             info = prices[card.serial_number]
@@ -59,7 +65,7 @@ class Command(BaseCommand):
         missing = len(cards) - len(matched)
         verb = "would update" if dry_run else "updated"
         self.stdout.write(self.style.SUCCESS(
-            f"{name} (TCGplayer group {group_id}): {verb} {len(matched)} prices"
+            f"{name} (TCGplayer: {label}): {verb} {len(matched)} prices"
             + (f", {missing} cards not on TCGplayer" if missing else "")
         ))
 
