@@ -159,6 +159,14 @@ class CardPagesTests(TestCase):
         self.assertEqual(self.names(level="0"), ["Anis"])
         self.assertEqual(self.names(level="none"), ["Footstep"])
         self.assertEqual(self.names(color="Red", level="0"), ["Anis"])
+        self.assertEqual(self.names(color=["Red", "Yellow"]), ["Anis", "Elegg", "Footstep"])
+        self.assertEqual(self.names(color=["Yellow", "Blue"]), ["Elegg"])
+
+    def test_color_chips_show_which_colors_are_selected(self):
+        response = self.client.get(reverse("weiss:set", args=[290]), {"color": ["Red", "Yellow"]})
+        self.assertEqual(response.context["filters"]["colors"], ["Red", "Yellow"])
+        self.assertContains(response, 'value="Red" checked')
+        self.assertContains(response, 'value="Yellow" checked')
 
     def test_search_by_card_text(self):
         Card.objects.filter(name="Elegg").update(description="【AUTO】 When this card is placed on stage, draw 1 card.")
@@ -697,6 +705,13 @@ class DeckReminderTests(TestCase):
         deck = self.checks()
         self.assertTrue(deck["over"])
         self.assertFalse(deck["groups"][2]["ok"])  # above the target is off too
+
+    def test_counts_cards_by_color(self):
+        Card.objects.filter(name__in=["Ai", "Ruby"]).update(color="Yellow")
+        Card.objects.filter(name="Aqua").update(color="Red")
+        CardList.objects.filter(pk=self.deck.pk).update(is_deck=True)
+        self.assertEqual(self.checks()["colors"], [("Yellow", 26), ("No color", 15), ("Red", 8)])
+        self.assertContains(self.client.get(reverse("weiss:sets")), '<strong>26</strong> Yellow')
 
     def test_panel_lists_climaxes_first_then_by_level(self):
         context = self.client.get(reverse("weiss:sets")).context

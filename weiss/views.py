@@ -138,7 +138,7 @@ def card_browser(request, pool, template_context):
     cards = pool
     name = request.GET.get("name", "").strip()
     text = request.GET.get("text", "").strip()
-    color = request.GET.get("color", "")
+    colors = [c for c in request.GET.getlist("color") if c]  # any of these (?color=Red&color=Blue)
     level = request.GET.get("level", "")
     cost = request.GET.get("cost", "")
     expansion = request.GET.get("set", "")
@@ -146,8 +146,8 @@ def card_browser(request, pool, template_context):
         cards = cards.filter(name__icontains=name)
     if text:
         cards = cards.filter(description__icontains=text)
-    if color:
-        cards = cards.filter(color=color)
+    if colors:
+        cards = cards.filter(color__in=colors)
     cards = filter_number(cards, "level", level)
     cards = filter_number(cards, "cost", cost)
     if expansion.isdigit():
@@ -175,9 +175,9 @@ def card_browser(request, pool, template_context):
         "levels": values_in(pool, "level"),
         "costs": values_in(pool, "cost"),
         "sort_options": [(value, label) for value, label, _ in CARD_SORTS],
-        "filters": {"name": name, "text": text, "color": color, "level": level, "cost": cost, "set": expansion,
+        "filters": {"name": name, "text": text, "colors": colors, "level": level, "cost": cost, "set": expansion,
                     "sort": sort},
-        "filtered": bool(name or text or color or level or cost or expansion),
+        "filtered": bool(name or text or colors or level or cost or expansion),
     })
 
 

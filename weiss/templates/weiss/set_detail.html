@@ -20,12 +20,18 @@
         </select>
       </label>
     {% endif %}
-    <label>Color
-      <select name="color" onchange="this.form.submit()">
-        <option value="">Any</option>
-        {% for color in colors %}<option value="{{ color }}"{% if filters.color == color %} selected{% endif %}>{{ color }}</option>{% endfor %}
-      </select>
-    </label>
+    {# Tick any number of colors; none ticked means any color. #}
+    <fieldset class="color-filter">
+      <legend>Colors</legend>
+      <div class="color-chips">
+        {% for color in colors %}
+          <label class="color-chip color-{{ color|lower }}">
+            <input type="checkbox" name="color" value="{{ color }}"{% if color in filters.colors %} checked{% endif %} onchange="this.form.submit()">
+            <span>{{ color }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </fieldset>
     <label>Level
       <select name="level" onchange="this.form.submit()">
         <option value="">Any</option>

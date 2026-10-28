@@ -16,5 +16,12 @@
       <span>{% if deck.over_limit %}<strong>{{ deck.over_limit|length }} over</strong>{% else %}<strong>OK</strong>{% endif %}</span>
     </li>
   </ul>
+  {% if deck.colors %}
+    <ul class="deck-colors" aria-label="Cards by color">
+      {% for color, count in deck.colors %}
+        <li class="color-{{ color|lower }}" title="{{ count }} {{ color }}"><strong>{{ count }}</strong> {{ color }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
   {% if deck.over_limit %}<p class="small deck-over-names">Too many copies: {{ deck.over_limit|join:", " }}</p>{% endif %}
 </div>

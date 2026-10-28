@@ -61,8 +61,12 @@ def deck_checks(entries):
         groups.append({"label": label, "count": count, "target": target, "required": required,
                        "ok": count == target})
     over = sorted(over_copy_limit(entries))
+    colors = Counter()
+    for entry in entries:
+        colors[entry.card.color or "No color"] += entry.quantity
     return {"total": total, "size": DECK_SIZE, "over": total > DECK_SIZE, "exact": total == DECK_SIZE,
-            "groups": groups, "copy_limit": COPY_LIMIT, "over_limit": over}
+            "groups": groups, "copy_limit": COPY_LIMIT, "over_limit": over,
+            "colors": colors.most_common()}  # [(color, copies), ...], most first
 
 
 class ListError(Exception):
