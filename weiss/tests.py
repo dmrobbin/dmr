@@ -185,6 +185,7 @@ class CardPagesTests(TestCase):
         self.assertEqual(self.serials(sort="cost"), ["E002", "E001", "E120"])
         self.assertEqual(self.serials(sort="-cost"), ["E001", "E002", "E120"])
         self.assertEqual(self.serials(sort="-level"), ["E001", "E002", "E120"])
+        self.assertEqual(self.serials(sort="level"), ["E120", "E002", "E001"])  # climax before level 0
         CardPrice.objects.create(card=Card.objects.get(name="Anis"), market_price="3.00")
         self.assertEqual(self.serials(sort="-price")[0], "E002")
         self.assertEqual(self.serials(sort="bogus"), ["E001", "E002", "E120"])
@@ -696,6 +697,14 @@ class DeckReminderTests(TestCase):
         deck = self.checks()
         self.assertTrue(deck["over"])
         self.assertFalse(deck["groups"][2]["ok"])  # above the target is off too
+
+    def test_panel_lists_climaxes_first_then_by_level(self):
+        context = self.client.get(reverse("weiss:sets")).context
+        self.assertEqual([e.card.name for e in context["editing_entries"]],
+                         ["Idol", "Ai", "Plan", "Ruby", "Aqua", "Kana"])
+        panel = self.client.get(reverse("weiss:sets")).content.decode()
+        self.assertIn('<span class="panel-level" title="Level 3">3</span>', panel)
+        self.assertIn('title="Climax">CX</span>', panel)
 
     def test_more_than_four_of_a_name_turns_its_buttons_red(self):
         # 14 copies of "Ai" are already in the deck; a second printing of the same name counts too.

@@ -11,7 +11,7 @@ from decimal import Decimal
 
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import F, Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -86,8 +86,9 @@ def panel_context(request):
     active = editing_list(request)
     entries = []
     if active:
+        # Climaxes (no level) first, then by level.
         entries = list(active.entries.select_related("card").prefetch_related("card__prices")
-                       .order_by("card__expansion_id", "card__serial_number"))
+                       .order_by(F("card__level").asc(nulls_first=True), "card__serial_number"))
         with_image_urls([e.card for e in entries])  # thumbnails in the panel
     count = sum(e.quantity for e in entries)
     total, unpriced = price_entries(entries)

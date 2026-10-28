@@ -102,7 +102,8 @@ def set_list(request):
     })
 
 
-# Card sort options on a set page: (value, label, ordering field). Blank values always go last.
+# Card sort options on a set page: (value, label, ordering field). Blank values go last, except
+# that climaxes (no level) come before level 0 when sorting by level, low to high.
 CARD_SORTS = [
     ("serial", "Card number", "serial_number"),
     ("level", "Level, low to high", "level"),
@@ -159,7 +160,11 @@ def card_browser(request, pool, template_context):
     field = orderings[sort]
     cards = cards.annotate(price=Max("prices__market_price"))
     expression = F(field.removeprefix("-"))
-    expression = expression.desc(nulls_last=True) if field.startswith("-") else expression.asc(nulls_last=True)
+    if field.startswith("-"):
+        expression = expression.desc(nulls_last=True)
+    else:
+        # Climaxes have no level and sort as if below level 0; other blanks go last.
+        expression = expression.asc(nulls_first=True) if field == "level" else expression.asc(nulls_last=True)
     cards = cards.order_by(expression, "serial_number").prefetch_related("prices")
 
     return render(request, "weiss/set_detail.html", {
