@@ -2,7 +2,7 @@
 {% load weiss_lists %}
 {% if editing_list %}
 {% with qty=editing_quantities|copies:card.pk next=panel_next|default:request.get_full_path %}
-<div class="qty-controls" data-qty-controls>
+<div class="qty-controls{% if card.name in editing_over_limit %} over-limit{% endif %}" data-qty-controls data-card-name="{{ card.name }}"{% if card.name in editing_over_limit %} title="More than 4 copies of this card"{% endif %}>
   <form method="post" action="{% url 'weiss:list_change' editing_list.pk %}" data-list-form>
     {% csrf_token %}<input type="hidden" name="card" value="{{ card.pk }}"><input type="hidden" name="delta" value="-1"><input type="hidden" name="next" value="{{ next }}">
     <button type="submit" data-delta="-1" aria-label="Remove one {{ card.name }}"{% if not qty %} disabled{% endif %}>−</button>

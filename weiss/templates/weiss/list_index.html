@@ -10,7 +10,7 @@
       {% for card_list in lists %}
         <li>
           <a href="{% url 'weiss:list' card_list.pk %}">
-            <span class="set-name">{{ card_list.name }}</span>
+            <span class="set-name">{{ card_list.name }}{% if card_list.is_deck %} <span class="deck-tag">Deck</span>{% endif %}</span>
             <span class="muted">{{ card_list.total|default:0 }} / {{ max_cards }} cards · updated {{ card_list.updated|date:"M j" }}</span>
           </a>
         </li>

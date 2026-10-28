@@ -363,11 +363,37 @@ a { color: inherit; }
 .meter span { display: block; height: 100%; background: var(--accent); }
 .meter.full span { background: #c0504d; }
 .panel-entries { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; gap: .5rem; }
-.panel-entries li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 .75rem; align-items: center; }
-.panel-entries .panel-entry-name { text-decoration: none; line-height: 1.3; }
+.panel-entries li { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) auto; gap: 0 .65rem; align-items: center; }
+.panel-thumb { grid-column: 1; grid-row: 1 / span 2; display: block; width: 2.4rem; aspect-ratio: 5 / 7; border-radius: .25rem; overflow: hidden; background: var(--bg); border: 1px solid var(--border); }
+.panel-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.panel-entries .panel-entry-name { grid-column: 2; text-decoration: none; line-height: 1.3; }
 .panel-entries .panel-entry-name:hover { color: var(--accent); }
-.panel-entries .muted { grid-column: 1; }
-.panel-entries .qty-controls { grid-column: 2; grid-row: 1 / span 2; }
+.panel-entries .muted { grid-column: 2; }
+.panel-entries .qty-controls { grid-column: 3; grid-row: 1 / span 2; }
+
+/* Deck reminders */
+.deck-toggle { margin: 0 0 .6rem; }
+.deck-toggle label { display: inline-flex; align-items: center; gap: .45rem; cursor: pointer; font-size: .85rem; }
+.deck-toggle input { accent-color: var(--accent); width: 1rem; height: 1rem; }
+.deck-checks { --good: #5cb85c; --bad: #e0605b; --suggest: #d9a441; margin: 0 0 .9rem; }
+.deck-total { margin: 0 0 .4rem; color: var(--muted); }
+.deck-total strong { font-size: 1.6rem; font-family: var(--serif); color: var(--accent); }
+.deck-total.good strong { color: var(--good); }
+.deck-total.bad strong { color: var(--bad); }
+.deck-groups { list-style: none; margin: 0; padding: 0; display: grid; gap: .25rem; font-size: .85rem; max-width: 22rem; }
+.deck-groups li { display: flex; justify-content: space-between; padding: .25rem .55rem; border-radius: .35rem; border-left: 3px solid; }
+.deck-groups li.good { border-color: var(--good); background: rgb(92 184 92 / .12); }
+.deck-groups li.bad { border-color: var(--bad); background: rgb(224 96 91 / .12); }
+.deck-groups li.suggest { border-color: var(--suggest); background: rgb(217 164 65 / .12); }
+.deck-groups li.good strong { color: var(--good); }
+.deck-groups li.bad strong { color: var(--bad); }
+.deck-groups li.suggest strong { color: var(--suggest); }
+.deck-hint { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.deck-over-names { margin: .4rem 0 0; color: #e0605b; }
+.qty-controls.over-limit button, .qty-controls.over-limit button:disabled { background: #c0504d; color: #fff; }
+.qty-controls.over-limit button:hover { background: #d9625e; }
+.qty-controls.over-limit .qty { color: #e0605b; font-weight: 700; }
+.deck-tag { margin-left: .4rem; padding: .05rem .4rem; border-radius: .3rem; font-size: .7rem; font-weight: 600; vertical-align: middle; color: var(--accent); background: var(--accent-soft); }
 .panel-new-list { display: grid; gap: .35rem; margin-bottom: 1rem; }
 .panel-row { display: flex; gap: .5rem; }
 .panel-row input {
@@ -453,6 +479,22 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .card-peek-name { margin: 0 0 .5rem; font-weight: 600; font-size: .95rem; }
 .card-peek .card-stats { gap: .2rem 1rem; margin-bottom: .6rem; }
 .card-peek-text { padding: .5rem .65rem; border-radius: .5rem; background: var(--bg); max-height: 14rem; overflow: hidden; }
+
+/* Deck-builder card popup. No padding on the dialog itself, so a click that lands on it is the backdrop. */
+.card-popup { width: min(40rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); padding: 0; border: 1px solid var(--accent); border-radius: .75rem; background: var(--surface); color: var(--text); box-shadow: 0 12px 40px rgb(0 0 0 / .55); font-size: .85rem; line-height: 1.45; }
+.card-popup::backdrop { background: rgb(0 0 0 / .55); }
+.card-popup [data-card-popup-body] { padding: 1.1rem; }
+.card-popup-close { position: absolute; top: .4rem; right: .5rem; font: inherit; font-size: 1.3rem; line-height: 1; color: var(--muted); background: none; border: none; cursor: pointer; padding: .2rem .45rem; }
+.card-popup-close:hover { color: var(--text); }
+.card-popup-content { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: 1.1rem; }
+.card-popup-image { width: 100%; border-radius: .5rem; display: block; }
+.card-popup .card-stats { gap: .2rem 1rem; margin-bottom: .6rem; }
+.card-popup .card-peek-text { max-height: none; }
+.card-popup-actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: .9rem; }
+@media (max-width: 34rem) {
+  .card-popup-content { grid-template-columns: 1fr; }
+  .card-popup-image { max-width: 14rem; margin: 0 auto; }
+}
 
 /* Login and invitation pages */
 .container.account-page { max-width: 28rem; padding: 4rem 1.25rem; }

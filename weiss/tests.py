@@ -531,7 +531,9 @@ class CardListTests(TestCase):
         self.anis = Card.objects.create(serial_number="NIK/S135-E002", name="Anis", **base)
 
     def create_list(self, name="Deck"):
+        """A plain (non-deck) list; deck reminders are covered by DeckReminderTests."""
         self.client.post(reverse("weiss:list_create"), {"name": name})
+        CardList.objects.filter(user=self.user, name=name).update(is_deck=False)
         return CardList.objects.get(user=self.user, name=name)
 
     def change(self, card_list, card, delta=1, json=False):
@@ -638,6 +640,115 @@ class CardListTests(TestCase):
     def test_no_panel_outside_weiss_pages(self):
         self.create_list()
         self.assertNotIn("editing_list", self.client.get(reverse("dashboard")).context)
+
+
+class DeckReminderTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth.models import User
+        self.user = User.objects.create_user("daryl", password="x", is_staff=True)
+        self.client.force_login(self.user)
+        self.deck = CardList.objects.create(user=self.user, name="OSK deck")
+        self.client.post(reverse("weiss:list_edit", args=[self.deck.pk]))
+        base = {"expansion": "OSHI NO KO", "expansion_id": 230}
+        cards = {
+            "lv0": Card.objects.create(serial_number="OSK/S107-E001", name="Ai", card_type="Character", level=0, **base),
+            "event0": Card.objects.create(serial_number="OSK/S107-E002", name="Plan", card_type="Event", level=0, **base),
+            "lv1": Card.objects.create(serial_number="OSK/S107-E003", name="Ruby", card_type="Character", level=1, **base),
+            "lv2": Card.objects.create(serial_number="OSK/S107-E004", name="Aqua", card_type="Character", level=2, **base),
+            "lv3": Card.objects.create(serial_number="OSK/S107-E005", name="Kana", card_type="Character", level=3, **base),
+            "cx": Card.objects.create(serial_number="OSK/S107-E006", name="Idol", card_type="Climax", level=None, **base),
+        }
+        for key, quantity in {"lv0": 14, "event0": 4, "lv1": 12, "lv2": 8, "lv3": 4, "cx": 7}.items():
+            CardListEntry.objects.create(card_list=self.deck, card=cards[key], quantity=quantity)
+        self.cards = cards
+
+    def checks(self):
+        return self.client.get(reverse("weiss:list", args=[self.deck.pk])).context["deck"]
+
+    def test_new_lists_are_decks_and_plain_lists_show_no_reminders(self):
+        self.client.post(reverse("weiss:list_create"), {"name": "Fresh"})
+        self.assertTrue(CardList.objects.get(name="Fresh").is_deck)
+        CardList.objects.filter(pk=self.deck.pk).update(is_deck=False)
+        self.assertIsNone(self.checks())
+
+    def test_toggle_marks_a_list_as_a_plain_list_and_back(self):
+        self.client.post(reverse("weiss:list_deck", args=[self.deck.pk]), {})
+        self.deck.refresh_from_db()
+        self.assertFalse(self.deck.is_deck)
+        self.client.post(reverse("weiss:list_deck", args=[self.deck.pk]), {"is_deck": "on"})
+        self.deck.refresh_from_db()
+        self.assertTrue(self.deck.is_deck)
+
+    def test_group_counts_and_colors(self):
+        CardList.objects.filter(pk=self.deck.pk).update(is_deck=True)
+        deck = self.checks()
+        self.assertEqual(deck["total"], 49)
+        self.assertFalse(deck["over"] or deck["exact"])
+        self.assertEqual([(g["label"], g["count"], g["ok"], g["required"]) for g in deck["groups"]], [
+            ("Climax", 7, False, True),
+            ("Level 0", 18, True, False),  # events count toward their level
+            ("Level 1", 12, True, False),
+            ("Level 2 + 3", 12, True, False),
+        ])
+        CardListEntry.objects.filter(card=self.cards["cx"]).update(quantity=8)
+        self.assertTrue(self.checks()["exact"])
+        CardListEntry.objects.filter(card=self.cards["lv1"]).update(quantity=13)
+        deck = self.checks()
+        self.assertTrue(deck["over"])
+        self.assertFalse(deck["groups"][2]["ok"])  # above the target is off too
+
+    def test_more_than_four_of_a_name_turns_its_buttons_red(self):
+        # 14 copies of "Ai" are already in the deck; a second printing of the same name counts too.
+        promo = Card.objects.create(serial_number="OSK/S107-E001SP", name="Ai", card_type="Character", level=0,
+                                    expansion="OSHI NO KO", expansion_id=230)
+        CardListEntry.objects.filter(card=self.cards["lv0"]).update(quantity=3)
+        CardListEntry.objects.create(card_list=self.deck, card=promo, quantity=1)
+        self.assertEqual(self.checks()["over_limit"], ["Aqua", "Idol", "Ruby"])  # Ai is at exactly 4
+        response = self.client.post(reverse("weiss:list_change", args=[self.deck.pk]),
+                                    {"card": promo.pk, "delta": 1}, HTTP_ACCEPT="application/json")
+        self.assertIn("Ai", response.json()["over_limit"])
+        page = self.client.get(reverse("weiss:set", args=[230]))
+        self.assertContains(page, 'class="qty-controls over-limit" data-qty-controls data-card-name="Ai"', count=4)  # set grid + panel
+        self.assertContains(page, 'class="qty-controls" data-qty-controls data-card-name="Ai"', count=0)
+        CardList.objects.filter(pk=self.deck.pk).update(is_deck=False)  # plain lists have no limit
+        self.assertNotContains(self.client.get(reverse("weiss:set", args=[230])), "over-limit")
+
+    def test_panel_shows_reminders_and_thumbnails_and_json_refreshes_them(self):
+        CardList.objects.filter(pk=self.deck.pk).update(is_deck=True)
+        response = self.client.get(reverse("weiss:sets"))
+        self.assertContains(response, "Level 2 + 3")
+        self.assertContains(response, 'class="panel-thumb"')
+        response = self.client.post(reverse("weiss:list_change", args=[self.deck.pk]),
+                                    {"card": self.cards["cx"].pk, "delta": 1}, HTTP_ACCEPT="application/json")
+        data = response.json()
+        self.assertEqual(data["list"], self.deck.pk)
+        self.assertIn("<strong>8</strong> / 8", data["deck"])
+
+
+class CardPopupTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth.models import User
+        self.user = User.objects.create_user("daryl", password="x", is_staff=True)
+        self.client.force_login(self.user)
+        self.card = Card.objects.create(serial_number="OSK/S107-E001", name="Ai", card_type="Character", level=0,
+                                        description="【AUTO】 Draw 1 card.", expansion="OSHI NO KO", expansion_id=230)
+        self.deck = CardList.objects.create(user=self.user, name="OSK deck")
+        CardListEntry.objects.create(card_list=self.deck, card=self.card, quantity=3)
+
+    def test_panel_links_open_the_popup_which_shows_text_and_qty(self):
+        self.client.post(reverse("weiss:list_edit", args=[self.deck.pk]))
+        popup_url = reverse("weiss:card_popup", args=[self.card.pk])
+        self.assertContains(self.client.get(reverse("weiss:sets")), f'data-card-popup="{popup_url}"')
+        response = self.client.get(popup_url, {"next": "/dashboard/weiss/sets/230/"})
+        self.assertContains(response, "Draw 1 card.")
+        self.assertContains(response, 'data-qty-for="%d">3<' % self.card.pk)
+        self.assertContains(response, 'name="next" value="/dashboard/weiss/sets/230/"')
+        self.assertNotContains(response, "<html")
+
+    def test_next_must_be_on_this_site(self):
+        self.client.post(reverse("weiss:list_edit", args=[self.deck.pk]))
+        response = self.client.get(reverse("weiss:card_popup", args=[self.card.pk]), {"next": "https://evil.example/"})
+        self.assertNotContains(response, "evil.example")
 
 
 class FetchNewSetsTests(TestCase):

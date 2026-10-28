@@ -1,0 +1,20 @@
+{# Deck-building reminders. Rules (deck size, climaxes, copy limit) go red when broken; the level #}
+{# spread is only a suggestion, so it goes amber when off. Green means exactly on target. #}
+<div class="deck-checks">
+  <p class="deck-total{% if deck.over %} bad{% elif deck.exact %} good{% endif %}" aria-live="polite">
+    <strong>{{ deck.total }}</strong> / {{ deck.size }} cards
+  </p>
+  <ul class="deck-groups">
+    {% for group in deck.groups %}
+      <li class="{% if group.ok %}good{% elif group.required %}bad{% else %}suggest{% endif %}">
+        <span>{{ group.label }}{% if not group.required %} <span class="deck-hint">suggested</span>{% endif %}</span>
+        <span><strong>{{ group.count }}</strong> / {{ group.target }}</span>
+      </li>
+    {% endfor %}
+    <li class="{% if deck.over_limit %}bad{% else %}good{% endif %}">
+      <span>Max {{ deck.copy_limit }} of a card</span>
+      <span>{% if deck.over_limit %}<strong>{{ deck.over_limit|length }} over</strong>{% else %}<strong>OK</strong>{% endif %}</span>
+    </li>
+  </ul>
+  {% if deck.over_limit %}<p class="small deck-over-names">Too many copies: {{ deck.over_limit|join:", " }}</p>{% endif %}
+</div>

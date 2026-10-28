@@ -6,6 +6,7 @@ here; the page's script sends them in the background and swaps in the re-rendere
 running count updates without reloading a page full of card images. Without JavaScript the same
 forms work as ordinary posts that redirect back.
 """
+from collections import Counter
 from decimal import Decimal
 
 from django.contrib import messages
@@ -24,6 +25,44 @@ from .models import Card, CardList, CardListEntry
 from .views import with_image_urls
 
 SESSION_KEY = "weiss_editing_list"
+
+DECK_SIZE = 50
+COPY_LIMIT = 4  # copies of any one card name in a deck
+# Reminders shown while building a deck: (label, target copies, required by the rules?, which cards count).
+# The climax count is a rule; the level spread is only the usual recommendation.
+DECK_GROUPS = [
+    ("Climax", 8, True, lambda card: is_climax(card)),
+    ("Level 0", 18, False, lambda card: not is_climax(card) and card.level == 0),
+    ("Level 1", 12, False, lambda card: not is_climax(card) and card.level == 1),
+    ("Level 2 + 3", 12, False, lambda card: not is_climax(card) and card.level in (2, 3)),
+]
+
+
+def is_climax(card):
+    return card.card_type.lower() == "climax"
+
+
+def over_copy_limit(entries):
+    """Names with more than COPY_LIMIT copies. The rule is per name, so different printings
+    (rarities, promos) of the same card count together."""
+    copies = Counter()
+    for entry in entries:
+        copies[entry.card.name] += entry.quantity
+    return {name for name, count in copies.items() if count > COPY_LIMIT}
+
+
+def deck_checks(entries):
+    """Card counts against the deck rules and the usual level spread. Only going over 50 total is
+    flagged, since a deck in progress is naturally under."""
+    total = sum(e.quantity for e in entries)
+    groups = []
+    for label, target, required, counts in DECK_GROUPS:
+        count = sum(e.quantity for e in entries if counts(e.card))
+        groups.append({"label": label, "count": count, "target": target, "required": required,
+                       "ok": count == target})
+    over = sorted(over_copy_limit(entries))
+    return {"total": total, "size": DECK_SIZE, "over": total > DECK_SIZE, "exact": total == DECK_SIZE,
+            "groups": groups, "copy_limit": COPY_LIMIT, "over_limit": over}
 
 
 class ListError(Exception):
@@ -49,12 +88,17 @@ def panel_context(request):
     if active:
         entries = list(active.entries.select_related("card").prefetch_related("card__prices")
                        .order_by("card__expansion_id", "card__serial_number"))
+        with_image_urls([e.card for e in entries])  # thumbnails in the panel
     count = sum(e.quantity for e in entries)
     total, unpriced = price_entries(entries)
+    deck = deck_checks(entries) if active and active.is_deck else None
     return {
         "card_lists": lists,
         "editing_list": active,
         "editing_entries": entries,
+        "editing_deck": deck,
+        # Card names past the copy limit; their +/- controls turn red (see qty_controls.html).
+        "editing_over_limit": set(deck["over_limit"]) if deck else set(),
         "editing_count": count,
         "editing_full": count >= CardList.MAX_CARDS,
         "editing_total": total,
@@ -99,8 +143,14 @@ def respond(request, fallback, error="", **extra):
         # Forms in the re-rendered panel should still point back at the page, not at this endpoint.
         context |= {"panel_error": error, "panel_next": request.POST.get("next", "")}
         panel = render_to_string("weiss/list_panel.html", context, request)
+        # The list's own page shows the same deck reminders; send them so it can refresh them too.
+        deck = ""
+        if context["editing_deck"]:
+            deck = render_to_string("weiss/deck_checks.html", {"deck": context["editing_deck"]}, request)
         return JsonResponse({
             "ok": not error, "error": error, "panel": panel,
+            "list": context["editing_list"].pk if context["editing_list"] else None, "deck": deck,
+            "over_limit": sorted(context["editing_over_limit"]),
             "count": context["editing_count"], "full": context["editing_full"], **extra,
         }, status=400 if error else 200)
     if error:
@@ -199,7 +249,18 @@ def list_detail(request, pk):
         "count": sum(e.quantity for e in entries),
         "value": value,
         "unpriced": unpriced,
+        "deck": deck_checks(entries) if card_list.is_deck else None,
     })
+
+
+@weiss_access_required
+@require_POST
+def list_deck(request, pk):
+    """Mark a list as a deck (is_deck=on) or as a plain list."""
+    card_list = get_object_or_404(CardList, pk=pk, user=request.user)
+    card_list.is_deck = request.POST.get("is_deck") == "on"
+    card_list.save(update_fields=["is_deck", "updated"])
+    return respond(request, reverse("weiss:list", args=[card_list.pk]))
 
 
 @weiss_access_required

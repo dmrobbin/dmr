@@ -5,6 +5,7 @@ from django.db.models import F, Max
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from core import s3
 from core.access import weiss_access_required
@@ -207,6 +208,17 @@ def series_detail(request, code):
 def card_detail(request, pk):
     card = with_image_urls([get_object_or_404(Card.objects.prefetch_related("prices"), pk=pk)])[0]
     return render(request, "weiss/card_detail.html", {"card": card, "series": series_code(card.serial_number)})
+
+
+@weiss_access_required
+def card_popup(request, pk):
+    """Just the picture, stats and text of a card, for the deck builder's popup. ?next= is the page
+    the popup opened on, so its +/- forms (and the panel they re-render) point back there."""
+    card = with_image_urls([get_object_or_404(Card.objects.prefetch_related("prices"), pk=pk)])[0]
+    next_url = request.GET.get("next", "")
+    if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        next_url = reverse("weiss:card", args=[card.pk])
+    return render(request, "weiss/card_popup.html", {"card": card, "panel_next": next_url})
 
 
 @weiss_access_required

@@ -6,9 +6,12 @@
   <p class="back"><a href="{% url 'weiss:lists' %}">← All lists</a></p>
   <h1>{{ card_list.name }}</h1>
   <p class="lead-meta">
-    {{ count }} / {{ max_cards }} cards
-    {% if value %} · ~${{ value|floatformat:2 }} approx. TCGplayer market value{% if unpriced %} ({{ unpriced }} card{{ unpriced|pluralize }} without a price){% endif %}{% endif %}
+    {% if not deck %}{{ count }} / {{ max_cards }} cards{% endif %}
+    {% if value %}{% if not deck %} · {% endif %}~${{ value|floatformat:2 }} approx. TCGplayer market value{% if unpriced %} ({{ unpriced }} card{{ unpriced|pluralize }} without a price){% endif %}{% endif %}
   </p>
+  {% include "weiss/deck_toggle.html" with toggle_list=card_list %}
+  {# lists.js refreshes this box after each +/- while this list is being edited. #}
+  <div data-deck-checks="{{ card_list.pk }}">{% if deck %}{% include "weiss/deck_checks.html" %}{% endif %}</div>
 
   <div class="list-actions">
     {# A plain post: start (or keep) editing this list, then go browse the sets. #}

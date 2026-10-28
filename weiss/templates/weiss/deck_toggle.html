@@ -1,0 +1,9 @@
+{# Mark a list as a deck. Saves as soon as the box is ticked; the page reloads to show or hide the reminders. #}
+<form class="deck-toggle" method="post" action="{% url 'weiss:list_deck' toggle_list.pk %}" data-list-form="reload">
+  {% csrf_token %}<input type="hidden" name="next" value="{{ next|default:request.get_full_path }}">
+  <label>
+    <input type="checkbox" name="is_deck"{% if toggle_list.is_deck %} checked{% endif %} onchange="this.form.requestSubmit()">
+    This list is a deck
+  </label>
+  <noscript><button type="submit" class="button-small secondary">Save</button></noscript>
+</form>

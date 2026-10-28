@@ -7,9 +7,14 @@
   <div class="panel-editing">
     <p class="muted small panel-label">Adding cards to</p>
     <p class="panel-list-name"><a href="{% url 'weiss:list' editing_list.pk %}">{{ editing_list.name }}</a></p>
-    <p class="list-counter" aria-live="polite"><strong>{{ editing_count }}</strong> / {{ max_cards }} cards</p>
-    <div class="meter{% if editing_full %} full{% endif %}"><span style="width: {% widthratio editing_count max_cards 100 %}%"></span></div>
-    {% if editing_full %}<p class="small muted">This list is full.</p>{% endif %}
+    {% include "weiss/deck_toggle.html" with toggle_list=editing_list %}
+    {% if editing_deck %}
+      {% include "weiss/deck_checks.html" with deck=editing_deck %}
+    {% else %}
+      <p class="list-counter" aria-live="polite"><strong>{{ editing_count }}</strong> / {{ max_cards }} cards</p>
+      <div class="meter{% if editing_full %} full{% endif %}"><span style="width: {% widthratio editing_count max_cards 100 %}%"></span></div>
+    {% endif %}
+    {% if editing_full %}<p class="small muted">This list is full ({{ max_cards }} cards).</p>{% endif %}
     {% if editing_entries %}
       <p class="list-total">
         <span>Total</span>
@@ -21,7 +26,12 @@
       <ul class="panel-entries">
         {% for entry in editing_entries %}
           <li>
-            <a href="{% url 'weiss:card' entry.card.pk %}" class="panel-entry-name">{{ entry.card.name }}</a>
+            {# Clicking opens a small popup (lists.js); the href is the full page for new tabs or no script. #}
+            {% url 'weiss:card_popup' entry.card.pk as popup_url %}
+            <a href="{% url 'weiss:card' entry.card.pk %}" data-card-popup="{{ popup_url }}" class="panel-thumb" tabindex="-1" aria-hidden="true">
+              {% if entry.card.image_src %}<img src="{{ entry.card.image_src }}" alt="" loading="lazy">{% endif %}
+            </a>
+            <a href="{% url 'weiss:card' entry.card.pk %}" data-card-popup="{{ popup_url }}" class="panel-entry-name">{{ entry.card.name }}</a>
             <span class="muted small">{{ entry.card.serial_number }}{% if entry.line_total is not None %} · <span class="line-total">~${{ entry.line_total|floatformat:2 }}</span>{% endif %}</span>
             {% include "weiss/qty_controls.html" with card=entry.card %}
           </li>

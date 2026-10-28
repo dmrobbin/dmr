@@ -77,6 +77,8 @@ class CardList(models.Model):
 
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE, related_name="card_lists")
     name = models.CharField(max_length=100)
+    # A deck gets deck-building reminders (50 cards, 8 climaxes, 4 copies, level spread); nothing is enforced.
+    is_deck = models.BooleanField(default=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
