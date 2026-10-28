@@ -84,15 +84,19 @@ def editing_list(request):
     return card_list
 
 
+def sorted_entries(card_list):
+    """A list's entries the way a deck list reads: climaxes (no level) first, then by level."""
+    return list(card_list.entries.select_related("card").prefetch_related("card__prices")
+                .order_by(F("card__level").asc(nulls_first=True), "card__serial_number"))
+
+
 def panel_context(request):
     """Everything the side panel and the per-card +/- controls need."""
     lists = list(CardList.objects.filter(user=request.user).annotate(total=Sum("entries__quantity")))
     active = editing_list(request)
     entries = []
     if active:
-        # Climaxes (no level) first, then by level.
-        entries = list(active.entries.select_related("card").prefetch_related("card__prices")
-                       .order_by(F("card__level").asc(nulls_first=True), "card__serial_number"))
+        entries = sorted_entries(active)
         with_image_urls([e.card for e in entries])  # thumbnails in the panel
     count = sum(e.quantity for e in entries)
     total, unpriced = price_entries(entries)
@@ -244,8 +248,7 @@ def list_change(request, pk):
 @weiss_access_required
 def list_detail(request, pk):
     card_list = get_object_or_404(CardList, pk=pk, user=request.user)
-    entries = list(card_list.entries.select_related("card").prefetch_related("card__prices")
-                   .order_by("card__expansion_id", "card__serial_number"))
+    entries = sorted_entries(card_list)
     with_image_urls([e.card for e in entries])
     value, unpriced = price_entries(entries)
     return render(request, "weiss/list_detail.html", {

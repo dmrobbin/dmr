@@ -717,6 +717,8 @@ class DeckReminderTests(TestCase):
         context = self.client.get(reverse("weiss:sets")).context
         self.assertEqual([e.card.name for e in context["editing_entries"]],
                          ["Idol", "Ai", "Plan", "Ruby", "Aqua", "Kana"])
+        page = self.client.get(reverse("weiss:list", args=[self.deck.pk])).context
+        self.assertEqual([e.card.name for e in page["entries"]], ["Idol", "Ai", "Plan", "Ruby", "Aqua", "Kana"])
         panel = self.client.get(reverse("weiss:sets")).content.decode()
         self.assertIn('<span class="panel-level" title="Level 3">3</span>', panel)
         self.assertIn('title="Climax">CX</span>', panel)
