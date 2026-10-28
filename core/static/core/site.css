@@ -524,7 +524,19 @@ button.button-small.secondary { border: 1px solid var(--border); }
 
 .hand { display: flex; flex-direction: column; align-items: center; gap: .3rem; padding: .4rem; border-radius: .5rem; }
 .hand-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: .35rem; min-height: var(--card-h); }
-.hand-me .pcard:hover { transform: translateY(-.4rem); }
+/* Your own hand is drawn larger than the board, and a hovered card lifts and grows over the board. */
+.hand-me { --card-w: clamp(4rem, 6vw, 6.4rem); --card-h: calc(var(--card-w) * 1.4); }
+.hand-me .hand-cards { gap: .5rem; }
+.hand-me .pcard { transform-origin: bottom center; }
+.hand-me .pcard:hover { z-index: 5; transform: translateY(-.6rem) scale(2.3); }
+
+/* Level / cost / power overlay on face-up cards; sized from the card so it scales with the board. */
+.pcard-stats { position: absolute; inset: 0; pointer-events: none; font-size: max(.55rem, calc(var(--card-w) * .17)); font-weight: 700; line-height: 1; }
+.stat-corner { position: absolute; top: 4%; left: 4%; display: flex; flex-direction: column; gap: .15em; }
+.stat { display: grid; place-items: center; min-width: 1.45em; height: 1.45em; padding: 0 .2em; border-radius: .35em; color: #fff; background: rgb(0 0 0 / .78); box-shadow: 0 0 0 1px rgb(255 255 255 / .25); }
+.stat-level { background: #b23a3a; }
+.stat-cost { background: #2f5fa8; }
+.stat-power { position: absolute; bottom: 4%; left: 4%; padding: 0 .3em; }
 .hand-opponent .pcard { width: calc(var(--card-w) * .6); height: calc(var(--card-h) * .6); }
 .hand-opponent .hand-cards { min-height: 0; }
 

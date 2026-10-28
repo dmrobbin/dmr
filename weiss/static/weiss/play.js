@@ -102,7 +102,21 @@
       : '<span class="pcard-back"></span>';
     const badge = card.pos === "reverse" ? '<span class="pcard-badge">REVERSE</span>'
       : card.face_down && info ? '<span class="pcard-badge">face down</span>' : "";
-    return `<div class="${classes.join(" ")}" ${attrs} tabindex="0">${face}${badge}</div>`;
+    const stats = info && !card.face_down ? statsHtml(info) : "";
+    return `<div class="${classes.join(" ")}" ${attrs} tabindex="0">${face}${stats}${badge}</div>`;
+  }
+
+  // Level and cost in the top-left corner and power in the bottom-left, where the printed card has
+  // them, but large enough to read at board size. Left-side so they show on overlapped piles too.
+  function statsHtml(info) {
+    const has = (value) => value !== null && value !== undefined && value !== "";
+    const corner = [
+      has(info.level) ? `<span class="stat stat-level" title="Level">${esc(info.level)}</span>` : "",
+      has(info.cost) ? `<span class="stat stat-cost" title="Cost">${esc(info.cost)}</span>` : "",
+    ].join("");
+    const power = has(info.power) ? `<span class="stat stat-power" title="Power">${esc(info.power)}</span>` : "";
+    if (!corner && !power) return "";
+    return `<span class="pcard-stats">${corner ? `<span class="stat-corner">${corner}</span>` : ""}${power}</span>`;
   }
 
   function backHtml() {
@@ -233,7 +247,7 @@
 
   // --- Enlarged card art after resting the mouse on a card -------------------------------------
 
-  const ZOOM_DELAY_MS = 1000;
+  const ZOOM_DELAY_MS = 0;
   const zoomEl = document.createElement("div");
   zoomEl.className = "play-zoom";
   zoomEl.hidden = true;

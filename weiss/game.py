@@ -246,6 +246,13 @@ def apply(state, player, action, name=lambda pk: f"card {pk}", shuffle=random.sh
     if kind == "end_turn":
         if state["turn"] != player:
             raise GameError("It isn't your turn.")
+        climaxes, zones["climax"] = zones["climax"], []
+        for card in climaxes:
+            put(side, card, "waiting")
+            card["face_down"] = False
+        if climaxes:
+            add_log(state, player, "put " + ", ".join(name(c["card"]) for c in climaxes)
+                    + " from the climax zone into the waiting room")
         other = next(p for p in state["order"] if p != player)
         state["turn"] = other
         state["turn_number"] += 1

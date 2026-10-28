@@ -124,6 +124,15 @@ class MoveTests(TestCase):
         with self.assertRaises(game.GameError):
             game.apply(self.state, 1, {"type": "move", "uid": self.hand[0]["uid"], "to": "nowhere"})
 
+    def test_ending_the_turn_clears_your_climax_zone(self):
+        self.play(self.hand[0]["uid"], "climax")
+        game.apply(self.state, 2, {"type": "move", "uid": zones(self.state, 2)["hand"][0]["uid"], "to": "climax"})
+        game.apply(self.state, 1, {"type": "end_turn"})
+        self.assertEqual(zones(self.state, 1)["climax"], [])
+        self.assertEqual([c["card"] for c in zones(self.state, 1)["waiting"]], [20])
+        self.assertEqual(len(zones(self.state, 2)["climax"]), 1)  # only the player whose turn ended
+        self.assertIn("climax zone into the waiting room", self.state["log"][-2]["text"])
+
     def test_turns_alternate(self):
         with self.assertRaises(game.GameError):
             game.apply(self.state, 2, {"type": "end_turn"})
