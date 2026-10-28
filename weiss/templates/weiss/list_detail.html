@@ -35,7 +35,7 @@
     <ul class="card-grid">
       {% for entry in entries %}
         <li>
-          <a href="{% url 'weiss:card' entry.card.pk %}">
+          <a href="{% url 'weiss:card' entry.card.pk %}?list={{ card_list.pk }}">
             {% if entry.card.image_src %}<img src="{{ entry.card.image_src }}" alt="{{ entry.card.name }}" loading="lazy">{% endif %}
             <span class="card-title-row">
               <span class="card-name">{{ entry.quantity }}× {{ entry.card.name }}</span>
@@ -44,6 +44,21 @@
             <span class="muted">{{ entry.card.serial_number }} · {{ entry.card.rarity }}</span>
           </a>
           {% if editing_list.pk == card_list.pk %}{% include "weiss/qty_controls.html" with card=entry.card %}{% endif %}
+          {% if entry.card.pk == cover.pk %}
+            <div class="cover-current">
+              <span>★ List cover</span>
+              {% if card_list.cover_card_id == entry.card.pk %}
+                <form method="post" action="{% url 'weiss:list_cover' card_list.pk %}">{% csrf_token %}<input type="hidden" name="card" value="">
+                  <button type="submit" class="link-button">reset</button>
+                </form>
+              {% else %}<span class="muted">(default)</span>{% endif %}
+            </div>
+          {% else %}
+            <form method="post" action="{% url 'weiss:list_cover' card_list.pk %}" class="cover-form">
+              {% csrf_token %}<input type="hidden" name="card" value="{{ entry.card.pk }}">
+              <button type="submit" class="link-button">☆ Use as list cover</button>
+            </form>
+          {% endif %}
         </li>
       {% endfor %}
     </ul>

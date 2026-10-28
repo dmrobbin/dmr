@@ -5,7 +5,7 @@
     {% include "weiss/card_summary.html" %}
     <div class="card-popup-actions">
       {% include "weiss/qty_controls.html" %}
-      <a class="small" href="{% url 'weiss:card' card.pk %}">Full card page →</a>
+      <a class="small" href="{% url 'weiss:card' card.pk %}{% if editing_list %}?list={{ editing_list.pk }}{% endif %}">Full card page →</a>
     </div>
   </div>
 </div>

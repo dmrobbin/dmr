@@ -27,7 +27,8 @@ urlpatterns = [
     path("lists/<int:pk>/", lists.list_detail, name="list"),
     path("lists/<int:pk>/edit/", lists.list_edit, name="list_edit"),
     path("lists/<int:pk>/cards/", lists.list_change, name="list_change"),
-    path("lists/<int:pk>/deck/", lists.list_deck, name="list_deck"),
+    path("lists/<int:pk>/cover/", lists.list_cover, name="list_cover"),
+    path("lists/<int:pk>/deck/",lists.list_deck, name="list_deck"),
     path("lists/<int:pk>/rename/",lists.list_rename, name="list_rename"),
     path("lists/<int:pk>/delete/", lists.list_delete, name="list_delete"),
 ]

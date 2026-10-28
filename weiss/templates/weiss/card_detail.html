@@ -4,7 +4,8 @@
 
 {% block weiss_content %}
   <p class="back">
-    <a href="{% url 'weiss:set' card.expansion_id %}">← {{ card.expansion }}</a>
+    {% if from_list %}<a href="{% url 'weiss:list' from_list.pk %}">← Back to “{{ from_list.name }}”</a> · {% endif %}
+    <a href="{% url 'weiss:set' card.expansion_id %}">{% if not from_list %}← {% endif %}{{ card.expansion }}</a>
     · <a href="{% url 'weiss:series' series %}">All {{ series }} cards</a>
   </p>
   <div class="card-detail">

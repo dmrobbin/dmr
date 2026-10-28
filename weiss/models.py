@@ -79,6 +79,8 @@ class CardList(models.Model):
     name = models.CharField(max_length=100)
     # A deck gets deck-building reminders (50 cards, 8 climaxes, 4 copies, level spread); nothing is enforced.
     is_deck = models.BooleanField(default=True)
+    # The card pictured for this list on the lists page; blank means its first card (see lists.attach_covers).
+    cover_card = models.ForeignKey("Card", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 

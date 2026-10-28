@@ -30,10 +30,10 @@
             {% url 'weiss:card_popup' entry.card.pk as popup_url %}
             {% if entry.card.level is not None %}<span class="panel-level" title="Level {{ entry.card.level }}">{{ entry.card.level }}</span>
             {% else %}<span class="panel-level{% if entry.card.card_type|lower == 'climax' %} climax{% endif %}" title="{{ entry.card.card_type|default:'No level' }}">{% if entry.card.card_type|lower == 'climax' %}CX{% else %}–{% endif %}</span>{% endif %}
-            <a href="{% url 'weiss:card' entry.card.pk %}" data-card-popup="{{ popup_url }}" class="panel-thumb" tabindex="-1" aria-hidden="true">
+            <a href="{% url 'weiss:card' entry.card.pk %}?list={{ editing_list.pk }}" data-card-popup="{{ popup_url }}" class="panel-thumb" tabindex="-1" aria-hidden="true">
               {% if entry.card.image_src %}<img src="{{ entry.card.image_src }}" alt="" loading="lazy">{% endif %}
             </a>
-            <a href="{% url 'weiss:card' entry.card.pk %}" data-card-popup="{{ popup_url }}" class="panel-entry-name">{{ entry.card.name }}</a>
+            <a href="{% url 'weiss:card' entry.card.pk %}?list={{ editing_list.pk }}" data-card-popup="{{ popup_url }}" class="panel-entry-name">{{ entry.card.name }}</a>
             <span class="muted small">{{ entry.card.serial_number }}{% if entry.line_total is not None %} · <span class="line-total">~${{ entry.line_total|floatformat:2 }}</span>{% endif %}</span>
             {% include "weiss/qty_controls.html" with card=entry.card %}
           </li>

@@ -10,7 +10,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from core import s3
 from core.access import weiss_access_required
 
-from .models import Card
+from .models import Card, CardList
 
 
 def with_image_urls(cards):
@@ -212,7 +212,13 @@ def series_detail(request, code):
 @weiss_access_required
 def card_detail(request, pk):
     card = with_image_urls([get_object_or_404(Card.objects.prefetch_related("prices"), pk=pk)])[0]
-    return render(request, "weiss/card_detail.html", {"card": card, "series": series_code(card.serial_number)})
+    # Opened from one of the user's lists (?list=<pk>): offer a way back to it.
+    from_list = None
+    if request.GET.get("list", "").isdigit():
+        from_list = CardList.objects.filter(pk=request.GET["list"], user=request.user).first()
+    return render(request, "weiss/card_detail.html", {
+        "card": card, "series": series_code(card.serial_number), "from_list": from_list,
+    })
 
 
 @weiss_access_required

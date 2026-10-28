@@ -751,6 +751,62 @@ class DeckReminderTests(TestCase):
         self.assertIn("<strong>8</strong> / 8", data["deck"])
 
 
+class ListCoverTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth.models import User
+        self.user = User.objects.create_user("daryl", password="x", is_staff=True)
+        self.client.force_login(self.user)
+        base = {"expansion": "OSHI NO KO", "expansion_id": 230}
+        self.climax = Card.objects.create(serial_number="OSK/S107-E090", name="Idol", card_type="Climax",
+                                          image_url="https://x/cx.png", **base)
+        self.ai = Card.objects.create(serial_number="OSK/S107-E001", name="Ai", card_type="Character", level=0,
+                                      image_url="https://x/ai.png", **base)
+        self.aqua = Card.objects.create(serial_number="OSK/S107-E050", name="Aqua", card_type="Character", level=2,
+                                        image_url="https://x/aqua.png", **base)
+        self.other = Card.objects.create(serial_number="OSK/S107-E060", name="Kana", card_type="Character", level=1,
+                                         **base)
+        self.deck = CardList.objects.create(user=self.user, name="OSK deck")
+        for card in (self.climax, self.ai, self.aqua):
+            CardListEntry.objects.create(card_list=self.deck, card=card, quantity=1)
+
+    def cover(self):
+        lists = self.client.get(reverse("weiss:lists")).context["lists"]
+        return lists[0].cover
+
+    def test_default_cover_is_first_card_skipping_climaxes(self):
+        self.assertEqual(self.cover(), self.ai)
+        self.assertContains(self.client.get(reverse("weiss:lists")), 'src="https://x/ai.png"')
+        CardListEntry.objects.exclude(card=self.climax).delete()
+        self.assertEqual(self.cover(), self.climax)  # all it has
+
+    def test_choose_and_reset_cover(self):
+        url = reverse("weiss:list_cover", args=[self.deck.pk])
+        self.client.post(url, {"card": self.aqua.pk})
+        self.assertEqual(self.cover(), self.aqua)
+        self.assertContains(self.client.get(reverse("weiss:list", args=[self.deck.pk])), "★ List cover")
+        self.client.post(url, {"card": ""})
+        self.assertEqual(self.cover(), self.ai)
+
+    def test_card_opened_from_a_list_links_back_to_it(self):
+        list_page = self.client.get(reverse("weiss:list", args=[self.deck.pk]))
+        card_url = f"{reverse('weiss:card', args=[self.ai.pk])}?list={self.deck.pk}"
+        self.assertContains(list_page, f'href="{card_url}"')
+        self.assertContains(self.client.get(card_url), "← Back to “OSK deck”")
+        self.assertNotContains(self.client.get(reverse("weiss:card", args=[self.ai.pk])), "Back to")
+        # Someone else's list id shows nothing.
+        from django.contrib.auth.models import User
+        theirs = CardList.objects.create(user=User.objects.create_user("eve"), name="Secret")
+        response = self.client.get(reverse("weiss:card", args=[self.ai.pk]), {"list": theirs.pk})
+        self.assertNotContains(response, "Secret")
+
+    def test_cover_must_be_in_the_list_and_falls_back_when_removed(self):
+        url = reverse("weiss:list_cover", args=[self.deck.pk])
+        self.assertEqual(self.client.post(url, {"card": self.other.pk}).status_code, 404)
+        self.client.post(url, {"card": self.aqua.pk})
+        CardListEntry.objects.filter(card=self.aqua).delete()
+        self.assertEqual(self.cover(), self.ai)
+
+
 class CardPopupTests(TestCase):
     def setUp(self):
         from django.contrib.auth.models import User

@@ -191,10 +191,46 @@ def change_quantity(card_list, card, delta):
     return quantity
 
 
+def attach_covers(lists):
+    """Set `cover` on each list: its chosen cover card if that's still in the list, else its first
+    card in deck order, skipping climaxes (their art is printed sideways) unless that's all it has."""
+    lists = list(lists)
+    entries = (CardListEntry.objects.filter(card_list__in=lists).select_related("card")
+               .order_by(F("card__level").asc(nulls_first=True), "card__serial_number"))
+    cards_in = {}
+    first, first_any = {}, {}
+    for entry in entries:
+        cards_in.setdefault(entry.card_list_id, {})[entry.card_id] = entry.card
+        first_any.setdefault(entry.card_list_id, entry.card)
+        if not is_climax(entry.card):
+            first.setdefault(entry.card_list_id, entry.card)
+    for card_list in lists:
+        in_list = cards_in.get(card_list.pk, {})
+        card_list.cover = (in_list.get(card_list.cover_card_id)
+                           or first.get(card_list.pk) or first_any.get(card_list.pk))
+    with_image_urls([card_list.cover for card_list in lists if card_list.cover])
+    return lists
+
+
 @weiss_access_required
 def list_index(request):
     lists = CardList.objects.filter(user=request.user).annotate(total=Sum("entries__quantity"))
-    return render(request, "weiss/list_index.html", {"lists": lists})
+    return render(request, "weiss/list_index.html", {"lists": attach_covers(lists)})
+
+
+@weiss_access_required
+@require_POST
+def list_cover(request, pk):
+    """Pick the card pictured for this list (one of its own cards); an empty `card` goes back to the default."""
+    card_list = get_object_or_404(CardList, pk=pk, user=request.user)
+    card_pk = request.POST.get("card", "")
+    if card_pk:
+        entry = get_object_or_404(CardListEntry, card_list=card_list, card_id=card_pk)
+        card_list.cover_card_id = entry.card_id
+    else:
+        card_list.cover_card = None
+    card_list.save(update_fields=["cover_card", "updated"])
+    return redirect("weiss:list", pk=card_list.pk)
 
 
 @weiss_access_required
@@ -258,6 +294,7 @@ def list_detail(request, pk):
         "value": value,
         "unpriced": unpriced,
         "deck": deck_checks(entries) if card_list.is_deck else None,
+        "cover": attach_covers([card_list])[0].cover,
     })
 
 

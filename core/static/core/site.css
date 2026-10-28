@@ -447,6 +447,11 @@ a { color: inherit; }
 .list-panel .small a { color: var(--accent); }
 .link-button { font: inherit; font-size: .85rem; color: var(--accent); background: none; border: none; padding: 0; cursor: pointer; }
 .link-button:hover { text-decoration: underline; }
+.cover-form, .cover-current { margin-top: .35rem; font-size: .8rem; }
+.cover-form .link-button { font-size: .8rem; color: var(--muted); }
+.cover-form .link-button:hover { color: var(--accent); }
+.cover-current { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4rem; color: var(--accent); font-weight: 600; }
+.cover-current .link-button, .cover-current .muted { font-size: .8rem; font-weight: 400; }
 
 .qty-controls { display: inline-flex; align-items: center; gap: .4rem; }
 .qty-controls form { margin: 0; }
