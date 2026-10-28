@@ -480,9 +480,11 @@ button.button-small.secondary { border: 1px solid var(--border); }
   z-index: 20;
   display: grid;
   grid-template-columns: 11rem minmax(0, 1fr);
+  align-items: start;
   gap: 1rem;
-  width: min(34rem, calc(100vw - 2rem));
-  max-height: calc(100vh - 2rem);
+  /* Wide rather than tall, so long card text fits on screen (the box can't be scrolled). */
+  width: min(42rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 1.5rem);
   overflow: hidden;
   padding: 1rem;
   border: 1px solid var(--accent);
@@ -498,6 +500,7 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .card-peek-serial { margin: 0; }
 .card-peek-name { margin: 0 0 .5rem; font-weight: 600; font-size: .95rem; }
 .card-peek .card-stats { gap: .2rem 1rem; margin-bottom: .6rem; }
+.card-peek .card-peek-text { max-height: none; }
 .card-peek-text { padding: .5rem .65rem; border-radius: .5rem; background: var(--bg); max-height: 14rem; overflow: hidden; }
 
 /* Deck-builder card popup. No padding on the dialog itself, so a click that lands on it is the backdrop. */
