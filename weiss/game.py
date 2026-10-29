@@ -5,17 +5,25 @@ is to keep hidden things hidden (hands, deck and stock order) and to keep both b
 
 State is plain JSON, stored on the GameRoom:
 
-    {"players": {"<user id>": {"name": ..., "zones": {zone: [card, ...]}, "stage": {slot: card|None}}},
-     "order": [host id, guest id], "turn": "<user id>", "turn_number": 1, "log": [...]}
+    {"players": {"<user id>": {"name": ..., "zones": {zone: [card, ...]}, "stage": {slot: card|None},
+                               "markers": {slot: [card, ...]}}},
+     "order": [host id, guest id], "turn": "<user id>", "turn_number": 1, "log": [...],
+     "pending_damage": {...}  # only while a cancelled damage waits to be cleaned up}
 
 A card instance is {"uid": "a1b2c3d4", "card": <Card pk>, "pos": "stand"|"rest"|"reverse",
 "face_down": bool}. The top of a pile is the end of its list.
+
+Markers are cards set under a character on the stage. Each slot's markers are a pile named
+"marker:<slot>"; they move with the character between slots and go to the waiting room when it
+leaves the stage.
 """
 import random
 import secrets
 
 ZONES = ["deck", "hand", "clock", "level", "stock", "waiting", "memory", "climax", "resolution"]
 STAGE_SLOTS = ["C1", "C2", "C3", "B1", "B2"]
+MARKER = "marker:"
+MARKER_PILES = [MARKER + slot for slot in STAGE_SLOTS]
 HIDDEN_ZONES = {"deck", "stock"}  # face down: no one sees the cards (the owner can search or peek)
 PRIVATE_ZONES = {"hand"}  # only the owner sees the cards
 POSITIONS = {"stand", "rest", "reverse"}
@@ -28,6 +36,7 @@ LABELS = {
     "C1": "center stage (left)", "C2": "center stage (middle)", "C3": "center stage (right)",
     "B1": "back stage (left)", "B2": "back stage (right)",
 }
+LABELS |= {MARKER + slot: f"markers under {LABELS[slot]}" for slot in STAGE_SLOTS}
 
 
 class GameError(Exception):
@@ -52,7 +61,8 @@ def new_game(players, shuffle=random.shuffle):
         zones = {zone: [] for zone in ZONES}
         zones["deck"] = deck
         zones["hand"] = [deck.pop() for _ in range(min(STARTING_HAND, len(deck)))]
-        state["players"][str(user_id)] = {"name": name, "zones": zones, "stage": {s: None for s in STAGE_SLOTS}}
+        state["players"][str(user_id)] = {"name": name, "zones": zones, "stage": {s: None for s in STAGE_SLOTS},
+                                          "markers": {s: [] for s in STAGE_SLOTS}}
     add_log(state, None, f"Game started. Each player shuffled and drew {STARTING_HAND} cards.")
     return state
 
@@ -65,8 +75,15 @@ def add_log(state, player, text):
 
 # --- Finding and moving cards ---------------------------------------------------------------------
 
+def pile(side, where):
+    """The list of cards in a zone or a marker pile."""
+    if where.startswith(MARKER):
+        return side.setdefault("markers", {s: [] for s in STAGE_SLOTS})[where.removeprefix(MARKER)]
+    return side["zones"][where]
+
+
 def find(side, uid):
-    """(where, index) of a card on one player's side; where is a zone name or a stage slot."""
+    """(where, index) of a card on one player's side; where is a zone name, a stage slot or a marker pile."""
     for zone, cards in side["zones"].items():
         for i, card in enumerate(cards):
             if card["uid"] == uid:
@@ -74,6 +91,10 @@ def find(side, uid):
     for slot, card in side["stage"].items():
         if card and card["uid"] == uid:
             return slot, None
+    for slot, cards in side.get("markers", {}).items():
+        for i, card in enumerate(cards):
+            if card["uid"] == uid:
+                return MARKER + slot, i
     raise GameError("That card isn't on your side of the board.")
 
 
@@ -82,25 +103,38 @@ def take(side, uid):
     if where in STAGE_SLOTS:
         card, side["stage"][where] = side["stage"][where], None
     else:
-        card = side["zones"][where].pop(index)
+        card = pile(side, where).pop(index)
     return card, where
 
 
-def put(side, card, to, where="top"):
-    """Place a card in a zone or stage slot. Returns whatever was already in that slot, if anything."""
+def check_marker_target(side, to, leaving=None):
+    """Markers need a character to go under (and not the one being moved)."""
+    if to in MARKER_PILES:
+        slot = to.removeprefix(MARKER)
+        if side["stage"][slot] is None or slot == leaving:
+            raise GameError("There's no character in that slot to put a marker under.")
+
+
+def put(side, card, to, where="top", face_down=False):
+    """Place a card in a zone, stage slot or marker pile. Returns whatever was already in that slot, if anything."""
     if to in STAGE_SLOTS:
         occupant, side["stage"][to] = side["stage"][to], card
         return occupant
+    if to in MARKER_PILES:
+        card["pos"] = "stand"
+        card["face_down"] = bool(face_down)
+        pile(side, to).append(card)
+        return None
     if to not in ZONES:
         raise GameError(f"Unknown zone: {to}")
     card["pos"] = "stand"
     if to in HIDDEN_ZONES or to == "hand":
         card["face_down"] = False  # orientation is meaningless once the card is hidden
-    pile = side["zones"][to]
+    cards = side["zones"][to]
     if where == "bottom":
-        pile.insert(0, card)
+        cards.insert(0, card)
     else:
-        pile.append(card)
+        cards.append(card)
     return None
 
 
@@ -115,6 +149,47 @@ def describe_move(card, src, dst, name):
     if src == "deck" and dst == "hand":
         return "took a card from their deck into their hand"
     return f"moved {what} from {LABELS[src]} to {LABELS[dst]}"
+
+
+def discard_markers(state, player, slot):
+    """A character left the stage: the markers under it go to the waiting room, face up."""
+    side = state["players"][player]
+    cards = pile(side, MARKER + slot)
+    if not cards:
+        return
+    side["markers"][slot] = []
+    for card in cards:
+        put(side, card, "waiting")
+        card["face_down"] = False
+    add_log(state, player, f"put {len(cards)} marker{'s' if len(cards) != 1 else ''} from "
+                           f"{LABELS[slot]} into the waiting room")
+
+
+def swap_markers(side, a, b):
+    """Characters moving between stage slots take their markers with them."""
+    markers = side.setdefault("markers", {s: [] for s in STAGE_SLOTS})
+    markers[a], markers[b] = markers.get(b, []), markers.get(a, [])
+
+
+def resolve_damage(state):
+    """Finish a damage that a climax cancelled: its cards leave the clock for the waiting room.
+
+    Taking damage puts the cards in the clock at once; when one is a climax, the board shows that
+    for a moment (the damaged player's page sends "resolve_damage" after half a second) and then
+    this cleans it up. Any other action finishes it first too, so it never gets stuck.
+    """
+    pending = state.pop("pending_damage", None)
+    if not pending:
+        return
+    player = pending["player"]
+    side = state["players"][player]
+    uids = set(pending["uids"])
+    clock = side["zones"]["clock"]
+    side["zones"]["clock"] = [c for c in clock if c["uid"] not in uids]
+    for card in (c for c in clock if c["uid"] in uids):
+        put(side, card, "waiting")
+    add_log(state, player, f"negated {pending['amount']} damage: revealed the climax {pending['climax']} "
+                           f"({len(uids)} card{'s' if len(uids) != 1 else ''} to the waiting room)")
 
 
 # --- Actions ---------------------------------------------------------------------------------------
@@ -136,32 +211,46 @@ def zone_arg(action, key, allowed):
     return value
 
 
-def apply(state, player, action, name=lambda pk: f"card {pk}", shuffle=random.shuffle):
+def apply(state, player, action, name=lambda pk: f"card {pk}", shuffle=random.shuffle,
+          is_climax=lambda pk: False, trigger=lambda pk: ""):
     """Apply one player's action to the state in place. Returns extra data for that player only
     (e.g. the cards they searched), or {}. Raises GameError for anything invalid."""
     player = str(player)
     if player not in state["players"]:
         raise GameError("You're not playing in this game.")
     side = state["players"][player]
+    side.setdefault("markers", {s: [] for s in STAGE_SLOTS})  # games started before markers existed
     zones = side["zones"]
     kind = action.get("type")
 
+    resolve_damage(state)  # a cancelled damage is always cleaned up before anything else happens
+    if kind == "resolve_damage":
+        return {}
+
     if kind == "move":
-        to = zone_arg(action, "to", set(ZONES) | set(STAGE_SLOTS))
+        to = zone_arg(action, "to", set(ZONES) | set(STAGE_SLOTS) | set(MARKER_PILES))
+        src, _ = find(side, action.get("uid", ""))
+        check_marker_target(side, to, leaving=src)
         card, src = take(side, action.get("uid", ""))
-        occupant = put(side, card, to, action.get("where", "top"))
-        if occupant:
-            if src in STAGE_SLOTS:  # moving between stage slots swaps the two cards
+        occupant = put(side, card, to, action.get("where", "top"), face_down=action.get("face_down"))
+        if src in STAGE_SLOTS and to in STAGE_SLOTS:
+            swap_markers(side, src, to)
+            if occupant:  # moving between stage slots swaps the two cards
                 side["stage"][src] = occupant
-            else:  # playing onto an occupied slot sends the old card to the waiting room
+        else:
+            if occupant:  # playing onto an occupied slot sends the old card (and its markers) to the waiting room
                 put(side, occupant, "waiting")
                 add_log(state, player, f"sent {name(occupant['card'])} to the waiting room")
+                discard_markers(state, player, to)
+            if src in STAGE_SLOTS:
+                discard_markers(state, player, src)
         add_log(state, player, describe_move(card, src, to, name))
         return {}
 
     if kind == "move_top":
         src = zone_arg(action, "from", HIDDEN_ZONES)
-        to = zone_arg(action, "to", set(ZONES) | set(STAGE_SLOTS))
+        to = zone_arg(action, "to", set(ZONES) | set(STAGE_SLOTS) | set(MARKER_PILES))
+        check_marker_target(side, to)
         count = count_arg(action)
         if to in STAGE_SLOTS:
             count = 1
@@ -170,9 +259,10 @@ def apply(state, player, action, name=lambda pk: f"card {pk}", shuffle=random.sh
         moved = []
         for _ in range(count):
             card = zones[src].pop()
-            occupant = put(side, card, to)
+            occupant = put(side, card, to, face_down=action.get("face_down"))
             if occupant:
                 put(side, occupant, "waiting")
+                discard_markers(state, player, to)
             moved.append(card)
         if src == "deck" and to == "hand":
             add_log(state, player, f"drew {count} card{'s' if count != 1 else ''}")
@@ -184,11 +274,14 @@ def apply(state, player, action, name=lambda pk: f"card {pk}", shuffle=random.sh
         return {}
 
     if kind == "move_all":
-        src = zone_arg(action, "from", set(ZONES) - HIDDEN_ZONES - PRIVATE_ZONES)
+        src = zone_arg(action, "from", (set(ZONES) - HIDDEN_ZONES - PRIVATE_ZONES) | set(MARKER_PILES))
         to = zone_arg(action, "to", set(ZONES))
-        cards, zones[src] = zones[src], []
+        cards = list(pile(side, src))
+        pile(side, src).clear()
         for card in cards:
             put(side, card, to)
+            if to not in HIDDEN_ZONES and to != "hand":
+                card["face_down"] = False
         if to == "deck":
             shuffle(zones["deck"])
             for card in zones["deck"]:
@@ -212,7 +305,7 @@ def apply(state, player, action, name=lambda pk: f"card {pk}", shuffle=random.sh
         where, index = find(side, action.get("uid", ""))
         if where in HIDDEN_ZONES or where in PRIVATE_ZONES:
             raise GameError("Cards there are already hidden.")
-        card = side["stage"][where] if where in STAGE_SLOTS else zones[where][index]
+        card = side["stage"][where] if where in STAGE_SLOTS else pile(side, where)[index]
         card["face_down"] = not card["face_down"]
         add_log(state, player, f"turned a card in their {LABELS[where]} face {'down' if card['face_down'] else 'up'}")
         return {}
@@ -242,6 +335,48 @@ def apply(state, player, action, name=lambda pk: f"card {pk}", shuffle=random.sh
             add_log(state, player, "searched their deck")
         return {"revealed": {"zone": "deck", "title": "Top of your deck" if kind == "peek" else "Your deck",
                              "cards": [dict(c) for c in cards]}}
+
+    if kind == "attack":
+        # Rest a standing center-stage character and do its trigger check: the top card of the
+        # deck goes face up to the resolution zone.
+        where, _ = find(side, action.get("uid", ""))
+        if where not in ("C1", "C2", "C3"):
+            raise GameError("Only characters on the center stage can attack.")
+        card = side["stage"][where]
+        if card["pos"] != "stand":
+            raise GameError("That character is already rested.")
+        card["pos"] = "rest"
+        attacker = name(card["card"]) if not card["face_down"] else "a character"
+        if not zones["deck"]:
+            add_log(state, player, f"attacked with {attacker} (no cards left in the deck for a trigger check)")
+            return {}
+        checked = zones["deck"].pop()
+        put(side, checked, "resolution")
+        icons = trigger(checked["card"])
+        add_log(state, player, f"attacked with {attacker} — trigger check: {name(checked['card'])}"
+                               + (f" [{icons}]" if icons else " (no trigger)"))
+        return {}
+
+    if kind == "damage":
+        # Deal N damage at once: cards go from the deck to the clock one at a time, stopping at a
+        # climax. A climax cancels the whole damage (see resolve_damage).
+        amount = count_arg(action, most=20)
+        deck = zones["deck"]
+        if not deck:
+            raise GameError("Your deck is empty.")
+        dealt = []
+        for _ in range(min(amount, len(deck))):
+            card = deck.pop()
+            put(side, card, "clock")
+            dealt.append(card)
+            if is_climax(card["card"]):
+                state["pending_damage"] = {"player": player, "uids": [c["uid"] for c in dealt],
+                                           "amount": amount, "climax": name(card["card"])}
+                return {}
+        names = ", ".join(name(c["card"]) for c in dealt)
+        short = f" (deck ran out after {len(dealt)})" if len(dealt) < amount else ""
+        add_log(state, player, f"took {amount} damage{short}: {names}")
+        return {}
 
     if kind == "end_turn":
         if state["turn"] != player:
@@ -285,7 +420,9 @@ def side_view(side, mine):
         else:
             zones[zone] = [card_view(c, mine or not c["face_down"]) for c in cards]
     stage = {slot: card_view(c, mine or not c["face_down"]) if c else None for slot, c in side["stage"].items()}
-    return {"name": side["name"], "zones": zones, "stage": stage}
+    markers = {slot: [card_view(c, mine or not c["face_down"]) for c in side.get("markers", {}).get(slot, [])]
+               for slot in STAGE_SLOTS}
+    return {"name": side["name"], "zones": zones, "stage": stage, "markers": markers}
 
 
 def visible_cards(view):
@@ -298,6 +435,8 @@ def visible_cards(view):
             if isinstance(cards, list):
                 pks.update(c["card"] for c in cards if c["card"])
         pks.update(c["card"] for c in side["stage"].values() if c and c["card"])
+        for cards in side.get("markers", {}).values():
+            pks.update(c["card"] for c in cards if c["card"])
     return pks
 
 
@@ -309,6 +448,8 @@ def view(state, player):
         "me": side_view(state["players"][player], True),
         "opponent": side_view(state["players"][other], False) if other else None,
         "my_turn": state["turn"] == player,
+        # This player's page should send "resolve_damage" shortly (a climax cancelled their damage).
+        "damage_pending": state.get("pending_damage", {}).get("player") == player,
         "turn_number": state["turn_number"],
         "log": state["log"][-50:],
     }

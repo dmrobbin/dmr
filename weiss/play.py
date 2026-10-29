@@ -192,19 +192,27 @@ def room_action(request, pk):
         action = json.loads(request.body)
     except ValueError:
         return JsonResponse({"error": "Bad request."}, status=400)
-    names = {}
+    details = {}
+
+    def lookup(card_pk):
+        if card_pk not in details:
+            details[card_pk] = (Card.objects.filter(pk=card_pk).values_list("name", "card_type", "trigger").first()
+                                or ("a card", "", ""))
+        return details[card_pk]
 
     def name(card_pk):
-        if card_pk not in names:
-            names[card_pk] = Card.objects.filter(pk=card_pk).values_list("name", flat=True).first() or "a card"
-        return names[card_pk]
+        return lookup(card_pk)[0]
+
+    def is_climax(card_pk):
+        return lookup(card_pk)[1].lower() == "climax"
 
     with transaction.atomic():
         room = GameRoom.objects.select_for_update().get(pk=room.pk)
         if room.status != GameRoom.Status.PLAYING:
             return JsonResponse({"error": "The game hasn't started."}, status=409)
         try:
-            extra = game.apply(room.state, request.user.pk, action, name=name)
+            extra = game.apply(room.state, request.user.pk, action, name=name, is_climax=is_climax,
+                               trigger=lambda card_pk: lookup(card_pk)[2])
         except game.GameError as exc:
             return JsonResponse({"error": str(exc), **board_payload(room, request.user)}, status=400)
         room.version += 1

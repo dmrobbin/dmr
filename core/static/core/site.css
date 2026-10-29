@@ -555,16 +555,74 @@ button.button-small.secondary { border: 1px solid var(--border); }
 
 /* Weiss Schwarz table */
 .container.dashboard:has(.play) { max-width: 110rem; }
+/* Two board views, picked by the player (play.js puts layout-classic or layout-focus on .play):
+   classic is three even rows with one card size; focus draws the stage large with the piles
+   around it. --card-h is set alongside --card-w wherever the size changes, because a custom
+   property built from another is fixed where it is defined. */
 .play { --card-w: clamp(2.9rem, 4.4vw, 4.6rem); --card-h: calc(var(--card-w) * 1.4); display: grid; grid-template-columns: minmax(0, 1fr) 19rem; gap: 1.5rem; align-items: start; }
+.play.layout-focus { --stage-w: clamp(4.4rem, 6.6vw, 8.4rem); --card-w: clamp(2.6rem, 3.4vw, 3.9rem); --card-h: calc(var(--card-w) * 1.4); grid-template-columns: minmax(0, 1fr) 17rem; gap: 1.25rem; }
+.layout-focus .stage { --card-w: var(--stage-w); --card-h: calc(var(--card-w) * 1.4); }
+/* The main piles around the stage are drawn between pile and stage size, to fill the board. */
+.layout-focus :is(.zone-stock, .zone-memory, .zone-deck, .zone-resolution, .zone-waiting) { --card-w: clamp(3.4rem, 5vw, 6.2rem); --card-h: calc(var(--card-w) * 1.4); }
 .play-board { display: grid; gap: .5rem; padding: .75rem; border: 1px solid var(--border); border-radius: 1rem; background: radial-gradient(ellipse at center, #1c1f26, var(--bg)); }
 .table-side { display: grid; gap: .5rem; }
 .table-divider { text-align: center; font-size: .8rem; color: var(--muted); border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); padding: .3rem 0; letter-spacing: .05em; }
-.mat { display: grid; gap: .5rem; }
-.mat-row { display: flex; align-items: stretch; justify-content: space-between; gap: .5rem; }
-/* The opponent sits across the table: their rows run from the far edge to the middle, left and right swapped. */
-.mat-opponent { display: flex; flex-direction: column-reverse; }
-.mat-opponent .mat-row, .mat-opponent .stage { flex-direction: row-reverse; }
-.stage { display: flex; justify-content: center; gap: .5rem; flex: 1; }
+.stage { display: flex; justify-content: center; gap: .6rem; flex: 0 1 auto; }
+
+/* Classic board: rows from the middle of the table outwards (climax / center stage / resolution,
+   stock / back stage / deck, then level / clock / memory / waiting room). */
+.layout-classic .mat { display: grid; gap: .5rem; }
+.layout-classic .mat-row { display: flex; align-items: stretch; justify-content: space-between; gap: .5rem; }
+.layout-classic .stage { flex: 1; gap: .5rem; }
+.layout-classic .mat-opponent { display: flex; flex-direction: column-reverse; }
+.layout-classic .mat-opponent .mat-row, .layout-classic .mat-opponent .stage { flex-direction: row-reverse; }
+
+/* Focused board: one grid per side. Stage centered, left piles against the left edge, and
+   resolution / deck / waiting room down the right edge beside both the stage and the level +
+   clock row. */
+.layout-focus .mat { display: grid; grid-template-columns: 1fr auto 1fr; grid-template-areas: "left stage right" "level clock right"; gap: .6rem .9rem; align-items: stretch; }
+.layout-focus .mat > .zone-level { grid-area: level; justify-self: start; }
+.layout-focus .mat > .zone-clock { grid-area: clock; }
+.layout-focus .zone-clock .spread-cards { justify-content: center; }
+.layout-focus .mat-stage { grid-area: stage; display: flex; flex-direction: column; justify-content: center; gap: .5rem; }
+.layout-focus .mat-right { grid-area: right; justify-self: end; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: .5rem; }
+/* Left: stock and memory at the top, the climax zone level with the middle of the stage. */
+.layout-focus .mat-left { grid-area: left; display: grid; grid-template-rows: 1fr auto 1fr; justify-items: start; gap: .5rem; }
+.layout-focus .mat-left-piles { grid-row: 1; align-self: start; display: flex; gap: .5rem; }
+.layout-focus .mat-left > .zone-climax { grid-row: 2; }
+/* The opponent sits across the table: everything turned around, so their stage faces ours. */
+.layout-focus .mat-opponent { grid-template-areas: "right clock level" "right stage left"; }
+.layout-focus .mat-opponent > .zone-level { justify-self: end; }
+.layout-focus .mat-opponent .stage, .layout-focus .mat-opponent .mat-left-piles { flex-direction: row-reverse; }
+.layout-focus .mat-opponent .mat-right, .layout-focus .mat-opponent .mat-stage { flex-direction: column-reverse; }
+.layout-focus .mat-opponent .mat-right { justify-self: start; }
+.layout-focus .mat-opponent .mat-left { justify-items: end; }
+.layout-focus .mat-opponent .mat-left-piles { grid-row: 3; align-self: end; }
+/* Climax zone: landscape and about twice the size of a pile card (1.5 x 1.3), matching the climax
+   art, which is printed sideways. */
+.layout-focus .zone.pile.zone-climax { --cx-w: calc(var(--card-h) * 1.95); --cx-h: calc(var(--card-w) * 1.95); min-width: calc(var(--cx-w) + .6rem); min-height: calc(var(--cx-h) + 1.6rem); }
+.layout-focus .zone-climax .pcard, .layout-focus .zone-climax .zone-empty { width: var(--cx-w); height: var(--cx-h); }
+
+/* Quick actions over one of your characters while the mouse is on its slot (or a button in it has
+   focus). They sit in the slot, not on the card, so they stay upright when the card is rested. */
+.slot-actions { position: absolute; left: 50%; top: 45%; z-index: 4; display: none; flex-direction: column; gap: .25rem; transform: translate(-50%, -50%); }
+.zone.slot:hover .slot-actions, .slot-actions:focus-within { display: flex; }
+.slot-actions button { font: inherit; font-size: .7rem; font-weight: 600; white-space: nowrap; color: var(--text); background: rgb(20 22 28 / .88); border: 1px solid var(--border); border-radius: .35rem; padding: .25rem .5rem; cursor: pointer; box-shadow: 0 2px 8px rgb(0 0 0 / .5); }
+.slot-actions button:hover { border-color: var(--accent); color: var(--accent); }
+.slot-actions button[data-act*='"attack"'] { color: #fff; background: #b23a3a; border-color: #d9625e; }
+.slot-actions button[data-act*='"attack"']:hover { background: #c94a4a; color: #fff; }
+
+/* Markers: a badge under the character with the top marker (or a card back) and the count. */
+.marker-pile { display: inline-flex; align-items: center; gap: .35rem; margin-top: .15rem; padding: .15rem .5rem .15rem .2rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); font-size: .68rem; white-space: nowrap; cursor: pointer; }
+.marker-pile:hover, .marker-pile.drop-over { border-color: var(--accent); color: var(--accent); }
+.marker-face { display: block; width: 1.1rem; height: 1.55rem; border-radius: .15rem; overflow: hidden; flex: none; }
+.marker-face img, .marker-face .pcard-back { display: block; width: 100%; height: 100%; object-fit: cover; }
+.damage-form { display: flex; align-items: flex-end; gap: .5rem; margin-top: .6rem; }
+.damage-form label { display: flex; flex-direction: column; gap: .2rem; font-size: .75rem; color: var(--muted); }
+.damage-form input { width: 4.5rem; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: .4rem; padding: .3rem .45rem; }
+.damage-form button { font: inherit; font-size: .8rem; font-weight: 600; color: var(--on-accent); background: #c0504d; border: none; border-radius: .4rem; padding: .4rem .7rem; cursor: pointer; }
+.damage-form button:hover { background: #d9625e; }
+.damage-note { margin: .35rem 0 0; }
 
 .zone { position: relative; display: flex; flex-direction: column; align-items: center; gap: .25rem; padding: .3rem; border: 1px dashed rgb(255 255 255 / .1); border-radius: .5rem; min-width: calc(var(--card-h) + .6rem); }
 .zone-label { font-size: .65rem; color: var(--muted); white-space: nowrap; text-transform: uppercase; letter-spacing: .06em; }
@@ -581,6 +639,22 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .spread-cards .pcard:hover { z-index: 2; }
 .mat-opponent .spread-cards { flex-direction: row-reverse; padding-right: 0; padding-left: calc(var(--card-w) * .5); }
 .mat-opponent .spread-cards .pcard { margin-right: 0; margin-left: calc(var(--card-w) * -.45); }
+
+/* Focused board: clock cards at the main pile size, using the room the narrow level zone frees up. */
+.layout-focus .zone-clock { --card-w: clamp(3.4rem, 5vw, 6.2rem); --card-h: calc(var(--card-w) * 1.4); }
+/* Focused board's level zone: one card wide, and half as wide as a stage slot (a slot is a stage
+   card's height plus padding, so it fits a rested card). Each card below covers all but the top
+   strip (level and cost) of the one above. */
+.layout-focus .zone.spread.zone-level { --card-w: calc(var(--stage-w) * .7 - .3rem); --card-h: calc(var(--card-w) * 1.4); flex: none; align-items: center; min-width: calc(var(--card-w) + .6rem); }
+.level-stack { display: flex; flex-direction: column; align-items: center; min-height: calc(var(--card-h) * 1.66); }
+.level-stack .pcard + .pcard { margin-top: calc(var(--card-h) * -.78); }
+.level-stack .pcard:hover { z-index: 2; }
+
+/* Board view switch in the controls panel. */
+.layout-switch { display: inline-flex; margin-top: .6rem; border: 1px solid var(--border); border-radius: .45rem; overflow: hidden; font-size: .78rem; }
+.layout-switch button { font: inherit; color: var(--muted); background: none; border: none; padding: .3rem .65rem; cursor: pointer; }
+.layout-switch button + button { border-left: 1px solid var(--border); }
+.layout-switch button[aria-pressed="true"] { color: var(--on-accent); background: var(--accent); font-weight: 600; }
 
 .pcard { position: relative; width: var(--card-w); height: var(--card-h); flex: none; border-radius: .35rem; transition: transform .15s; cursor: pointer; }
 .pcard img { width: 100%; height: 100%; object-fit: cover; border-radius: .35rem; display: block; box-shadow: 0 2px 6px rgb(0 0 0 / .5); }
@@ -650,7 +724,7 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .setup-step button.button-small:disabled { opacity: .4; cursor: default; }
 
 @media (max-width: 70rem) {
-  .play { grid-template-columns: 1fr; }
+  .play, .play.layout-focus { grid-template-columns: 1fr; }
   .play-side { position: static; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
 }
 .play-zoom { position: fixed; top: 50%; left: 2rem; z-index: 40; transform: translateY(-50%); pointer-events: none; }

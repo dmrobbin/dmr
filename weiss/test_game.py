@@ -133,12 +133,123 @@ class MoveTests(TestCase):
         self.assertEqual(len(zones(self.state, 2)["climax"]), 1)  # only the player whose turn ended
         self.assertIn("climax zone into the waiting room", self.state["log"][-2]["text"])
 
+    def test_attack_rests_and_trigger_checks(self):
+        uid = self.hand[0]["uid"]
+        self.play(uid, "C2")
+        game.apply(self.state, 1, {"type": "attack", "uid": uid},
+                   name=lambda pk: f"Card{pk}", trigger=lambda pk: "soul" if pk == 15 else "")
+        self.assertEqual(self.state["players"]["1"]["stage"]["C2"]["pos"], "rest")
+        self.assertEqual([c["card"] for c in zones(self.state, 1)["resolution"]], [15])
+        self.assertEqual(self.state["log"][-1]["text"], "attacked with Card20 — trigger check: Card15 [soul]")
+        with self.assertRaises(game.GameError):  # already rested
+            game.apply(self.state, 1, {"type": "attack", "uid": uid})
+        back = self.hand[0]["uid"]
+        self.play(back, "B1")
+        with self.assertRaises(game.GameError):  # back stage can't attack
+            game.apply(self.state, 1, {"type": "attack", "uid": back})
+
     def test_turns_alternate(self):
         with self.assertRaises(game.GameError):
             game.apply(self.state, 2, {"type": "end_turn"})
         game.apply(self.state, 1, {"type": "end_turn"})
         self.assertEqual((self.state["turn"], self.state["turn_number"]), ("2", 2))
         self.assertTrue(game.view(self.state, 2)["my_turn"])
+
+
+class MarkerTests(TestCase):
+    def setUp(self):
+        self.state = started()
+        self.hand = zones(self.state, 1)["hand"]  # cards 20, 19, 18, 17, 16
+        game.apply(self.state, 1, {"type": "move", "uid": self.hand[0]["uid"], "to": "C1"})  # 20 on C1
+
+    def markers(self, slot, player=1):
+        return [c["card"] for c in self.state["players"][str(player)]["markers"][slot]]
+
+    def test_markers_face_up_or_down_and_hidden_from_opponent_when_down(self):
+        game.apply(self.state, 1, {"type": "move", "uid": self.hand[0]["uid"], "to": "marker:C1"})
+        game.apply(self.state, 1, {"type": "move_top", "from": "deck", "to": "marker:C1", "face_down": True})
+        self.assertEqual(self.markers("C1"), [19, 15])
+        opponent_view = game.view(self.state, 2)["opponent"]["markers"]["C1"]
+        self.assertEqual([c["card"] for c in opponent_view], [19, None])
+        self.assertEqual([c["card"] for c in game.view(self.state, 1)["me"]["markers"]["C1"]], [19, 15])
+        self.assertIn("markers under center stage (left)", self.state["log"][-1]["text"])
+
+    def test_marker_needs_a_character(self):
+        with self.assertRaises(game.GameError):
+            game.apply(self.state, 1, {"type": "move", "uid": self.hand[0]["uid"], "to": "marker:C2"})
+        character = self.state["players"]["1"]["stage"]["C1"]["uid"]
+        with self.assertRaises(game.GameError):  # not under itself
+            game.apply(self.state, 1, {"type": "move", "uid": character, "to": "marker:C1"})
+        self.assertIsNotNone(self.state["players"]["1"]["stage"]["C1"])  # nothing moved
+
+    def test_markers_follow_the_character_and_go_to_waiting_room_when_it_leaves(self):
+        game.apply(self.state, 1, {"type": "move_top", "from": "deck", "to": "marker:C1", "face_down": True})
+        character = self.state["players"]["1"]["stage"]["C1"]["uid"]
+        game.apply(self.state, 1, {"type": "move", "uid": character, "to": "C3"})
+        self.assertEqual((self.markers("C1"), self.markers("C3")), ([], [15]))
+        game.apply(self.state, 1, {"type": "move", "uid": character, "to": "waiting"})
+        self.assertEqual(self.markers("C3"), [])
+        waiting = zones(self.state, 1)["waiting"]
+        self.assertEqual([c["card"] for c in waiting], [20, 15])  # the character, then its marker
+        self.assertFalse(waiting[1]["face_down"])
+
+    def test_marker_pile_works_like_other_piles(self):
+        game.apply(self.state, 1, {"type": "move_top", "from": "deck", "to": "marker:C1", "count": 2})
+        marker = self.state["players"]["1"]["markers"]["C1"][0]
+        game.apply(self.state, 1, {"type": "flip", "uid": marker["uid"]})
+        self.assertTrue(marker["face_down"])
+        game.apply(self.state, 1, {"type": "move", "uid": marker["uid"], "to": "hand"})
+        game.apply(self.state, 1, {"type": "move_all", "from": "marker:C1", "to": "stock"})
+        self.assertEqual(self.markers("C1"), [])
+        self.assertEqual(len(zones(self.state, 1)["stock"]), 1)
+
+    def test_old_games_without_markers_still_work(self):
+        for side in self.state["players"].values():
+            del side["markers"]
+        game.apply(self.state, 1, {"type": "move_top", "from": "deck", "to": "marker:C1"})
+        self.assertEqual(self.markers("C1"), [15])
+        self.assertEqual(game.view(self.state, 2)["me"]["markers"]["C1"], [])
+
+
+class DamageTests(TestCase):
+    def setUp(self):
+        self.state = started()  # deck top is card 15, then 14, 13, ...
+
+    def damage(self, amount, climaxes=()):
+        return game.apply(self.state, 1, {"type": "damage", "count": amount},
+                          name=lambda pk: f"Card{pk}", is_climax=lambda pk: pk in climaxes)
+
+    def test_damage_goes_to_the_clock_at_once(self):
+        self.damage(3)
+        self.assertEqual([c["card"] for c in zones(self.state, 1)["clock"]], [15, 14, 13])
+        self.assertEqual(self.state["log"][-1]["text"], "took 3 damage: Card15, Card14, Card13")
+        self.assertFalse(game.view(self.state, 1)["damage_pending"])
+
+    def test_climax_cancels_the_damage_after_the_board_shows_it(self):
+        self.damage(4, climaxes={14})
+        # Revealing stops at the climax; for now both cards sit in the clock.
+        self.assertEqual([c["card"] for c in zones(self.state, 1)["clock"]], [15, 14])
+        self.assertTrue(game.view(self.state, 1)["damage_pending"])
+        self.assertFalse(game.view(self.state, 2)["damage_pending"])
+        game.apply(self.state, 1, {"type": "resolve_damage"})
+        self.assertEqual(zones(self.state, 1)["clock"], [])
+        self.assertEqual([c["card"] for c in zones(self.state, 1)["waiting"]], [15, 14])
+        self.assertEqual(self.state["log"][-1]["text"],
+                         "negated 4 damage: revealed the climax Card14 (2 cards to the waiting room)")
+        self.assertFalse(game.view(self.state, 1)["damage_pending"])
+
+    def test_any_action_finishes_a_cancelled_damage_first(self):
+        self.damage(2, climaxes={15})
+        game.apply(self.state, 2, {"type": "chat", "text": "nice"})
+        self.assertEqual(zones(self.state, 1)["clock"], [])
+        self.assertIn("negated 2 damage", self.state["log"][-2]["text"])
+
+    def test_damage_limits(self):
+        with self.assertRaises(game.GameError):
+            self.damage(0)
+        zones(self.state, 1)["deck"][:] = zones(self.state, 1)["deck"][-2:]
+        self.damage(5)
+        self.assertIn("deck ran out after 2", self.state["log"][-1]["text"])
 
 
 class RoomFlowTests(TestCase):
@@ -205,6 +316,20 @@ class RoomFlowTests(TestCase):
         self.assertEqual(self.client.get(reverse("weiss:play_join", args=[room.invite_token])).status_code, 403)
         room.refresh_from_db()
         self.assertEqual(room.guest, self.guest)
+
+    def test_damage_through_the_room_spots_climaxes_by_card_type(self):
+        climax = Card.objects.create(serial_number="NIK/S135-E099", name="Victory", card_type="Climax",
+                                     expansion="NIKKE", expansion_id=290)
+        room = GameRoom.objects.create(host=self.host, guest=self.guest, status="playing",
+                                       state=game.new_game([(self.host.pk, "alice", [climax.pk] * 10),
+                                                            (self.guest.pk, "bob", [climax.pk] * 10)]))
+        self.as_user(self.host)
+        url = reverse("weiss:play_action", args=[room.pk])
+        data = self.client.post(url, json.dumps({"type": "damage", "count": 3}), content_type="application/json").json()
+        self.assertTrue(data["board"]["damage_pending"])
+        data = self.client.post(url, json.dumps({"type": "resolve_damage"}), content_type="application/json").json()
+        self.assertEqual(data["board"]["me"]["zones"]["clock"], [])
+        self.assertIn("negated 3 damage: revealed the climax Victory", data["board"]["log"][-1]["text"])
 
     def test_bad_action_returns_error_with_board(self):
         room = GameRoom.objects.create(host=self.host, guest=self.guest, status="playing",

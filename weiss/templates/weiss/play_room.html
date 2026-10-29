@@ -73,7 +73,7 @@
       })();
     </script>
   {% else %}
-    <div id="play" class="play"
+    <div id="play" class="play layout-focus"
          data-state-url="{% url 'weiss:play_state' room.pk %}"
          data-action-url="{% url 'weiss:play_action' room.pk %}"
          data-csrf="{{ csrf_token }}">

@@ -23,6 +23,11 @@
     memory: "Memory", climax: "Climax", resolution: "Resolution",
     C1: "Center left", C2: "Center middle", C3: "Center right", B1: "Back left", B2: "Back right",
   };
+  const STAGE = ["C1", "C2", "C3", "B1", "B2"];
+  // Each stage slot has a pile of markers under it, named "marker:<slot>" like the server does.
+  for (const slot of STAGE) LABELS[`marker:${slot}`] = `Markers under ${LABELS[slot].toLowerCase()}`;
+  const isMarkerPile = (zone) => zone.startsWith("marker:");
+  const DAMAGE_RESOLVE_MS = 500; // how long a climax-cancelled damage stays on the board
   const MOVE_TARGETS = ["hand", "C1", "C2", "C3", "B1", "B2", "climax", "clock", "level", "stock",
     "memory", "waiting", "resolution"];
   const PUBLIC_PILES = ["waiting", "memory", "level", "clock", "climax", "resolution"];
@@ -33,6 +38,24 @@
   let modal = null; // {title, owner: "me"|"opponent", zone} or {title, revealed: [...]}
   let error = "";
   let busy = false;
+  let resolveTimer = null; // pending "resolve_damage" after a climax cancels our damage
+
+  // Board view: "focus" (big stage, piles around it) or "classic" (three even rows). Remembered
+  // per browser; storage can be unavailable (private windows), so it falls back to focus.
+  const LAYOUT_KEY = "weiss-board-layout";
+  const LAYOUTS = { focus: "Focused", classic: "Classic" };
+  let layout = "focus";
+  try {
+    if (LAYOUTS[localStorage.getItem(LAYOUT_KEY)]) layout = localStorage.getItem(LAYOUT_KEY);
+  } catch (e) { /* keep the default */ }
+
+  function setLayout(next) {
+    layout = next;
+    try { localStorage.setItem(LAYOUT_KEY, next); } catch (e) { /* only this visit, then */ }
+    for (const name of Object.keys(LAYOUTS)) root.classList.toggle(`layout-${name}`, name === layout);
+    if (board) render();
+  }
+  setLayout(layout);
 
   // --- Talking to the server -------------------------------------------------------------------
 
@@ -48,6 +71,13 @@
     board = data.board;
     if (data.revealed) modal = { title: data.revealed.title, revealed: data.revealed.cards };
     render();
+    // A climax cancelled our damage: leave it on the board for a moment, then let the server clean up.
+    if (board.damage_pending && !resolveTimer) {
+      resolveTimer = setTimeout(() => {
+        resolveTimer = null;
+        act({ type: "resolve_damage" });
+      }, DAMAGE_RESOLVE_MS);
+    }
   }
 
   async function poll() {
@@ -128,28 +158,77 @@
     const hidden = !Array.isArray(pile);
     const count = hidden ? pile.count : pile.length;
     const top = hidden ? (count ? backHtml() : "") : cardHtml(pile[pile.length - 1], owner, zone);
-    return `<div class="zone pile" data-pile="${zone}" data-owner="${owner}" data-drop="${owner === "me" ? zone : ""}">
+    return `<div class="zone pile zone-${zone}" data-pile="${zone}" data-owner="${owner}" data-drop="${owner === "me" ? zone : ""}">
       <span class="zone-label">${LABELS[zone]} <b>${count}</b></span>
       <div class="pile-top">${top || '<span class="zone-empty"></span>'}</div>
     </div>`;
   }
 
+  function pileCards(side, zone) {
+    if (isMarkerPile(zone)) return (side.markers || {})[zone.slice("marker:".length)] || [];
+    return side.zones[zone] || [];
+  }
+
+  // A character's markers: a small badge under it (top marker's picture, or a card back if it's
+  // face down, plus the count). Click it like any pile; drop a card on it to add a marker.
+  function markerHtml(side, owner, slot) {
+    const markers = pileCards(side, `marker:${slot}`);
+    if (!markers.length) return "";
+    const top = markers[markers.length - 1];
+    const info = top.card && !top.face_down ? cards[top.card] : null;
+    const face = info ? `<img src="${esc(info.image)}" alt="" draggable="false">` : '<span class="pcard-back"></span>';
+    return `<div class="marker-pile" data-pile="marker:${slot}" data-owner="${owner}" data-drop="${owner === "me" ? `marker:${slot}` : ""}"
+        title="${markers.length} marker${markers.length === 1 ? "" : "s"} — click for options">
+      <span class="marker-face">${face}</span><span>${markers.length} marker${markers.length === 1 ? "" : "s"}</span>
+    </div>`;
+  }
+
+  // Quick actions shown while hovering one of our characters: waiting room, attack (standing
+  // center-stage characters only) and "More" for the full menu.
+  function slotActionsHtml(card, slot) {
+    const act = (action) => esc(JSON.stringify(action));
+    const attack = slot.startsWith("C") && card.pos === "stand"
+      ? `<button type="button" data-act='${act({ type: "attack", uid: card.uid })}'>⚔ Attack</button>` : "";
+    return `<div class="slot-actions">
+      ${attack}
+      <button type="button" data-act='${act({ type: "move", uid: card.uid, to: "waiting" })}'>→ Waiting room</button>
+      <button type="button" data-more>More…</button>
+    </div>`;
+  }
+
   function slotHtml(side, owner, slot) {
+    const card = side.stage[slot];
     return `<div class="zone slot" data-drop="${owner === "me" ? slot : ""}" data-owner="${owner}">
       <span class="zone-label">${LABELS[slot]}</span>
-      ${cardHtml(side.stage[slot], owner, slot) || '<span class="zone-empty"></span>'}
+      ${cardHtml(card, owner, slot) || '<span class="zone-empty"></span>'}
+      ${card && owner === "me" ? slotActionsHtml(card, slot) : ""}
+      ${markerHtml(side, owner, slot)}
+    </div>`;
+  }
+
+  // The level zone: a narrow column, its (at most 4) cards stacked closely top to bottom so each
+  // one's level and cost corner still shows.
+  function levelHtml(side, owner) {
+    const pile = side.zones.level;
+    return `<div class="zone spread zone-level" data-pile="level" data-owner="${owner}" data-drop="${owner === "me" ? "level" : ""}">
+      <span class="zone-label">${LABELS.level} <b>${pile.length}</b></span>
+      <div class="level-stack">${pile.map((c) => cardHtml(c, owner, "level")).join("") || '<span class="zone-empty"></span>'}</div>
     </div>`;
   }
 
   function spreadHtml(side, owner, zone) {
     const pile = side.zones[zone];
-    return `<div class="zone spread" data-pile="${zone}" data-owner="${owner}" data-drop="${owner === "me" ? zone : ""}">
+    return `<div class="zone spread zone-${zone}" data-pile="${zone}" data-owner="${owner}" data-drop="${owner === "me" ? zone : ""}">
       <span class="zone-label">${LABELS[zone]} <b>${pile.length}</b></span>
       <div class="spread-cards">${pile.map((c) => cardHtml(c, owner, zone)).join("") || '<span class="zone-empty"></span>'}</div>
     </div>`;
   }
 
   function matHtml(side, owner) {
+    return layout === "classic" ? classicMatHtml(side, owner) : focusMatHtml(side, owner);
+  }
+
+  function classicMatHtml(side, owner) {
     // Rows from the middle of the table outwards; the opponent's side is mirrored by CSS.
     return `<div class="mat mat-${owner}">
       <div class="mat-row">${pileHtml(side, owner, "climax")}
@@ -160,6 +239,26 @@
         ${pileHtml(side, owner, "deck")}</div>
       <div class="mat-row">${spreadHtml(side, owner, "level")}${spreadHtml(side, owner, "clock")}
         ${pileHtml(side, owner, "memory")}${pileHtml(side, owner, "waiting")}</div>
+    </div>`;
+  }
+
+  function focusMatHtml(side, owner) {
+    // From the middle of the table outwards: the stage (center row, then back row) with stock and
+    // memory above the climax zone on the left (the climax level with the middle of the stage),
+    // level beneath that, and the clock under the stage (centered on the board). Resolution, deck
+    // and waiting room run down the right edge.
+    // The opponent's side is the same turned around by CSS.
+    return `<div class="mat mat-${owner}">
+      <div class="mat-left">
+        <div class="mat-left-piles">${pileHtml(side, owner, "stock")}${pileHtml(side, owner, "memory")}</div>
+        ${pileHtml(side, owner, "climax")}
+      </div>
+      <div class="mat-stage">
+        <div class="stage">${["C1", "C2", "C3"].map((s) => slotHtml(side, owner, s)).join("")}</div>
+        <div class="stage">${["B1", "B2"].map((s) => slotHtml(side, owner, s)).join("")}</div>
+      </div>
+      <div class="mat-right">${pileHtml(side, owner, "resolution")}${pileHtml(side, owner, "deck")}${pileHtml(side, owner, "waiting")}</div>
+      ${levelHtml(side, owner)}${spreadHtml(side, owner, "clock")}
     </div>`;
   }
 
@@ -181,16 +280,7 @@
           <div class="hand-cards">${me.zones.hand.map((c) => cardHtml(c, "me", "hand")).join("")}</div></div>
       </div>`;
 
-    controlsEl.innerHTML = `
-      ${error ? `<p class="panel-error" role="alert">${esc(error)}</p>` : ""}
-      <p class="play-turn ${board.my_turn ? "mine" : ""}">${board.my_turn ? "Your turn" : "Opponent's turn"} · turn ${board.turn_number}</p>
-      <div class="play-buttons">
-        <button type="button" data-act='{"type":"move_top","from":"deck","to":"hand"}'>Draw</button>
-        <button type="button" data-act='{"type":"stand_all"}'>Stand all</button>
-        <button type="button" data-act='{"type":"move_top","from":"deck","to":"clock"}'>Damage</button>
-        <button type="button" data-act='{"type":"move_top","from":"deck","to":"resolution"}'>Trigger</button>
-        <button type="button" data-act='{"type":"end_turn"}' ${board.my_turn ? "" : "disabled"}>End turn</button>
-      </div>`;
+    renderControls();
 
     const atBottom = logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 20;
     logEl.innerHTML = board.log.map((entry) => entry.chat
@@ -199,6 +289,41 @@
     if (atBottom) logEl.scrollTop = logEl.scrollHeight;
 
     renderModal();
+  }
+
+  // The controls are built once and then only updated, so the damage amount being typed survives
+  // the board redrawing on every opponent move.
+  function renderControls() {
+    if (!controlsEl.dataset.built) {
+      controlsEl.dataset.built = "1";
+      controlsEl.innerHTML = `
+        <p class="panel-error" role="alert" data-error hidden></p>
+        <p class="play-turn" data-turn></p>
+        <div class="play-buttons">
+          <button type="button" data-act='{"type":"move_top","from":"deck","to":"hand"}'>Draw</button>
+          <button type="button" data-act='{"type":"stand_all"}'>Stand all</button>
+          <button type="button" data-act='{"type":"move_top","from":"deck","to":"resolution"}'>Trigger</button>
+          <button type="button" data-act='{"type":"end_turn"}' data-end-turn>End turn</button>
+        </div>
+        <form class="damage-form" data-damage>
+          <label>Damage <input type="number" name="count" min="1" max="20" value="1" required></label>
+          <button type="submit">Take damage</button>
+        </form>
+        <p class="muted small damage-note">Cards go to your clock one at a time; a climax cancels it all.</p>
+        <div class="layout-switch" role="group" aria-label="Board view">
+          ${Object.entries(LAYOUTS).map(([name, label]) => `<button type="button" data-layout="${name}">${label}</button>`).join("")}
+        </div>`;
+    }
+    controlsEl.querySelectorAll("[data-layout]").forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.layout === layout));
+    });
+    const errorEl = controlsEl.querySelector("[data-error]");
+    errorEl.textContent = error;
+    errorEl.hidden = !error;
+    const turn = controlsEl.querySelector("[data-turn]");
+    turn.textContent = `${board.my_turn ? "Your turn" : "Opponent's turn"} · turn ${board.turn_number}`;
+    turn.classList.toggle("mine", board.my_turn);
+    controlsEl.querySelector("[data-end-turn]").disabled = !board.my_turn;
   }
 
   function renderModal() {
@@ -213,7 +338,7 @@
     } else {
       owner = modal.owner;
       const side = owner === "me" ? board.me : board.opponent;
-      list = (side.zones[modal.zone] || []).slice().reverse().map((c) => cardHtml(c, owner, modal.zone));
+      list = pileCards(side, modal.zone).slice().reverse().map((c) => cardHtml(c, owner, modal.zone));
     }
     modalEl.hidden = false;
     modalEl.innerHTML = `<div class="play-modal-box" role="dialog" aria-label="${esc(modal.title)}">
@@ -305,6 +430,9 @@
     const zone = el.dataset.zone;
     const info = el.dataset.card ? cards[el.dataset.card] : null;
     const items = [];
+    if (["C1", "C2", "C3"].includes(zone) && el.classList.contains("pos-stand")) {
+      items.push({ label: "⚔ Attack (rest + trigger check)", action: { type: "attack", uid } }, "-");
+    }
     if (["C1", "C2", "C3", "B1", "B2"].includes(zone)) {
       items.push({ label: "Stand", action: { type: "position", uid, pos: "stand" } },
         { label: "Rest", action: { type: "position", uid, pos: "rest" } },
@@ -318,18 +446,44 @@
     }
     items.push({ label: "→ Deck (top)", action: { type: "move", uid, to: "deck", where: "top" } },
       { label: "→ Deck (bottom)", action: { type: "move", uid, to: "deck", where: "bottom" } });
+    items.push(...markerItems((slot, face_down) => ({ type: "move", uid, to: `marker:${slot}`, face_down }),
+      (slot) => slot !== zone && `marker:${slot}` !== zone));
     return [info ? info.name : "Card", items];
+  }
+
+  // "Marker under <character>" choices, face up and face down, for each of our occupied stage slots.
+  function markerItems(makeAction, allowed = () => true, prefix = "Marker") {
+    const items = [];
+    for (const slot of STAGE) {
+      const character = board.me.stage[slot];
+      if (!character || !allowed(slot)) continue;
+      const info = character.card ? cards[character.card] : null;
+      const under = `${LABELS[slot].toLowerCase()}${info ? ` (${info.name})` : ""}`;
+      items.push({ label: `${prefix} under ${under}, face up`, action: makeAction(slot, false) },
+        { label: `${prefix} under ${under}, face down`, action: makeAction(slot, true) });
+    }
+    return items.length ? ["-", ...items] : [];
   }
 
   function pileMenu(zone, owner) {
     const view = { owner, zone, title: `${owner === "me" ? "Your" : `${board.opponent.name}'s`} ${LABELS[zone].toLowerCase()}` };
-    if (owner !== "me") return PUBLIC_PILES.includes(zone) ? [LABELS[zone], [{ label: "View all", view }]] : null;
+    if (owner !== "me") {
+      return PUBLIC_PILES.includes(zone) || isMarkerPile(zone) ? [LABELS[zone], [{ label: "View all", view }]] : null;
+    }
+    if (isMarkerPile(zone)) {
+      return [LABELS[zone], [
+        { label: "View all", view },
+        { label: "All → waiting room", action: { type: "move_all", from: zone, to: "waiting" } },
+        { label: "All → hand", action: { type: "move_all", from: zone, to: "hand" } },
+        { label: "All → stock", action: { type: "move_all", from: zone, to: "stock" } },
+      ]];
+    }
     if (zone === "deck") {
       return ["Deck", [
         { label: "Draw 1", action: { type: "move_top", from: "deck", to: "hand" } },
         { label: "Draw…", action: { type: "move_top", from: "deck", to: "hand" }, prompt: "How many cards to draw?" },
         "-",
-        { label: "Damage: top → clock", action: { type: "move_top", from: "deck", to: "clock" } },
+        { label: "Take damage…", action: { type: "damage" }, prompt: "How much damage?" },
         { label: "Trigger: top → resolution", action: { type: "move_top", from: "deck", to: "resolution" } },
         { label: "Top → stock", action: { type: "move_top", from: "deck", to: "stock" } },
         { label: "Top → waiting room", action: { type: "move_top", from: "deck", to: "waiting" } },
@@ -338,6 +492,8 @@
         { label: "Look at top…", action: { type: "peek" }, prompt: "Look at how many cards?" },
         { label: "Search deck", action: { type: "search" } },
         { label: "Shuffle", action: { type: "shuffle" } },
+        ...markerItems((slot, face_down) => ({ type: "move_top", from: "deck", to: `marker:${slot}`, face_down }),
+          () => true, "Top card → marker"),
       ]];
     }
     if (zone === "stock") {
@@ -373,9 +529,23 @@
       act(action);
       return;
     }
+    const layoutButton = event.target.closest("[data-layout]");
+    if (layoutButton) {
+      setLayout(layoutButton.dataset.layout);
+      return;
+    }
     const button = event.target.closest("[data-act]");
     if (button) {
       act(JSON.parse(button.dataset.act));
+      return;
+    }
+    const more = event.target.closest("[data-more]");
+    if (more) {
+      const card = more.closest(".zone.slot").querySelector(".pcard[data-uid]");
+      if (card) {
+        const [title, items] = cardMenu(card);
+        showMenu(event.clientX, event.clientY, title, items);
+      }
       return;
     }
     if (event.target.closest("[data-close]") || event.target === modalEl) {
@@ -442,6 +612,13 @@
   });
 
   // --- Chat ------------------------------------------------------------------------------------
+
+  controlsEl.addEventListener("submit", (event) => {
+    if (!event.target.matches("[data-damage]")) return;
+    event.preventDefault();
+    const count = Number(event.target.elements.count.value);
+    if (count >= 1) act({ type: "damage", count });
+  });
 
   $("[data-chat]").addEventListener("submit", (event) => {
     event.preventDefault();
