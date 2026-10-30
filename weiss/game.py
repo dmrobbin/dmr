@@ -28,6 +28,7 @@ HIDDEN_ZONES = {"deck", "stock"}  # face down: no one sees the cards (the owner 
 PRIVATE_ZONES = {"hand"}  # only the owner sees the cards
 POSITIONS = {"stand", "rest", "reverse"}
 STARTING_HAND = 5
+ENCORE_COST = 3  # stock paid to keep a reversed character on the stage, rested
 MAX_LOG = 100
 
 LABELS = {
@@ -256,21 +257,23 @@ def apply(state, player, action, name=lambda pk: f"card {pk}", shuffle=random.sh
             count = 1
         if len(zones[src]) < count:
             raise GameError(f"Your {LABELS[src]} only has {len(zones[src])} cards.")
+        bottom = action.get("where") == "bottom"
         moved = []
         for _ in range(count):
-            card = zones[src].pop()
+            card = zones[src].pop(0 if bottom else -1)
             occupant = put(side, card, to, face_down=action.get("face_down"))
             if occupant:
                 put(side, occupant, "waiting")
                 discard_markers(state, player, to)
             moved.append(card)
-        if src == "deck" and to == "hand":
+        end = "bottom" if bottom else "top"
+        if src == "deck" and to == "hand" and not bottom:
             add_log(state, player, f"drew {count} card{'s' if count != 1 else ''}")
         elif is_public(to, moved[0]):
             names = ", ".join(name(c["card"]) for c in moved)
-            add_log(state, player, f"put the top {count} of their {LABELS[src]} into {LABELS[to]}: {names}")
+            add_log(state, player, f"put the {end} {count} of their {LABELS[src]} into {LABELS[to]}: {names}")
         else:
-            add_log(state, player, f"moved the top {count} of their {LABELS[src]} to {LABELS[to]}")
+            add_log(state, player, f"moved the {end} {count} of their {LABELS[src]} to {LABELS[to]}")
         return {}
 
     if kind == "move_all":
@@ -355,6 +358,42 @@ def apply(state, player, action, name=lambda pk: f"card {pk}", shuffle=random.sh
         icons = trigger(checked["card"])
         add_log(state, player, f"attacked with {attacker} — trigger check: {name(checked['card'])}"
                                + (f" [{icons}]" if icons else " (no trigger)"))
+        return {}
+
+    if kind == "encore":
+        # Pay 3 stock to keep a reversed character on the stage; it stays in its slot, rested.
+        where, _ = find(side, action.get("uid", ""))
+        if where not in STAGE_SLOTS:
+            raise GameError("Only characters on the stage can be encored.")
+        card = side["stage"][where]
+        if card["pos"] != "reverse":
+            raise GameError("Only a reversed character can be encored.")
+        if len(zones["stock"]) < ENCORE_COST:
+            raise GameError(f"Encore costs {ENCORE_COST} stock; you have {len(zones['stock'])}.")
+        for _ in range(ENCORE_COST):
+            put(side, zones["stock"].pop(), "waiting")
+        card["pos"] = "rest"
+        who = name(card["card"]) if not card["face_down"] else "a character"
+        add_log(state, player, f"encored {who} (paid {ENCORE_COST} stock)")
+        return {}
+
+    if kind == "deck_out":
+        # Refresh: with the deck empty, the waiting room is shuffled into a new deck and the
+        # top card of it goes to the clock (refresh damage, which a climax doesn't cancel).
+        if zones["deck"]:
+            raise GameError("Your deck isn't empty yet.")
+        if not zones["waiting"]:
+            raise GameError("Your waiting room is empty.")
+        cards, zones["waiting"] = zones["waiting"], []
+        for card in cards:
+            put(side, card, "deck")
+        shuffle(zones["deck"])
+        for card in zones["deck"]:
+            card["uid"] = new_uid()
+        damage = zones["deck"].pop()
+        put(side, damage, "clock")
+        add_log(state, player, f"decked out: shuffled {len(cards)} cards from the waiting room into their deck "
+                               f"and put {name(damage['card'])} into their clock")
         return {}
 
     if kind == "damage":

@@ -148,6 +148,39 @@ class MoveTests(TestCase):
         with self.assertRaises(game.GameError):  # back stage can't attack
             game.apply(self.state, 1, {"type": "attack", "uid": back})
 
+    def test_deck_bottom_card_to_waiting_room(self):
+        game.apply(self.state, 1, {"type": "move_top", "from": "deck", "to": "waiting", "where": "bottom"},
+                   name=lambda pk: f"Card{pk}")
+        self.assertEqual([c["card"] for c in zones(self.state, 1)["waiting"]], [1])
+        self.assertEqual(zones(self.state, 1)["deck"][-1]["card"], 15)  # the top is untouched
+        self.assertEqual(self.state["log"][-1]["text"], "put the bottom 1 of their deck into waiting room: Card1")
+
+    def test_encore_pays_three_stock_and_rests_a_reversed_character(self):
+        uid = self.hand[0]["uid"]
+        self.play(uid, "C1")
+        game.apply(self.state, 1, {"type": "move_top", "from": "deck", "to": "stock", "count": 2})
+        with self.assertRaises(game.GameError):  # not reversed
+            game.apply(self.state, 1, {"type": "encore", "uid": uid})
+        game.apply(self.state, 1, {"type": "position", "uid": uid, "pos": "reverse"})
+        with self.assertRaises(game.GameError):  # only 2 stock
+            game.apply(self.state, 1, {"type": "encore", "uid": uid})
+        game.apply(self.state, 1, {"type": "move_top", "from": "deck", "to": "stock"})
+        game.apply(self.state, 1, {"type": "encore", "uid": uid}, name=lambda pk: f"Card{pk}")
+        self.assertEqual(self.state["players"]["1"]["stage"]["C1"]["pos"], "rest")
+        self.assertEqual(zones(self.state, 1)["stock"], [])
+        self.assertEqual(len(zones(self.state, 1)["waiting"]), 3)
+        self.assertEqual(self.state["log"][-1]["text"], "encored Card20 (paid 3 stock)")
+
+    def test_deck_out_refreshes_from_the_waiting_room_and_takes_one_damage(self):
+        with self.assertRaises(game.GameError):  # deck isn't empty
+            game.apply(self.state, 1, {"type": "deck_out"})
+        game.apply(self.state, 1, {"type": "move_top", "from": "deck", "to": "waiting", "count": 15})
+        game.apply(self.state, 1, {"type": "deck_out"}, shuffle=no_shuffle, name=lambda pk: f"Card{pk}")
+        self.assertEqual(zones(self.state, 1)["waiting"], [])
+        self.assertEqual([c["card"] for c in zones(self.state, 1)["clock"]], [1])
+        self.assertEqual(len(zones(self.state, 1)["deck"]), 14)
+        self.assertIn("decked out", self.state["log"][-1]["text"])
+
     def test_turns_alternate(self):
         with self.assertRaises(game.GameError):
             game.apply(self.state, 2, {"type": "end_turn"})

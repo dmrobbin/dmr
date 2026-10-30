@@ -607,8 +607,8 @@ button.button-small.secondary { border: 1px solid var(--border); }
    focus). They sit in the slot, not on the card, so they stay upright when the card is rested. */
 .slot-actions { position: absolute; left: 50%; top: 45%; z-index: 4; display: none; flex-direction: column; gap: .25rem; transform: translate(-50%, -50%); }
 .zone.slot:hover .slot-actions, .slot-actions:focus-within { display: flex; }
-.slot-actions button { font: inherit; font-size: .7rem; font-weight: 600; white-space: nowrap; color: var(--text); background: rgb(20 22 28 / .88); border: 1px solid var(--border); border-radius: .35rem; padding: .25rem .5rem; cursor: pointer; box-shadow: 0 2px 8px rgb(0 0 0 / .5); }
-.slot-actions button:hover { border-color: var(--accent); color: var(--accent); }
+:is(.slot-actions, .hand-actions) button { font: inherit; font-size: .7rem; font-weight: 600; white-space: nowrap; color: var(--text); background: rgb(20 22 28 / .88); border: 1px solid var(--border); border-radius: .35rem; padding: .25rem .5rem; cursor: pointer; box-shadow: 0 2px 8px rgb(0 0 0 / .5); }
+:is(.slot-actions, .hand-actions) button:hover { border-color: var(--accent); color: var(--accent); }
 .slot-actions button[data-act*='"attack"'] { color: #fff; background: #b23a3a; border-color: #d9625e; }
 .slot-actions button[data-act*='"attack"']:hover { background: #c94a4a; color: #fff; }
 
@@ -666,13 +666,25 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .pcard.pos-reverse .pcard-badge { transform: translate(-50%, -50%) rotate(180deg); }
 .pcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+/* Active colors: a strip of the colors in your clock and level zone, right-aligned between the board
+   and your hand so it sits under the waiting room. Colors come from .color-<name> (--chip). */
+.active-colors { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .35rem; padding: 0 .3rem; }
+.active-colors .zone-label { margin-right: .15rem; }
+.active-color { display: inline-flex; align-items: center; gap: .3rem; padding: .12rem .5rem; border-radius: 999px; font-size: .72rem; font-weight: 600; border: 1px solid var(--chip, var(--border)); background: color-mix(in srgb, var(--chip, var(--muted)) 22%, var(--surface)); }
+.active-color::before { content: ""; width: .6rem; height: .6rem; border-radius: 50%; background: var(--chip, var(--muted)); }
+
 .hand { display: flex; flex-direction: column; align-items: center; gap: .3rem; padding: .4rem; border-radius: .5rem; }
 .hand-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: .35rem; min-height: var(--card-h); }
 /* Your own hand is drawn larger than the board, and a hovered card lifts and grows over the board. */
 .hand-me { --card-w: clamp(4rem, 6vw, 6.4rem); --card-h: calc(var(--card-w) * 1.4); }
 .hand-me .hand-cards { gap: .5rem; }
 .hand-me .pcard { transform-origin: bottom center; }
-.hand-me .pcard:hover { z-index: 5; transform: translateY(-.6rem) scale(2.3); }
+.hand-card { position: relative; flex: none; }
+.hand-card:hover .pcard { z-index: 5; transform: translateY(-.6rem) scale(2.3); }
+/* A hovered hand card's quick moves sit over the middle of the enlarged card. They're outside the
+   card element so they don't scale with it. */
+.hand-actions { position: absolute; left: 50%; bottom: calc(.6rem + var(--card-h) * 2.3 * .5); z-index: 6; display: none; flex-direction: column; gap: .25rem; transform: translate(-50%, 50%); }
+.hand-card:hover .hand-actions, .hand-actions:focus-within { display: flex; }
 
 /* Level / cost / power overlay on face-up cards; sized from the card so it scales with the board. */
 .pcard-stats { position: absolute; inset: 0; pointer-events: none; font-size: max(.55rem, calc(var(--card-w) * .17)); font-weight: 700; line-height: 1; }

@@ -31,6 +31,8 @@
   const MOVE_TARGETS = ["hand", "C1", "C2", "C3", "B1", "B2", "climax", "clock", "level", "stock",
     "memory", "waiting", "resolution"];
   const PUBLIC_PILES = ["waiting", "memory", "level", "clock", "climax", "resolution"];
+  const ENCORE_COST = 3; // stock, as on the server
+  const COLORS = ["Yellow", "Green", "Red", "Blue", "Purple"];
 
   let version = "";
   let board = null;
@@ -183,17 +185,50 @@
     </div>`;
   }
 
-  // Quick actions shown while hovering one of our characters: waiting room, attack (standing
-  // center-stage characters only) and "More" for the full menu.
+  // Quick actions shown while hovering one of our characters: on our turn attack (standing
+  // center-stage characters), on the opponent's turn reverse (center stage) instead; encore once
+  // reversed (with enough stock); waiting room; and "More" for the full menu.
   function slotActionsHtml(card, slot) {
     const act = (action) => esc(JSON.stringify(action));
-    const attack = slot.startsWith("C") && card.pos === "stand"
-      ? `<button type="button" data-act='${act({ type: "attack", uid: card.uid })}'>⚔ Attack</button>` : "";
+    let quick = "";
+    if (card.pos === "reverse") {
+      if (canEncore()) quick = `<button type="button" data-act='${act({ type: "encore", uid: card.uid })}'>Encore (${ENCORE_COST} stock)</button>`;
+    } else if (slot.startsWith("C") && !board.my_turn) {
+      quick = `<button type="button" data-act='${act({ type: "position", uid: card.uid, pos: "reverse" })}'>Reverse</button>`;
+    } else if (slot.startsWith("C") && card.pos === "stand") {
+      quick = `<button type="button" data-act='${act({ type: "attack", uid: card.uid })}'>⚔ Attack</button>`;
+    }
     return `<div class="slot-actions">
-      ${attack}
+      ${quick}
       <button type="button" data-act='${act({ type: "move", uid: card.uid, to: "waiting" })}'>→ Waiting room</button>
       <button type="button" data-more>More…</button>
     </div>`;
+  }
+
+  // Quick moves shown on a hand card while hovering it: where characters and climaxes usually go
+  // (events go to the resolution zone to be played), then "More" for the full menu.
+  function handActionsHtml(card) {
+    const act = (action) => esc(JSON.stringify(action));
+    const info = card.card ? cards[card.card] : null;
+    const type = info && info.type ? info.type.toLowerCase() : "";
+    const targets = type === "character" ? ["C1", "C2", "C3", "waiting", "clock"]
+      : type === "climax" ? ["climax", "clock", "waiting"] : ["resolution"];
+    return `<div class="hand-actions">
+      ${targets.map((to) => `<button type="button" data-act='${act({ type: "move", uid: card.uid, to })}'>→ ${LABELS[to]}</button>`).join("")}
+      <button type="button" data-more>More…</button>
+    </div>`;
+  }
+
+  const canEncore = () => board.me.zones.stock.count >= ENCORE_COST;
+
+  // Which colors are in our clock and level zone (how many cards doesn't matter), in a strip
+  // between the board and the hand, under the waiting room.
+  function activeColorsHtml(side) {
+    const present = new Set([...side.zones.clock, ...side.zones.level]
+      .map((c) => (c.card && cards[c.card] ? cards[c.card].color : "")).filter(Boolean));
+    const colors = [...COLORS.filter((c) => present.has(c)), ...[...present].filter((c) => !COLORS.includes(c))];
+    const chips = colors.map((c) => `<span class="active-color color-${esc(c.toLowerCase())}">${esc(c)}</span>`).join("");
+    return `<div class="active-colors"><span class="zone-label">Active colors</span>${chips || '<span class="muted small">none yet</span>'}</div>`;
   }
 
   function slotHtml(side, owner, slot) {
@@ -276,8 +311,9 @@
       <div class="table-divider">${board.my_turn ? "Your turn" : `${esc(opp ? opp.name : "Opponent")}'s turn`} · turn ${board.turn_number}</div>
       <div class="table-side side-me">
         ${matHtml(me, "me")}
+        ${activeColorsHtml(me)}
         <div class="hand hand-me zone" data-drop="hand" data-owner="me"><span class="zone-label">Your hand <b>${me.zones.hand.length}</b></span>
-          <div class="hand-cards">${me.zones.hand.map((c) => cardHtml(c, "me", "hand")).join("")}</div></div>
+          <div class="hand-cards">${me.zones.hand.map((c) => `<div class="hand-card">${cardHtml(c, "me", "hand")}${handActionsHtml(c)}</div>`).join("")}</div></div>
       </div>`;
 
     renderControls();
@@ -411,10 +447,15 @@
 
   // --- Menus -----------------------------------------------------------------------------------
 
-  function showMenu(x, y, title, items) {
+  // A short menu can end in "More…", which reopens it in place with the full list (`more`).
+  let menuMore = null;
+
+  function showMenu(x, y, title, items, more = null) {
+    menuMore = more && { x, y, title, items: more };
     menuEl.innerHTML = `<p class="play-menu-title">${esc(title)}</p>` + items.map((item) => item === "-"
       ? "<hr>"
-      : `<button type="button" data-menu-item='${esc(JSON.stringify(item.action || {}))}' ${item.prompt ? `data-prompt="${esc(item.prompt)}"` : ""} ${item.view ? `data-view='${esc(JSON.stringify(item.view))}'` : ""}>${esc(item.label)}</button>`).join("");
+      : `<button type="button" data-menu-item='${esc(JSON.stringify(item.action || {}))}' ${item.prompt ? `data-prompt="${esc(item.prompt)}"` : ""} ${item.view ? `data-view='${esc(JSON.stringify(item.view))}'` : ""}>${esc(item.label)}</button>`).join("")
+      + (more ? '<hr><button type="button" data-menu-more>More…</button>' : "");
     menuEl.hidden = false;
     const box = menuEl.getBoundingClientRect();
     menuEl.style.left = `${Math.min(x, window.innerWidth - box.width - 8)}px`;
@@ -430,8 +471,11 @@
     const zone = el.dataset.zone;
     const info = el.dataset.card ? cards[el.dataset.card] : null;
     const items = [];
-    if (["C1", "C2", "C3"].includes(zone) && el.classList.contains("pos-stand")) {
+    if (["C1", "C2", "C3"].includes(zone) && el.classList.contains("pos-stand") && board.my_turn) {
       items.push({ label: "⚔ Attack (rest + trigger check)", action: { type: "attack", uid } }, "-");
+    }
+    if (STAGE.includes(zone) && el.classList.contains("pos-reverse") && canEncore()) {
+      items.push({ label: `Encore: pay ${ENCORE_COST} stock, rest`, action: { type: "encore", uid } }, "-");
     }
     if (["C1", "C2", "C3", "B1", "B2"].includes(zone)) {
       items.push({ label: "Stand", action: { type: "position", uid, pos: "stand" } },
@@ -450,6 +494,7 @@
       (slot) => slot !== zone && `marker:${slot}` !== zone));
     return [info ? info.name : "Card", items];
   }
+
 
   // "Marker under <character>" choices, face up and face down, for each of our occupied stage slots.
   function markerItems(makeAction, allowed = () => true, prefix = "Marker") {
@@ -479,19 +524,23 @@
       ]];
     }
     if (zone === "deck") {
-      return ["Deck", [
+      const shuffle = { label: "Shuffle", action: { type: "shuffle" } };
+      const toWaiting = { label: "Top → waiting room", action: { type: "move_top", from: "deck", to: "waiting" } };
+      const bottomToWaiting = { label: "Bottom → waiting room", action: { type: "move_top", from: "deck", to: "waiting", where: "bottom" } };
+      return ["Deck", [shuffle, toWaiting, bottomToWaiting], [
         { label: "Draw 1", action: { type: "move_top", from: "deck", to: "hand" } },
         { label: "Draw…", action: { type: "move_top", from: "deck", to: "hand" }, prompt: "How many cards to draw?" },
         "-",
         { label: "Take damage…", action: { type: "damage" }, prompt: "How much damage?" },
         { label: "Trigger: top → resolution", action: { type: "move_top", from: "deck", to: "resolution" } },
         { label: "Top → stock", action: { type: "move_top", from: "deck", to: "stock" } },
-        { label: "Top → waiting room", action: { type: "move_top", from: "deck", to: "waiting" } },
+        toWaiting,
+        bottomToWaiting,
         { label: "Mill…", action: { type: "move_top", from: "deck", to: "waiting" }, prompt: "How many cards to put into the waiting room?" },
         "-",
         { label: "Look at top…", action: { type: "peek" }, prompt: "Look at how many cards?" },
         { label: "Search deck", action: { type: "search" } },
-        { label: "Shuffle", action: { type: "shuffle" } },
+        shuffle,
         ...markerItems((slot, face_down) => ({ type: "move_top", from: "deck", to: `marker:${slot}`, face_down }),
           () => true, "Top card → marker"),
       ]];
@@ -503,6 +552,9 @@
       ]];
     }
     const items = [{ label: "View all", view }];
+    if (zone === "waiting" && board.me.zones.deck.count === 0 && board.me.zones.waiting.length) {
+      items.unshift({ label: "Deck out: shuffle into deck, top card → clock", action: { type: "deck_out" } }, "-");
+    }
     if (zone === "waiting") items.push({ label: "Refresh: all → deck and shuffle", action: { type: "move_all", from: "waiting", to: "deck" } });
     if (["clock", "resolution", "climax", "memory"].includes(zone)) {
       items.push({ label: "All → waiting room", action: { type: "move_all", from: zone, to: "waiting" } });
@@ -529,6 +581,11 @@
       act(action);
       return;
     }
+    if (event.target.closest("[data-menu-more]")) {
+      const { x, y, title, items } = menuMore;
+      showMenu(x, y, title, items);
+      return;
+    }
     const layoutButton = event.target.closest("[data-layout]");
     if (layoutButton) {
       setLayout(layoutButton.dataset.layout);
@@ -541,7 +598,7 @@
     }
     const more = event.target.closest("[data-more]");
     if (more) {
-      const card = more.closest(".zone.slot").querySelector(".pcard[data-uid]");
+      const card = more.closest(".zone.slot, .hand-card").querySelector(".pcard[data-uid]");
       if (card) {
         const [title, items] = cardMenu(card);
         showMenu(event.clientX, event.clientY, title, items);
@@ -566,7 +623,7 @@
     if (pile) {
       const menu = pileMenu(pile.dataset.pile, pile.dataset.owner);
       if (menu) {
-        showMenu(event.clientX, event.clientY, menu[0], menu[1]);
+        showMenu(event.clientX, event.clientY, menu[0], menu[1], menu[2]);
         return;
       }
     }
