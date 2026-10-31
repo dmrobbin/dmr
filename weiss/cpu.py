@@ -8,8 +8,10 @@ stats on the board. It never reads the other hand, or either deck, except what a
 
 The "standard" model:
 - Fills the front line for the most power it can get, facing enemies it can beat where it can.
-- Attacks to reverse enemy characters first, and avoids battles it would lose (a side attack instead).
-- Clocks a card every turn to draw, and uses abilities that bring cards to its hand.
+- Attacks to reverse enemy characters first, and avoids battles it would lose: with nothing left to
+  reverse, it still makes a side attack, even for no damage, since its trigger check brings stock.
+- Clocks a card every turn to draw, and uses abilities that bring cards to its hand. Stock comes third,
+  after reversing enemies and cards in hand.
 - Plays cards with a cx combo ahead of others when their climax is available, and that climax next.
 - Plays a backup when that makes the defender at least as strong as the attacker.
 - Encores only level 2 and up, and not if that leaves too little stock for an equal or better card in hand.
@@ -315,8 +317,9 @@ class Mind:
 
     def try_move(self, card, src, slot):
         players = copy.deepcopy(self.state["players"])
-        stage = players[self.me]["stage"]
-        stage[src], stage[slot] = stage[slot], stage[src]
+        side = players[self.me]
+        side["stage"][src], side["stage"][slot] = side["stage"][slot], side["stage"][src]
+        game.swap_markers(side, src, slot)  # as the real move does
         return self.front_score(players)
 
     def main(self):
@@ -334,14 +337,19 @@ class Mind:
                 gain = self.try_play(card, slot) - current + (bonus if slot in game.OPPOSITE else 0)
                 if gain > best_gain:
                     best, best_gain = {"type": "move", "uid": card["uid"], "to": slot}, gain
+        moved = self.state.get("cpu_moved", {})
+        already = set(moved.get("uids", [])) if moved.get("turn") == self.state["turn_number"] else set()
         for src in game.STAGE_SLOTS:
             card = stage[src]
-            for slot in game.OPPOSITE if card else ():
-                if slot == src:
+            for slot in game.OPPOSITE if card and card["uid"] not in already else ():
+                if slot == src or (stage[slot] and stage[slot]["uid"] in already):
                     continue
                 gain = self.try_move(card, src, slot) - current
                 if gain > best_gain:
                     best, best_gain = {"type": "move", "uid": card["uid"], "to": slot}, gain
+        if best and any(c and c["uid"] == best["uid"] for c in stage.values()):
+            # A character is only rearranged once a turn, so this can never go round in circles.
+            self.state["cpu_moved"] = {"turn": self.state["turn_number"], "uids": [*already, best["uid"]]}
         return best or self.useful_event() or self.back_row() or self.hand_ability()
 
     def back_row(self):
@@ -393,7 +401,8 @@ class Mind:
         return {"type": "move", "uid": (wanted or climaxes)[0]["uid"], "to": "climax"}
 
     def declare(self):
-        """Reverse what it can, biggest first; then direct attacks; a losing battle becomes a side attack."""
+        """Reverse what it can, biggest first; then direct attacks; then side attacks instead of losing
+        battles, even for no damage, because every attack's trigger check adds to its stock."""
         if not game.can_attack(self.state, self.me):
             return None
         wins, directs, sides = [], [], []
@@ -408,7 +417,7 @@ class Mind:
             power, theirs = self.stat(card, "power"), self.stat(enemy, "power")
             if power + self.temper.risk >= theirs:
                 wins.append((theirs, {"type": "attack", "uid": card["uid"], "kind": "front"}))
-            elif self.stat(card, "soul") > game.number(self.details(enemy).get("level")):
+            else:
                 sides.append({"type": "attack", "uid": card["uid"], "kind": "side"})
         ordered = [a for _, a in sorted(wins, key=lambda w: -w[0])] + directs + sides
         return ordered[0] if ordered else None

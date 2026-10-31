@@ -223,7 +223,7 @@
   // An ability that has resolved: its card, in the middle of the screen with the same entrance as a
   // climax, with an arrow to each card it was directed at.
   function showAbility(ability) {
-    if (ability.check) return showTriggerCheck(ability.check);
+    if (ability.check) return showTriggerCheck(ability.check, ability.label);
     const source = cards[ability.card];
     if (!source) return;
     const targets = ability.targets.map((pk) => cards[pk]).filter(Boolean);
@@ -246,7 +246,7 @@
   }
 
   // A trigger check: the card or cards it turned over, with their icons, or that they have none.
-  function showTriggerCheck(pks) {
+  function showTriggerCheck(pks, label = null) {
     const checked = pks.map((pk) => cards[pk]).filter(Boolean);
     if (!checked.length) return;
     const icons = checked.map((c) => c.trigger).filter(Boolean).join(" ");
@@ -254,9 +254,9 @@
     el.className = `climax-show ${CLIMAX_EFFECTS[Math.floor(Math.random() * CLIMAX_EFFECTS.length)]}`;
     el.style.animationDuration = `${CLIMAX_SHOW_MS}ms`;
     el.innerHTML = `<div class="trigger-show">
-      <p class="trigger-show-title">Trigger check</p>
+      <p class="trigger-show-title">${esc(label || "Trigger check")}</p>
       <div class="trigger-show-cards">${checked.map((c) => `<img src="${esc(c.image)}" alt="${esc(c.name)}">`).join("")}</div>
-      <p class="trigger-show-icons">${icons ? esc(icons) : "No trigger"}</p>
+      ${label ? "" : `<p class="trigger-show-icons">${icons ? esc(icons) : "No trigger"}</p>`}
     </div>`;
     document.body.appendChild(el);
     el.addEventListener("animationend", () => el.remove());
@@ -990,7 +990,7 @@
     renderAttackPanel();
     const note = controlsEl.querySelector(".phase-note");
     const ability = board.ability;
-    note.textContent = board.ability_show && board.ability_show.check ? "Trigger check…"
+    note.textContent = board.ability_show && board.ability_show.check ? `${board.ability_show.label || "Trigger check"}…`
       : ability && !ability.mine ? `Waiting for ${ability.by} to resolve ${ability.resolving ? "an ability" : "their abilities"}…`
       : ability && ability.resolving && !ability.prompt ? "Finishing the ability…"
       : board.reveal && board.reveal.mine ? `Waiting for ${board.opponent ? board.opponent.name : "your opponent"} to close the card you revealed.`
