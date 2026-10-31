@@ -373,11 +373,11 @@ def must_level_up(state, player):
     return len(state["players"][player]["zones"]["clock"]) >= LEVEL_UP_AT and not damage_in_progress(state, player)
 
 
-def stand_all(side):
-    """Stand every character; True if any wasn't standing."""
+def stand_all(side, held=()):
+    """Stand every character but any held back; True if any wasn't standing."""
     changed = False
     for card in side["stage"].values():
-        if card and card["pos"] != "stand":
+        if card and card["pos"] != "stand" and card["uid"] not in held:
             card["pos"] = "stand"
             changed = True
     return changed
@@ -489,7 +489,7 @@ def declare_attack(state, player, slot, kind, env):
     # attack (update_attack_soul keeps it up to date, with the trigger's soul in soul_extra).
     state["attack"] = {"step": "trigger", "slot": slot, "uid": card["uid"], "target": target, "kind": kind,
                        "soul": 0, "soul_extra": 1 if kind == "direct" else 0, "backup": 0, "shot": False, "checking": True}
-    fire(state, env, "attack", uid=card["uid"], kind=kind, player=player, defender=defender,
+    fire(state, env, "attack", uid=card["uid"], card=card["card"], kind=kind, player=player, defender=defender,
          target=opposing["uid"] if opposing else None, target_card=opposing["card"] if opposing else None)
     if not abilities_busy(state):
         trigger_check(state, env)
@@ -520,8 +520,9 @@ def trigger_check(state, env):
         add_log(state, player, f"trigger check: {env.name(checked['card'])}"
                 + (f" [{' '.join(found)}]" if found else " (no trigger)")
                 + (" — to their hand" if "treasure" in found else " — to their stock"))
+        fire(state, env, "check_card", uid=attack["uid"], player=player, card=checked["card"])
         if env.is_climax(checked["card"]):
-            fire(state, env, "check_climax", uid=attack["uid"])
+            fire(state, env, "check_climax", uid=attack["uid"], player=player)
             fire(state, env, "climax_trigger", player=player, card=checked["card"])
     if attack.pop("check_pay", 0) and checks == 2 and zones["stock"]:
         put(side, zones["stock"].pop(), "waiting")
@@ -634,10 +635,14 @@ def advance_attack(state, env):
                 continue
             if damage_in_progress(state, defender) or must_level_up(state, defender):
                 return  # the damage or a level up is still being worked out
-            if attack.get("cancelled") and not attack.get("cancel_fired"):
+            if not attack.get("cancel_fired"):
                 attack["cancel_fired"] = True
-                fire(state, env, "cancel", uid=attack["uid"])
-                continue
+                if attack.get("cancelled"):
+                    fire(state, env, "cancel", uid=attack["uid"])
+                if attack["soul"]:
+                    fire(state, env, "damage_result", uid=attack["uid"], defender=defender, cancelled=bool(attack.get("cancelled")))
+                if abilities_busy(state):
+                    continue
             if attack.pop("shot", False) and attack.get("cancelled"):
                 # Shot trigger: this attack's damage was cancelled, so it deals 1 damage more.
                 add_log(state, player, "shot trigger: 1 more damage")
@@ -663,8 +668,8 @@ def advance_attack(state, env):
                         + " — " + (", ".join(f"{env.name(c['card'])} reversed" for c in losers) or "neither reversed"))
                 for card in losers:
                     other = target if card is attacker else attacker
-                    fire(state, env, "reverse", uid=card["uid"], by=other["uid"], card=card["card"],
-                         owner=player if card is attacker else defender)
+                    fire(state, env, "reverse", uid=card["uid"], by=other["uid"], by_card=other["card"], by_owner=defender if card is attacker else player,
+                         card=card["card"], owner=player if card is attacker else defender)
             end_attack(state, env)
             continue
         return
@@ -740,13 +745,15 @@ def finish_turn(state, player, name):
     other = next(p for p in state["order"] if p != player)
     state["turn"] = other
     state["buffs"] = [buff for buff in state.get("buffs", []) if buff["expires"] > state["turn_number"]]
+    state["delayed"] = state.get("delayed", [])
     state["used"] = []
     state["turn_number"] += 1
     state["attacks"] = 0
     add_log(state, player, f"ended their turn. Turn {state['turn_number']}: {state['players'][other]['name']}")
     state["phase"] = "stand"
     if rules:
-        if stand_all(state["players"][other]):
+        held = {b["uid"] for b in state.get("buffs", []) if b.get("status") == "no_stand"}
+        if stand_all(state["players"][other], held):
             add_log(state, other, "stand phase: stood all their characters")
         state["auto_next"] = "draw"
 
@@ -803,6 +810,8 @@ def played(state, player, card, to, env):
     elif to == "climax":
         fire(state, env, "climax", uid=card["uid"], source=card, source_owner=player, player=player, card=card["card"])
     elif to == "resolution" and rules_on(state):
+        if (env.info(card["card"]).get("card_type") or "").lower() == "event":
+            fire(state, env, "event", player=player)
         for ability in abilities.parse(env.info(card["card"]).get("text")):
             if ability["kind"] == "event" and ability["steps"]:
                 queue_event(state, player, card, ability, env)
@@ -1262,6 +1271,7 @@ def apply_action(state, player, action, env):
             if card is not chosen:
                 put(side, card, "waiting")
         side["level_ups"] = side.get("level_ups", 0) + 1  # so both pages can show the new level
+        fire(state, env, "level_up", player=player)
         add_log(state, player, f"levelled up to level {len(zones['level'])} with {name(chosen['card'])}")
         return {}
 
@@ -1451,7 +1461,30 @@ def condition_met(cond, state, player, source, ctx, env):
     if kind == "opp_turn":
         return state["turn"] != player
     if kind == "phase":
-        return state.get("phase") == cond["phase"]
+        whose = cond.get("whose")
+        return state.get("phase") == cond["phase"] and (not whose or (state["turn"] == player) == (whose == "me"))
+    if kind == "always":
+        return True
+    if kind == "self_marker_count":
+        slot = slot_of(side, uid) if uid else None
+        return compare(len(pile(side, MARKER + slot)) if slot else 0, cond["n"], cond["dir"])
+    if kind == "self_markers":
+        slot = slot_of(side, uid) if uid else None
+        return bool(slot and pile(side, MARKER + slot)) == cond["any"]
+    if kind == "total_level":
+        return compare(sum(number(details_of(c, env).get("level")) for c in zones["level"]), cond["n"], cond["dir"])
+    if kind == "in_battle":
+        attack = state.get("attack") or {}
+        return bool(uid) and attack.get("kind") == "front" and uid in battle_uids(state)
+    if kind == "facing_exists":
+        slot = slot_of(side, uid) if uid else None
+        there = bool(other["stage"].get(OPPOSITE.get(slot, "")))
+        return not there if cond["absent"] else there
+    if kind == "opp_stage_count":
+        count = sum(1 for slot, c in other["stage"].items() if c and (slot in OPPOSITE) == (cond["zone"] == "center"))
+        return compare(count, cond["n"], cond["dir"])
+    if kind == "looked":
+        return bool(ctx.get("among"))
     if kind == "have_markers":
         return any(fits(cond["filter"], card, env) and pile(side, MARKER + slot)
                    for slot, card in side["stage"].items() if card)
@@ -1475,20 +1508,23 @@ def condition_met(cond, state, player, source, ctx, env):
     if kind == "my_level":
         return compare(len(zones["level"]), cond["n"], cond["dir"])
     if kind == "zone_count":
-        return compare(sum(fits(cond["filter"], c, env) for c in zones[cond["zone"]]), cond["n"], cond["dir"])
+        counted_zones = other["zones"] if cond.get("owner") == "opp" else zones
+        return compare(sum(fits(cond["filter"], c, env) for c in counted_zones[cond["zone"]]), cond["n"], cond["dir"])
     if kind == "all_trait":
-        trait_filter = {"any": [{"trait": cond["trait"]}]}
+        trait_filter = {"any": [{"trait": trait} for trait in cond.get("traits") or [cond["trait"]]]}
         return all(fits(trait_filter, c, env) for c in stage_cards(side))
     if kind == "have":
-        count = sum(fits(cond["filter"], c, env) and not (cond["filter"].get("other") and c["uid"] == uid) for c in stage_cards(side))
+        cards = [c for slot, c in side["stage"].items() if c and (cond.get("zone") is None or (slot in OPPOSITE) == (cond["zone"] == "center"))]
+        count = sum(fits(cond["filter"], c, env) and not (cond["filter"].get("other") and c["uid"] == uid) for c in cards)
         return compare(count, cond["n"], cond["dir"])
     if kind == "have_each":
         if cond.get("level"):
             cards = [c for c in zones["level"] if not (cond["other"] and c["uid"] == uid)]
         else:
             cards = [c for slot, c in side["stage"].items() if c and (not cond["center"] or slot in OPPOSITE)
+                     and (not cond.get("back") or slot not in OPPOSITE)
                      and not (cond["other"] and c["uid"] == uid)]
-        found = all(any(fits(f, c, env) for c in cards) for f in cond["filters"])
+        found = all(any(fits(f, c, env) and position_fits(f, c) for c in cards) for f in cond["filters"])
         return not found if cond["absent"] else found
     if kind == "climax_is":
         climax = (other if cond["owner"] == "opp" else side)["zones"]["climax"]
@@ -1497,6 +1533,8 @@ def condition_met(cond, state, player, source, ctx, env):
         _, _, where = locate(state, uid) if uid else (None, None, None)
         return {"center stage": where in OPPOSITE, "back stage": where in ("B1", "B2"), "middle": where == "C2",
                 "waiting room": where == "waiting", "memory": where == "memory", "level": where == "level"}[cond["where"]]
+    if kind == "self_rest":
+        return bool(source) and source["pos"] == "rest"
     if kind == "self_stand":
         return bool(source) and source["pos"] == "stand"
     if kind == "self_clock_top":
@@ -1505,14 +1543,27 @@ def condition_met(cond, state, player, source, ctx, env):
         return any(fits(cond["filter"], c, env) for c in stage_cards(other))
     if kind == "facing_level":
         facing = facing_card(state, player, source, ctx)
-        return bool(facing) and compare(number(details_of(facing, env).get("level")), cond["n"], cond["dir"])
+        return bool(facing) and compare(number(details_of(facing, env).get(cond.get("stat", "level"))), cond["n"], cond["dir"])
     if kind == "counted":
         return ctx.get("counts", {}).get(cond["key"], 0) >= 1
     if kind == "revealed":
-        return ctx.get("revealed") is not None and abilities.matches_filter(cond["filter"], env.info(ctx["revealed"]) or {})
+        return ctx.get("revealed") is not None and abilities.matches_filter(cond["filter"], env.info(ctx["revealed"]) or {}) != bool(cond.get("negate"))
     if kind == "among_has":
         return any(abilities.matches_filter(cond["filter"], env.info(pk) or {}) for pk in ctx.get("flipped", []))
     return True
+
+
+def position_fits(filter_, card):
+    return not (filter_.get("stand") and card["pos"] != "stand") and not (filter_.get("rest") and card["pos"] != "rest")
+
+
+def battle_uids(state):
+    """The two characters in the battle in progress, if any."""
+    attack = state.get("attack") or {}
+    if "uid" not in attack:
+        return set()
+    target = state["players"][other_player(state, state["turn"])]["stage"].get(attack.get("target") or "")
+    return {attack["uid"]} | ({target["uid"]} if target else set())
 
 
 def compare(value, n, direction):
@@ -1555,8 +1606,24 @@ def x_value(spec, state, player, target, ctx, env, stats=None):
     elif kind == "chosen_level":
         chosen = locate(state, (ctx.get("it") or [None])[0])[1] if ctx else None
         value = number(details_of(chosen, env).get("level")) - spec.get("minus", 0) if chosen else 0
+    elif kind == "flipped_total":
+        value = sum(number((env.info(pk) or {}).get("level")) for pk in (ctx or {}).get("flipped", []))
+    elif kind == "flipped_icons":
+        value = sum(((env.info(pk) or {}).get("trigger") or "").split().count(spec["icon"]) for pk in (ctx or {}).get("flipped", []))
+    elif kind == "markers":
+        slot = slot_of(side, (ctx or {}).get("source_uid"))
+        value = len(pile(side, MARKER + slot)) if slot else 0
+    elif kind == "facing_level":
+        facing = facing_card(state, player, locate(state, (ctx or {}).get("source_uid"))[1], ctx)
+        value = number(details_of(facing, env).get("level")) if facing else 0
+    elif kind == "opp_stage":
+        them = state["players"][other_player(state, player)]
+        value = sum(1 for slot, c in them["stage"].items() if c and (slot in OPPOSITE) == (spec["zone"] == "center"))
+    elif kind == "flipped_level":
+        last = (ctx or {}).get("flipped", [])
+        value = (number((env.info(last[-1]) or {}).get("level")) + spec.get("plus", 0)) if last else 0
     elif kind == "flipped":
-        value = sum(abilities.matches_filter(spec["filter"], env.info(pk) or {}) for pk in (ctx or {}).get("flipped", []))
+        value = sum(abilities.matches_filter(spec["filter"], env.info(pk) or {}) for pk in (ctx or {}).get("flipped", [])) + spec.get("plus", 0)
     elif kind == "marker_tiers":
         slot = slot_of(side, (ctx or {}).get("source_uid"))
         count = len(pile(side, MARKER + slot)) if slot else 0
@@ -1565,8 +1632,9 @@ def x_value(spec, state, player, target, ctx, env, stats=None):
         value = len(stage_cards(state["players"][other_player(state, player)]))
     elif kind == "my_chars":
         source_uid = (ctx or {}).get("source_uid")
-        value = sum(fits(spec.get("filter"), c, env) and not (spec["filter"].get("other") and c["uid"] == source_uid)
-                    for c in stage_cards(side))
+        zone = spec.get("stage_zone")
+        cards = [c for slot, c in side["stage"].items() if c and (zone is None or (slot in OPPOSITE) == (zone == "center"))]
+        value = sum(fits(spec.get("filter"), c, env) and not (spec["filter"].get("other") and c["uid"] == source_uid) for c in cards)
     else:  # "zone"
         value = sum(fits(spec.get("filter"), c, env) for c in side["zones"][spec["zone"]])
     return value * spec.get("times", 1)
@@ -1576,6 +1644,9 @@ def cont_targets(effect, state, player, source, env):
     side = state["players"][player]
     target = effect["target"]
     slot = slot_of(side, source["uid"])
+    if target["type"] == "facing":
+        facing = state["players"][other_player(state, player)]["stage"].get(OPPOSITE.get(slot, ""))
+        return [facing] if facing else []
     if target["type"] == "self":
         return [source] if slot else []
     if target["type"] == "front":
@@ -1615,7 +1686,7 @@ def compute_stats(state, env):
                     amount = effect.get(wanted, 0)
                     if effect.get("x_stat") == wanted:
                         amount += x_value(effect.get("x"), state, player, target, ctx, env, stats)
-                    if effect.get("per") and wanted == "power":
+                    if effect.get("per"):
                         amount *= x_value(effect["per"], state, player, target, ctx, env, stats)
                     stats[target["uid"]][wanted] += amount
                     if wanted == "power" and effect.get("grant"):
@@ -1633,15 +1704,19 @@ def compute_stats(state, env):
     return stats, granted
 
 
+def level_buff(state, uid):
+    return sum(buff.get("level", 0) for buff in state.get("buffs", []) if buff["uid"] == uid)
+
+
 def update_attack_soul(state, stats, env):
     """The damage of the attack in progress follows its attacker's soul until it's dealt."""
     attack = state.get("attack") or {}
     if "soul_extra" not in attack or attack.get("dealt") or attack["uid"] not in stats:
         return
     soul = stats[attack["uid"]]["soul"] + attack["soul_extra"]
-    if attack["kind"] == "side":
+    if attack["kind"] == "side" and not has_status(state, attack["uid"], "no_side_loss"):
         target = state["players"][other_player(state, state["turn"])]["stage"][attack["target"]]
-        soul = max(0, soul - (number(details_of(target, env).get("level")) if target else 0))
+        soul = max(0, soul - (number(details_of(target, env).get("level")) + level_buff(state, target["uid"]) if target else 0))
     attack["soul"] = soul
 
 
@@ -1692,6 +1767,12 @@ def can_pay(cost, state, player, source, env):
             return "needs this card standing"
         if kind == "deck_to_clock" and not zones["deck"]:
             return "needs a card in your deck"
+        if kind == "stock_to_clock" and not zones["stock"]:
+            return "needs a card in your stock"
+        if kind == "markers":
+            slot = slot_of(state["players"][player], source["uid"]) if source else None
+            if not slot or len(pile(state["players"][player], MARKER + slot)) < part["n"]:
+                return f"needs {part['n']} marker{'s' if part['n'] != 1 else ''} under this card"
         if kind in ("pick", "rest_chars") and len(cost_options(part, state, player, source, env)) < part["n"]:
             return f"needs {part['n']} more to pay with"
     return None
@@ -1709,10 +1790,16 @@ def cost_steps(cost):
             steps.append({"do": "self_to", "to": part["to"]})
         elif kind == "deck_to_clock":
             steps.append({"do": "top", "n": 1, "owner": "me", "to": "clock"})
+        elif kind == "stock_to_clock":
+            steps.append({"do": "stock_to_clock"})
+        elif kind == "shuffle":
+            steps.append({"do": "shuffle", "owner": "me"})
+        elif kind == "markers":
+            steps.append({"do": "pay_markers", "n": part["n"]})
         elif kind == "pick":
             steps.append({"do": "choose", "zone": part["zone"], "filter": part["filter"], "min": part["n"], "max": part["n"],
                           "text": "Cost: choose what to pay with", "cost": True})
-            steps.append({"do": "move_it", "to": part["to"]})
+            steps.append({"do": "move_it", "to": part["to"]} if part["to"] else {"do": "reveal_it"})
         elif kind == "rest_chars":
             steps.append({"do": "choose", "zone": "stage", "filter": part["filter"], "min": part["n"], "max": part["n"],
                           "text": "Cost: choose characters to rest", "cost": True})
@@ -1726,6 +1813,8 @@ def when_matches(when, event, data, player, card, env):
     """{"that": uid} and so on if this trigger is this event, for this ability's card, else None."""
     on = when["on"]
     uid = card["uid"]
+    if on == "backup" and (when.get("opponent") or when.get("any_of_mine")):
+        return {} if event == "backup" and (data.get("source_owner") == player) == bool(when.get("any_of_mine")) else None
     self_event = {"play": "play", "leave": "leave", "attack": "attack", "cancel": "cancel", "backup": "backup",
                   "check_climax": "check_climax", "attack_end": "attack_end", "climax_self": "climax"}
     if on in self_event:
@@ -1736,9 +1825,9 @@ def when_matches(when, event, data, player, card, env):
         return {}
     if on == "phase":
         mine = data.get("player") == player
-        return {} if event == "phase" and when["phase"] == data["phase"] and mine == (when["whose"] == "me") else None
+        return {} if event == "phase" and when["phase"] == data["phase"] and (when["whose"] == "any" or mine == (when["whose"] == "me")) else None
     if on == "climax":
-        if event != "climax" or data.get("player") != player:
+        if event != "climax" or (data.get("player") == player) != (when.get("whose") != "opp"):
             return None
         return {} if not when.get("filter") or abilities.matches_filter(when["filter"], env.info(data["card"]) or {}) else None
     if on == "climax_trigger":
@@ -1747,6 +1836,35 @@ def when_matches(when, event, data, player, card, env):
         return {} if not when.get("filter") or abilities.matches_filter(when["filter"], env.info(data["card"]) or {}) else None
     if on == "opp_act":
         return {} if event == "act" and data.get("player") != player else None
+    if on == "play_other":
+        if event == "play" and data.get("source_owner") == player and data.get("uid") != uid and abilities.matches_filter(when["filter"], env.info(data["source"]["card"]) or {}):
+            return {"that": data["uid"]}
+        return None
+    if on == "level_up":
+        return {} if event == "level_up" and (data.get("player") == player) != (when.get("whose") == "opp") else None
+    if on == "check_card":
+        if event != "check_card" or data.get("player") != player or (not when.get("any") and data.get("uid") != uid):
+            return None
+        return {} if abilities.matches_filter(when["filter"], env.info(data["card"]) or {}) else None
+    if on == "other_battle_win":
+        if event == "reverse" and data.get("by") and data["by"] != uid and locate_owner(data.get("by_owner"), player):
+            attacker = data.get("by_card")
+            return {"that": data["uid"]} if abilities.matches_filter(when["filter"], env.info(attacker) or {}) else None
+        return None
+    if on == "my_act":
+        return {} if event == "act" and data.get("player") == player else None
+    if on == "my_event":
+        return {} if event == "event" and data.get("player") == player else None
+    if on == "any_check_climax":
+        return {} if event == "check_climax" and data.get("player") == player else None
+    if on == "no_cancel":
+        return {} if event == "damage_result" and not data["cancelled"] and data.get("uid") == uid else None
+    if on == "received":
+        return {} if event == "damage_result" and data["cancelled"] == when["cancelled"] and data.get("defender") == player else None
+    if on == "leave_other":
+        if event == "leave" and data.get("source_owner") == player and data.get("uid") != uid and abilities.matches_filter(when["filter"], env.info(data["source"]["card"]) or {}):
+            return {"that": data["uid"]}
+        return None
     if event == "reverse":
         reversed_card = data["uid"]
         if on == "reverse_self" and reversed_card == uid:
@@ -1759,12 +1877,21 @@ def when_matches(when, event, data, player, card, env):
             return {"that": reversed_card}
         return None
     if event == "attack":
+        if on == "other_attacks" and data.get("player") == player and (when.get("any") or data.get("uid") != uid) and when.get("kind") in (None, data.get("kind")) \
+                and (not when.get("filter") or abilities.matches_filter(when["filter"], env.info(data.get("card")) or {})):
+            return {"that": data["uid"]}
+        if on == "frontal_self" and data.get("target") == uid and data.get("kind") == when.get("kind", "front"):
+            return {"that": data["uid"]}
         if on == "frontal" and data.get("kind") == "front" and data.get("defender") == player and data.get("target") != uid:
             target = locate_details(data.get("target_card"), env)
             return {"that": data["target"]} if abilities.matches_filter(when["filter"], target) else None
         if on == "facing_attacks" and data.get("target") == uid:
             return {"that": data.get("uid")}
     return None
+
+
+def locate_owner(owner, player):
+    return owner == player
 
 
 def locate_details(card_pk, env):
@@ -1776,14 +1903,31 @@ def response_sources(side, data):
     sources = [(c, "stage") for c in stage_cards(side) if not c["face_down"]]
     sources += [(c, "waiting") for c in side["zones"]["waiting"]]
     sources += [(c, "memory") for c in side["zones"]["memory"]]
-    sources += [(c, "clock") for c in side["zones"]["clock"][-1:]]
+    sources += [(c, "clock") for c in side["zones"]["clock"]]
     return sources
+
+
+def fire_delayed(state, env, phase, player):
+    """Effects that said "at the beginning of your next ..." and have been waiting for this phase."""
+    waiting = []
+    for delayed in state.get("delayed", []):
+        whose_turn = delayed["player"] == player
+        if delayed["phase"] == phase and (delayed["whose"] == "any" or whose_turn == (delayed["whose"] == "me")):
+            ability = {"kind": "delayed", "text": delayed["text"], "steps": delayed["steps"]}
+            state.setdefault("ability_queue", []).append({"id": new_uid(), "player": delayed["player"], "uid": delayed["uid"], "card": delayed["card"],
+                                                          "ability": ability, "ctx": delayed["ctx"]})
+        else:
+            waiting.append(delayed)
+    if state.get("delayed"):
+        state["delayed"] = waiting
 
 
 def fire(state, env, event, **data):
     """An event happened: queue each AUTO ability it triggers. Only with turn rules on."""
     if not rules_on(state):
         return
+    if event == "phase":
+        fire_delayed(state, env, data["phase"], data["player"])
     first = state["turn"]
     for player in [first, other_player(state, first)]:
         side = state["players"][player]
@@ -1818,13 +1962,18 @@ def has_status(state, uid, status):
     return any(buff["uid"] == uid and buff.get("status") == status for buff in state.get("buffs", []))
 
 
+def used_up(state, card, ability):
+    """Whether this ability has been used as often as it can be this turn."""
+    return bool(ability.get("once")) and state.get("used", []).count(used_key(card, ability)) >= (ability.get("limit") or 1)
+
+
 def used_key(card, ability):
     return f"{card['uid']}:{ability['text'][:80]}"
 
 
 def queue_ability(state, player, card, ability, ctx, env):
     """An AUTO ability triggered: queue it if it can still do something."""
-    if ability.get("once") and used_key(card, ability) in state.get("used", []):
+    if used_up(state, card, ability):
         return
     if ability["text"].startswith("【AUTO】 Encore") and has_status(state, card["uid"], "no_encore"):
         return
@@ -1956,7 +2105,8 @@ def choose_options(step, res, state, env):
     level = len(state["players"][player]["zones"]["level"])
     found = [c for c in cards if fits(filter_, c, env, x=x, level=level)
              and not (filter_.get("other") and c["uid"] == res["uid"])
-             and not (filter_.get("stand") and c["pos"] != "stand")
+             and position_fits(filter_, c)
+             and not (filter_.get("in_battle") and c["uid"] not in battle_uids(state))
              and not (filter_.get("no_markers") and pile(side, MARKER + (slot_of(side, c["uid"]) or "C1")))
              and not (filter_.get("above_opponent_level") and number(details_of(c, env).get("level")) <= len(side["zones"]["level"]))]
     if owner != player and step.get("chooser") != "opp":  # "This card cannot be chosen by your opponent's effects."
@@ -1990,6 +2140,8 @@ def move_card(state, env, actor, owner, uid, to):
     card, src = take(side, uid)
     if to == "deck_bottom":
         put(side, card, "deck", "bottom")
+    elif to == "clock_bottom":
+        put(side, card, "clock", "bottom")
     else:
         put(side, card, to)
     if to not in HIDDEN_ZONES and to != "hand":
@@ -1998,7 +2150,7 @@ def move_card(state, env, actor, owner, uid, to):
         discard_markers(state, owner, src)
         if to == "waiting":
             fire(state, env, "leave", uid=uid, source=card, source_owner=owner, slot=src)
-    target = "deck" if to == "deck_bottom" else to
+    target = {"deck_bottom": "deck", "clock_bottom": "clock"}.get(to, to)
     add_log(state, actor, describe_move(card, src, target, env.name)
             + (" (bottom)" if to == "deck_bottom" else "")
             + (f" ({state['players'][owner]['name']}'s)" if owner != actor else ""))
@@ -2007,7 +2159,7 @@ def move_card(state, env, actor, owner, uid, to):
 
 def add_buff(state, uid, step, power, soul):
     expires = state["turn_number"] + (1 if step.get("until") == "next" else 0)
-    state.setdefault("buffs", []).append({"uid": uid, "power": power, "soul": soul, "expires": expires, "grant": step.get("grant", [])})
+    state.setdefault("buffs", []).append({"uid": uid, "power": power, "soul": soul, "level": step.get("level", 0), "expires": expires, "grant": step.get("grant", [])})
 
 
 def buff_label(power, soul, grant):
@@ -2090,7 +2242,11 @@ def run_step(step, res, state, env):
     elif do == "place":
         if ctx.get("it"):
             other_stage = state["players"][opponent]["stage"]
+            owner = opponent if step.get("opponent_places") or (step.get("on_owner") and ctx.get("it_owner") == opponent) else player
+            side = state["players"][owner]
             slots = [s for s in STAGE_SLOTS if not (step.get("open") and side["stage"][s])]
+            if step.get("only"):
+                slots = [s for s in slots if s == step["only"]]
             if step.get("zone"):
                 slots = [s for s in slots if (s in OPPOSITE) == (step["zone"] == "center")]
             if step.get("facing"):
@@ -2100,9 +2256,11 @@ def run_step(step, res, state, env):
                 return
             shown = [c for c in (locate(state, uid)[1] for uid in ctx["it"]) if c]
             ask_choice(res, "place", "Choose a stage position", [(s, LABELS[s].capitalize()) for s in slots],
-                       cards=[dict(c) for c in shown], owner=player, rest=step.get("rest", False), keep_pos=step.get("keep_pos", False))
+                       cards=[dict(c) for c in shown], owner=owner, rest=step.get("rest", False), keep_pos=step.get("keep_pos", False))
+            if step.get("opponent_places"):
+                res["prompt"]["player"] = opponent
     elif do == "to_old_slot":
-        uid = res["uid"] if step.get("self") else (ctx.get("it") or [None])[0]
+        uid = ctx.get("that") if step.get("that") else res["uid"] if step.get("self") else (ctx.get("it") or [None])[0]
         slot = ctx.get("old_slot") or ctx.get("self_slot")
         if uid and slot and not side["stage"][slot] and locate(state, uid)[0] == player:
             card, _ = take(side, uid)
@@ -2179,12 +2337,17 @@ def run_step(step, res, state, env):
         owner = opponent if step.get("owner") == "opp" else player
         target = state["players"][owner]
         moved = []
-        for _ in range(ctx.get(step["n_from"], 0) if step.get("n_from") else step["n"]):
+        count = ctx.get(step["n_from"], 0) if step.get("n_from") else x_value(step.get("x"), state, player, None, ctx, env) if step.get("x_stat") else step["n"]
+        for _ in range(count):
             if not target["zones"]["deck"]:
                 break
-            card = target["zones"]["deck"].pop()
+            card = target["zones"]["deck"].pop(0 if step.get("bottom") else -1)
             put(target, card, step["to"])
             moved.append(card)
+        ctx["flipped"] = [c["card"] for c in moved]
+        if moved:  # "If that card is ...", "put it ..."
+            ctx["revealed"] = moved[-1]["card"]
+            ctx["it"], ctx["it_owner"] = [c["uid"] for c in moved], owner
         add_log(state, owner, f"put the top {len(moved)} of their deck into {LABELS[step['to']]}"
                 + (": " + ", ".join(env.name(c["card"]) for c in moved) if step["to"] != "stock" else ""))
     elif do == "clock_card":
@@ -2201,6 +2364,8 @@ def run_step(step, res, state, env):
             put(target, card, step["to"])
             add_log(state, owner, f"put {env.name(card['card'])} from their clock into {LABELS[step['to']]}")
     elif do == "look":
+        if step.get("x_stat"):
+            step = {**step, "n": x_value(step.get("x"), state, player, None, ctx, env), "x_stat": None}
         if step.get("upto"):
             ask_number(res, {**step, "upto": False}, "Look at how many cards?")
             return
@@ -2223,6 +2388,7 @@ def run_step(step, res, state, env):
         if zones["deck"]:
             top = zones["deck"][-1]
             ctx["revealed"] = top["card"]
+            ctx["it"], ctx["it_owner"] = [top["uid"]], player  # "put it into your hand"
             add_log(state, player, f"revealed the top card of their deck: {env.name(top['card'])}")
     elif do == "flip":
         cards = list(reversed(zones["deck"][-step["n"]:]))
@@ -2231,7 +2397,14 @@ def run_step(step, res, state, env):
         ctx["flipped"] = [c["card"] for c in cards]
         add_log(state, player, "flipped over " + (", ".join(env.name(c["card"]) for c in cards) or "nothing"))
     elif do == "damage":
-        deal_damage(state, opponent, step["n"], step["n"], [], env.name, env.is_climax)
+        amount = x_value(step.get("x"), state, player, None, ctx, env) if step.get("x_stat") else step["n"]
+        if amount > 0:
+            deal_damage(state, opponent, amount, amount, [], env.name, env.is_climax)
+    elif do == "top_marker":
+        slot = slot_of(side, res["uid"])
+        if slot and zones["deck"]:
+            put(side, zones["deck"].pop(), MARKER + slot, face_down=step.get("face_down"))
+            add_log(state, player, f"put the top card of their deck under {LABELS[slot]} as a marker")
     elif do == "waiting_to_deck":
         owner = opponent if step.get("owner") == "opp" else player
         target = state["players"][owner]
@@ -2241,14 +2414,66 @@ def run_step(step, res, state, env):
         for card in going:
             put(target, card, "deck")
         add_log(state, owner, f"returned {len(going)} cards from their waiting room to their deck")
+    elif do == "delay":
+        state.setdefault("delayed", []).append({"player": player, "uid": res["uid"], "card": res["card"], "text": res["text"], "phase": step["phase"],
+                                                "whose": step["whose"], "steps": step["then"], "ctx": copy.deepcopy(ctx)})
+    elif do == "choose_battle":
+        cards = [card for card in (locate(state, uid)[1] for uid in battle_uids(state)) if card]
+        if cards:
+            ctx["it_owner"] = None
+            ask_cards(res, cards, player, min(step["min"], len(cards)), min(step["max"], len(cards)), step.get("text", "Choose"))
+            res["prompt"]["zone"] = "stage"
+    elif do == "choose_facing":
+        facing = facing_card(state, player, locate(state, res["uid"])[1], ctx)
+        if facing:
+            ctx["it_before"], ctx["it"], ctx["it_owner"] = ctx.get("it", []), [facing["uid"]], opponent
+    elif do == "place_each":
+        for uid in reversed(ctx.get("it", [])[1:]):
+            res["steps"].insert(0, {"do": "place_one", "uid": uid})
+        if ctx.get("it"):
+            res["steps"].insert(0, {"do": "place_one", "uid": ctx["it"][0]})
+    elif do == "place_one":
+        if locate(state, step["uid"])[1]:
+            ctx["it"] = [step["uid"]]
+            res["steps"].insert(0, {"do": "place", "open": True})
+    elif do == "stock_to_clock":
+        if zones["stock"]:
+            put(side, zones["stock"].pop(), "clock")
+            add_log(state, player, "put the top card of their stock into their clock")
+    elif do == "pay_markers":
+        slot = slot_of(side, res["uid"])
+        if slot:
+            for _ in range(min(step["n"], len(pile(side, MARKER + slot)))):
+                card = pile(side, MARKER + slot).pop()
+                put(side, card, "waiting")
+                card["face_down"] = False
+            add_log(state, player, f"paid {step['n']} marker(s)")
+    elif do == "stock_card":
+        owner = opponent if step.get("owner") == "opp" else player
+        target = state["players"][owner]
+        for _ in range(step.get("n", 1)):
+            if target["zones"]["stock"]:
+                put(target, target["zones"]["stock"].pop(0 if step["end"] == "bottom" else -1), "waiting")
+        add_log(state, owner, f"put {step.get('n', 1)} card(s) from their stock into their waiting room")
+    elif do == "that_it":
+        if ctx.get("that") and locate(state, ctx["that"])[1]:  # otherwise "that character" is the card just revealed
+            ctx["it"], ctx["it_owner"] = [ctx["that"]], locate(state, ctx["that"])[0]
+    elif do == "add_self_to_it":
+        ctx["it"] = [*ctx.get("it", []), res["uid"]]
+    elif do == "rest_all":
+        for card in stage_cards(side):
+            if card["uid"] != res["uid"] and fits(step["filter"], card, env) and position_fits(step["filter"], card):
+                card["pos"] = "rest"
+        add_log(state, player, "rested their other characters")
     elif do == "stock_to_deck":
         owner = opponent if step.get("owner") == "opp" else player
         target = state["players"][owner]
         ctx["stock_returned"] = len(target["zones"]["stock"])
+        to = step.get("to", "deck")
         for card in target["zones"]["stock"]:
-            put(target, card, "deck")
+            put(target, card, to)
         target["zones"]["stock"] = []
-        add_log(state, owner, f"returned {ctx['stock_returned']} cards from their stock to their deck")
+        add_log(state, owner, f"put {ctx['stock_returned']} cards from their stock into {LABELS[to]}")
     elif do == "exchange":
         first, second = (ctx.get("it_before") or [None])[0], (ctx.get("it") or [None])[0]
         if first and second:
@@ -2263,12 +2488,12 @@ def run_step(step, res, state, env):
             one["pos"] = two["pos"] = step.get("pos", "stand")
             add_log(state, player, f"exchanged {env.name(one['card'])} and {env.name(two['card'])}, both {'resting' if step.get('pos') == 'rest' else 'standing'}")
     elif do == "status":
-        uid = ctx.get(step["target"])
+        uid = (ctx.get("it") or [None])[0] if step["target"] == "it_first" else ctx.get(step["target"])
         if uid and locate(state, uid)[1]:
             note_target(res, locate(state, uid)[1])
-            state.setdefault("buffs", []).append({"uid": uid, "status": step["status"], "expires": state["turn_number"]})
-            add_log(state, player, f"{env.name(locate(state, uid)[1]['card'])} can't "
-                    + ("become reversed" if step["status"] == "no_reverse" else "be encored") + " this turn")
+            state.setdefault("buffs", []).append({"uid": uid, "status": step["status"], "expires": state["turn_number"] + (1 if step.get("until") == "next" else 0)})
+            add_log(state, player, f"{env.name(locate(state, uid)[1]['card'])} " + {
+                "no_reverse": "can't become reversed", "no_encore": "can't be encored", "no_side_loss": "keeps its soul in side attacks", "no_stand": "won't stand next stand phase"}[step["status"]])
     elif do == "all_mill":
         ctx["milled"] = {}
         for owner, target in state["players"].items():
@@ -2378,6 +2603,9 @@ def apply_buff(step, res, state, env):
         cards = [locate(state, uid)[1] for uid in ctx.get("it", [])]
     elif step["target"] == "self":
         cards = [locate(state, res["uid"])[1]]
+    elif step["target"] == "opp_center":
+        them = state["players"][other_player(state, player)]
+        cards = [them["stage"][slot] for slot in OPPOSITE if them["stage"][slot]]
     else:
         side = state["players"][player]
         cards = [c for c in stage_cards(side) if fits(step["filter"], c, env)]
@@ -2474,7 +2702,7 @@ def answer_ability(state, player, action, env):
                     if value in ("hand", "stock"):
                         counted(ctx, value)
         elif purpose == "place":
-            side = state["players"][player]
+            side = state["players"][prompt.get("owner", player)]
             for uid in ctx.get("it", []):
                 card, src = take(side, uid)
                 occupant = put(side, card, value)
@@ -2497,7 +2725,7 @@ def act_status(state, player, card, ability, where, env):
             return "only in your main phase"
     if abilities_busy(state):
         return "another ability is resolving"
-    if ability.get("once") and used_key(card, ability) in state.get("used", []):
+    if used_up(state, card, ability):
         return "already used this turn"
     if where in STAGE_SLOTS and card["face_down"]:
         return "this card is face down"
