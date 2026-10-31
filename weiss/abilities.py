@@ -67,6 +67,17 @@ def unmask(text, quotes):
     return re.sub(r"⟦(\d+)⟧", lambda m: f'"{quotes[int(m[1])]}"', text)
 
 
+def ability_lines(text):
+    """A card's text, one ability to a line. Some cards' abilities run together with no line between
+    them: a new one starts where a tag follows the end of a sentence, a reminder or a quote. (A tag can
+    also come mid-sentence, as in "uses an 【ACT】", and 【ACT】 【COUNTER】 is one ability.)"""
+    lines = []
+    for raw in (text or "").split("\n"):
+        body, quotes = mask(" ".join(raw.split()))
+        lines += [unmask(part, quotes) for part in re.split(r"(?<=[.)⟧])\s*(?=【(?:AUTO|ACT|CONT|COUNTER)】)", body) if part]
+    return lines
+
+
 def without_reminders(text):
     return re.sub(r"\s*\([^()]*\)", "", text).strip()
 
@@ -153,7 +164,7 @@ def plain_name(name):
 
 def plain_name_lines(text):
     """A card's text line by line, with its quotes straightened the same way as plain_name."""
-    return [plain_name(line) for line in (text or "").split("\n")]
+    return [plain_name(line) for line in ability_lines(text)]
 
 
 def matches_filter(filter_, details, x=None, my_level=0):
@@ -760,7 +771,7 @@ def parse_when(words, quotes):
     text = re.sub(r"^(?:when|at the beginning of|at the end of) ", "", words.strip(), flags=re.I)
     begin = words.lower().startswith("at the beginning")
     if begin:
-        match = re.fullmatch(r"your (opponent's )?(climax phase|attack phase|encore step|first turn)", text)
+        match = re.fullmatch(r"your (opponent's )?(draw phase|clock phase|main phase|climax phase|attack phase|encore step|first turn)", text)
         if match:
             phase = "first_turn" if match[2] == "first turn" else match[2].split()[0]
             return [{"on": "phase", "phase": phase, "whose": "opp" if match[1] else "me"}]
@@ -1011,9 +1022,8 @@ def parse_cached(text):
     """Card text comes from outside and new sets have new wording, so no line of it may ever stop a page or a game."""
     abilities = []
     event_lines = []
-    for line in (text or "").split("\n"):
-        line = " ".join(line.split())
-        if not line or line.startswith("("):  # a trigger icon's reminder text
+    for line in ability_lines(text):
+        if line.startswith("("):  # a trigger icon's reminder text
             continue
         body, quotes = mask(line)
         tag = re.match(r"【(AUTO|ACT|CONT|COUNTER)】\s*", body)

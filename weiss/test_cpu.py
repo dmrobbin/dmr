@@ -59,10 +59,14 @@ class Table:
         self.refresh()
         return cpu.next_action(self.state, "2", self.info, aggression, random.Random(1))
 
-    def apply(self, player, action):
-        game.apply(self.state, player, action, shuffle=no_shuffle, info=self.info, name=lambda pk: self.info(pk)["name"],
-                   is_climax=lambda pk: (self.info(pk).get("card_type") or "").lower() == "climax",
-                   trigger=lambda pk: self.info(pk).get("trigger", ""), cost=lambda pk: self.info(pk).get("cost", 0))
+    def apply(self, player, action, show_checks=False):
+        kwargs = dict(shuffle=no_shuffle, info=self.info, name=lambda pk: self.info(pk)["name"],
+                      is_climax=lambda pk: (self.info(pk).get("card_type") or "").lower() == "climax",
+                      trigger=lambda pk: self.info(pk).get("trigger", ""), cost=lambda pk: self.info(pk).get("cost", 0))
+        game.apply(self.state, player, action, **kwargs)
+        shown = self.state.get("ability_show")
+        if shown and shown.get("check") and not show_checks:  # as a page would, once it's been seen
+            game.apply(self.state, player, {"type": "ability_show_done", "id": shown["id"]}, **kwargs)
 
 
 class FrontLineTests(TestCase):
@@ -1153,6 +1157,189 @@ class UnusualCardTextTests(TestCase):
         self.assertTrue(t.state["acts"]["2"][card["uid"]])  # it can still be started by hand
 
 
+class RunTogetherAbilitiesTests(TestCase):
+    TEXT = ('【CONT】 Your other character in the middle position of your center stage gets the following ability. "【AUTO】 At the beginning of your opponent\'s draw phase, reveal the top card of your deck. '
+            'If that card is level 2 or higher, you may return this card to your hand." (Climax are regarded as level -. Return the revealed card to its original place)'
+            '【ACT】 【CXCOMBO】 Brainstorm [(1) 【REST】 this card] Flip over 5 cards from the top of your deck, and put them into your waiting room. '
+            'For each "Superstar\'s Acting" or "Wound-shifting Scabbard" revealed among those cards, choose up to 1 character in your waiting room, and return it to your hand.')
+
+    def test_two_abilities_on_one_line_are_read_apart(self):
+        cont, act = abilities.parse(self.TEXT)
+        self.assertEqual((cont["kind"], act["kind"]), ("cont", "act"))
+        self.assertEqual(cont["effects"][0]["target"]["type"], "middle")
+        self.assertEqual(abilities.parse(cont["effects"][0]["grant"][0])[0]["when"], [{"on": "phase", "phase": "draw", "whose": "opp"}])
+        self.assertEqual([s["do"] for s in act["steps"]], ["flip", "move_it", "for_each"])
+        self.assertEqual(abilities.by_hand_parts(self.TEXT), [])
+
+    def test_a_tag_in_the_middle_of_a_sentence_doesnt_split(self):
+        for text in ("【AUTO】 When your opponent uses an 【ACT】, this card gets +1500 power until end of turn.",
+                     '【AUTO】 [(1)] When this card is placed on the stage from your hand or by the 【ACT】 effect of "Viper", you may pay the cost. If you do, draw 1 card.',
+                     "【ACT】 【COUNTER】 Backup 2000, Level 1 [(1) Put this card from your hand into your waiting room] (Choose 1 of your characters that is being frontal attacked, and that character gets +2000 power until end of turn)",
+                     '【AUTO】 When this card attacks, this card gets "【AUTO】 Encore [(3)]" until end of turn.'):
+            self.assertEqual(len(abilities.parse(text)), 1, text)
+
+    def test_every_tag_after_a_full_stop_starts_a_new_ability(self):
+        self.assertEqual(len(abilities.parse("【CONT】 During your turn, this card gets +1000 power.【AUTO】 When this card attacks, draw 1 card.")), 2)
+
+    def table(self):
+        t = Table()
+        t.card(500, name="Superstar's Acting", card_type="Climax", power=None, level=None)
+        t.card(501)
+        t.card(2000, text=self.TEXT)
+        return t
+
+    def test_the_brainstorm_works_from_the_button(self):
+        t = self.table()
+        me = t.seat(t.me, "C1", 2000)
+        t.stock(1)
+        t.me["zones"]["deck"][-5:] = [game.new_card(pk) for pk in (501, 500, 501, 501, 501)]
+        keep = game.new_card(501)
+        t.me["zones"]["waiting"].append(keep)
+        t.refresh()
+        row = t.state["acts"]["2"][me["uid"]][0]
+        self.assertIsNone(row["why"])
+        t.apply(2, {"type": "activate", "uid": me["uid"], "index": row["index"]})
+        self.assertEqual(me["pos"], "rest")
+        self.assertEqual(len(t.me["zones"]["waiting"]), 7)  # 5 flipped, 1 paid, and it was there
+        prompt = t.state["resolving"]["prompt"]  # one of them's the climax it names: one character back
+        self.assertEqual(prompt["max"], 1)
+        t.apply(2, {"type": "ability_answer", "uids": [keep["uid"]]})
+        self.assertIn(keep["uid"], [c["uid"] for c in t.me["zones"]["hand"]])
+
+    def test_the_cx_combo_line_is_found_for_a_cpu(self):
+        t = self.table()
+        mind = cpu.Mind(t.state, "2", t.info, cpu.Temper(), random.Random(1))
+        card = t.seat(t.me, "C1", 2000)
+        self.assertFalse(mind.combo_live(card))
+        t.hand(500)
+        self.assertTrue(mind.combo_live(card))
+
+    def test_the_ability_it_gives_triggers_in_the_opponents_draw_phase(self):
+        t = self.table()
+        t.seat(t.me, "C1", 2000)
+        middle = t.seat(t.me, "C2", t.card(502))
+        t.card(503, level=2)
+        t.me["zones"]["deck"][-1]["card"] = 503
+        t.state.update(turn="1", phase="stand", turn_number=5)
+        t.refresh()
+        t.apply(1, {"type": "phase", "phase": "draw"})
+        entry = t.state["ability_queue"][0]
+        self.assertEqual((entry["player"], entry["uid"]), ("2", middle["uid"]))
+        t.apply(2, {"type": "ability_trigger", "id": entry["id"], "accept": True})
+        t.apply(2, {"type": "ability_answer", "value": "yes"})
+        self.assertIn(middle["uid"], [c["uid"] for c in t.me["zones"]["hand"]])
+
+
+class TriggerCheckShowTests(TestCase):
+    def attack(self, text="", trigger=""):
+        t = Table()
+        t.card(600, trigger=trigger, card_type="Climax" if trigger == "comeback" else "Character")
+        t.me["zones"]["deck"][-1]["card"] = 600
+        me = t.seat(t.me, "C2", t.card(2000, text=text))
+        t.me["zones"]["waiting"].append(game.new_card(2001))
+        t.card(2001)
+        t.state.update(phase="attack", attack={"step": "declare"})
+        t.refresh()
+        t.apply(2, {"type": "attack", "uid": me["uid"], "kind": "direct"}, show_checks=True)
+        return t
+
+    def test_both_players_see_the_check_even_with_no_trigger(self):
+        t = self.attack()
+        for player in (1, 2):
+            view = game.view(t.state, player)
+            self.assertEqual(view["ability_show"]["check"], [600])
+            self.assertIn(600, game.visible_cards(view))
+
+    def test_damage_waits_until_its_been_shown(self):
+        t = self.attack()
+        self.assertEqual(t.them["zones"]["clock"], [])
+        t.apply(2, {"type": "ability_show_done", "id": t.state["ability_show"]["id"]})
+        self.assertEqual(len(t.them["zones"]["clock"]), 2)
+
+    def test_a_triggers_choice_waits_too(self):
+        t = self.attack(trigger="comeback")
+        self.assertEqual(t.state["attack"]["prompt"]["kind"], "comeback")
+        with self.assertRaises(game.GameError):
+            t.apply(2, {"type": "trigger_choice"})
+        t.apply(2, {"type": "ability_show_done", "id": t.state["ability_show"]["id"]})
+        t.apply(2, {"type": "trigger_choice"})
+
+    def test_abilities_the_check_triggers_wait_too(self):
+        t = Table()
+        t.card(600, card_type="Climax", power=None, level=None)
+        t.me["zones"]["deck"][-1]["card"] = 600
+        me = t.seat(t.me, "C2", t.card(2000, text="【AUTO】 When this card's trigger check reveals a climax, draw 1 card."))
+        t.state.update(phase="attack", attack={"step": "declare"})
+        t.refresh()
+        t.apply(2, {"type": "attack", "uid": me["uid"], "kind": "direct"}, show_checks=True)
+        self.assertTrue(t.state["ability_queue"])
+        with self.assertRaises(game.GameError):
+            t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+        self.assertEqual(game.view(t.state, 2)["ability"]["prompt"], None)
+        t.apply(2, {"type": "ability_show_done", "id": t.state["ability_show"]["id"]})
+        t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+
+    def test_the_other_page_can_end_it(self):
+        t = self.attack()
+        t.apply(1, {"type": "ability_show_done", "id": t.state["ability_show"]["id"]})
+        self.assertIsNone(t.state.get("ability_show"))
+
+    def test_the_cpu_carries_on_by_itself(self):
+        t = self.attack()
+        action = t.next()
+        self.assertEqual(action["type"], "ability_show_done")
+
+
+class SetPowerTests(TestCase):
+    def setUp(self):
+        self.t = Table()
+        self.card = self.t.seat(self.t.me, "C2", self.t.card(700, power=3000, text="【CONT】 During your turn, this card gets +1000 power."))
+        self.t.refresh()
+
+    def set(self, **action):
+        self.t.apply(2, {"type": "set_power", "uid": self.card["uid"], **action})
+        return self.t.state["stats"][self.card["uid"]]
+
+    def test_it_replaces_whatever_the_power_was_and_both_players_see_it(self):
+        self.assertEqual(self.set(count=9000)["power"], 9000)
+        self.assertEqual(game.view(self.t.state, 1)["stats"][self.card["uid"]]["power"], 9000)
+        self.assertIn("set the power", self.t.state["log"][-1]["text"])
+
+    def test_it_counts_in_battle(self):
+        self.set(count=500)
+        self.t.card(1, power=1000)
+        enemy = self.t.seat(self.t.them, "C2", 1)
+        self.t.state.update(phase="attack", attack={"step": "declare"})
+        self.t.refresh()
+        self.t.apply(2, {"type": "attack", "uid": self.card["uid"], "kind": "front"})
+        self.assertEqual(self.card["pos"], "reverse")
+        self.assertEqual(enemy["pos"], "stand")
+
+    def test_it_returns_to_normal_when_the_turn_ends(self):
+        self.set(count=9000)
+        self.t.state["phase"] = "main"
+        self.t.apply(2, {"type": "phase", "phase": "end"})
+        self.t.refresh()
+        self.assertEqual(self.t.state["stats"][self.card["uid"]]["power"], 3000)
+        self.assertNotIn("manual", self.t.state["stats"][self.card["uid"]])
+
+    def test_setting_it_again_or_clearing_it(self):
+        self.set(count=9000)
+        self.assertEqual(self.set(count=100)["power"], 100)
+        self.assertEqual(self.set(clear=True)["power"], 4000)
+
+    def test_bad_values_and_other_cards(self):
+        for bad in ({"count": -1}, {"count": 100000}, {"count": "lots"}, {}):
+            with self.assertRaises(game.GameError):
+                self.set(**bad)
+        in_hand = self.t.hand(700)[0]
+        with self.assertRaises(game.GameError):
+            self.t.apply(2, {"type": "set_power", "uid": in_hand["uid"], "count": 1})
+        enemy = self.t.seat(self.t.them, "C1", 700)
+        with self.assertRaises(game.GameError):  # your own characters only
+            self.t.apply(2, {"type": "set_power", "uid": enemy["uid"], "count": 1})
+
+
 class CpuDeckBuildingTests(TestCase):
     JUGGLE = "【AUTO】 When this card attacks, juggle the dice."
     COMBO = '【AUTO】 【CXCOMBO】 When "BIG" is placed on your climax area, draw 1 card.'
@@ -1242,6 +1429,25 @@ class CpuDeckBuildingTests(TestCase):
         from .cpu_views import deck_problem
         CardListEntry.objects.create(card_list=self.deck, card=self.bad[0], quantity=1)
         self.assertIn("Bad 0", deck_problem(self.deck))
+
+    def test_exporting_them_as_a_file(self):
+        response = self.client.get(reverse("weiss:cpu_excluded_export"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("attachment", response["Content-Disposition"])
+        self.assertIn("text/plain", response["Content-Type"])
+        text = response.content.decode()
+        self.assertIn("9 cards a CPU can't play", text)
+        self.assertIn("Bad Anchor (TST/", text)
+        self.assertIn(self.COMBO, text)  # the card's full text
+        self.assertIn("  - juggle the dice", text)
+        self.assertNotIn("Clean Anchor", text)
+        self.assertContains(self.client.get(reverse("weiss:cpu_home")), reverse("weiss:cpu_excluded_export"))
+
+    def test_only_staff_can_export(self):
+        player = User.objects.create_user("player", password="x")
+        player.groups.add(Group.objects.get_or_create(name=WEISS_GROUP)[0])
+        self.client.force_login(player)
+        self.assertEqual(self.client.get(reverse("weiss:cpu_excluded_export")).status_code, 403)
 
     def test_the_tab_lists_them(self):
         page = self.client.get(reverse("weiss:cpu_home"))

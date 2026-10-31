@@ -204,7 +204,16 @@ class Builder:
 
     def allowed(self, card):
         """The level 0 rule (see needs_level_zero), for a card about to be drawn."""
+        if card.level == 3 and self.level_three_room() <= 0:
+            return False
         return not needs_level_zero(card) or self.level_zero_copies(card.color) >= MIN_LEVEL_ZERO
+
+    def level_copies(self, level):
+        return sum(n for pk, n in self.copies.items() if pk in self.by_pk and self.by_pk[pk].level == level and not is_climax(self.by_pk[pk]))
+
+    def level_three_room(self):
+        """How many more level 3s fit: a deck shouldn't have more of them than level 2s."""
+        return self.level_copies(2) - self.level_copies(3)
 
     def strands_color(self, color):
         """Whether this color has higher cards in the deck but too few level 0s now."""
@@ -249,7 +258,7 @@ class Builder:
             return None
         return self.rng.choices(candidates, [self.weight(c) for c in candidates])[0]
 
-    def fill(self, fits, count):
+    def fill(self, fits, count, level_rule=True):
         """Add up to `count` copies of cards that fit, a few at a time. Returns how many it couldn't."""
         while count > 0:
             card = self.draw([c for c in self.pool if fits(c)])
@@ -257,9 +266,16 @@ class Builder:
                 break
             wanted = self.rng.choices(list(COPY_WEIGHTS), list(COPY_WEIGHTS.values()))[0]
             added = min(wanted, self.room(card), count)
+            if level_rule and card.level == 3:
+                added = min(added, self.level_three_room())
             self.copies[card.pk] += added
             count -= added
         return count
+
+
+def before_high(builder):
+    """The level 2 copies there were before the level 2 + 3 group started filling."""
+    return builder.level_twos_at_start
 
 
 def spread(cards, total):
@@ -334,10 +350,18 @@ def build_deck(pool, anchors, rng=random):
     for label, target, needed, counts in DECK_GROUPS:
         have = sum(n for pk, n in builder.copies.items() if counts(builder.by_pk[pk]))
         wanting.append([counts, max(0, target - have), needed])
+    # Required level 3s need as many level 2s beside them, even if that's more than the group's share.
+    high_group = wanting[-1]
+    high_group[1] = max(high_group[1], -builder.level_three_room())
     while sum(w[1] for w in wanting) > DECK_SIZE - builder.total():
-        max(wanting[1:], key=lambda w: w[1])[1] -= 1
+        max(wanting[1:-1] if wanting[1:-1] and max(w[1] for w in wanting[1:-1]) > 0 else wanting[1:], key=lambda w: w[1])[1] -= 1
+    builder.level_twos_at_start = builder.level_copies(2)
     for counts, count, needed in wanting:
-        short = builder.fill(lambda c, counts=counts: counts(c) and builder.allowed(c), count)
+        fits = (lambda c, counts=counts: counts(c) and builder.allowed(c))
+        if counts is high_group[0]:  # level 2s first, if required level 3s are waiting for them
+            builder.fill(lambda c: c.level == 2 and builder.allowed(c), min(count, max(0, -builder.level_three_room())))
+            count = max(0, count - max(0, builder.level_copies(2) - before_high(builder)))
+        short = builder.fill(fits, count)
         if short and needed:
             notes.append(f"This series doesn't have enough climaxes for {CLIMAX_COUNT}; {short} short.")
     # A small series can run out of some level: anything else that isn't a climax makes up the size,
@@ -345,7 +369,7 @@ def build_deck(pool, anchors, rng=random):
     builder.fill(lambda c: not is_climax(c) and builder.allowed(c), DECK_SIZE - builder.total())
     if builder.total() < DECK_SIZE and any(not is_climax(c) and builder.room(c) > 0 for c in pool):
         notes.append(f"To reach {DECK_SIZE} cards, some colors have higher levels without {MIN_LEVEL_ZERO} level 0s.")
-    short = builder.fill(lambda c: not is_climax(c), DECK_SIZE - builder.total())
+    short = builder.fill(lambda c: not is_climax(c), DECK_SIZE - builder.total(), level_rule=False)
     if short:
         notes.append(f"This series only has enough cards for {DECK_SIZE - short} of the {DECK_SIZE}.")
     replace_unplayable_climaxes(builder, anchors, required)
@@ -383,7 +407,10 @@ def replace_cards(pool, anchors, copies, required, removing, mode, rng=random, k
                 n and is_climax(builder.by_pk[p]) and builder.by_pk[p].color == old.color and builder.by_pk[p].name in required
                 for p, n in builder.copies.items() if p in builder.by_pk)
             color = old.color if needed_climax or (old.level == 0 and builder.strands_color(old.color)) else None
+            # Taking out a level 2 can't leave more level 3s than level 2s.
+            level = 2 if old.level == 2 and builder.level_three_room() < 0 else None
             others = [c for c in pool if c.name not in removed and builder.allowed(c) and (not color or c.color == color)
+                      and (not level or c.level == level)
                       and (not is_climax(c) or builder.supported(c.color))]
             new = builder.draw([c for c in others if group_of(c) == group_of(old)])
             if not new and not is_climax(old):

@@ -4,6 +4,7 @@ from functools import wraps
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models import Sum
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
@@ -50,7 +51,7 @@ def excluded_cards():
         if card.name not in found:
             parts = abilities.by_hand_parts(card.description)
             if parts:
-                found[card.name] = {"name": card.name, "serial": card.serial_number, "parts": parts}
+                found[card.name] = {"name": card.name, "serial": card.serial_number, "text": card.description, "parts": parts}
     return sorted(found.values(), key=lambda c: c["name"])
 
 
@@ -83,6 +84,20 @@ def cpu_home(request):
         "aggressions": range(cpu.MIN_AGGRESSION, cpu.MAX_AGGRESSION + 1),
         "excluded": excluded_cards(),
     })
+
+
+@staff_required
+def cpu_excluded_export(request):
+    """The cards a CPU can't play, with their full text and what's stopping it, as a text file."""
+    cards = excluded_cards()
+    lines = [f"{len(cards)} card{'' if len(cards) == 1 else 's'} a CPU can't play", ""]
+    for card in cards:
+        lines += [f"{card['name']} ({card['serial']})", card["text"], "Needs doing by hand:"]
+        lines += [f"  - {part}" for part in card["parts"]]
+        lines.append("")
+    response = HttpResponse("\n".join(lines), content_type="text/plain; charset=utf-8")
+    response["Content-Disposition"] = 'attachment; filename="cpu-unplayable-cards.txt"'
+    return response
 
 
 @staff_required

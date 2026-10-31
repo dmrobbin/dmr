@@ -655,6 +655,7 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .slot-pos-center { top: 50%; left: 50%; transform: translate(-50%, -50%); }
 .slot-pos button { display: grid; place-items: center; width: 1.4rem; height: 1.4rem; padding: 0; font: inherit; font-size: .85rem; font-weight: 800; line-height: 1; color: #fff; background: #2b2f3a; border: 1px solid rgb(255 255 255 / .55); border-radius: .3rem; cursor: pointer; box-shadow: 0 2px 6px rgb(0 0 0 / .6); }
 .slot-pos button:hover { border-color: var(--accent); color: var(--accent); background: #353a47; }
+.slot-pos button.zone-menu { width: auto; min-width: 1.4rem; padding: 0 .15rem; font-size: .68rem; letter-spacing: -.02em; }
 .slot-pos button[aria-pressed="true"] { color: #111; border-color: var(--accent); background: var(--accent); }
 /* The ! button on a card with an ability to activate: bright when one can be used right now. */
 .slot-pos button.ability-button, .ability-button { display: grid; place-items: center; width: 1.4rem; height: 1.4rem; padding: 0; font: inherit; font-size: .95rem; font-weight: 900; line-height: 1; color: #d8dbe3; background: #2b2f3a; border: 1px solid rgb(255 255 255 / .35); border-radius: 50%; cursor: pointer; box-shadow: 0 2px 6px rgb(0 0 0 / .6); }
@@ -886,6 +887,23 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .ability-show-targets { display: flex; flex-direction: column; gap: .75rem; }
 .climax-show .ability-show-targets img { max-width: 30vw; max-height: calc((52vh - (var(--targets) - 1) * .75rem) / var(--targets)); }
 .ability-arrows { position: absolute; top: 0; left: 0; overflow: visible; filter: drop-shadow(0 0 6px rgb(255 200 80 / .8)); }
+/* A trigger check, in the middle of the screen for both players. */
+.trigger-show { display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: .75rem 1.25rem; border-radius: .9rem; background: rgb(10 12 18 / .82); }
+.trigger-show-title, .trigger-show-icons { margin: 0; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #fff; text-shadow: 0 2px 6px #000; }
+.trigger-show-title { font-size: 1.5rem; color: #f5c542; }
+.trigger-show-icons { font-size: 1.15rem; }
+.trigger-show-cards { display: flex; gap: .75rem; }
+.climax-show .trigger-show-cards img { max-width: 34vw; max-height: 46vh; }
+/* A phase change: the old phase's graphic, swept away by the new one's. */
+.phase-show { position: fixed; left: 50%; top: 50%; z-index: 45; width: 15rem; height: 11rem; pointer-events: none; transform: translate(-50%, -50%); }
+.phase-show-card { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid #f5c542; border-radius: 1rem; background: linear-gradient(160deg, rgb(32 36 48 / .96), rgb(12 14 20 / .96)); box-shadow: 0 0 24px rgb(245 197 66 / .45), 0 12px 40px rgb(0 0 0 / .7); }
+.phase-show-icon { font-size: 3rem; line-height: 1.1; }
+.phase-show-name { font-size: 1.8rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #fff; }
+.phase-show-word { font-size: .75rem; letter-spacing: .3em; text-transform: uppercase; color: #f5c542; }
+.phase-show-out { animation: phase-out var(--phase-ms) ease-in both; }
+.phase-show-in { animation: phase-in var(--phase-ms) ease-out both; }
+@keyframes phase-out { 0%, 35% { opacity: 1; transform: none; } 65%, 100% { opacity: 0; transform: translateX(-70%) scale(.8) rotate(-6deg); } }
+@keyframes phase-in { 0%, 35% { opacity: 0; transform: translateX(70%) scale(.8) rotate(6deg); } 65% { opacity: 1; transform: none; } 85% { opacity: 1; transform: none; } 100% { opacity: 0; transform: scale(1.05); } }
 .climax-zoom { animation-name: climax-zoom; }
 .climax-spin { animation-name: climax-spin; }
 .climax-slide { animation-name: climax-slide; }

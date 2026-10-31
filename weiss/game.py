@@ -62,6 +62,7 @@ HAND_LIMIT = 7  # cards a player may keep in hand at the end of their turn
 ENCORE_COST = 3  # stock paid to keep a reversed character on the stage, rested
 LEVEL_UP_AT = 7  # clock cards that make a level
 LOSING_LEVEL = 4  # a player who reaches this level has lost
+MAX_SET_POWER = 99999  # the most power a character can be set to by hand
 RPS_BEATS = {"rock": "scissors", "paper": "rock", "scissors": "paper"}
 CLOCK_DRAW = 2  # cards drawn after putting a card from the hand into the clock
 PHASES = ["mulligan", "stand", "draw", "clock", "main", "climax", "attack", "encore", "end"]  # mulligan: turn 1 only
@@ -504,6 +505,7 @@ def trigger_check(state, env):
     attack = state["attack"]
     attack.pop("checking", None)
     icons = []
+    shown = []
     checks = attack.pop("checks", 1)
     for _ in range(checks):
         if not zones["deck"] and zones["waiting"]:
@@ -511,6 +513,7 @@ def trigger_check(state, env):
         if not zones["deck"]:
             break
         checked = zones["deck"].pop()
+        shown.append(checked["card"])
         found = (env.trigger(checked["card"]) or "").split()
         icons += found
         put(side, checked, "hand" if "treasure" in found else "stock")
@@ -523,6 +526,9 @@ def trigger_check(state, env):
     if attack.pop("check_pay", 0) and checks == 2 and zones["stock"]:
         put(side, zones["stock"].pop(), "waiting")
         add_log(state, player, "paid 1 stock for the second trigger check")
+    if shown:  # both pages show what was checked; anything it triggered resolves after that
+        state["ability_show"] = {"id": new_uid(), "player": player, "uid": attack["uid"], "card": shown[0], "text": "Trigger check",
+                                 "targets": [], "check": shown}
     attack["soul_extra"] += icons.count("soul")
     attack["shot"] = "shot" in icons
     update_attack_soul(state, compute_stats(state, env)[0], env)
@@ -701,6 +707,7 @@ def enter_phase(state, player, phase, env):
         add_log(state, player, "moved to the draw phase")
         if state["turn_number"] <= len(state["order"]):
             fire(state, env, "phase", phase="first_turn", player=player)
+        fire(state, env, "phase", phase="draw", player=player)
         draw_step(state, player, name, shuffle)
         state["auto_next"] = "clock"
     elif phase == "end":
@@ -712,7 +719,7 @@ def enter_phase(state, player, phase, env):
         finish_turn(state, player, name)
     else:
         add_log(state, player, f"moved to the {phase} phase")
-        if rules and phase in ("climax", "attack", "encore"):
+        if rules and phase in ("clock", "main", "climax", "attack", "encore"):
             fire(state, env, "phase", phase=phase, player=player)
 
 
@@ -982,6 +989,26 @@ def apply_action(state, player, action, env):
         add_log(state, player, f"turned a card in their {LABELS[where]} face {'down' if card['face_down'] else 'up'}")
         return {}
 
+    if kind == "set_power":
+        # For when an ability isn't doing what it should: this character's power, until the end of the turn.
+        where, _ = find(side, action.get("uid", ""))
+        if where not in STAGE_SLOTS:
+            raise GameError("Only characters on the stage have power to set.")
+        card = side["stage"][where]
+        state["buffs"] = [b for b in state.get("buffs", []) if not (b["uid"] == card["uid"] and "set_power" in b)]
+        if action.get("clear"):
+            add_log(state, player, f"put the power of {name(card['card'])} back to normal")
+            return {}
+        try:
+            power = int(action.get("count"))
+        except (TypeError, ValueError):
+            raise GameError("Power must be a number.")
+        if not 0 <= power <= MAX_SET_POWER:
+            raise GameError(f"Power must be between 0 and {MAX_SET_POWER}.")
+        state["buffs"].append({"uid": card["uid"], "set_power": power, "expires": state["turn_number"]})
+        add_log(state, player, f"set the power of {name(card['card'])} to {power} until the end of the turn")
+        return {}
+
     if kind == "stand_all":
         stand_all(side)
         add_log(state, player, "stood all their characters")
@@ -1109,6 +1136,8 @@ def apply_action(state, player, action, env):
         prompt = attack.get("prompt")
         if attack.get("step") != "trigger" or not prompt or player != state["turn"]:
             raise GameError("There's no trigger to resolve right now.")
+        if state.get("ability_show"):
+            raise GameError("Wait for the trigger check to finish showing.")
         trigger_kind = prompt["kind"]
         uid = action.get("uid")
         if trigger_kind == "treasure":
@@ -1598,6 +1627,9 @@ def compute_stats(state, env):
     for values in stats.values():
         values["power"] = max(0, values["power"])
         values["soul"] = max(0, values["soul"])
+    for buff in state.get("buffs", []):  # power set by hand beats everything else, until the turn ends
+        if "set_power" in buff and buff["uid"] in stats:
+            stats[buff["uid"]].update(power=buff["set_power"], manual=True)
     return stats, granted
 
 
@@ -2636,7 +2668,7 @@ def visible_cards(view):
     pks.update(row["card"] for rows in view.get("acts", {}).values() for row in rows)
     shown = view.get("ability_show") or {}
     if shown:
-        pks.update([shown["card"], *shown["targets"]])
+        pks.update([shown["card"], *shown["targets"], *(shown.get("check") or [])])
     return pks
 
 
@@ -2707,7 +2739,7 @@ def view(state, player):
         "ability": ability_view(state, player),
         # An ability that just resolved, for both pages to show: {"id", "card", "targets": [card, ...], "mine"}.
         "ability_show": ({"id": state["ability_show"]["id"], "card": state["ability_show"]["card"], "targets": state["ability_show"]["targets"],
-                          "mine": state["ability_show"]["player"] == player} if state.get("ability_show") else None),
+                          "check": state["ability_show"].get("check"), "mine": state["ability_show"]["player"] == player} if state.get("ability_show") else None),
         "needs_color": state.get("needs_color", {}).get(player, {}),
         # Characters that can't be encored this turn.
         "no_encore": [b["uid"] for b in state.get("buffs", []) if b.get("status") == "no_encore"],

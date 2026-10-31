@@ -29,6 +29,7 @@
   </section>
 
   <section class="cpu-section">
+    <p><a class="button-small secondary" href="{% url 'weiss:cpu_excluded_export' %}" download>Export unplayable cards</a></p>
     <details>
       <summary>{{ excluded|length }} card{{ excluded|length|pluralize }} a CPU can't play</summary>
       <p class="muted small">Part of each of these has to be done by hand, so they're left out of CPU decks. So are anchors that name one of them.</p>

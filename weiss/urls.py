@@ -15,6 +15,7 @@ urlpatterns = [
     path("play/new/", play.room_create, name="play_create"),
     path("play/cpu/", play.room_vs_cpu, name="play_vs_cpu"),
     path("cpu/", cpu_views.cpu_home, name="cpu_home"),
+    path("cpu/unplayable.txt", cpu_views.cpu_excluded_export, name="cpu_excluded_export"),
     path("cpu/decks/new/", cpu_views.cpu_deck_create, name="cpu_deck_create"),
     path("cpu/profiles/new/", cpu_views.cpu_profile_create, name="cpu_profile_create"),
     path("cpu/profiles/<int:pk>/", cpu_views.cpu_profile_update, name="cpu_profile_update"),

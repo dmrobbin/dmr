@@ -223,6 +223,7 @@
   // An ability that has resolved: its card, in the middle of the screen with the same entrance as a
   // climax, with an arrow to each card it was directed at.
   function showAbility(ability) {
+    if (ability.check) return showTriggerCheck(ability.check);
     const source = cards[ability.card];
     if (!source) return;
     const targets = ability.targets.map((pk) => cards[pk]).filter(Boolean);
@@ -242,6 +243,23 @@
       const images = [...el.querySelectorAll("img")].map((img) => img.decode().catch(() => {}));
       Promise.all(images).then(() => drawArrows(el));
     }
+  }
+
+  // A trigger check: the card or cards it turned over, with their icons, or that they have none.
+  function showTriggerCheck(pks) {
+    const checked = pks.map((pk) => cards[pk]).filter(Boolean);
+    if (!checked.length) return;
+    const icons = checked.map((c) => c.trigger).filter(Boolean).join(" ");
+    const el = document.createElement("div");
+    el.className = `climax-show ${CLIMAX_EFFECTS[Math.floor(Math.random() * CLIMAX_EFFECTS.length)]}`;
+    el.style.animationDuration = `${CLIMAX_SHOW_MS}ms`;
+    el.innerHTML = `<div class="trigger-show">
+      <p class="trigger-show-title">Trigger check</p>
+      <div class="trigger-show-cards">${checked.map((c) => `<img src="${esc(c.image)}" alt="${esc(c.name)}">`).join("")}</div>
+      <p class="trigger-show-icons">${icons ? esc(icons) : "No trigger"}</p>
+    </div>`;
+    document.body.appendChild(el);
+    el.addEventListener("animationend", () => el.remove());
   }
 
   // Arrows from the shown ability's card to its targets, measured without the entrance's transform.
@@ -626,6 +644,7 @@
     return `<div class="zone pile zone-${zone}" data-pile="${zone}" data-owner="${owner}" data-drop="${owner === "me" ? zone : ""}">
       <span class="zone-label">${cxHtml(LABELS[zone])} <b>${count}</b></span>
       ${searchHtml(owner, zone, count)}
+      ${zone === "deck" && owner === "me" ? `<div class="slot-pos slot-pos-right">${zoneMenuButton("deck")}</div>` : ""}
       ${zone === "deck" && owner === "me" && count ? `<div class="slot-pos slot-pos-center">${
         iconButton({ type: "move_top", from: "deck", to: "hand" }, "✋", "Draw")}</div>` : ""}
       ${zone === "resolution" && owner === "me" && count ? resolutionButtonsHtml(pile[pile.length - 1]) : ""}
@@ -758,6 +777,8 @@
   // Any reversed character on either side (the encore step waits for them).
   const reversedLeft = () => [board.me, board.opponent].some((side) => side && Object.values(side.stage).some((c) => c && c.pos === "reverse"));
 
+  const zoneMenuButton = (zone) => `<button type="button" class="zone-menu" title="More actions" aria-label="More actions" data-zone-menu="${zone}">[…]</button>`;
+
   // Small always-visible buttons in the corners of our occupied slots: stand (|) and rest (—) top
   // left, reverse (↷, center stage only) top right, and back to hand (✋) bottom left.
   function slotPosHtml(card, slot) {
@@ -765,7 +786,7 @@
       aria-pressed="${pressed}" data-act='${esc(JSON.stringify(action))}'>${symbol}</button>`;
     const pos = (p, symbol, label) => button({ type: "position", uid: card.uid, pos: p }, symbol, label, card.pos === p);
     return `<div class="slot-pos">${pos("stand", "|", "Stand")}${pos("rest", "—", "Rest")}</div>
-      ${slot.startsWith("C") ? `<div class="slot-pos slot-pos-right">${pos("reverse", "↷", "Reverse")}</div>` : ""}
+      <div class="slot-pos slot-pos-right">${slot.startsWith("C") ? pos("reverse", "↷", "Reverse") : ""}${zoneMenuButton(slot)}</div>
       <div class="slot-pos slot-pos-bottom">${button({ type: "move", uid: card.uid, to: "hand" }, "✋", "To hand")}</div>`;
   }
 
@@ -969,7 +990,8 @@
     renderAttackPanel();
     const note = controlsEl.querySelector(".phase-note");
     const ability = board.ability;
-    note.textContent = ability && !ability.mine ? `Waiting for ${ability.by} to resolve ${ability.resolving ? "an ability" : "their abilities"}…`
+    note.textContent = board.ability_show && board.ability_show.check ? "Trigger check…"
+      : ability && !ability.mine ? `Waiting for ${ability.by} to resolve ${ability.resolving ? "an ability" : "their abilities"}…`
       : ability && ability.resolving && !ability.prompt ? "Finishing the ability…"
       : board.reveal && board.reveal.mine ? `Waiting for ${board.opponent ? board.opponent.name : "your opponent"} to close the card you revealed.`
       : board.discard ? (board.discard.mine ? `End phase: discard ${board.discard.count} to get down to 7.`
@@ -1161,7 +1183,7 @@
     if (board.ability && board.ability.mine && !board.ability.resolving) return renderAbilityQueue();
     if (board.ability && board.ability.mine && board.ability.prompt && board.ability.prompt.kind !== "manual") return renderAbilityPrompt();
     if (modal && modal.abilities) return renderAbilityList();
-    if (board.my_turn && board.attack && board.attack.step === "trigger" && board.attack.prompt) return renderTriggerPrompt();
+    if (board.my_turn && board.attack && board.attack.step === "trigger" && board.attack.prompt && !board.ability_show) return renderTriggerPrompt();
     if (!modal) {
       modalEl.hidden = true;
       return;
@@ -1386,9 +1408,30 @@
   // A new phase's name (in the side panel, on the board and on the phase bar) comes in with a
   // randomly picked little animation.
   let phaseKey = null;
+  let phaseWas = null;
+
+  // The phase that's ending in the middle of the screen, replaced by the new one.
+  const PHASE_ICONS = { mulligan: "🔄", stand: "⬆", draw: "🃏", clock: "🕒", main: "🎯", climax: "⚡", attack: "⚔", encore: "♻", end: "🏁" };
+  const phaseCard = (phase, which) => `<div class="phase-show-card ${which}"><span class="phase-show-icon" aria-hidden="true">${PHASE_ICONS[phase] || ""}</span>
+    <span class="phase-show-name">${cxHtml(PHASES[phase] || phase)}</span><span class="phase-show-word">phase</span></div>`;
+
+  function showPhaseChange(from, to) {
+    document.querySelectorAll(".phase-show").forEach((el) => el.remove());
+    const el = document.createElement("div");
+    el.className = "phase-show";
+    el.style.setProperty("--phase-ms", `${PHASE_PAUSE_MS}ms`);
+    el.setAttribute("aria-live", "polite");
+    el.innerHTML = phaseCard(from, "phase-show-out") + phaseCard(to, "phase-show-in");
+    document.body.appendChild(el);
+    el.querySelector(".phase-show-in").addEventListener("animationend", () => el.remove());
+  }
 
   function announcePhase() {
     const key = `${board.turn_number}:${board.phase}`;
+    if (phaseKey && key !== phaseKey && animations && phaseWas && phaseWas !== board.phase && !board.game_over && !board.rps) {
+      showPhaseChange(phaseWas, board.phase);
+    }
+    phaseWas = board.phase;
     if (phaseKey && key !== phaseKey && animations) {
       const effect = PHASE_NAME_FX[Math.floor(Math.random() * PHASE_NAME_FX.length)];
       const names = [controlsEl.querySelector("[data-turn]"), boardEl.querySelector(".table-turn"),
@@ -1467,12 +1510,14 @@
 
   // --- Menus -----------------------------------------------------------------------------------
 
+  let menuZone = null; // the deck or stage slot whose [...] menu is open, if any
+
   function showMenu(x, y, title, items) {
-    hoverZone = null;
+    menuZone = null;
     menuEl.classList.remove("see-through");
     menuEl.innerHTML = `<p class="play-menu-title">${esc(title)}</p>` + items.map((item) => item === "-"
       ? "<hr>"
-      : `<button type="button" data-menu-item='${esc(JSON.stringify(item.action || {}))}' ${item.prompt ? `data-prompt="${esc(item.prompt)}"` : ""} ${item.view ? `data-view='${esc(JSON.stringify(item.view))}'` : ""}>${esc(item.label)}</button>`).join("");
+      : `<button type="button" data-menu-item='${esc(JSON.stringify(item.action || {}))}' ${item.prompt ? `data-prompt="${esc(item.prompt)}" data-prompt-default="${esc(item.promptDefault ?? 1)}"` : ""} ${item.view ? `data-view='${esc(JSON.stringify(item.view))}'` : ""}>${esc(item.label)}</button>`).join("");
     menuEl.hidden = false;
     const box = menuEl.getBoundingClientRect();
     menuEl.style.left = `${Math.min(x, window.innerWidth - box.width - 8)}px`;
@@ -1481,24 +1526,11 @@
 
   function hideMenu() {
     menuEl.hidden = true;
-    hoverZone = null;
+    menuZone = null;
   }
 
-  // Hovering our deck or one of our occupied stage slots opens its full menu beside it. It stays
-  // open while the pointer is on the zone or the menu, and closes shortly after it leaves both.
-  // The zone is remembered by name, not element, because the board is redrawn on every move.
-  const HOVER_CLOSE_MS = 200;
-  let hoverZone = null; // "deck" or a stage slot, while the menu showing is its hover menu
-  let hoverCloseTimer = null;
-
-  function hoverTarget(el) {
-    if (!board || el.closest(".marker-pile")) return null; // markers have their own (click) menu
-    if (el.closest('[data-pile="deck"][data-owner="me"]')) return "deck";
-    const slot = el.closest('.zone.slot[data-owner="me"]');
-    return slot && board.me.stage[slot.dataset.drop] ? slot.dataset.drop : null;
-  }
-
-  function openHoverMenu(zone, zoneEl) {
+  // The [...] button on our deck and our occupied stage slots opens its full menu beside the zone.
+  function openZoneMenu(zone, zoneEl) {
     const card = zone === "deck" ? null : zoneEl.querySelector(".pcard[data-uid]");
     const [title, items] = zone === "deck" ? pileMenu("deck", "me") : cardMenu(card);
     const box = zoneEl.getBoundingClientRect();
@@ -1508,27 +1540,8 @@
     if (box.right + 6 + width > window.innerWidth - 8) { // no room on the right: open to the left
       menuEl.style.left = `${Math.max(8, box.left - 6 - width)}px`;
     }
-    hoverZone = zone;
+    menuZone = zone;
   }
-
-  function cancelHoverClose() {
-    clearTimeout(hoverCloseTimer);
-    hoverCloseTimer = null;
-  }
-
-  document.addEventListener("mousemove", (event) => {
-    if (menuEl.contains(event.target)) return cancelHoverClose();
-    const zone = hoverTarget(event.target);
-    if (zone) {
-      cancelHoverClose();
-      if (zone !== hoverZone || menuEl.hidden) openHoverMenu(zone, event.target.closest(".zone"));
-    } else if (hoverZone && !hoverCloseTimer) {
-      hoverCloseTimer = setTimeout(() => {
-        hoverCloseTimer = null;
-        if (hoverZone) hideMenu();
-      }, HOVER_CLOSE_MS);
-    }
-  });
 
   function cardMenu(el) {
     const uid = el.dataset.uid;
@@ -1545,6 +1558,11 @@
       items.push({ label: "Stand", action: { type: "position", uid, pos: "stand" } },
         { label: "Rest", action: { type: "position", uid, pos: "rest" } },
         { label: "Reverse", action: { type: "position", uid, pos: "reverse" } }, "-");
+      // For when an ability isn't doing what it should: back to normal at the end of the turn.
+      const live = (board.stats || {})[uid];
+      items.push({ label: "Set power…", action: { type: "set_power", uid }, prompt: "Set this card's power until the end of the turn:", promptDefault: live ? live.power : (info && info.power) || 0 });
+      if (live && live.manual) items.push({ label: "Put power back to normal", action: { type: "set_power", uid, clear: true } });
+      items.push("-");
     }
     if (!["hand", "deck", "stock"].includes(zone)) {
       items.push({ label: el.classList.contains("face-down") ? "Turn face up" : "Turn face down", action: { type: "flip", uid } }, "-");
@@ -1635,11 +1653,17 @@
       }
       const action = JSON.parse(menuItem.dataset.menuItem);
       if (menuItem.dataset.prompt) {
-        const answer = window.prompt(menuItem.dataset.prompt, "1");
+        const answer = window.prompt(menuItem.dataset.prompt, menuItem.dataset.promptDefault);
         if (!answer) return hideMenu();
         action.count = Number(answer);
       }
       act(action);
+      return;
+    }
+    const zoneMenu = event.target.closest("[data-zone-menu]");
+    if (zoneMenu) {
+      if (menuZone === zoneMenu.dataset.zoneMenu && !menuEl.hidden) hideMenu();
+      else openZoneMenu(zoneMenu.dataset.zoneMenu, zoneMenu.closest(".zone"));
       return;
     }
     const confirmClimax = event.target.closest("[data-confirm-climax]");
@@ -1748,10 +1772,9 @@
       renderModal();
       return;
     }
-    // The deck and stage slots open their hover menu on a click too (for touch screens).
-    const hovered = hoverTarget(event.target);
-    if (hovered) {
-      openHoverMenu(hovered, event.target.closest(".zone"));
+    // The deck's and stage cards' menus are on their [...] buttons.
+    if (event.target.closest('[data-pile="deck"][data-owner="me"]') || event.target.closest('.zone.slot[data-owner="me"]:not(:has(.marker-pile:hover))')) {
+      hideMenu();
       return;
     }
     // A stacked pile opens the pile's menu (its cards are reachable through "View all");

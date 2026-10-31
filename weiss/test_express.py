@@ -439,6 +439,50 @@ class UnplayableClimaxTests(TestCase):
             self.assert_every_climax_is_playable(self.builder(new))
 
 
+class HighLevelBalanceTests(TestCase):
+    def setUp(self):
+        make_series()
+        self.pool = express.series_pool("TST")
+
+    def levels(self, builder):
+        return builder.level_copies(2), builder.level_copies(3)
+
+    def test_never_more_level_3s_than_level_2s(self):
+        for seed in range(60):
+            builder, _, notes = express.build_deck(self.pool, [in_pool(self.pool, "Combo Red")], random.Random(seed))
+            two, three = self.levels(builder)
+            self.assertLessEqual(three, two, seed)
+            self.assertEqual((builder.total(), notes), (50, []))
+
+    def test_required_level_3s_get_level_2s_to_match_even_past_the_groups_share(self):
+        anchors = [Card.objects.create(serial_number=f"TST/S1-H{i}", name=f"High {i}", expansion="Test set", expansion_id=1, card_type="Character", level=3, power=9000, soul=2, color="Red", description=COMBO) for i in range(2)]
+        pool = express.series_pool("TST")
+        for seed in range(30):
+            builder, _, notes = express.build_deck(pool, [in_pool(pool, a.name) for a in anchors], random.Random(seed))
+            two, three = self.levels(builder)
+            self.assertEqual(three, 8)
+            self.assertGreaterEqual(two, 8)
+            self.assertEqual(builder.total(), 50)
+            self.assertEqual(sum(n for pk, n in builder.copies.items() if builder.by_pk[pk].card_type == "Climax"), 8)
+
+    def test_replacements_keep_to_it(self):
+        anchors = [in_pool(self.pool, "Combo Red")]
+        for seed in range(30):
+            builder, required, _ = express.build_deck(self.pool, anchors, random.Random(seed))
+            removing = Counter({pk: n for pk, n in builder.copies.items() if builder.by_pk[pk].level == 2 and builder.by_pk[pk].name not in required})
+            new, _ = express.replace_cards(self.pool, anchors, builder.copies, set(required), removing, "balanced", random.Random(seed))
+            builder.copies = Counter(new)
+            two, three = self.levels(builder)
+            self.assertLessEqual(three, two)
+            self.assertEqual(builder.total(), 50)
+
+    def test_a_series_with_no_level_2s_still_fills_the_deck(self):
+        Card.objects.filter(level=2).delete()
+        pool = express.series_pool("TST")
+        builder, _, _ = express.build_deck(pool, [in_pool(pool, "Combo Red")], random.Random(1))
+        self.assertEqual(builder.total(), 50)
+
+
 class PagesTests(TestCase):
     def setUp(self):
         make_series()

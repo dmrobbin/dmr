@@ -510,6 +510,7 @@ class PhaseTests(TestCase):
         game.apply(self.state, 1, {"type": "move", "uid": b["uid"], "to": "C2"})
         self.phase("attack")
         game.apply(self.state, 1, {"type": "attack", "uid": a["uid"], "kind": "direct"})
+        game.apply(self.state, 1, {"type": "ability_show_done", "id": self.state["ability_show"]["id"]})  # the trigger check
         # No attacks left on turn 1, so the attack phase ends itself (then the encore step, and the turn).
         self.assertEqual(self.state["auto_next"], "encore")
         self.assertEqual(self.state["players"]["1"]["stage"]["C2"]["pos"], "stand")
@@ -584,8 +585,11 @@ class AttackStepTests(TestCase):
         self.bob = zones(self.state, 2)["hand"]
 
     def act(self, player, action, **kwargs):
-        return game.apply(self.state, player, action, shuffle=no_shuffle, name=lambda pk: f"Card{pk}",
-                          info=lambda pk: CARDS.get(pk, {}), **kwargs)
+        common = dict(shuffle=no_shuffle, name=lambda pk: f"Card{pk}", info=lambda pk: CARDS.get(pk, {}), **kwargs)
+        extra = game.apply(self.state, player, action, **common)
+        if self.state.get("ability_show"):  # the trigger check shows, then a page moves things on
+            game.apply(self.state, player, {"type": "ability_show_done", "id": self.state["ability_show"]["id"]}, **common)
+        return extra
 
     def stage(self, player, slot):
         return self.state["players"][str(player)]["stage"][slot]
@@ -902,7 +906,7 @@ class AbilityGameTests(TestCase):
     def act(self, player, action):
         """An action, and then any ability's show plays out as the pages would let it."""
         extra = self.apply(player, action)
-        if self.state.get("ability_show"):
+        while self.state.get("ability_show"):
             self.last_show = self.state["ability_show"]
             self.apply(player, {"type": "ability_show_done", "id": self.state["ability_show"]["id"]})
         return extra
