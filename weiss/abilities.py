@@ -19,8 +19,11 @@ silently dropped. A condition it doesn't recognize counts as met (the player can
 Inside the parser, quoted text (card names, granted abilities) is masked as ⟦n⟧ first, so commas and
 full stops inside quotes can't confuse the splitting into sentences and clauses.
 """
+import logging
 import re
 from functools import lru_cache
+
+log = logging.getLogger(__name__)
 
 ZONE_WORDS = {"waiting room": "waiting", "clock": "clock", "hand": "hand", "level": "level", "memory": "memory",
               "stock": "stock", "deck": "deck"}
@@ -346,9 +349,10 @@ def parse_x(words, quotes):
     if words == "the number of climax among those cards":
         return {"of": "flipped", "filter": {"any": [{"type": "climax"}]}, "times": times}
     tiers = re.findall(r"(\d+) if there are (\d+)(?: or (\d+)| or (less|more)) markers underneath this card", words)
-    if tiers:  # [[most markers, X], ...], then X with more markers than any of those
+    above = next((int(x) for x, _, _, how in tiers if how == "more"), None)
+    if tiers and above is not None:  # [[most markers, X], ...], then X with more markers than any of those
         steps = [[int(upper or low), int(x)] for x, low, upper, how in tiers if how != "more"]
-        return {"of": "marker_tiers", "tiers": steps, "above": next(int(x) for x, _, _, how in tiers if how == "more"), "times": times}
+        return {"of": "marker_tiers", "tiers": steps, "above": above, "times": times}
     if words == "that character's level":
         return {"of": "target_level", "times": times}
     if words == "that character's soul":
@@ -835,6 +839,21 @@ def strip_head(body):
         body = body[match.end():]
 
 
+def take_cost(ability, body, quotes):
+    """Read a "[cost]" off the front of an ability's body, if it has one. Returns the rest."""
+    if not body.startswith("["):
+        return body
+    end = body.find("]")
+    if end < 0:  # never closed, so there's no telling what's cost and what's effect
+        ability["manual_cost"] = True
+        return body[1:].strip()
+    ability["cost"] = parse_cost(body[1:end], quotes)
+    if ability["cost"] is None:
+        ability["cost"] = []
+        ability["manual_cost"] = True
+    return body[end + 1:].strip()
+
+
 ENCORE_REMINDER = ("When this card is put into your waiting room from the stage, you may pay the cost. "
                    "If you do, return this card to its previous stage position as 【REST】")
 
@@ -857,13 +876,7 @@ def parse_auto(body, quotes, line, head):
         ability["cost"] = cost
         ability["steps"] = parse_effect(reminder + ".", cost, (reminder + ".", quotes))
         return ability
-    if body.startswith("["):
-        end = body.index("]")
-        ability["cost"] = parse_cost(body[1:end], quotes)
-        body = body[end + 1:].strip()
-        if ability["cost"] is None:
-            ability["cost"] = []
-            ability["manual_cost"] = True
+    body = take_cost(ability, body, quotes)
     plain = without_reminders(body)
     parts = plain.split(". ", 1)
     pieces = clauses(parts[0])
@@ -897,13 +910,7 @@ def parse_auto(body, quotes, line, head):
 
 def parse_act(body, quotes, line, head):
     ability = {"kind": "act", "text": line, "cost": [], "cond": [], "steps": [], **head}
-    if body.startswith("["):
-        end = body.index("]")
-        ability["cost"] = parse_cost(body[1:end], quotes)
-        body = body[end + 1:].strip()
-        if ability["cost"] is None:
-            ability["cost"] = []
-            ability["manual_cost"] = True
+    body = take_cost(ability, body, quotes)
     plain = without_reminders(body)
     match = re.match(r"If this card is in your waiting room, (.*)", plain)
     if match:
@@ -980,8 +987,28 @@ def parse_cont(body, quotes, line, head):
     return ability
 
 
+def unreadable(kind, line):
+    """An ability this module failed on: it has to be done by hand, like any other it can't read."""
+    return {"kind": kind, "text": line, "cost": [], "cond": [], "when": None, "effects": [], "once": False, "where": None,
+            "steps": [{"do": "manual", "text": line}]}
+
+
+def parse_tagged(tag, body, quotes, line):
+    head, body = strip_head(body)
+    if tag == "AUTO":
+        return parse_auto(body, quotes, line, head)
+    if tag == "CONT":
+        return parse_cont(body, quotes, line, head)
+    if tag == "COUNTER":
+        return {"kind": "counter", "text": line, "cost": [], "cond": [], **head, "steps": parse_effect(body, None, (body, quotes))}
+    if body.startswith("【COUNTER】"):  # Backup: game.counter_play plays these from the hand
+        return {"kind": "backup", "text": line, "cost": [], "cond": [], "steps": [], **head}
+    return parse_act(body, quotes, line, head)
+
+
 @lru_cache(maxsize=4096)
 def parse_cached(text):
+    """Card text comes from outside and new sets have new wording, so no line of it may ever stop a page or a game."""
     abilities = []
     event_lines = []
     for line in (text or "").split("\n"):
@@ -993,24 +1020,21 @@ def parse_cached(text):
         if not tag:
             event_lines.append(line)
             continue
-        head, body = strip_head(body[tag.end():])
-        if tag[1] == "AUTO":
-            abilities.append(parse_auto(body, quotes, line, head))
-        elif tag[1] == "CONT":
-            abilities.append(parse_cont(body, quotes, line, head))
-        elif tag[1] == "COUNTER":
-            abilities.append({"kind": "counter", "text": line, "cost": [], "cond": [], **head,
-                              "steps": parse_effect(body, None, (body, quotes))})
-        elif body.startswith("【COUNTER】"):  # Backup: game.counter_play plays these from the hand
-            abilities.append({"kind": "backup", "text": line, "cost": [], "cond": [], "steps": [], **head})
-        else:
-            abilities.append(parse_act(body, quotes, line, head))
+        try:
+            abilities.append(parse_tagged(tag[1], body[tag.end():], quotes, line))
+        except Exception:
+            log.exception("Couldn't read card text: %s", line)
+            abilities.append(unreadable(tag[1].lower(), line))
     if event_lines:  # An event's lines happen one after another when it's played.
         steps = []
         for line in event_lines:
-            body, quotes = mask(line)
-            _, body = strip_head(body)
-            steps += parse_effect(body, None, (body, quotes))
+            try:
+                body, quotes = mask(line)
+                _, body = strip_head(body)
+                steps += parse_effect(body, None, (body, quotes))
+            except Exception:
+                log.exception("Couldn't read card text: %s", line)
+                steps.append({"do": "manual", "text": line})
         abilities.append({"kind": "event", "text": " ".join(event_lines), "cost": [], "cond": [], "once": False,
                           "where": None, "steps": steps})
     return tuple(abilities)

@@ -1109,6 +1109,50 @@ class NoBackupTests(TestCase):
         self.assertEqual(defender["pos"], "reverse")
 
 
+class UnusualCardTextTests(TestCase):
+    """New sets have wording nothing here has seen. None of it may ever stop a page or a game."""
+
+    def test_a_cost_that_never_closes(self):
+        for text in ("【AUTO】 [(1) Put 1 card from your hand into your waiting room When this card attacks, draw 1 card.",
+                     "【ACT】 [【REST】 this card Draw 1 card."):
+            self.assertTrue(abilities.by_hand_parts(text), text)
+
+    def test_marker_tiers_with_no_top_tier(self):
+        text = '【AUTO】 When this card attacks, deal 2 damage X times to your opponent. X is equal to 1 if there are 3 or less markers underneath this card.'
+        self.assertTrue(abilities.by_hand_parts(text))
+
+    def test_a_line_that_crashes_the_reader_becomes_a_step_by_hand(self):
+        original = abilities.parse_auto
+        abilities.parse_auto = lambda *a: 1 / 0
+        abilities.parse_cached.cache_clear()
+        try:
+            with self.assertLogs("weiss.abilities", "ERROR"):
+                parsed = abilities.parse("【AUTO】 When this card attacks, draw 1 card.\n【CONT】 During your turn, this card gets +1000 power.")
+            self.assertEqual(parsed[0]["steps"][0]["do"], "manual")
+            self.assertIsNone(parsed[0]["when"])
+            self.assertEqual(parsed[1]["effects"][0]["power"], 1000)  # the rest of the card still works
+        finally:
+            abilities.parse_auto = original
+            abilities.parse_cached.cache_clear()
+
+    def test_the_cpu_tab_survives_such_a_card(self):
+        staff = User.objects.create_user("staff", password="x", is_staff=True)
+        self.client.force_login(staff)
+        Card.objects.create(serial_number="ODD/1", name="Odd", expansion="E", expansion_id=9, card_type="Character", level=0,
+                            description="【AUTO】 [(1) Put 1 card from your hand into your waiting room When this card attacks, draw 1 card.")
+        page = self.client.get(reverse("weiss:cpu_home"))
+        self.assertEqual(page.status_code, 200)
+        self.assertEqual([c["name"] for c in page.context["excluded"]], ["Odd"])
+
+    def test_a_game_survives_such_a_card(self):
+        t = Table()
+        card = t.hand(t.card(2000, text="【AUTO】 [(1) Put 1 card from your hand When this card attacks, draw 1 card.", power=3000))[0]
+        t.refresh()
+        t.apply(2, {"type": "move", "uid": card["uid"], "to": "C1"})
+        self.assertEqual(t.me["stage"]["C1"]["uid"], card["uid"])
+        self.assertTrue(t.state["acts"]["2"][card["uid"]])  # it can still be started by hand
+
+
 class CpuDeckBuildingTests(TestCase):
     JUGGLE = "【AUTO】 When this card attacks, juggle the dice."
     COMBO = '【AUTO】 【CXCOMBO】 When "BIG" is placed on your climax area, draw 1 card.'
