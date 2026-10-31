@@ -124,12 +124,15 @@ def deck_cards(card_list):
 @weiss_access_required
 @require_POST
 def room_start(request, pk):
-    """Host only: shuffle both decks (copied as they are now) and deal. Also used for a rematch."""
+    """Shuffle both decks (copied as they are now) and deal. The host starts the first game; either
+    player can call a rematch once one is going."""
     room = my_room(request, pk)
-    if not room or room.seat_of(request.user) != "host":
-        return HttpResponseForbidden("Only the host can start the game.")
+    if not room:
+        return HttpResponseForbidden()
     with transaction.atomic():
         room = GameRoom.objects.select_for_update().select_related("host", "guest").get(pk=room.pk)
+        if room.status != GameRoom.Status.PLAYING and room.seat_of(request.user) != "host":
+            return HttpResponseForbidden("Only the host can start the game.")
         if not (room.guest and room.host_deck and room.guest_deck):
             messages.error(request, "Both players need to choose a deck first.")
             return redirect("weiss:play_room", pk=room.pk)
@@ -146,9 +149,9 @@ def room_start(request, pk):
 @weiss_access_required
 @require_POST
 def room_reset(request, pk):
-    """Host only: back to choosing decks."""
+    """Either player: back to choosing decks."""
     room = my_room(request, pk)
-    if not room or room.seat_of(request.user) != "host":
+    if not room:
         return HttpResponseForbidden()
     with transaction.atomic():
         room = GameRoom.objects.select_for_update().get(pk=room.pk)
@@ -196,15 +199,17 @@ def room_action(request, pk):
 
     def lookup(card_pk):
         if card_pk not in details:
-            details[card_pk] = (Card.objects.filter(pk=card_pk).values_list("name", "card_type", "trigger").first()
-                                or ("a card", "", ""))
+            details[card_pk] = (Card.objects.filter(pk=card_pk).values(
+                "name", "card_type", "trigger", "cost", "level", "power", "soul", "description").first()
+                or {"name": "a card", "card_type": "", "trigger": ""})
+            details[card_pk]["text"] = details[card_pk].get("description") or ""
         return details[card_pk]
 
     def name(card_pk):
-        return lookup(card_pk)[0]
+        return lookup(card_pk)["name"]
 
     def is_climax(card_pk):
-        return lookup(card_pk)[1].lower() == "climax"
+        return lookup(card_pk)["card_type"].lower() == "climax"
 
     with transaction.atomic():
         room = GameRoom.objects.select_for_update().get(pk=room.pk)
@@ -212,7 +217,8 @@ def room_action(request, pk):
             return JsonResponse({"error": "The game hasn't started."}, status=409)
         try:
             extra = game.apply(room.state, request.user.pk, action, name=name, is_climax=is_climax,
-                               trigger=lambda card_pk: lookup(card_pk)[2])
+                               trigger=lambda card_pk: lookup(card_pk)["trigger"],
+                               cost=lambda card_pk: lookup(card_pk).get("cost"), info=lookup)
         except game.GameError as exc:
             return JsonResponse({"error": str(exc), **board_payload(room, request.user)}, status=400)
         room.version += 1

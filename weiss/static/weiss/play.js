@@ -20,7 +20,7 @@
 
   const LABELS = {
     deck: "Deck", hand: "Hand", clock: "Clock", level: "Level", stock: "Stock", waiting: "Waiting room",
-    memory: "Memory", climax: "Climax", resolution: "Resolution",
+    memory: "Memory", climax: "CX", resolution: "Resolution",
     C1: "Center left", C2: "Center middle", C3: "Center right", B1: "Back left", B2: "Back right",
   };
   const STAGE = ["C1", "C2", "C3", "B1", "B2"];
@@ -28,10 +28,31 @@
   for (const slot of STAGE) LABELS[`marker:${slot}`] = `Markers under ${LABELS[slot].toLowerCase()}`;
   const isMarkerPile = (zone) => zone.startsWith("marker:");
   const DAMAGE_RESOLVE_MS = 500; // how long a climax-cancelled damage stays on the board
+  const REFRESH_PAUSE_MS = 250; // how long an emptied deck shows before it's refreshed mid-damage
+  const CLIMAX_SHOW_MS = 2000; // how long a climax played in the climax phase shows before the attack phase
+  const PHASE_PAUSE_MS = 900; // how long a phase that ended itself stays before the next begins
+  const PHASE_NAME_FX = ["fx-pop", "fx-flip", "fx-slide", "fx-glow"]; // a new phase's name comes in with one of these
+  const CLIMAX_EFFECTS = ["climax-zoom", "climax-spin", "climax-slide", "climax-flip", "climax-drop", "climax-blur"];
   const MOVE_TARGETS = ["hand", "C1", "C2", "C3", "B1", "B2", "climax", "clock", "level", "stock",
     "memory", "waiting", "resolution"];
   const PUBLIC_PILES = ["waiting", "memory", "level", "clock", "climax", "resolution"];
   const ENCORE_COST = 3; // stock, as on the server
+  const LEVEL_UP_AT = 7; // clock cards that make a level, as on the server
+  const CLOCK_DRAW = 2; // cards drawn after clocking a card from the hand, as on the server
+  const PHASES = { mulligan: "Mulligan", stand: "Stand", draw: "Draw", clock: "Clock", main: "Main", climax: "CX", attack: "Attack", encore: "Encore", end: "End" };
+  const PHASE_NAMES = Object.keys(PHASES);
+  const ATTACK_STEPS = { declare: "Declare", trigger: "Trigger", counter: "Counter", damage: "Damage", battle: "Battle" };
+  const OPPOSITE = { C1: "C3", C2: "C2", C3: "C1" }; // the opponent's slot facing each of our center slots
+  // Neighbouring stage slots, each linked by a button on the first slot: [first, second, direction].
+  // The back row sits under the gaps of the center row, so center-to-back links are diagonal.
+  const SLOT_LINKS = [["C1", "C2", "h"], ["C2", "C3", "h"], ["B1", "B2", "h"],
+    ["C1", "B1", "dr"], ["C2", "B1", "dl"], ["C2", "B2", "dr"], ["C3", "B2", "dl"]];
+  // [both occupied (swap), first to second, second to first]
+  const LINK_SYMBOLS = { h: ["⇄", "→", "←"], dr: ["⇅", "↘", "↖"], dl: ["⇅", "↙", "↗"] };
+  // Entrances for the panel that takes over from the phase bar during the attack phase (and back).
+  const PANEL_SWAPS = ["swap-slide", "swap-flip", "swap-zoom", "swap-skew"];
+  // Playing a card from the hand into one of these pays its cost from the stock (as on the server).
+  const PLAY_ZONES = ["C1", "C2", "C3", "B1", "B2", "climax", "resolution"];
   const COLORS = ["Yellow", "Green", "Red", "Blue", "Purple"];
 
   let version = "";
@@ -41,6 +62,10 @@
   let error = "";
   let busy = false;
   let resolveTimer = null; // pending "resolve_damage" after a climax cancels our damage
+  let refreshTimer = null; // pending "continue_damage" after a damage empties our deck
+  let climaxTimer = null; // pending move to the attack phase after we play a climax
+  let autoTimer = null; // pending move to the next phase after one ended itself (board.auto_next)
+  const mulliganPicks = new Set(); // hand cards picked to mulligan away
 
   // Board view: "focus" (big stage, piles around it) or "classic" (three even rows). Remembered
   // per browser; storage can be unavailable (private windows), so it falls back to focus.
@@ -59,6 +84,21 @@
   }
   setLayout(layout);
 
+  // Animations ("Deck Out!", level ups, drawing) can be turned off; remembered per browser like
+  // the layout. Off by default for people who've asked their system for reduced motion.
+  const ANIMATIONS_KEY = "weiss-animations";
+  let animations = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  try {
+    const saved = localStorage.getItem(ANIMATIONS_KEY);
+    if (saved) animations = saved === "on";
+  } catch (e) { /* keep the default */ }
+
+  function setAnimations(on) {
+    animations = on;
+    try { localStorage.setItem(ANIMATIONS_KEY, on ? "on" : "off"); } catch (e) { /* only this visit, then */ }
+    if (board) renderControls();
+  }
+
   // --- Talking to the server -------------------------------------------------------------------
 
   function receive(data) {
@@ -70,9 +110,12 @@
     for (const [pk, info] of Object.entries(data.cards || {})) {
       if (!cards[pk]) cards[pk] = info;
     }
+    const before = opponentSnapshot();
     board = data.board;
     if (data.revealed) modal = { title: data.revealed.title, revealed: data.revealed.cards };
     render();
+    animateOpponent(before);
+    announce();
     // A climax cancelled our damage: leave it on the board for a moment, then let the server clean up.
     if (board.damage_pending && !resolveTimer) {
       resolveTimer = setTimeout(() => {
@@ -80,6 +123,304 @@
         act({ type: "resolve_damage" });
       }, DAMAGE_RESOLVE_MS);
     }
+    // A phase of our turn ended itself: pause on it, then move on (the server drops this if the
+    // turn has moved on some other way in the meantime).
+    if (board.auto_next && board.my_turn && !autoTimer) {
+      const next = board.auto_next;
+      autoTimer = setTimeout(() => {
+        autoTimer = null;
+        if (board.auto_next === next && board.my_turn) act({ type: "phase", phase: next, auto: true });
+      }, PHASE_PAUSE_MS);
+    }
+    // We played a climax in the climax phase: let it show, then move on to the attack phase.
+    if (board.climax_pending && !climaxTimer) {
+      climaxTimer = setTimeout(() => {
+        climaxTimer = null;
+        if (board.climax_pending) act({ type: "phase", phase: "attack" });
+      }, CLIMAX_SHOW_MS);
+    }
+    // A damage emptied our deck: pause a moment, then the server refreshes it and deals the rest.
+    if (board.refresh_pending && !refreshTimer) {
+      refreshTimer = setTimeout(() => {
+        refreshTimer = null;
+        act({ type: "continue_damage" });
+      }, REFRESH_PAUSE_MS);
+    }
+  }
+
+  // --- Announcements: "Deck Out!" and level ups, shown on the side they happened on -----------------
+
+  // How many refreshes and level ups each side had at the last board we saw; the first board only
+  // sets these, so reopening the page doesn't replay old ones.
+  let seen = null;
+
+  function announce() {
+    const now = {};
+    const show = animations && seen;
+    for (const owner of ["me", "opponent"]) {
+      const side = owner === "me" ? board.me : board.opponent;
+      if (!side) continue;
+      now[owner] = { refreshes: side.refreshes || 0, level_ups: side.level_ups || 0, climaxes: side.climaxes || 0 };
+      if (!show || !seen[owner]) continue;
+      const mat = boardEl.querySelector(`.mat-${owner}`);
+      if (now[owner].refreshes > seen[owner].refreshes) {
+        flash(between(mat, '[data-pile="deck"]', '[data-slot="C3"]'), "Deck Out!", "flash-deck-out");
+      }
+      if (now[owner].climaxes > seen[owner].climaxes) showClimax(side.zones.climax[side.zones.climax.length - 1]);
+      if (now[owner].level_ups > seen[owner].level_ups) {
+        const level = side.zones.level.length;
+        flash(levelGap(mat), `lv.${level - 1}`, "flash-level", `lv.${level}`);
+      }
+    }
+    seen = now;
+  }
+
+  // A climax just played, in the middle of the screen, coming in with a randomly picked effect and
+  // fading away over the time the turn waits before the attack phase.
+  function showClimax(card) {
+    const info = card && card.card ? cards[card.card] : null;
+    if (!info) return;
+    const el = document.createElement("div");
+    el.className = `climax-show ${CLIMAX_EFFECTS[Math.floor(Math.random() * CLIMAX_EFFECTS.length)]}`;
+    el.style.animationDuration = `${CLIMAX_SHOW_MS}ms`;
+    el.innerHTML = `<img src="${esc(info.image)}" alt="Climax: ${esc(info.name)}">`;
+    document.body.appendChild(el);
+    el.addEventListener("animationend", () => el.remove());
+  }
+
+  // The point halfway between the centers of two zones on one side of the table.
+  function between(mat, fromSel, toSel) {
+    const from = mat && mat.querySelector(fromSel);
+    const to = mat && mat.querySelector(toSel);
+    if (!from || !to) return null;
+    const a = from.getBoundingClientRect();
+    const b = to.getBoundingClientRect();
+    return { x: (a.left + a.right + b.left + b.right) / 4, y: (a.top + a.bottom + b.top + b.bottom) / 4 };
+  }
+
+  // The middle of the empty stretch between the level zone and the clock's cards (the level zone
+  // is on the clock's left on our side, on its right on the opponent's).
+  function levelGap(mat) {
+    const level = mat && mat.querySelector('[data-pile="level"]');
+    const clock = mat && mat.querySelector('[data-pile="clock"]');
+    if (!level || !clock) return null;
+    const l = level.getBoundingClientRect();
+    const clockCards = [...clock.querySelectorAll(".pcard")].map((c) => c.getBoundingClientRect());
+    const c = clock.getBoundingClientRect();
+    const left = clockCards.length ? Math.min(...clockCards.map((r) => r.left)) : c.left + c.width / 2;
+    const right = clockCards.length ? Math.max(...clockCards.map((r) => r.right)) : c.left + c.width / 2;
+    const x = l.right <= left ? (l.right + left) / 2 : (right + l.left) / 2;
+    return { x, y: c.top + c.height / 2 };
+  }
+
+  // Text over the board at a point. It fades in and out; with `next` it flickers as `text`, then
+  // changes to `next` and fades out.
+  function flash(at, text, className, next = null) {
+    if (!at) return;
+    const el = document.createElement("div");
+    el.className = `play-flash ${className}`;
+    el.textContent = text;
+    el.setAttribute("aria-live", "polite");
+    el.style.left = `${at.x}px`;
+    el.style.top = `${at.y}px`;
+    document.body.appendChild(el);
+    el.addEventListener("animationend", () => {
+      if (next && !el.classList.contains("flash-next")) {
+        el.textContent = next;
+        el.classList.add("flash-next");
+      } else {
+        el.remove();
+      }
+    });
+  }
+
+  // --- Card movement: our own moves fly a card from where it is to where it's going, and then the
+  // action is sent, so the real card appears as the flight lands ---------------------------------
+
+  const FLIGHT_MS = 420; // each card's flight
+  const FLIGHT_STAGGER_MS = 140; // between cards when several move
+  const MAX_FLIGHTS = 10;
+  const BACK = '<span class="pcard-back"></span>';
+
+  // The element showing one of our zones: a stage slot (markers fly to their character), a pile,
+  // or the hand.
+  function zoneEl(zone) {
+    if (zone === "hand") return boardEl.querySelector(".hand-me .hand-cards");
+    const slot = isMarkerPile(zone) ? zone.slice("marker:".length) : zone;
+    if (STAGE.includes(slot)) return boardEl.querySelector(`.mat-me [data-slot="${slot}"]`);
+    return boardEl.querySelector(`.mat-me [data-pile="${zone}"]`);
+  }
+
+  // An element's box as laid out, ignoring rotation, so a rested card still flies card-shaped.
+  function layoutBox(el) {
+    const r = el.getBoundingClientRect();
+    const w = el.offsetWidth || r.width;
+    const h = el.offsetHeight || r.height;
+    return { left: r.left + r.width / 2 - w / 2, top: r.top + r.height / 2 - h / 2, width: w, height: h };
+  }
+
+  // The top (last) card shown in a zone, if any.
+  function topCardEl(zone) {
+    const el = zoneEl(zone);
+    const shown = el ? el.querySelectorAll(".pcard") : [];
+    return shown.length ? shown[shown.length - 1] : null;
+  }
+
+  // Where a card leaves a zone from: its top card, or the empty space.
+  function originBox(zone) {
+    const top = topCardEl(zone);
+    const empty = zoneEl(zone) && zoneEl(zone).querySelector(".zone-empty");
+    return top ? layoutBox(top) : empty ? layoutBox(empty) : null;
+  }
+
+  // Where a card arriving in a zone lands: past the end of the hand or clock, below the level
+  // stack's last card, or on the pile or slot itself. `size` is used when there's nothing to match.
+  function landingBox(zone, size) {
+    const el = zoneEl(zone);
+    if (!el) return null;
+    const top = topCardEl(zone);
+    if (top) {
+      const last = layoutBox(top);
+      if (zone === "hand" || zone === "clock") return { ...last, left: last.left + last.width * .6 };
+      if (zone === "level") return { ...last, top: last.top + last.height * .22 };
+      return last;
+    }
+    const empty = el.querySelector(".zone-empty");
+    if (empty) return layoutBox(empty);
+    const r = el.getBoundingClientRect(); // an empty hand
+    return { left: r.left + r.width / 2 - size.width / 2, top: r.top, width: size.width, height: size.height };
+  }
+
+  const faceOf = (el) => {
+    const img = el && !el.classList.contains("face-down") && el.querySelector("img");
+    return img ? `<img src="${esc(img.src)}" alt="">` : BACK;
+  };
+
+  // The cards an action of ours moves, as [{from, to, face}] boxes, in the order they move.
+  function flightsFor(action) {
+    const flights = [];
+    // `hide`: the card on the board that's moving, hidden while its flight stands in for it.
+    const fly = (from, toZone, face = BACK, times = 1, ms = FLIGHT_MS, hide = null) => {
+      const to = from && landingBox(toZone, from);
+      for (let i = 0; to && i < Math.min(times, MAX_FLIGHTS); i++) flights.push({ from, to, face, ms, hide });
+    };
+    const fromZone = (zone, toZone, times = 1, face = BACK, ms = FLIGHT_MS) => fly(originBox(zone), toZone, face, times, ms);
+    const at = PHASE_NAMES.indexOf(board.phase);
+    const target = action.type === "end_turn" ? PHASE_NAMES.length - 1 : PHASE_NAMES.indexOf(action.phase);
+    const passes = (phase) => at < PHASE_NAMES.indexOf(phase) && PHASE_NAMES.indexOf(phase) <= target;
+    switch (action.type) {
+      case "move": {
+        const el = root.querySelector(`.pcard[data-uid="${action.uid}"]`);
+        if (!el) break;
+        fly(layoutBox(el), action.to, faceOf(el), 1, FLIGHT_MS, el);
+        // Moving onto an occupied slot from another slot swaps them: the other card flies back.
+        const other = STAGE.includes(el.dataset.zone) && STAGE.includes(action.to) && topCardEl(action.to);
+        if (other) fly(layoutBox(other), el.dataset.zone, faceOf(other), 1, FLIGHT_MS, other);
+        const info = el.dataset.card ? cards[el.dataset.card] : null;
+        if (el.dataset.zone === "hand" && PLAY_ZONES.includes(action.to) && info && info.cost) {
+          fromZone("stock", "waiting", info.cost); // paying the cost
+        }
+        break;
+      }
+      case "move_top": fromZone(action.from, action.to, action.count || 1); break;
+      case "move_all": fromZone(action.from, action.to, Math.min(pileCards(board.me, action.from).length, 6), faceOf(topCardEl(action.from))); break;
+      case "attack": fromZone("deck", board.rules ? "stock" : "resolution"); break;
+      case "mulligan":
+        for (const uid of action.uids) {
+          const el = root.querySelector(`.hand-me .pcard[data-uid="${uid}"]`);
+          if (el) fly(layoutBox(el), "waiting", faceOf(el), 1, FLIGHT_MS, el);
+        }
+        fromZone("deck", "hand", action.uids.length);
+        break;
+      case "trigger_choice": {
+        const el = action.uid && root.querySelector(`.pcard[data-uid="${action.uid}"]`);
+        if (el) fly(layoutBox(el), action.to, faceOf(el));
+        if (action.accept) fromZone("deck", "stock");
+        break;
+      }
+      case "counter": {
+        const el = root.querySelector(`.pcard[data-uid="${action.uid}"]`);
+        if (el) fly(layoutBox(el), "waiting", faceOf(el));
+        break;
+      }
+      case "damage": fromZone("deck", "clock", action.count || 1); break;
+      case "encore": fromZone("stock", "waiting", ENCORE_COST); break;
+      case "clock_draw": {
+        const el = root.querySelector(`.pcard[data-uid="${action.uid}"]`);
+        if (el) fly(layoutBox(el), "clock", faceOf(el));
+        fromZone("deck", "hand", CLOCK_DRAW);
+        break;
+      }
+      case "phase":
+      case "end_turn":
+        if (board.rules && passes("draw")) fromZone("deck", "hand", 1, BACK, FLIGHT_MS * 1.2); // the draw phase's draw, a little slower
+        if (passes("end") && board.me.zones.climax.length) fromZone("climax", "waiting", board.me.zones.climax.length, faceOf(topCardEl("climax")));
+        break;
+      default: break;
+    }
+    return flights;
+  }
+
+  async function animateAction(action) {
+    if (!animations || !board) return;
+    await flyAll(flightsFor(action));
+  }
+
+  // Fly card-shaped boxes {from, to, face, ms}: `hide` is hidden for the flight (it's the card
+  // leaving; the board is redrawn afterwards anyway), `show` is hidden until its flight lands.
+  function flyAll(flights) {
+    return Promise.all(flights.map(({ from, to, face, ms = FLIGHT_MS, hide, show }, i) => {
+      const el = document.createElement("div");
+      el.className = "card-flight";
+      el.innerHTML = face;
+      Object.assign(el.style, { left: `${from.left}px`, top: `${from.top}px`, width: `${from.width}px`, height: `${from.height}px` });
+      document.body.appendChild(el);
+      if (hide) hide.style.visibility = "hidden";
+      if (show) show.style.visibility = "hidden";
+      const animation = el.animate([
+        { transform: "translate(0, 0) scale(1)" },
+        { transform: `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${to.width / from.width})` },
+      ], { duration: ms, delay: i * FLIGHT_STAGGER_MS, easing: "cubic-bezier(.3, .7, .4, 1)", fill: "forwards" });
+      return animation.finished.catch(() => {}).then(() => {
+        el.remove();
+        if (show) show.style.visibility = "";
+      });
+    }));
+  }
+
+  // The opponent's moves arrive already made, so their stage changes are animated after the fact:
+  // a character that changed slots flies from its old slot, and one played from their hand flies
+  // from there, while the card in its new slot stays hidden until the flight lands.
+  function opponentSnapshot() {
+    if (!board || !board.opponent || !animations) return null;
+    const mat = boardEl.querySelector(".mat-opponent");
+    if (!mat) return null;
+    const slots = {};
+    const boxes = {};
+    for (const slot of STAGE) {
+      const card = board.opponent.stage[slot];
+      if (card) slots[card.uid] = slot;
+      const el = mat.querySelector(`[data-slot="${slot}"] .pcard, [data-slot="${slot}"] .zone-empty`);
+      if (el) boxes[slot] = layoutBox(el);
+    }
+    const handCards = boardEl.querySelectorAll(".hand-opponent .pcard");
+    const hand = handCards.length ? layoutBox(handCards[handCards.length - 1]) : null;
+    return { slots, boxes, hand, handCount: board.opponent.zones.hand.count };
+  }
+
+  function animateOpponent(before) {
+    if (!before || !board.opponent || !animations) return;
+    const mat = boardEl.querySelector(".mat-opponent");
+    const flights = [];
+    for (const slot of STAGE) {
+      const card = board.opponent.stage[slot];
+      const el = card && mat && mat.querySelector(`[data-slot="${slot}"] .pcard`);
+      if (!el || before.slots[card.uid] === slot) continue;
+      const from = before.slots[card.uid] ? before.boxes[before.slots[card.uid]]
+        : board.opponent.zones.hand.count < before.handCount ? before.hand : null;
+      if (from) flights.push({ from, to: layoutBox(el), face: faceOf(el), show: el });
+    }
+    flyAll(flights);
   }
 
   async function poll() {
@@ -94,6 +435,7 @@
     busy = true;
     hideMenu();
     try {
+      await animateAction(action);
       const response = await fetch(ACTION_URL, {
         method: "POST",
         credentials: "same-origin",
@@ -117,6 +459,9 @@
   // --- Drawing ---------------------------------------------------------------------------------
 
   const esc = (text) => String(text ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+  // Text as HTML with the word "climax" (or the label "CX") drawn as the stylized CX mark.
+  const CX_HTML = '<span class="cx" title="Climax">CX</span>';
+  const cxHtml = (text) => esc(text).replace(/\b(climax|CX)\b/gi, CX_HTML);
 
   function cardHtml(card, owner, zone, extraClass = "") {
     if (!card) return "";
@@ -134,25 +479,68 @@
       : '<span class="pcard-back"></span>';
     const badge = card.pos === "reverse" ? '<span class="pcard-badge">REVERSE</span>'
       : card.face_down && info ? '<span class="pcard-badge">face down</span>' : "";
-    const stats = info && !card.face_down ? statsHtml(info) : "";
+    const side = STAGE.includes(zone) ? (owner === "me" ? board.me : board.opponent) : null;
+    const stats = info && !card.face_down
+      ? statsHtml(info, { boost: side && climaxBoost(side), soul: STAGE.includes(zone) && zone.startsWith("C") })
+      : "";
     return `<div class="${classes.join(" ")}" ${attrs} tabindex="0">${face}${stats}${badge}</div>`;
   }
 
   // Level and cost in the top-left corner and power in the bottom-left, where the printed card has
   // them, but large enough to read at board size. Left-side so they show on overlapped piles too.
-  function statsHtml(info) {
+  // A climax whose text says "all of your characters get +X power and +Y soul", sitting in a
+  // side's climax zone, boosts every character on that side; the board shows the boosted numbers.
+  const CLIMAX_BOOST = /all of your characters get \+(\d+) power and \+(\d+) soul/i;
+  function climaxBoost(side) {
+    const top = side.zones.climax[side.zones.climax.length - 1];
+    const info = top && top.card && !top.face_down ? cards[top.card] : null;
+    const match = info && info.text && info.text.match(CLIMAX_BOOST);
+    return match ? { power: Number(match[1]), soul: Number(match[2]) } : null;
+  }
+
+  // The soul icon: a flame-like wisp, close to the one printed on Weiss Schwarz cards.
+  const SOUL_ICON = '<svg viewBox="0 0 16 22" aria-hidden="true"><path d="M8.6 0c.6 3.4 3.2 5 5 8.3 2.6 4.6.4 11.9-5.6 12.9C2.4 22-1.6 15.8 1.3 10.9c.9-1.6 2.4-2.6 2.9-4.6.9 1.9.6 3.6 2 4.4C5.5 7 9.4 4.4 8.6 0z"/></svg>';
+
+  // Level and cost in the top-left corner and power in the bottom-left; front-row characters also
+  // show their soul in the bottom-right. `boost` is a climax's bonus to power and soul.
+  function statsHtml(info, { boost = null, soul = false } = {}) {
     const has = (value) => value !== null && value !== undefined && value !== "";
     const corner = [
       has(info.level) ? `<span class="stat stat-level" title="Level">${esc(info.level)}</span>` : "",
       has(info.cost) ? `<span class="stat stat-cost" title="Cost">${esc(info.cost)}</span>` : "",
     ].join("");
-    const power = has(info.power) ? `<span class="stat stat-power" title="Power">${esc(info.power)}</span>` : "";
-    if (!corner && !power) return "";
-    return `<span class="pcard-stats">${corner ? `<span class="stat-corner">${corner}</span>` : ""}${power}</span>`;
+    const boosted = boost ? " boosted" : "";
+    const power = has(info.power)
+      ? `<span class="stat stat-power${boosted}" title="Power${boost ? ` (+${boost.power} from the climax)` : ""}">${esc(Number(info.power) + (boost ? boost.power : 0))}</span>`
+      : "";
+    let souls = "";
+    if (soul && has(info.soul)) {
+      const count = Number(info.soul) + (boost ? boost.soul : 0);
+      const icons = count <= 3 ? SOUL_ICON.repeat(count) : `${SOUL_ICON}<b>×${count}</b>`;
+      souls = `<span class="stat-soul${boosted}" title="Soul ${count}${boost ? ` (+${boost.soul} from the climax)` : ""}">${icons}</span>`;
+    }
+    if (!corner && !power && !souls) return "";
+    return `<span class="pcard-stats">${corner ? `<span class="stat-corner">${corner}</span>` : ""}${power}${souls}</span>`;
   }
 
   function backHtml() {
     return '<div class="pcard"><span class="pcard-back"></span></div>';
+  }
+
+  // A magnifying glass shown while hovering a pile of more than one card that its viewer may look
+  // through: the full list of a public pile, or a search of our own deck.
+  function searchHtml(owner, zone, count) {
+    if (count < 2 || zone === "stock" || (owner !== "me" && !PUBLIC_PILES.includes(zone))) return "";
+    const title = `${owner === "me" ? "Your" : `${board.opponent.name}'s`} ${LABELS[zone].toLowerCase()}`;
+    const what = zone === "deck" ? `data-act='{"type":"search"}'` : `data-search-view='${esc(JSON.stringify({ owner, zone, title }))}'`;
+    return `<button type="button" class="zone-search" ${what} title="Search ${esc(title.toLowerCase())}" aria-label="Search">🔍</button>`;
+  }
+
+  // The resolution zone's top card can go to the hand (✋, bottom left) or the waiting room (🪦,
+  // bottom right) in one click.
+  function resolutionButtonsHtml(card) {
+    return `<div class="slot-pos slot-pos-bottom">${iconButton({ type: "move", uid: card.uid, to: "hand" }, "✋", "To hand")}</div>
+      <div class="slot-pos slot-pos-right slot-pos-bottom">${iconButton({ type: "move", uid: card.uid, to: "waiting" }, "🪦", "Waiting room")}</div>`;
   }
 
   function pileHtml(side, owner, zone) {
@@ -161,7 +549,11 @@
     const count = hidden ? pile.count : pile.length;
     const top = hidden ? (count ? backHtml() : "") : cardHtml(pile[pile.length - 1], owner, zone);
     return `<div class="zone pile zone-${zone}" data-pile="${zone}" data-owner="${owner}" data-drop="${owner === "me" ? zone : ""}">
-      <span class="zone-label">${LABELS[zone]} <b>${count}</b></span>
+      <span class="zone-label">${cxHtml(LABELS[zone])} <b>${count}</b></span>
+      ${searchHtml(owner, zone, count)}
+      ${zone === "deck" && owner === "me" && count ? `<div class="slot-pos slot-pos-center">${
+        iconButton({ type: "move_top", from: "deck", to: "hand" }, "✋", "Draw")}</div>` : ""}
+      ${zone === "resolution" && owner === "me" && count ? resolutionButtonsHtml(pile[pile.length - 1]) : ""}
       <div class="pile-top">${top || '<span class="zone-empty"></span>'}</div>
     </div>`;
   }
@@ -185,41 +577,80 @@
     </div>`;
   }
 
-  // Quick actions shown while hovering one of our characters: on our turn attack (standing
-  // center-stage characters), on the opponent's turn reverse (center stage) instead; encore once
-  // reversed (with enough stock); waiting room; and "More" for the full menu.
+  // A small button showing just a symbol, with its name as the tooltip.
+  function iconButton(action, symbol, label) {
+    return `<button type="button" class="icon-button" title="${label}" aria-label="${label}"
+      data-act='${esc(JSON.stringify(action))}'>${symbol}</button>`;
+  }
+
+  // Quick actions shown on one of our characters while hovering it: attack (⚔) for a standing
+  // center-stage character on our turn, encore once reversed (with enough stock), and waiting
+  // room (🪦). Stand, rest and reverse are the corner buttons (slotPosHtml); everything else is in
+  // the full menu that opens beside the slot.
+  // With turn rules on, a standing center character in our attack's declare step offers the
+  // attacks the rules allow: front or side against the character facing it, direct if there's none.
   function slotActionsHtml(card, slot) {
-    const act = (action) => esc(JSON.stringify(action));
     let quick = "";
-    if (card.pos === "reverse") {
-      if (canEncore()) quick = `<button type="button" data-act='${act({ type: "encore", uid: card.uid })}'>Encore (${ENCORE_COST} stock)</button>`;
-    } else if (slot.startsWith("C") && !board.my_turn) {
-      quick = `<button type="button" data-act='${act({ type: "position", uid: card.uid, pos: "reverse" })}'>Reverse</button>`;
-    } else if (slot.startsWith("C") && card.pos === "stand") {
-      quick = `<button type="button" data-act='${act({ type: "attack", uid: card.uid })}'>⚔ Attack</button>`;
+    if (slot.startsWith("C") && card.pos === "stand") {
+      if (!board.rules) {
+        quick = iconButton({ type: "attack", uid: card.uid }, "⚔", "Attack");
+      } else if (inPhase("attack") && board.attack && board.attack.step === "declare"
+          && !(board.turn_number === 1 && board.attacks >= 1)) { // only one attack on turn 1
+        const attack = (kind, label) => `<button type="button" data-act='${esc(JSON.stringify({ type: "attack", uid: card.uid, kind }))}'>⚔ ${label}</button>`;
+        quick = board.opponent && board.opponent.stage[OPPOSITE[slot]]
+          ? attack("front", "Front") + attack("side", "Side") : attack("direct", "Direct");
+      }
     }
     return `<div class="slot-actions">
       ${quick}
-      <button type="button" data-act='${act({ type: "move", uid: card.uid, to: "waiting" })}'>→ Waiting room</button>
-      <button type="button" data-more>More…</button>
+      ${iconButton({ type: "move", uid: card.uid, to: "waiting" }, "🪦", "Waiting room")}
     </div>`;
   }
 
   // Quick moves shown on a hand card while hovering it: where characters and climaxes usually go
-  // (events go to the resolution zone to be played), then "More" for the full menu.
+  // (events go to the resolution zone to be played), then "More" for the full menu. A character's
+  // stage slots are rows of boxes: L / M / R for the center stage, L / R under it for the back stage.
+  // The clock (🕒) and waiting room (🪦) are symbol buttons side by side.
   function handActionsHtml(card) {
-    const act = (action) => esc(JSON.stringify(action));
+    const move = (to, symbol) => iconButton({ type: "move", uid: card.uid, to }, symbol, LABELS[to]);
+    const moveText = (to) => `<button type="button" data-act='${esc(JSON.stringify({ type: "move", uid: card.uid, to }))}'>→ ${cxHtml(LABELS[to])}</button>`;
     const info = card.card ? cards[card.card] : null;
     const type = info && info.type ? info.type.toLowerCase() : "";
-    const targets = type === "character" ? ["C1", "C2", "C3", "waiting", "clock"]
-      : type === "climax" ? ["climax", "clock", "waiting"] : ["resolution"];
+    const clockDraw = inPhase("clock") ? iconButton({ type: "clock_draw", uid: card.uid }, "🕒+2", "Clock and draw 2") : "";
+    const clock = inPhase("clock") ? move("clock", "🕒") : "";
+    const reveal = board.reveal ? "" : iconButton({ type: "reveal", uid: card.uid }, "👁", "Reveal to your opponent");
+    const piles = `<div class="hand-center">${clock}${move("waiting", "🪦")}${clockDraw}${reveal}</div>`;
+    const affordable = canPay(info);
+    let rows = "";
+    if (type === "character" && affordable && inPhase("main")) {
+      rows = `<div class="hand-center">${move("C1", "L")}${move("C2", "M")}${move("C3", "R")}</div>
+        <div class="hand-center hand-back">${move("B1", "L")}${move("B2", "R")}</div>`;
+    } else if (type === "climax" && affordable && inPhase("climax")) {
+      rows = moveText("climax");
+    } else if (type === "climax" && affordable && board.rules && inPhase("main")) {
+      // Playing a climax from the main phase ends it: asks first (see renderClimaxConfirm).
+      rows = `<button type="button" data-confirm-climax="${esc(card.uid)}">→ ${CX_HTML}</button>`;
+    } else if (type !== "character" && type !== "climax" && affordable && inPhase("main")) {
+      rows = moveText("resolution"); // events in our main phase
+    }
+    // Our counter step (the opponent is attacking): the counters we can play right now.
+    const attack = board.attack;
+    if (attack && attack.step === "counter" && (attack.counters || []).includes(card.uid)) {
+      rows = `<button type="button" class="counter-button" data-act='${esc(JSON.stringify({ type: "counter", uid: card.uid }))}'>Counter</button>` + rows;
+    }
+    rows += piles;
     return `<div class="hand-actions">
-      ${targets.map((to) => `<button type="button" data-act='${act({ type: "move", uid: card.uid, to })}'>→ ${LABELS[to]}</button>`).join("")}
+      ${rows}
       <button type="button" data-more>More…</button>
     </div>`;
   }
 
   const canEncore = () => board.me.zones.stock.count >= ENCORE_COST;
+  // Our turn, in one of these phases.
+  // With turn rules off every shortcut is offered, in any phase.
+  const inPhase = (...phases) => !board.rules || (board.my_turn && phases.includes(board.phase));
+  // Whether our stock covers a card's cost (cards with no cost are free; so is everything with the rules off).
+  const canPay = (info) => !board.rules || !info || !info.cost || board.me.zones.stock.count >= info.cost;
 
   // Which colors are in our clock and level zone (how many cards doesn't matter), in a strip
   // between the board and the hand, under the waiting room.
@@ -231,13 +662,64 @@
     return `<div class="active-colors"><span class="zone-label">Active colors</span>${chips || '<span class="muted small">none yet</span>'}</div>`;
   }
 
+  // In the encore step every reversed character of ours gets two always-visible choices: encore
+  // (pay 3 stock, stay rested; unavailable without the stock) or the waiting room. The turn can't
+  // go on until each reversed character on the table has had one.
+  function encoreChoiceHtml(card) {
+    if (board.phase !== "encore" || card.pos !== "reverse") return "";
+    const encore = canEncore()
+      ? `<button type="button" data-act='${esc(JSON.stringify({ type: "encore", uid: card.uid }))}' title="Pay ${ENCORE_COST} stock, stay rested">Encore</button>`
+      : `<button type="button" disabled title="Encore needs ${ENCORE_COST} stock">Encore</button>`;
+    return `<div class="encore-choice" role="group" aria-label="Encore or waiting room">
+      ${encore}${iconButton({ type: "move", uid: card.uid, to: "waiting" }, "🪦", "Waiting room")}
+    </div>`;
+  }
+
+  // Any reversed character on either side (the encore step waits for them).
+  const reversedLeft = () => [board.me, board.opponent].some((side) => side && Object.values(side.stage).some((c) => c && c.pos === "reverse"));
+
+  // Small always-visible buttons in the corners of our occupied slots: stand (|) and rest (—) top
+  // left, reverse (↷, center stage only) top right, and back to hand (✋) bottom left.
+  function slotPosHtml(card, slot) {
+    const button = (action, symbol, label, pressed = false) => `<button type="button" title="${label}" aria-label="${label}"
+      aria-pressed="${pressed}" data-act='${esc(JSON.stringify(action))}'>${symbol}</button>`;
+    const pos = (p, symbol, label) => button({ type: "position", uid: card.uid, pos: p }, symbol, label, card.pos === p);
+    return `<div class="slot-pos">${pos("stand", "|", "Stand")}${pos("rest", "—", "Rest")}</div>
+      ${slot.startsWith("C") ? `<div class="slot-pos slot-pos-right">${pos("reverse", "↷", "Reverse")}</div>` : ""}
+      <div class="slot-pos slot-pos-bottom">${button({ type: "move", uid: card.uid, to: "hand" }, "✋", "To hand")}</div>`;
+  }
+
+  // Buttons between neighbouring slots of ours (in the main phase, with turn rules on): swap the two
+  // characters, or an arrow moving one into the empty slot beside it.
+  function slotLinksHtml(side, slot) {
+    if (!inPhase("main")) return "";
+    return SLOT_LINKS.filter(([first]) => first === slot).map(([first, second, direction]) => {
+      const a = side.stage[first];
+      const b = side.stage[second];
+      if (!a && !b) return "";
+      const [swap, forward, back] = LINK_SYMBOLS[direction];
+      const [symbol, uid, to, label] = a && b ? [swap, a.uid, second, `Swap with ${LABELS[second].toLowerCase()}`]
+        : a ? [forward, a.uid, second, `Move to ${LABELS[second].toLowerCase()}`]
+        : [back, b.uid, first, `Move to ${LABELS[first].toLowerCase()}`];
+      return `<button type="button" class="slot-link link-${direction}" title="${label}" aria-label="${label}"
+        data-act='${esc(JSON.stringify({ type: "move", uid, to }))}'>${symbol}</button>`;
+    }).join("");
+  }
+
+  // A stage slot's name sits outside it: above the center row, below the back row.
   function slotHtml(side, owner, slot) {
     const card = side.stage[slot];
-    return `<div class="zone slot" data-drop="${owner === "me" ? slot : ""}" data-owner="${owner}">
-      <span class="zone-label">${LABELS[slot]}</span>
-      ${cardHtml(card, owner, slot) || '<span class="zone-empty"></span>'}
-      ${card && owner === "me" ? slotActionsHtml(card, slot) : ""}
-      ${markerHtml(side, owner, slot)}
+    const center = slot.startsWith("C");
+    const label = `<span class="zone-label slot-label">${LABELS[slot]}</span>`;
+    return `<div class="slot-wrap ${center ? "slot-wrap-center" : "slot-wrap-back"}">
+      ${center ? label : ""}
+      <div class="zone slot" data-slot="${slot}" data-drop="${owner === "me" ? slot : ""}" data-owner="${owner}">
+        ${cardHtml(card, owner, slot) || '<span class="zone-empty"></span>'}
+        ${card && owner === "me" ? slotPosHtml(card, slot) + slotActionsHtml(card, slot) + encoreChoiceHtml(card) : ""}
+        ${markerHtml(side, owner, slot)}
+        ${owner === "me" ? slotLinksHtml(side, slot) : ""}
+      </div>
+      ${center ? "" : label}
     </div>`;
   }
 
@@ -247,6 +729,7 @@
     const pile = side.zones.level;
     return `<div class="zone spread zone-level" data-pile="level" data-owner="${owner}" data-drop="${owner === "me" ? "level" : ""}">
       <span class="zone-label">${LABELS.level} <b>${pile.length}</b></span>
+      ${searchHtml(owner, "level", pile.length)}
       <div class="level-stack">${pile.map((c) => cardHtml(c, owner, "level")).join("") || '<span class="zone-empty"></span>'}</div>
     </div>`;
   }
@@ -255,6 +738,7 @@
     const pile = side.zones[zone];
     return `<div class="zone spread zone-${zone}" data-pile="${zone}" data-owner="${owner}" data-drop="${owner === "me" ? zone : ""}">
       <span class="zone-label">${LABELS[zone]} <b>${pile.length}</b></span>
+      ${searchHtml(owner, zone, pile.length)}
       <div class="spread-cards">${pile.map((c) => cardHtml(c, owner, zone)).join("") || '<span class="zone-empty"></span>'}</div>
     </div>`;
   }
@@ -272,7 +756,7 @@
       <div class="mat-row">${pileHtml(side, owner, "stock")}
         <div class="stage">${["B1", "B2"].map((s) => slotHtml(side, owner, s)).join("")}</div>
         ${pileHtml(side, owner, "deck")}</div>
-      <div class="mat-row">${spreadHtml(side, owner, "level")}${spreadHtml(side, owner, "clock")}
+      <div class="mat-row">${levelHtml(side, owner)}${spreadHtml(side, owner, "clock")}
         ${pileHtml(side, owner, "memory")}${pileHtml(side, owner, "waiting")}</div>
     </div>`;
   }
@@ -308,7 +792,7 @@
         <div class="hand hand-opponent"><span class="zone-label">${esc(opp.name)}'s hand <b>${oppHand}</b></span>
           <div class="hand-cards">${Array.from({ length: oppHand }, backHtml).join("")}</div></div>
         ${matHtml(opp, "opponent")}</div>` : ""}
-      <div class="table-divider">${board.my_turn ? "Your turn" : `${esc(opp ? opp.name : "Opponent")}'s turn`} · turn ${board.turn_number}</div>
+      <div class="table-divider">${board.my_turn ? "Your turn" : `${esc(opp ? opp.name : "Opponent")}'s turn`} · turn ${board.turn_number} · ${cxHtml(PHASES[board.phase])} phase</div>
       <div class="table-side side-me">
         ${matHtml(me, "me")}
         ${activeColorsHtml(me)}
@@ -317,11 +801,12 @@
       </div>`;
 
     renderControls();
+    announcePhase();
 
     const atBottom = logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 20;
     logEl.innerHTML = board.log.map((entry) => entry.chat
       ? `<p class="log-chat"><b>${esc(entry.who)}:</b> ${esc(entry.text)}</p>`
-      : `<p>${entry.who ? `<b>${esc(entry.who)}</b> ` : ""}${esc(entry.text)}</p>`).join("");
+      : `<p>${entry.who ? `<b>${esc(entry.who)}</b> ` : ""}${cxHtml(entry.text)}</p>`).join("");
     if (atBottom) logEl.scrollTop = logEl.scrollHeight;
 
     renderModal();
@@ -335,34 +820,140 @@
       controlsEl.innerHTML = `
         <p class="panel-error" role="alert" data-error hidden></p>
         <p class="play-turn" data-turn></p>
+        <div class="phase-area">
+          <div class="phase-bar" role="group" aria-label="Turn phase" data-phase-bar>
+            ${PHASE_NAMES.map((p) => `<button type="button" data-phase="${p}">${cxHtml(PHASES[p])}</button>`).join("")}
+          </div>
+          <div class="attack-panel" data-attack-panel hidden></div>
+        </div>
+        <p class="muted small phase-note"></p>
         <div class="play-buttons">
-          <button type="button" data-act='{"type":"move_top","from":"deck","to":"hand"}'>Draw</button>
-          <button type="button" data-act='{"type":"stand_all"}'>Stand all</button>
           <button type="button" data-act='{"type":"move_top","from":"deck","to":"resolution"}'>Trigger</button>
-          <button type="button" data-act='{"type":"end_turn"}' data-end-turn>End turn</button>
         </div>
         <form class="damage-form" data-damage>
           <label>Damage <input type="number" name="count" min="1" max="20" value="1" required></label>
           <button type="submit">Take damage</button>
         </form>
         <p class="muted small damage-note">Cards go to your clock one at a time; a climax cancels it all.</p>
-        <div class="layout-switch" role="group" aria-label="Board view">
-          ${Object.entries(LAYOUTS).map(([name, label]) => `<button type="button" data-layout="${name}">${label}</button>`).join("")}
-        </div>`;
+        <div class="view-options">
+          <div class="layout-switch" role="group" aria-label="Board view">
+            ${Object.entries(LAYOUTS).map(([name, label]) => `<button type="button" data-layout="${name}">${label}</button>`).join("")}
+          </div>
+          <div class="layout-switch">
+            <button type="button" data-animations title="Turn animations on or off">Animations</button>
+          </div>
+          <div class="layout-switch">
+            <button type="button" data-rules title="Turn the turn rules on or off (both players have to agree)">Turn rules</button>
+          </div>
+        </div>
+        <div class="rules-prompt" data-rules-prompt role="alertdialog" aria-live="assertive" hidden></div>`;
     }
     controlsEl.querySelectorAll("[data-layout]").forEach((button) => {
       button.setAttribute("aria-pressed", String(button.dataset.layout === layout));
     });
+    controlsEl.querySelector("[data-animations]").setAttribute("aria-pressed", String(animations));
     const errorEl = controlsEl.querySelector("[data-error]");
     errorEl.textContent = error;
     errorEl.hidden = !error;
+    renderRules();
     const turn = controlsEl.querySelector("[data-turn]");
-    turn.textContent = `${board.my_turn ? "Your turn" : "Opponent's turn"} · turn ${board.turn_number}`;
+    turn.textContent = `${board.my_turn ? "Your turn" : "Opponent's turn"} · turn ${board.turn_number} · ${PHASES[board.phase]} phase`;
     turn.classList.toggle("mine", board.my_turn);
-    controlsEl.querySelector("[data-end-turn]").disabled = !board.my_turn;
+    // Only the turn player moves the phase on, and only forwards.
+    const at = PHASE_NAMES.indexOf(board.phase);
+    controlsEl.querySelectorAll("[data-phase]").forEach((button) => {
+      const index = PHASE_NAMES.indexOf(button.dataset.phase);
+      button.classList.toggle("current", index === at);
+      button.classList.toggle("past", index < at);
+      if (index === at) button.setAttribute("aria-current", "step"); else button.removeAttribute("aria-current");
+      button.disabled = !board.my_turn || index <= at || (board.rules && board.phase === "encore" && reversedLeft());
+      if (button.dataset.phase === "mulligan" && button.closest("[data-phase-bar]")) button.hidden = board.phase !== "mulligan";
+    });
+    renderAttackPanel();
+    const note = controlsEl.querySelector(".phase-note");
+    note.textContent = board.reveal && board.reveal.mine ? `Waiting for ${board.opponent ? board.opponent.name : "your opponent"} to close the card you revealed.`
+      : board.mulligan ? (board.mulligan.me ? `Waiting for ${board.opponent ? board.opponent.name : "your opponent"} to finish their mulligan…` : "Mulligan: choose cards to swap.")
+      : !board.rules ? "Turn rules are off: anything goes."
+      : board.attack ? ""
+      : board.phase === "encore" && reversedLeft() ? "Encore step: every reversed character needs Encore or 🪦 before the turn can end."
+      : inPhase("draw") ? "Draw phase: draw a card (✋ on your deck) to move on."
+      : "End clears your climax zone and passes the turn.";
+    note.hidden = !note.textContent;
+  }
+
+  // During the attack phase (turn rules on) the phase bar gives way to the attack's steps, with a
+  // randomly picked transition each time one takes over from the other.
+  let panelMode = null;
+
+  function renderAttackPanel() {
+    const bar = controlsEl.querySelector("[data-phase-bar]");
+    const panel = controlsEl.querySelector("[data-attack-panel]");
+    const attack = board.rules && board.phase === "attack" ? board.attack : null;
+    const mode = attack ? "attack" : "phases";
+    if (attack) {
+      const oppName = board.opponent ? board.opponent.name : "Your opponent";
+      const kinds = { front: "Front attack", side: "Side attack", direct: "Direct attack" };
+      const steps = Object.entries(ATTACK_STEPS).map(([step, label]) =>
+        `<span class="attack-step${step === attack.step ? " current" : ""}"${step === attack.step ? ' aria-current="step"' : ""}>${label}</span>`).join("");
+      let status = "";
+      let buttons = "";
+      if (attack.step === "declare") {
+        status = board.my_turn ? "Choose an attacker: hover a standing center-stage character." : `Waiting for ${esc(oppName)} to attack…`;
+        if (board.my_turn) buttons = '<button type="button" data-phase="encore">End attack phase</button>';
+      } else {
+        status = `${kinds[attack.kind]} · ${attack.soul} damage${attack.backup ? ` · backup +${attack.backup}` : ""}`;
+        if (attack.step === "trigger" && attack.prompt) {
+          status += board.my_turn ? ` — resolve the ${attack.prompt.kind} trigger.` : ` — waiting for ${esc(oppName)} to resolve a ${attack.prompt.kind} trigger…`;
+        }
+        if (attack.step === "counter") {
+          status += board.my_turn ? ` — waiting for ${esc(oppName)} to counter…` : " — play a counter from your hand, or:";
+          if (!board.my_turn) buttons = `<button type="button" data-act='{"type":"no_counter"}'>No counter</button>`;
+        }
+      }
+      panel.innerHTML = `<p class="attack-title">⚔ Attack phase</p>
+        <div class="attack-steps" role="list">${steps}</div>
+        <p class="small attack-status">${status}</p>${buttons ? `<div class="attack-buttons">${buttons}</div>` : ""}`;
+    }
+    bar.hidden = Boolean(attack);
+    panel.hidden = !attack;
+    if (panelMode && panelMode !== mode && animations) {
+      const shown = attack ? panel : bar;
+      const effect = PANEL_SWAPS[Math.floor(Math.random() * PANEL_SWAPS.length)];
+      shown.classList.remove(...PANEL_SWAPS);
+      void shown.offsetWidth; // restart the animation
+      shown.classList.add(effect);
+      shown.addEventListener("animationend", () => shown.classList.remove(effect), { once: true });
+    }
+    panelMode = mode;
+  }
+
+  // The turn rules toggle: asking sends the other player a prompt; the rules change only if they agree.
+  function renderRules() {
+    const button = controlsEl.querySelector("[data-rules]");
+    const request = board.rules_request;
+    button.setAttribute("aria-pressed", String(board.rules));
+    button.textContent = request && request.mine ? "Turn rules: asked…" : `Turn rules: ${board.rules ? "on" : "off"}`;
+    button.title = request && request.mine ? "Waiting for your opponent. Click to take the request back."
+      : `Ask your opponent to turn the turn rules ${board.rules ? "off" : "on"}`;
+    const prompt = controlsEl.querySelector("[data-rules-prompt]");
+    const asked = request && !request.mine;
+    prompt.hidden = !asked;
+    if (asked) {
+      prompt.innerHTML = `<p><b>${esc(board.opponent ? board.opponent.name : "Your opponent")}</b> wants to turn the turn rules
+        <b>${request.on ? "on" : "off"}</b>. ${request.on ? "Phases and attacks will follow the rules again." : "Phases, attacks and costs will no longer be enforced."}</p>
+        <div class="attack-buttons">
+          <button type="button" data-act='{"type":"rules_answer","accept":true}'>Agree</button>
+          <button type="button" data-act='{"type":"rules_answer","accept":false}'>Keep them ${board.rules ? "on" : "off"}</button>
+        </div>`;
+    }
   }
 
   function renderModal() {
+    if (board.reveal && board.reveal.card) return renderReveal();
+    if (modal && modal.confirmClimax) return renderClimaxConfirm();
+    if (board.mulligan && !board.mulligan.me) return renderMulligan();
+    if (board.level_up_pending) return renderLevelUp();
+    if (board.my_turn && board.attack && board.attack.step === "trigger" && board.attack.prompt) return renderTriggerPrompt();
     if (!modal) {
       modalEl.hidden = true;
       return;
@@ -382,6 +973,119 @@
       <p class="muted small">${owner === "me" ? "Click a card to move it. Top of the pile first." : "Top of the pile first."}</p>
       <div class="play-modal-cards">${list.join("") || '<p class="empty">Empty.</p>'}</div>
     </div>`;
+  }
+
+  // A card the opponent revealed from their hand: shown large with its text until we close it
+  // (their turn waits for that).
+  function renderReveal() {
+    const info = cards[board.reveal.card];
+    modalEl.hidden = false;
+    modalEl.innerHTML = `<div class="play-modal-box reveal-box" role="dialog" aria-label="Revealed card">
+      <div class="play-modal-head"><h2>${esc(board.reveal.by)} reveals</h2>
+        <button type="button" data-act='{"type":"close_reveal"}'>Close</button></div>
+      ${info ? `<div class="reveal-card"><img src="${esc(info.image)}" alt="${esc(info.name)}">
+        <div><p class="play-preview-name">${esc(info.name)}</p>
+          <p class="small muted">${esc([info.type, info.color, info.level != null ? `Level ${info.level}` : "", info.cost != null ? `Cost ${info.cost}` : "",
+            info.power != null ? `Power ${info.power}` : "", info.soul != null ? `Soul ${info.soul}` : ""].filter(Boolean).join(" · "))}</p>
+          ${info.text ? `<div class="card-peek-text">${esc(info.text).replace(/\n/g, "<br>")}</div>` : ""}</div></div>` : ""}
+    </div>`;
+  }
+
+  // Playing a climax from the main phase ends the main phase: confirm first.
+  function renderClimaxConfirm() {
+    const card = board.me.zones.hand.find((c) => c.uid === modal.confirmClimax);
+    const info = card && cards[card.card];
+    if (!card || !inPhase("main")) {
+      modal = null;
+      return renderModal();
+    }
+    modalEl.hidden = false;
+    modalEl.innerHTML = `<div class="play-modal-box confirm-box" role="alertdialog" aria-label="Play a climax">
+      <div class="play-modal-head"><h2>Play ${CX_HTML}${info ? ` ${esc(info.name)}` : ""}?</h2></div>
+      <p>Playing a climax card ends your main phase: it goes into your ${CX_HTML} zone, and your attack phase follows.</p>
+      <div class="trigger-buttons">
+        <button type="button" data-act='${esc(JSON.stringify({ type: "move", uid: card.uid, to: "climax", end_main: true }))}'>Play it</button>
+        <button type="button" class="button-cancel" data-close>Cancel</button>
+      </div>
+    </div>`;
+  }
+
+  // Turn 1's mulligan: pick any cards in the hand to swap for new ones (or keep it as it is).
+  function renderMulligan() {
+    const hand = board.me.zones.hand;
+    for (const uid of [...mulliganPicks]) if (!hand.some((c) => c.uid === uid)) mulliganPicks.delete(uid);
+    const count = mulliganPicks.size;
+    modalEl.hidden = false;
+    modalEl.innerHTML = `<div class="play-modal-box" role="dialog" aria-label="Mulligan">
+      <div class="play-modal-head"><h2>Mulligan</h2></div>
+      <p class="muted small">Pick any cards to put into your waiting room; you'll draw as many new ones.</p>
+      <div class="play-modal-cards">${hand.map((c) => `<div class="level-pick${mulliganPicks.has(c.uid) ? " picked" : ""}" role="button"
+        tabindex="0" aria-pressed="${mulliganPicks.has(c.uid)}" data-mulligan-pick="${esc(c.uid)}">${cardHtml(c, "me", "mulligan")}</div>`).join("")}</div>
+      <div class="trigger-buttons"><button type="button" data-mulligan-submit>${count ? `Mulligan ${count} card${count === 1 ? "" : "s"}` : "Keep my hand"}</button></div>
+    </div>`;
+  }
+
+  // A trigger with a choice in it, for the attacker (see trigger_prompt in game.py).
+  const TRIGGERS = {
+    comeback: { title: "Comeback trigger", text: "You may return a character from your waiting room to your hand.", to: { hand: "→ Hand" } },
+    gate: { title: "Gate trigger", text: "You may return a climax from your waiting room to your hand.", to: { hand: "→ Hand" } },
+    choice: { title: "Choice trigger", text: "You may put a character with a soul trigger from your waiting room into your hand or your stock.", to: { hand: "→ Hand", stock: "→ Stock" } },
+    standby: { title: "Standby trigger", text: "You may put a character of up to your level + 1 from your waiting room onto your stage, rested.", to: { C1: "Center L", C2: "Center M", C3: "Center R", B1: "Back L", B2: "Back R" } },
+    treasure: { title: "Treasure trigger", text: "The treasure went to your hand. Put the top card of your deck into your stock?" },
+  };
+
+  function renderTriggerPrompt() {
+    const prompt = board.attack.prompt;
+    const trigger = TRIGGERS[prompt.kind];
+    const choice = (action, label) => `<button type="button" data-act='${esc(JSON.stringify({ type: "trigger_choice", ...action }))}'>${label}</button>`;
+    let body;
+    if (prompt.kind === "treasure") {
+      body = `<div class="trigger-buttons">${choice({ accept: true }, "Yes, to my stock")}${choice({ accept: false }, "No")}</div>`;
+    } else {
+      const options = board.me.zones.waiting.filter((c) => prompt.options.includes(c.uid));
+      body = `<div class="play-modal-cards">${options.map((c) => `<div class="trigger-option">${cardHtml(c, "me", "waiting")}
+          <div class="trigger-buttons">${Object.entries(trigger.to).map(([to, label]) => choice({ uid: c.uid, to }, label)).join("")}</div>
+        </div>`).join("")}</div>
+        <div class="trigger-buttons">${choice({}, "Choose nothing")}</div>`;
+    }
+    modalEl.hidden = false;
+    modalEl.innerHTML = `<div class="play-modal-box" role="dialog" aria-label="${trigger.title}">
+      <div class="play-modal-head"><h2>${trigger.title}</h2></div>
+      <p class="muted small">${trigger.text}</p>${body}
+    </div>`;
+  }
+
+  // 7 or more cards in our clock: choose which of the first 7 goes to the level zone (the rest go to
+  // the waiting room). This stays up until a card is chosen.
+  function renderLevelUp() {
+    const first = board.me.zones.clock.slice(0, LEVEL_UP_AT);
+    modalEl.hidden = false;
+    modalEl.innerHTML = `<div class="play-modal-box" role="dialog" aria-label="Level up">
+      <div class="play-modal-head"><h2>Level up to level ${board.me.zones.level.length + 1}</h2></div>
+      <p class="muted small">Choose a card from your clock for your level zone. The other ${LEVEL_UP_AT - 1} go to the waiting room.</p>
+      <div class="play-modal-cards">${first.map((c) => `<div class="level-pick" role="button" tabindex="0"
+        data-level-up="${esc(c.uid)}" aria-label="Level up with this card">${cardHtml(c, "me", "clock")}</div>`).join("")}</div>
+    </div>`;
+  }
+
+  // A new phase's name (in the side panel, on the board and on the phase bar) comes in with a
+  // randomly picked little animation.
+  let phaseKey = null;
+
+  function announcePhase() {
+    const key = `${board.turn_number}:${board.phase}`;
+    if (phaseKey && key !== phaseKey && animations) {
+      const effect = PHASE_NAME_FX[Math.floor(Math.random() * PHASE_NAME_FX.length)];
+      const names = [controlsEl.querySelector("[data-turn]"), boardEl.querySelector(".table-divider"),
+        controlsEl.querySelector("[data-phase].current")];
+      for (const el of names.filter(Boolean)) {
+        el.classList.remove(...PHASE_NAME_FX);
+        void el.offsetWidth; // restart the animation
+        el.classList.add(effect);
+        el.addEventListener("animationend", () => el.classList.remove(effect), { once: true });
+      }
+    }
+    phaseKey = key;
   }
 
   // --- Card preview ----------------------------------------------------------------------------
@@ -427,6 +1131,7 @@
     const info = cards[el.dataset.card];
     if (!info) return;
     zoomEl.innerHTML = `<img src="${esc(info.image)}" alt="${esc(info.name)}">`;
+    zoomEl.classList.toggle("zoom-climax", (info.type || "").toLowerCase() === "climax");
     zoomEl.hidden = false;
   }
 
@@ -447,15 +1152,11 @@
 
   // --- Menus -----------------------------------------------------------------------------------
 
-  // A short menu can end in "More…", which reopens it in place with the full list (`more`).
-  let menuMore = null;
-
-  function showMenu(x, y, title, items, more = null) {
-    menuMore = more && { x, y, title, items: more };
+  function showMenu(x, y, title, items) {
+    hoverZone = null;
     menuEl.innerHTML = `<p class="play-menu-title">${esc(title)}</p>` + items.map((item) => item === "-"
       ? "<hr>"
-      : `<button type="button" data-menu-item='${esc(JSON.stringify(item.action || {}))}' ${item.prompt ? `data-prompt="${esc(item.prompt)}"` : ""} ${item.view ? `data-view='${esc(JSON.stringify(item.view))}'` : ""}>${esc(item.label)}</button>`).join("")
-      + (more ? '<hr><button type="button" data-menu-more>More…</button>' : "");
+      : `<button type="button" data-menu-item='${esc(JSON.stringify(item.action || {}))}' ${item.prompt ? `data-prompt="${esc(item.prompt)}"` : ""} ${item.view ? `data-view='${esc(JSON.stringify(item.view))}'` : ""}>${esc(item.label)}</button>`).join("");
     menuEl.hidden = false;
     const box = menuEl.getBoundingClientRect();
     menuEl.style.left = `${Math.min(x, window.innerWidth - box.width - 8)}px`;
@@ -464,7 +1165,53 @@
 
   function hideMenu() {
     menuEl.hidden = true;
+    hoverZone = null;
   }
+
+  // Hovering our deck or one of our occupied stage slots opens its full menu beside it. It stays
+  // open while the pointer is on the zone or the menu, and closes shortly after it leaves both.
+  // The zone is remembered by name, not element, because the board is redrawn on every move.
+  const HOVER_CLOSE_MS = 200;
+  let hoverZone = null; // "deck" or a stage slot, while the menu showing is its hover menu
+  let hoverCloseTimer = null;
+
+  function hoverTarget(el) {
+    if (!board || el.closest(".marker-pile")) return null; // markers have their own (click) menu
+    if (el.closest('[data-pile="deck"][data-owner="me"]')) return "deck";
+    const slot = el.closest('.zone.slot[data-owner="me"]');
+    return slot && board.me.stage[slot.dataset.drop] ? slot.dataset.drop : null;
+  }
+
+  function openHoverMenu(zone, zoneEl) {
+    const card = zone === "deck" ? null : zoneEl.querySelector(".pcard[data-uid]");
+    const [title, items] = zone === "deck" ? pileMenu("deck", "me") : cardMenu(card);
+    const box = zoneEl.getBoundingClientRect();
+    showMenu(box.right + 6, box.top, title, items);
+    const width = menuEl.getBoundingClientRect().width;
+    if (box.right + 6 + width > window.innerWidth - 8) { // no room on the right: open to the left
+      menuEl.style.left = `${Math.max(8, box.left - 6 - width)}px`;
+    }
+    hoverZone = zone;
+  }
+
+  function cancelHoverClose() {
+    clearTimeout(hoverCloseTimer);
+    hoverCloseTimer = null;
+  }
+
+  document.addEventListener("mousemove", (event) => {
+    if (menuEl.contains(event.target)) return cancelHoverClose();
+    const zone = hoverTarget(event.target);
+    if (zone) {
+      cancelHoverClose();
+      if (zone !== hoverZone || menuEl.hidden) openHoverMenu(zone, event.target.closest(".zone"));
+    } else if (hoverZone && !hoverCloseTimer) {
+      hoverCloseTimer = setTimeout(() => {
+        hoverCloseTimer = null;
+        if (hoverZone) hideMenu();
+      }, HOVER_CLOSE_MS);
+    }
+  });
 
   function cardMenu(el) {
     const uid = el.dataset.uid;
@@ -485,7 +1232,9 @@
     if (!["hand", "deck", "stock"].includes(zone)) {
       items.push({ label: el.classList.contains("face-down") ? "Turn face up" : "Turn face down", action: { type: "flip", uid } }, "-");
     }
+    const unaffordable = zone === "hand" && !canPay(info);
     for (const to of MOVE_TARGETS) {
+      if (unaffordable && PLAY_ZONES.includes(to)) continue;
       if (to !== zone) items.push({ label: `→ ${LABELS[to]}`, action: { type: "move", uid, to } });
     }
     items.push({ label: "→ Deck (top)", action: { type: "move", uid, to: "deck", where: "top" } },
@@ -524,23 +1273,21 @@
       ]];
     }
     if (zone === "deck") {
-      const shuffle = { label: "Shuffle", action: { type: "shuffle" } };
-      const toWaiting = { label: "Top → waiting room", action: { type: "move_top", from: "deck", to: "waiting" } };
-      const bottomToWaiting = { label: "Bottom → waiting room", action: { type: "move_top", from: "deck", to: "waiting", where: "bottom" } };
-      return ["Deck", [shuffle, toWaiting, bottomToWaiting], [
+      return ["Deck", [
+        { label: "Shuffle", action: { type: "shuffle" } },
+        { label: "Top → waiting room", action: { type: "move_top", from: "deck", to: "waiting" } },
+        { label: "Bottom → waiting room", action: { type: "move_top", from: "deck", to: "waiting", where: "bottom" } },
+        "-",
         { label: "Draw 1", action: { type: "move_top", from: "deck", to: "hand" } },
         { label: "Draw…", action: { type: "move_top", from: "deck", to: "hand" }, prompt: "How many cards to draw?" },
         "-",
         { label: "Take damage…", action: { type: "damage" }, prompt: "How much damage?" },
         { label: "Trigger: top → resolution", action: { type: "move_top", from: "deck", to: "resolution" } },
         { label: "Top → stock", action: { type: "move_top", from: "deck", to: "stock" } },
-        toWaiting,
-        bottomToWaiting,
         { label: "Mill…", action: { type: "move_top", from: "deck", to: "waiting" }, prompt: "How many cards to put into the waiting room?" },
         "-",
         { label: "Look at top…", action: { type: "peek" }, prompt: "Look at how many cards?" },
         { label: "Search deck", action: { type: "search" } },
-        shuffle,
         ...markerItems((slot, face_down) => ({ type: "move_top", from: "deck", to: `marker:${slot}`, face_down }),
           () => true, "Top card → marker"),
       ]];
@@ -552,9 +1299,6 @@
       ]];
     }
     const items = [{ label: "View all", view }];
-    if (zone === "waiting" && board.me.zones.deck.count === 0 && board.me.zones.waiting.length) {
-      items.unshift({ label: "Deck out: shuffle into deck, top card → clock", action: { type: "deck_out" } }, "-");
-    }
     if (zone === "waiting") items.push({ label: "Refresh: all → deck and shuffle", action: { type: "move_all", from: "waiting", to: "deck" } });
     if (["clock", "resolution", "climax", "memory"].includes(zone)) {
       items.push({ label: "All → waiting room", action: { type: "move_all", from: zone, to: "waiting" } });
@@ -581,9 +1325,48 @@
       act(action);
       return;
     }
-    if (event.target.closest("[data-menu-more]")) {
-      const { x, y, title, items } = menuMore;
-      showMenu(x, y, title, items);
+    const confirmClimax = event.target.closest("[data-confirm-climax]");
+    if (confirmClimax) {
+      modal = { confirmClimax: confirmClimax.dataset.confirmClimax };
+      renderModal();
+      return;
+    }
+    const mulliganPick = event.target.closest("[data-mulligan-pick]");
+    if (mulliganPick) {
+      const uid = mulliganPick.dataset.mulliganPick;
+      if (mulliganPicks.has(uid)) mulliganPicks.delete(uid); else mulliganPicks.add(uid);
+      renderModal();
+      return;
+    }
+    if (event.target.closest("[data-mulligan-submit]")) {
+      const uids = [...mulliganPicks];
+      mulliganPicks.clear();
+      act({ type: "mulligan", uids });
+      return;
+    }
+    const levelPick = event.target.closest("[data-level-up]");
+    if (levelPick) {
+      act({ type: "level_up", uid: levelPick.dataset.levelUp });
+      return;
+    }
+    const search = event.target.closest("[data-search-view]");
+    if (search) {
+      modal = JSON.parse(search.dataset.searchView);
+      hideMenu();
+      renderModal();
+      return;
+    }
+    const phaseButton = event.target.closest("[data-phase]");
+    if (phaseButton) {
+      act({ type: "phase", phase: phaseButton.dataset.phase });
+      return;
+    }
+    if (event.target.closest("[data-rules]")) {
+      act(board.rules_request && board.rules_request.mine ? { type: "rules_answer" } : { type: "rules_request" });
+      return;
+    }
+    if (event.target.closest("[data-animations]")) {
+      setAnimations(!animations);
       return;
     }
     const layoutButton = event.target.closest("[data-layout]");
@@ -598,7 +1381,7 @@
     }
     const more = event.target.closest("[data-more]");
     if (more) {
-      const card = more.closest(".zone.slot, .hand-card").querySelector(".pcard[data-uid]");
+      const card = more.closest(".hand-card").querySelector(".pcard[data-uid]");
       if (card) {
         const [title, items] = cardMenu(card);
         showMenu(event.clientX, event.clientY, title, items);
@@ -610,8 +1393,14 @@
       renderModal();
       return;
     }
+    // The deck and stage slots open their hover menu on a click too (for touch screens).
+    const hovered = hoverTarget(event.target);
+    if (hovered) {
+      openHoverMenu(hovered, event.target.closest(".zone"));
+      return;
+    }
     // A stacked pile opens the pile's menu (its cards are reachable through "View all");
-    // cards on the stage, in the hand, spread in clock/level, or in a viewer open their own menu.
+    // cards in the hand, spread in clock/level, or in a viewer open their own menu.
     const pile = event.target.closest("[data-pile]");
     const card = event.target.closest(".pcard[data-uid]");
     if (card && card.dataset.owner === "me" && !(pile && pile.classList.contains("pile"))) {
@@ -623,7 +1412,7 @@
     if (pile) {
       const menu = pileMenu(pile.dataset.pile, pile.dataset.owner);
       if (menu) {
-        showMenu(event.clientX, event.clientY, menu[0], menu[1], menu[2]);
+        showMenu(event.clientX, event.clientY, menu[0], menu[1]);
         return;
       }
     }
@@ -631,6 +1420,12 @@
   });
 
   document.addEventListener("keydown", (event) => {
+    const levelPick = event.target.closest && event.target.closest("[data-level-up]");
+    if (levelPick && (event.key === "Enter" || event.key === " ")) {
+      event.preventDefault();
+      act({ type: "level_up", uid: levelPick.dataset.levelUp });
+      return;
+    }
     if (event.key === "Escape") {
       hideZoom();
       hideMenu();

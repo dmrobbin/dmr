@@ -3,6 +3,13 @@
 
 {% block title %}{% if opponent %}vs {{ opponent.username }}{% else %}New room{% endif %}{% endblock %}
 
+{% block head %}
+  {# Metal Mania: the heavy-metal display face for the level-up announcement. #}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Metal+Mania&display=swap">
+{% endblock %}
+
 {% block content %}
   {% if room.status == "setup" %}
     <p class="back"><a href="{% url 'weiss:play_rooms' %}">← Your rooms</a></p>
@@ -86,14 +93,12 @@
           <input type="text" name="text" maxlength="300" placeholder="Message" aria-label="Chat message">
           <button type="submit">Send</button>
         </form>
-        {% if seat == "host" %}
-          <form method="post" action="{% url 'weiss:play_start' room.pk %}" onsubmit="return confirm('Start a new game with the same decks?')">
-            {% csrf_token %}<button type="submit" class="link-button">Rematch (reshuffle and deal again)</button>
-          </form>
-          <form method="post" action="{% url 'weiss:play_reset' room.pk %}" onsubmit="return confirm('End this game and go back to choosing decks?')">
-            {% csrf_token %}<button type="submit" class="link-button">Change decks</button>
-          </form>
-        {% endif %}
+        <form method="post" action="{% url 'weiss:play_start' room.pk %}" onsubmit="return confirm('Start a new game with the same decks?')">
+          {% csrf_token %}<button type="submit" class="link-button">Rematch (reshuffle and deal again)</button>
+        </form>
+        <form method="post" action="{% url 'weiss:play_reset' room.pk %}" onsubmit="return confirm('End this game and go back to choosing decks?')">
+          {% csrf_token %}<button type="submit" class="link-button">Change decks</button>
+        </form>
       </aside>
       <div class="play-menu" data-menu hidden></div>
       <div class="play-modal" data-modal hidden></div>

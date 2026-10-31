@@ -605,6 +605,24 @@ button.button-small.secondary { border: 1px solid var(--border); }
 
 /* Quick actions over one of your characters while the mouse is on its slot (or a button in it has
    focus). They sit in the slot, not on the card, so they stay upright when the card is rested. */
+/* Stand / rest (stacked, top left), reverse (top right) and to-hand (bottom left) buttons, in the
+   slot's side margins beside a standing card so they don't cover its level, cost or power. */
+.slot-pos { position: absolute; top: .25rem; left: .2rem; z-index: 4; display: flex; flex-direction: column; gap: .2rem; }
+.slot-pos-right { left: auto; right: .2rem; }
+.slot-pos-bottom { top: auto; bottom: .25rem; }
+/* Buttons between neighbouring stage slots (swap, or move into the empty one). They sit on the
+   edge of the first slot, half outside it, so they read as being between the two. */
+.slot-link { position: absolute; z-index: 6; display: grid; place-items: center; width: 1.35rem; height: 1.35rem; padding: 0; font: inherit; font-size: .85rem; font-weight: 800; line-height: 1; color: #fff; background: #2f5fa8; border: 1px solid rgb(255 255 255 / .6); border-radius: 50%; cursor: pointer; box-shadow: 0 2px 6px rgb(0 0 0 / .6); }
+.slot-link:hover { background: #3c74c9; border-color: var(--accent); }
+.slot-link.link-h { top: 50%; right: calc(-.3rem - .675rem); transform: translateY(-50%); }
+.slot-link.link-dr { bottom: -.95rem; right: -.5rem; }
+.slot-link.link-dl { bottom: -.95rem; left: -.5rem; }
+.slot-pos-center { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.slot-pos button { display: grid; place-items: center; width: 1.4rem; height: 1.4rem; padding: 0; font: inherit; font-size: .85rem; font-weight: 800; line-height: 1; color: #fff; background: #2b2f3a; border: 1px solid rgb(255 255 255 / .55); border-radius: .3rem; cursor: pointer; box-shadow: 0 2px 6px rgb(0 0 0 / .6); }
+.slot-pos button:hover { border-color: var(--accent); color: var(--accent); background: #353a47; }
+.slot-pos button[aria-pressed="true"] { color: #111; border-color: var(--accent); background: var(--accent); }
+.slot-wrap { display: flex; flex-direction: column; align-items: center; gap: .15rem; }
+.mat-opponent .slot-wrap { flex-direction: column-reverse; } /* the opponent's side is the same, turned around */
 .slot-actions { position: absolute; left: 50%; top: 45%; z-index: 4; display: none; flex-direction: column; gap: .25rem; transform: translate(-50%, -50%); }
 .zone.slot:hover .slot-actions, .slot-actions:focus-within { display: flex; }
 :is(.slot-actions, .hand-actions) button { font: inherit; font-size: .7rem; font-weight: 600; white-space: nowrap; color: var(--text); background: rgb(20 22 28 / .88); border: 1px solid var(--border); border-radius: .35rem; padding: .25rem .5rem; cursor: pointer; box-shadow: 0 2px 8px rgb(0 0 0 / .5); }
@@ -628,7 +646,12 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .zone-label { font-size: .65rem; color: var(--muted); white-space: nowrap; text-transform: uppercase; letter-spacing: .06em; }
 .zone-label b { color: var(--text); font-weight: 600; }
 .zone.slot, .zone.pile { min-height: calc(var(--card-h) + 1.6rem); justify-content: flex-start; }
+.zone.slot { min-height: calc(var(--card-h) + .6rem); justify-content: center; } /* its name is outside it */
 .zone-empty { display: block; width: var(--card-w); height: var(--card-h); border-radius: .35rem; background: rgb(255 255 255 / .03); }
+/* Search (🔍) on a pile of more than one card, shown while hovering it. */
+.zone-search { position: absolute; top: .2rem; right: .2rem; z-index: 4; display: none; place-items: center; width: 1.5rem; height: 1.5rem; padding: 0; font: inherit; font-size: .85rem; line-height: 1; background: #2b2f3a; border: 1px solid rgb(255 255 255 / .55); border-radius: .3rem; cursor: pointer; box-shadow: 0 2px 6px rgb(0 0 0 / .6); }
+.zone:hover > .zone-search, .zone-search:focus-visible { display: grid; }
+.zone-search:hover { border-color: var(--accent); background: #353a47; }
 .zone.drop-over { border-color: var(--accent); background: var(--accent-soft); }
 .zone.pile { cursor: pointer; }
 .zone.pile:hover { border-color: rgb(255 255 255 / .3); }
@@ -645,7 +668,8 @@ button.button-small.secondary { border: 1px solid var(--border); }
 /* Focused board's level zone: one card wide, and half as wide as a stage slot (a slot is a stage
    card's height plus padding, so it fits a rested card). Each card below covers all but the top
    strip (level and cost) of the one above. */
-.layout-focus .zone.spread.zone-level { --card-w: calc(var(--stage-w) * .7 - .3rem); --card-h: calc(var(--card-w) * 1.4); flex: none; align-items: center; min-width: calc(var(--card-w) + .6rem); }
+.play.layout-classic { --stage-w: clamp(2.9rem, 4.4vw, 4.6rem); } /* classic stage cards are the board size */
+.zone.spread.zone-level { --card-w: calc(var(--stage-w) * .7 - .3rem); --card-h: calc(var(--card-w) * 1.4); flex: none; align-items: center; min-width: calc(var(--card-w) + .6rem); }
 .level-stack { display: flex; flex-direction: column; align-items: center; min-height: calc(var(--card-h) * 1.66); }
 .level-stack .pcard + .pcard { margin-top: calc(var(--card-h) * -.78); }
 .level-stack .pcard:hover { z-index: 2; }
@@ -685,6 +709,10 @@ button.button-small.secondary { border: 1px solid var(--border); }
    card element so they don't scale with it. */
 .hand-actions { position: absolute; left: 50%; bottom: calc(.6rem + var(--card-h) * 2.3 * .5); z-index: 6; display: none; flex-direction: column; gap: .25rem; transform: translate(-50%, 50%); }
 .hand-card:hover .hand-actions, .hand-actions:focus-within { display: flex; }
+:is(.slot-actions, .hand-actions) .icon-button { font-size: 1rem; line-height: 1; padding: .2rem .45rem; text-align: center; }
+.hand-center { display: flex; justify-content: center; gap: .25rem; }
+.hand-back { padding: 0 1rem; } /* narrower, like the back row under the center stage */
+.hand-center button { flex: 1; min-width: 1.9rem; font-size: .8rem; font-weight: 700; text-align: center; }
 
 /* Level / cost / power overlay on face-up cards; sized from the card so it scales with the board. */
 .pcard-stats { position: absolute; inset: 0; pointer-events: none; font-size: max(.55rem, calc(var(--card-w) * .17)); font-weight: 700; line-height: 1; }
@@ -693,6 +721,12 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .stat-level { background: #b23a3a; }
 .stat-cost { background: #2f5fa8; }
 .stat-power { position: absolute; bottom: 4%; left: 4%; padding: 0 .3em; }
+/* Front-row soul: wisp icons in the bottom-right. Boosted numbers (a climax's bonus) glow green. */
+.stat-soul { position: absolute; bottom: 4%; right: 4%; display: flex; align-items: center; gap: .05em; height: 1.45em; padding: 0 .25em; border-radius: .35em; color: #ff8fb1; background: rgb(0 0 0 / .78); box-shadow: 0 0 0 1px rgb(255 255 255 / .25); }
+.stat-soul svg { width: .7em; height: .95em; fill: currentColor; filter: drop-shadow(0 0 2px rgb(255 90 140 / .8)); }
+.stat-soul b { margin-left: .1em; color: #fff; }
+.stat.boosted, .stat-soul.boosted { box-shadow: 0 0 0 1px #6be08a, 0 0 8px rgb(107 224 138 / .7); }
+.stat-power.boosted { color: #9ff5b4; }
 .hand-opponent .pcard { width: calc(var(--card-w) * .6); height: calc(var(--card-h) * .6); }
 .hand-opponent .hand-cards { min-height: 0; }
 
@@ -739,6 +773,142 @@ button.button-small.secondary { border: 1px solid var(--border); }
   .play, .play.layout-focus { grid-template-columns: 1fr; }
   .play-side { position: static; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
 }
+/* Announcements over the board (play.js flash()): "Deck Out!" between the deck and center right,
+   and a level up's old level flickering between the clock and level zones before the new one fades out. */
+.play-flash { position: fixed; z-index: 45; transform: translate(-50%, -50%); pointer-events: none; white-space: nowrap; font-weight: 800; letter-spacing: .03em; color: var(--accent); text-shadow: 0 0 12px rgb(0 0 0 / .9), 0 2px 4px rgb(0 0 0 / .9); }
+.flash-deck-out { font-size: clamp(1.6rem, 3vw, 2.6rem); animation: flash-fade 1.4s ease-in-out forwards; }
+.flash-level { font-family: "Metal Mania", Impact, "Arial Black", sans-serif; font-weight: 400; letter-spacing: .04em; font-size: clamp(2.6rem, 4.6vw, 4.2rem); color: #ffd36b; -webkit-text-stroke: 1px #6b1d0f; text-shadow: 0 0 18px rgb(255 120 40 / .75), 0 3px 0 #3a0d06, 0 0 4px rgb(0 0 0 / .9); animation: flash-flicker 2s steps(1) forwards; }
+.flash-level.flash-next { animation: flash-out 2s ease-out forwards; }
+/* A card flying between zones while one of your moves is sent (play.js animateAction). */
+.card-flight { position: fixed; z-index: 44; pointer-events: none; transform-origin: top left; border-radius: .35rem; box-shadow: 0 6px 18px rgb(0 0 0 / .6); }
+.card-flight .pcard-back, .card-flight img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: .35rem; }
+/* Turn phases: the current one lit, past ones dimmed, later ones clickable on your turn. */
+.phase-bar { display: flex; flex-wrap: wrap; gap: .25rem; margin: .4rem 0 .2rem; }
+.phase-bar button { font: inherit; font-size: .74rem; font-weight: 600; padding: .25rem .5rem; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: .35rem; cursor: pointer; }
+.phase-bar button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.phase-bar button:disabled { cursor: default; }
+.phase-bar button.past { opacity: .4; }
+.phase-bar button.current { color: var(--on-accent); background: var(--accent); border-color: var(--accent); opacity: 1; }
+.phase-note { margin: 0 0 .4rem; }
+/* The attack phase's panel (in place of the phase bar): its steps, what's happening, and buttons. */
+.attack-panel { margin: .4rem 0 .3rem; padding: .55rem .65rem; border: 1px solid #b23a3a; border-radius: .5rem; background: linear-gradient(135deg, rgb(178 58 58 / .22), rgb(20 22 28 / .6)); }
+.phase-bar[hidden], .attack-panel[hidden] { display: none; }
+.attack-title { margin: 0 0 .35rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; font-size: .78rem; color: #ff8a80; }
+.attack-steps { display: flex; flex-wrap: wrap; gap: .2rem; }
+.attack-step { font-size: .7rem; font-weight: 600; padding: .18rem .45rem; border-radius: .3rem; color: var(--muted); border: 1px solid var(--border); }
+.attack-step.current { color: #fff; background: #b23a3a; border-color: #d9625e; }
+.attack-status { margin: .45rem 0 0; }
+.attack-buttons { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .45rem; }
+.attack-buttons button, .counter-button { font: inherit; font-size: .78rem; font-weight: 700; color: #fff; background: #b23a3a; border: 1px solid #d9625e; border-radius: .35rem; padding: .3rem .6rem; cursor: pointer; }
+.attack-buttons button:hover, .counter-button:hover { background: #c94a4a; }
+.swap-slide { animation: swap-slide .35s ease-out; }
+.swap-flip { animation: swap-flip .4s ease-out; transform-origin: top center; }
+.swap-zoom { animation: swap-zoom .35s ease-out; }
+.swap-skew { animation: swap-skew .35s ease-out; }
+@keyframes swap-slide { from { opacity: 0; transform: translateX(-1.5rem); } to { opacity: 1; transform: none; } }
+@keyframes swap-flip { from { opacity: 0; transform: perspective(600px) rotateX(-80deg); } to { opacity: 1; transform: none; } }
+@keyframes swap-zoom { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
+@keyframes swap-skew { from { opacity: 0; transform: skewX(-18deg) translateX(1rem); } to { opacity: 1; transform: none; } }
+/* A new phase's name coming in (play.js announcePhase picks one). */
+.fx-pop { animation: fx-pop .5s ease-out; }
+.fx-flip { animation: fx-flip .55s ease-out; }
+.fx-slide { animation: fx-slide .45s ease-out; }
+.fx-glow { animation: fx-glow .8s ease-out; }
+@keyframes fx-pop { 0% { transform: scale(.6); opacity: 0; } 60% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes fx-flip { 0% { transform: perspective(500px) rotateX(90deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+@keyframes fx-slide { 0% { transform: translateX(-1.2rem); opacity: 0; } 100% { transform: none; opacity: 1; } }
+@keyframes fx-glow { 0% { text-shadow: 0 0 0 transparent; filter: brightness(2.2); } 40% { text-shadow: 0 0 14px var(--accent); } 100% { text-shadow: none; filter: none; } }
+/* Trigger choices in the attacker's prompt. */
+.trigger-option { display: flex; flex-direction: column; align-items: center; gap: .35rem; }
+.trigger-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem; margin-top: .4rem; }
+.trigger-buttons button { font: inherit; font-size: .76rem; font-weight: 700; color: var(--on-accent); background: var(--accent); border: none; border-radius: .35rem; padding: .3rem .55rem; cursor: pointer; }
+.trigger-buttons button:hover { background: var(--accent-hover); }
+/* The other player asking to turn the turn rules on or off. */
+.rules-prompt { position: fixed; top: 28vh; left: 50%; z-index: 50; width: min(26rem, calc(100vw - 2rem)); transform: translateX(-50%); padding: .8rem 1rem; border: 1px solid var(--accent); border-radius: .6rem; background: var(--surface); box-shadow: 0 12px 40px rgb(0 0 0 / .7); font-size: .88rem; }
+.rules-prompt p { margin: 0; }
+.rules-prompt[hidden] { display: none; }
+/* Encore step choices on a reversed character: greyed until pointed at, so they read as undecided. */
+.encore-choice { position: absolute; left: 50%; bottom: .3rem; z-index: 5; display: flex; gap: .25rem; transform: translateX(-50%); }
+.encore-choice button { font: inherit; font-size: .72rem; font-weight: 700; line-height: 1; padding: .3rem .5rem; color: #c9ccd3; background: #3a3d45; border: 1px solid #5a5e69; border-radius: .35rem; cursor: pointer; filter: grayscale(1); opacity: .8; box-shadow: 0 2px 6px rgb(0 0 0 / .6); }
+.encore-choice button:hover:not(:disabled), .encore-choice button:focus-visible { filter: none; opacity: 1; color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
+.encore-choice button:disabled { opacity: .35; cursor: not-allowed; }
+/* A climax played in the climax phase, in the middle of the screen for both players. play.js picks
+   one of these entrances at random and sets the duration (2s). */
+.climax-show { position: fixed; left: 50%; top: 50%; z-index: 46; pointer-events: none; transform: translate(-50%, -50%); animation-fill-mode: forwards; animation-timing-function: ease-out; }
+.climax-show img { display: block; max-width: min(70vw, 52rem); max-height: 58vh; border-radius: .9rem; box-shadow: 0 0 40px rgb(255 200 80 / .55), 0 20px 60px rgb(0 0 0 / .8); }
+.climax-zoom { animation-name: climax-zoom; }
+.climax-spin { animation-name: climax-spin; }
+.climax-slide { animation-name: climax-slide; }
+.climax-flip { animation-name: climax-flip; }
+.climax-drop { animation-name: climax-drop; }
+.climax-blur { animation-name: climax-blur; }
+@keyframes climax-zoom {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.2); }
+  30%, 75% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.15); }
+}
+@keyframes climax-spin {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(-540deg) scale(.3); }
+  35%, 75% { opacity: 1; transform: translate(-50%, -50%) rotate(0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(0) scale(.9); }
+}
+@keyframes climax-slide {
+  0% { opacity: 0; transform: translate(-160%, -50%) skewX(-20deg); }
+  25% { opacity: 1; transform: translate(-45%, -50%) skewX(8deg); }
+  35%, 75% { opacity: 1; transform: translate(-50%, -50%) skewX(0); }
+  100% { opacity: 0; transform: translate(60%, -50%) skewX(-10deg); }
+}
+@keyframes climax-flip {
+  0% { opacity: 0; transform: translate(-50%, -50%) perspective(900px) rotateY(90deg); }
+  30%, 75% { opacity: 1; transform: translate(-50%, -50%) perspective(900px) rotateY(0); }
+  100% { opacity: 0; transform: translate(-50%, -50%) perspective(900px) rotateY(-30deg); }
+}
+@keyframes climax-drop {
+  0% { opacity: 0; transform: translate(-50%, -160%); }
+  22% { opacity: 1; transform: translate(-50%, -44%); }
+  30% { transform: translate(-50%, -53%); }
+  36%, 75% { opacity: 1; transform: translate(-50%, -50%); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(.95); }
+}
+@keyframes climax-blur {
+  0% { opacity: 0; filter: blur(24px) brightness(2.5); transform: translate(-50%, -50%) scale(1.3); }
+  35%, 75% { opacity: 1; filter: blur(0) brightness(1); transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; filter: blur(8px); transform: translate(-50%, -50%) scale(1); }
+}
+.view-options { display: flex; flex-wrap: wrap; gap: .5rem; }
+@keyframes flash-fade {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.85); }
+  25%, 70% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); }
+}
+@keyframes flash-flicker {
+  0%, 20%, 40%, 60%, 80%, 100% { opacity: 1; }
+  10%, 30%, 50%, 70%, 90% { opacity: .15; }
+}
+@keyframes flash-out {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+}
+.level-pick { border-radius: .45rem; cursor: pointer; outline: 2px solid transparent; outline-offset: 3px; }
+.level-pick:hover, .level-pick:focus-visible { outline-color: var(--accent); }
+.level-pick .pcard { cursor: pointer; }
+.level-pick.picked { outline-color: #e0605b; }
+.level-pick.picked .pcard { opacity: .5; }
+/* The stylized CX standing in for the word "climax". */
+.cx { display: inline-block; padding: 0 .12em; font-weight: 900; font-style: italic; letter-spacing: -.02em; line-height: 1;
+  background: linear-gradient(135deg, #ffe27a, #ff8a3d 55%, #e0405b); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 3px rgb(255 140 60 / .55)); }
+button .cx, .phase-bar button.current .cx { filter: drop-shadow(0 0 2px rgb(0 0 0 / .6)); }
+.confirm-box { max-width: 30rem; }
+.trigger-buttons .button-cancel { color: var(--text); background: var(--surface); border: 1px solid var(--border); }
+.trigger-buttons .button-cancel:hover { background: var(--bg); }
+/* A card the opponent revealed. */
+.reveal-box { max-width: 46rem; }
+.reveal-card { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); gap: 1rem; align-items: start; }
+.reveal-card img { width: 100%; border-radius: .6rem; display: block; }
+@media (max-width: 40rem) { .reveal-card { grid-template-columns: 1fr; } }
 .play-zoom { position: fixed; top: 50%; left: 2rem; z-index: 40; transform: translateY(-50%); pointer-events: none; }
 .play-zoom[hidden] { display: none; }
 .play-zoom img { display: block; height: min(80vh, 44rem); width: auto; border-radius: .9rem; box-shadow: 0 20px 60px rgb(0 0 0 / .75); }
+.play-zoom.zoom-climax img { height: min(68vh, 37.4rem); } /* landscape, so a little smaller */
