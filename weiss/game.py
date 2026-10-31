@@ -562,6 +562,17 @@ def trigger_prompt(state, player, icons, info):
     return {"kind": kind, "options": options} if options else None
 
 
+def bars_backups(state, uid, info):
+    """Whether this character, attacking or defending, says no Backups can be played during its battle."""
+    card = locate(state, uid)[1]
+    return bool(card) and any(ability.get("no_backup") for ability in abilities_of(state, card, SimpleNamespace(info=info)))
+
+
+def find_card(side, uid):
+    where, index = find(side, uid)
+    return side["stage"][where] if where in STAGE_SLOTS else pile(side, where)[index]
+
+
 def after_trigger(state, info):
     """The trigger step is done: on to the counter step (if the defender can counter a front or side
     attack) or the damage step."""
@@ -569,6 +580,10 @@ def after_trigger(state, info):
     attack["step"] = "damage"
     if attack["kind"] != "direct":
         counters = counters_for(state, other_player(state, state["turn"]), info)
+        defender = state["players"][other_player(state, state["turn"])]
+        if attack["kind"] == "front" and (bars_backups(state, attack["uid"], info) or bars_backups(state, (defender["stage"][attack["target"]] or {}).get("uid"), info)):
+            add_log(state, state["turn"], "no Backups can be played in this battle")
+            counters = [uid for uid in counters if not BACKUP.search(info(find_card(defender, uid)["card"]).get("text") or "")]
         if counters:
             attack.update(step="counter", counters=counters)
 
@@ -635,10 +650,11 @@ def advance_attack(state, env):
                 mine = stats[attacker["uid"]]["power"]
                 theirs = stats[target["uid"]]["power"] + attack["backup"]
                 losers = ([attacker] if mine <= theirs else []) + ([target] if theirs <= mine else [])
+                losers = [card for card in losers if not has_status(state, card["uid"], "no_reverse")]
                 for card in losers:
                     card["pos"] = "reverse"
                 add_log(state, player, f"battle: {env.name(attacker['card'])} ({mine}) against {env.name(target['card'])} ({theirs})"
-                        + " — " + (", ".join(f"{env.name(c['card'])} reversed" for c in losers)))
+                        + " — " + (", ".join(f"{env.name(c['card'])} reversed" for c in losers) or "neither reversed"))
                 for card in losers:
                     other = target if card is attacker else attacker
                     fire(state, env, "reverse", uid=card["uid"], by=other["uid"], card=card["card"],
@@ -683,6 +699,8 @@ def enter_phase(state, player, phase, env):
         state["attack"] = {"step": "declare"}
     if phase == "draw" and rules:
         add_log(state, player, "moved to the draw phase")
+        if state["turn_number"] <= len(state["order"]):
+            fire(state, env, "phase", phase="first_turn", player=player)
         draw_step(state, player, name, shuffle)
         state["auto_next"] = "clock"
     elif phase == "end":
@@ -1128,7 +1146,7 @@ def apply_action(state, player, action, env):
         if kind == "counter":
             where, index = find(side, action.get("uid", ""))
             play = counter_play(state, player, zones["hand"][index], info) if where == "hand" else None
-            if not play:
+            if not play or action.get("uid") not in attack.get("counters", []):
                 raise GameError("That card can't be played as a counter now.")
             price, power = play
             card = zones["hand"].pop(index)
@@ -1226,6 +1244,8 @@ def apply_action(state, player, action, env):
         card = side["stage"][where]
         if card["pos"] != "reverse":
             raise GameError("Only a reversed character can be encored.")
+        if has_status(state, card["uid"], "no_encore"):
+            raise GameError("That character can't be encored this turn.")
         if len(zones["stock"]) < ENCORE_COST:
             raise GameError(f"Encore costs {ENCORE_COST} stock; you have {len(zones['stock'])}.")
         for _ in range(ENCORE_COST):
@@ -1403,6 +1423,24 @@ def condition_met(cond, state, player, source, ctx, env):
         return state["turn"] != player
     if kind == "phase":
         return state.get("phase") == cond["phase"]
+    if kind == "have_markers":
+        return any(fits(cond["filter"], card, env) and pile(side, MARKER + slot)
+                   for slot, card in side["stage"].items() if card)
+    if kind == "that_above_opponent_level":
+        facing = facing_card(state, player, source, ctx)
+        return bool(facing) and number(details_of(facing, env).get("level")) > len(other["zones"]["level"])
+    if kind == "milled_higher":
+        milled = ctx.get("milled", {})
+        if player not in milled:
+            return False
+        theirs = milled.get(other_player(state, player))
+        return number((env.info(milled[player]) or {}).get("level")) > number((env.info(theirs) or {}).get("level") if theirs else 0)
+    if kind == "chose":
+        return len(ctx.get("it", [])) == cond["n"]
+    if kind == "same_power":
+        cards = [card for card in (locate(state, uid)[1] for uid in ctx.get("among", [])) if card]
+        stats = compute_stats(state, env)[0]
+        return len({stats.get(card["uid"], {}).get("power") for card in cards}) == 1
     if kind == "played_this_turn":
         return bool(source) and source.get("played_turn") == state["turn_number"]
     if kind == "my_level":
@@ -1485,6 +1523,15 @@ def x_value(spec, state, player, target, ctx, env, stats=None):
         value = known.get("soul", number(details_of(target, env).get("soul")) if target else 0)
     elif kind == "revealed_level":
         value = number((env.info(ctx.get("revealed")) or {}).get("level")) if ctx and ctx.get("revealed") is not None else 0
+    elif kind == "chosen_level":
+        chosen = locate(state, (ctx.get("it") or [None])[0])[1] if ctx else None
+        value = number(details_of(chosen, env).get("level")) - spec.get("minus", 0) if chosen else 0
+    elif kind == "flipped":
+        value = sum(abilities.matches_filter(spec["filter"], env.info(pk) or {}) for pk in (ctx or {}).get("flipped", []))
+    elif kind == "marker_tiers":
+        slot = slot_of(side, (ctx or {}).get("source_uid"))
+        count = len(pile(side, MARKER + slot)) if slot else 0
+        value = next((x for most, x in spec["tiers"] if count <= most), spec["above"])
     elif kind == "opp_chars":
         value = len(stage_cards(state["players"][other_player(state, player)]))
     elif kind == "my_chars":
@@ -1671,10 +1718,10 @@ def when_matches(when, event, data, player, card, env):
     if event == "reverse":
         reversed_card = data["uid"]
         if on == "reverse_self" and reversed_card == uid:
-            return {"that": data.get("by")}
+            return {"that": data.get("by"), "reversed": reversed_card}
         if on == "reverse_opponent" and data.get("by") == uid:
             level = number((env.info(data["card"]) or {}).get("level"))
-            return {"that": reversed_card} if level >= when.get("level_min", 0) else None
+            return {"that": reversed_card, "reversed": reversed_card} if level >= when.get("level_min", 0) else None
         if (on == "reverse_other" and data.get("owner") == player and reversed_card != uid
                 and abilities.matches_filter(when["filter"], env.info(data["card"]) or {})):
             return {"that": reversed_card}
@@ -1734,6 +1781,11 @@ def fire(state, env, event, **data):
                     break
 
 
+def has_status(state, uid, status):
+    """Whether a buff on this character says it can't do something (see the "status" step)."""
+    return any(buff["uid"] == uid and buff.get("status") == status for buff in state.get("buffs", []))
+
+
 def used_key(card, ability):
     return f"{card['uid']}:{ability['text'][:80]}"
 
@@ -1741,6 +1793,8 @@ def used_key(card, ability):
 def queue_ability(state, player, card, ability, ctx, env):
     """An AUTO ability triggered: queue it if it can still do something."""
     if ability.get("once") and used_key(card, ability) in state.get("used", []):
+        return
+    if ability["text"].startswith("【AUTO】 Encore") and has_status(state, card["uid"], "no_encore"):
         return
     ctx = {**ctx, "source_uid": card["uid"]}
     if not all_met(ability, state, player, card, ctx, env):
@@ -1860,6 +1914,9 @@ def choose_options(step, res, state, env):
         cards = stage_cards(side)
     elif zone in ("center", "back"):
         cards = [c for s, c in side["stage"].items() if c and (s in OPPOSITE) == (zone == "center")]
+    elif zone == "hand_or_marker":
+        slot = slot_of(side, res["uid"])
+        cards = side["zones"]["hand"] + (pile(side, MARKER + slot) if slot else [])
     else:
         cards = side["zones"][zone]
     x = x_value(step.get("x"), state, player, None, ctx, env)
@@ -1867,8 +1924,10 @@ def choose_options(step, res, state, env):
     level = len(state["players"][player]["zones"]["level"])
     found = [c for c in cards if fits(filter_, c, env, x=x, level=level)
              and not (filter_.get("other") and c["uid"] == res["uid"])
-             and not (filter_.get("stand") and c["pos"] != "stand")]
-    if owner != player:  # "This card cannot be chosen by your opponent's effects."
+             and not (filter_.get("stand") and c["pos"] != "stand")
+             and not (filter_.get("no_markers") and pile(side, MARKER + (slot_of(side, c["uid"]) or "C1")))
+             and not (filter_.get("above_opponent_level") and number(details_of(c, env).get("level")) <= len(side["zones"]["level"]))]
+    if owner != player and step.get("chooser") != "opp":  # "This card cannot be chosen by your opponent's effects."
         found = [c for c in found if not any("cannot be chosen by your opponent's effects" in a["text"]
                                              for a in abilities_of(state, c, env))]
     return owner, found
@@ -1956,7 +2015,7 @@ def run_step(step, res, state, env):
     elif do == "choose":
         owner, found = choose_options(step, res, state, env)
         if not found:
-            ctx["it"] = []
+            ctx["it_before"], ctx["it"] = ctx.get("it", []), []
             add_log(state, player, "had nothing to choose")
             return
         minimum = min(step["min"], len(found))
@@ -1968,6 +2027,8 @@ def run_step(step, res, state, env):
         ask_cards(res, shown, owner, minimum, maximum, step.get("text", "Choose"), options=found)
         res["prompt"]["zone"] = step["zone"]
         res["prompt"]["cost"] = step.get("cost", False)
+        if step.get("chooser") == "opp":  # the opponent answers this one
+            res["prompt"]["player"] = opponent
     elif do == "search":
         cards = list(reversed(zones["deck"]))
         found = [c for c in cards if fits(step["filter"], c, env, level=len(zones["level"]))]
@@ -1996,13 +2057,18 @@ def run_step(step, res, state, env):
                        cards=[dict(c) for c in shown], owner=owner)
     elif do == "place":
         if ctx.get("it"):
+            other_stage = state["players"][opponent]["stage"]
             slots = [s for s in STAGE_SLOTS if not (step.get("open") and side["stage"][s])]
+            if step.get("zone"):
+                slots = [s for s in slots if (s in OPPOSITE) == (step["zone"] == "center")]
+            if step.get("facing"):
+                slots = [s for s in slots if other_stage[OPPOSITE[s]]]
             if not slots:
                 add_log(state, player, "had no open stage position")
                 return
             shown = [c for c in (locate(state, uid)[1] for uid in ctx["it"]) if c]
             ask_choice(res, "place", "Choose a stage position", [(s, LABELS[s].capitalize()) for s in slots],
-                       cards=[dict(c) for c in shown], owner=player, rest=step.get("rest", False))
+                       cards=[dict(c) for c in shown], owner=player, rest=step.get("rest", False), keep_pos=step.get("keep_pos", False))
     elif do == "to_old_slot":
         uid = res["uid"] if step.get("self") else (ctx.get("it") or [None])[0]
         slot = ctx.get("old_slot") or ctx.get("self_slot")
@@ -2017,6 +2083,7 @@ def run_step(step, res, state, env):
             for uid in ctx.get("it", []):
                 card, _ = take(side, uid)
                 put(side, card, MARKER + slot, face_down=step.get("face_down"))
+                ctx.setdefault("moved", []).append(uid)
             add_log(state, player, f"put {len(ctx.get('it', []))} marker(s) under {LABELS[slot]}")
     elif do == "rest":
         owner = ctx.get("among_owner", player)
@@ -2080,7 +2147,7 @@ def run_step(step, res, state, env):
         owner = opponent if step.get("owner") == "opp" else player
         target = state["players"][owner]
         moved = []
-        for _ in range(step["n"]):
+        for _ in range(ctx.get(step["n_from"], 0) if step.get("n_from") else step["n"]):
             if not target["zones"]["deck"]:
                 break
             card = target["zones"]["deck"].pop()
@@ -2134,11 +2201,94 @@ def run_step(step, res, state, env):
     elif do == "damage":
         deal_damage(state, opponent, step["n"], step["n"], [], env.name, env.is_climax)
     elif do == "waiting_to_deck":
-        for card in zones["waiting"]:
-            put(side, card, "deck")
-        count = len(zones["waiting"])
-        zones["waiting"] = []
-        add_log(state, player, f"returned {count} cards from their waiting room to their deck")
+        owner = opponent if step.get("owner") == "opp" else player
+        target = state["players"][owner]
+        kept = set(ctx.get("it", [])) if step.get("except_it") else set()
+        going = [c for c in target["zones"]["waiting"] if c["uid"] not in kept]
+        target["zones"]["waiting"] = [c for c in target["zones"]["waiting"] if c["uid"] in kept]
+        for card in going:
+            put(target, card, "deck")
+        add_log(state, owner, f"returned {len(going)} cards from their waiting room to their deck")
+    elif do == "stock_to_deck":
+        owner = opponent if step.get("owner") == "opp" else player
+        target = state["players"][owner]
+        ctx["stock_returned"] = len(target["zones"]["stock"])
+        for card in target["zones"]["stock"]:
+            put(target, card, "deck")
+        target["zones"]["stock"] = []
+        add_log(state, owner, f"returned {ctx['stock_returned']} cards from their stock to their deck")
+    elif do == "exchange":
+        first, second = (ctx.get("it_before") or [None])[0], (ctx.get("it") or [None])[0]
+        if first and second:
+            exchange_places(state, env, player, first, second)
+    elif do == "swap_stage":
+        cards = [locate(state, uid) for uid in ctx.get("it", [])]
+        if len(cards) == 2 and all(where in STAGE_SLOTS for _, _, where in cards) and cards[0][0] == cards[1][0]:
+            (owner, one, first), (_, two, second) = cards
+            target = state["players"][owner]
+            target["stage"][first], target["stage"][second] = two, one
+            swap_markers(target, first, second)
+            one["pos"] = two["pos"] = step.get("pos", "stand")
+            add_log(state, player, f"exchanged {env.name(one['card'])} and {env.name(two['card'])}, both {'resting' if step.get('pos') == 'rest' else 'standing'}")
+    elif do == "status":
+        uid = ctx.get(step["target"])
+        if uid and locate(state, uid)[1]:
+            note_target(res, locate(state, uid)[1])
+            state.setdefault("buffs", []).append({"uid": uid, "status": step["status"], "expires": state["turn_number"]})
+            add_log(state, player, f"{env.name(locate(state, uid)[1]['card'])} can't "
+                    + ("become reversed" if step["status"] == "no_reverse" else "be encored") + " this turn")
+    elif do == "all_mill":
+        ctx["milled"] = {}
+        for owner, target in state["players"].items():
+            if target["zones"]["deck"]:
+                card = target["zones"]["deck"].pop()
+                put(target, card, "waiting")
+                ctx["milled"][owner] = card["card"]
+                add_log(state, owner, f"put {env.name(card['card'])} from the top of their deck into their waiting room")
+    elif do == "which_deck":
+        ask_choice(res, "which_deck", "Whose deck?", [("opp", "Your opponent's deck"), ("me", "Your deck")], step=step)
+    elif do == "damage_choice":
+        ask_choice(res, "damage_choice", "How much damage?", [(n, f"{n} damage") for n in step["options"]])
+    elif do == "damage_times":
+        times = max(0, x_value(step.get("x"), state, player, None, ctx, env))
+        add_log(state, player, f"deals {step['n']} damage {times} time{'s' if times != 1 else ''}")
+        res["steps"][:0] = [{"do": "damage", "n": step["n"]}] * times
+    elif do == "reveal_top_cards":
+        cards = list(reversed(zones["deck"][-step["n"]:]))
+        ctx["flipped"] = [c["card"] for c in cards]
+        add_log(state, player, "revealed the top of their deck: " + (", ".join(env.name(c["card"]) for c in cards) or "nothing"))
+    elif do == "rest_choice":
+        left = among_them(state, {"among": ctx.get("among", []), "moved": ctx.get("moved", [])})
+        if left:
+            ask_choice(res, "rest_choice", "Where does the rest go?", [("waiting", "Waiting room"), ("deck", "Top of deck, in any order")],
+                       cards=[dict(c) for c in left], owner=ctx.get("among_owner", player))
+    elif do == "lowest_power":
+        cards = [card for card in (locate(state, uid)[1] for uid in ctx.get("among", [])) if card]
+        if cards:
+            stats = compute_stats(state, env)[0]
+            lowest = min(stats[c["uid"]]["power"] for c in cards)
+            tied = [c for c in cards if stats[c["uid"]]["power"] == lowest]
+            if len(tied) > 1:
+                ask_cards(res, tied, ctx.get("it_owner", player), 1, 1, "Which of the lowest power?")
+                res["prompt"]["zone"] = "among"
+            else:
+                ctx["it"] = [tied[0]["uid"]]
+    elif do == "any_order":
+        ask_choice(res, "any_order", "Which first?", [(i, o["text"]) for i, o in enumerate(step["options"])], step=step)
+    elif do == "memory_to_markers":
+        slot = slot_of(side, res["uid"])
+        if slot:
+            going = [c for c in zones["memory"] if fits(step["filter"], c, env)]
+            zones["memory"] = [c for c in zones["memory"] if c not in going]
+            for card in going:
+                put(side, card, MARKER + slot)
+            add_log(state, player, f"put {len(going)} card{'s' if len(going) != 1 else ''} from their memory under {LABELS[slot]} as markers")
+    elif do == "self_marker_on_it":
+        slot = slot_of(side, (ctx.get("it") or [None])[0]) if ctx.get("it") else None
+        if slot and locate(state, res["uid"])[0] == player:
+            card, _ = take(side, res["uid"])
+            put(side, card, MARKER + slot)
+            add_log(state, player, f"put {env.name(card['card'])} under {LABELS[slot]} as a marker")
     elif do == "self_to":
         owner, card, where = locate(state, res["uid"])
         if card:
@@ -2161,6 +2311,32 @@ def run_step(step, res, state, env):
             state["attack"]["check_pay"] = 1
     else:
         res["prompt"] = {"kind": "manual", "title": "Do this by hand", "text": res["text"]}
+
+
+def exchange_places(state, env, actor, first, second):
+    """Two cards of one player's swap places, each keeping its own state: a rested character stays
+    rested. One going from the stage to another zone loses its markers; between stage slots they
+    go with it. A card coming from a zone was never rested, so it arrives standing."""
+    owner, one, where_one = locate(state, first)
+    other, two, where_two = locate(state, second)
+    if not one or not two or owner != other:
+        return
+    side = state["players"][owner]
+    if where_one in STAGE_SLOTS and where_two in STAGE_SLOTS:
+        side["stage"][where_one], side["stage"][where_two] = two, one
+        swap_markers(side, where_one, where_two)
+        add_log(state, actor, f"exchanged {env.name(one['card'])} and {env.name(two['card'])}")
+        return
+    take(side, first)
+    take(side, second)
+    for card, to, leaving in ((one, where_two, where_one), (two, where_one, where_two)):
+        put(side, card, to)
+        if leaving in STAGE_SLOTS:
+            discard_markers(state, owner, leaving)
+            if to == "waiting":
+                fire(state, env, "leave", uid=card["uid"], source=card, source_owner=owner, slot=leaving)
+    add_log(state, actor, f"exchanged {env.name(one['card'])} and {env.name(two['card'])}"
+            if is_public(where_one, one) and is_public(where_two, two) else "exchanged two cards")
 
 
 def apply_buff(step, res, state, env):
@@ -2201,13 +2377,13 @@ def answer_ability(state, player, action, env):
     """The player's answer to the prompt of the ability being resolved."""
     res = state.get("resolving")
     prompt = (res or {}).get("prompt")
-    if not prompt or res["player"] != player:
+    if not prompt or prompt.get("player", res["player"]) != player:
         raise GameError("There's nothing for you to answer right now.")
     ctx = res["ctx"]
     kind = prompt["kind"]
     if kind == "manual":
         res["prompt"] = None
-        add_log(state, player, "finished a step by hand")
+        add_log(state, player, "passed over a step it can't do automatically" if action.get("passed") else "finished a step by hand")
     elif kind == "cards":
         uids = list(dict.fromkeys(action.get("uids") or []))
         if not set(uids) <= set(prompt["options"]) or not prompt["min"] <= len(uids) <= prompt["max"]:
@@ -2222,7 +2398,7 @@ def answer_ability(state, player, action, env):
                 put(side, card, "deck")
             add_log(state, player, f"put {len(taken)} cards back on top of the deck")
             return
-        ctx["it"] = uids
+        ctx["it_before"], ctx["it"] = ctx.get("it", []), uids
         if prompt.get("zone") in PUBLIC_CHOICES and not prompt.get("cost"):
             for uid in uids:
                 note_target(res, locate(state, uid)[1])
@@ -2245,6 +2421,16 @@ def answer_ability(state, player, action, env):
                 add_log(state, player, "chose not to")
         elif purpose == "options":
             res["steps"][:0] = step["options"][value]["steps"]
+        elif purpose == "any_order":
+            left = [o for i, o in enumerate(step["options"]) if i != value]
+            res["steps"][:0] = step["options"][value]["steps"] + (
+                [{"do": "any_order", "options": left}] if len(left) > 1 else left[0]["steps"] if left else [])
+        elif purpose == "which_deck":
+            res["steps"].insert(0, {"do": "top", "n": step["n"], "owner": value, "to": "waiting"})
+        elif purpose == "damage_choice":
+            res["steps"].insert(0, {"do": "damage", "n": value})
+        elif purpose == "rest_choice":
+            res["steps"].insert(0, {"do": "order_top"} if value == "deck" else {"do": "rest", "to": "waiting"})
         elif purpose == "number":
             res["steps"].insert(0, {**step, "n": value})
         elif purpose == "dest":
@@ -2260,7 +2446,10 @@ def answer_ability(state, player, action, env):
             for uid in ctx.get("it", []):
                 card, src = take(side, uid)
                 occupant = put(side, card, value)
-                card["pos"] = "rest" if prompt.get("rest") else "stand"
+                if src in STAGE_SLOTS:
+                    swap_markers(side, src, value)
+                if not prompt.get("keep_pos"):
+                    card["pos"] = "rest" if prompt.get("rest") else "stand"
                 if occupant:
                     put(side, occupant, "waiting")
                     discard_markers(state, player, value)
@@ -2372,10 +2561,12 @@ def ability_view(state, player):
                 "by": state["players"][shown["player"]]["name"], "prompt": None}
     res = state.get("resolving")
     if res:
-        mine = res["player"] == player
         prompt = res.get("prompt")
+        answering = (prompt or {}).get("player", res["player"])
+        mine = answering == player
         return {"resolving": True, "mine": mine, "card": res["card"], "uid": res["uid"], "text": res["text"],
-                "by": state["players"][res["player"]]["name"],
+                "by": state["players"][answering]["name"],
+                "can_stop": res["player"] == player,
                 "prompt": prompt_view(state, prompt) if prompt and mine else None}
     queue = state.get("ability_queue") or []
     if not queue:
@@ -2518,6 +2709,8 @@ def view(state, player):
         "ability_show": ({"id": state["ability_show"]["id"], "card": state["ability_show"]["card"], "targets": state["ability_show"]["targets"],
                           "mine": state["ability_show"]["player"] == player} if state.get("ability_show") else None),
         "needs_color": state.get("needs_color", {}).get(player, {}),
+        # Characters that can't be encored this turn.
+        "no_encore": [b["uid"] for b in state.get("buffs", []) if b.get("status") == "no_encore"],
         "stats": stats_view(state, player),
         # This player's cards with a ! button, and why each ability can't be activated right now.
         "acts": state.get("acts", {}).get(player, {}),

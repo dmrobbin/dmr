@@ -1,0 +1,13 @@
+<label class="small">Name <input type="text" name="name" value="{{ name }}" maxlength="100" required></label>
+<label class="small">Model
+  <select name="model">{% for value, label in models %}<option value="{{ value }}"{% if value == model %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+</label>
+<label class="small">Aggression
+  <select name="aggression">{% for value in aggressions %}<option value="{{ value }}"{% if value == aggression %} selected{% endif %}>{{ value }}</option>{% endfor %}</select>
+</label>
+<label class="small">Deck
+  <select name="deck">
+    <option value="">Choose a deck</option>
+    {% for deck in decks %}<option value="{{ deck.pk }}"{% if deck.pk == deck_id %} selected{% endif %}>{{ deck.name }} ({{ deck.total|default:0 }})</option>{% endfor %}
+  </select>
+</label>

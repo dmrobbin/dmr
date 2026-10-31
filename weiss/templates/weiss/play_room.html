@@ -1,7 +1,7 @@
 {% extends "core/dashboard_base.html" %}
 {% load static %}
 
-{% block title %}{% if opponent %}vs {{ opponent.username }}{% else %}New room{% endif %}{% endblock %}
+{% block title %}{% if opponent %}vs {{ opponent_name }}{% else %}New room{% endif %}{% endblock %}
 
 {% block head %}
   {# Metal Mania: the heavy-metal display face for the level-up announcement. Cinzel: Victory and Defeat. #}
@@ -13,14 +13,14 @@
 {% block content %}
   {% if room.status == "setup" %}
     <p class="back"><a href="{% url 'weiss:play_rooms' %}">← Your rooms</a></p>
-    <h1>{% if opponent %}You vs {{ opponent.username }}{% else %}New room{% endif %}</h1>
+    <h1>{% if opponent %}You vs {{ opponent_name }}{% else %}New room{% endif %}</h1>
 
     <section class="play-setup">
       {% if seat == "host" %}
         <div class="setup-step">
           <h2>1. Invite your opponent</h2>
           {% if room.guest %}
-            <p>{{ room.guest.username }} has joined.</p>
+            <p>{{ room.guest_name }} has joined.</p>
           {% else %}
             <p class="muted small">Send this link. The first person with Weiss access to open it takes the other seat.</p>
             <div class="panel-row">
@@ -51,7 +51,7 @@
         <h2>{% if seat == "host" %}3. {% endif %}Start</h2>
         <ul class="setup-status small">
           <li>{{ room.host.username }}: {% if room.host_deck %}ready{% else %}choosing a deck…{% endif %}</li>
-          <li>{% if room.guest %}{{ room.guest.username }}: {% if room.guest_deck %}ready{% else %}choosing a deck…{% endif %}{% else %}Waiting for an opponent…{% endif %}</li>
+          <li>{% if room.guest %}{{ room.guest_name }}: {% if room.guest_deck %}ready{% else %}choosing a deck…{% endif %}{% else %}Waiting for an opponent…{% endif %}</li>
         </ul>
         {% if seat == "host" %}
           <form method="post" action="{% url 'weiss:play_start' room.pk %}">
@@ -83,7 +83,7 @@
     <div id="play" class="play layout-focus"
          data-state-url="{% url 'weiss:play_state' room.pk %}"
          data-action-url="{% url 'weiss:play_action' room.pk %}"
-         data-csrf="{{ csrf_token }}">
+         data-csrf="{{ csrf_token }}"{% if room.vs_cpu %} data-poll-ms="700"{% endif %}>
       <div class="play-board" data-board><p class="muted">Loading the table…</p></div>
       <aside class="play-side">
         <div class="play-preview" data-preview><p class="muted small">Hover over a card to see it here.</p></div>

@@ -21,10 +21,12 @@ from django.views.decorators.http import require_POST
 
 from core.access import weiss_access_required
 
+from . import abilities
 from .models import Card, CardList, CardListEntry
 from .views import with_image_urls
 
 SESSION_KEY = "weiss_editing_list"
+EXPRESS_PROMPT = "weiss_express_prompt"  # a list just created, to offer express building for
 
 DECK_SIZE = 50
 COPY_LIMIT = 4  # copies of any one card name in a deck
@@ -92,7 +94,7 @@ def sorted_entries(card_list):
 
 def panel_context(request):
     """Everything the side panel and the per-card +/- controls need."""
-    lists = list(CardList.objects.filter(user=request.user).annotate(total=Sum("entries__quantity")))
+    lists = list(CardList.objects.filter(user=request.user, reserved_for_cpu=False).annotate(total=Sum("entries__quantity")))
     active = editing_list(request)
     entries = []
     if active:
@@ -101,7 +103,9 @@ def panel_context(request):
     count = sum(e.quantity for e in entries)
     total, unpriced = price_entries(entries)
     deck = deck_checks(entries) if active and active.is_deck else None
+    prompt_pk = request.session.get(EXPRESS_PROMPT)
     return {
+        "express_prompt": CardList.objects.filter(pk=prompt_pk, user=request.user).first() if prompt_pk else None,
         "card_lists": lists,
         "editing_list": active,
         "editing_entries": entries,
@@ -214,7 +218,7 @@ def attach_covers(lists):
 
 @weiss_access_required
 def list_index(request):
-    lists = CardList.objects.filter(user=request.user).annotate(total=Sum("entries__quantity"))
+    lists = CardList.objects.filter(user=request.user, reserved_for_cpu=False).annotate(total=Sum("entries__quantity"))
     return render(request, "weiss/list_index.html", {"lists": attach_covers(lists)})
 
 
@@ -239,12 +243,21 @@ def list_create(request):
     name = request.POST.get("name", "").strip()[:100]
     if not name:
         return respond(request, reverse("weiss:lists"), error="Give the list a name.")
-    if CardList.objects.filter(user=request.user).count() >= CardList.MAX_LISTS_PER_USER:
+    if CardList.objects.filter(user=request.user, reserved_for_cpu=False).count() >= CardList.MAX_LISTS_PER_USER:
         return respond(request, reverse("weiss:lists"),
                        error=f"You already have {CardList.MAX_LISTS_PER_USER} lists; delete one first.")
     card_list = CardList.objects.create(user=request.user, name=name)
     request.session[SESSION_KEY] = card_list.pk  # start adding to it straight away
+    request.session[EXPRESS_PROMPT] = card_list.pk  # and offer to build it automatically instead
     return respond(request, reverse("weiss:list", args=[card_list.pk]))
+
+
+@weiss_access_required
+@require_POST
+def list_express_skip(request):
+    """No thanks to the express building prompt: this list gets built by hand."""
+    request.session.pop(EXPRESS_PROMPT, None)
+    return respond(request, reverse("weiss:lists"))
 
 
 @weiss_access_required
@@ -273,6 +286,10 @@ def list_change(request, pk):
     except ValueError:
         delta = 1
     fallback = reverse("weiss:list", args=[card_list.pk])
+    if card_list.reserved_for_cpu and delta > 0 and abilities.by_hand_parts(card.description):
+        current = CardListEntry.objects.filter(card_list=card_list, card=card).values_list("quantity", flat=True)
+        return respond(request, fallback, error=f"A CPU can't play {card.name}: part of it has to be done by hand.",
+                       card=card.pk, quantity=next(iter(current), 0))
     try:
         quantity = change_quantity(card_list, card, delta)
     except ListError as exc:
@@ -326,5 +343,6 @@ def list_delete(request, pk):
     if request.session.get(SESSION_KEY) == card_list.pk:
         request.session.pop(SESSION_KEY)
     messages.success(request, f"Deleted “{card_list.name}”.")
+    reserved = card_list.reserved_for_cpu
     card_list.delete()
-    return redirect("weiss:lists")
+    return redirect("weiss:cpu_home" if reserved else "weiss:lists")

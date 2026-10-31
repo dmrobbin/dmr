@@ -3,9 +3,9 @@
 {% block title %}{{ card_list.name }}{% endblock %}
 
 {% block weiss_content %}
-  <p class="back"><a href="{% url 'weiss:lists' %}">← All lists</a></p>
+  <p class="back">{% if card_list.reserved_for_cpu %}<a href="{% url 'weiss:cpu_home' %}">← CPU creation</a>{% else %}<a href="{% url 'weiss:lists' %}">← All lists</a>{% endif %}</p>
   <h1>{{ card_list.name }}</h1>
-  {% if card_list.wins %}<p class="deck-stars" title="{{ card_list.wins }} win{{ card_list.wins|pluralize }}" aria-label="{{ card_list.wins }} win{{ card_list.wins|pluralize }}">{{ card_list.win_stars }}</p>{% endif %}
+  {% include "weiss/deck_wins.html" with deck=card_list %}
   <p class="lead-meta">
     {% if not deck %}{{ count }} / {{ max_cards }} cards{% endif %}
     {% if value %}{% if not deck %} · {% endif %}~${{ value|floatformat:2 }} approx. TCGplayer market value{% if unpriced %} ({{ unpriced }} card{{ unpriced|pluralize }} without a price){% endif %}{% endif %}
@@ -15,6 +15,8 @@
   <div data-deck-checks="{{ card_list.pk }}">{% if deck %}{% include "weiss/deck_checks.html" %}{% endif %}</div>
 
   <div class="list-actions">
+    {% if deck and not entries %}<a class="button-small" href="{% url 'weiss:list_express' card_list.pk %}">Express build</a>{% endif %}
+    {% if card_list.express %}<a class="button-small secondary" href="{% url 'weiss:list_express_review' card_list.pk %}">Review and replace cards</a>{% endif %}
     {# A plain post: start (or keep) editing this list, then go browse the sets. #}
     <form method="post" action="{% url 'weiss:list_edit' card_list.pk %}">
       {% csrf_token %}<input type="hidden" name="next" value="{% url 'weiss:sets' %}">

@@ -1,0 +1,80 @@
+{% extends "weiss/base.html" %}
+
+{% block title %}CPU creation{% endblock %}
+
+{% block weiss_content %}
+  <h1>CPU creation</h1>
+
+  <section class="cpu-section">
+    <h2>Reserved decks</h2>
+    <p class="muted small">Built like any deck, but kept for CPUs: they don't appear in anyone's lists or deck choices.</p>
+    <form method="post" action="{% url 'weiss:cpu_deck_create' %}" class="panel-row cpu-form">
+      {% csrf_token %}
+      <input type="text" name="name" maxlength="100" placeholder="e.g. NIKKE red CPU deck" aria-label="Deck name" required>
+      <button type="submit" class="button-small">Create deck</button>
+    </form>
+    {% if decks %}
+      <ul class="cpu-list">
+        {% for deck in decks %}
+          <li>
+            {% if deck.user == user %}<a href="{% url 'weiss:list' deck.pk %}">{{ deck.name }}</a>{% else %}<span>{{ deck.name }}</span>{% endif %}
+            <span class="muted small">{{ deck.total|default:0 }} / 50 cards · by {{ deck.user.username }}</span>
+            {% if deck.wins %}<span class="deck-stars" title="{{ deck.wins }} win{{ deck.wins|pluralize }}">{{ deck.win_stars }}</span>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty">No reserved decks yet.</p>
+    {% endif %}
+  </section>
+
+  <section class="cpu-section">
+    <details>
+      <summary>{{ excluded|length }} card{{ excluded|length|pluralize }} a CPU can't play</summary>
+      <p class="muted small">Part of each of these has to be done by hand, so they're left out of CPU decks. So are anchors that name one of them.</p>
+      <ul class="cpu-excluded">
+        {% for card in excluded %}
+          <li><strong>{{ card.name }}</strong> <span class="muted small">{{ card.serial }}</span>
+            {% for part in card.parts %}<br><span class="small">{{ part }}</span>{% endfor %}</li>
+        {% endfor %}
+      </ul>
+    </details>
+  </section>
+
+  <section class="cpu-section">
+    <h2>CPU profiles</h2>
+    <p class="muted small">Aggression 1 is the standard behaviour. Higher values chase enemy characters harder and protect their own less.</p>
+    {% for profile in profiles %}
+      <div class="cpu-profile">
+        <form method="post" action="{% url 'weiss:cpu_profile_update' profile.pk %}" class="cpu-form">
+          {% csrf_token %}
+          {% include "weiss/cpu_fields.html" with name=profile.name model=profile.model aggression=profile.aggression deck_id=profile.deck_id %}
+          <button type="submit" class="button-small secondary">Save</button>
+        </form>
+        <div class="cpu-form">
+          {% if profile.finalized %}
+            <span class="deck-tag">Available to players</span>
+            {% if profile.problem %}<span class="small panel-error">{{ profile.problem }}</span>{% endif %}
+            <form method="post" action="{% url 'weiss:cpu_profile_finalize' profile.pk %}">{% csrf_token %}
+              <button type="submit" class="button-small secondary">Take back</button></form>
+          {% else %}
+            <span class="muted small">{% if profile.problem %}{{ profile.problem }}{% else %}Ready to finalize.{% endif %}</span>
+            <form method="post" action="{% url 'weiss:cpu_profile_finalize' profile.pk %}">{% csrf_token %}
+              <input type="hidden" name="finalized" value="on">
+              <button type="submit" class="button-small"{% if profile.problem %} disabled{% endif %}>Finalize</button></form>
+          {% endif %}
+          <form method="post" action="{% url 'weiss:cpu_profile_delete' profile.pk %}" onsubmit="return confirm('Delete {{ profile.name|escapejs }}?')">{% csrf_token %}
+            <button type="submit" class="button-small danger">Delete</button></form>
+        </div>
+      </div>
+    {% empty %}
+      <p class="empty">No CPU profiles yet.</p>
+    {% endfor %}
+    <h3>New profile</h3>
+    <form method="post" action="{% url 'weiss:cpu_profile_create' %}" class="cpu-form">
+      {% csrf_token %}
+      {% include "weiss/cpu_fields.html" with name="" model="standard" aggression=1 deck_id=None %}
+      <button type="submit" class="button-small">Create profile</button>
+    </form>
+  </section>
+{% endblock %}

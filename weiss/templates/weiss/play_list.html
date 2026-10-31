@@ -9,13 +9,32 @@
     <button type="submit" class="button-small">New room</button>
     <span class="muted small">You'll get a link to send to your opponent.</span>
   </form>
+  <section class="vs-cpu">
+    <h2>VS CPU</h2>
+    {% if not cpus %}
+      <p class="muted small">No CPU opponents are available yet.</p>
+    {% elif not decks %}
+      <p class="muted small">You need a deck to play with first. <a href="{% url 'weiss:lists' %}">Make one in your lists.</a></p>
+    {% else %}
+      <form method="post" action="{% url 'weiss:play_vs_cpu' %}" class="cpu-form">
+        {% csrf_token %}
+        <label class="small">Opponent
+          <select name="cpu">{% for cpu in cpus %}<option value="{{ cpu.pk }}">{{ cpu.name }} (aggression {{ cpu.aggression }})</option>{% endfor %}</select>
+        </label>
+        <label class="small">Your deck
+          <select name="deck">{% for deck in decks %}<option value="{{ deck.pk }}">{{ deck.name }}</option>{% endfor %}</select>
+        </label>
+        <button type="submit" class="button-small">Challenge</button>
+      </form>
+    {% endif %}
+  </section>
   {% if rooms %}
     <ul class="set-list">
       {% for room in rooms %}
         <li>
           <a href="{% url 'weiss:play_room' room.pk %}">
             <span class="set-name">
-              {% if room.host == user %}You vs {{ room.guest.username|default:"(waiting for opponent)" }}{% else %}{{ room.host.username }} vs you{% endif %}
+              {% if room.host == user %}You vs {{ room.guest_name|default:"(waiting for opponent)" }}{% else %}{{ room.host.username }} vs you{% endif %}
             </span>
             <span class="muted">{{ room.get_status_display }} · updated {{ room.updated|timesince }} ago</span>
           </a>

@@ -1,0 +1,24 @@
+{% extends "weiss/base.html" %}
+
+{% block title %}Express build: {{ card_list.name }}{% endblock %}
+
+{% block weiss_content %}
+  <p class="back"><a href="{% url 'weiss:list' card_list.pk %}">← {{ card_list.name }}</a></p>
+  <h1>Express build</h1>
+  <p class="lead-meta">Step 1 of 2: choose a series.</p>
+  {% if series %}
+    <ul class="set-grid">
+      {% for choice in series %}
+        <li>
+          <a href="{% url 'weiss:list_express' card_list.pk %}?series={{ choice.code|urlencode }}">
+            {% if choice.cover.image_src %}<img src="{{ choice.cover.image_src }}" alt="" loading="lazy">{% else %}<span class="set-cover-missing" aria-hidden="true"></span>{% endif %}
+            <span class="set-name">{{ choice.name }}</span>
+            <span class="muted">{{ choice.code }} · {{ choice.anchors }} cx combo card{{ choice.anchors|pluralize }}</span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty">No saved series has cx combo cards to build around yet.</p>
+  {% endif %}
+{% endblock %}

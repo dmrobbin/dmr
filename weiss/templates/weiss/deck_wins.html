@@ -1,0 +1,7 @@
+{# A deck's wins: stars against human players, robots against CPUs. #}
+{% if deck.wins or deck.cpu_wins %}
+  <span class="deck-wins">
+    {% if deck.wins %}<span class="deck-stars" title="{{ deck.wins }} win{{ deck.wins|pluralize }} against players" aria-label="{{ deck.wins }} win{{ deck.wins|pluralize }} against players">{{ deck.win_stars }}</span>{% endif %}
+    {% if deck.cpu_wins %}<span class="deck-stars deck-cpu-wins" title="{{ deck.cpu_wins }} win{{ deck.cpu_wins|pluralize }} against CPUs" aria-label="{{ deck.cpu_wins }} win{{ deck.cpu_wins|pluralize }} against CPUs">{{ deck.cpu_win_icons }}</span>{% endif %}
+  </span>
+{% endif %}

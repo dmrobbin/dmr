@@ -226,6 +226,7 @@ a { color: inherit; }
   white-space: nowrap;
 }
 .button-small:hover { background: var(--accent-hover); }
+.button-small:disabled { opacity: .45; cursor: not-allowed; }
 .button-small.secondary { color: var(--text); background: none; border: 1px solid var(--border); }
 .button-small.secondary:hover { border-color: var(--muted); }
 .lead-files, .lead-summary { margin-bottom: 2.5rem; }
@@ -462,6 +463,40 @@ a { color: inherit; }
 .card-list-controls { display: flex; align-items: center; gap: .75rem; margin: 0 0 1.5rem; }
 .list-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin: 0 0 2rem; }
 .list-actions form { margin: 0; }
+/* The CPU creation tab, and the VS CPU option under Play. */
+.cpu-section, .vs-cpu { margin-bottom: 2rem; }
+.cpu-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem; margin: .5rem 0; }
+.cpu-form form { margin: 0; }
+.cpu-form label { display: grid; gap: .2rem; }
+.cpu-list { list-style: none; margin: .75rem 0; padding: 0; display: grid; gap: .4rem; }
+.cpu-list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: .6rem; }
+.cpu-excluded { margin: .5rem 0 0; padding-left: 1.1rem; display: grid; gap: .5rem; }
+.cpu-profile { margin: .75rem 0; padding: .6rem .8rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--surface); }
+/* Express deck building: the prompt on creating a list, and tiles of cards to tick. */
+.express-prompt { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 1rem; background: rgb(0 0 0 / .6); }
+.express-prompt-box { width: min(30rem, 100%); padding: 1.25rem; border: 1px solid var(--accent); border-radius: .75rem; background: var(--surface); box-shadow: 0 12px 40px rgb(0 0 0 / .7); }
+.express-prompt-box h2 { margin: 0 0 .5rem; }
+.express-prompt-box .list-actions { margin: 1rem 0 0; }
+.express-bar { position: sticky; top: 0; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin: 1rem 0; padding: .6rem .75rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--surface); }
+.express-mode { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin: 0; padding: 0; border: 0; }
+.express-mode legend { float: left; margin-right: .25rem; padding: 0; }
+.express-mode label { display: inline-flex; align-items: center; gap: .3rem; cursor: pointer; }
+.express-grid { gap: .85rem; }
+.express-review { grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); }
+.express-tile { position: relative; display: block; border-radius: .55rem; outline: 3px solid transparent; outline-offset: 1px; cursor: pointer; }
+.express-tile:hover { outline-color: var(--border); }
+/* Selected: a border, and a glow, in the card's own color. */
+.express-tile:has(input:checked) { outline: 4px solid var(--chip, var(--accent)); box-shadow: 0 0 14px var(--chip, var(--accent)); }
+.express-tile:has(input:focus-visible) { outline-color: var(--text); }
+.express-tile:has(input:checked:focus-visible) { outline-color: var(--chip, var(--accent)); box-shadow: 0 0 0 7px var(--text); }
+.express-tile:has(input:disabled) { cursor: not-allowed; opacity: .45; }
+.express-tile.locked { cursor: default; }
+.express-tile input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: inherit; }
+.express-roles { position: absolute; right: .3rem; bottom: .3rem; display: flex; gap: .2rem; }
+.express-role { display: grid; place-items: center; min-width: 1.3rem; height: 1.3rem; font-size: .72rem; font-weight: 800; color: #fff; border-radius: .3rem; box-shadow: 0 1px 4px rgb(0 0 0 / .6); }
+.role-damage { background: #b23a3a; }
+.role-utility { background: #2f5fa8; }
+.role-locked { background: #2b2f3a; }
 .button-small.danger { background: none; color: #e07a76; border: 1px solid #c0504d; cursor: pointer; font: inherit; font-size: .85rem; font-weight: 600; }
 .button-small.danger:hover { background: rgb(192 80 77 / .15); }
 button.button-small { border: none; cursor: pointer; font: inherit; font-size: .85rem; font-weight: 600; }
@@ -931,7 +966,9 @@ button .cx, .phase-bar button.current .cx { filter: drop-shadow(0 0 2px rgb(0 0 
 .rps-won { color: #9ff5b4; }
 .rps-beaten { color: #ffb4b0; }
 /* Wins: on a deck, and in this series of rematches either side of the turn counter. */
+.deck-wins { display: flex; flex-wrap: wrap; gap: .1rem .6rem; margin: 0 0 .25rem; }
 .deck-stars { display: block; margin: 0; color: #f5c542; letter-spacing: .1em; }
+.deck-cpu-wins { letter-spacing: 0; }
 .table-turn { display: inline-block; }
 .match-stars { min-height: 1em; font-size: 1.05rem; line-height: 1; letter-spacing: .1em; color: #f5c542; text-shadow: 0 0 8px rgb(245 197 66 / .6); }
 .match-stars-left { text-align: right; }

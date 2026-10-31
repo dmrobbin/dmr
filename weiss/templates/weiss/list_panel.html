@@ -1,6 +1,21 @@
 {# Side panel on every Weiss page; re-rendered and swapped in by lists.js after each change. #}
 {% with next=panel_next|default:request.get_full_path %}
 <h2>Card lists</h2>
+{% if express_prompt %}
+  <div class="express-prompt" role="dialog" aria-label="Express build" data-express-prompt>
+    <div class="express-prompt-box">
+      <h2>Express build “{{ express_prompt.name }}”?</h2>
+      <p>Choose a series and 2 anchor cards, and a full deck is built around them for you to review. Or add the cards yourself.</p>
+      <div class="list-actions">
+        <a class="button-small" href="{% url 'weiss:list_express' express_prompt.pk %}">Express build</a>
+        <form method="post" action="{% url 'weiss:list_express_skip' %}" data-list-form="reload">
+          {% csrf_token %}<input type="hidden" name="next" value="{{ next }}">
+          <button type="submit" class="button-small secondary">Build it myself</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endif %}
 {% if panel_error %}<p class="panel-error" role="alert">{{ panel_error }}</p>{% endif %}
 
 {% if editing_list %}

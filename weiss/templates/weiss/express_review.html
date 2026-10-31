@@ -1,0 +1,43 @@
+{% extends "weiss/base.html" %}
+
+{% block title %}Review: {{ card_list.name }}{% endblock %}
+
+{% block weiss_content %}
+  <h1>Review {{ card_list.name }}</h1>
+  <p class="lead-meta">
+    Select any cards you want swapped.
+    Damage {{ roles.damage }} · Utility {{ roles.utility }}{% if roles.both %} ({{ roles.both }} count as both){% endif %}{% if roles.neither %} · {{ roles.neither }} neither{% endif %}.
+  </p>
+  {% include "weiss/deck_checks.html" %}
+  <form method="post" action="{% url 'weiss:list_express_replace' card_list.pk %}">
+    {% csrf_token %}<input type="hidden" name="next" value="{% if card_list.reserved_for_cpu %}{% url 'weiss:cpu_home' %}{% else %}{% url 'weiss:lists' %}{% endif %}">
+    <div class="express-bar">
+      <fieldset class="express-mode">
+        <legend class="small muted">Replacements lean towards</legend>
+        <label><input type="radio" name="mode" value="balanced"{% if mode == "balanced" %} checked{% endif %}> Balanced</label>
+        <label><input type="radio" name="mode" value="damage"{% if mode == "damage" %} checked{% endif %}> More damage</label>
+        <label><input type="radio" name="mode" value="utility"{% if mode == "utility" %} checked{% endif %}> More utility</label>
+      </fieldset>
+      <button type="submit" class="button-small">Replace selected</button>
+      {# Counts as "Done editing", then on to the lists. #}
+      <button type="submit" class="button-small secondary" formaction="{% url 'weiss:list_stop_editing' %}">Looks good, I'm done</button>
+    </div>
+    <ul class="card-grid express-grid express-review">
+      {% for tile in tiles %}
+        <li>
+          <label class="express-tile color-{{ tile.card.color|lower }}{% if tile.locked %} locked{% endif %}" title="{{ tile.card.name }}{% if tile.locked %}: required by your anchors, so one copy stays{% endif %}">
+            {% if not tile.locked %}<input type="checkbox" name="replace" value="{{ tile.card.pk }}" aria-label="Replace a copy of {{ tile.card.name }}">{% endif %}
+            {% if tile.card.image_src %}<img src="{{ tile.card.image_src }}" alt="{{ tile.card.name }}" loading="lazy">{% endif %}
+            <span class="express-roles">
+              {% if tile.locked %}<span class="express-role role-locked" title="Required by your anchors">🔒</span>{% endif %}
+              {% if tile.card.damage %}<span class="express-role role-damage" title="Damage">D</span>{% endif %}
+              {% if tile.card.utility %}<span class="express-role role-utility" title="Utility">U</span>{% endif %}
+            </span>
+          </label>
+          {% url 'weiss:card_popup' tile.card.pk as popup_url %}
+          <a href="{% url 'weiss:card' tile.card.pk %}" data-card-popup="{{ popup_url }}" class="card-name small">{{ tile.card.name }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  </form>
+{% endblock %}

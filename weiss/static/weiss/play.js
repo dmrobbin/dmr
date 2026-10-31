@@ -8,7 +8,7 @@
   const STATE_URL = root.dataset.stateUrl;
   const ACTION_URL = root.dataset.actionUrl;
   const CSRF = root.dataset.csrf;
-  const POLL_MS = 1500;
+  const POLL_MS = Number(root.dataset.pollMs) || 1500; // quicker against a CPU: polling is what moves it
 
   const $ = (sel) => root.querySelector(sel);
   const boardEl = $("[data-board]");
@@ -747,7 +747,7 @@
   // go on until each reversed character on the table has had one.
   function encoreChoiceHtml(card) {
     if (board.phase !== "encore" || card.pos !== "reverse") return "";
-    const encore = canEncore()
+    const encore = canEncore() && !(board.no_encore || []).includes(card.uid)
       ? `<button type="button" data-act='${esc(JSON.stringify({ type: "encore", uid: card.uid }))}' title="Pay ${ENCORE_COST} stock, stay rested">Encore</button>`
       : `<button type="button" disabled title="Encore needs ${ENCORE_COST} stock">Encore</button>`;
     return `<div class="encore-choice" role="group" aria-label="Encore or waiting room">
@@ -1221,7 +1221,8 @@
     const info = cards[ability.card];
     const options = new Set(prompt.options && prompt.kind === "cards" ? prompt.options : []);
     abilityPicks = abilityPicks.filter((uid) => options.has(uid));
-    const stopButton = '<button type="button" class="button-cancel" data-act=\'{"type":"ability_stop"}\' title="Leave the rest of this ability undone">Stop</button>';
+    // The other player's ability can't be stopped from here, though it may be asking us to choose.
+    const stopButton = ability.can_stop ? '<button type="button" class="button-cancel" data-act=\'{"type":"ability_stop"}\' title="Leave the rest of this ability undone">Stop</button>' : "";
     const label = (card) => (card.where && LABELS[card.where] ? `<span class="muted small">${esc(LABELS[card.where])}</span>` : "");
     let body;
     if (prompt.kind === "cards") {

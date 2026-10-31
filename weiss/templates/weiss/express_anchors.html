@@ -1,0 +1,46 @@
+{% extends "weiss/base.html" %}
+
+{% block title %}Express build: {{ card_list.name }}{% endblock %}
+
+{% block weiss_content %}
+  <p class="back"><a href="{% url 'weiss:list_express' card_list.pk %}">← Choose another series</a></p>
+  <h1>Express build: {{ code }}</h1>
+  <p class="lead-meta">Step 2 of 2: choose {{ needed }} anchor card{{ needed|pluralize }}. The deck is built around them, with 4 copies of each and any card they name.</p>
+  <form method="post" data-express-anchors data-max="{{ needed }}">
+    {% csrf_token %}<input type="hidden" name="series" value="{{ code }}">
+    <div class="express-bar">
+      <button type="submit" class="button-small" data-express-build disabled>Build my deck</button>
+      <span class="muted small" data-express-count aria-live="polite">0 of {{ needed }} chosen</span>
+    </div>
+    <ul class="card-grid express-grid">
+      {% for card in choices %}
+        <li>
+          <label class="express-tile color-{{ card.color|lower }}">
+            <input type="checkbox" name="anchor" value="{{ card.pk }}">
+            {% if card.image_src %}<img src="{{ card.image_src }}" alt="{{ card.name }}" loading="lazy">{% endif %}
+          </label>
+          {% url 'weiss:card_popup' card.pk as popup_url %}
+          <a href="{% url 'weiss:card' card.pk %}" data-card-popup="{{ popup_url }}" class="card-name">{{ card.name }}</a>
+          <span class="muted small">{{ card.color }} · {{ card.card_type }}{% if card.level is not None %} · Level {{ card.level }}{% endif %}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  </form>
+{% endblock %}
+
+{% block weiss_scripts %}
+  <script>
+    // Hold the choice to the number needed (the server checks too), and show how many are chosen.
+    (() => {
+      const form = document.querySelector("[data-express-anchors]");
+      const max = Number(form.dataset.max);
+      const boxes = [...form.querySelectorAll('input[name="anchor"]')];
+      form.addEventListener("change", () => {
+        const count = boxes.filter((box) => box.checked).length;
+        boxes.forEach((box) => { box.disabled = !box.checked && count >= max; });
+        form.querySelector("[data-express-count]").textContent = `${count} of ${max} chosen`;
+        form.querySelector("[data-express-build]").disabled = count !== max;
+      });
+    })();
+  </script>
+{% endblock %}

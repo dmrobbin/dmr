@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import lists, play, views
+from . import cpu_views, express, lists, play, views
 
 app_name = "weiss"
 
@@ -13,6 +13,13 @@ urlpatterns = [
     path("cards/<int:pk>/image/",views.card_image, name="card_image"),
     path("play/", play.room_list, name="play_rooms"),
     path("play/new/", play.room_create, name="play_create"),
+    path("play/cpu/", play.room_vs_cpu, name="play_vs_cpu"),
+    path("cpu/", cpu_views.cpu_home, name="cpu_home"),
+    path("cpu/decks/new/", cpu_views.cpu_deck_create, name="cpu_deck_create"),
+    path("cpu/profiles/new/", cpu_views.cpu_profile_create, name="cpu_profile_create"),
+    path("cpu/profiles/<int:pk>/", cpu_views.cpu_profile_update, name="cpu_profile_update"),
+    path("cpu/profiles/<int:pk>/finalize/", cpu_views.cpu_profile_finalize, name="cpu_profile_finalize"),
+    path("cpu/profiles/<int:pk>/delete/", cpu_views.cpu_profile_delete, name="cpu_profile_delete"),
     path("play/join/<str:token>/", play.room_join, name="play_join"),
     path("play/<int:pk>/", play.room_detail, name="play_room"),
     path("play/<int:pk>/deck/", play.room_deck, name="play_deck"),
@@ -24,8 +31,12 @@ urlpatterns = [
     path("lists/", lists.list_index, name="lists"),
     path("lists/new/", lists.list_create, name="list_create"),
     path("lists/stop-editing/", lists.list_stop_editing, name="list_stop_editing"),
+    path("lists/express-skip/", lists.list_express_skip, name="list_express_skip"),
     path("lists/<int:pk>/", lists.list_detail, name="list"),
     path("lists/<int:pk>/edit/", lists.list_edit, name="list_edit"),
+    path("lists/<int:pk>/express/", express.express_start, name="list_express"),
+    path("lists/<int:pk>/express/review/", express.express_review, name="list_express_review"),
+    path("lists/<int:pk>/express/replace/", express.express_replace, name="list_express_replace"),
     path("lists/<int:pk>/cards/", lists.list_change, name="list_change"),
     path("lists/<int:pk>/cover/", lists.list_cover, name="list_cover"),
     path("lists/<int:pk>/deck/",lists.list_deck, name="list_deck"),
