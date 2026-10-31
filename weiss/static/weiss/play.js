@@ -66,6 +66,7 @@
   let climaxTimer = null; // pending move to the attack phase after we play a climax
   let autoTimer = null; // pending move to the next phase after one ended itself (board.auto_next)
   const mulliganPicks = new Set(); // hand cards picked to mulligan away
+  const discardPicks = new Set(); // hand cards picked for the end phase's discard
 
   // Board view: "focus" (big stage, piles around it) or "classic" (three even rows). Remembered
   // per browser; storage can be unavailable (private windows), so it falls back to focus.
@@ -325,6 +326,12 @@
       case "move_top": fromZone(action.from, action.to, action.count || 1); break;
       case "move_all": fromZone(action.from, action.to, Math.min(pileCards(board.me, action.from).length, 6), faceOf(topCardEl(action.from))); break;
       case "attack": fromZone("deck", board.rules ? "stock" : "resolution"); break;
+      case "discard":
+        for (const uid of action.uids) {
+          const el = root.querySelector(`.hand-me .pcard[data-uid="${uid}"]`);
+          if (el) fly(layoutBox(el), "waiting", faceOf(el), 1, FLIGHT_MS, el);
+        }
+        break;
       case "mulligan":
         for (const uid of action.uids) {
           const el = root.querySelector(`.hand-me .pcard[data-uid="${uid}"]`);
@@ -872,6 +879,8 @@
     renderAttackPanel();
     const note = controlsEl.querySelector(".phase-note");
     note.textContent = board.reveal && board.reveal.mine ? `Waiting for ${board.opponent ? board.opponent.name : "your opponent"} to close the card you revealed.`
+      : board.discard ? (board.discard.mine ? `End phase: discard ${board.discard.count} to get down to 7.`
+        : `Waiting for ${board.opponent ? board.opponent.name : "your opponent"} to discard down to 7…`)
       : board.mulligan ? (board.mulligan.me ? `Waiting for ${board.opponent ? board.opponent.name : "your opponent"} to finish their mulligan…` : "Mulligan: choose cards to swap.")
       : !board.rules ? "Turn rules are off: anything goes."
       : board.attack ? ""
@@ -952,6 +961,7 @@
     if (board.reveal && board.reveal.card) return renderReveal();
     if (modal && modal.confirmClimax) return renderClimaxConfirm();
     if (board.mulligan && !board.mulligan.me) return renderMulligan();
+    if (board.discard && board.discard.mine) return renderDiscard();
     if (board.level_up_pending) return renderLevelUp();
     if (board.my_turn && board.attack && board.attack.step === "trigger" && board.attack.prompt) return renderTriggerPrompt();
     if (!modal) {
@@ -1007,6 +1017,22 @@
         <button type="button" data-act='${esc(JSON.stringify({ type: "move", uid: card.uid, to: "climax", end_main: true }))}'>Play it</button>
         <button type="button" class="button-cancel" data-close>Cancel</button>
       </div>
+    </div>`;
+  }
+
+  // The end phase's discard: pick exactly enough cards to bring the hand down to 7.
+  function renderDiscard() {
+    const hand = board.me.zones.hand;
+    const need = board.discard.count;
+    for (const uid of [...discardPicks]) if (!hand.some((c) => c.uid === uid)) discardPicks.delete(uid);
+    const picked = discardPicks.size;
+    modalEl.hidden = false;
+    modalEl.innerHTML = `<div class="play-modal-box" role="dialog" aria-label="Discard">
+      <div class="play-modal-head"><h2>Discard ${need} card${need === 1 ? "" : "s"}</h2></div>
+      <p class="muted small">Your hand is over 7 at the end of your turn. Choose ${need} card${need === 1 ? "" : "s"} for your waiting room (${picked} of ${need} chosen).</p>
+      <div class="play-modal-cards">${hand.map((c) => `<div class="level-pick${discardPicks.has(c.uid) ? " picked" : ""}" role="button"
+        tabindex="0" aria-pressed="${discardPicks.has(c.uid)}" data-discard-pick="${esc(c.uid)}">${cardHtml(c, "me", "discard")}</div>`).join("")}</div>
+      <div class="trigger-buttons"><button type="button" data-discard-submit${picked === need ? "" : " disabled"}>Discard ${picked === need ? "them" : `${need}`}</button></div>
     </div>`;
   }
 
@@ -1154,6 +1180,7 @@
 
   function showMenu(x, y, title, items) {
     hoverZone = null;
+    menuEl.classList.remove("see-through");
     menuEl.innerHTML = `<p class="play-menu-title">${esc(title)}</p>` + items.map((item) => item === "-"
       ? "<hr>"
       : `<button type="button" data-menu-item='${esc(JSON.stringify(item.action || {}))}' ${item.prompt ? `data-prompt="${esc(item.prompt)}"` : ""} ${item.view ? `data-view='${esc(JSON.stringify(item.view))}'` : ""}>${esc(item.label)}</button>`).join("");
@@ -1187,6 +1214,7 @@
     const [title, items] = zone === "deck" ? pileMenu("deck", "me") : cardMenu(card);
     const box = zoneEl.getBoundingClientRect();
     showMenu(box.right + 6, box.top, title, items);
+    menuEl.classList.toggle("see-through", zone !== "deck"); // over the stage: let the board show through
     const width = menuEl.getBoundingClientRect().width;
     if (box.right + 6 + width > window.innerWidth - 8) { // no room on the right: open to the left
       menuEl.style.left = `${Math.max(8, box.left - 6 - width)}px`;
@@ -1336,6 +1364,20 @@
       const uid = mulliganPick.dataset.mulliganPick;
       if (mulliganPicks.has(uid)) mulliganPicks.delete(uid); else mulliganPicks.add(uid);
       renderModal();
+      return;
+    }
+    const discardPick = event.target.closest("[data-discard-pick]");
+    if (discardPick) {
+      const uid = discardPick.dataset.discardPick;
+      if (discardPicks.has(uid)) discardPicks.delete(uid);
+      else if (discardPicks.size < board.discard.count) discardPicks.add(uid);
+      renderModal();
+      return;
+    }
+    if (event.target.closest("[data-discard-submit]")) {
+      const uids = [...discardPicks];
+      discardPicks.clear();
+      act({ type: "discard", uids });
       return;
     }
     if (event.target.closest("[data-mulligan-submit]")) {

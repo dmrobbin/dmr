@@ -530,6 +530,19 @@ class PhaseTests(TestCase):
         self.phase("attack")
         self.assertFalse(game.view(self.state, 1)["climax_pending"])
 
+    def test_the_end_phase_waits_for_a_hand_over_seven_to_be_discarded(self):
+        game.apply(self.state, 1, {"type": "move_top", "from": "deck", "to": "hand", "count": 3})  # 8 cards
+        self.phase("end")  # passes the draw phase too: 9 cards
+        self.assertEqual((self.state["phase"], self.state["turn"]), ("end", "1"))
+        self.assertEqual(game.view(self.state, 1)["discard"], {"count": 2, "mine": True})
+        self.assertEqual(game.view(self.state, 2)["discard"], {"count": 2, "mine": False})
+        hand = zones(self.state, 1)["hand"]
+        with self.assertRaises(game.GameError):  # exactly 2
+            game.apply(self.state, 1, {"type": "discard", "uids": [hand[0]["uid"]]})
+        game.apply(self.state, 1, {"type": "discard", "uids": [hand[0]["uid"], hand[1]["uid"]]})
+        self.assertEqual(len(zones(self.state, 1)["hand"]), 7)
+        self.assertEqual((self.state["turn"], self.state["phase"]), ("2", "stand"))
+
     def test_a_climax_played_from_the_main_phase_ends_it(self):
         self.phase("main")
         uid = zones(self.state, 1)["hand"][0]["uid"]

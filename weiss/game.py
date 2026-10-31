@@ -10,6 +10,7 @@ State is plain JSON, stored on the GameRoom:
      "order": [host id, guest id], "turn": "<user id>", "turn_number": 1, "phase": "mulligan", "log": [...],
      "mulligan_done": [user id, ...],  # during the mulligan: who has finished theirs
      "reveal": {"player": id, "uid": ..., "card": pk},  # a hand card shown to the opponent, until they close it
+     "pending_discard": {"player": id, "count": n},  # the end phase waits for a hand over 7 to be discarded
      "pending_damage": {...},  # only while a cancelled damage waits to be cleaned up
      "pending_refresh": {...},  # only while a damage waits for the emptied deck to be refreshed
      "pending_climax": "<user id>",  # only while a climax just played shows before the attack phase
@@ -43,6 +44,7 @@ HIDDEN_ZONES = {"deck", "stock"}  # face down: no one sees the cards (the owner 
 PRIVATE_ZONES = {"hand"}  # only the owner sees the cards
 POSITIONS = {"stand", "rest", "reverse"}
 STARTING_HAND = 5
+HAND_LIMIT = 7  # cards a player may keep in hand at the end of their turn
 ENCORE_COST = 3  # stock paid to keep a reversed character on the stage, rested
 LEVEL_UP_AT = 7  # clock cards that make a level
 CLOCK_DRAW = 2  # cards drawn after putting a card from the hand into the clock
@@ -555,25 +557,40 @@ def enter_phase(state, player, phase, name, shuffle):
         draw_step(state, player, name, shuffle)
         state["auto_next"] = "clock"
     elif phase == "end":
-        climaxes, zones["climax"] = zones["climax"], []
-        for card in climaxes:
-            put(side, card, "waiting")
-            card["face_down"] = False
-        if climaxes:
-            add_log(state, player, "put " + ", ".join(name(c["card"]) for c in climaxes)
-                    + " from the climax zone into the waiting room")
-        other = next(p for p in state["order"] if p != player)
-        state["turn"] = other
-        state["turn_number"] += 1
-        state["attacks"] = 0
-        add_log(state, player, f"ended their turn. Turn {state['turn_number']}: {state['players'][other]['name']}")
-        state["phase"] = "stand"
-        if rules:
-            if stand_all(state["players"][other]):
-                add_log(state, other, "stand phase: stood all their characters")
-            state["auto_next"] = "draw"
+        if rules and len(zones["hand"]) > HAND_LIMIT:
+            # The discard step comes first: the turn waits for the "discard" action.
+            state["pending_discard"] = {"player": player, "count": len(zones["hand"]) - HAND_LIMIT}
+            add_log(state, player, f"moved to the end phase: must discard down to {HAND_LIMIT} cards")
+            return
+        finish_turn(state, player, name)
     else:
         add_log(state, player, f"moved to the {phase} phase")
+
+
+def finish_turn(state, player, name):
+    """The rest of the end phase: the climax zone empties into the waiting room and the turn passes
+    to the other player, whose stand phase (with turn rules on) stands their characters and ends
+    itself."""
+    side = state["players"][player]
+    zones = side["zones"]
+    rules = rules_on(state)
+    climaxes, zones["climax"] = zones["climax"], []
+    for card in climaxes:
+        put(side, card, "waiting")
+        card["face_down"] = False
+    if climaxes:
+        add_log(state, player, "put " + ", ".join(name(c["card"]) for c in climaxes)
+                + " from the climax zone into the waiting room")
+    other = next(p for p in state["order"] if p != player)
+    state["turn"] = other
+    state["turn_number"] += 1
+    state["attacks"] = 0
+    add_log(state, player, f"ended their turn. Turn {state['turn_number']}: {state['players'][other]['name']}")
+    state["phase"] = "stand"
+    if rules:
+        if stand_all(state["players"][other]):
+            add_log(state, other, "stand phase: stood all their characters")
+        state["auto_next"] = "draw"
 
 
 def auto_end_encore(state, name, shuffle):
@@ -804,6 +821,22 @@ def apply_action(state, player, action, name, shuffle, is_climax, trigger, cost,
                 state["auto_next"] = "draw"
         return {}
 
+    if kind == "discard":
+        # The end phase's discard step: exactly enough cards from the hand to get down to 7.
+        pending = state.get("pending_discard")
+        if not pending or pending["player"] != player:
+            raise GameError("You don't need to discard right now.")
+        uids = list(dict.fromkeys(action.get("uids") or []))
+        if len(uids) != pending["count"] or not set(uids) <= {c["uid"] for c in zones["hand"]}:
+            raise GameError(f"Choose {pending['count']} card{'s' if pending['count'] != 1 else ''} from your hand.")
+        cards = [take(side, uid)[0] for uid in uids]
+        for card in cards:
+            put(side, card, "waiting")
+        add_log(state, player, "discarded " + ", ".join(name(c["card"]) for c in cards))
+        state.pop("pending_discard")
+        finish_turn(state, player, name)
+        return {}
+
     if kind == "reveal":
         # Show a hand card to the opponent; the turn doesn't move on until they close it.
         if state.get("reveal"):
@@ -901,6 +934,8 @@ def apply_action(state, player, action, name, shuffle, is_climax, trigger, cost,
             add_log(state, player, "kept the turn rules as they are")
             return {}
         state["rules"] = request["on"]
+        if not request["on"] and state.get("pending_discard"):  # no longer required: the turn ends
+            finish_turn(state, state.pop("pending_discard")["player"], name)
         state.pop("attack", None)
         state.pop("pending_climax", None)
         if request["on"] and state.get("phase") == "attack":
@@ -1079,6 +1114,9 @@ def view(state, player):
         "phase": state.get("phase", "main"),
         "attacks": state.get("attacks", 0),
         "rules": rules_on(state),
+        # The end phase's discard: {"count": n, "mine": is it this player's}.
+        "discard": ({"count": state["pending_discard"]["count"], "mine": state["pending_discard"]["player"] == player}
+                    if state.get("pending_discard") else None),
         # Whether each player has finished their mulligan (only during the mulligan phase).
         "mulligan": ({"me": player in state.get("mulligan_done", []),
                       "opponent": other in state.get("mulligan_done", [])} if state.get("phase") == "mulligan" else None),
