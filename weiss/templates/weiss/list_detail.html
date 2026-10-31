@@ -5,6 +5,7 @@
 {% block weiss_content %}
   <p class="back"><a href="{% url 'weiss:lists' %}">← All lists</a></p>
   <h1>{{ card_list.name }}</h1>
+  {% if card_list.wins %}<p class="deck-stars" title="{{ card_list.wins }} win{{ card_list.wins|pluralize }}" aria-label="{{ card_list.wins }} win{{ card_list.wins|pluralize }}">{{ card_list.win_stars }}</p>{% endif %}
   <p class="lead-meta">
     {% if not deck %}{{ count }} / {{ max_cards }} cards{% endif %}
     {% if value %}{% if not deck %} · {% endif %}~${{ value|floatformat:2 }} approx. TCGplayer market value{% if unpriced %} ({{ unpriced }} card{{ unpriced|pluralize }} without a price){% endif %}{% endif %}

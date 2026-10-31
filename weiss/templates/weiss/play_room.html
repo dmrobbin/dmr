@@ -4,10 +4,10 @@
 {% block title %}{% if opponent %}vs {{ opponent.username }}{% else %}New room{% endif %}{% endblock %}
 
 {% block head %}
-  {# Metal Mania: the heavy-metal display face for the level-up announcement. #}
+  {# Metal Mania: the heavy-metal display face for the level-up announcement. Cinzel: Victory and Defeat. #}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Metal+Mania&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Metal+Mania&display=swap">
 {% endblock %}
 
 {% block content %}
@@ -93,8 +93,8 @@
           <input type="text" name="text" maxlength="300" placeholder="Message" aria-label="Chat message">
           <button type="submit">Send</button>
         </form>
-        <form method="post" action="{% url 'weiss:play_start' room.pk %}" onsubmit="return confirm('Start a new game with the same decks?')">
-          {% csrf_token %}<button type="submit" class="link-button">Rematch (reshuffle and deal again)</button>
+        <form method="post" action="{% url 'weiss:play_start' room.pk %}" onsubmit="return confirm('Start a new set with the same decks? This ends the current game and goes back to game 1.')">
+          {% csrf_token %}<button type="submit" class="link-button">New Set</button>
         </form>
         <form method="post" action="{% url 'weiss:play_reset' room.pk %}" onsubmit="return confirm('End this game and go back to choosing decks?')">
           {% csrf_token %}<button type="submit" class="link-button">Change decks</button>

@@ -18,11 +18,21 @@ State is plain JSON, stored on the GameRoom:
      "attack": {"step": ...},  # during the attack phase (with turn rules on): the attack in progress
      "rules": bool,  # turn rules on (the default) or off (a free-form table), changed by both players agreeing
      "rules_request": {"player": id, "on": bool},  # one player has asked to turn the rules on or off
-     "auto_next": phase}  # a phase that has ended itself: the turn player's page moves on to this
-                         # one after a pause, so phase changes can be followed
+     "auto_next": phase,  # a phase that has ended itself: the turn player's page moves on to this
+                          # one after a pause, so phase changes can be followed
+     "game_number": n, "first_player": id,  # which game of a series of rematches this is, and who went first
+     "rps": {"picks": {id: choice}, "last": {id: choice}, "winner": id},  # game 1's rock, paper, scissors for going first
+     "game_over": {"winner": id, "loser": id, "reason": "level"|"deck", "rematch": [id, ...]},  # who lost and how; who's asked for a rematch
+     "match_wins": {user id: n},  # games each player has won in this series of rematches
+     "ability_queue": [...], "resolving": {...},  # card abilities to trigger, and the one running (see Abilities)
+     "ability_show": {...},  # an ability just resolved: both pages show it, and play waits (see show_ability)
+     "needs_color": {user id: {uid: color}},  # hand cards the color rule is holding back
+     "buffs": [...], "stats": {uid: {"power", "soul"}}, "granted": {uid: [text]},  # what's boosting characters
+     "acts": {user id: {uid: [...]}}, "used": [...]}  # what each ! button can do, and 1/TURN abilities used
 
 With turn rules on, phases end themselves when there's nothing left to do in them, the page offers
-only the shortcuts for the current phase, playing a card pays its cost, and the attack phase runs as
+only the shortcuts for the current phase, playing a card pays its cost and needs its color (see
+color_needed), and the attack phase runs as
 the rules' steps: declare (front, side or direct), trigger, counter, damage and battle.
 
 A card instance is {"uid": "a1b2c3d4", "card": <Card pk>, "pos": "stand"|"rest"|"reverse",
@@ -32,9 +42,13 @@ Markers are cards set under a character on the stage. Each slot's markers are a 
 "marker:<slot>"; they move with the character between slots and go to the waiting room when it
 leaves the stage.
 """
+import copy
 import random
 import re
 import secrets
+from types import SimpleNamespace
+
+from . import abilities
 
 ZONES = ["deck", "hand", "clock", "level", "stock", "waiting", "memory", "climax", "resolution"]
 STAGE_SLOTS = ["C1", "C2", "C3", "B1", "B2"]
@@ -47,6 +61,8 @@ STARTING_HAND = 5
 HAND_LIMIT = 7  # cards a player may keep in hand at the end of their turn
 ENCORE_COST = 3  # stock paid to keep a reversed character on the stage, rested
 LEVEL_UP_AT = 7  # clock cards that make a level
+LOSING_LEVEL = 4  # a player who reaches this level has lost
+RPS_BEATS = {"rock": "scissors", "paper": "rock", "scissors": "paper"}
 CLOCK_DRAW = 2  # cards drawn after putting a card from the hand into the clock
 PHASES = ["mulligan", "stand", "draw", "clock", "main", "climax", "attack", "encore", "end"]  # mulligan: turn 1 only
 PLAY_ZONES = set(STAGE_SLOTS) | {"climax", "resolution"}  # playing a card from the hand here pays its cost
@@ -55,7 +71,6 @@ ATTACK_KINDS = {"front", "side", "direct"}
 TRIGGER_CHOICES = {"comeback": {"hand"}, "gate": {"hand"}, "choice": {"hand", "stock"},
                    "standby": set(STAGE_SLOTS), "treasure": set()}  # trigger icon -> where its card may go
 OPPOSITE = {"C1": "C3", "C2": "C2", "C3": "C1"}  # the opponent's slot facing each center slot
-CLIMAX_BOOST = re.compile(r"all of your characters get \+(\d+) power and \+(\d+) soul", re.I)
 BACKUP = re.compile(r"【COUNTER】\s*Backup\s*(\d+)(?:,\s*Level\s*(\d+))?(?:\s*\[\((\d+)\))?", re.I)
 MAX_LOG = 100
 
@@ -80,10 +95,14 @@ def new_card(card_pk):
     return {"uid": new_uid(), "card": card_pk, "pos": "stand", "face_down": False}
 
 
-def new_game(players, shuffle=random.shuffle):
-    """players: [(user id, display name, [card pk, ...]), ...] with the host first, who takes the first turn."""
-    state = {"players": {}, "order": [str(p[0]) for p in players], "turn": str(players[0][0]),
-             "turn_number": 1, "phase": "mulligan", "mulligan_done": [], "log": []}
+def new_game(players, shuffle=random.shuffle, match_wins=None, game_number=1, first=None, rps=False):
+    """players: [(user id, display name, [card pk, ...]), ...] with the host first. The first turn is
+    `first`'s (the host's if not given), unless `rps`: then the winner of rock, paper, scissors takes it.
+    match_wins and game_number: where a series of rematches has got to."""
+    first = str(first or players[0][0])
+    state = {"players": {}, "order": [str(p[0]) for p in players], "turn": first, "first_player": first, "game_number": game_number,
+             "turn_number": 1, "phase": "mulligan", "mulligan_done": [], "log": [],
+             "match_wins": dict(match_wins or {})}
     for user_id, name, cards in players:
         deck = [new_card(pk) for pk in cards]
         shuffle(deck)
@@ -94,7 +113,48 @@ def new_game(players, shuffle=random.shuffle):
                                           "markers": {s: [] for s in STAGE_SLOTS}}
     add_log(state, None, f"Game started. Each player shuffled and drew {STARTING_HAND} cards. "
                          "Mulligan: each player may swap any cards in their hand for new ones.")
+    if rps:
+        state["rps"] = {"picks": {}, "last": None, "winner": None}
+    elif game_number > 1:
+        add_log(state, first, f"goes first in game {game_number}")
     return state
+
+
+def play_rps(state, player, choice):
+    """One player's pick. Once both have picked: a tie goes again, and otherwise the winner takes the
+    first turn, which both pages show until one of them sends "rps_done"."""
+    rps = state["rps"]
+    if choice not in RPS_BEATS:
+        raise GameError("Choose rock, paper or scissors.")
+    if rps["winner"] or player in rps["picks"]:
+        raise GameError("You've already chosen.")
+    rps["picks"][player] = choice
+    if len(rps["picks"]) < len(state["order"]):
+        return
+    first, second = state["order"]
+    picks = rps["picks"]
+    names = f"{state['players'][first]['name']} chose {picks[first]}, {state['players'][second]['name']} chose {picks[second]}"
+    rps["last"], rps["picks"] = picks, {}
+    if picks[first] == picks[second]:
+        add_log(state, None, f"Rock, paper, scissors: {names}. A tie, so again!")
+        return
+    winner = first if RPS_BEATS[picks[first]] == picks[second] else second
+    rps["winner"] = winner
+    state["turn"] = state["first_player"] = winner
+    add_log(state, None, f"Rock, paper, scissors: {names}.")
+    add_log(state, winner, "won and goes first")
+
+
+def rps_view(state, player):
+    """What this player sees of rock, paper, scissors: never the other pick until both are in."""
+    rps = state.get("rps")
+    if not rps:
+        return None
+    other = other_player(state, player)
+    last = rps["last"]
+    return {"mine": rps["picks"].get(player), "opponent_chose": other in rps["picks"],
+            "last": {"me": last[player], "opponent": last[other]} if last else None,
+            "won": rps["winner"] == player if rps["winner"] else None}
 
 
 def add_log(state, player, text):
@@ -330,16 +390,6 @@ def other_player(state, player):
     return next(p for p in state["order"] if p != player)
 
 
-def climax_boost(state, player, info):
-    """(power, soul) every character of this player gets from the climax in their climax zone."""
-    climax = state["players"][player]["zones"]["climax"]
-    if climax and not climax[-1]["face_down"]:
-        match = CLIMAX_BOOST.search(info(climax[-1]["card"]).get("text") or "")
-        if match:
-            return int(match[1]), int(match[2])
-    return 0, 0
-
-
 def number(value):
     try:
         return int(value or 0)
@@ -355,6 +405,44 @@ def can_attack(state, player):
     return any(stage[s] and stage[s]["pos"] == "stand" for s in OPPOSITE)
 
 
+def color_free(state, player, card, info):
+    """Whether an ability lets this hand card skip the color rule: its own, or one in play for it.
+    Outside the stage, an ability only counts if it says it works from where its card is."""
+    env = SimpleNamespace(info=info)
+    side = state["players"][player]
+    for ability in abilities_of(state, card, env):
+        if ability.get("color_free", {}).get("self") and all_met(ability, state, player, card, {}, env):
+            return True
+    sources = [(c, "stage") for c in stage_cards(side) if not c["face_down"]]
+    sources += [(c, zone) for zone in ("level", "memory", "climax") for c in side["zones"][zone] if not c["face_down"]]
+    for source, zone in sources:
+        for ability in abilities_of(state, source, env):
+            free = ability.get("color_free")
+            if not free or "filter" not in free or not fits(free["filter"], card, env):
+                continue
+            if zone != "stage" and not any(cond["type"] == "self_in" for cond in ability["cond"]):
+                continue
+            if all_met(ability, state, player, source, {}, env):
+                return True
+    return False
+
+
+def color_needed(state, player, card, info):
+    """The color this card is missing under the color rule, or None if it can be played: with turn
+    rules on, a climax or a card of level 1 or higher needs its color among the cards in its player's
+    clock and level zone, unless an ability says otherwise. A card whose color isn't known is let through."""
+    details = info(card["card"]) or {}
+    color = details.get("color")
+    if not color or not rules_on(state):
+        return None
+    if (details.get("card_type") or "").lower() != "climax" and number(details.get("level")) < 1:
+        return None
+    zones = state["players"][player]["zones"]
+    if any((info(c["card"]) or {}).get("color") == color for c in zones["clock"] + zones["level"]):
+        return None
+    return None if color_free(state, player, card, info) else color
+
+
 def counter_play(state, player, card, info):
     """(stock to pay, backup power) if this hand card can be played as a counter right now, else None:
     it says 【COUNTER】, its level is within the player's, and the stock covers it."""
@@ -363,9 +451,11 @@ def counter_play(state, player, card, info):
     if "【COUNTER】" not in text.upper():
         return None
     backup = BACKUP.search(text)
-    if backup:
+    if backup:  # exempt from the color rule
         power, level, price = int(backup[1]), number(backup[2]), number(backup[3])
     else:
+        if color_needed(state, player, card, info):
+            return None
         power, level, price = 0, number(details.get("level")), number(details.get("cost"))
     zones = state["players"][player]["zones"]
     if level > len(zones["level"]) or price > len(zones["stock"]):
@@ -377,12 +467,10 @@ def counters_for(state, player, info):
     return [c["uid"] for c in state["players"][player]["zones"]["hand"] if counter_play(state, player, c, info)]
 
 
-def declare_attack(state, player, slot, kind, name, shuffle, trigger, info):
-    """The declaration and trigger steps of an attack: rest the attacker, check the top card of the
-    deck for its trigger (soul icons add to this attack's damage; the card then goes to the stock,
-    or a treasure to the hand), and set up the counter or damage step."""
+def declare_attack(state, player, slot, kind, env):
+    """The declaration step of an attack: rest the attacker, then any abilities its attack triggers
+    resolve before the trigger step (see trigger_check)."""
     side = state["players"][player]
-    zones = side["zones"]
     defender = other_player(state, player)
     card = side["stage"][slot]
     target = OPPOSITE[slot]
@@ -393,35 +481,56 @@ def declare_attack(state, player, slot, kind, name, shuffle, trigger, info):
         raise GameError("There's no character in front of it, so it's a direct attack.")
     card["pos"] = "rest"
     state["attacks"] = state.get("attacks", 0) + 1
-    attacker = name(card["card"]) if not card["face_down"] else "a character"
+    attacker = env.name(card["card"]) if not card["face_down"] else "a character"
     add_log(state, player, f"{kind} attack with {attacker}"
-            + (f" against {name(opposing['card'])}" if opposing else ""))
-    # Trigger step.
-    if not zones["deck"] and zones["waiting"]:
-        refresh(state, player, name, shuffle)
-    icons = []
-    if zones["deck"]:
-        checked = zones["deck"].pop()
-        icons = (trigger(checked["card"]) or "").split()
-        put(side, checked, "hand" if "treasure" in icons else "stock")
-        add_log(state, player, f"trigger check: {name(checked['card'])}"
-                + (f" [{' '.join(icons)}]" if icons else " (no trigger)")
-                + (" — to their hand" if "treasure" in icons else " — to their stock"))
-    trigger_soul = icons.count("soul")
-    # The damage this attack will deal: soul, plus the climax's and the trigger's, +1 if direct, or
-    # minus the defender's level for a side attack.
-    soul = number(info(card["card"]).get("soul")) + climax_boost(state, player, info)[1] + trigger_soul
-    if kind == "direct":
-        soul += 1
-    elif kind == "side":
-        soul = max(0, soul - number(info(opposing["card"]).get("level")))
+            + (f" against {env.name(opposing['card'])}" if opposing else ""))
+    # The damage this attack will deal: soul, +1 if direct, or minus the defender's level for a side
+    # attack (update_attack_soul keeps it up to date, with the trigger's soul in soul_extra).
     state["attack"] = {"step": "trigger", "slot": slot, "uid": card["uid"], "target": target, "kind": kind,
-                       "soul": soul, "backup": 0, "shot": "shot" in icons}
-    prompt = trigger_prompt(state, player, icons, info)
+                       "soul": 0, "soul_extra": 1 if kind == "direct" else 0, "backup": 0, "shot": False, "checking": True}
+    fire(state, env, "attack", uid=card["uid"], kind=kind, player=player, defender=defender,
+         target=opposing["uid"] if opposing else None, target_card=opposing["card"] if opposing else None)
+    if not abilities_busy(state):
+        trigger_check(state, env)
+
+
+def trigger_check(state, env):
+    """The trigger step: check the top card of the deck for its trigger (soul icons add to this
+    attack's damage; the card then goes to the stock, or a treasure to the hand), and set up the
+    counter or damage step."""
+    player = state["turn"]
+    side = state["players"][player]
+    zones = side["zones"]
+    attack = state["attack"]
+    attack.pop("checking", None)
+    icons = []
+    checks = attack.pop("checks", 1)
+    for _ in range(checks):
+        if not zones["deck"] and zones["waiting"]:
+            refresh(state, player, env.name, env.shuffle)
+        if not zones["deck"]:
+            break
+        checked = zones["deck"].pop()
+        found = (env.trigger(checked["card"]) or "").split()
+        icons += found
+        put(side, checked, "hand" if "treasure" in found else "stock")
+        add_log(state, player, f"trigger check: {env.name(checked['card'])}"
+                + (f" [{' '.join(found)}]" if found else " (no trigger)")
+                + (" — to their hand" if "treasure" in found else " — to their stock"))
+        if env.is_climax(checked["card"]):
+            fire(state, env, "check_climax", uid=attack["uid"])
+            fire(state, env, "climax_trigger", player=player, card=checked["card"])
+    if attack.pop("check_pay", 0) and checks == 2 and zones["stock"]:
+        put(side, zones["stock"].pop(), "waiting")
+        add_log(state, player, "paid 1 stock for the second trigger check")
+    attack["soul_extra"] += icons.count("soul")
+    attack["shot"] = "shot" in icons
+    update_attack_soul(state, compute_stats(state, env)[0], env)
+    prompt = trigger_prompt(state, player, icons, env.info)
     if prompt:
-        state["attack"]["prompt"] = prompt  # the attacker chooses (see the trigger_choice action)
+        attack["prompt"] = prompt  # the attacker chooses (see the trigger_choice action)
     else:
-        after_trigger(state, info)
+        after_trigger(state, env.info)
 
 
 def trigger_prompt(state, player, icons, info):
@@ -464,15 +573,20 @@ def after_trigger(state, info):
             attack.update(step="counter", counters=counters)
 
 
-def power_of(state, player, card, info):
-    return number(info(card["card"]).get("power")) + climax_boost(state, player, info)[0]
+def end_attack(state, env):
+    uid = (state.get("attack") or {}).get("uid")
+    state["attack"] = {"step": "declare"}
+    if uid:
+        fire(state, env, "attack_end", uid=uid)
 
 
-def advance_attack(state, name, shuffle, is_climax, info):
+def advance_attack(state, env):
     """Move the attack phase along while nobody has a choice to make: deal an attack's damage once
     its counter step is over, battle once that damage (and any level up) is done, and end the
-    phase when the turn player has no attack left to make."""
+    phase when the turn player has no attack left to make. Abilities resolve first."""
     while rules_on(state) and state.get("phase") == "attack" and state.get("attack"):
+        if abilities_busy(state):
+            return
         attack = state["attack"]
         player = state["turn"]
         defender = other_player(state, player)
@@ -482,40 +596,54 @@ def advance_attack(state, name, shuffle, is_climax, info):
                 add_log(state, player, "no attacks left")
                 state["auto_next"] = "encore"
             return
+        if step == "trigger" and attack.get("checking"):
+            trigger_check(state, env)
+            continue
         if step in ("trigger", "counter"):
             return  # the attacker resolves a trigger, or the defender plays a counter or passes
         if step == "damage":
             if not attack.get("dealt"):
+                update_attack_soul(state, compute_stats(state, env)[0], env)
                 attack["dealt"] = True
                 if attack["soul"]:
-                    deal_damage(state, defender, attack["soul"], attack["soul"], [], name, is_climax)
+                    deal_damage(state, defender, attack["soul"], attack["soul"], [], env.name, env.is_climax)
                     attack["cancelled"] = state.get("pending_damage", {}).get("player") == defender
                 else:
                     add_log(state, defender, "took no damage")
                 continue
             if damage_in_progress(state, defender) or must_level_up(state, defender):
                 return  # the damage or a level up is still being worked out
+            if attack.get("cancelled") and not attack.get("cancel_fired"):
+                attack["cancel_fired"] = True
+                fire(state, env, "cancel", uid=attack["uid"])
+                continue
             if attack.pop("shot", False) and attack.get("cancelled"):
                 # Shot trigger: this attack's damage was cancelled, so it deals 1 damage more.
                 add_log(state, player, "shot trigger: 1 more damage")
-                deal_damage(state, defender, 1, 1, [], name, is_climax)
+                deal_damage(state, defender, 1, 1, [], env.name, env.is_climax)
                 continue
-            attack["step"] = "battle" if attack["kind"] == "front" else "declare"
-            if attack["step"] == "declare":
-                state["attack"] = {"step": "declare"}
+            if attack["kind"] == "front":
+                attack["step"] = "battle"
+            else:
+                end_attack(state, env)
             continue
         if step == "battle":
             attacker = state["players"][player]["stage"][attack["slot"]]
             target = state["players"][defender]["stage"][attack["target"]]
             if attacker and target and attacker["uid"] == attack["uid"]:
-                mine = power_of(state, player, attacker, info)
-                theirs = power_of(state, defender, target, info) + attack["backup"]
+                stats = compute_stats(state, env)[0]
+                mine = stats[attacker["uid"]]["power"]
+                theirs = stats[target["uid"]]["power"] + attack["backup"]
                 losers = ([attacker] if mine <= theirs else []) + ([target] if theirs <= mine else [])
                 for card in losers:
                     card["pos"] = "reverse"
-                add_log(state, player, f"battle: {name(attacker['card'])} ({mine}) against {name(target['card'])} ({theirs})"
-                        + " — " + (", ".join(f"{name(c['card'])} reversed" for c in losers)))
-            state["attack"] = {"step": "declare"}
+                add_log(state, player, f"battle: {env.name(attacker['card'])} ({mine}) against {env.name(target['card'])} ({theirs})"
+                        + " — " + (", ".join(f"{env.name(c['card'])} reversed" for c in losers)))
+                for card in losers:
+                    other = target if card is attacker else attacker
+                    fire(state, env, "reverse", uid=card["uid"], by=other["uid"], card=card["card"],
+                         owner=player if card is attacker else defender)
+            end_attack(state, env)
             continue
         return
 
@@ -539,11 +667,12 @@ def draw_step(state, player, name, shuffle):
         add_log(state, player, "draw phase: no cards left to draw")
 
 
-def enter_phase(state, player, phase, name, shuffle):
+def enter_phase(state, player, phase, env):
     """Move the turn player into a phase. With turn rules on, the draw phase draws a card and ends
     itself; the end phase clears the climax zone and passes the turn into the next player's stand
     phase, which stands their characters and ends itself. ("Ends itself" sets auto_next.)
-    Other phases only change what the page offers."""
+    Other phases only change what the page offers, and any abilities they trigger are queued."""
+    name, shuffle = env.name, env.shuffle
     side = state["players"][player]
     zones = side["zones"]
     rules = rules_on(state)
@@ -565,6 +694,8 @@ def enter_phase(state, player, phase, name, shuffle):
         finish_turn(state, player, name)
     else:
         add_log(state, player, f"moved to the {phase} phase")
+        if rules and phase in ("climax", "attack", "encore"):
+            fire(state, env, "phase", phase=phase, player=player)
 
 
 def finish_turn(state, player, name):
@@ -583,6 +714,8 @@ def finish_turn(state, player, name):
                 + " from the climax zone into the waiting room")
     other = next(p for p in state["order"] if p != player)
     state["turn"] = other
+    state["buffs"] = [buff for buff in state.get("buffs", []) if buff["expires"] > state["turn_number"]]
+    state["used"] = []
     state["turn_number"] += 1
     state["attacks"] = 0
     add_log(state, player, f"ended their turn. Turn {state['turn_number']}: {state['players'][other]['name']}")
@@ -595,8 +728,38 @@ def finish_turn(state, player, name):
 
 def auto_end_encore(state, name, shuffle):
     """The encore step is over once no reversed characters are left: the turn moves to its end."""
-    if rules_on(state) and state.get("phase") == "encore" and not reversed_characters(state):
+    if rules_on(state) and state.get("phase") == "encore" and not reversed_characters(state) and not abilities_busy(state):
         state["auto_next"] = "end"
+
+
+def check_game_over(state):
+    """A player at level 4 has lost, whatever got them there. So has one, with turn rules on, whose
+    deck is out with no waiting room to refresh it from (once any damage of theirs is over: a cancelled
+    damage's cards are about to reach the waiting room). Everything in progress stops."""
+    if state.get("game_over"):
+        return
+    for player, side in state["players"].items():
+        zones = side["zones"]
+        reason = "level" if len(zones["level"]) >= LOSING_LEVEL else None
+        if (not reason and rules_on(state) and state.get("phase") != "mulligan" and not zones["deck"]
+                and not zones["waiting"] and not damage_in_progress(state, player)):
+            reason = "deck"
+        if reason:
+            winner = other_player(state, player)
+            state["game_over"] = {"winner": winner, "loser": player, "reason": reason, "rematch": []}
+            wins = state.setdefault("match_wins", {})
+            wins[winner] = wins.get(winner, 0) + 1
+            for key in ("ability_queue", "resolving", "ability_show", "attack", "auto_next", "pending_damage", "pending_refresh",
+                        "pending_climax", "pending_discard", "reveal", "rules_request"):
+                state.pop(key, None)
+            add_log(state, player, (f"reached level {LOSING_LEVEL}" if reason == "level" else "can't refresh their deck")
+                    + f": {state['players'][winner]['name']} wins!")
+            return
+
+
+def rematch_agreed(state):
+    """Both players have asked for a rematch: whoever holds the decks (play.py) deals the new game."""
+    return len((state.get("game_over") or {}).get("rematch", [])) == len(state["order"])
 
 
 def auto_refresh(state, name, shuffle):
@@ -607,20 +770,44 @@ def auto_refresh(state, name, shuffle):
             refresh(state, player, name, shuffle)
 
 
+def played(state, player, card, to, env):
+    """A card just played from the hand: what that triggers."""
+    if to in STAGE_SLOTS:
+        card["played_turn"] = state["turn_number"]
+        fire(state, env, "play", uid=card["uid"], source=card, source_owner=player)
+    elif to == "climax":
+        fire(state, env, "climax", uid=card["uid"], source=card, source_owner=player, player=player, card=card["card"])
+    elif to == "resolution" and rules_on(state):
+        for ability in abilities.parse(env.info(card["card"]).get("text")):
+            if ability["kind"] == "event" and ability["steps"]:
+                queue_event(state, player, card, ability, env)
+
+
 def apply(state, player, action, name=lambda pk: f"card {pk}", shuffle=random.shuffle,
           is_climax=lambda pk: False, trigger=lambda pk: "", cost=lambda pk: 0, info=lambda pk: {}):
     """Apply one player's action to the state in place. Returns extra data for that player only
     (e.g. the cards they searched), or {}. Raises GameError for anything invalid.
 
     `info` gives a card's details for the rules (power, soul, level, cost, text)."""
-    extra = apply_action(state, player, action, name, shuffle, is_climax, trigger, cost, info)
+    env = SimpleNamespace(name=name, shuffle=shuffle, is_climax=is_climax, trigger=trigger, cost=cost, info=info)
+    extra = apply_action(state, player, action, env)
+    check_game_over(state)
+    if state.get("game_over"):
+        refresh_stats(state, env)
+        return extra
     auto_refresh(state, name, shuffle)
-    advance_attack(state, name, shuffle, is_climax, info)
+    refresh_stats(state, env)
+    run_abilities(state, env)
+    refresh_stats(state, env)
+    advance_attack(state, env)
     auto_end_encore(state, name, shuffle)
+    check_game_over(state)
+    refresh_stats(state, env)
     return extra
 
 
-def apply_action(state, player, action, name, shuffle, is_climax, trigger, cost, info):
+def apply_action(state, player, action, env):
+    name, shuffle, is_climax, trigger, cost, info = env.name, env.shuffle, env.is_climax, env.trigger, env.cost, env.info
     player = str(player)
     if player not in state["players"]:
         raise GameError("You're not playing in this game.")
@@ -635,15 +822,47 @@ def apply_action(state, player, action, name, shuffle, is_climax, trigger, cost,
     if kind in ("resolve_damage", "continue_damage"):
         return {}
 
+    if kind == "rps_done":
+        # Either page may send this; the other's copy finds it already done.
+        if (state.get("rps") or {}).get("winner"):
+            state.pop("rps")
+        return {}
+    if kind == "rps":
+        if not state.get("rps"):
+            raise GameError("Rock, paper, scissors is over.")
+        play_rps(state, player, action.get("choice"))
+        return {}
+    if state.get("rps") and kind != "chat":
+        if action.get("auto"):
+            return {}
+        raise GameError("Finish rock, paper, scissors first.")
+
+    over = state.get("game_over")
+    if kind == "rematch":
+        if not over:
+            raise GameError("The game isn't over.")
+        if player not in over["rematch"]:
+            over["rematch"].append(player)
+            add_log(state, player, "asked for a rematch")
+        return {}
+    if over and kind != "chat":
+        if action.get("auto") or kind == "ability_show_done":
+            return {}  # a page's timer that hadn't heard yet
+        raise GameError("The game is over.")
+
     if kind == "move":
         to = zone_arg(action, "to", set(ZONES) | set(STAGE_SLOTS) | set(MARKER_PILES))
         src, index = find(side, action.get("uid", ""))
         check_marker_target(side, to, leaving=src)
+        if src == "hand" and to in PLAY_ZONES:
+            missing = color_needed(state, player, zones["hand"][index], info)
+            if missing:
+                raise GameError(f"That card needs {missing} in your clock or level zone.")
         if (action.get("end_main") and to == "climax" and src == "hand" and rules_on(state)
                 and state["turn"] == player and state.get("phase") == "main"):
             # A climax played from the main phase (the page asks first): that ends the main phase,
             # so it's played in the climax phase, and the attack phase follows.
-            enter_phase(state, player, "climax", name, shuffle)
+            enter_phase(state, player, "climax", env)
         # Playing a card from the hand pays its cost from the stock.
         price = ((cost(zones["hand"][index]["card"]) or 0)
                  if rules_on(state) and src == "hand" and to in PLAY_ZONES else 0)
@@ -662,8 +881,11 @@ def apply_action(state, player, action, name, shuffle, is_climax, trigger, cost,
                 put(side, occupant, "waiting")
                 add_log(state, player, f"sent {name(occupant['card'])} to the waiting room")
                 discard_markers(state, player, to)
+                fire(state, env, "leave", uid=occupant["uid"], source=occupant, source_owner=player, slot=to)
             if src in STAGE_SLOTS:
                 discard_markers(state, player, src)
+                if to == "waiting":
+                    fire(state, env, "leave", uid=card["uid"], source=card, source_owner=player, slot=src)
         add_log(state, player, describe_move(card, src, to, name)
                 + (f" (paid {price} stock)" if price else ""))
         if to == "climax" and rules_on(state) and state["turn"] == player and state.get("phase") == "climax":
@@ -671,6 +893,8 @@ def apply_action(state, player, action, name, shuffle, is_climax, trigger, cost,
             # to the attack phase.
             side["climaxes"] = side.get("climaxes", 0) + 1
             state["pending_climax"] = player
+        if src == "hand":
+            played(state, player, card, to, env)
         return {}
 
     if kind == "move_top":
@@ -727,6 +951,8 @@ def apply_action(state, player, action, name, shuffle, is_climax, trigger, cost,
         card["pos"] = pos
         verb = {"stand": "stood", "rest": "rested", "reverse": "reversed"}[pos]
         add_log(state, player, f"{verb} {name(card['card'])}")
+        if pos == "reverse":
+            fire(state, env, "reverse", uid=card["uid"], owner=player, card=card["card"])
         return {}
 
     if kind == "flip":
@@ -778,9 +1004,11 @@ def apply_action(state, player, action, name, shuffle, is_climax, trigger, cost,
                 raise GameError("Attacks happen in your attack phase.")
             if (state.get("attack") or {}).get("step") != "declare":
                 raise GameError("Finish the attack in progress first.")
+            if abilities_busy(state):
+                raise GameError("Finish resolving the abilities first.")
             if not can_attack(state, player):
                 raise GameError("Only one character can attack on the first turn.")
-            declare_attack(state, player, where, action.get("kind"), name, shuffle, trigger, info)
+            declare_attack(state, player, where, action.get("kind"), env)
             return {}
         state["attacks"] = state.get("attacks", 0) + 1
         card["pos"] = "rest"
@@ -895,6 +1123,8 @@ def apply_action(state, player, action, name, shuffle, is_climax, trigger, cost,
         attack = state.get("attack") or {}
         if attack.get("step") != "counter" or player == state["turn"]:
             raise GameError("There's no counter step for you right now.")
+        if abilities_busy(state):
+            raise GameError("Finish resolving the abilities first.")
         if kind == "counter":
             where, index = find(side, action.get("uid", ""))
             play = counter_play(state, player, zones["hand"][index], info) if where == "hand" else None
@@ -908,6 +1138,10 @@ def apply_action(state, player, action, name, shuffle, is_climax, trigger, cost,
             attack["backup"] += power
             add_log(state, player, f"countered with {name(card['card'])}"
                     + (f" (+{power} power)" if power else "") + (f", paying {price} stock" if price else ""))
+            fire(state, env, "backup", uid=card["uid"], source=card, source_owner=player)
+            for ability in abilities.parse(info(card["card"]).get("text")):
+                if ability["kind"] == "counter":
+                    queue_event(state, player, card, ability, env)
         else:
             add_log(state, player, "didn't counter")
         attack["step"] = "damage"
@@ -938,6 +1172,9 @@ def apply_action(state, player, action, name, shuffle, is_climax, trigger, cost,
             finish_turn(state, state.pop("pending_discard")["player"], name)
         state.pop("attack", None)
         state.pop("pending_climax", None)
+        state.pop("ability_queue", None)
+        state.pop("resolving", None)
+        state.pop("ability_show", None)
         if request["on"] and state.get("phase") == "attack":
             state["attack"] = {"step": "declare"}
         add_log(state, player, f"agreed: turn rules are now {'on' if request['on'] else 'off'}")
@@ -1019,6 +1256,10 @@ def apply_action(state, player, action, name, shuffle, is_climax, trigger, cost,
             if action.get("auto"):
                 return {}  # the page tries again once the revealed card is closed
             raise GameError("Wait until the revealed card has been closed.")
+        if rules_on(state) and abilities_busy(state):
+            if action.get("auto"):
+                return {}  # the page tries again once the abilities are done
+            raise GameError("Finish resolving the abilities first.")
         if rules_on(state) and state.get("phase") == "mulligan":
             raise GameError("Both players need to finish their mulligan first.")
         target = PHASES.index("end" if kind == "end_turn" else zone_arg(action, "phase", PHASES))
@@ -1031,9 +1272,41 @@ def apply_action(state, player, action, name, shuffle, is_climax, trigger, cost,
         if rules and (state.get("attack") or {}).get("step", "declare") != "declare":
             raise GameError("Finish the attack in progress first.")
         for phase in PHASES[current + 1:target + 1]:
-            enter_phase(state, player, phase, name, shuffle)
+            enter_phase(state, player, phase, env)
             if rules and phase == "encore" and reversed_characters(state):
                 break  # wait here for the encore choices
+            if rules and abilities_busy(state):
+                if phase != PHASES[target]:
+                    state["auto_next"] = PHASES[target]  # picks up where it left off afterwards
+                break
+        return {}
+
+    if kind == "ability_trigger":
+        trigger_ability(state, player, action, env)
+        return {}
+
+    if kind == "ability_answer":
+        answer_ability(state, player, action, env)
+        return {}
+
+    if kind == "ability_stop":
+        # A way out of an ability, whatever it's waiting on (anything already done stays done).
+        res = state.get("resolving")
+        if not res or res["player"] != player:
+            raise GameError("You aren't resolving an ability.")
+        state.pop("resolving")
+        finish_event(state, res, env)
+        add_log(state, player, "stopped resolving the ability; the rest was not done")
+        return {}
+
+    if kind == "ability_show_done":
+        # Either page may send this; the other's copy arrives too late to match and does nothing.
+        if (state.get("ability_show") or {}).get("id") == action.get("id"):
+            state.pop("ability_show")
+        return {}
+
+    if kind == "activate":
+        activate(state, player, action, env)
         return {}
 
     if kind == "chat":
@@ -1045,6 +1318,1087 @@ def apply_action(state, player, action, name, shuffle, is_climax, trigger, cost,
         return {}
 
     raise GameError(f"Unknown action: {kind!r}")
+
+
+# --- Abilities -------------------------------------------------------------------------------------
+#
+# Card text is read by abilities.py into plain JSON steps. An event in the game (fire) checks every
+# card that could respond; each AUTO ability whose trigger and conditions are met joins
+# state["ability_queue"], and its controller is asked whether to trigger it (the turn player first,
+# picking the order). A triggered or activated ability then runs as state["resolving"]: its steps run
+# one at a time until one needs an answer, which it asks as res["prompt"] and picks up again from
+# the "ability_answer" action. Steps wait for any damage or level up they caused.
+#
+# CONT abilities and buffs aren't stored on cards: refresh_stats works out every character's power
+# and soul after each action, into state["stats"], from the printed numbers, every CONT ability
+# in play and state["buffs"] ({"uid", "power", "soul", "expires": turn number, "grant": [text]}).
+
+PUBLIC_CHOICES = {"stage", "center", "back", "waiting", "clock", "level", "memory"}  # choices both players can see
+STEP_LIMIT = 500  # steps one action may run: a safety net, far above what any card does
+BOARD_ERRORS = (GameError, KeyError, IndexError, TypeError, ValueError, AttributeError)
+
+
+def abilities_busy(state):
+    return bool(state.get("ability_queue") or state.get("resolving") or state.get("ability_show"))
+
+
+def details_of(card, env):
+    return env.info(card["card"]) or {}
+
+
+def abilities_of(state, card, env):
+    """A card's abilities: printed, given by a buff, and given by a CONT ability (see refresh_stats)."""
+    found = list(abilities.parse(details_of(card, env).get("text")))
+    for buff in state.get("buffs", []):
+        if buff["uid"] == card["uid"]:
+            for text in buff.get("grant", []):
+                found += abilities.parse(text)
+    for text in state.get("granted", {}).get(card["uid"], []):
+        found += abilities.parse(text)
+    return found
+
+
+def card_pks(state):
+    """Every card pk in the game."""
+    pks = set()
+    for side in state["players"].values():
+        for cards in [*side["zones"].values(), *side.get("markers", {}).values(), stage_cards(side)]:
+            pks.update(card["card"] for card in cards)
+    return pks
+
+
+def stage_cards(side):
+    return [card for card in side["stage"].values() if card]
+
+
+def slot_of(side, uid):
+    return next((slot for slot, card in side["stage"].items() if card and card["uid"] == uid), None)
+
+
+def locate(state, uid):
+    """(owner, card, where) of a card anywhere on the table, or (None, None, None)."""
+    for owner, side in state["players"].items():
+        try:
+            where, index = find(side, uid)
+        except GameError:
+            continue
+        return owner, side["stage"][where] if where in STAGE_SLOTS else pile(side, where)[index], where
+    return None, None, None
+
+
+def fits(filter_, card, env, x=None, level=0):
+    return abilities.matches_filter(filter_, details_of(card, env), x=x, my_level=level)
+
+
+def condition_met(cond, state, player, source, ctx, env):
+    """Whether one parsed condition holds. `source` is the ability's card."""
+    side = state["players"][player]
+    zones = side["zones"]
+    other = state["players"][other_player(state, player)]
+    kind = cond["type"]
+    uid = source["uid"] if source else None
+    if kind == "my_turn":
+        return state["turn"] == player
+    if kind == "opp_turn":
+        return state["turn"] != player
+    if kind == "phase":
+        return state.get("phase") == cond["phase"]
+    if kind == "played_this_turn":
+        return bool(source) and source.get("played_turn") == state["turn_number"]
+    if kind == "my_level":
+        return compare(len(zones["level"]), cond["n"], cond["dir"])
+    if kind == "zone_count":
+        return compare(sum(fits(cond["filter"], c, env) for c in zones[cond["zone"]]), cond["n"], cond["dir"])
+    if kind == "all_trait":
+        trait_filter = {"any": [{"trait": cond["trait"]}]}
+        return all(fits(trait_filter, c, env) for c in stage_cards(side))
+    if kind == "have":
+        count = sum(fits(cond["filter"], c, env) and not (cond["filter"].get("other") and c["uid"] == uid) for c in stage_cards(side))
+        return compare(count, cond["n"], cond["dir"])
+    if kind == "have_each":
+        if cond.get("level"):
+            cards = [c for c in zones["level"] if not (cond["other"] and c["uid"] == uid)]
+        else:
+            cards = [c for slot, c in side["stage"].items() if c and (not cond["center"] or slot in OPPOSITE)
+                     and not (cond["other"] and c["uid"] == uid)]
+        found = all(any(fits(f, c, env) for c in cards) for f in cond["filters"])
+        return not found if cond["absent"] else found
+    if kind == "climax_is":
+        climax = (other if cond["owner"] == "opp" else side)["zones"]["climax"]
+        return any(not c["face_down"] and fits(cond["filter"], c, env) for c in climax)
+    if kind == "self_in":
+        _, _, where = locate(state, uid) if uid else (None, None, None)
+        return {"center stage": where in OPPOSITE, "back stage": where in ("B1", "B2"), "middle": where == "C2",
+                "waiting room": where == "waiting", "memory": where == "memory", "level": where == "level"}[cond["where"]]
+    if kind == "self_stand":
+        return bool(source) and source["pos"] == "stand"
+    if kind == "self_clock_top":
+        return bool(zones["clock"]) and zones["clock"][-1]["uid"] == uid
+    if kind == "opp_has":
+        return any(fits(cond["filter"], c, env) for c in stage_cards(other))
+    if kind == "facing_level":
+        facing = facing_card(state, player, source, ctx)
+        return bool(facing) and compare(number(details_of(facing, env).get("level")), cond["n"], cond["dir"])
+    if kind == "counted":
+        return ctx.get("counts", {}).get(cond["key"], 0) >= 1
+    if kind == "revealed":
+        return ctx.get("revealed") is not None and abilities.matches_filter(cond["filter"], env.info(ctx["revealed"]) or {})
+    if kind == "among_has":
+        return any(abilities.matches_filter(cond["filter"], env.info(pk) or {}) for pk in ctx.get("flipped", []))
+    return True
+
+
+def compare(value, n, direction):
+    if direction in ("more", "higher"):
+        return value >= n
+    if direction in ("less", "lower"):
+        return value <= n
+    return value == n
+
+
+def facing_card(state, player, source, ctx):
+    """The character battling or facing this one."""
+    if ctx and ctx.get("that"):
+        _, card, _ = locate(state, ctx["that"])
+        if card:
+            return card
+    slot = slot_of(state["players"][player], source["uid"]) if source else None
+    return state["players"][other_player(state, player)]["stage"].get(OPPOSITE.get(slot, ""))
+
+
+def all_met(ability, state, player, source, ctx, env):
+    return all(condition_met(cond, state, player, source, ctx, env) for cond in ability.get("cond", []))
+
+
+def x_value(spec, state, player, target, ctx, env, stats=None):
+    """The number an "X is equal to ..." sentence describes."""
+    if not spec:
+        return 0
+    side = state["players"][player]
+    kind = spec["of"]
+    if kind == "my_level":
+        value = len(side["zones"]["level"])
+    elif kind == "target_level":
+        value = number(details_of(target, env).get("level")) if target else 0
+    elif kind == "target_soul":
+        known = (stats or {}).get(target["uid"], {}) if target else {}
+        value = known.get("soul", number(details_of(target, env).get("soul")) if target else 0)
+    elif kind == "revealed_level":
+        value = number((env.info(ctx.get("revealed")) or {}).get("level")) if ctx and ctx.get("revealed") is not None else 0
+    elif kind == "opp_chars":
+        value = len(stage_cards(state["players"][other_player(state, player)]))
+    elif kind == "my_chars":
+        source_uid = (ctx or {}).get("source_uid")
+        value = sum(fits(spec.get("filter"), c, env) and not (spec["filter"].get("other") and c["uid"] == source_uid)
+                    for c in stage_cards(side))
+    else:  # "zone"
+        value = sum(fits(spec.get("filter"), c, env) for c in side["zones"][spec["zone"]])
+    return value * spec.get("times", 1)
+
+
+def cont_targets(effect, state, player, source, env):
+    side = state["players"][player]
+    target = effect["target"]
+    slot = slot_of(side, source["uid"])
+    if target["type"] == "self":
+        return [source] if slot else []
+    if target["type"] == "front":
+        slots = {"B1": ("C1", "C2"), "B2": ("C2", "C3")}.get(slot, ())
+    elif target["type"] == "middle":
+        slots = ("C2",)
+    else:
+        slots = STAGE_SLOTS
+    filter_ = target.get("filter")
+    return [card for card in (side["stage"][s] for s in slots) if card and fits(filter_, card, env)
+            and not (filter_.get("other") and card["uid"] == source["uid"])]
+
+
+def compute_stats(state, env):
+    """Every character's power and soul right now, and the abilities CONT abilities are giving them.
+    Soul first, since some power depends on it ("X is equal to that character's soul ×1000")."""
+    stats = {}
+    conts = []
+    for player, side in state["players"].items():
+        for card in stage_cards(side):
+            details = details_of(card, env)
+            stats[card["uid"]] = {"power": number(details.get("power")), "soul": number(details.get("soul"))}
+        sources = [c for c in stage_cards(side) if not c["face_down"]]
+        sources += [c for c in side["zones"]["climax"][-1:] if not c["face_down"]]
+        for source in sources:
+            for ability in abilities.parse(details_of(source, env).get("text")):
+                if ability["kind"] == "cont" and ability["effects"]:
+                    conts.append((player, source, ability))
+    granted = {}
+    for wanted in ("soul", "power"):
+        for player, source, ability in conts:
+            ctx = {"source_uid": source["uid"]}
+            if not all_met(ability, state, player, source, ctx, env):
+                continue
+            for effect in ability["effects"]:
+                for target in cont_targets(effect, state, player, source, env) if source["uid"] in stats or effect["target"]["type"] != "self" else []:
+                    amount = effect.get(wanted, 0)
+                    if effect.get("x_stat") == wanted:
+                        amount += x_value(effect.get("x"), state, player, target, ctx, env, stats)
+                    if effect.get("per") and wanted == "power":
+                        amount *= x_value(effect["per"], state, player, target, ctx, env, stats)
+                    stats[target["uid"]][wanted] += amount
+                    if wanted == "power" and effect.get("grant"):
+                        granted.setdefault(target["uid"], []).extend(effect["grant"])
+    for buff in state.get("buffs", []):
+        if buff["uid"] in stats:
+            stats[buff["uid"]]["power"] += buff.get("power", 0)
+            stats[buff["uid"]]["soul"] += buff.get("soul", 0)
+    for values in stats.values():
+        values["power"] = max(0, values["power"])
+        values["soul"] = max(0, values["soul"])
+    return stats, granted
+
+
+def update_attack_soul(state, stats, env):
+    """The damage of the attack in progress follows its attacker's soul until it's dealt."""
+    attack = state.get("attack") or {}
+    if "soul_extra" not in attack or attack.get("dealt") or attack["uid"] not in stats:
+        return
+    soul = stats[attack["uid"]]["soul"] + attack["soul_extra"]
+    if attack["kind"] == "side":
+        target = state["players"][other_player(state, state["turn"])]["stage"][attack["target"]]
+        soul = max(0, soul - (number(details_of(target, env).get("level")) if target else 0))
+    attack["soul"] = soul
+
+
+def refresh_stats(state, env):
+    on_stage = {card["uid"] for side in state["players"].values() for card in stage_cards(side)}
+    if state.get("buffs"):
+        state["buffs"] = [buff for buff in state["buffs"] if buff["uid"] in on_stage]
+    state["stats"], state["granted"] = compute_stats(state, env)
+    update_attack_soul(state, state["stats"], env)
+    state["acts"] = {player: player_acts(state, player, env) for player in state["players"]}
+    state["needs_color"] = {player: {card["uid"]: needed for card in side["zones"]["hand"]
+                                     if (needed := color_needed(state, player, card, env.info))}
+                            for player, side in state["players"].items()}
+
+
+def stat_of(state, card, env, stat):
+    stats, _ = compute_stats(state, env)
+    return stats.get(card["uid"], {}).get(stat, 0)
+
+
+# Paying costs ----------------------------------------------------------------------------------------
+
+def cost_options(part, state, player, source, env):
+    side = state["players"][player]
+    filter_ = part.get("filter")
+    if part["part"] == "rest_chars" or part.get("zone") == "stage":
+        cards = stage_cards(side)
+    elif part.get("zone") == "climax":
+        cards = side["zones"]["climax"]
+    else:
+        cards = side["zones"][part["zone"]]
+    level = len(side["zones"]["level"])
+    return [c for c in cards if fits(filter_, c, env, level=level)
+            and not (filter_.get("other") and source and c["uid"] == source["uid"])
+            and not (filter_.get("stand") and c["pos"] != "stand")]
+
+
+def can_pay(cost, state, player, source, env):
+    """Why this cost can't be paid right now, or None if it can."""
+    zones = state["players"][player]["zones"]
+    for part in cost or []:
+        kind = part["part"]
+        if kind == "stock" and len(zones["stock"]) < part["n"]:
+            return f"needs {part['n']} stock"
+        if kind == "self_rest" and (not source or source["pos"] != "stand"):
+            return "needs this card standing"
+        if kind == "self_to" and part.get("stand") and (not source or source["pos"] != "stand"):
+            return "needs this card standing"
+        if kind == "deck_to_clock" and not zones["deck"]:
+            return "needs a card in your deck"
+        if kind in ("pick", "rest_chars") and len(cost_options(part, state, player, source, env)) < part["n"]:
+            return f"needs {part['n']} more to pay with"
+    return None
+
+
+def cost_steps(cost):
+    steps = []
+    for part in cost or []:
+        kind = part["part"]
+        if kind == "stock":
+            steps.append({"do": "pay_stock", "n": part["n"]})
+        elif kind == "self_rest":
+            steps.append({"do": "pos_self", "pos": "rest"})
+        elif kind == "self_to":
+            steps.append({"do": "self_to", "to": part["to"]})
+        elif kind == "deck_to_clock":
+            steps.append({"do": "top", "n": 1, "owner": "me", "to": "clock"})
+        elif kind == "pick":
+            steps.append({"do": "choose", "zone": part["zone"], "filter": part["filter"], "min": part["n"], "max": part["n"],
+                          "text": "Cost: choose what to pay with", "cost": True})
+            steps.append({"do": "move_it", "to": part["to"]})
+        elif kind == "rest_chars":
+            steps.append({"do": "choose", "zone": "stage", "filter": part["filter"], "min": part["n"], "max": part["n"],
+                          "text": "Cost: choose characters to rest", "cost": True})
+            steps.append({"do": "pos_it", "pos": "rest"})
+    return steps
+
+
+# Triggering ------------------------------------------------------------------------------------------
+
+def when_matches(when, event, data, player, card, env):
+    """{"that": uid} and so on if this trigger is this event, for this ability's card, else None."""
+    on = when["on"]
+    uid = card["uid"]
+    self_event = {"play": "play", "leave": "leave", "attack": "attack", "cancel": "cancel", "backup": "backup",
+                  "check_climax": "check_climax", "attack_end": "attack_end", "climax_self": "climax"}
+    if on in self_event:
+        if event != self_event[on] or data.get("uid") != uid:
+            return None
+        if on == "attack" and when.get("kind") not in (None, data.get("kind")):
+            return None
+        return {}
+    if on == "phase":
+        mine = data.get("player") == player
+        return {} if event == "phase" and when["phase"] == data["phase"] and mine == (when["whose"] == "me") else None
+    if on == "climax":
+        if event != "climax" or data.get("player") != player:
+            return None
+        return {} if not when.get("filter") or abilities.matches_filter(when["filter"], env.info(data["card"]) or {}) else None
+    if on == "climax_trigger":
+        if event != "climax_trigger" or data.get("player") != player:
+            return None
+        return {} if not when.get("filter") or abilities.matches_filter(when["filter"], env.info(data["card"]) or {}) else None
+    if on == "opp_act":
+        return {} if event == "act" and data.get("player") != player else None
+    if event == "reverse":
+        reversed_card = data["uid"]
+        if on == "reverse_self" and reversed_card == uid:
+            return {"that": data.get("by")}
+        if on == "reverse_opponent" and data.get("by") == uid:
+            level = number((env.info(data["card"]) or {}).get("level"))
+            return {"that": reversed_card} if level >= when.get("level_min", 0) else None
+        if (on == "reverse_other" and data.get("owner") == player and reversed_card != uid
+                and abilities.matches_filter(when["filter"], env.info(data["card"]) or {})):
+            return {"that": reversed_card}
+        return None
+    if event == "attack":
+        if on == "frontal" and data.get("kind") == "front" and data.get("defender") == player and data.get("target") != uid:
+            target = locate_details(data.get("target_card"), env)
+            return {"that": data["target"]} if abilities.matches_filter(when["filter"], target) else None
+        if on == "facing_attacks" and data.get("target") == uid:
+            return {"that": data.get("uid")}
+    return None
+
+
+def locate_details(card_pk, env):
+    return (env.info(card_pk) or {}) if card_pk is not None else {}
+
+
+def response_sources(side, data):
+    """(card, zone) for each card of a side that could respond to an event."""
+    sources = [(c, "stage") for c in stage_cards(side) if not c["face_down"]]
+    sources += [(c, "waiting") for c in side["zones"]["waiting"]]
+    sources += [(c, "memory") for c in side["zones"]["memory"]]
+    sources += [(c, "clock") for c in side["zones"]["clock"][-1:]]
+    return sources
+
+
+def fire(state, env, event, **data):
+    """An event happened: queue each AUTO ability it triggers. Only with turn rules on."""
+    if not rules_on(state):
+        return
+    first = state["turn"]
+    for player in [first, other_player(state, first)]:
+        side = state["players"][player]
+        seen = set()
+        explicit = data.get("source")
+        sources = response_sources(side, data)
+        if explicit is not None and data.get("source_owner") == player:
+            sources.append((explicit, "event"))
+        for card, zone in sources:
+            for ability in abilities_of(state, card, env):
+                if ability["kind"] != "auto" or not ability.get("when"):
+                    continue
+                where = ability.get("where")
+                if zone != "event" and (where or "stage") != zone:
+                    continue
+                key = (card["uid"], ability["text"])
+                if key in seen:
+                    continue
+                seen.add(key)
+                for when in ability["when"]:
+                    ctx = when_matches(when, event, data, player, card, env)
+                    if ctx is None:
+                        continue
+                    if data.get("slot"):
+                        ctx["old_slot"] = data["slot"]
+                    queue_ability(state, player, card, ability, ctx, env)
+                    break
+
+
+def used_key(card, ability):
+    return f"{card['uid']}:{ability['text'][:80]}"
+
+
+def queue_ability(state, player, card, ability, ctx, env):
+    """An AUTO ability triggered: queue it if it can still do something."""
+    if ability.get("once") and used_key(card, ability) in state.get("used", []):
+        return
+    ctx = {**ctx, "source_uid": card["uid"]}
+    if not all_met(ability, state, player, card, ctx, env):
+        return
+    first = (ability.get("steps") or [{}])[0]
+    if first.get("do") == "may" and first.get("cost") and can_pay(first["cost"], state, player, card, env):
+        return  # "you may pay the cost", and it can't be paid
+    state.setdefault("ability_queue", []).append(
+        {"id": new_uid(), "player": player, "uid": card["uid"], "card": card["card"], "ability": copy.deepcopy(ability), "ctx": ctx})
+
+
+def queue_event(state, player, card, ability, env):
+    """An event or counter card played: its text joins the queue like an ability."""
+    state.setdefault("ability_queue", []).append(
+        {"id": new_uid(), "player": player, "uid": card["uid"], "card": card["card"], "ability": copy.deepcopy(ability),
+         "ctx": {"source_uid": card["uid"]}, "event": True})
+
+
+def start_resolving(state, entry, env):
+    """Start running an ability the player has triggered or activated."""
+    ability = entry["ability"]
+    steps = copy.deepcopy(ability.get("steps", []))
+    if steps and steps[0].get("do") == "may" and entry.get("accepted", True):
+        first = steps.pop(0)  # saying yes to the prompt was the "you may"
+        steps[:0] = cost_steps(first.get("cost")) + first.get("then", [])
+    if ability.get("once"):
+        state.setdefault("used", []).append(used_key({"uid": entry["uid"]}, ability))
+    if ability.get("manual_cost"):
+        steps.insert(0, {"do": "manual", "text": "Pay this ability's cost by hand."})
+    state["resolving"] = {"player": entry["player"], "uid": entry["uid"], "card": entry["card"], "text": ability["text"],
+                          "steps": steps, "ctx": entry.get("ctx", {}), "prompt": None, "event": entry.get("event", False)}
+
+
+def activate_steps(entry):
+    """An activated ability's cost is paid first, then its effect."""
+    ability = entry["ability"]
+    entry["ability"] = {**ability, "steps": cost_steps(ability.get("cost")) + ability.get("steps", [])}
+
+
+def finish_event(state, res, env):
+    """An event that's done goes to the waiting room, unless its text put it somewhere else."""
+    if not res.get("event"):
+        return
+    owner, card, where = locate(state, res["uid"])
+    if card and where == "resolution":
+        side = state["players"][owner]
+        side["zones"]["resolution"].remove(card)
+        put(side, card, "waiting")
+
+
+# Running steps ---------------------------------------------------------------------------------------
+
+def run_abilities(state, env):
+    """Run the ability being resolved until it needs an answer, something it caused needs finishing
+    first, or it's done."""
+    for _ in range(STEP_LIMIT):
+        res = state.get("resolving")
+        if not res or res.get("prompt") or state.get("ability_show"):
+            return
+        if any(damage_in_progress(state, p) or must_level_up(state, p) for p in state["players"]):
+            return
+        if not res["steps"]:
+            state.pop("resolving")
+            finish_event(state, res, env)
+            show_ability(state, res)
+            continue
+        step = res["steps"].pop(0)
+        try:
+            run_step(step, res, state, env)
+        except BOARD_ERRORS as exc:  # a card this couldn't follow must not stop the game: hand it to the player
+            res["steps"][:0] = [{"do": "manual", "text": step.get("text") or res["text"]}]
+            add_log(state, res["player"], f"couldn't apply a step automatically ({exc}); resolve it by hand")
+
+
+def among_them(state, ctx):
+    """The cards "from among them" means: what was revealed, else what was looked at or last chosen,
+    less any that have since been moved."""
+    uids = ctx["pool"] if "pool" in ctx else ctx.get("among", [])
+    return [card for card in (locate(state, uid)[1] for uid in uids if uid not in ctx.get("moved", [])) if card]
+
+
+SHOW_TARGETS = 4  # at most this many targets shown with an ability
+
+
+def note_target(res, card):
+    """A card this ability is directed at, for show_ability. Only call this for cards both players can see."""
+    if card and not card["face_down"] and card["uid"] != res["uid"]:
+        targets = res["ctx"].setdefault("targets", [])
+        if card["uid"] not in [t["uid"] for t in targets]:
+            targets.append({"uid": card["uid"], "card": card["card"]})
+
+
+def show_ability(state, res):
+    """An ability finished, prompts and all: both pages show its card, with arrows to any cards it was
+    directed at, and everything else waits until a page sends "ability_show_done". An ability that
+    was declined and did nothing isn't shown."""
+    ctx = res["ctx"]
+    if ctx.get("declined") and not ctx.get("targets"):
+        return
+    state["ability_show"] = {"id": new_uid(), "player": res["player"], "uid": res["uid"], "card": res["card"], "text": res["text"],
+                             "targets": [t["card"] for t in ctx.get("targets", [])[:SHOW_TARGETS]]}
+
+
+def choose_options(step, res, state, env):
+    """(owner, candidates) that a choose step could pick from."""
+    player = res["player"]
+    ctx = res["ctx"]
+    opponent = other_player(state, player)
+    owner = opponent if step.get("owner") == "opp" else player
+    side = state["players"][owner]
+    zone = step["zone"]
+    if zone == "among":
+        owner = ctx.get("among_owner", player)
+        side = state["players"][owner]
+        cards = among_them(state, ctx)
+    elif zone == "stage":
+        cards = stage_cards(side)
+    elif zone in ("center", "back"):
+        cards = [c for s, c in side["stage"].items() if c and (s in OPPOSITE) == (zone == "center")]
+    else:
+        cards = side["zones"][zone]
+    x = x_value(step.get("x"), state, player, None, ctx, env)
+    filter_ = step.get("filter") or {}
+    level = len(state["players"][player]["zones"]["level"])
+    found = [c for c in cards if fits(filter_, c, env, x=x, level=level)
+             and not (filter_.get("other") and c["uid"] == res["uid"])
+             and not (filter_.get("stand") and c["pos"] != "stand")]
+    if owner != player:  # "This card cannot be chosen by your opponent's effects."
+        found = [c for c in found if not any("cannot be chosen by your opponent's effects" in a["text"]
+                                             for a in abilities_of(state, c, env))]
+    return owner, found
+
+
+def ask_cards(res, cards, owner, minimum, maximum, title, purpose="it", options=None):
+    res["prompt"] = {"kind": "cards", "for": purpose, "title": title[:1].upper() + title[1:], "owner": owner, "min": minimum, "max": maximum,
+                     "cards": [dict(card) for card in cards], "options": [c["uid"] for c in (options if options is not None else cards)]}
+
+
+def ask_choice(res, purpose, title, options, **extra):
+    res["prompt"] = {"kind": "choice", "for": purpose, "title": title[:1].upper() + title[1:],
+                     "options": [{"value": value, "label": label} for value, label in options], **extra}
+
+
+def ask_number(res, step, title):
+    ask_choice(res, "number", title, [(n, str(n)) for n in range(step["n"], -1, -1)], step=step)
+
+
+def counted(ctx, key):
+    counts = ctx.setdefault("counts", {})
+    counts[key] = counts.get(key, 0) + 1
+
+
+def move_card(state, env, actor, owner, uid, to):
+    """An ability moving a card. Moving onto the stage goes through "place"; `to` here is a zone."""
+    side = state["players"][owner]
+    card, src = take(side, uid)
+    if to == "deck_bottom":
+        put(side, card, "deck", "bottom")
+    else:
+        put(side, card, to)
+    if to not in HIDDEN_ZONES and to != "hand":
+        card["face_down"] = False
+    if src in STAGE_SLOTS:
+        discard_markers(state, owner, src)
+        if to == "waiting":
+            fire(state, env, "leave", uid=uid, source=card, source_owner=owner, slot=src)
+    target = "deck" if to == "deck_bottom" else to
+    add_log(state, actor, describe_move(card, src, target, env.name)
+            + (" (bottom)" if to == "deck_bottom" else "")
+            + (f" ({state['players'][owner]['name']}'s)" if owner != actor else ""))
+    return card
+
+
+def add_buff(state, uid, step, power, soul):
+    expires = state["turn_number"] + (1 if step.get("until") == "next" else 0)
+    state.setdefault("buffs", []).append({"uid": uid, "power": power, "soul": soul, "expires": expires, "grant": step.get("grant", [])})
+
+
+def buff_label(power, soul, grant):
+    parts = [f"{value:+d} {stat}" for value, stat in ((power, "power"), (soul, "soul")) if value]
+    if grant:
+        parts.append("a new ability")
+    return " and ".join(parts) or "nothing"
+
+
+def run_step(step, res, state, env):
+    """One step of an ability. Steps that branch or repeat put what comes next on the front of res["steps"]."""
+    player = res["player"]
+    ctx = res["ctx"]
+    do = step["do"]
+    side = state["players"][player]
+    zones = side["zones"]
+    opponent = other_player(state, player)
+
+    if do == "manual":
+        res["prompt"] = {"kind": "manual", "title": "Do this by hand", "text": step["text"]}
+    elif do == "if":
+        source = locate(state, res["uid"])[1]
+        if all(condition_met(cond, state, player, source, ctx, env) for cond in step["cond"]):
+            res["steps"][:0] = step["then"]
+    elif do == "may":
+        source = locate(state, res["uid"])[1]
+        why = can_pay(step.get("cost"), state, player, source, env)
+        if why:
+            add_log(state, player, f"couldn't pay the cost: {why}")
+            return
+        ask_choice(res, "may", step.get("text", "You may do this."), [("yes", "Yes"), ("no", "No")], step=step)
+    elif do == "options":
+        ask_choice(res, "options", "Choose 1 effect", [(i, o["text"]) for i, o in enumerate(step["options"])], step=step)
+    elif do == "for_each":
+        count = sum(abilities.matches_filter(step["filter"], env.info(pk) or {}) for pk in ctx.get("flipped", []))
+        res["steps"][:0] = copy.deepcopy(step["then"]) * count
+    elif do == "choose":
+        owner, found = choose_options(step, res, state, env)
+        if not found:
+            ctx["it"] = []
+            add_log(state, player, "had nothing to choose")
+            return
+        minimum = min(step["min"], len(found))
+        maximum = min(step["max"], len(found))
+        shown = found
+        if step["zone"] == "among":  # show everything looked at, though only some can be taken
+            shown = among_them(state, ctx)
+        ctx["it_owner"] = owner
+        ask_cards(res, shown, owner, minimum, maximum, step.get("text", "Choose"), options=found)
+        res["prompt"]["zone"] = step["zone"]
+        res["prompt"]["cost"] = step.get("cost", False)
+    elif do == "search":
+        cards = list(reversed(zones["deck"]))
+        found = [c for c in cards if fits(step["filter"], c, env, level=len(zones["level"]))]
+        add_log(state, player, "searched their deck")
+        if not found:
+            ctx["it"] = []
+            ctx["among"] = []
+            add_log(state, player, "found nothing to take")
+            return
+        ctx["it_owner"] = ctx["among_owner"] = player
+        ask_cards(res, found, player, 0, min(step["max"], len(found)), step.get("text", "Search your deck"), purpose="search")
+    elif do == "move_it":
+        owner = ctx.get("it_owner", player)
+        for uid in ctx.get("it", []):
+            if locate(state, uid)[1]:
+                move_card(state, env, player, owner, uid, step["to"])
+                ctx.setdefault("moved", []).append(uid)
+                if step["to"] in ("hand", "stock"):
+                    counted(ctx, step["to"])
+    elif do == "dest":
+        if ctx.get("it"):
+            labels = {"hand": "Hand", "stock": "Stock", "deck": "Top of deck", "deck_bottom": "Bottom of deck", "waiting": "Waiting room"}
+            owner = ctx.get("it_owner", player)
+            shown = [c for c in (locate(state, uid)[1] for uid in ctx["it"]) if c]
+            ask_choice(res, "dest", "Where does it go?", [(to, labels[to]) for to in step["options"]],
+                       cards=[dict(c) for c in shown], owner=owner)
+    elif do == "place":
+        if ctx.get("it"):
+            slots = [s for s in STAGE_SLOTS if not (step.get("open") and side["stage"][s])]
+            if not slots:
+                add_log(state, player, "had no open stage position")
+                return
+            shown = [c for c in (locate(state, uid)[1] for uid in ctx["it"]) if c]
+            ask_choice(res, "place", "Choose a stage position", [(s, LABELS[s].capitalize()) for s in slots],
+                       cards=[dict(c) for c in shown], owner=player, rest=step.get("rest", False))
+    elif do == "to_old_slot":
+        uid = res["uid"] if step.get("self") else (ctx.get("it") or [None])[0]
+        slot = ctx.get("old_slot") or ctx.get("self_slot")
+        if uid and slot and not side["stage"][slot] and locate(state, uid)[0] == player:
+            card, _ = take(side, uid)
+            put(side, card, slot)
+            card["pos"] = "rest" if step.get("rest") else "stand"
+            add_log(state, player, f"put {env.name(card['card'])} on {LABELS[slot]}")
+    elif do == "marker":
+        slot = slot_of(side, res["uid"])
+        if slot:
+            for uid in ctx.get("it", []):
+                card, _ = take(side, uid)
+                put(side, card, MARKER + slot, face_down=step.get("face_down"))
+            add_log(state, player, f"put {len(ctx.get('it', []))} marker(s) under {LABELS[slot]}")
+    elif do == "rest":
+        owner = ctx.get("among_owner", player)
+        for uid in ctx.get("among", []):
+            if uid not in ctx.get("moved", []) and locate(state, uid)[1]:
+                move_card(state, env, player, owner, uid, step["to"])
+                ctx.setdefault("moved", []).append(uid)
+        ctx.pop("pool", None)
+        ctx["among"] = []
+    elif do == "order_top":
+        owner = ctx.get("among_owner", player)
+        cards = [c for c in among_them(state, {"among": ctx.get("among", []), "moved": ctx.get("moved", [])})]
+        if len(cards) > 1:
+            ask_cards(res, cards, owner, len(cards), len(cards), "Pick them in order: the first you pick goes on top", purpose="order")
+    elif do == "reveal_it":
+        names = [env.name(card["card"]) for card in (locate(state, uid)[1] for uid in ctx.get("it", [])) if card]
+        if names:
+            add_log(state, player, "revealed " + ", ".join(names))
+        for uid in ctx.get("it", []):
+            note_target(res, locate(state, uid)[1])
+        ctx["pool"] = list(ctx.get("it", []))
+    elif do == "pos_it":
+        for uid in ctx.get("it", []):
+            card = locate(state, uid)[1]
+            if card:
+                set_position(state, env, player, card, step["pos"])
+    elif do == "pos_self":
+        card = locate(state, res["uid"])[1]
+        if card:
+            card["pos"] = step["pos"]
+            ctx["self_slot"] = ctx.get("self_slot") or slot_of(side, res["uid"])
+    elif do == "pos_that":
+        card = locate(state, ctx.get("that"))[1] if ctx.get("that") else None
+        if card:
+            note_target(res, card)
+            set_position(state, env, player, card, step["pos"])
+    elif do == "pay_stock":
+        for _ in range(min(step["n"], len(zones["stock"]))):
+            put(side, zones["stock"].pop(), "waiting")
+        add_log(state, player, f"paid {step['n']} stock")
+    elif do == "buff":
+        apply_buff(step, res, state, env)
+    elif do == "draw":
+        if step.get("upto"):
+            ask_number(res, {**step, "upto": False}, "How many cards to draw?")
+            return
+        drawn = 0
+        for _ in range(step["n"]):
+            if not zones["deck"] and zones["waiting"]:
+                refresh(state, player, env.name, env.shuffle)
+            if not zones["deck"]:
+                break
+            put(side, zones["deck"].pop(), "hand")
+            drawn += 1
+            counted(ctx, "drew")
+        add_log(state, player, f"drew {drawn} card{'s' if drawn != 1 else ''}")
+    elif do == "top":
+        if step.get("upto"):
+            ask_number(res, {**step, "upto": False}, "How many cards?")
+            return
+        owner = opponent if step.get("owner") == "opp" else player
+        target = state["players"][owner]
+        moved = []
+        for _ in range(step["n"]):
+            if not target["zones"]["deck"]:
+                break
+            card = target["zones"]["deck"].pop()
+            put(target, card, step["to"])
+            moved.append(card)
+        add_log(state, owner, f"put the top {len(moved)} of their deck into {LABELS[step['to']]}"
+                + (": " + ", ".join(env.name(c["card"]) for c in moved) if step["to"] != "stock" else ""))
+    elif do == "clock_card":
+        if step.get("upto"):
+            ask_number(res, {**step, "upto": False}, "How many cards?")
+            return
+        owner = opponent if step.get("owner") == "opp" else player
+        target = state["players"][owner]
+        for _ in range(step.get("n", 1)):
+            clock = target["zones"]["clock"]
+            if not clock:
+                break
+            card = clock.pop(-1 if step["end"] == "top" else 0)
+            put(target, card, step["to"])
+            add_log(state, owner, f"put {env.name(card['card'])} from their clock into {LABELS[step['to']]}")
+    elif do == "look":
+        if step.get("upto"):
+            ask_number(res, {**step, "upto": False}, "Look at how many cards?")
+            return
+        owner = opponent if step.get("owner") == "opp" else player
+        deck = state["players"][owner]["zones"]["deck"]
+        cards = list(reversed(deck[-step["n"]:])) if step["n"] else []
+        ctx["among"] = [c["uid"] for c in cards]
+        ctx["it"] = list(ctx["among"])
+        ctx.pop("pool", None)
+        ctx["it_owner"] = ctx["among_owner"] = owner
+        add_log(state, player, f"looked at the top {len(cards)} of {'their' if owner == player else 'the opponent'}'s deck".replace("their's", "their"))
+    elif do == "shuffle":
+        owner = opponent if step.get("owner") == "opp" else player
+        target = state["players"][owner]["zones"]["deck"]
+        env.shuffle(target)
+        for card in target:
+            card["uid"] = new_uid()
+        add_log(state, owner, "shuffled their deck")
+    elif do == "reveal_top":
+        if zones["deck"]:
+            top = zones["deck"][-1]
+            ctx["revealed"] = top["card"]
+            add_log(state, player, f"revealed the top card of their deck: {env.name(top['card'])}")
+    elif do == "flip":
+        cards = list(reversed(zones["deck"][-step["n"]:]))
+        ctx["it"] = [c["uid"] for c in cards]
+        ctx["it_owner"] = player
+        ctx["flipped"] = [c["card"] for c in cards]
+        add_log(state, player, "flipped over " + (", ".join(env.name(c["card"]) for c in cards) or "nothing"))
+    elif do == "damage":
+        deal_damage(state, opponent, step["n"], step["n"], [], env.name, env.is_climax)
+    elif do == "waiting_to_deck":
+        for card in zones["waiting"]:
+            put(side, card, "deck")
+        count = len(zones["waiting"])
+        zones["waiting"] = []
+        add_log(state, player, f"returned {count} cards from their waiting room to their deck")
+    elif do == "self_to":
+        owner, card, where = locate(state, res["uid"])
+        if card:
+            if where in STAGE_SLOTS:
+                ctx["self_slot"] = where
+            move_card(state, env, player, owner, res["uid"], step["to"])
+    elif do == "self_it":
+        ctx["it"] = [res["uid"]] if locate(state, res["uid"])[1] else []
+        ctx["it_owner"] = player
+    elif do == "that_to":
+        owner, card, _ = locate(state, ctx.get("that")) if ctx.get("that") else (None, None, None)
+        if card:
+            note_target(res, card)
+            move_card(state, env, player, owner, card["uid"], step["to"])
+    elif do == "double_check":
+        if state.get("attack") and "checking" in state["attack"]:
+            state["attack"]["checks"] = 2
+    elif do == "double_check_pay":
+        if state.get("attack") and state["attack"].get("checks") == 2:
+            state["attack"]["check_pay"] = 1
+    else:
+        res["prompt"] = {"kind": "manual", "title": "Do this by hand", "text": res["text"]}
+
+
+def apply_buff(step, res, state, env):
+    player = res["player"]
+    ctx = res["ctx"]
+    if step["target"] == "it":
+        cards = [locate(state, uid)[1] for uid in ctx.get("it", [])]
+    elif step["target"] == "self":
+        cards = [locate(state, res["uid"])[1]]
+    else:
+        side = state["players"][player]
+        cards = [c for c in stage_cards(side) if fits(step["filter"], c, env)]
+    on_stage = {card["uid"] for side in state["players"].values() for card in stage_cards(side)}
+    for card in cards:
+        if not card or card["uid"] not in on_stage:
+            continue
+        power, soul = step.get("power", 0), step.get("soul", 0)
+        if step.get("x_stat"):
+            amount = x_value(step.get("x"), state, player, card, ctx, env)
+            if step["x_stat"] == "power":
+                power += amount
+            else:
+                soul += amount
+        note_target(res, card)
+        add_buff(state, card["uid"], step, power, soul)
+        add_log(state, player, f"gave {env.name(card['card'])} {buff_label(power, soul, step.get('grant'))}")
+
+
+def set_position(state, env, actor, card, pos):
+    card["pos"] = pos
+    add_log(state, actor, f"{ {'stand': 'stood', 'rest': 'rested', 'reverse': 'reversed'}[pos] } {env.name(card['card'])}")
+    if pos == "reverse":
+        owner = locate(state, card["uid"])[0]
+        fire(state, env, "reverse", uid=card["uid"], owner=owner, card=card["card"])
+
+
+def answer_ability(state, player, action, env):
+    """The player's answer to the prompt of the ability being resolved."""
+    res = state.get("resolving")
+    prompt = (res or {}).get("prompt")
+    if not prompt or res["player"] != player:
+        raise GameError("There's nothing for you to answer right now.")
+    ctx = res["ctx"]
+    kind = prompt["kind"]
+    if kind == "manual":
+        res["prompt"] = None
+        add_log(state, player, "finished a step by hand")
+    elif kind == "cards":
+        uids = list(dict.fromkeys(action.get("uids") or []))
+        if not set(uids) <= set(prompt["options"]) or not prompt["min"] <= len(uids) <= prompt["max"]:
+            raise GameError(f"Choose between {prompt['min']} and {prompt['max']} of those cards.")
+        res["prompt"] = None
+        purpose = prompt.get("for")
+        if purpose == "order":
+            owner = prompt["owner"]
+            side = state["players"][owner]
+            taken = [take(side, uid)[0] for uid in uids]
+            for card in reversed(taken):
+                put(side, card, "deck")
+            add_log(state, player, f"put {len(taken)} cards back on top of the deck")
+            return
+        ctx["it"] = uids
+        if prompt.get("zone") in PUBLIC_CHOICES and not prompt.get("cost"):
+            for uid in uids:
+                note_target(res, locate(state, uid)[1])
+        if prompt.get("zone") != "among":  # what's chosen is what a later "from among them" or "the rest" means
+            ctx["among"] = list(uids)
+            ctx["among_owner"] = prompt["owner"]
+            ctx.pop("pool", None)
+    else:
+        value = action.get("value")
+        if value not in [option["value"] for option in prompt["options"]]:
+            raise GameError("That's not one of the choices.")
+        res["prompt"] = None
+        purpose = prompt["for"]
+        step = prompt.get("step")
+        if purpose == "may":
+            if value == "yes":
+                res["steps"][:0] = cost_steps(step.get("cost")) + step.get("then", [])
+            else:
+                ctx["declined"] = True
+                add_log(state, player, "chose not to")
+        elif purpose == "options":
+            res["steps"][:0] = step["options"][value]["steps"]
+        elif purpose == "number":
+            res["steps"].insert(0, {**step, "n": value})
+        elif purpose == "dest":
+            owner = prompt.get("owner", player)
+            for uid in ctx.get("it", []):
+                if locate(state, uid)[1]:
+                    move_card(state, env, player, owner, uid, value)
+                    ctx.setdefault("moved", []).append(uid)
+                    if value in ("hand", "stock"):
+                        counted(ctx, value)
+        elif purpose == "place":
+            side = state["players"][player]
+            for uid in ctx.get("it", []):
+                card, src = take(side, uid)
+                occupant = put(side, card, value)
+                card["pos"] = "rest" if prompt.get("rest") else "stand"
+                if occupant:
+                    put(side, occupant, "waiting")
+                    discard_markers(state, player, value)
+                    fire(state, env, "leave", uid=occupant["uid"], source=occupant, source_owner=player, slot=value)
+                add_log(state, player, f"put {env.name(card['card'])} on {LABELS[value]}")
+                break
+
+
+def act_status(state, player, card, ability, where, env):
+    """Why this card's ability can't be activated now, or None if it can."""
+    if rules_on(state):
+        if state["turn"] != player or state.get("phase") != "main":
+            return "only in your main phase"
+    if abilities_busy(state):
+        return "another ability is resolving"
+    if ability.get("once") and used_key(card, ability) in state.get("used", []):
+        return "already used this turn"
+    if where in STAGE_SLOTS and card["face_down"]:
+        return "this card is face down"
+    return can_pay(ability.get("cost"), state, player, card, env)
+
+
+def activatable(ability):
+    """ACT abilities, and AUTO abilities whose trigger couldn't be read (so they can be started by hand)."""
+    return ability["kind"] == "act" or (ability["kind"] == "auto" and not ability.get("when"))
+
+
+def player_acts(state, player, env):
+    """{uid: [{"index", "text", "why"}, ...]} for the cards that show the ! button."""
+    side = state["players"][player]
+    result = {}
+    places = [(c, slot_of(side, c["uid"])) for c in stage_cards(side)] + [(c, "waiting") for c in side["zones"]["waiting"]]
+    for card, where in places:
+        rows = []
+        for index, ability in enumerate(abilities_of(state, card, env)):
+            if not activatable(ability):
+                continue
+            wants = ability.get("where")
+            if (where == "waiting") != (wants == "waiting"):
+                continue
+            rows.append({"index": index, "card": card["card"], "text": ability["text"], "why": act_status(state, player, card, ability, where, env)})
+        if rows:
+            result[card["uid"]] = rows
+    return result
+
+
+def activate(state, player, action, env):
+    """The ! button: pay an activated ability's cost and resolve it."""
+    side = state["players"][player]
+    where, _ = find(side, action.get("uid", ""))
+    card = locate(state, action["uid"])[1]
+    found = abilities_of(state, card, env)
+    try:
+        ability = found[int(action.get("index", 0))]
+    except (TypeError, ValueError, IndexError):
+        raise GameError("That card doesn't have that ability.")
+    if not activatable(ability):
+        raise GameError("That ability can't be activated.")
+    why = act_status(state, player, card, ability, where, env)
+    if why:
+        raise GameError(f"Can't activate that: {why}.")
+    add_log(state, player, f"activated {env.name(card['card'])}: {ability['text']}")
+    if not ability.get("when") and ability["kind"] == "auto":
+        ability = {**ability, "steps": [{"do": "manual", "text": ability["text"]}]}
+    entry = {"player": player, "uid": card["uid"], "card": card["card"], "ability": copy.deepcopy(ability),
+             "ctx": {"source_uid": card["uid"], "self_slot": where if where in STAGE_SLOTS else None}, "accepted": False}
+    activate_steps(entry)
+    start_resolving(state, entry, env)
+    fire(state, env, "act", player=player)
+
+
+def trigger_ability(state, player, action, env):
+    """A queued ability's prompt answered: trigger it, or skip it."""
+    if state.get("resolving") or state.get("ability_show"):
+        raise GameError("Finish the ability being resolved first.")
+    queue = state.get("ability_queue") or []
+    entry = next((e for e in queue if e["id"] == action.get("id")), None)
+    if not entry or entry["player"] != player:
+        raise GameError("That ability isn't waiting for you.")
+    if queue_chooser(state) != player:
+        raise GameError("The other player's abilities go first.")
+    queue.remove(entry)
+    if not queue:
+        state.pop("ability_queue", None)
+    name = env.name(entry["card"])
+    if not action.get("accept"):
+        add_log(state, player, f"skipped the ability of {name}")
+        if entry.get("event"):
+            finish_event(state, {"event": True, "uid": entry["uid"]}, env)
+        return
+    add_log(state, player, f"triggered the ability of {name}")
+    start_resolving(state, entry, env)
+
+
+def queue_chooser(state):
+    """Whose queued abilities come next: the turn player's first."""
+    queue = state.get("ability_queue") or []
+    if any(e["player"] == state["turn"] for e in queue):
+        return state["turn"]
+    return queue[0]["player"] if queue else None
+
+
+def ability_view(state, player):
+    """What the page shows about abilities: the running ability (its prompt, which can show hidden
+    cards, only to the player answering it) and queued abilities to trigger."""
+    shown = state.get("ability_show")
+    if shown:
+        return {"resolving": True, "mine": shown["player"] == player, "card": shown["card"], "uid": shown["uid"], "text": shown["text"],
+                "by": state["players"][shown["player"]]["name"], "prompt": None}
+    res = state.get("resolving")
+    if res:
+        mine = res["player"] == player
+        prompt = res.get("prompt")
+        return {"resolving": True, "mine": mine, "card": res["card"], "uid": res["uid"], "text": res["text"],
+                "by": state["players"][res["player"]]["name"],
+                "prompt": prompt_view(state, prompt) if prompt and mine else None}
+    queue = state.get("ability_queue") or []
+    if not queue:
+        return None
+    chooser = queue_chooser(state)
+    if chooser != player:
+        return {"resolving": False, "mine": False, "by": state["players"][chooser]["name"]}
+    return {"resolving": False, "mine": True, "queue": [
+        {"id": e["id"], "card": e["card"], "uid": e["uid"], "text": e["ability"]["text"], "event": e.get("event", False)}
+        for e in queue if e["player"] == player]}
+
+
+def prompt_view(state, prompt):
+    """A prompt for the player answering it. Face-down cards of the opponent's stay face down."""
+    shown = {key: value for key, value in prompt.items() if key != "step"}
+    if "cards" in shown:
+        cards = []
+        for card in shown["cards"]:
+            where = locate(state, card["uid"])[2]
+            hidden = where in STAGE_SLOTS and card["face_down"] and prompt.get("owner") != state["resolving"]["player"]
+            cards.append({**card_view(card, not hidden), "where": where})
+        shown["cards"] = cards
+    return shown
 
 
 # --- What each player sees -------------------------------------------------------------------------
@@ -1083,6 +2437,15 @@ def visible_cards(view):
             pks.update(c["card"] for c in cards if c["card"])
     if (view.get("reveal") or {}).get("card"):
         pks.add(view["reveal"]["card"])
+    ability = view.get("ability") or {}
+    if ability.get("card"):
+        pks.add(ability["card"])
+    pks.update(entry["card"] for entry in ability.get("queue", []))
+    pks.update(c["card"] for c in (ability.get("prompt") or {}).get("cards", []) if c["card"])
+    pks.update(row["card"] for rows in view.get("acts", {}).values() for row in rows)
+    shown = view.get("ability_show") or {}
+    if shown:
+        pks.update([shown["card"], *shown["targets"]])
     return pks
 
 
@@ -1090,9 +2453,19 @@ def attack_view(state, player):
     attack = state.get("attack")
     if not attack:
         return None
-    shown = {k: v for k, v in attack.items() if k not in ("counters", "dealt", "cancelled")}
+    shown = {k: v for k, v in attack.items() if k not in ("counters", "dealt", "cancelled", "soul_extra", "cancel_fired", "checks", "check_pay")}
     if player != state["turn"]:
         shown["counters"] = attack.get("counters", [])
+    return shown
+
+
+def stats_view(state, player):
+    """Characters' current power and soul, for the ones this player can see."""
+    shown = {}
+    for owner, side in state["players"].items():
+        for card in stage_cards(side):
+            if (owner == player or not card["face_down"]) and card["uid"] in state.get("stats", {}):
+                shown[card["uid"]] = state["stats"][card["uid"]]
     return shown
 
 
@@ -1111,6 +2484,8 @@ def view(state, player):
         # This player has to choose a clock card for their level zone before playing on.
         "level_up_pending": must_level_up(state, player),
         "turn_number": state["turn_number"],
+        "game_number": state.get("game_number", 1),
+        "rps": rps_view(state, player),
         "phase": state.get("phase", "main"),
         "attacks": state.get("attacks", 0),
         "rules": rules_on(state),
@@ -1133,5 +2508,18 @@ def view(state, player):
         "attack": attack_view(state, player),
         # A climax this player just played is showing; their page moves on to the attack phase shortly.
         "climax_pending": state.get("pending_climax") == player,
+        # {"won": did this player win, "rematch": have they asked, "opponent_rematch": has the other player}
+        "game_over": ({"won": state["game_over"]["winner"] == player, "reason": state["game_over"].get("reason", "level"), "rematch": player in state["game_over"]["rematch"],
+                       "opponent_rematch": other in state["game_over"]["rematch"]} if state.get("game_over") else None),
+        # Games won in this series, for the first player and then the second, on both players' screens.
+        "match_wins": [{"name": state["players"][p]["name"], "wins": state.get("match_wins", {}).get(p, 0)} for p in state["order"]],
+        "ability": ability_view(state, player),
+        # An ability that just resolved, for both pages to show: {"id", "card", "targets": [card, ...], "mine"}.
+        "ability_show": ({"id": state["ability_show"]["id"], "card": state["ability_show"]["card"], "targets": state["ability_show"]["targets"],
+                          "mine": state["ability_show"]["player"] == player} if state.get("ability_show") else None),
+        "needs_color": state.get("needs_color", {}).get(player, {}),
+        "stats": stats_view(state, player),
+        # This player's cards with a ! button, and why each ability can't be activated right now.
+        "acts": state.get("acts", {}).get(player, {}),
         "log": state["log"][-50:],
     }

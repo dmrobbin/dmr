@@ -32,6 +32,8 @@
   const CLIMAX_SHOW_MS = 2000; // how long a climax played in the climax phase shows before the attack phase
   const PHASE_PAUSE_MS = 900; // how long a phase that ended itself stays before the next begins
   const PHASE_NAME_FX = ["fx-pop", "fx-flip", "fx-slide", "fx-glow"]; // a new phase's name comes in with one of these
+  const RPS_SHOW_MS = 3000; // how long rock, paper, scissors' result shows before the mulligan
+  const SHOW_FALLBACK_MS = 3000; // how much later than its owner the other player's page ends an ability's show
   const CLIMAX_EFFECTS = ["climax-zoom", "climax-spin", "climax-slide", "climax-flip", "climax-drop", "climax-blur"];
   const MOVE_TARGETS = ["hand", "C1", "C2", "C3", "B1", "B2", "climax", "clock", "level", "stock",
     "memory", "waiting", "resolution"];
@@ -65,8 +67,11 @@
   let refreshTimer = null; // pending "continue_damage" after a damage empties our deck
   let climaxTimer = null; // pending move to the attack phase after we play a climax
   let autoTimer = null; // pending move to the next phase after one ended itself (board.auto_next)
+  let showTimer = null; // pending end of an ability being shown (board.ability_show)
+  let rpsTimer = null; // pending end of rock, paper, scissors' result
   const mulliganPicks = new Set(); // hand cards picked to mulligan away
   const discardPicks = new Set(); // hand cards picked for the end phase's discard
+  let abilityPicks = []; // cards picked for an ability's prompt, in the order they were picked
 
   // Board view: "focus" (big stage, piles around it) or "classic" (three even rows). Remembered
   // per browser; storage can be unavailable (private windows), so it falls back to focus.
@@ -125,20 +130,39 @@
       }, DAMAGE_RESOLVE_MS);
     }
     // A phase of our turn ended itself: pause on it, then move on (the server drops this if the
-    // turn has moved on some other way in the meantime).
-    if (board.auto_next && board.my_turn && !autoTimer) {
+    // turn has moved on some other way in the meantime). Abilities being resolved hold this up;
+    // the board that arrives once they're done starts it again.
+    if (board.auto_next && board.my_turn && !board.ability && !autoTimer) {
       const next = board.auto_next;
       autoTimer = setTimeout(() => {
         autoTimer = null;
-        if (board.auto_next === next && board.my_turn) act({ type: "phase", phase: next, auto: true });
+        if (board.auto_next === next && board.my_turn && !board.ability) act({ type: "phase", phase: next, auto: true });
       }, PHASE_PAUSE_MS);
     }
-    // We played a climax in the climax phase: let it show, then move on to the attack phase.
-    if (board.climax_pending && !climaxTimer) {
+    // We played a climax in the climax phase: let it show, then move on to the attack phase
+    // (once any abilities it triggered have been resolved).
+    if (board.climax_pending && !board.ability && !climaxTimer) {
       climaxTimer = setTimeout(() => {
         climaxTimer = null;
-        if (board.climax_pending) act({ type: "phase", phase: "attack" });
+        if (board.climax_pending && !board.ability) act({ type: "phase", phase: "attack" });
       }, CLIMAX_SHOW_MS);
+    }
+    // An ability is being shown: once it has been, play carries on. Its owner's page says so; the
+    // other page does too a little later, in case the owner has gone away.
+    if (board.ability_show && !showTimer) {
+      const { id, mine } = board.ability_show;
+      const delay = (animations ? CLIMAX_SHOW_MS : 0) + (mine ? 0 : SHOW_FALLBACK_MS);
+      showTimer = setTimeout(() => {
+        showTimer = null;
+        if (board.ability_show && board.ability_show.id === id) act({ type: "ability_show_done", id });
+      }, delay);
+    }
+    // Rock, paper, scissors has a winner: let both players see it, then on to the mulligan.
+    if (board.rps && board.rps.won !== null && !rpsTimer) {
+      rpsTimer = setTimeout(() => {
+        rpsTimer = null;
+        if (board.rps) act({ type: "rps_done" });
+      }, RPS_SHOW_MS);
     }
     // A damage emptied our deck: pause a moment, then the server refreshes it and deals the rest.
     if (board.refresh_pending && !refreshTimer) {
@@ -155,9 +179,16 @@
   // sets these, so reopening the page doesn't replay old ones.
   let seen = null;
 
+  let shownAbility = null; // the id of the last ability shown
+
   function announce() {
     const now = {};
     const show = animations && seen;
+    const ability = board.ability_show;
+    if (ability && ability.id !== shownAbility) {
+      shownAbility = ability.id;
+      if (show) showAbility(ability);
+    }
     for (const owner of ["me", "opponent"]) {
       const side = owner === "me" ? board.me : board.opponent;
       if (!side) continue;
@@ -187,6 +218,46 @@
     el.innerHTML = `<img src="${esc(info.image)}" alt="Climax: ${esc(info.name)}">`;
     document.body.appendChild(el);
     el.addEventListener("animationend", () => el.remove());
+  }
+
+  // An ability that has resolved: its card, in the middle of the screen with the same entrance as a
+  // climax, with an arrow to each card it was directed at.
+  function showAbility(ability) {
+    const source = cards[ability.card];
+    if (!source) return;
+    const targets = ability.targets.map((pk) => cards[pk]).filter(Boolean);
+    const el = document.createElement("div");
+    el.className = `climax-show ${CLIMAX_EFFECTS[Math.floor(Math.random() * CLIMAX_EFFECTS.length)]}`;
+    el.style.animationDuration = `${CLIMAX_SHOW_MS}ms`;
+    el.innerHTML = targets.length
+      ? `<div class="ability-show" style="--targets: ${targets.length}">
+          <img data-source src="${esc(source.image)}" alt="Ability: ${esc(source.name)}">
+          <div class="ability-show-targets">${targets.map((t) => `<img data-target src="${esc(t.image)}" alt="Target: ${esc(t.name)}">`).join("")}</div>
+          <svg class="ability-arrows" aria-hidden="true"></svg>
+        </div>`
+      : `<img src="${esc(source.image)}" alt="Ability: ${esc(source.name)}">`;
+    document.body.appendChild(el);
+    el.addEventListener("animationend", () => el.remove());
+    if (targets.length) {
+      const images = [...el.querySelectorAll("img")].map((img) => img.decode().catch(() => {}));
+      Promise.all(images).then(() => drawArrows(el));
+    }
+  }
+
+  // Arrows from the shown ability's card to its targets, measured without the entrance's transform.
+  function drawArrows(el) {
+    const box = el.querySelector(".ability-show");
+    const svg = box.querySelector(".ability-arrows");
+    const from = box.querySelector("[data-source]");
+    const startX = from.offsetLeft + from.offsetWidth;
+    const startY = from.offsetTop + from.offsetHeight / 2;
+    const GAP = 8;
+    svg.setAttribute("width", box.offsetWidth);
+    svg.setAttribute("height", box.offsetHeight);
+    svg.innerHTML = `<defs><marker id="ability-arrowhead" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+        <path d="M0 0 L5 2.5 L0 5 z" fill="#ffd964"/></marker></defs>`
+      + [...box.querySelectorAll("[data-target]")].map((to) => `<line x1="${startX + GAP}" y1="${startY}"
+        x2="${to.offsetLeft - GAP}" y2="${to.offsetTop + to.offsetHeight / 2}" stroke="#ffd964" stroke-width="5" marker-end="url(#ability-arrowhead)"/>`).join("");
   }
 
   // The point halfway between the centers of two zones on one side of the table.
@@ -454,7 +525,7 @@
       if (modal && modal.revealed && action.uid && !data.error) {
         modal.revealed = modal.revealed.filter((c) => c.uid !== action.uid);
       }
-      if (data.board) receive(data); else render();
+      if (data.board || data.status) receive(data); else render();
     } catch (e) {
       error = "Couldn't reach the server. Try again.";
       render();
@@ -486,45 +557,42 @@
       : '<span class="pcard-back"></span>';
     const badge = card.pos === "reverse" ? '<span class="pcard-badge">REVERSE</span>'
       : card.face_down && info ? '<span class="pcard-badge">face down</span>' : "";
-    const side = STAGE.includes(zone) ? (owner === "me" ? board.me : board.opponent) : null;
     const stats = info && !card.face_down
-      ? statsHtml(info, { boost: side && climaxBoost(side), soul: STAGE.includes(zone) && zone.startsWith("C") })
+      ? statsHtml(info, { live: (board.stats || {})[card.uid], soul: STAGE.includes(zone) && zone.startsWith("C") })
       : "";
     return `<div class="${classes.join(" ")}" ${attrs} tabindex="0">${face}${stats}${badge}</div>`;
-  }
-
-  // Level and cost in the top-left corner and power in the bottom-left, where the printed card has
-  // them, but large enough to read at board size. Left-side so they show on overlapped piles too.
-  // A climax whose text says "all of your characters get +X power and +Y soul", sitting in a
-  // side's climax zone, boosts every character on that side; the board shows the boosted numbers.
-  const CLIMAX_BOOST = /all of your characters get \+(\d+) power and \+(\d+) soul/i;
-  function climaxBoost(side) {
-    const top = side.zones.climax[side.zones.climax.length - 1];
-    const info = top && top.card && !top.face_down ? cards[top.card] : null;
-    const match = info && info.text && info.text.match(CLIMAX_BOOST);
-    return match ? { power: Number(match[1]), soul: Number(match[2]) } : null;
   }
 
   // The soul icon: a flame-like wisp, close to the one printed on Weiss Schwarz cards.
   const SOUL_ICON = '<svg viewBox="0 0 16 22" aria-hidden="true"><path d="M8.6 0c.6 3.4 3.2 5 5 8.3 2.6 4.6.4 11.9-5.6 12.9C2.4 22-1.6 15.8 1.3 10.9c.9-1.6 2.4-2.6 2.9-4.6.9 1.9.6 3.6 2 4.4C5.5 7 9.4 4.4 8.6 0z"/></svg>';
 
-  // Level and cost in the top-left corner and power in the bottom-left; front-row characters also
-  // show their soul in the bottom-right. `boost` is a climax's bonus to power and soul.
-  function statsHtml(info, { boost = null, soul = false } = {}) {
+  // Level and cost in the top-left corner and power in the bottom-left, where the printed card has
+  // them, but large enough to read at board size. Left-side so they show on overlapped piles too.
+  // Front-row characters also show their soul in the bottom-right. `live` is the character's power
+  // and soul right now, worked out by the server from climaxes, abilities and effects on it: numbers
+  // above the printed ones glow green, numbers below it glow red.
+  function statsHtml(info, { live = null, soul = false } = {}) {
     const has = (value) => value !== null && value !== undefined && value !== "";
     const corner = [
       has(info.level) ? `<span class="stat stat-level" title="Level">${esc(info.level)}</span>` : "",
       has(info.cost) ? `<span class="stat stat-cost" title="Cost">${esc(info.cost)}</span>` : "",
     ].join("");
-    const boosted = boost ? " boosted" : "";
-    const power = has(info.power)
-      ? `<span class="stat stat-power${boosted}" title="Power${boost ? ` (+${boost.power} from the climax)` : ""}">${esc(Number(info.power) + (boost ? boost.power : 0))}</span>`
-      : "";
+    // A number's value right now, its glow, and its tooltip's note about the change from the card.
+    const current = (printed, now) => {
+      const value = now === undefined ? Number(printed) : now;
+      const change = value - Number(printed);
+      return { value, glow: change > 0 ? " boosted" : change < 0 ? " lowered" : "", note: change ? ` (${change > 0 ? "+" : ""}${change} from abilities)` : "" };
+    };
+    let power = "";
+    if (has(info.power)) {
+      const { value, glow, note } = current(info.power, live ? live.power : undefined);
+      power = `<span class="stat stat-power${glow}" title="Power${note}">${esc(value)}</span>`;
+    }
     let souls = "";
     if (soul && has(info.soul)) {
-      const count = Number(info.soul) + (boost ? boost.soul : 0);
-      const icons = count <= 3 ? SOUL_ICON.repeat(count) : `${SOUL_ICON}<b>×${count}</b>`;
-      souls = `<span class="stat-soul${boosted}" title="Soul ${count}${boost ? ` (+${boost.soul} from the climax)` : ""}">${icons}</span>`;
+      const { value, glow, note } = current(info.soul, live ? live.soul : undefined);
+      const icons = value <= 3 ? SOUL_ICON.repeat(value) : `${SOUL_ICON}<b>×${value}</b>`;
+      souls = `<span class="stat-soul${glow}" title="Soul ${value}${note}">${icons}</span>`;
     }
     if (!corner && !power && !souls) return "";
     return `<span class="pcard-stats">${corner ? `<span class="stat-corner">${corner}</span>` : ""}${power}${souls}</span>`;
@@ -627,7 +695,7 @@
     const clock = inPhase("clock") ? move("clock", "🕒") : "";
     const reveal = board.reveal ? "" : iconButton({ type: "reveal", uid: card.uid }, "👁", "Reveal to your opponent");
     const piles = `<div class="hand-center">${clock}${move("waiting", "🪦")}${clockDraw}${reveal}</div>`;
-    const affordable = canPay(info);
+    const affordable = canPay(info) && !colorMissing(card);
     let rows = "";
     if (type === "character" && affordable && inPhase("main")) {
       rows = `<div class="hand-center">${move("C1", "L")}${move("C2", "M")}${move("C3", "R")}</div>
@@ -645,6 +713,8 @@
     if (attack && attack.step === "counter" && (attack.counters || []).includes(card.uid)) {
       rows = `<button type="button" class="counter-button" data-act='${esc(JSON.stringify({ type: "counter", uid: card.uid }))}'>Counter</button>` + rows;
     }
+    const needs = inPhase("main", "climax") ? colorMissing(card) : null;
+    if (needs) rows = `<span class="hand-needs">Needs ${esc(needs)}</span>` + rows;
     rows += piles;
     return `<div class="hand-actions">
       ${rows}
@@ -658,6 +728,9 @@
   const inPhase = (...phases) => !board.rules || (board.my_turn && phases.includes(board.phase));
   // Whether our stock covers a card's cost (cards with no cost are free; so is everything with the rules off).
   const canPay = (info) => !board.rules || !info || !info.cost || board.me.zones.stock.count >= info.cost;
+
+  // The color the server says the color rule is holding this hand card back for, or null.
+  const colorMissing = (card) => (board.needs_color || {})[card.uid] || null;
 
   // Which colors are in our clock and level zone (how many cards doesn't matter), in a strip
   // between the board and the hand, under the waiting room.
@@ -696,6 +769,16 @@
       <div class="slot-pos slot-pos-bottom">${button({ type: "move", uid: card.uid, to: "hand" }, "✋", "To hand")}</div>`;
   }
 
+  // The ! button, on any card of ours with an ability that can be activated. It opens the list of
+  // those abilities (see renderAbilityList); it's dimmed when none of them can be used right now.
+  function activateButtonHtml(card) {
+    const rows = (board.acts || {})[card.uid];
+    if (!rows) return "";
+    const ready = rows.some((row) => !row.why);
+    const label = ready ? "Activate an ability" : `Ability: ${rows[0].why}`;
+    return `<button type="button" class="ability-button${ready ? " ready" : ""}" title="${esc(label)}" aria-label="${esc(label)}" data-abilities="${esc(card.uid)}">!</button>`;
+  }
+
   // Buttons between neighbouring slots of ours (in the main phase, with turn rules on): swap the two
   // characters, or an arrow moving one into the empty slot beside it.
   function slotLinksHtml(side, slot) {
@@ -723,6 +806,7 @@
       <div class="zone slot" data-slot="${slot}" data-drop="${owner === "me" ? slot : ""}" data-owner="${owner}">
         ${cardHtml(card, owner, slot) || '<span class="zone-empty"></span>'}
         ${card && owner === "me" ? slotPosHtml(card, slot) + slotActionsHtml(card, slot) + encoreChoiceHtml(card) : ""}
+        ${card && owner === "me" && board.acts && board.acts[card.uid] ? `<div class="slot-pos slot-pos-right slot-pos-bottom">${activateButtonHtml(card)}</div>` : ""}
         ${markerHtml(side, owner, slot)}
         ${owner === "me" ? slotLinksHtml(side, slot) : ""}
       </div>
@@ -799,7 +883,7 @@
         <div class="hand hand-opponent"><span class="zone-label">${esc(opp.name)}'s hand <b>${oppHand}</b></span>
           <div class="hand-cards">${Array.from({ length: oppHand }, backHtml).join("")}</div></div>
         ${matHtml(opp, "opponent")}</div>` : ""}
-      <div class="table-divider">${board.my_turn ? "Your turn" : `${esc(opp ? opp.name : "Opponent")}'s turn`} · turn ${board.turn_number} · ${cxHtml(PHASES[board.phase])} phase</div>
+      <div class="table-divider">${matchStarsHtml(0)}<span class="table-turn">${board.rps ? `Game ${gameNumber()} · rock, paper, scissors` : `${board.my_turn ? "Your turn" : `${esc(opp ? opp.name : "Opponent")}'s turn`} · game ${gameNumber()} · turn ${board.turn_number} · ${cxHtml(PHASES[board.phase])} phase`}</span>${matchStarsHtml(1)}</div>
       <div class="table-side side-me">
         ${matHtml(me, "me")}
         ${activeColorsHtml(me)}
@@ -817,7 +901,10 @@
     if (atBottom) logEl.scrollTop = logEl.scrollHeight;
 
     renderModal();
+    renderGameOver();
   }
+
+  const gameNumber = () => board.game_number || 1;
 
   // The controls are built once and then only updated, so the damage amount being typed survives
   // the board redrawing on every opponent move.
@@ -826,6 +913,7 @@
       controlsEl.dataset.built = "1";
       controlsEl.innerHTML = `
         <p class="panel-error" role="alert" data-error hidden></p>
+        <div class="ability-dock" data-ability-dock role="alertdialog" aria-live="assertive" hidden></div>
         <p class="play-turn" data-turn></p>
         <div class="phase-area">
           <div class="phase-bar" role="group" aria-label="Turn phase" data-phase-bar>
@@ -863,8 +951,10 @@
     errorEl.textContent = error;
     errorEl.hidden = !error;
     renderRules();
+    renderAbilityDock();
     const turn = controlsEl.querySelector("[data-turn]");
-    turn.textContent = `${board.my_turn ? "Your turn" : "Opponent's turn"} · turn ${board.turn_number} · ${PHASES[board.phase]} phase`;
+    turn.textContent = board.rps ? `Game ${gameNumber()} · rock, paper, scissors`
+      : `${board.my_turn ? "Your turn" : "Opponent's turn"} · game ${gameNumber()} · turn ${board.turn_number} · ${PHASES[board.phase]} phase`;
     turn.classList.toggle("mine", board.my_turn);
     // Only the turn player moves the phase on, and only forwards.
     const at = PHASE_NAMES.indexOf(board.phase);
@@ -873,12 +963,15 @@
       button.classList.toggle("current", index === at);
       button.classList.toggle("past", index < at);
       if (index === at) button.setAttribute("aria-current", "step"); else button.removeAttribute("aria-current");
-      button.disabled = !board.my_turn || index <= at || (board.rules && board.phase === "encore" && reversedLeft());
+      button.disabled = !board.my_turn || index <= at || Boolean(board.ability || board.rps) || (board.rules && board.phase === "encore" && reversedLeft());
       if (button.dataset.phase === "mulligan" && button.closest("[data-phase-bar]")) button.hidden = board.phase !== "mulligan";
     });
     renderAttackPanel();
     const note = controlsEl.querySelector(".phase-note");
-    note.textContent = board.reveal && board.reveal.mine ? `Waiting for ${board.opponent ? board.opponent.name : "your opponent"} to close the card you revealed.`
+    const ability = board.ability;
+    note.textContent = ability && !ability.mine ? `Waiting for ${ability.by} to resolve ${ability.resolving ? "an ability" : "their abilities"}…`
+      : ability && ability.resolving && !ability.prompt ? "Finishing the ability…"
+      : board.reveal && board.reveal.mine ? `Waiting for ${board.opponent ? board.opponent.name : "your opponent"} to close the card you revealed.`
       : board.discard ? (board.discard.mine ? `End phase: discard ${board.discard.count} to get down to 7.`
         : `Waiting for ${board.opponent ? board.opponent.name : "your opponent"} to discard down to 7…`)
       : board.mulligan ? (board.mulligan.me ? `Waiting for ${board.opponent ? board.opponent.name : "your opponent"} to finish their mulligan…` : "Mulligan: choose cards to swap.")
@@ -936,6 +1029,24 @@
     panelMode = mode;
   }
 
+  // A step of an ability the page can't do for us: it goes here, beside the board, so the cards can
+  // still be moved by hand. The ability carries on once we say it's done.
+  function renderAbilityDock() {
+    const dock = controlsEl.querySelector("[data-ability-dock]");
+    const ability = board.ability;
+    const prompt = ability && ability.mine && ability.resolving ? ability.prompt : null;
+    const manual = prompt && prompt.kind === "manual";
+    dock.hidden = !manual;
+    if (manual) {
+      dock.innerHTML = `<p><b>Do this by hand</b>, then press Done:</p>
+        <p class="small">${abilityText(prompt.text)}</p>
+        <div class="attack-buttons">
+          <button type="button" data-act='{"type":"ability_answer"}'>Done</button>
+          <button type="button" data-act='{"type":"ability_stop"}' title="Leave the rest of this ability undone">Stop</button>
+        </div>`;
+    }
+  }
+
   // The turn rules toggle: asking sends the other player a prompt; the rules change only if they agree.
   function renderRules() {
     const button = controlsEl.querySelector("[data-rules]");
@@ -957,12 +1068,99 @@
     }
   }
 
+  // Game 1 starts with rock, paper, scissors for who goes first: picks stay secret until both are
+  // in, a tie goes again, and the result shows for a moment before the mulligan.
+  const RPS_HANDS = { rock: ["✊", "Rock"], paper: ["✋", "Paper"], scissors: ["✌️", "Scissors"] };
+
+  function renderRps() {
+    const rps = board.rps;
+    const name = board.opponent ? board.opponent.name : "Your opponent";
+    const hand = (choice, label, extra = "") => `<div class="rps-hand ${extra}"><span class="rps-symbol" role="img" aria-label="${RPS_HANDS[choice][1]}">${RPS_HANDS[choice][0]}</span><span class="small muted">${esc(label)}</span></div>`;
+    const faceOff = rps.last ? `<div class="rps-faceoff">${hand(rps.last.me, "You", rps.won === false ? "rps-lost" : "")}<span class="rps-vs">vs</span>${hand(rps.last.opponent, name, rps.won ? "rps-lost" : "")}</div>` : "";
+    let body;
+    if (rps.won !== null) {
+      body = `<p class="rps-result ${rps.won ? "rps-won" : "rps-beaten"}">${rps.won ? "You win! You go first." : `${esc(name)} wins and goes first.`}</p>`;
+    } else if (rps.mine) {
+      body = `<p>You chose ${RPS_HANDS[rps.mine][1].toLowerCase()}. Waiting for ${esc(name)}…</p>`;
+    } else {
+      body = `<p>${rps.last ? "A tie! Choose again." : "The winner goes first."}${rps.opponent_chose ? ` ${esc(name)} has chosen.` : ""}</p>
+        <div class="rps-choices">${Object.entries(RPS_HANDS).map(([choice, [symbol, label]]) => `<button type="button" data-act='${esc(JSON.stringify({ type: "rps", choice }))}'>
+          <span class="rps-symbol" aria-hidden="true">${symbol}</span>${label}</button>`).join("")}</div>`;
+    }
+    modalEl.hidden = false;
+    modalEl.innerHTML = `<div class="play-modal-box confirm-box rps-box" role="dialog" aria-label="Rock, paper, scissors">
+      <h2>Rock, paper, scissors</h2>${faceOff}${body}</div>`;
+  }
+
+  // Games won in this series of rematches, either side of the turn counter: the first player on the
+  // left and the second on the right, on both players' screens.
+  const MAX_STARS = 8;
+  function matchStarsHtml(index) {
+    const { name, wins } = (board.match_wins || [])[index] || { name: "", wins: 0 };
+    const stars = wins > MAX_STARS ? `★ ×${wins}` : "★".repeat(wins);
+    const label = wins ? `${esc(name)}: ${wins} win${wins === 1 ? "" : "s"}` : "";
+    return `<span class="match-stars match-stars-${index ? "right" : "left"}"${wins ? ` title="${label}" aria-label="${label}"` : ""}>${stars}</span>`;
+  }
+
+  // Victory or Defeat, over everything, until both players ask for a rematch or either ends the match.
+  // Built once per game so its entrance plays once; only the buttons change as the other player answers.
+  const CREST = `<svg class="game-over-crest" viewBox="0 0 240 150" aria-hidden="true">
+    <defs><linearGradient id="crest-metal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="var(--crest-light)"/><stop offset=".5" stop-color="var(--crest-mid)"/><stop offset="1" stop-color="var(--crest-dark)"/>
+    </linearGradient></defs>
+    <path fill="url(#crest-metal)" d="M96 60 L14 22 L30 58 L6 56 L34 86 L16 92 L62 108 L96 96 Z"/>
+    <path fill="url(#crest-metal)" d="M144 60 L226 22 L210 58 L234 56 L206 86 L224 92 L178 108 L144 96 Z"/>
+    <path fill="url(#crest-metal)" d="M120 6 L164 32 L164 84 L120 144 L76 84 L76 32 Z"/>
+    <path fill="var(--crest-core)" d="M120 24 L150 42 L150 80 L120 122 L90 80 L90 42 Z"/>
+    <path fill="var(--crest-gem)" d="M120 44 L136 58 L120 92 L104 58 Z"/>
+  </svg>`;
+  let gameOverEl = null;
+
+  function renderGameOver() {
+    const over = board.game_over;
+    if (!over) {
+      if (gameOverEl) gameOverEl.remove();
+      gameOverEl = null;
+      return;
+    }
+    if (!gameOverEl) {
+      hideMenu();
+      hideZoom();
+      gameOverEl = document.createElement("div");
+      gameOverEl.className = `game-over ${over.won ? "game-over-victory" : "game-over-defeat"}${animations ? " animated" : ""}`;
+      gameOverEl.setAttribute("role", "alertdialog");
+      gameOverEl.setAttribute("aria-label", over.won ? "Victory" : "Defeat");
+      const loser = over.won ? (board.opponent ? board.opponent.name : "Your opponent") : "You";
+      const reason = over.reason === "deck" ? `${esc(loser)} can't refresh ${over.won ? "their" : "your"} deck.` : `${esc(loser)} reached level 4.`;
+      gameOverEl.innerHTML = `<div class="game-over-rays"></div>
+        <div class="game-over-banner">${CREST}<h2 class="game-over-word">${over.won ? "Victory" : "Defeat"}</h2>
+          <p class="game-over-reason">${reason}</p>
+          <p class="game-over-status" data-game-over-status></p>
+          <div class="game-over-buttons" data-game-over-buttons></div></div>`;
+      root.appendChild(gameOverEl);
+    }
+    const name = board.opponent ? board.opponent.name : "Your opponent";
+    gameOverEl.querySelector("[data-game-over-status]").textContent = error
+      || (over.rematch ? `Waiting for ${name} to accept the rematch…` : over.opponent_rematch ? `${name} wants a rematch.` : "");
+    gameOverEl.querySelector("[data-game-over-buttons]").innerHTML = `
+      <button type="button" data-act='{"type":"rematch"}'${over.rematch ? " disabled" : ""}>Rematch</button>
+      <button type="button" class="game-over-end" data-act='{"type":"end_match"}'>End match</button>`;
+  }
+
   function renderModal() {
+    if (board.game_over) {
+      modalEl.hidden = true;
+      return;
+    }
+    if (board.rps) return renderRps();
     if (board.reveal && board.reveal.card) return renderReveal();
     if (modal && modal.confirmClimax) return renderClimaxConfirm();
     if (board.mulligan && !board.mulligan.me) return renderMulligan();
     if (board.discard && board.discard.mine) return renderDiscard();
     if (board.level_up_pending) return renderLevelUp();
+    if (board.ability && board.ability.mine && !board.ability.resolving) return renderAbilityQueue();
+    if (board.ability && board.ability.mine && board.ability.prompt && board.ability.prompt.kind !== "manual") return renderAbilityPrompt();
+    if (modal && modal.abilities) return renderAbilityList();
     if (board.my_turn && board.attack && board.attack.step === "trigger" && board.attack.prompt) return renderTriggerPrompt();
     if (!modal) {
       modalEl.hidden = true;
@@ -975,13 +1173,103 @@
     } else {
       owner = modal.owner;
       const side = owner === "me" ? board.me : board.opponent;
-      list = pileCards(side, modal.zone).slice().reverse().map((c) => cardHtml(c, owner, modal.zone));
+      list = pileCards(side, modal.zone).slice().reverse().map((c) => {
+        const button = owner === "me" ? activateButtonHtml(c) : "";
+        return button ? `<div class="trigger-option">${cardHtml(c, owner, modal.zone)}${button}</div>` : cardHtml(c, owner, modal.zone);
+      });
     }
     modalEl.hidden = false;
     modalEl.innerHTML = `<div class="play-modal-box" role="dialog" aria-label="${esc(modal.title)}">
       <div class="play-modal-head"><h2>${esc(modal.title)}</h2><button type="button" data-close>Close</button></div>
       <p class="muted small">${owner === "me" ? "Click a card to move it. Top of the pile first." : "Top of the pile first."}</p>
       <div class="play-modal-cards">${list.join("") || '<p class="empty">Empty.</p>'}</div>
+    </div>`;
+  }
+
+  // Ability text, with CX marks and line breaks.
+  const abilityText = (text) => cxHtml(text).replace(/\n/g, "<br>");
+
+  // A small picture of the card an ability belongs to.
+  function abilitySourceHtml(pk) {
+    const info = pk ? cards[pk] : null;
+    return info ? `<img class="ability-source" src="${esc(info.image)}" alt="${esc(info.name)}" data-card="${pk}">` : "";
+  }
+
+  // Abilities of ours that have triggered: each can be triggered or skipped, in any order.
+  function renderAbilityQueue() {
+    const queue = board.ability.queue;
+    const send = (entry, accept, label, extra = "") => `<button type="button" ${extra} data-act='${esc(JSON.stringify({ type: "ability_trigger", id: entry.id, accept }))}'>${label}</button>`;
+    modalEl.hidden = false;
+    modalEl.innerHTML = `<div class="play-modal-box ability-box" role="alertdialog" aria-label="Ability triggered">
+      <div class="play-modal-head"><h2>Ability triggered${queue.length > 1 ? `: ${queue.length} to resolve` : ""}</h2></div>
+      ${queue.length > 1 ? '<p class="muted small">Resolve them in any order.</p>' : ""}
+      ${queue.map((entry) => {
+        const info = cards[entry.card];
+        return `<div class="ability-row">${abilitySourceHtml(entry.card)}
+          <div><p class="play-preview-name">${esc(info ? info.name : "Card")}</p>
+            <div class="card-peek-text">${abilityText(entry.text)}</div>
+            <div class="trigger-buttons">${send(entry, true, entry.event ? "Play it" : "Trigger")}${send(entry, false, "Skip", 'class="button-cancel"')}</div>
+          </div></div>`;
+      }).join("")}
+    </div>`;
+  }
+
+  // An ability being resolved needs an answer: cards to pick, or one choice from a list.
+  function renderAbilityPrompt() {
+    const ability = board.ability;
+    const prompt = ability.prompt;
+    const info = cards[ability.card];
+    const options = new Set(prompt.options && prompt.kind === "cards" ? prompt.options : []);
+    abilityPicks = abilityPicks.filter((uid) => options.has(uid));
+    const stopButton = '<button type="button" class="button-cancel" data-act=\'{"type":"ability_stop"}\' title="Leave the rest of this ability undone">Stop</button>';
+    const label = (card) => (card.where && LABELS[card.where] ? `<span class="muted small">${esc(LABELS[card.where])}</span>` : "");
+    let body;
+    if (prompt.kind === "cards") {
+      const count = abilityPicks.length;
+      const need = prompt.min === prompt.max ? `${prompt.max}` : `${prompt.min}–${prompt.max}`;
+      const ready = count >= prompt.min && count <= prompt.max;
+      const ordered = prompt.for === "order";
+      body = `<p class="small"><b>${esc(prompt.title)}</b> (${count} of ${need} chosen)</p>
+        <div class="play-modal-cards">${prompt.cards.map((c) => {
+          const can = options.has(c.uid);
+          const picked = abilityPicks.indexOf(c.uid);
+          return `<div class="trigger-option"><div class="level-pick${picked >= 0 ? " picked" : ""}${can ? "" : " unpickable"}"${can ? ` role="button" tabindex="0" aria-pressed="${picked >= 0}" data-ability-pick="${esc(c.uid)}"` : ""}>
+            ${cardHtml(c, "view", "ability")}${ordered && picked >= 0 ? `<span class="ability-order">${picked + 1}</span>` : ""}</div>${label(c)}</div>`;
+        }).join("")}</div>
+        <div class="trigger-buttons"><button type="button" data-ability-submit${ready ? "" : " disabled"}>${count || prompt.min ? "Confirm" : "Choose none"}</button>${stopButton}</div>`;
+    } else {
+      const shown = prompt.cards || [];
+      body = `<p class="small"><b>${abilityText(prompt.title)}</b></p>
+        ${shown.length ? `<div class="play-modal-cards">${shown.map((c) => `<div class="trigger-option">${cardHtml(c, "view", "ability")}${label(c)}</div>`).join("")}</div>` : ""}
+        <div class="trigger-buttons ability-choices">${prompt.options.map((option) => `<button type="button" data-act='${esc(JSON.stringify({ type: "ability_answer", value: option.value }))}'>${abilityText(option.label)}</button>`).join("")}${stopButton}</div>`;
+    }
+    modalEl.hidden = false;
+    modalEl.innerHTML = `<div class="play-modal-box ability-box" role="dialog" aria-label="Resolve ability">
+      <div class="ability-row">${abilitySourceHtml(ability.card)}
+        <div><p class="play-preview-name">${esc(info ? info.name : "Ability")}</p>
+          <div class="card-peek-text">${abilityText(ability.text)}</div></div></div>
+      ${body}
+    </div>`;
+  }
+
+  // The ! button's list: this card's activated abilities, each with what's stopping it, if anything.
+  // Asks first because activating pays the cost straight away.
+  function renderAbilityList() {
+    const rows = (board.acts || {})[modal.abilities];
+    if (!rows) {
+      modal = null;
+      return renderModal();
+    }
+    const pk = rows[0].card;
+    const info = cards[pk];
+    modalEl.hidden = false;
+    modalEl.innerHTML = `<div class="play-modal-box ability-box" role="dialog" aria-label="Activate an ability">
+      <div class="play-modal-head"><h2>${esc(info ? info.name : "Abilities")}</h2><button type="button" data-close>Close</button></div>
+      ${rows.map((row) => `<div class="ability-row">${abilitySourceHtml(pk)}
+        <div><div class="card-peek-text">${abilityText(row.text)}</div>
+          <div class="trigger-buttons">${row.why
+            ? `<button type="button" disabled>Activate</button> <span class="muted small">Can't now: ${esc(row.why)}</span>`
+            : `<button type="button" data-act='${esc(JSON.stringify({ type: "activate", uid: modal.abilities, index: row.index }))}' data-close-after>Activate</button>`}</div></div></div>`).join("")}
     </div>`;
   }
 
@@ -1102,7 +1390,7 @@
     const key = `${board.turn_number}:${board.phase}`;
     if (phaseKey && key !== phaseKey && animations) {
       const effect = PHASE_NAME_FX[Math.floor(Math.random() * PHASE_NAME_FX.length)];
-      const names = [controlsEl.querySelector("[data-turn]"), boardEl.querySelector(".table-divider"),
+      const names = [controlsEl.querySelector("[data-turn]"), boardEl.querySelector(".table-turn"),
         controlsEl.querySelector("[data-phase].current")];
       for (const el of names.filter(Boolean)) {
         el.classList.remove(...PHASE_NAME_FX);
@@ -1260,7 +1548,7 @@
     if (!["hand", "deck", "stock"].includes(zone)) {
       items.push({ label: el.classList.contains("face-down") ? "Turn face up" : "Turn face down", action: { type: "flip", uid } }, "-");
     }
-    const unaffordable = zone === "hand" && !canPay(info);
+    const unaffordable = zone === "hand" && (!canPay(info) || colorMissing({ uid }));
     for (const to of MOVE_TARGETS) {
       if (unaffordable && PLAY_ZONES.includes(to)) continue;
       if (to !== zone) items.push({ label: `→ ${LABELS[to]}`, action: { type: "move", uid, to } });
@@ -1366,6 +1654,30 @@
       renderModal();
       return;
     }
+    const abilityPick = event.target.closest("[data-ability-pick]");
+    if (abilityPick) {
+      const uid = abilityPick.dataset.abilityPick;
+      const prompt = board.ability.prompt;
+      if (abilityPicks.includes(uid)) abilityPicks = abilityPicks.filter((u) => u !== uid);
+      else if (prompt.max === 1) abilityPicks = [uid];
+      else if (abilityPicks.length < prompt.max) abilityPicks.push(uid);
+      renderModal();
+      return;
+    }
+    if (event.target.closest("[data-ability-submit]")) {
+      const uids = abilityPicks;
+      abilityPicks = [];
+      act({ type: "ability_answer", uids });
+      return;
+    }
+    const abilities = event.target.closest("[data-abilities]");
+    if (abilities) {
+      modal = { abilities: abilities.dataset.abilities };
+      hideMenu();
+      renderModal();
+      return;
+    }
+    if (event.target.closest("[data-close-after]")) modal = null;
     const discardPick = event.target.closest("[data-discard-pick]");
     if (discardPick) {
       const uid = discardPick.dataset.discardPick;
@@ -1462,6 +1774,12 @@
   });
 
   document.addEventListener("keydown", (event) => {
+    const abilityPick = event.target.closest && event.target.closest("[data-ability-pick]");
+    if (abilityPick && (event.key === "Enter" || event.key === " ")) {
+      event.preventDefault();
+      abilityPick.click();
+      return;
+    }
     const levelPick = event.target.closest && event.target.closest("[data-level-up]");
     if (levelPick && (event.key === "Enter" || event.key === " ")) {
       event.preventDefault();

@@ -9,6 +9,7 @@ import json
 from django.contrib import messages
 from django.contrib.auth.views import redirect_to_login
 from django.db import transaction
+from django.db.models import F
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -121,11 +122,26 @@ def deck_cards(card_list):
     return [entry.card_id for entry in card_list.entries.all() for _ in range(entry.quantity)]
 
 
+def deal(room):
+    """A new game with both decks as they are now. Game 1 starts with rock, paper, scissors for who
+    goes first; each game after that keeps the series' tally, and the first turn alternates."""
+    old = room.state or {}
+    series = {"rps": True}
+    if old:
+        went_first = old.get("first_player", str(room.host_id))
+        series = {"match_wins": old.get("match_wins"), "game_number": old.get("game_number", 1) + 1,
+                  "first": room.guest_id if went_first == str(room.host_id) else room.host_id}
+    room.state = game.new_game([
+        (room.host_id, room.host.username, deck_cards(room.host_deck)),
+        (room.guest_id, room.guest.username, deck_cards(room.guest_deck)),
+    ], **series)
+
+
 @weiss_access_required
 @require_POST
 def room_start(request, pk):
-    """Shuffle both decks (copied as they are now) and deal. The host starts the first game; either
-    player can call a rematch once one is going."""
+    """Shuffle both decks (copied as they are now) and deal game 1 of a new set. The host starts the
+    first set; either player can start a new one once one is going, which clears the tally."""
     room = my_room(request, pk)
     if not room:
         return HttpResponseForbidden()
@@ -136,10 +152,8 @@ def room_start(request, pk):
         if not (room.guest and room.host_deck and room.guest_deck):
             messages.error(request, "Both players need to choose a deck first.")
             return redirect("weiss:play_room", pk=room.pk)
-        room.state = game.new_game([
-            (room.host_id, room.host.username, deck_cards(room.host_deck)),
-            (room.guest_id, room.guest.username, deck_cards(room.guest_deck)),
-        ])
+        room.state = {}
+        deal(room)
         room.status = GameRoom.Status.PLAYING
         room.version += 1
         room.save()
@@ -197,12 +211,16 @@ def room_action(request, pk):
         return JsonResponse({"error": "Bad request."}, status=400)
     details = {}
 
+    def load(pks):
+        for row in Card.objects.filter(pk__in=pks).values(
+                "pk", "name", "card_type", "color", "trigger", "cost", "level", "power", "soul", "traits", "description"):
+            row["text"] = row["description"] or ""
+            details[row["pk"]] = row
+
     def lookup(card_pk):
         if card_pk not in details:
-            details[card_pk] = (Card.objects.filter(pk=card_pk).values(
-                "name", "card_type", "trigger", "cost", "level", "power", "soul", "description").first()
-                or {"name": "a card", "card_type": "", "trigger": ""})
-            details[card_pk]["text"] = details[card_pk].get("description") or ""
+            load([card_pk])
+            details.setdefault(card_pk, {"name": "a card", "card_type": "", "trigger": ""})
         return details[card_pk]
 
     def name(card_pk):
@@ -215,12 +233,32 @@ def room_action(request, pk):
         room = GameRoom.objects.select_for_update().get(pk=room.pk)
         if room.status != GameRoom.Status.PLAYING:
             return JsonResponse({"error": "The game hasn't started."}, status=409)
+        if action.get("type") == "end_match":
+            # From the victory or defeat screen, either player: back to choosing decks.
+            if not room.state.get("game_over"):
+                return JsonResponse({"error": "The game isn't over.", **board_payload(room, request.user)}, status=400)
+            room.status, room.state = GameRoom.Status.SETUP, {}
+            room.version += 1
+            room.save()
+            return JsonResponse({"version": room.version, "status": room.status})
+        was_over = bool(room.state.get("game_over"))
+        load(game.card_pks(room.state))  # abilities look through every card in play, so get them all at once
         try:
             extra = game.apply(room.state, request.user.pk, action, name=name, is_climax=is_climax,
                                trigger=lambda card_pk: lookup(card_pk)["trigger"],
                                cost=lambda card_pk: lookup(card_pk).get("cost"), info=lookup)
         except game.GameError as exc:
             return JsonResponse({"error": str(exc), **board_payload(room, request.user)}, status=400)
+        over = room.state.get("game_over")
+        if over and not was_over:  # counted once: this is the action that ended the game
+            deck_id = room.host_deck_id if over["winner"] == str(room.host_id) else room.guest_deck_id
+            CardList.objects.filter(pk=deck_id).update(wins=F("wins") + 1)
+        if game.rematch_agreed(room.state):
+            if room.host_deck and room.guest_deck:
+                deal(room)
+            else:  # a deck was deleted during the game
+                over["rematch"] = []
+                extra = {"error": "A deck has been deleted, so there can't be a rematch."}
         room.version += 1
         room.save(update_fields=["state", "version", "updated"])
     return JsonResponse(board_payload(room, request.user, extra))

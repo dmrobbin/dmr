@@ -12,6 +12,7 @@
           <a href="{% url 'weiss:list' card_list.pk %}">
             {% if card_list.cover.image_src %}<img src="{{ card_list.cover.image_src }}" alt="" loading="lazy">{% else %}<span class="set-cover-missing" aria-hidden="true"></span>{% endif %}
             <span class="set-name">{{ card_list.name }}{% if card_list.is_deck %} <span class="deck-tag">Deck</span>{% endif %}</span>
+            {% if card_list.wins %}<span class="deck-stars" title="{{ card_list.wins }} win{{ card_list.wins|pluralize }}" aria-label="{{ card_list.wins }} win{{ card_list.wins|pluralize }}">{{ card_list.win_stars }}</span>{% endif %}
             <span class="muted">{{ card_list.total|default:0 }} card{{ card_list.total|default:0|pluralize }} · updated {{ card_list.updated|date:"M j" }}</span>
           </a>
         </li>

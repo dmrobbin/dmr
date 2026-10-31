@@ -74,6 +74,7 @@ class CardList(models.Model):
 
     MAX_LISTS_PER_USER = 100
     MAX_CARDS = 100  # total copies across the whole list
+    MAX_STARS = 10  # wins shown as separate stars
 
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE, related_name="card_lists")
     name = models.CharField(max_length=100)
@@ -81,6 +82,7 @@ class CardList(models.Model):
     is_deck = models.BooleanField(default=True)
     # The card pictured for this list on the lists page; blank means its first card (see lists.attach_covers).
     cover_card = models.ForeignKey("Card", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    wins = models.PositiveIntegerField(default=0, help_text="Games this list has won as a deck; shown as stars")
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -89,6 +91,11 @@ class CardList(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def win_stars(self):
+        """This list's wins as stars, or a star and the number once there are too many to count by eye."""
+        return "★" * self.wins if self.wins <= self.MAX_STARS else f"★ ×{self.wins}"
 
     def card_count(self):
         return self.entries.aggregate(total=models.Sum("quantity"))["total"] or 0
