@@ -27,7 +27,7 @@
   // Each stage slot has a pile of markers under it, named "marker:<slot>" like the server does.
   for (const slot of STAGE) LABELS[`marker:${slot}`] = `Markers under ${LABELS[slot].toLowerCase()}`;
   const isMarkerPile = (zone) => zone.startsWith("marker:");
-  const DAMAGE_RESOLVE_MS = 500; // how long a climax-cancelled damage stays on the board
+  const DAMAGE_RESOLVE_MS = 500; // how long a climax-cancelled damage stays on the board, with animations off
   const REFRESH_PAUSE_MS = 250; // how long an emptied deck shows before it's refreshed mid-damage
   const CLIMAX_SHOW_MS = 2000; // how long a climax played in the climax phase shows before the attack phase
   const PHASE_PAUSE_MS = 900; // how long a phase that ended itself stays before the next begins
@@ -135,7 +135,7 @@
       resolveTimer = setTimeout(() => {
         resolveTimer = null;
         act({ type: "resolve_damage" });
-      }, DAMAGE_RESOLVE_MS);
+      }, animations ? CLIMAX_SHOW_MS : DAMAGE_RESOLVE_MS); // long enough for "Damage Negated!" to be seen
     }
     // A phase of our turn ended itself: pause on it, then move on (the server drops this if the
     // turn has moved on some other way in the meantime). Abilities being resolved hold this up;
@@ -200,13 +200,14 @@
     for (const owner of ["me", "opponent"]) {
       const side = owner === "me" ? board.me : board.opponent;
       if (!side) continue;
-      now[owner] = { refreshes: side.refreshes || 0, level_ups: side.level_ups || 0, climaxes: side.climaxes || 0 };
+      now[owner] = { refreshes: side.refreshes || 0, level_ups: side.level_ups || 0, climaxes: side.climaxes || 0, negated: side.negated || 0 };
       if (!show || !seen[owner]) continue;
       const mat = boardEl.querySelector(`.mat-${owner}`);
       if (now[owner].refreshes > seen[owner].refreshes) {
         flash(between(mat, '[data-pile="deck"]', '[data-slot="C3"]'), "Deck Out!", "flash-deck-out");
       }
       if (now[owner].climaxes > seen[owner].climaxes) showClimax(side.zones.climax[side.zones.climax.length - 1]);
+      if (now[owner].negated > seen[owner].negated) showNegated(side.negated_card);
       if (now[owner].level_ups > seen[owner].level_ups) {
         const level = side.zones.level.length;
         flash(levelGap(mat), `lv.${level - 1}`, "flash-level", `lv.${level}`);
@@ -224,6 +225,21 @@
     el.className = `climax-show ${CLIMAX_EFFECTS[Math.floor(Math.random() * CLIMAX_EFFECTS.length)]}`;
     el.style.animationDuration = `${CLIMAX_SHOW_MS}ms`;
     el.innerHTML = `<img src="${esc(info.image)}" alt="Climax: ${esc(info.name)}">`;
+    document.body.appendChild(el);
+    el.addEventListener("animationend", () => el.remove());
+  }
+
+  // A climax revealed by damage: it cancels the damage, and both players see that it did.
+  function showNegated(pk) {
+    const info = cards[pk];
+    if (!info) return;
+    const el = document.createElement("div");
+    el.className = `climax-show ${CLIMAX_EFFECTS[Math.floor(Math.random() * CLIMAX_EFFECTS.length)]}`;
+    el.style.animationDuration = `${CLIMAX_SHOW_MS}ms`;
+    el.innerHTML = `<div class="trigger-show">
+      <p class="trigger-show-title damage-negated">Damage Negated!</p>
+      <div class="trigger-show-cards"><img src="${esc(info.image)}" alt="${esc(info.name)}"></div>
+    </div>`;
     document.body.appendChild(el);
     el.addEventListener("animationend", () => el.remove());
   }
@@ -607,7 +623,7 @@
     const badge = card.pos === "reverse" ? '<span class="pcard-badge">REVERSE</span>'
       : card.face_down && info ? '<span class="pcard-badge">face down</span>' : "";
     const stats = info && !card.face_down
-      ? statsHtml(info, { live: (board.stats || {})[card.uid], soul: STAGE.includes(zone) && zone.startsWith("C") })
+      ? statsHtml(info, { live: (board.stats || {})[card.uid], soul: STAGE.includes(zone) && zone.startsWith("C"), lowered: zone === "hand" ? handMod(card) : null })
       : "";
     return `<div class="${classes.join(" ")}" ${attrs} tabindex="0">${face}${stats}${badge}</div>`;
   }
@@ -620,12 +636,15 @@
   // Front-row characters also show their soul in the bottom-right. `live` is the character's power
   // and soul right now, worked out by the server from climaxes, abilities and effects on it: numbers
   // above the printed ones glow green, numbers below it glow red.
-  function statsHtml(info, { live = null, soul = false } = {}) {
+  function statsHtml(info, { live = null, soul = false, lowered = null } = {}) {
     const has = (value) => value !== null && value !== undefined && value !== "";
-    const corner = [
-      has(info.level) ? `<span class="stat stat-level" title="Level">${esc(info.level)}</span>` : "",
-      has(info.cost) ? `<span class="stat stat-cost" title="Cost">${esc(info.cost)}</span>` : "",
-    ].join("");
+    // In the hand, an ability can lower what a card counts as: that shows, glowing, in place of what's printed.
+    const corner = [["level", "Level"], ["cost", "Cost"]].map(([stat, label]) => {
+      if (!has(info[stat])) return "";
+      const now = lowered ? lowered[stat] : info[stat];
+      const changed = now !== info[stat];
+      return `<span class="stat stat-${stat}${changed ? " boosted" : ""}" title="${label}${changed ? ` ${now} while in your hand (printed ${info[stat]})` : ""}">${esc(now)}</span>`;
+    }).join("");
     // A number's value right now, its glow, and its tooltip's note about the change from the card.
     const current = (printed, now) => {
       const value = now === undefined ? Number(printed) : now;
@@ -745,7 +764,7 @@
     const clock = inPhase("clock") ? move("clock", "🕒") : "";
     const reveal = board.reveal ? "" : iconButton({ type: "reveal", uid: card.uid }, "👁", "Reveal to your opponent");
     const piles = `<div class="hand-center">${clock}${move("waiting", "🪦")}${clockDraw}${reveal}</div>`;
-    const affordable = canPay(info) && !colorMissing(card);
+    const affordable = canPay(card, info) && !colorMissing(card) && !levelMissing(card, info);
     let rows = "";
     if (type === "character" && affordable && inPhase("main")) {
       rows = `<div class="hand-center">${move("C1", "L")}${move("C2", "M")}${move("C3", "R")}</div>
@@ -765,6 +784,7 @@
     }
     const needs = inPhase("main", "climax") ? colorMissing(card) : null;
     if (needs) rows = `<span class="hand-needs">Needs ${esc(needs)}</span>` + rows;
+    if (inPhase("main", "climax") && levelMissing(card, info)) rows = `<span class="hand-needs">Needs level ${esc(handStat(card, info, "level"))}</span>` + rows;
     rows += piles;
     return `<div class="hand-actions">
       ${rows}
@@ -777,7 +797,11 @@
   // With turn rules off every shortcut is offered, in any phase.
   const inPhase = (...phases) => !board.rules || (board.my_turn && phases.includes(board.phase));
   // Whether our stock covers a card's cost (cards with no cost are free; so is everything with the rules off).
-  const canPay = (info) => !board.rules || !info || !info.cost || board.me.zones.stock.count >= info.cost;
+  const canPay = (card, info) => !board.rules || !info || !handStat(card, info, "cost") || board.me.zones.stock.count >= handStat(card, info, "cost");
+  // What the server says a hand card counts as, if an ability has lowered it; or what's printed.
+  const handMod = (card) => (board.hand_mods || {})[card.uid] || null;
+  const handStat = (card, info, stat) => (handMod(card) ? handMod(card)[stat] : info[stat]);
+  const levelMissing = (card, info) => Boolean(board.rules && info && handStat(card, info, "level") > board.me.zones.level.length);
 
   // The color the server says the color rule is holding this hand card back for, or null.
   const colorMissing = (card) => (board.needs_color || {})[card.uid] || null;

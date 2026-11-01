@@ -45,7 +45,7 @@ MIN_FRONT_LINE = 2  # a focused CPU saving stock still pays for characters up to
 FILL_MIN_DECK = 8  # a strategic CPU won't mill a deck this small, since refreshing costs damage
 HAND_EFFECT = re.compile(r"\bdraw\b|into your hand|to your hand", re.I)
 CHOICE_DESTINATIONS = ["hand", "stock", "deck", "deck_bottom", "waiting"]  # best first, for "where does it go?"
-WAITS = {"ability_show": 2, "pending_climax": 2, "auto_next": .9}  # seconds to let these show; otherwise STEP_WAIT
+WAITS = {"ability_show": 2, "pending_climax": 2, "pending_damage": 2, "auto_next": .9}  # seconds to let these show; otherwise STEP_WAIT
 STEP_WAIT = .8
 
 
@@ -117,10 +117,15 @@ class Mind:
     def my_level(self):
         return len(self.zones["level"])
 
+    def play_level(self, card):
+        return game.play_level(self.state, self.me, card, self.info)
+
+    def play_cost(self, card):
+        return game.play_cost(self.state, self.me, card, self.info)
+
     def can_play(self, card):
-        details = self.details(card)
-        return (game.number(details.get("level")) <= self.my_level()
-                and game.number(details.get("cost")) <= len(self.zones["stock"])
+        return (self.play_level(card) <= self.my_level()
+                and self.play_cost(card) <= len(self.zones["stock"])
                 and not game.color_needed(self.state, self.me, card, self.info))
 
     def value(self, card):
@@ -128,7 +133,7 @@ class Mind:
         details = self.details(card)
         if self.kind(card) == "climax":
             return 1.5
-        level = game.number(details.get("level"))
+        level = self.play_level(card)  # one it could play soon is worth keeping, however it gets there
         value = 1 + game.number(details.get("power")) / 20000
         if level <= self.my_level() + 1:
             value += 2
@@ -273,7 +278,7 @@ class Mind:
         for other in self.zones["hand"]:
             details = self.details(other)
             if self.kind(other) == "character" and game.number(details.get("power")) >= power and self.can_play(other) \
-                    and game.number(details.get("cost")) > left:
+                    and self.play_cost(other) > left:
                 return False  # paying would cost it a card at least this strong
         return True
 
@@ -382,7 +387,7 @@ class Mind:
         if not open_slots:
             return None
         free = [c for c in self.zones["hand"] if self.kind(c) == "character" and self.can_play(c)
-                and game.number(self.details(c).get("cost")) == 0 and len(self.zones["hand"]) > 4]
+                and self.play_cost(c) == 0 and len(self.zones["hand"]) > 4]
         return {"type": "move", "uid": max(free, key=self.value)["uid"], "to": open_slots[0]} if free else None
 
     def by_hand_only(self, ability):
@@ -584,7 +589,7 @@ class Focused(Mind):
     def can_play(self, card):
         if not super().can_play(card):
             return False
-        return (self.in_plan(card) or self.combo_live(card) or self.can_spend(game.number(self.details(card).get("cost")))
+        return (self.in_plan(card) or self.combo_live(card) or self.can_spend(self.play_cost(card))
                 or len(self.front_uids()) < MIN_FRONT_LINE)
 
     def worth_encore(self, card):
@@ -633,7 +638,7 @@ class Strategic(Mind):
         for card in self.zones["hand"] if slot else ():
             if self.kind(card) != "character" or not self.can_play(card):
                 continue
-            left = len(self.zones["stock"]) - game.number(self.details(card).get("cost"))
+            left = len(self.zones["stock"]) - self.play_cost(card)
             for ability in abilities.parse(self.details(card).get("text")):
                 parts = {part["part"] for part in ability.get("cost", [])}
                 if (ability["kind"] == "act" and not self.by_hand_only(ability) and stock_cost(ability) <= left

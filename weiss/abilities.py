@@ -9,6 +9,7 @@ parse(text) gives a list of plain-JSON abilities, one per ability on the card:
      "effects": [{"target": ..., "power": n, "soul": n, "grant": [text, ...]}, ...],  # cont: what it gives
      "color_free": {"self": True} or {"filter": ...},  # cont: hand cards it lets skip the color rule
      "no_backup": True,  # cont: no Backups can be played during this card's battle
+     "hand_mod": {"level": -1, "cost": 0, "filter": ...},  # cont: lower while in the hand; with a filter, other cards'
      "once": bool,  # 1/TURN
      "where": zone}  # where the card has to be, if not on the stage
 
@@ -70,8 +71,87 @@ def unmask(text, quotes):
 # Older sets say the same things in other words. These put card text into the wording the rest of
 # this module reads. They run on everything but card names (see canonical).
 NUMBER_WORDS = {"one": "1", "two": "2", "three": "3", "four": "4", "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9", "ten": "10"}
-FULL_WIDTH = str.maketrans({"［": "[", "］": "]", "（": "(", "）": ")", "／": "/", "　": " ", "“": '"', "”": '"', "’": "'"})
+FULL_WIDTH = str.maketrans({"［": "[", "］": "]", "（": "(", "）": ")", "／": "/", "　": " ", "“": '"', "”": '"', "’": "'", "Ｘ": "X",
+                            "①": "(1)", "②": "(2)", "③": "(3)", "④": "(4)", "⑤": "(5)"})
 WORDING = [
+    (r"\b(one|two|three|four|five|six|seven|eight|nine|ten)\b", lambda m: NUMBER_WORDS[m[1].lower()]),
+    (r"\b(One|Two|Three|Four|Five|Six)\b", lambda m: NUMBER_WORDS[m[1].lower()]),
+    (r"\[\[(\w+)\.gif\]\]", r"[\1]"),
+    (r"(?m)^\[c-icon\]\s*", "【AUTO】 When this card is placed on your climax area from your hand, "),
+    (r"\bmultiplied by by\b", "multiplied by"),
+    (r"\binto you hand\b", "into your hand"),
+    (r"(?<=[a-z']),(?=[a-z])", ", "),
+    (r"(?m)^COUNTER@\s*|(?<=[.)])\s*COUNTER@\s*", "【ACT】 【COUNTER】 "),
+    (r"(?m)^(Backup \d+, Level \d+)", r"【ACT】 【COUNTER】 \1"),
+    (r"(?<=\[)([^\]]*?)\bPut an? (?=(?:red |blue |green |yellow |level )?(?:card|character|climax|event))", r"\1Put 1 "),
+    (r"(?<=your deck)\. Shuffle your deck\.?(?=\])", " & Shuffle your deck"),
+    (r"\bif an? (⟦\d+⟧) is in your\b", r"if \1 is in your"),
+    (r"\bIf an? (⟦\d+⟧) is in your\b", r"If \1 is in your"),
+    (r"\b([Ii])f you 【REST】 (\d+) characters?\b", r"\1f you chose \2 characters"),
+    (r"\b([Ee])ach player shuffles their deck(?: afterwards)?\b", r"\1ach player shuffles their deck"),
+    (r"\bcannot use until end of turn (⟦\d+⟧)", r"cannot use \1 until end of turn"),
+    (r"\b((?:this card|all of your [^,.⟦]*?) gets? [^,.⟦]*?) and (your opponent|you) cannot use (⟦\d+⟧) until end of turn\b", r"\1 until end of turn, \2 cannot use \3 until end of turn"),
+    (r"\b([Tt]hat character gets? [-+]\d+ power) and this card gets? ([-+]\d+ power) until end of turn\b", r"\1 until end of turn, this card gets \2 until end of turn"),
+    (r"\b(?:U|u)ntil end of turn, (this card's soul does not decrease by side attacking)", r"\1 until end of turn"),
+    (r"\bput all of your opponent's stock into your opponent's waiting room\b", "your opponent puts all of their stock into their waiting room"),
+    (r"\b[Yy]our opponent puts the same number of cards from the top of their deck into the stock\b", "puts the same number of cards from the top of their deck into their stock"),
+    (r"\b[Yy]our opponent puts the (top|bottom) card of your opponent's stock into their waiting room\b", r"put the \1 card of your opponent's stock into their waiting room"),
+    (r"\b([Pp])ut the top card of your opponent's deck into your opponent's waiting room\b", r"\1ut the top card of your opponent's deck into their waiting room"),
+    (r"\b([Pp])ut the (top|bottom) card of your opponent's clock into your opponent's waiting room\b", r"\1ut the \2 card of your opponent's clock into their waiting room"),
+    (r"\b[Yy]our opponent puts that character (?:from|in) your opponent's memory in any position of their stage\b", "your opponent puts that character from their memory in any position of their stage"),
+    (r"\bon top of\b", "on the top of"),
+    (r"\b([Pp])ut it in their waiting room\b", r"\1ut it into their waiting room"),
+    (r"\b([Rr])eturn this character to its previous stage position\b", r"\1eturn this card to its previous stage position"),
+    (r"\b([Pp])ut it (?:on|in) separate positions\b", r"\1ut them on separate positions"),
+    (r"\b([Cc]hoose (?:up to )?\d+ [^,.]+?) and (put|return) (it|them)\b", r"\1, and \2 \3"),
+    (r"\bshuffle their deck\b", "your opponent shuffles their deck"),
+    (r"\b([Ee])ach player returns all cards in the waiting room to their deck\b", r"\1ach player returns all cards in the waiting room to their deck"),
+    (r"\s*' ?/>", ""),
+    (r"【(\d)/TURN】", r"\1/TURN@"),
+    (r"【CXCombo】|\bCXCOMBO(?=\s)", "【CXCOMBO】"),
+    (r"(?i)\bthis ability activates up to once per turn[.,]?\s*", "1/TURN@ "),
+    (r"(?i)\bthis ability activates up to (\d+) times? per turn[.,]?\s*", lambda m: f"{m[1]}/TURN@ "),
+    (r"\buntil the end of turn\b", "until end of turn"),
+    (r"\buntil the end of the next turn\b", "until the end of your opponent's next turn"),
+    (r"\b(?:on|at) the bottom of\b", "at the bottom of"),
+    (r"(?<=【CONT】)\s*(?:Experience |Memory )?When your opponent has\b", " If your opponent has"),
+    (r"\bAll your\b", "All of your"),
+    (r"\ball your\b", "all of your"),
+    (r"\bAll of your opponent's characters\b", "all characters in your opponent's stage"),
+    (r"\ball of your opponent's characters\b", "all characters in your opponent's stage"),
+    (r"\b([Cc]hoose (?:up to )?\d+) of your opponent's (.+?) (?:in|on) (?:the|their) (center|back) stage\b", r"\1 \2 in your opponent's \3 stage"),
+    (r"\b([Cc]hoose (?:up to )?\d+ .+?) in their (center|back) stage\b", r"\1 in your opponent's \2 stage"),
+    (r"\b([Cc]hoose (?:up to )?\d+) other of your\b", r"\1 of your other"),
+    (r"\b([Cc]hoose (?:up to )?\d+ .+?) from your opponent's (waiting room|clock|memory|level)\b", r"\1 in your opponent's \2"),
+    (r"\b(put|return) it on the position that this card was on\b", "put it in the stage position that this card was in"),
+    (r"\bput it (?:in|on) the stage position this card was (?:in|on)\b", "put it in the stage position that this card was in"),
+    (r"\bput that card (into|at|on)\b", r"put it \1"),
+    (r"\bput it on the top of your opponent's deck\b", "put it on the top of their deck"),
+    (r"\bput them on the top of your opponent's deck in any order\b", "put them on the top of their deck in any order"),
+    (r"\breturn the rest to your opponent's deck\b", "return the rest to their deck"),
+    (r"\b(?:[Ss]huffle your opponent's deck(?: afterwards)?)\b", "your opponent shuffles their deck"),
+    (r"\bshuffles their deck afterwards\b", "shuffles their deck"),
+    (r"\bput (\d+) cards? from the bottom of your opponent's deck\b", r"put the bottom \1 cards of your opponent's deck"),
+    (r"\bthe top (\d+) cards of your deck or your opponent's deck into the waiting room\b", r"\1 cards from the top of your or your opponent's deck into the waiting room"),
+    (r"\bput the top (\d+) cards of your deck into your\b", r"put \1 cards from the top of your deck into your"),
+    (r"\b[Ff]lip over the top (\d+) cards of your deck\b", r"flip over \1 cards from the top of your deck"),
+    (r"\bdeal (\d+) damage to your opponent X times\b", r"deal \1 damage X times to your opponent"),
+    (r"\bthe level of the character facing this card is\b", "the character facing this card is level"),
+    (r"\bthe level of this card's battle opponent is (\d+)\b", r"this card's battle opponent is level \1"),
+    (r"\bis placed into your waiting room from the stage\b", "is put into your waiting room from the stage"),
+    (r"\bis put into the waiting room from your stage\b", "is put into your waiting room from the stage"),
+    (r"\bbecomes 【REVERSE】 in battle\b", "becomes 【REVERSE】"),
+    (r"\bis being frontal attacked\b", "is frontal attacked"),
+    (r"\bWhen another of your character's battle opponent\b", "When your other character's battle opponent"),
+    (r"\b[Ww]hen another of your (.+?) (becomes|is put)\b", r"When your other \1 \2"),
+    (r"\bif you have an? (⟦\d+⟧) in your climax area\b", r"if \1 is in your climax area"),
+    (r"\bif you have a climax in your climax area\b", "if there is a climax in your climax area"),
+    (r"\bif a climax is put into the waiting room by that effect\b", "if there is a climax among those cards"),
+    (r"\bif you do not have any other\b", "if you do not have another"),
+    (r"\bif your opponent does not have any characters (?:on|in) their center stage\b", "if your opponent's center stage has 0 or less characters"),
+    (r"(?<=\[)(\d+) (?=Put |【REST】|Return |Reveal )", r"(\1) "),
+    (r"(?<=\[)Put (\d+) cards in your hand into your waiting room\b", r"Put \1 cards from your hand into your waiting room"),
+    (r"\bfrom your hand into waiting room\b", "from your hand into your waiting room"),
     (r"\bCXCombo@\s*", "【CXCOMBO】 "),
     (r"\bBond/\s+", "Bond/"),
     (r"\b(event|climax) cards?\b(?! named)", r"\1"),
@@ -105,7 +185,7 @@ WORDING = [
     (r"【REST】 this card from 【STAND】", "【REST】 this card"),
     (r"\bis put on (your|the) climax area\b", r"is placed on your climax area"),
     (r"\bplaced on the climax area\b", "placed on your climax area"),
-    (r"\bwhen this card attacks\b", "attacks"),
+    (r"\bor when this card attacks\b", "or attacks"),
     (r"\bWhen another of your (.*?)characters? (becomes|is|attacks)", lambda m: f"When your other {m[1]}character {m[2]}"),
     (r"\buses? an 【ACT】 ability\b", lambda m: m[0].replace(" ability", "")),
     (r"\bplay an event card\b", "play an event"),
@@ -126,7 +206,6 @@ WORDING = [
     (r"\b(Return \d+ .+?) (?:in|from) your waiting room (?:in)?to your deck\b", r"\1 from your waiting room to your deck"),
     (r"\bPut (\d+) markers? (?:from )?underneath this card into your waiting room\b", r"Put \1 marker into your waiting room"),
     (r"\bPut a marker (?:from )?underneath this card into your waiting room\b", "Put 1 marker into your waiting room"),
-    (r"(?i)\bthis ability activates up to (\d+) times? per turn\.?\s*", lambda m: f"{m[1]}/TURN@ "),
     (r"\bthe total level of cards\b", "the total level of the cards"),
     (r"\bthis card is (?:on|in) the (center|back) stage\b", r"this card is in your \1 stage"),
     (r"\bthe revealed card is\b", "that card is"),
@@ -141,14 +220,11 @@ WORDING = [
     (r"\bchoose another (.*?)character\b", r"choose 1 other \1character"),
     (r"\bif you are level\b", "if your level is"),
     (r"\bIf you are level\b", "If your level is"),
-    (r"\b([Cc]hoose (?:up to )?\d+ .+?) (in your (?:waiting room|hand|clock|memory|level)) (with ⟦\d+⟧ in (?:its|their) card names?)", r"\1 \3 \2"),
+    (r"\b([Cc]hoose (?:up to )?\d+ .+?) (in your (?:waiting room|hand|clock|memory|level)) (with ⟦\d+⟧(?: or ⟦\d+⟧)* in (?:its|their) card names?)", r"\1 \3 \2"),
     (r"\bchooase\b", "choose"),
     (r"\bif your opponent has (\d+) or (less|more) characters in their center stage\b", r"if your opponent's center stage has \1 or \2 characters"),
     (r"\bif the number of characters in your opponent's center stage is (\d+) or (less|more)\b", r"if your opponent's center stage has \1 or \2 characters"),
     (r"\bif the number of your other (.+?) is (\d+) or (more|less)\b", r"if the number of other \1 you have is \2 or \3"),
-    (r"\b(one|two|three|four|five|six|seven|eight|nine|ten)\b", lambda m: NUMBER_WORDS[m[1].lower()]),
-    (r"\bOne\b", "1"),
-    (r"\bThis ability activates up to 1 times? per turn\.\s*", "1/TURN@ "),
     (r"\b(cards?|characters?) named (⟦\d+⟧)", r"\2"),
     (r"\b([Cc]hoose|[Pp]ut|[Rr]eturn|[Rr]eveal) an? (⟦\d+⟧)", r"\1 1 \2"),
     (r"\bif an? (⟦\d+⟧) is in your climax area", r"if \1 is in your climax area"),
@@ -180,6 +256,10 @@ WORDING = [
     (r"\bin any order\b(?= on| at)", "in any order"),
     (r"\b[Rr]eveal (\d+) cards from the top of your deck, (?:and )?put them into your waiting room", r"flip over \1 cards from the top of your deck, and put them into your waiting room"),
     (r"\s+,", ","),
+    (r"\b([Cc])hoose (\d+) other (?!of\b)(.*?)characters?\b", r"\1hoose \2 of your other \3characters"),
+    (r"\b([Cc]hoose) an? (?=cost )", r"\1 1 "),
+    (r"\b([Cc]hoose (?:up to )?\d+) other of your\b", r"\1 of your other"),
+    (r"\b([Ii])f an? (⟦\d+⟧) is in your\b", r"\1f \2 is in your"),
 ]
 
 
@@ -215,7 +295,7 @@ def sentences(text):
 
 
 def clauses(sentence):
-    return [c for c in (re.sub(r"^(?:and|then) ", "", part.strip().rstrip(".")) for part in sentence.split(", ")) if c]
+    return [c for c in (re.sub(r"^(?:and|then) ", "", part.strip().rstrip(".")) for part in re.split(r", (?![^《》]*》)", sentence)) if c]
 
 
 # --- Card filters: "up to 2 level 1 or higher 《NIKKE》 characters", "an event or a 《NIKKE》 character" ---
@@ -236,16 +316,21 @@ def parse_filter(words, quotes):
     if words.endswith(" without markers"):
         words = words.removesuffix(" without markers")
         flags["no_markers"] = True
+    marked = re.fullmatch(r"(.+?) with (?:a |1 or more )?markers?(?: underneath (?:it|them))?", words)
+    if marked:
+        words = marked[1]
+        flags["has_markers"] = True
     if words.endswith(" in battle"):
         words = words.removesuffix(" in battle")
         flags["in_battle"] = True
     if words.endswith(" with level higher than your opponent's level"):
         words = words.removesuffix(" with level higher than your opponent's level")
         flags["above_opponent_level"] = True
-    match = re.fullmatch(r"(.*?)characters? with ⟦(\d+)⟧ or ⟦(\d+)⟧ in its card name", words)
-    if match and not match[1]:  # either of two names
-        names = [re.sub(r"\(.*?\)", "", quotes[int(g)]).strip() for g in match.groups()[1:]]
-        return {"any": [{"type": "character", "in_name": name} for name in names]}
+    match = re.fullmatch(r"(other )?(?:characters?|cards?) with ((?:⟦\d+⟧(?: or )?)+)(?: in (?:its|their) card names?)?", words)
+    if match:  # any of these names
+        names = [re.sub(r"\(.*?\)", "", quotes[int(g)]).strip() for g in re.findall(r"⟦(\d+)⟧", match[2])]
+        kind = {"type": "character"} if "character" in words else {}
+        return {"any": [{**kind, "in_name": name} for name in names], **({"other": True} if match[1] else {})}
     for part in words.split(" or "):
         match = ALT.fullmatch(part.strip())
         if not match or not part.strip():
@@ -320,7 +405,7 @@ def matches_filter(filter_, details, x=None, my_level=0):
             continue
         if "in_name" in alt and plain_name(alt["in_name"]).lower() not in name.lower():
             continue
-        if "trait" in alt and alt["trait"] not in re.split(r"[・/]", traits):
+        if "trait" in alt and alt["trait"].casefold() not in [t.strip().casefold() for t in re.split(r"[・･/]", traits)]:
             continue
         if "color" in alt and alt["color"] != (details.get("color") or "").lower():
             continue
@@ -459,10 +544,14 @@ def parse_condition(words, quotes):
     match = re.fullmatch(r"(?:this card's battle opponent|the character facing this card) is level (\d+)(?: or (higher|lower))?", text, re.I)
     if match:
         return {"type": "facing_level", "n": int(match[1]), "dir": match[2]}
-    if re.fullmatch(r"you put 1 card into your hand", text, re.I):
-        return {"type": "counted", "key": "hand"}
-    if re.fullmatch(r"you put 1 card into your stock", text, re.I):
-        return {"type": "counted", "key": "stock"}
+    match = re.fullmatch(r"you put (\d+) (?:cards?|characters?) into your (hand|stock|clock|waiting room|memory)", text, re.I)
+    if match:
+        return {"type": "counted", "key": ZONE_WORDS[match[2].lower()], "n": int(match[1])}
+    match = re.fullmatch(r"you returned (\d+) cards?(?: to your (?:hand|deck))?", text, re.I)
+    if match:
+        return {"type": "chose", "n": int(match[1])}
+    if re.fullmatch(r"you returned a character to your hand", text, re.I):
+        return {"type": "counted", "key": "hand", "n": 1}
     if re.fullmatch(r"you drew 1 card", text, re.I):
         return {"type": "counted", "key": "drew"}
     match = re.fullmatch(r"that card (is not|is|has|'s trigger icon is) (.+?)", text, re.I)
@@ -494,6 +583,43 @@ def parse_condition(words, quotes):
     match = re.fullmatch(r"the number of (.+?) in your opponent's (memory|hand|waiting room|stock|clock) is (\d+) or (more|less)", text, re.I)
     if match and (f := parse_filter(match[1], quotes)):
         return {"type": "zone_count", "owner": "opp", "zone": ZONE_WORDS[match[2].lower()], "n": int(match[3]), "dir": match[4], "filter": carries_type_back(f)}
+    match = re.fullmatch(r"you have (\d+) or (more|less) (.+?) in your (waiting room|memory|level|clock|hand|stock)", text, re.I)
+    if match and (f := parse_filter(match[3], quotes)):
+        return {"type": "zone_count", "zone": ZONE_WORDS[match[4].lower()], "n": int(match[1]), "dir": match[2].lower(), "filter": carries_type_back(f)}
+    match = re.fullmatch(r"there (?:is|are) (?:an? )?(?:(\d+) or (more|less) )?(.+?) in your (waiting room|memory|level|clock|hand|stock)", text, re.I)
+    if match and (f := parse_filter(match[3], quotes)):
+        return {"type": "zone_count", "zone": ZONE_WORDS[match[4].lower()], "n": int(match[1] or 1), "dir": (match[2] or "more").lower(), "filter": carries_type_back(f)}
+    match = re.fullmatch(r"((?:⟦\d+⟧(?: and )?)+) are in your (waiting room|memory|level|clock)", text, re.I)
+    if match:
+        wanted = [parse_filter(f"⟦{n}⟧", quotes) for n in re.findall(r"⟦(\d+)⟧", match[1])]
+        return {"type": "zone_has_each", "zone": ZONE_WORDS[match[2].lower()], "filters": wanted}
+    match = re.fullmatch(r"you or your opponent has (\d+) or (more|less) (.+?) in the (waiting room|memory|clock|hand|stock)", text, re.I)
+    if match and (f := parse_filter(match[3], quotes)):
+        shared = {"type": "zone_count", "zone": ZONE_WORDS[match[4].lower()], "n": int(match[1]), "dir": match[2].lower(), "filter": carries_type_back(f)}
+        return {"type": "any_of", "conds": [shared, {**shared, "owner": "opp"}]}
+    match = re.fullmatch(r"you do not have a climax in your climax area", text, re.I)
+    if match:
+        return {"type": "climax_is", "filter": None, "owner": "me", "absent": True}
+    match = re.fullmatch(r"your level has (an? (?:red|blue|green|yellow) card)(?: and (an? (?:red|blue|green|yellow) card))?", text, re.I)
+    if match:
+        wanted = [parse_filter(w, quotes) for w in match.groups() if w]
+        return {"type": "zone_has_each", "zone": "level", "filters": wanted}
+    match = re.fullmatch(r"your (stock|hand|waiting room|clock) has (less|more) cards than your opponent's \1", text, re.I)
+    if match:
+        return {"type": "zone_vs_opp", "zone": ZONE_WORDS[match[1].lower()], "dir": match[2].lower()}
+    match = re.fullmatch(r"the number of colors of your characters on the stage is (\d+) or (more|less)", text, re.I)
+    if match:
+        return {"type": "colors", "zone": "stage", "n": int(match[1]), "dir": match[2].lower()}
+    match = re.fullmatch(r"the total number of colors of the cards in your (waiting room|level|clock|memory) is (\d+) or (more|less)", text, re.I)
+    if match:
+        return {"type": "colors", "zone": ZONE_WORDS[match[1].lower()], "n": int(match[2]), "dir": match[3].lower()}
+    if re.fullmatch(r"there are no characters in your opponent's center stage or all characters in their center stage are 【REVERSE】", text, re.I):
+        return {"type": "opp_center_down"}
+    if re.fullmatch(r"the level of this card's battle opponent is lower than or equal to the level of this card", text, re.I):
+        return {"type": "facing_vs_self", "dir": "lower"}
+    match = re.fullmatch(r"the top card of your clock is (⟦\d+⟧|a card with ⟦\d+⟧ in its card name)", text, re.I)
+    if match and (f := parse_filter(re.sub(r"^a ", "", match[1]), quotes)):
+        return {"type": "clock_top", "filter": f}
     match = re.fullmatch(r"your level is (\d+)", text, re.I)
     if match:
         return {"type": "my_level", "n": int(match[1]), "dir": None}
@@ -504,8 +630,6 @@ def parse_condition(words, quotes):
         return {"type": "that_no_markers"}
     if re.fullmatch(r"there is no character facing this card or the character facing this card is 【REVERSE】", text, re.I):
         return {"type": "no_standing_facing"}
-    if re.fullmatch(r"you paid the cost", text, re.I):
-        return {"type": "always"}
     return None
 
 
@@ -544,6 +668,23 @@ def parse_cost(words, quotes):
         if raw == "Put the top card of your stock into your clock":
             parts.append({"part": "stock_to_clock"})
             continue
+        match = re.fullmatch(r"Put (\d+) (.+?) from your waiting room (?:at the bottom of your deck|into your clock|into your memory)", raw)
+        if match and (filter_ := parse_filter(match[2], quotes)):
+            to = "deck_bottom" if "bottom" in raw else "clock" if "clock" in raw else "memory"
+            parts.append({"part": "pick", "zone": "waiting", "n": int(match[1]), "filter": carries_type_back(filter_), "to": to})
+            continue
+        match = re.fullmatch(r"Put (\d+) of your (other )?(.+?) from (?:your|the) stage into your (waiting room|clock|memory|stock)", raw)
+        if match and (filter_ := parse_filter(match[3], quotes)):
+            parts.append({"part": "pick", "zone": "stage", "n": int(match[1]), "filter": {**carries_type_back(filter_), **({"other": True} if match[2] else {})}, "to": ZONE_WORDS[match[4]]})
+            continue
+        if raw == "Put this card from your memory into your waiting room":
+            parts.append({"part": "self_to", "to": "waiting", "stand": False})
+            continue
+        match = re.fullmatch(r"【REST】 this card and (\d+) of your (.+?)|【REST】 (\d+) of your (.+?) and this card", raw)
+        if match and (filter_ := parse_filter(match[2] or match[4], quotes)):
+            parts.append({"part": "self_rest"})
+            parts.append({"part": "rest_chars", "n": int(match[1] or match[3]), "filter": {"stand": True, **filter_, "other": True}})
+            continue
         match = re.fullmatch(r"Put (\d+) marker into your waiting room", raw)
         if match:
             parts.append({"part": "markers", "n": int(match[1])})
@@ -579,7 +720,9 @@ def parse_cost(words, quotes):
             zone = {"hand": "hand", "stage": "stage", "climax area": "climax", "level": "level"}[match[3]]
             parts.append({"part": "pick", "zone": zone, "n": int(match[1]), "filter": carries_type_back(filter_), "to": ZONE_WORDS[match[4]]})
             continue
-        match = re.fullmatch(r"【REST】 (\d+) of your (.+?)", raw)
+        match = re.fullmatch(r"【REST】 (\d+) of your (.+?)|【REST】 (\d+) (characters?)", raw)
+        if match and not match[1]:
+            match = re.fullmatch(r"【REST】 (\d+) (.+?)", raw)
         if match:
             filter_ = parse_filter(match[2], quotes)
             if not filter_:
@@ -709,6 +852,34 @@ def step_manual(text, quotes):
     return {"do": "manual", "text": unmask(text, quotes)}
 
 
+def marker_move(n, to):
+    return [{"do": "choose", "zone": "marker", "filter": None, "min": n, "max": n, "text": f"Choose {n} marker{'s' if n != 1 else ''} underneath this card"},
+            {"do": "move_it", "to": to}]
+
+
+def keep_in_memory(words):
+    """ "If your memory has 5 or more cards, choose 4 cards in your memory, and put all cards in your memory
+    except those cards into your waiting room." Each player does it, and chooses for themselves."""
+    match = re.fullmatch(r"If your memory has (\d+) or more cards, choose (\d+) cards in your memory, and put all cards in your memory except those cards into your waiting room\.?", words)
+    if not match:
+        return None
+    return [{"do": "if", "cond": [{"type": "zone_count", **({"owner": "opp"} if owner == "opp" else {}), "zone": "memory", "n": int(match[1]), "dir": "more", "filter": None}],
+             "then": [{"do": "choose", "zone": "memory", "filter": None, "max": int(match[2]), "min": int(match[2]), "text": f"Choose {match[2]} cards in your memory to keep",
+                       **({"owner": "opp", "chooser": "opp"} if owner == "opp" else {})},
+                      {"do": "memory_except_it", "owner": owner}]} for owner in ("me", "opp")]
+
+
+def opponent_action(words, clause, quotes):
+    """What "your opponent may ..." has them do, or None if it isn't understood."""
+    match = re.fullmatch(r"draw (\d+) cards?", words)
+    if match:
+        return [{"do": "draw", "n": int(match[1]), "upto": False, "owner": "opp"}]
+    match = re.fullmatch(r"put the top (\d+) cards? of their stock into their waiting room", words)
+    if match:
+        return [{"do": "stock_card", "owner": "opp", "end": "top", "n": int(match[1])}]
+    return None
+
+
 def clause_steps(clause, quotes, cost):
     """The steps for one clause, or None if it isn't understood."""
     text = re.sub(r"^you (?=draw|choose|deal)", "", clause[0].lower() + clause[1:])
@@ -758,6 +929,45 @@ def clause_steps(clause, quotes, cost):
     if re.fullmatch(r"your opponent puts that character from their memory (?:in|on) any position of their stage", text):
         return [{"do": "place", "opponent_places": True}]
 
+    match = re.fullmatch(r"your opponent chooses (up to )?(\d+) (.+?) from among them", text)
+    if match and (f := parse_filter(match[3], quotes)):
+        return [{"do": "choose", "zone": "among", "chooser": "opp", "filter": carries_type_back(f), "max": int(match[2]),
+                 "min": 0 if match[1] else int(match[2]), "text": unmask(clause, quotes)}]
+    match = re.fullmatch(r"(?:you )?puts? it into your hand", text)
+    if match:
+        return [{"do": "move_it", "to": "hand"}]
+    if re.fullmatch(r"(?:you )?puts? the rest into your waiting room", text):
+        return [{"do": "rest", "to": "waiting"}]
+    match = re.fullmatch(r"your opponent chooses (\d+) cards? in (?:your opponent's|their) hand", text)
+    if match:
+        return [{"do": "choose", "zone": "hand", "owner": "opp", "chooser": "opp", "filter": None, "max": int(match[1]), "min": int(match[1]), "text": unmask(clause, quotes)}]
+    if text == "puts it into their waiting room":
+        return [{"do": "move_it", "to": "waiting"}]
+    if text == "each player returns all cards in the waiting room to their deck":
+        return [{"do": "waiting_to_deck", "owner": "me"}, {"do": "waiting_to_deck", "owner": "opp"}]
+    if text == "each player shuffles their deck":
+        return [{"do": "shuffle", "owner": "me"}, {"do": "shuffle", "owner": "opp"}]
+    if text == "all players perform the following action ⟦0⟧" or re.fullmatch(r"all players perform the following action ⟦\d+⟧", text):
+        return keep_in_memory(quotes[int(re.search(r"⟦(\d+)⟧", text)[1])]) or None
+    if text == "put it on your climax area":
+        return [{"do": "move_it", "to": "climax"}]
+
+    # Finding a card by another card's name.
+    match = re.fullmatch(r"search your deck for up to (\d+) (climax|character) with the same card name as an? (climax|character) in your (waiting room|stage|level|memory)", text)
+    if match:
+        return [{"do": "search", "max": int(match[1]), "filter": {"any": [{"type": match[2]}]}, "same_name_as": {"type": match[3], "zone": "stage" if match[4] == "stage" else ZONE_WORDS[match[4]]},
+                 "text": unmask(clause, quotes)}]
+
+    # A set card and a chosen one, exchanged.
+    match = re.fullmatch(r"choose the (bottom|top) card of your clock and (\d+) (.+?) in your waiting room", text)
+    if match and (f := parse_filter(match[3], quotes)):
+        return [{"do": "clock_end_it", "end": match[1]},
+                {"do": "choose", "zone": "waiting", "filter": carries_type_back(f), "max": int(match[2]), "min": int(match[2]), "text": unmask(clause, quotes)}]
+    match = re.fullmatch(r"choose (?:1|a) (.+?) in your (hand|level|clock|memory|waiting room) and (?:1|a) (.+?) in your (hand|level|clock|memory|waiting room)", text)
+    if match and (first := parse_filter(match[1], quotes)) and (second := parse_filter(match[3], quotes)):
+        return [{"do": "choose", "zone": ZONE_WORDS[match[2]], "filter": carries_type_back(first), "max": 1, "min": 1, "text": f"Choose from your {match[2]}"},
+                {"do": "choose", "zone": ZONE_WORDS[match[4]], "filter": carries_type_back(second), "max": 1, "min": 1, "text": f"Choose from your {match[4]}"}]
+
     # Exchanging two cards' places.
     match = re.fullmatch(r"exchange them as 【(STAND|REST)】", text)
     if match:
@@ -789,6 +999,10 @@ def clause_steps(clause, quotes, cost):
         return [{"do": "status", "status": "no_side_loss", "target": "source_uid"}]
     if text == "that character cannot 【STAND】 during your opponent's next stand phase":
         return [{"do": "status", "status": "no_stand", "target": "it_first", "until": "next"}]
+    if text == "those characters cannot 【STAND】 during your opponent's next stand phase":
+        return [{"do": "status", "status": "no_stand", "target": "it_all", "until": "next"}]
+    if text == "this card cannot 【STAND】 during your next stand phase":
+        return [{"do": "status", "status": "no_stand", "target": "source_uid", "until": "my_next"}]
     if text == "【REST】 that character":
         return [{"do": "pos_that", "pos": "rest"}]
     if text == "put them into your stock in any order":
@@ -894,6 +1108,12 @@ def clause_steps(clause, quotes, cost):
         return [{"do": "any_order", "options": [{"text": o, "steps": parse_effect(o, cost)} for o in options]}]
 
     # Choosing cards.
+    match = re.fullmatch(r"choose (up to )?(\d+) (.+?) in your climax area", text)
+    if match and (f := parse_filter(match[3], quotes)):
+        return [{"do": "choose", "zone": "climax", "filter": carries_type_back(f), "max": int(match[2]), "min": 0 if match[1] else int(match[2]), "text": unmask(clause, quotes)}]
+    match = re.fullmatch(r"choose (up to )?(\d+) (.+?) from the markers underneath this card", text)
+    if match and (f := parse_filter(match[3], quotes)):
+        return [{"do": "choose", "zone": "marker", "filter": carries_type_back(f), "max": int(match[2]), "min": 0 if match[1] else int(match[2]), "text": unmask(clause, quotes)}]
     match = re.fullmatch(r"choose (up to )?(\d+) (.+?) (?:in|from) your (waiting room|clock|hand|level|memory)", text)
     if match and (f := parse_filter(match[3], quotes)):
         return [{"do": "choose", "zone": ZONE_WORDS[match[4]], "filter": carries_type_back(f), "max": int(match[2]),
@@ -965,8 +1185,55 @@ def clause_steps(clause, quotes, cost):
         return [{"do": "pos_it", "pos": "rest"}]
     if text == "【REVERSE】 that character":
         return [{"do": "pos_that", "pos": "reverse"}]
+    if text in ("【REVERSE】 this card's battle opponent", "【REVERSE】 that battle opponent"):
+        return [{"do": "choose_facing"}, {"do": "pos_it", "pos": "reverse"}]
+    if text == "this card cannot become 【REVERSE】 until end of turn":
+        return [{"do": "status", "status": "no_reverse", "target": "source_uid"}]
+    match = re.fullmatch(r"(?:put|return) that character (?:into|to) (?:your|their) (waiting room|stock|memory|clock|hand)", text)
+    if match:
+        return [{"do": "that_to", "to": ZONE_WORDS[match[1]]}]
+    match = re.fullmatch(r"put that character (?:at the bottom|on the top) of their deck", text)
+    if match:
+        return [{"do": "that_to", "to": "deck_bottom" if "bottom" in text else "deck"}]
+    if text == "put it on the top of their deck or into their waiting room":
+        return [{"do": "dest", "options": ["deck", "waiting"]}]
+    match = re.fullmatch(r"(?:move|put) it (?:to|on) an open position (?:of|in) (your|their) (center|back) stage", text)
+    if match:
+        return [{"do": "place", "open": True, "zone": match[2], "keep_pos": True, **({"on_owner": True} if match[1] == "their" else {})}]
+    if text == "put the rest into your stock in any order":
+        return [{"do": "rest", "to": "stock"}]
+    if text == "return it to hand":
+        return [{"do": "move_it", "to": "hand"}]
+    if text == "put this card in any position of your center stage":
+        return [{"do": "self_it"}, {"do": "place", "zone": "center"}]
+    match = re.fullmatch(r"put (\d+) marker underneath this card into your (stock|waiting room)", text)
+    if match:
+        return marker_move(int(match[1]), ZONE_WORDS[match[2]])
+    if text == "put a marker from underneath this card into your stock":
+        return marker_move(1, "stock")
+    match = re.fullmatch(r"return (\d+) marker underneath this card to your hand", text)
+    if match:
+        return marker_move(int(match[1]), "hand")
+    if text == "put all markers underneath this card into your waiting room":
+        return [{"do": "all_markers", "to": "waiting"}]
+    match = re.fullmatch(r"put X cards from the top of your deck into your (waiting room|stock|clock)", text)
+    if match:
+        return [{"do": "top", "n": 0, "owner": "me", "to": ZONE_WORDS[match[1]], "x_stat": "n"}]
+    match = re.fullmatch(r"flip over X cards from the top of your deck", text)
+    if match:
+        return [{"do": "flip", "n": 0, "x_stat": "n"}]
+    match = re.fullmatch(r"deal (\d+) damage to yourself", text)
+    if match:
+        return [{"do": "damage", "n": int(match[1]), "self": True}]
+    if text == "put them at the bottom of your clock in any order":
+        return [{"do": "move_it", "to": "clock_bottom"}]
+    if re.fullmatch(r"return the top card of your (clock|stock) to your hand", text):
+        return [{"do": "top_of_zone", "zone": "clock" if "clock" in text else "stock", "to": "hand"}]
 
     # Power and soul.
+    match = re.fullmatch(r"all characters in your opponent's stage gets? (?P<what>.+?) until end of turn", text)
+    if match and (change := stat_change(match["what"], quotes)) is not None:
+        return [{"do": "buff", "target": "opp_all", "until": "turn", **change}]
     match = GETS.fullmatch(text)
     if match and (change := stat_change(match["what"] + (match["after"] or ""), quotes)) is not None:
         who = match["who"]
@@ -1025,6 +1292,11 @@ def clause_steps(clause, quotes, cost):
         return [{"do": "damage", "n": int(match[1])}]
     if text == "【REST】 this card":
         return [{"do": "pos_self", "pos": "rest"}]
+    match = re.fullmatch(r"your opponent may (.+)", text)
+    if match:
+        action = opponent_action(match[1], clause, quotes)
+        if action:
+            return [{"do": "may", "chooser": "opp", "cost": [], "then": action, "text": unmask(clause, quotes)}]
     if text == "【STAND】 this card":
         return [{"do": "pos_self", "pos": "stand"}]
     if text in ("return all cards in your waiting room to your deck", "return all cards from your waiting room to your deck"):
@@ -1078,7 +1350,7 @@ def has_manual(steps):
     for step in steps:
         if step["do"] == "manual":
             return True
-        if has_manual(step.get("then", [])):
+        if has_manual(step.get("then", [])) or has_manual(step.get("otherwise", [])):
             return True
     return False
 
@@ -1148,7 +1420,11 @@ def parse_effect(text, cost=None, masked=None):
         plain = sentence.rstrip(".")
         if re.search(r"this card cannot be played from your hand", plain):
             continue
-        match = re.match(r"If you do, (.*)", plain)
+        match = re.match(r"If you do not, (.*)", plain)
+        if match and (may := last_may(steps)):
+            may["otherwise"] = parse_clauses(clauses(match[1]), quotes, cost)
+            continue
+        match = re.match(r"If (?:you do|you paid the cost|they do|your opponent does|he or she does), (.*)", plain)
         if match:
             may = last_may(steps)
             if may:
@@ -1191,6 +1467,10 @@ def parse_effect(text, cost=None, masked=None):
 def parse_when(words, quotes):
     """The trigger events in a "When ..." clause as a list, or None if not understood. "When this
     card attacks or becomes 【REVERSE】" is two triggers."""
+    either = re.fullmatch(r"(when .+?) or (when .+)", words.strip(), re.I)
+    if either:
+        first, second = parse_one_when(either[1], quotes), parse_one_when(either[2], quotes)
+        return first + second if first and second else None
     match = re.fullmatch(r"(when this card) (attacks|direct attacks|frontal attacks|is frontal attacked|becomes 【REVERSE】) or (attacks|is frontal attacked|becomes 【REVERSE】)", words.strip(), re.I)
     if match:
         first, second = parse_one_when(f"{match[1]} {match[2]}", quotes), parse_one_when(f"{match[1]} {match[3]}", quotes)
@@ -1204,6 +1484,9 @@ def parse_one_when(words, quotes):
     if begin:
         if text == "the encore step":
             return [{"on": "phase", "phase": "encore", "whose": "any"}]
+        match = re.fullmatch(r"the (draw|clock|main|climax|attack) phase", text)
+        if match:
+            return [{"on": "phase", "phase": match[1], "whose": "any"}]
         if text == "all players' attack phase":
             return [{"on": "phase", "phase": "attack", "whose": "any"}]
         match = re.fullmatch(r"your (opponent's )?(draw phase|clock phase|main phase|climax phase|attack phase|encore step|first turn)", text)
@@ -1214,6 +1497,10 @@ def parse_one_when(words, quotes):
     if words.lower().startswith("at the end of"):
         if text == "your turn":
             return [{"on": "phase", "phase": "end", "whose": "me"}]
+        if text == "your opponent's turn":
+            return [{"on": "phase", "phase": "end", "whose": "opp"}]
+        if text in ("turn", "the turn", "each turn"):
+            return [{"on": "phase", "phase": "end", "whose": "any"}]
         return [{"on": "attack_end"}] if text == "this card's attack" else None
     match = re.fullmatch(r"this card is placed on the stage from your hand or (deck|waiting room|memory)", text)
     if match:
@@ -1226,7 +1513,7 @@ def parse_one_when(words, quotes):
     match = re.fullmatch(r"(your character's|this card's) trigger check reveals (.+?)", text)
     if match and (f := parse_filter(match[2], quotes)):
         return [{"on": "check_card", "any": match[1] == "your character's", "filter": f}]
-    match = re.fullmatch(r"(?:your|an?) (climax(?: with \[\w+\] in (?:its|the) trigger icons?)?) is placed on your climax area", text)
+    match = re.fullmatch(r"(?:your|an?) ((?:(?:red|blue|green|yellow) )?climax(?: with \[\w+\] in (?:its|the) trigger icons?)?) is placed on your climax area", text)
     if match and (f := parse_filter(match[1], quotes)):
         return [{"on": "climax", "filter": f}]
     match = re.fullmatch(r"your (⟦\d+⟧) is put into your waiting room from the stage", text)
@@ -1307,7 +1594,7 @@ def parse_one_when(words, quotes):
         return [{"on": "reverse_other", "filter": f}]
     if text == "a climax is placed on your climax area":
         return [{"on": "climax"}]
-    match = re.fullmatch(r"(⟦\d+⟧) is placed on your climax area", text)
+    match = re.fullmatch(r"(⟦\d+⟧(?: or ⟦\d+⟧)*) is placed on your climax area", text)
     if match:
         return [{"on": "climax", "filter": parse_filter(match[1], quotes)}]
     if text == "this card is placed on your climax area from your hand":
@@ -1490,10 +1777,34 @@ def parse_each(words, quotes):
     return None
 
 
+HAND_MOD = re.compile(r"(?:(?P<self>[Tt]his card)|(?:[Yy]our )?(?P<name>⟦\d+⟧)) gets? (?:-(?P<level>\d+) levels?)?(?: and )?(?:-(?P<cost>\d+) cost)? while in your hand")
+
+
+def parse_hand_mod(ability, plain, quotes):
+    """ "If ..., this card gets -1 level while in your hand." True if that's what this is. It can't be left
+    unread: the card couldn't be played when it should be, so what isn't understood is done by hand."""
+    pieces = clauses(plain)
+    match = HAND_MOD.fullmatch(pieces[-1].rstrip(".")) if pieces else None
+    if not match or not (match["level"] or match["cost"]):
+        return False
+    ability["where"] = None  # "Memory" says where its condition looks, but it's the hand this is about
+    conds = [parse_condition(p, quotes) for p in pieces[:-1]]
+    if not all(conds):
+        ability["steps"] = [{"do": "manual", "text": unmask(plain, quotes)}]
+        return True
+    ability["cond"] = conds
+    ability["hand_mod"] = {"level": -int(match["level"] or 0), "cost": -int(match["cost"] or 0)}
+    if match["name"]:
+        ability["hand_mod"]["filter"] = parse_filter(match["name"], quotes)
+    return True
+
+
 def parse_cont(body, quotes, line, head):
     """A CONT ability's stat changes and abilities given, as far as they're understood."""
     ability = {"kind": "cont", "text": line, "cond": [], "effects": [], **head}
     plain = without_reminders(body)
+    if parse_hand_mod(ability, plain, quotes):
+        return ability
     match = re.fullmatch(r"During this card's battle, all players cannot play ⟦(\d+)⟧ from their hands\.?", plain)
     if match and quotes[int(match[1])] == "Backup":
         ability["no_backup"] = True
@@ -1581,7 +1892,10 @@ def parse_cached(text):
     abilities = []
     event_lines = []
     for line in ability_lines(canonical(text)):
-        if line.startswith("("):  # a trigger icon's reminder text
+        if line.startswith(("(", ": ")):  # a trigger icon's reminder text, sometimes missing the start
+            continue
+        if re.fullmatch(r"This card can be played from your hand without fulfilling color requirements\.?", line):
+            abilities.append({"kind": "cont", "text": line, "cond": [], "effects": [], "once": False, "where": None, "limit": 0, "color_free": {"self": True}})
             continue
         body, quotes = mask(line)
         tag = re.match(r"【(AUTO|ACT|CONT|COUNTER)】\s*", body)
@@ -1618,6 +1932,7 @@ def by_hand_parts(text):
             for granted in step.get("grant", []):
                 yield from by_hand_parts(granted)
             yield from in_steps(step.get("then", []))
+            yield from in_steps(step.get("otherwise", []))
             for option in step.get("options", []):
                 if isinstance(option, dict):
                     yield from in_steps(option["steps"])

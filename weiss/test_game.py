@@ -1730,6 +1730,7 @@ class ColorRuleTests(TestCase):
     def test_its_color_in_the_clock_or_level_zone_is_enough(self):
         for zone in ("clock", "level"):
             self.setUp()
+            zones(self.state, 1)["level"].append(game.new_card(19))  # blue: only its level, not its color
             zones(self.state, 1)[zone].append(game.new_card(50))
             self.play(20, "C1")
 
@@ -1760,6 +1761,7 @@ class ColorRuleTests(TestCase):
 
     def test_a_card_that_says_so_skips_the_color_rule(self):
         self.cards[20]["text"] = "【CONT】 This card can be played from your hand without fulfilling color requirements."
+        zones(self.state, 1)["level"].append(game.new_card(19))  # blue
         self.play(20, "C1")
 
     def test_a_condition_on_that_ability_counts(self):

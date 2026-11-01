@@ -1783,6 +1783,477 @@ class NoEndlessRearrangingTests(TestCase):
         self.assertEqual(action, {"type": "phase", "phase": "climax"})
 
 
+class DamageNegatedTests(TestCase):
+    def damage(self, t, top):
+        t.them["zones"]["deck"][-1]["card"] = top
+        game.deal_damage(t.state, "1", 2, 2, [], lambda pk: "x", lambda pk: t.info(pk)["card_type"] == "Climax")
+
+    def table(self):
+        t = Table()
+        t.card(901, card_type="Climax", name="Big Climax", power=None, level=None)
+        return t
+
+    def test_both_players_are_told_which_climax_negated_it(self):
+        t = self.table()
+        self.damage(t, 901)
+        for viewer, key in ((1, "me"), (2, "opponent")):
+            side = game.view(t.state, viewer)[key]
+            self.assertEqual((side["negated"], side["negated_card"]), (1, 901))
+
+    def test_the_card_can_be_shown_to_both_players(self):
+        t = self.table()
+        self.damage(t, 901)
+        for viewer in (1, 2):
+            self.assertIn(901, game.visible_cards(game.view(t.state, viewer)))
+
+    def test_damage_that_gets_through_says_nothing(self):
+        t = self.table()
+        self.damage(t, 5)
+        self.assertEqual(game.view(t.state, 2)["opponent"]["negated"], 0)
+
+    def test_it_counts_each_time(self):
+        t = self.table()
+        self.damage(t, 901)
+        self.damage(t, 901)
+        self.assertEqual(t.them["negated"], 2)
+
+    def test_a_cpu_gives_it_time_to_be_seen(self):
+        t = self.table()
+        self.damage(t, 901)
+        self.assertEqual(cpu.wait_seconds(t.state), 2)
+
+
+class CharactersWithMarkersTests(TestCase):
+    TEXT = "【CONT】 All of your other 《Team DAI-GURREN》 characters with a marker get +500 power."
+
+    def table(self):
+        t = Table()
+        t.card(800, traits="Team DAI-GURREN", power=3000)
+        t.card(801, traits="Someone Else", power=3000)
+        self.source = t.seat(t.me, "C1", t.card(2000, text=self.TEXT, traits="Team DAI-GURREN", power=1000))
+        self.marked = t.seat(t.me, "C2", 800)
+        self.bare = t.seat(t.me, "C3", 800)
+        self.outsider = t.seat(t.me, "B1", 801)
+        t.me["markers"]["C2"] = [game.new_card(1)]
+        t.me["markers"]["B1"] = [game.new_card(1)]
+        t.me["markers"]["C1"] = [game.new_card(1)]
+        t.refresh()
+        return t
+
+    def power(self, t, card):
+        return t.state["stats"][card["uid"]]["power"]
+
+    def test_only_characters_of_that_trait_with_a_marker_get_it(self):
+        t = self.table()
+        self.assertEqual(self.power(t, self.marked), 3500)
+        self.assertEqual(self.power(t, self.bare), 3000)
+        self.assertEqual(self.power(t, self.outsider), 3000)
+
+    def test_not_this_card_itself(self):
+        self.assertEqual(self.power(self.table(), self.source), 1000)
+
+    def test_it_follows_the_markers(self):
+        t = self.table()
+        t.me["markers"]["C2"] = []
+        t.me["markers"]["C3"] = [game.new_card(1)]
+        t.refresh()
+        self.assertEqual(self.power(t, self.marked), 3000)
+        self.assertEqual(self.power(t, self.bare), 3500)
+
+    def test_other_wordings_for_having_markers(self):
+        for words in ("with a marker", "with markers", "with 1 or more markers"):
+            self.assertTrue(abilities.parse_filter(f"《Hero》 characters {words}", [])["has_markers"], words)
+
+    def test_a_trait_matches_whatever_its_case(self):
+        self.assertTrue(abilities.matches_filter({"any": [{"trait": "Team DAI-GURREN"}]}, {"traits": "team dai-gurren・Mecha"}))
+
+
+class ReportedLagannTests(TestCase):
+    TEXT = ('【AUTO】 [(1) Put two cards from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, '
+            'choose up to two characters in your waiting room with "LAGANN(ラガン)" in its card name, return them to your hand, chooase one of your other 《Team DAI-GURREN》 characters, '
+            'and that character gets +1000 power until end of turn.')
+
+    def test_the_whole_effect_happens(self):
+        t = Table()
+        t.card(2000, text=self.TEXT, traits="Team DAI-GURREN")
+        other = t.seat(t.me, "C2", t.card(801, traits="Team DAI-GURREN", power=3000))
+        t.card(910, name="LAGANN(ラガン)")
+        t.card(911, name="Big LAGANN(ラガン)")
+        t.card(912, name="Someone Else")
+        card = t.hand(2000)[0]
+        payment = t.hand(1, 2)
+        t.me["zones"]["waiting"] = [game.new_card(910), game.new_card(911), game.new_card(912)]
+        wanted = [c["uid"] for c in t.me["zones"]["waiting"][:2]]
+        t.stock(1)
+        t.refresh()
+        t.apply(2, {"type": "move", "uid": card["uid"], "to": "C1"})
+        t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+        t.apply(2, {"type": "ability_answer", "uids": [c["uid"] for c in payment]})
+        self.assertEqual(sorted(t.state["resolving"]["prompt"]["options"]), sorted(wanted))
+        t.apply(2, {"type": "ability_answer", "uids": wanted})
+        self.assertEqual(t.state["resolving"]["prompt"]["options"], [other["uid"]])
+        t.apply(2, {"type": "ability_answer", "uids": [other["uid"]]})
+        t.refresh()
+        self.assertEqual(sorted(c["uid"] for c in t.me["zones"]["hand"]), sorted(wanted))
+        self.assertEqual(t.me["zones"]["stock"], [])
+        self.assertEqual(t.state["stats"][other["uid"]]["power"], 4000)
+
+
+class LowerWhileInHandTests(TestCase):
+    TEXT = "【CONT】 If you have 2 or more other 《Hero》 characters, this card gets -1 level while in your hand."
+
+    def table(self, text=TEXT, **details):
+        t = Table()
+        t.card(800, traits="Hero")
+        t.card(2000, text=text, level=1, power=9000, color="Red", **details)
+        t.cards[2000]["cost"] = details.get("cost", 0)
+        self.card = t.hand(2000)[0]
+        return t
+
+    def heroes(self, t):
+        t.seat(t.me, "B1", 800)
+        t.seat(t.me, "B2", 800)
+
+    def play(self, t, to="C1"):
+        t.refresh()
+        t.apply(2, {"type": "move", "uid": self.card["uid"], "to": to})
+
+    def test_it_reads_as_a_level_change_not_a_step_by_hand(self):
+        ability = abilities.parse(self.TEXT)[0]
+        self.assertEqual(ability["hand_mod"], {"level": -1, "cost": 0})
+        self.assertEqual(abilities.by_hand_parts(self.TEXT), [])
+
+    def test_every_wording_on_the_cards_reads(self):
+        for text in ("If your waiting room has 3 or less climax, this card gets -1 level while in your hand.",
+                     'If "Name" is in your clock, this card gets -1 level while in your hand.',
+                     'If a card named "Name" is in your clock, this card gets -1 level while in your hand.',
+                     'If you have "One" and "Other", this card gets -1 level while in your hand.',
+                     "If your opponent has a level 3 or higher character, this card gets -1 level while in your hand.",
+                     "When your opponent has a level 3 or higher character, this card gets -1 level while in your hand.",
+                     "If your waiting room has 3 or more climax with [treasure] in the trigger icons, this card gets -1 level while in your hand.",
+                     'If you have 2 or more "Name" in your waiting room, this card gets -1 level while in your hand.',
+                     'Experience If "One" and "Other" are in your level, this card gets -1 level while in your hand.',
+                     "Memory If your memory has 2 or more green cards, this card gets -1 level while in your hand.",
+                     "If the number of climax in your waiting room is 2 or less, this card gets -1 level while in your hand.",
+                     "If you or your opponent has 2 or less climax in the waiting room, this card gets -1 level while in your hand.",
+                     "If there are 2 or less climax in your waiting room, this card gets -1 level while in your hand.",
+                     'If there is a card named "Name" in your clock, this card gets -1 level while in your hand.',
+                     "If your level is 1, and there is a blue card in your clock, this card gets -1 levels and -1 cost while in your hand.",
+                     "If your deck has 5 or less cards, this card gets -1 level while in your hand.",
+                     "This card gets -1 level while in your hand."):
+            ability = abilities.parse("【CONT】 " + text)[0]
+            self.assertIn("hand_mod", ability, text)
+            self.assertEqual(abilities.by_hand_parts("【CONT】 " + text), [], text)
+
+    def test_a_trait_with_a_comma_in_its_name(self):
+        text = "【CONT】 If you have 4 or more 《Anniversary》 or 《Hello, Happy World!》 characters, this card gets -1 level while in your hand."
+        self.assertEqual(abilities.parse(text)[0]["cond"][0]["filter"]["any"][1]["trait"], "Hello, Happy World!")
+
+    def test_a_condition_it_cant_read_is_done_by_hand_not_ignored(self):
+        self.assertTrue(abilities.by_hand_parts("【CONT】 If the moon is full, this card gets -1 level while in your hand."))
+
+    def test_level_is_enforced_when_playing_from_hand(self):
+        t = Table()
+        t.card(2000, level=2, power=9000)
+        self.card = t.hand(2000)[0]
+        with self.assertRaisesMessage(game.GameError, "level 2"):
+            self.play(t)
+        t.level(2)
+        self.play(t)
+        self.assertEqual(t.me["stage"]["C1"]["uid"], self.card["uid"])
+
+    def test_with_the_rules_off_level_doesnt_matter(self):
+        t = Table()
+        t.card(2000, level=3)
+        self.card = t.hand(2000)[0]
+        t.state["rules"] = False
+        self.play(t)
+        self.assertEqual(t.me["stage"]["C1"]["uid"], self.card["uid"])
+
+    def test_it_can_only_be_played_early_when_the_condition_holds(self):
+        t = self.table()
+        with self.assertRaises(game.GameError):
+            self.play(t)
+        self.heroes(t)
+        self.play(t)
+        self.assertEqual(t.me["stage"]["C1"]["uid"], self.card["uid"])
+
+    def test_lowered_to_level_0_it_doesnt_need_its_color(self):
+        t = self.table()
+        t.me["zones"]["level"] = [game.new_card(t.card(801, color="Blue"))]
+        t.refresh()
+        self.assertEqual(t.state["needs_color"]["2"], {self.card["uid"]: "Red"})
+        self.heroes(t)
+        t.me["zones"]["level"] = []
+        t.refresh()
+        self.assertEqual(t.state["needs_color"]["2"], {})
+
+    def test_lowered_to_level_1_it_still_needs_its_color(self):
+        t = Table()
+        t.card(800, traits="Hero")
+        t.card(2000, text=self.TEXT, level=2, color="Red")
+        self.card = t.hand(2000)[0]
+        t.level(1)
+        self.heroes(t)
+        t.refresh()
+        self.assertEqual(t.state["needs_color"]["2"], {self.card["uid"]: "Red"})
+
+    def test_it_never_goes_below_0(self):
+        t = Table()
+        t.card(2000, text="【CONT】 This card gets -2 level while in your hand.", level=1)
+        self.assertEqual(game.play_level(t.state, "2", game.new_card(2000), t.info), 0)
+
+    def test_a_cost_reduction_is_what_gets_paid(self):
+        t = Table()
+        t.card(2000, text="【CONT】 This card gets -1 cost while in your hand.", cost=2)
+        self.card = t.hand(2000)[0]
+        t.stock(2)
+        self.play(t)
+        self.assertEqual(len(t.me["zones"]["stock"]), 1)
+
+    def test_a_cost_reduction_lets_you_afford_it(self):
+        t = Table()
+        t.card(2000, text="【CONT】 This card gets -1 cost while in your hand.", cost=1)
+        self.card = t.hand(2000)[0]
+        self.play(t)
+        self.assertEqual(t.me["zones"]["stock"], [])
+        self.assertIsNotNone(t.me["stage"]["C1"])
+
+    def test_another_character_can_lower_a_named_card(self):
+        t = Table()
+        t.card(2000, name="Named", cost=2)
+        t.card(801, text='【CONT】 "Named" gets -1 cost while in your hand.')
+        card = t.hand(2000)[0]
+        self.assertEqual(game.play_cost(t.state, "2", card, t.info), 2)
+        t.seat(t.me, "B1", 801)
+        self.assertEqual(game.play_cost(t.state, "2", card, t.info), 1)
+
+    def test_once_on_the_stage_it_is_its_printed_level_again(self):
+        t = self.table()
+        self.heroes(t)
+        self.play(t)
+        t.refresh()
+        self.assertNotIn(self.card["uid"], t.state["hand_mods"]["2"])
+        self.assertEqual(game.details_of(t.me["stage"]["C1"], game.SimpleNamespace(info=t.info))["level"], 1)
+
+    def test_the_board_shows_it_only_to_its_owner(self):
+        t = self.table()
+        self.heroes(t)
+        t.refresh()
+        self.assertEqual(game.view(t.state, 2)["hand_mods"], {self.card["uid"]: {"level": 0, "cost": 0}})
+        self.assertEqual(game.view(t.state, 1)["hand_mods"], {})
+
+    def test_the_cpu_plays_it_early_when_it_can(self):
+        t = self.table()
+        self.assertNotEqual((t.next() or {}).get("uid"), self.card["uid"])
+        self.heroes(t)
+        action = t.next()
+        self.assertEqual(action["uid"], self.card["uid"])
+        self.assertIn(action["to"], game.OPPOSITE)
+
+    def test_the_cpu_counts_the_lower_cost(self):
+        t = Table()
+        t.card(2000, text="【CONT】 This card gets -1 cost while in your hand.", cost=1, power=9000)
+        card = t.hand(2000)[0]
+        self.assertEqual(t.next()["uid"], card["uid"])
+
+    def test_the_cpu_keeps_a_card_it_can_lower_over_one_it_cant_play(self):
+        t = self.table()
+        self.heroes(t)
+        t.card(802, level=3, power=9000)
+        mind = cpu.Mind(t.state, "2", t.info, cpu.Temper(), random.Random(1))
+        self.assertGreater(mind.value(self.card), mind.value(game.new_card(802)))
+
+
+class SecondExportTests(TestCase):
+    """Wording from the newer export of unplayable cards, and what the game does with it."""
+
+    def play(self, text, stock=0, **details):
+        t = Table()
+        t.card(2000, text=text, **details)
+        card = t.hand(2000)[0]
+        t.stock(stock)
+        t.refresh()
+        t.apply(2, {"type": "move", "uid": card["uid"], "to": "C1"})
+        return t, card
+
+    def fire(self, t):
+        t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+
+    def show_done(self, t):
+        while t.state.get("ability_show"):
+            t.apply(2, {"type": "ability_show_done", "id": t.state["ability_show"]["id"]})
+
+    def test_number_words_reach_every_wording_rule(self):
+        self.assertEqual(abilities.parse("【ACT】 [Return two characters in your waiting room to your deck. Shuffle your deck] Draw 1 card.")[0]["cost"][0]["n"], 2)
+        self.assertEqual(abilities.parse("【ACT】 [【REST】 two of your characters] Draw 1 card.")[0]["cost"][0]["n"], 2)
+
+    def test_markup_left_in_card_text_is_ignored(self):
+        self.assertEqual(abilities.by_hand_parts("【AUTO】 Encore [Put 1 card from your hand into your waiting room] (When this card is put into your waiting room from the stage, you may pay the cost. If you do, return this card to its previous stage position as 【REST】' />)"), [])
+        self.assertEqual(abilities.parse("【ACT】 [Put 1 climax with [[gate.gif]] in its trigger icon from your hand into your waiting room] Draw 1 card.")[0]["cost"][0]["filter"]["any"][0]["icon"], "gate")
+
+    def test_during_the_turn_placed_when_it_attacks(self):
+        ability = abilities.parse("【AUTO】 During the turn that this card is placed on the stage from your hand, when this card attacks, this card gets +1000 power until end of turn.")[0]
+        self.assertEqual(ability["when"], [{"on": "attack"}])
+        self.assertEqual(ability["cond"][0]["type"], "played_this_turn")
+
+    def test_limits_written_in_words(self):
+        for text, limit in (("up to one time", 1), ("up to two times", 2), ("up to once", 1)):
+            ability = abilities.parse(f"【AUTO】 This ability activates {text} per turn. When your other character attacks, this card gets +500 power until end of turn.")[0]
+            self.assertEqual((ability["once"], ability["limit"], abilities.by_hand_parts(ability["text"])), (True, limit, []), text)
+
+    def test_a_climax_icon_effect_happens_when_the_climax_is_placed(self):
+        ability = abilities.parse("[c-icon] All of your characters get +1000 power until end of turn.")[0]
+        self.assertEqual((ability["kind"], ability["when"]), ("auto", [{"on": "climax_self"}]))
+        self.assertEqual(ability["steps"][0]["power"], 1000)
+
+    OR_ELSE = "【AUTO】 [(1)] When this card is placed on the stage from your hand, you may pay the cost. If you do, draw 1 card. If you do not, put this card into your waiting room."
+
+    def test_if_you_do_not_when_you_decline(self):
+        t, card = self.play(self.OR_ELSE, stock=1)
+        t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": False})
+        self.assertEqual(len(t.me["zones"]["stock"]), 1)
+        self.assertIsNone(t.me["stage"]["C1"])
+        self.assertEqual(t.me["zones"]["waiting"][-1]["uid"], card["uid"])
+
+    def test_if_you_do_not_when_you_cant_pay(self):
+        t, _ = self.play(self.OR_ELSE)
+        self.fire(t)
+        self.assertIsNone(t.me["stage"]["C1"])
+
+    def test_if_you_do_not_doesnt_happen_when_you_do(self):
+        t, _ = self.play(self.OR_ELSE, stock=1)
+        hand = len(t.me["zones"]["hand"])
+        self.fire(t)
+        self.assertIsNotNone(t.me["stage"]["C1"])
+        self.assertEqual(len(t.me["zones"]["hand"]), hand + 1)
+
+    def test_if_you_paid_the_cost_needs_you_to_have_paid(self):
+        text = "【AUTO】 [(1)] When this card is placed on the stage from your hand, you may pay the cost. If you paid the cost, draw 1 card."
+        t, _ = self.play(text, stock=1)
+        hand = len(t.me["zones"]["hand"])
+        t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": False})
+        self.assertEqual((len(t.me["zones"]["hand"]), len(t.me["zones"]["stock"])), (hand, 1))
+        t, _ = self.play(text, stock=1)
+        hand = len(t.me["zones"]["hand"])
+        self.fire(t)
+        self.assertEqual((len(t.me["zones"]["hand"]), len(t.me["zones"]["stock"])), (hand + 1, 0))
+
+    def test_your_opponent_may_is_their_choice_and_their_card(self):
+        t, _ = self.play("【AUTO】 When this card is placed on the stage from your hand, your opponent may draw 1 card.")
+        t.me["zones"]["deck"], mine = t.me["zones"]["deck"], len(t.me["zones"]["hand"])
+        theirs = len(t.them["zones"]["hand"])
+        self.fire(t)
+        self.assertEqual(t.state["resolving"]["prompt"]["player"], "1")
+        t.apply(1, {"type": "ability_answer", "value": "yes"})
+        self.assertEqual((len(t.them["zones"]["hand"]), len(t.me["zones"]["hand"])), (theirs + 1, mine))
+
+    def test_the_cpu_answers_when_it_is_the_opponent_being_asked(self):
+        t = Table()
+        t.card(2000, text="【AUTO】 When this card is placed on the stage from your hand, your opponent may draw 1 card.")
+        t.state["turn"] = "1"
+        card = game.new_card(2000)
+        t.them["zones"]["hand"].append(card)
+        t.refresh()
+        t.apply(1, {"type": "move", "uid": card["uid"], "to": "C1"})
+        t.apply(1, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+        self.assertEqual(t.next(), {"type": "ability_answer", "value": "yes"})
+
+    def test_the_opponent_chooses_for_you_from_among_them(self):
+        text = ("【AUTO】 When this card is placed on the stage from your hand, look at the top 2 cards of your deck, your opponent chooses 1 event or character from among them, "
+                "you put it into your hand, and put the rest into your waiting room.").replace("look at the top 2 cards", "look at 2 cards from the top")
+        t, _ = self.play(text)
+        self.fire(t)
+        prompt = t.state["resolving"]["prompt"]
+        self.assertEqual(prompt["player"], "1")
+        wanted = prompt["options"][0]
+        t.apply(1, {"type": "ability_answer", "uids": [wanted]})
+        self.assertIn(wanted, [c["uid"] for c in t.me["zones"]["hand"]])
+        self.assertEqual(len(t.me["zones"]["waiting"]), 1)
+
+    def test_this_card_stays_rested_through_my_next_stand_phase_only(self):
+        t, card = self.play("【AUTO】 When this card is placed on the stage from your hand, this card cannot 【STAND】 during your next stand phase.")
+        self.fire(t)
+        self.assertEqual(t.state["buffs"][-1]["expires"], t.state["turn_number"] + 2)
+
+    def test_each_player_keeps_cards_in_memory(self):
+        text = ('【AUTO】 When this card is placed on the stage from your hand, all players perform the following action. '
+                '"If your memory has 2 or more cards, choose 1 cards in your memory, and put all cards in your memory except those cards into your waiting room."')
+        t, _ = self.play(text)
+        t.me["zones"]["memory"] = [game.new_card(1), game.new_card(2)]
+        t.them["zones"]["memory"] = [game.new_card(3), game.new_card(4), game.new_card(5)]
+        self.fire(t)
+        keep = t.state["resolving"]["prompt"]["options"][0]
+        t.apply(2, {"type": "ability_answer", "uids": [keep]})
+        self.assertEqual([c["uid"] for c in t.me["zones"]["memory"]], [keep])
+        prompt = t.state["resolving"]["prompt"]
+        self.assertEqual(prompt["player"], "1")
+        theirs = prompt["options"][0]
+        t.apply(1, {"type": "ability_answer", "uids": [theirs]})
+        self.assertEqual([c["uid"] for c in t.them["zones"]["memory"]], [theirs])
+        self.assertEqual(len(t.them["zones"]["waiting"]), 2)
+
+    def test_search_for_the_same_name_as_a_climax_in_the_waiting_room(self):
+        t, _ = self.play("【AUTO】 When this card is placed on the stage from your hand, search your deck for up to 1 climax with the same card name as a climax in your waiting room, reveal it to your opponent, put it into your hand, and shuffle your deck.")
+        t.card(910, name="Match", card_type="Climax", level=None, cost=None, power=None)
+        t.card(911, name="Other", card_type="Climax", level=None, cost=None, power=None)
+        t.me["zones"]["waiting"].append(game.new_card(910))
+        match, other = game.new_card(910), game.new_card(911)
+        t.me["zones"]["deck"] += [match, other]
+        self.fire(t)
+        self.assertEqual(t.state["resolving"]["prompt"]["options"], [match["uid"]])
+
+    def test_the_bottom_of_the_clock_exchanged_with_a_chosen_card(self):
+        t, _ = self.play("【AUTO】 When this card is placed on the stage from your hand, you may choose the bottom card of your clock and 1 character in your waiting room, and exchange them.")
+        bottom, top, chosen = game.new_card(1), game.new_card(2), game.new_card(3)
+        t.me["zones"]["clock"] = [bottom, top]
+        t.me["zones"]["waiting"] = [chosen]
+        self.fire(t)
+        t.apply(2, {"type": "ability_answer", "uids": [chosen["uid"]]})
+        self.assertEqual([c["uid"] for c in t.me["zones"]["clock"]].count(chosen["uid"]), 1)
+        self.assertIn(bottom["uid"], [c["uid"] for c in t.me["zones"]["waiting"]])
+        self.assertIn(top["uid"], [c["uid"] for c in t.me["zones"]["clock"]])
+
+    def test_markers_move_where_the_card_says(self):
+        t, card = self.play("【AUTO】 When this card is placed on the stage from your hand, put 1 marker underneath this card into your stock.")
+        marker = game.new_card(5)
+        t.me["markers"]["C1"] = [marker]
+        self.fire(t)
+        if t.state.get("resolving"):
+            t.apply(2, {"type": "ability_answer", "uids": [marker["uid"]]})
+        self.assertIn(marker["uid"], [c["uid"] for c in t.me["zones"]["stock"]])
+        self.assertEqual(t.me["markers"]["C1"], [])
+
+    def test_all_opposing_characters_lose_power(self):
+        t, _ = self.play("【AUTO】 When this card is placed on the stage from your hand, all of your opponent's characters get -500 power until end of turn.")
+        enemy = t.seat(t.them, "C2", t.card(700, power=3000))
+        self.fire(t)
+        self.show_done(t)
+        t.refresh()
+        self.assertEqual(t.state["stats"][enemy["uid"]]["power"], 2500)
+
+    def test_reversing_the_battle_opponent(self):
+        steps = abilities.parse("【AUTO】 When this card attacks, 【REVERSE】 this card's battle opponent.")[0]["steps"]
+        self.assertEqual([s["do"] for s in steps], ["choose_facing", "pos_it"])
+
+    def test_conditions_comparing_with_the_opponent(self):
+        t = Table()
+        cond = abilities.parse_condition("if your stock has less cards than your opponent's stock", [])
+        env = game.SimpleNamespace(info=t.info)
+        self.assertFalse(game.condition_met(cond, t.state, "2", None, {}, env))
+        t.them["zones"]["stock"].append(game.new_card(1))
+        self.assertTrue(game.condition_met(cond, t.state, "2", None, {}, env))
+
+    def test_counting_colors(self):
+        t = Table()
+        t.seat(t.me, "C1", t.card(701, color="Red"))
+        t.seat(t.me, "C2", t.card(702, color="Blue"))
+        cond = abilities.parse_condition("if the number of colors of your characters on the stage is 2 or more", [])
+        env = game.SimpleNamespace(info=t.info)
+        self.assertTrue(game.condition_met(cond, t.state, "2", None, {}, env))
+        self.assertFalse(game.condition_met({**cond, "n": 3}, t.state, "2", None, {}, env))
+
+
 class FocusedModelTests(TestCase):
     def table(self):
         t = Table()

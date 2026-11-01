@@ -84,15 +84,17 @@
          data-state-url="{% url 'weiss:play_state' room.pk %}"
          data-action-url="{% url 'weiss:play_action' room.pk %}"
          data-csrf="{{ csrf_token }}"{% if room.vs_cpu %} data-poll-ms="700"{% endif %}>
-      <div class="play-board" data-board><p class="muted">Loading the table…</p></div>
-      <aside class="play-side">
-        <div class="play-preview" data-preview><p class="muted small">Hover over a card to see it here.</p></div>
-        <div class="play-controls" data-controls></div>
+      <aside class="play-chat-side" aria-label="Chat and game log">
         <div class="play-log" data-log aria-live="polite"></div>
         <form class="panel-row play-chat" data-chat>
           <input type="text" name="text" maxlength="300" placeholder="Message" aria-label="Chat message">
           <button type="submit">Send</button>
         </form>
+      </aside>
+      <div class="play-board" data-board><p class="muted">Loading the table…</p></div>
+      <aside class="play-side">
+        <div class="play-preview" data-preview><p class="muted small">Hover over a card to see it here.</p></div>
+        <div class="play-controls" data-controls></div>
         {% if room.arcade_run_id %}
           <form method="post" action="{% url 'weiss:arcade_quit' room.pk %}" onsubmit="return confirm('Stop this arcade run? It can\'t be picked up again.')">
             {% csrf_token %}<button type="submit" class="link-button">Stop arcade run</button>
