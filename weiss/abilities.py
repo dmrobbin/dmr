@@ -583,6 +583,12 @@ def parse_condition(words, quotes):
     match = re.fullmatch(r"the number of (.+?) in your opponent's (memory|hand|waiting room|stock|clock) is (\d+) or (more|less)", text, re.I)
     if match and (f := parse_filter(match[1], quotes)):
         return {"type": "zone_count", "owner": "opp", "zone": ZONE_WORDS[match[2].lower()], "n": int(match[3]), "dir": match[4], "filter": carries_type_back(f)}
+    match = re.fullmatch(r"the number of your (other )?(.+?) is (\d+) or (more|less)", text, re.I)
+    if match and (f := parse_filter(match[2], quotes)):
+        return {"type": "have", "n": int(match[3]), "dir": match[4].lower(), "filter": {**carries_type_back(f), **({"other": True} if match[1] else {})}}
+    match = re.fullmatch(r"you did not play (⟦\d+⟧) during this turn", text, re.I)
+    if match:
+        return {"type": "not_played", "filter": parse_filter(match[1], quotes)}
     match = re.fullmatch(r"you have (\d+) or (more|less) (.+?) in your (waiting room|memory|level|clock|hand|stock)", text, re.I)
     if match and (f := parse_filter(match[3], quotes)):
         return {"type": "zone_count", "zone": ZONE_WORDS[match[4].lower()], "n": int(match[1]), "dir": match[2].lower(), "filter": carries_type_back(f)}
@@ -1805,7 +1811,7 @@ def parse_cont(body, quotes, line, head):
     plain = without_reminders(body)
     if parse_hand_mod(ability, plain, quotes):
         return ability
-    match = re.fullmatch(r"During this card's battle, all players cannot play ⟦(\d+)⟧ from their hands\.?", plain)
+    match = re.fullmatch(r"During this card's battle, all players cannot play ⟦(\d+)⟧ from (?:their hands?|your hand|hand)\.?", plain)
     if match and quotes[int(match[1])] == "Backup":
         ability["no_backup"] = True
         return ability

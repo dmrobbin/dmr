@@ -802,6 +802,7 @@ def finish_turn(state, player, name):
     state["buffs"] = [buff for buff in state.get("buffs", []) if buff["expires"] > state["turn_number"]]
     state["delayed"] = state.get("delayed", [])
     state["used"] = []
+    state["played_cards"] = {}
     state["turn_number"] += 1
     state["attacks"] = 0
     add_log(state, player, f"ended their turn. Turn {state['turn_number']}: {state['players'][other]['name']}")
@@ -859,6 +860,7 @@ def auto_refresh(state, name, shuffle):
 
 def played(state, player, card, to, env):
     """A card just played from the hand: what that triggers."""
+    state.setdefault("played_cards", {}).setdefault(player, []).append(card["card"])
     if to in STAGE_SLOTS:
         card["played_turn"] = state["turn_number"]
         fire(state, env, "play", uid=card["uid"], source=card, source_owner=player)
@@ -1595,6 +1597,8 @@ def condition_met(cond, state, player, source, ctx, env):
         climax = (other if cond["owner"] == "opp" else side)["zones"]["climax"]
         found = any(not c["face_down"] and fits(cond["filter"], c, env) for c in climax)
         return found != bool(cond.get("absent"))
+    if kind == "not_played":
+        return not any(abilities.matches_filter(cond["filter"], env.info(pk) or {}) for pk in state.get("played_cards", {}).get(player, []))
     if kind == "any_of":
         return any(condition_met(c, state, player, source, ctx, env) for c in cond["conds"])
     if kind == "zone_has_each":

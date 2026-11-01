@@ -1783,6 +1783,62 @@ class NoEndlessRearrangingTests(TestCase):
         self.assertEqual(action, {"type": "phase", "phase": "climax"})
 
 
+class ReportedLeviTests(TestCase):
+    TEXT = ("【CONT】 If the number of your 《Corps》 characters is four or more, this card gets -1 level while in your hand.\n\n\n"
+            "【CONT】 If all of your characters are 《Corps》, this card gets +1000 power.\n\n\n"
+            '【CONT】 During this card\'s battle, all players cannot play "Backup" from hand.')
+
+    def test_nothing_on_the_card_needs_doing_by_hand(self):
+        self.assertEqual(abilities.by_hand_parts(self.TEXT), [])
+
+    def test_every_line_does_something(self):
+        lowered, boost, backup = abilities.parse(self.TEXT)
+        self.assertEqual(lowered["hand_mod"]["level"], -1)
+        self.assertEqual(boost["effects"][0]["power"], 1000)
+        self.assertTrue(backup["no_backup"])
+
+    def test_it_counts_four_characters_of_the_trait(self):
+        t = Table()
+        t.card(2000, text=self.TEXT, level=2)
+        t.card(800, traits="Corps")
+        card = game.new_card(2000)
+        for slot in ("C1", "C2", "C3"):
+            t.seat(t.me, slot, 800)
+        self.assertEqual(game.play_level(t.state, "2", card, t.info), 2)
+        t.seat(t.me, "B1", 800)
+        self.assertEqual(game.play_level(t.state, "2", card, t.info), 1)
+
+    def test_a_cpu_deck_with_it_is_ready(self):
+        self.assertEqual(abilities.by_hand_parts('【CONT】 If the number of your other 《Corps》 or 《Scouts》 characters is 2 or less, this card gets -1 level while in your hand.'), [])
+
+
+class NotPlayedThisTurnTests(TestCase):
+    TEXT = ('【CONT】 If you have another "Partner", and you did not play "Big Climax" during this turn, your "Big Climax" get -1 cost while in your hand.')
+
+    def table(self):
+        t = Table()
+        t.card(800, name="Partner")
+        t.card(910, name="Big Climax", card_type="Event", cost=2, level=0, power=None)
+        t.seat(t.me, "C1", t.card(2000, text=self.TEXT))
+        t.seat(t.me, "C2", 800)
+        return t
+
+    def test_it_reads(self):
+        self.assertEqual(abilities.by_hand_parts(self.TEXT), [])
+
+    def test_it_applies_until_one_is_played_then_comes_back_next_turn(self):
+        t = self.table()
+        waiting, first = game.new_card(910), t.hand(910)[0]
+        self.assertEqual(game.play_cost(t.state, "2", waiting, t.info), 1)
+        t.stock(1)
+        t.refresh()
+        t.apply(2, {"type": "move", "uid": first["uid"], "to": "resolution"})
+        self.assertEqual(len(t.me["zones"]["stock"]), 0)  # paid the lower cost
+        self.assertEqual(game.play_cost(t.state, "2", waiting, t.info), 2)
+        game.finish_turn(t.state, "2", lambda pk: "x")
+        self.assertEqual(game.play_cost(t.state, "2", waiting, t.info), 1)
+
+
 class DamageNegatedTests(TestCase):
     def damage(self, t, top):
         t.them["zones"]["deck"][-1]["card"] = top
