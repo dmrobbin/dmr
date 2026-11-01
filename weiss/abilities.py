@@ -1096,6 +1096,11 @@ def clause_steps(clause, quotes, cost):
         return [{"do": "damage_choice", "options": sorted((int(match[1]), int(match[2])), reverse=True)}]
     if text == "deal X damage to your opponent":
         return [{"do": "damage", "n": 0, "x_stat": "n"}]
+    match = re.fullmatch(r"deal X damage to your opponent (\d+) times", text)
+    if match:
+        return [{"do": "damage", "n": 0, "x_stat": "n"} for _ in range(int(match[1]))]
+    if text == "return it to their respective player's hands":
+        return [{"do": "move_it", "to": "hand"}]
     match = re.fullmatch(r"deal (\d+) damage X times to your opponent", text)
     if match:
         return [{"do": "damage_times", "n": int(match[1]), "x_stat": "times"}]
@@ -1379,6 +1384,14 @@ def parse_clauses(parts, quotes, cost):
             steps.append({"do": "may", "cost": cost if pays else [], "then": then,
                           "text": unmask(", ".join(parts[i:]), quotes)})
             return steps
+        either = re.fullmatch(r"or (up to \d+ of your opponent's .+)", parts[i + 1]) if i + 1 < len(parts) else None
+        if either:  # "choose up to 1 X in your waiting room, or up to 1 of your opponent's characters": which comes first
+            first, second = clause_steps(part, quotes, cost), clause_steps(f"choose {either[1]}", quotes, cost)
+            if first and second:
+                steps.append({"do": "options", "options": [{"text": unmask(part, quotes), "steps": first},
+                                                            {"text": unmask(f"Choose {either[1]}", quotes), "steps": second}]})
+                steps += parse_clauses(parts[i + 2:], quotes, cost)
+                return steps
         got = clause_steps(part, quotes, cost)
         if got is None:
             steps.append(step_manual(", ".join(parts[i:]), quotes))

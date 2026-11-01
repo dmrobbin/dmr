@@ -1783,6 +1783,154 @@ class NoEndlessRearrangingTests(TestCase):
         self.assertEqual(action, {"type": "phase", "phase": "climax"})
 
 
+class ReportedComboTests(TestCase):
+    """Cards reported as missing from CPU decks, played through the game."""
+
+    RELOAD = ('【AUTO】 When this card is placed on the stage from your hand, you may put the top card of your clock into your waiting room.\n'
+              '【AUTO】 【CXCOMBO】 When this card attacks, if "DONE AND DUSTED." is in your climax area, and all of your characters are 《Reload》, choose 1 of the following effects, and perform it. '
+              '"Choose up to 1 《Reload》 or 《Magic》 or 《Weapon》 character in your waiting room, or up to 1 of your opponent\'s characters, return it to their respective player\'s hands, and put up to 1 card from the top of your deck into your stock." '
+              '"[Put 1 《Reload》 or 《Magic》 or 《Weapon》 character from your hand into your waiting room] You may pay the cost. If you do, deal 2 damage to your opponent." (Damage may be canceled)')
+    PARTNER = ('【AUTO】 [Put 1 《Reload》 or 《Magic》 or 《Weapon》 character from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, draw 1 card.\n'
+               '【AUTO】 【CXCOMBO】 [Put this 【STAND】 card into your memory] During your climax phase, when "DONE AND DUSTED." is placed on your climax area, you may pay the cost. If you do, choose up to 1 "Protagonist & Thanatos: Reload" in your hand, and put it in the stage position that this card was in.')
+    THANKS = ('【AUTO】 When this card is placed on the stage from your hand, draw up to one card, and this card gets +2000 power until end of turn.\n'
+              '【AUTO】 【CXCOMBO】 When this card attacks, if a card named "Thank You..." is in your climax area, you may deal one damage to your opponent. (This damage may be canceled)\n'
+              '【AUTO】 [(2)] When this card\'s battle opponent becomes 【REVERSE】, you may pay the cost. If you do, deal one damage to your opponent. (This damage may be canceled)')
+    CORPS = ('【CONT】 If you have 2 or more other 《Eldian》 or 《Corps》 characters, this card gets +1000 power.\n'
+             '【AUTO】 【CXCOMBO】 When this card attacks, if "Perfect Timing" is in your climax area, and all of your characters are 《Eldian》 or 《Corps》, look at up to 4 cards from the top of your deck, choose up to 1 "New Omni Directional Mobility Gear" or 《Eldian》 or 《Corps》 character from among them, reveal it to your opponent, put it into your hand, put the rest into your waiting room, and this card gets +1000 power until end of turn.')
+    TITAN = ('【CONT】 If you have 2 or more other 《Eldian》 or 《Titan》 characters, this card gets +1500 power and "【AUTO】 Encore [Put 1 《Eldian》 or 《Titan》 character from your hand into your waiting room]".\n'
+             '【AUTO】 【CXCOMBO】 [(2) Put 1 card from your hand into your waiting room] When this card attacks, if "Facing Off" is in your climax area, and you have 4 or more other 《Eldian》 or 《Titan》 characters, you may pay the cost. If you do, reveal the top 9 cards of your deck, shuffle your deck, and deal X damage to your opponent 2 times. X is equal to the total number of [gate] in the trigger icons of those cards. (Damage may be canceled. Return the revealed cards to their original places)')
+
+    def test_none_of_them_need_anything_done_by_hand(self):
+        for text in (self.RELOAD, self.PARTNER, self.THANKS, self.CORPS, self.TITAN):
+            self.assertEqual(abilities.by_hand_parts(text), [], text[:60])
+
+    def finish_stock_prompt(self, t, stock_before):
+        prompt = t.state["resolving"]["prompt"]
+        t.apply(2, {"type": "ability_answer", "value": 1 if prompt["kind"] == "choice" else None})
+        self.assertEqual(len(t.me["zones"]["stock"]), stock_before + 1)
+
+    def test_reload_returns_one_from_my_waiting_room(self):
+        mine = game.new_card(911)
+        t = self.attack_with_reload_after(lambda t: (t.card(911, traits="Magic"), t.me["zones"]["waiting"].append(mine)))
+        t.apply(2, {"type": "ability_answer", "value": 0})
+        t.apply(2, {"type": "ability_answer", "uids": [mine["uid"]]})
+        self.assertIn(mine["uid"], [c["uid"] for c in t.me["zones"]["hand"]])
+        self.finish_stock_prompt(t, 0)
+
+    def test_reload_returns_an_opposing_character_to_its_owner(self):
+        enemy = game.new_card(700)
+        t = self.attack_with_reload_after(lambda t: t.them["stage"].__setitem__("C2", {**enemy, "pos": "stand"}))
+        t.apply(2, {"type": "ability_answer", "value": 1})
+        self.assertEqual(t.state["resolving"]["prompt"]["options"], [enemy["uid"]])
+        t.apply(2, {"type": "ability_answer", "uids": [enemy["uid"]]})
+        self.assertIn(enemy["uid"], [c["uid"] for c in t.them["zones"]["hand"]])
+        self.assertIsNone(t.them["stage"]["C2"])
+        self.finish_stock_prompt(t, 0)
+
+    def attack_with_reload_after(self, setup):
+        t = Table()
+        t.card(2000, text=self.RELOAD, traits="Reload")
+        t.card(910, name="DONE AND DUSTED.", card_type="Climax", level=None, cost=None, power=None)
+        t.me["zones"]["climax"].append(game.new_card(910))
+        setup(t)
+        me = t.seat(t.me, "C1", 2000)
+        t.state.update(phase="attack", attack={"step": "declare"})
+        t.refresh()
+        t.apply(2, {"type": "attack", "uid": me["uid"], "kind": "direct"})
+        while t.state.get("ability_show"):
+            t.apply(2, {"type": "ability_show_done", "id": t.state["ability_show"]["id"]})
+        t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+        t.apply(2, {"type": "ability_answer", "value": 0})
+        return t
+
+    def test_the_cpu_can_play_reload_through(self):
+        t = self.attack_with_reload_after(lambda t: (t.card(911, traits="Magic"), t.me["zones"]["waiting"].append(game.new_card(911))))
+        for _ in range(8):
+            if not t.state.get("resolving"):
+                break
+            t.apply(2, t.next())
+        self.assertFalse(t.state.get("resolving"))
+
+    def test_titan_deals_x_twice_counting_gates_among_the_nine(self):
+        t = Table()
+        t.card(2000, text=self.TITAN, traits="Titan")
+        t.card(800, traits="Eldian")
+        t.card(910, name="Facing Off", card_type="Climax", level=None, cost=None, power=None)
+        t.card(912, trigger="gate")
+        t.me["zones"]["climax"].append(game.new_card(910))
+        me = t.seat(t.me, "C1", 2000)
+        for slot in ("C2", "C3", "B1", "B2"):
+            t.seat(t.me, slot, 800)
+        t.me["zones"]["deck"][-9:] = [game.new_card(912) if i < 2 else game.new_card(1) for i in range(9)]
+        t.them["zones"]["deck"] = [game.new_card(1) for _ in range(20)]
+        t.stock(2)
+        pay = t.hand(1)[0]
+        t.state.update(phase="attack", attack={"step": "declare"})
+        t.refresh()
+        t.apply(2, {"type": "attack", "uid": me["uid"], "kind": "direct"})
+        while t.state.get("ability_show"):
+            t.apply(2, {"type": "ability_show_done", "id": t.state["ability_show"]["id"]})
+        t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+        t.apply(2, {"type": "ability_answer", "uids": [pay["uid"]]})
+        self.assertEqual(len(t.them["zones"]["clock"]), 4)  # 2 gates, twice; the attack's own damage comes after
+
+    def test_titan_first_hit_cancelled_doesnt_lose_the_second(self):
+        t = Table()
+        t.card(2000, text="【ACT】 [(0)] Reveal the top 9 cards of your deck, shuffle your deck, and deal X damage to your opponent 2 times. X is equal to the total number of [gate] in the trigger icons of those cards.")
+        t.card(912, trigger="gate")
+        t.card(913, card_type="Climax", level=None, cost=None, power=None)
+        me = t.seat(t.me, "B1", 2000)
+        t.me["zones"]["deck"][-9:] = [game.new_card(912) if i < 2 else game.new_card(1) for i in range(9)]
+        # The first hit's second card is a climax: it cancels, and those two go to the waiting room.
+        t.them["zones"]["deck"] = [game.new_card(1) for _ in range(10)] + [game.new_card(913), game.new_card(1)]
+        t.refresh()
+        t.apply(2, {"type": "activate", "uid": me["uid"], "index": 0})
+        for _ in range(10):
+            if t.state.get("pending_damage"):
+                t.apply(1, {"type": "resolve_damage"})
+            elif t.state.get("ability_show"):
+                t.apply(2, {"type": "ability_show_done", "id": t.state["ability_show"]["id"]})
+            else:
+                break
+        self.assertEqual(len(t.them["zones"]["waiting"]), 2)
+        self.assertEqual(len(t.them["zones"]["clock"]), 2)
+
+    def test_the_partner_swaps_itself_for_the_named_card(self):
+        t = Table()
+        t.card(2000, text=self.PARTNER, traits="Reload")
+        t.card(910, name="DONE AND DUSTED.", card_type="Climax", level=None, cost=None, power=None)
+        t.card(913, name="Protagonist & Thanatos: Reload", traits="Reload")
+        me = t.seat(t.me, "C2", 2000)
+        climax, named = t.hand(910, 913)
+        t.state["phase"] = "climax"
+        t.refresh()
+        t.apply(2, {"type": "move", "uid": climax["uid"], "to": "climax"})
+        t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+        t.apply(2, {"type": "ability_answer", "uids": [named["uid"]]})
+        self.assertEqual(t.me["stage"]["C2"]["uid"], named["uid"])
+        self.assertEqual(t.me["zones"]["memory"][-1]["uid"], me["uid"])
+
+    def test_thanks_draws_and_boosts_when_played(self):
+        t = Table()
+        t.card(2000, text=self.THANKS, power=1000)
+        card = t.hand(2000)[0]
+        t.refresh()
+        t.apply(2, {"type": "move", "uid": card["uid"], "to": "C1"})
+        t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+        t.apply(2, {"type": "ability_answer", "value": 1})
+        while t.state.get("ability_show"):
+            t.apply(2, {"type": "ability_show_done", "id": t.state["ability_show"]["id"]})
+        t.refresh()
+        self.assertEqual(len(t.me["zones"]["hand"]), 1)
+        self.assertEqual(t.state["stats"][card["uid"]]["power"], 3000)
+
+    def test_a_card_naming_them_is_now_a_usable_anchor(self):
+        common = {"expansion": "E", "expansion_id": 9, "traits": "Reload", "power": 1000, "soul": 1, "level": 0}
+        Card.objects.create(serial_number="RLD/1", name="Protagonist & Thanatos: Reload", card_type="Character", description=self.RELOAD, **common)
+        Card.objects.create(serial_number="RLD/2", name="Partner", card_type="Character", description=self.PARTNER, **common)
+        self.assertEqual({c.name for c in express.cpu_anchor_choices("RLD")}, {"Protagonist & Thanatos: Reload", "Partner"})
+
+
 class ReportedLeviTests(TestCase):
     TEXT = ("【CONT】 If the number of your 《Corps》 characters is four or more, this card gets -1 level while in your hand.\n\n\n"
             "【CONT】 If all of your characters are 《Corps》, this card gets +1000 power.\n\n\n"
