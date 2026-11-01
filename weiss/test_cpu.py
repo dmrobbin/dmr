@@ -2293,6 +2293,29 @@ class CpuDeckBuildingTests(TestCase):
         self.assertNotIn("ONLY", codes)
         self.assertIn("ONLY", {c["code"] for c in express.series_choices()})
 
+    def test_the_menu_counts_what_the_next_step_offers(self):
+        counts = express.cpu_anchor_counts()
+        self.assertEqual(counts["TST"], len(express.cpu_anchor_choices("TST")))
+
+    def test_the_menu_only_reads_anchors_and_what_they_name(self):
+        express.cpu_counts_memo = (None, None)
+        with mock.patch.object(abilities, "by_hand_parts", wraps=abilities.by_hand_parts) as reader:
+            express.cpu_anchor_counts()
+        anchors = Card.objects.filter(description__contains=express.CX_COMBO).exclude(card_type__iexact="climax").count()
+        self.assertLess(reader.call_count, Card.objects.count())
+        self.assertGreaterEqual(reader.call_count, 1 if anchors else 0)
+
+    def test_the_menu_is_only_worked_out_again_when_the_cards_change(self):
+        first = express.cpu_anchor_counts()
+        with mock.patch.object(abilities, "by_hand_parts", wraps=abilities.by_hand_parts) as reader:
+            self.assertEqual(express.cpu_anchor_counts(), first)
+            reader.assert_not_called()
+        card = Card.objects.get(name="Clean Anchor")
+        before = first["TST"]
+        card.description += " Juggle the dice."
+        card.save()
+        self.assertEqual(express.cpu_anchor_counts()["TST"], before - 1)
+
 
 class PagesTests(TestCase):
     def setUp(self):

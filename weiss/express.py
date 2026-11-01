@@ -19,6 +19,7 @@ from collections import Counter
 
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Count, Max
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -144,10 +145,37 @@ def anchor_choices(pool):
 def cpu_anchor_choices(code):
     """Anchors for a CPU deck: none that need steps done by hand, nor that name a card that does,
     since a card an anchor names has to go in the deck."""
-    whole = series_pool(code)
-    usable = series_pool(code, for_cpu=True)
-    usable_names = {c.name for c in usable}
-    return [a for a in anchor_choices(usable) if all(c.name in usable_names for c in named_in([a], whole)[0])]
+    return cpu_usable_anchors(series_pool(code))
+
+
+def cpu_usable_anchors(cards):
+    """cards: one printing of each name in a series. Only anchors and what they name get read, which is why
+    the series menu can afford to do this for every series."""
+    playable = {}
+
+    def can_play(card):
+        if card.name not in playable:
+            playable[card.name] = not abilities.by_hand_parts(card.description)
+        return playable[card.name]
+
+    return [a for a in anchor_choices(cards) if can_play(a) and all(can_play(c) for c in named_in([a], cards)[0])]
+
+
+cpu_counts_memo = (None, None)  # (what the cards looked like, the counts): it's every series' anchors, so it takes a while
+
+
+def cpu_anchor_counts():
+    """{series code: anchors a CPU deck can use}, for the series menu."""
+    global cpu_counts_memo
+    version = Card.objects.aggregate(Count("pk"), Max("updated"))
+    if cpu_counts_memo[0] == version:
+        return cpu_counts_memo[1]
+    by_series = {}
+    for card in Card.objects.only("name", "serial_number", "description", "card_type").order_by("serial_number"):
+        by_series.setdefault(series_code(card.serial_number), {}).setdefault(card.name, card)
+    counts = Counter({code: len(cpu_usable_anchors(list(cards.values()))) for code, cards in by_series.items()})
+    cpu_counts_memo = (version, counts)
+    return counts
 
 
 def named_in(anchors, pool):
@@ -433,10 +461,11 @@ def own_list(request, pk):
 def series_choices(for_cpu=False):
     """The series that have at least one anchor to offer: [{code, name, cover, anchors}, ...]."""
     counts = Counter()
-    for serial in Card.objects.filter(description__contains=CX_COMBO).exclude(card_type__iexact="climax").values_list("serial_number", flat=True):
-        counts[series_code(serial)] += 1
     if for_cpu:
-        counts = Counter({code: len(cpu_anchor_choices(code)) for code in counts})
+        counts = cpu_anchor_counts()
+    else:
+        for serial in Card.objects.filter(description__contains=CX_COMBO).exclude(card_type__iexact="climax").values_list("serial_number", flat=True):
+            counts[series_code(serial)] += 1
     found = {}
     for summary in sorted(summarize_sets(), key=lambda s: -s["expansion_id"]):
         if counts[summary["code"]] and summary["code"] not in found:
