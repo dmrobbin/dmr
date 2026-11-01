@@ -1,0 +1,105 @@
+"""Player profiles: their lists, the games they've played, and a picture cut from a card.
+
+A picture is a card and a circle on its image, kept as numbers and cropped by the browser. The same
+picker sets a CPU's picture, from the CPU creation tab.
+"""
+import math
+
+from django.contrib import messages
+from django.core.paginator import Paginator
+from django.db.models import Count, Q, Sum
+from django.http import JsonResponse
+from django.shortcuts import redirect, render
+from django.urls import reverse
+
+from core.access import weiss_access_required
+
+from .models import ArcadeRun, Card, CardList, CpuProfile, GameRecord, PlayerProfile
+
+MIN_RADIUS = .05
+MAX_TALL = 2  # how many image widths tall a card can be, for checking a circle's center
+SEARCH_RESULTS = 24
+RECORDS_PER_PAGE = 25
+HAS_IMAGE = ~Q(image_s3_key="") | ~Q(image_url="")
+
+
+def read_avatar(post):
+    """(fields, error) from the picker's form."""
+    card = Card.objects.filter(HAS_IMAGE, pk=post.get("card") if str(post.get("card", "")).isdigit() else None).first()
+    if not card:
+        return None, "Choose a card with an image."
+    try:
+        x, y, r = float(post.get("x", "")), float(post.get("y", "")), float(post.get("r", ""))
+    except ValueError:
+        return None, "That isn't a circle on the card."
+    tolerance = .001  # the page rounds what it sends
+    if not (all(map(math.isfinite, (x, y, r))) and MIN_RADIUS <= r <= .5 + tolerance
+            and r - tolerance <= x <= 1 - r + tolerance and r - tolerance <= y <= MAX_TALL):
+        return None, "That isn't a circle on the card."
+    return {"avatar_card": card, "avatar_x": x, "avatar_y": y, "avatar_r": r}, None
+
+
+def avatar_picker(request, owner, name, back):
+    """The page for choosing owner's picture, and what it posts: a new picture, or none."""
+    if request.method == "POST":
+        fields, error = ({"avatar_card": None}, None) if "remove" in request.POST else read_avatar(request.POST)
+        if error:
+            messages.error(request, error)
+            return redirect(request.path)
+        for field, value in fields.items():
+            setattr(owner, field, value)
+        owner.save()
+        return redirect(back)
+    current = None
+    if owner.avatar:
+        current = {"card": owner.avatar_card_id, "image": owner.avatar["image"], "x": owner.avatar_x, "y": owner.avatar_y, "r": owner.avatar_r}
+    return render(request, "weiss/avatar_picker.html", {"name": name, "avatar": owner.avatar, "current": current, "back": back})
+
+
+@weiss_access_required
+def avatar_search(request):
+    """Cards to choose a picture from."""
+    query = request.GET.get("q", "").strip()
+    if len(query) < 2:
+        return JsonResponse({"cards": []})
+    cards = Card.objects.filter(HAS_IMAGE).filter(Q(name__icontains=query) | Q(serial_number__icontains=query))[:SEARCH_RESULTS]
+    return JsonResponse({"cards": [{"pk": c.pk, "name": c.name, "serial": c.serial_number,
+                                    "image": reverse("weiss:card_image", args=[c.pk])} for c in cards]})
+
+
+def opponents_avatars(records, user):
+    """Each record's other side's picture, for the page's rows."""
+    cpus = {p.pk: p for p in CpuProfile.objects.filter(pk__in={r.cpu_profile_id for r in records if r.cpu_profile_id})}
+    theirs = {r.guest_id if r.host_id == user.pk else r.host_id for r in records}
+    people = {p.user_id: p for p in PlayerProfile.objects.filter(user_id__in=theirs - {None})}
+    for record in records:
+        if record.cpu_profile_id:
+            owner = cpus.get(record.cpu_profile_id)
+        else:
+            owner = people.get(record.guest_id if record.host_id == user.pk else record.host_id)
+        record.opponent_avatar = owner.avatar if owner else None
+
+
+@weiss_access_required
+def profile(request):
+    user = request.user
+    owner = PlayerProfile.objects.filter(user=user).first()
+    mine = GameRecord.objects.filter(Q(host=user) | Q(guest=user))
+    tally = mine.aggregate(played=Count("pk"), won=Count("pk", filter=Q(host=user, winner="host") | Q(guest=user, winner="guest")))
+    page = Paginator(mine, RECORDS_PER_PAGE).get_page(request.GET.get("page"))
+    records = list(page.object_list)
+    opponents_avatars(records, user)
+    for record in records:
+        record.view_for(user)
+    return render(request, "weiss/profile.html", {
+        "avatar": owner.avatar if owner else None,
+        "lists": CardList.objects.filter(user=user, reserved_for_cpu=False).annotate(total=Sum("entries__quantity")).prefetch_related("arcade_clears"),
+        "runs": ArcadeRun.objects.filter(user=user)[:RECORDS_PER_PAGE],
+        "records": records, "page": page, "played": tally["played"], "won": tally["won"], "lost": tally["played"] - tally["won"],
+    })
+
+
+@weiss_access_required
+def profile_picture(request):
+    owner, _ = PlayerProfile.objects.get_or_create(user=request.user)
+    return avatar_picker(request, owner, request.user.username, reverse("weiss:profile"))

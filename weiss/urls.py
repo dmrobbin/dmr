@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import cpu_views, express, lists, play, views
+from . import cpu_views, express, lists, play, profiles, views
 
 app_name = "weiss"
 
@@ -11,15 +11,28 @@ urlpatterns = [
     path("cards/<int:pk>/",views.card_detail, name="card"),
     path("cards/<int:pk>/popup/", views.card_popup, name="card_popup"),
     path("cards/<int:pk>/image/",views.card_image, name="card_image"),
+    path("profile/", profiles.profile, name="profile"),
+    path("profile/picture/", profiles.profile_picture, name="profile_picture"),
+    path("profile/picture/cards/", profiles.avatar_search, name="avatar_search"),
     path("play/", play.room_list, name="play_rooms"),
     path("play/new/", play.room_create, name="play_create"),
     path("play/cpu/", play.room_vs_cpu, name="play_vs_cpu"),
+    path("play/arcade/", play.arcade_start, name="arcade_start"),
+    path("play/<int:pk>/arcade-quit/", play.arcade_quit, name="arcade_quit"),
+    path("cpu/profiles/<int:pk>/image/", play.cpu_image, name="cpu_image"),
+    path("cpu/profiles/<int:pk>/image/upload/", cpu_views.cpu_image_upload, name="cpu_image_upload"),
+    path("cpu/profiles/<int:pk>/image/remove/", cpu_views.cpu_image_remove, name="cpu_image_remove"),
+    path("cpu/arcade/new/", cpu_views.arcade_create, name="arcade_create"),
+    path("cpu/arcade/<int:pk>/delete/", cpu_views.arcade_delete, name="arcade_delete"),
+    path("cpu/arcade/<int:pk>/entries/", cpu_views.arcade_entry_add, name="arcade_entry_add"),
+    path("cpu/arcade/entries/<int:pk>/remove/", cpu_views.arcade_entry_remove, name="arcade_entry_remove"),
     path("cpu/", cpu_views.cpu_home, name="cpu_home"),
     path("cpu/unplayable/", cpu_views.cpu_excluded, name="cpu_excluded"),
     path("cpu/unplayable.txt", cpu_views.cpu_excluded_export, name="cpu_excluded_export"),
     path("cpu/decks/new/", cpu_views.cpu_deck_create, name="cpu_deck_create"),
     path("cpu/profiles/new/", cpu_views.cpu_profile_create, name="cpu_profile_create"),
     path("cpu/profiles/<int:pk>/", cpu_views.cpu_profile_update, name="cpu_profile_update"),
+    path("cpu/profiles/<int:pk>/picture/", cpu_views.cpu_picture, name="cpu_picture"),
     path("cpu/profiles/<int:pk>/finalize/", cpu_views.cpu_profile_finalize, name="cpu_profile_finalize"),
     path("cpu/profiles/<int:pk>/delete/", cpu_views.cpu_profile_delete, name="cpu_profile_delete"),
     path("play/join/<str:token>/", play.room_join, name="play_join"),

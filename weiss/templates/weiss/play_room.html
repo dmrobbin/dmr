@@ -93,12 +93,18 @@
           <input type="text" name="text" maxlength="300" placeholder="Message" aria-label="Chat message">
           <button type="submit">Send</button>
         </form>
-        <form method="post" action="{% url 'weiss:play_start' room.pk %}" onsubmit="return confirm('Start a new set with the same decks? This ends the current game and goes back to game 1.')">
-          {% csrf_token %}<button type="submit" class="link-button">New Set</button>
-        </form>
-        <form method="post" action="{% url 'weiss:play_reset' room.pk %}" onsubmit="return confirm('End this game and go back to choosing decks?')">
-          {% csrf_token %}<button type="submit" class="link-button">Change decks</button>
-        </form>
+        {% if room.arcade_run_id %}
+          <form method="post" action="{% url 'weiss:arcade_quit' room.pk %}" onsubmit="return confirm('Stop this arcade run? It can\'t be picked up again.')">
+            {% csrf_token %}<button type="submit" class="link-button">Stop arcade run</button>
+          </form>
+        {% else %}
+          <form method="post" action="{% url 'weiss:play_start' room.pk %}" onsubmit="return confirm('Start a new set with the same decks? This ends the current game and goes back to game 1.')">
+            {% csrf_token %}<button type="submit" class="link-button">New Set</button>
+          </form>
+          <form method="post" action="{% url 'weiss:play_reset' room.pk %}" onsubmit="return confirm('End this game and go back to choosing decks?')">
+            {% csrf_token %}<button type="submit" class="link-button">Change decks</button>
+          </form>
+        {% endif %}
       </aside>
       <div class="play-menu" data-menu hidden></div>
       <div class="play-modal" data-modal hidden></div>

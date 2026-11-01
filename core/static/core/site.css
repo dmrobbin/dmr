@@ -27,6 +27,34 @@ body {
   min-height: 100vh;
 }
 a { color: inherit; }
+
+/* Every dropdown. Browsers that can style the open list get all of it; the others still get the closed
+   control and the list's colors, though they draw the highlighted row themselves. */
+select {
+  appearance: none;
+  max-width: 100%;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23d4af37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right .7rem center;
+  border: 1px solid var(--border);
+  border-radius: .5rem;
+  padding: .45rem 2rem .45rem .7rem;
+  cursor: pointer;
+}
+select:hover { border-color: var(--accent); }
+select:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+select:disabled { cursor: default; opacity: .55; border-color: var(--border); }
+select option { color: var(--text); background: var(--surface); }
+@supports (appearance: base-select) {
+  select, select::picker(select) { appearance: base-select; }
+  select::picker-icon { display: none; }
+  select::picker(select) { margin-block: .25rem; padding: .25rem; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: .5rem; box-shadow: 0 10px 30px rgb(0 0 0 / .55); }
+  select option { padding: .35rem .6rem; border-radius: .35rem; cursor: pointer; }
+  select option:is(:hover, :focus-visible) { outline: none; color: var(--accent-hover); background: var(--accent-soft); }
+  select option:checked { font-weight: 600; color: var(--accent); }
+  select option::checkmark { color: var(--accent); }
+}
+
 .container { width: 100%; max-width: 56rem; margin: 0 auto; padding: 0 1.25rem; }
 
 /* Header */
@@ -280,14 +308,6 @@ a { color: inherit; }
 }
 .set-list a:hover { border-color: var(--accent); }
 .set-list .set-name { font-weight: 600; }
-.lead-filters select {
-  font: inherit;
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: .5rem;
-  padding: .45rem .7rem;
-}
 .page-title-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; }
 .page-title-row h1 { margin-right: auto; }
 .card-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 1.25rem; }
@@ -472,6 +492,55 @@ a { color: inherit; }
 .cpu-list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: .6rem; }
 .cpu-excluded { margin: .5rem 0 0; padding-left: 1.1rem; display: grid; gap: .5rem; }
 .cpu-excluded li { content-visibility: auto; contain-intrinsic-size: auto 3.5rem; }  /* thousands of them: only lay out what's on screen */
+/* A player's picture: a circle cut from a card (see weiss.models.Avatar), and the page for choosing one. */
+.avatar { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; width: 1.6em; height: 1.6em; overflow: hidden; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); vertical-align: middle; }
+.avatar img { position: absolute; max-width: none; height: auto; }
+.avatar-large { width: 6rem; height: 6rem; font-size: 2.5rem; }
+.avatar-letter { font-size: .8em; font-weight: 700; }
+.profile-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.profile-head h1 { margin: 0 0 .4rem; }
+.match-list { list-style: none; margin: .5rem 0; padding: 0; display: grid; gap: .4rem; }
+.match-list li { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
+.match-result { min-width: 2.6rem; font-weight: 700; }
+.match-won { color: #57c27a; }
+.match-lost { color: #e06c6c; }
+.match-list .muted { display: block; }
+.cpu-picture { display: flex; align-items: center; gap: .5rem; margin: 0 0 .5rem; }
+.avatar-picker { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.avatar-picker input[type="search"] { width: 100%; }
+.avatar-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(5rem, 1fr)); gap: .4rem; }
+.avatar-result { padding: 0; border: 2px solid transparent; border-radius: .3rem; background: none; cursor: pointer; }
+.avatar-result:hover, .avatar-result:focus-visible { border-color: var(--accent, currentColor); }
+.avatar-result img { display: block; width: 100%; border-radius: .2rem; }
+.avatar-stage { position: relative; max-width: 22rem; overflow: hidden; border-radius: .4rem; touch-action: none; cursor: grab; user-select: none; }
+.avatar-stage[hidden] { display: none; }
+.avatar-stage img { display: block; width: 100%; pointer-events: none; }
+.avatar-circle { position: absolute; aspect-ratio: 1; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 100rem rgb(0 0 0 / .6); }
+.avatar-size { display: flex; align-items: center; gap: .5rem; max-width: 22rem; margin: .6rem 0; }
+.avatar-size[hidden], .avatar-preview[hidden] { display: none; }
+.avatar-size input { flex: 1; }
+.avatar-preview { display: flex; align-items: center; gap: .8rem; margin-bottom: .8rem; }
+@media (max-width: 40rem) { .avatar-picker { grid-template-columns: minmax(0, 1fr); } }
+.play .log-who .avatar, .play-log .avatar { font-size: 1.05em; }
+/* A CPU's screen before a match, and its part in the victory and defeat screens. */
+.cpu-intro { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; overflow: auto; padding: 1rem; background: radial-gradient(circle at center, rgb(40 44 60 / .95), rgb(4 6 12 / .98) 70%); }
+.cpu-intro-box { display: flex; flex-direction: column; align-items: center; gap: 1rem; max-width: 42rem; text-align: center; }
+.cpu-intro-stage { margin: 0; font-size: .85rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.cpu-intro-name { margin: 0; font-family: "Cinzel", Georgia, serif; font-size: clamp(1.8rem, 5vw, 3rem); color: #fff; }
+.cpu-intro-image, .game-over-cpu-image { display: block; max-width: min(90vw, 28rem); max-height: 55vh; object-fit: contain; border-radius: .5rem; box-shadow: 0 10px 40px rgb(0 0 0 / .6); }
+.cpu-intro-picture { width: 12rem; height: 12rem; }
+.cpu-speech { margin: 0; font-size: 1.15rem; white-space: pre-line; color: #eee; }
+.game-over-custom .game-over-banner { max-height: calc(100vh - 2rem); overflow-y: auto; }
+.game-over-cpu { display: flex; flex-direction: column; align-items: center; gap: .6rem; margin-bottom: .6rem; }
+.game-over-custom .game-over-cpu-image { max-height: 40vh; }
+.game-over-custom .game-over-crest { display: none; }
+.game-over-arcade { margin: .5rem 0 0; font-weight: 700; color: var(--word-light); }
+.cpu-text { flex: 1 1 100%; display: flex; flex-direction: column; gap: .2rem; }
+.cpu-text textarea { width: 100%; }
+.cpu-image-row { align-items: center; margin-bottom: .5rem; }
+.cpu-image-thumb { max-width: 6rem; max-height: 6rem; border-radius: .3rem; }
+.inline-form { display: inline; }
+.deck-arcade { font-size: .8rem; font-weight: 700; color: var(--accent); white-space: nowrap; }
 .cpu-profile { margin: .75rem 0; padding: .6rem .8rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--surface); }
 /* Express deck building: the prompt on creating a list, and tiles of cards to tick. */
 .express-prompt { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 1rem; background: rgb(0 0 0 / .6); }
@@ -738,7 +807,13 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .active-color { display: inline-flex; align-items: center; gap: .3rem; padding: .12rem .5rem; border-radius: 999px; font-size: .72rem; font-weight: 600; border: 1px solid var(--chip, var(--border)); background: color-mix(in srgb, var(--chip, var(--muted)) 22%, var(--surface)); }
 .active-color::before { content: ""; width: .6rem; height: .6rem; border-radius: 50%; background: var(--chip, var(--muted)); }
 
-.hand { display: flex; flex-direction: column; align-items: center; gap: .3rem; padding: .4rem; border-radius: .5rem; }
+.hand { position: relative; display: flex; flex-direction: column; align-items: center; gap: .3rem; padding: .4rem; border-radius: .5rem; }
+/* As tall as a hand with one row of cards, and the cards keep clear of it on both sides so they stay centered.
+   It's worked out from the row, not measured from the hand: wrapping cards make the hand taller, which would
+   make the picture bigger, which would wrap more cards. */
+.has-portrait { --portrait: calc(var(--card-h) * var(--hand-scale, 1) + 1.3rem); padding-inline: calc(var(--portrait) + .8rem); }
+.hand-opponent { --hand-scale: .6; }
+.hand-portrait { position: absolute; top: 50%; right: .4rem; width: var(--portrait); height: var(--portrait); transform: translateY(-50%); }
 .hand-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: .35rem; min-height: var(--card-h); }
 /* Your own hand is drawn larger than the board, and a hovered card lifts and grows over the board. */
 .hand-me { --card-w: clamp(4rem, 6vw, 6.4rem); --card-h: calc(var(--card-w) * 1.4); }
@@ -771,7 +846,7 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .stat.lowered, .stat-soul.lowered { box-shadow: 0 0 0 1px #e0605b, 0 0 8px rgb(224 96 91 / .7); }
 .stat-power.lowered { color: #ffb4b0; }
 .hand-opponent .pcard { width: calc(var(--card-w) * .6); height: calc(var(--card-h) * .6); }
-.hand-opponent .hand-cards { min-height: 0; }
+.hand-opponent .hand-cards { min-height: calc(var(--card-h) * .6); }
 
 .play-side { position: sticky; top: 5rem; display: grid; gap: .75rem; font-size: .85rem; }
 .play-preview { padding: .75rem; border: 1px solid var(--border); border-radius: .75rem; background: var(--surface); min-height: 6rem; }
@@ -810,7 +885,7 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .play-setup { display: grid; gap: 1.5rem; max-width: 40rem; }
 .setup-step { padding: 1.25rem; border: 1px solid var(--border); border-radius: .75rem; background: var(--surface); }
 .dashboard .setup-step h2 { margin-bottom: .75rem; }
-.setup-step select { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: .5rem; padding: .4rem .6rem; flex: 1; }
+.setup-step select { flex: 1; }
 .setup-status { margin: 0 0 1rem; padding-left: 1.1rem; }
 .setup-step button.button-small:disabled { opacity: .4; cursor: default; }
 

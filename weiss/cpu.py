@@ -18,19 +18,31 @@ The "standard" model:
 
 Aggression weighs these against each other: at 1 (standard) as above. Each point more values
 reversing enemies more and its own characters less (see Temper).
+
+The other models play as standard does, apart from:
+- "focused" (Focused) works towards its cx combos. It knows what's in its own deck, as a player knows their
+  deck list, though not the order. It picks the highest level combo it can reach by next level, then holds
+  that card and its climax, saves the stock to pay for it, and levels up with the color it needs.
+- "strategic" (Strategic) gets as many cards to work with as it can before building its board: it sets out and
+  uses abilities and events that bring cards to the hand, and if one of them can take cards from the waiting
+  room, it first uses what puts cards in there, such as brainstorm.
 """
 import copy
 import random
 import re
+from functools import cached_property
 from types import SimpleNamespace
 
 from . import abilities, game
 
-MODELS = {"standard": "Standard"}
+MODELS = {"standard": "Standard", "focused": "Focused", "strategic": "Strategic"}
 MIN_AGGRESSION = 1
 MAX_AGGRESSION = 5
 ENCORE_MIN_LEVEL = 2
 COMBO_BONUS = 100000  # front line power a card with a live cx combo is worth: more than any card, so it's always played
+PLAN_VALUE = 5  # what being part of a focused CPU's combo adds to a card's value in hand: more than any other card has
+MIN_FRONT_LINE = 2  # a focused CPU saving stock still pays for characters up to this many at the front
+FILL_MIN_DECK = 8  # a strategic CPU won't mill a deck this small, since refreshing costs damage
 HAND_EFFECT = re.compile(r"\bdraw\b|into your hand|to your hand", re.I)
 CHOICE_DESTINATIONS = ["hand", "stock", "deck", "deck_bottom", "waiting"]  # best first, for "where does it go?"
 WAITS = {"ability_show": 2, "pending_climax": 2, "auto_next": .9}  # seconds to let these show; otherwise STEP_WAIT
@@ -53,9 +65,9 @@ def wait_seconds(state):
     return max([seconds for key, seconds in WAITS.items() if state.get(key)], default=STEP_WAIT)
 
 
-def next_action(state, me, info, aggression=MIN_AGGRESSION, rng=random):
+def next_action(state, me, info, aggression=MIN_AGGRESSION, rng=random, model="standard"):
     """The CPU's next action in this game, or None if there's nothing for it to do yet."""
-    return Mind(state, str(me), info, Temper(aggression), rng).act()
+    return MINDS.get(model, Mind)(state, str(me), info, Temper(aggression), rng).act()
 
 
 def fallback_action(state, me):
@@ -137,7 +149,10 @@ class Mind:
         if not lines:
             return False
         climaxes = [c for c in self.zones["hand"] + self.zones["climax"] if self.kind(c) == "climax"]
-        return any(any(f'"{abilities.plain_name(self.details(c).get("name"))}"' in line for c in climaxes) for line in lines)
+        return any(self.names_climax(line, c) for line in lines for c in climaxes)
+
+    def names_climax(self, line, climax):
+        return f'"{abilities.plain_name(self.details(climax).get("name"))}"' in line
 
     # The order things happen in -------------------------------------------------------------------------
 
@@ -216,7 +231,7 @@ class Mind:
             return None
         hand = self.zones["hand"]
         climaxes = [c for c in hand if self.kind(c) == "climax"]
-        swap = climaxes[1:] + [c for c in hand if self.kind(c) != "climax" and game.number(self.details(c).get("level")) >= 2]
+        swap = sorted(climaxes, key=self.value, reverse=True)[1:] + [c for c in hand if self.kind(c) != "climax" and game.number(self.details(c).get("level")) >= 2]
         return {"type": "mulligan", "uids": [c["uid"] for c in swap]}
 
     # Choices the rules force ---------------------------------------------------------------------------
@@ -224,10 +239,16 @@ class Mind:
     def level_up(self):
         first = self.zones["clock"][:game.LEVEL_UP_AT]
         # Whatever colors the hand is held back for, and otherwise the most useful card.
-        wanted = {self.details(c).get("color") for c in self.zones["hand"] if game.color_needed(self.state, self.me, c, self.info)}
-        non_climax = [c for c in first if self.kind(c) != "climax"] or first
+        wanted = self.colors_wanted()
+        non_climax = self.level_up_choices([c for c in first if self.kind(c) != "climax"] or first)
         best = max(non_climax, key=lambda c: (self.details(c).get("color") in wanted, game.number(self.details(c).get("level"))))
         return {"type": "level_up", "uid": best["uid"]}
+
+    def colors_wanted(self):
+        return {self.details(c).get("color") for c in self.zones["hand"] if game.color_needed(self.state, self.me, c, self.info)}
+
+    def level_up_choices(self, cards):
+        return cards
 
     def discard(self):
         count = self.state["pending_discard"]["count"]
@@ -344,13 +365,16 @@ class Mind:
             for slot in game.OPPOSITE if card and card["uid"] not in already else ():
                 if slot == src or (stage[slot] and stage[slot]["uid"] in already):
                     continue
-                gain = self.try_move(card, src, slot) - current
+                gain = self.try_move(card, src, slot) - current + self.move_bonus(card, src, slot)
                 if gain > best_gain:
                     best, best_gain = {"type": "move", "uid": card["uid"], "to": slot}, gain
         if best and any(c and c["uid"] == best["uid"] for c in stage.values()):
             # A character is only rearranged once a turn, so this can never go round in circles.
             self.state["cpu_moved"] = {"turn": self.state["turn_number"], "uids": [*already, best["uid"]]}
         return best or self.useful_event() or self.back_row() or self.hand_ability()
+
+    def move_bonus(self, card, src, slot):
+        return 0
 
     def back_row(self):
         """An open back slot takes a card that pays nothing, to have more characters out."""
@@ -373,8 +397,8 @@ class Mind:
                         return {"type": "move", "uid": card["uid"], "to": "resolution"}
         return None
 
-    def hand_ability(self):
-        """A back row character's ability that brings cards to the hand, without spending the hand on it.
+    def usable_acts(self):
+        """(action, ability) for the back row's abilities it can use, without spending the hand on them.
         Only ones that rest the character or are once a turn, so this can't go round forever."""
         acts = self.state.get("acts", {}).get(self.me, {})
         for slot in ("B1", "B2"):
@@ -384,10 +408,16 @@ class Mind:
                     continue
                 ability = game.abilities_of(self.state, card, self.env)[row["index"]]
                 parts = {part["part"] for part in ability.get("cost", [])}
-                if (HAND_EFFECT.search(ability["text"]) and not self.by_hand_only(ability) and ability["kind"] == "act"
+                if (not self.by_hand_only(ability) and ability["kind"] == "act" and self.can_spend(stock_cost(ability))
                         and "pick" not in parts and ("self_rest" in parts or ability.get("once"))):
-                    return {"type": "activate", "uid": card["uid"], "index": row["index"]}
-        return None
+                    yield {"type": "activate", "uid": card["uid"], "index": row["index"]}, ability
+
+    def can_spend(self, stock):
+        return True
+
+    def hand_ability(self):
+        """A back row character's ability that brings cards to the hand."""
+        return next((action for action, ability in self.usable_acts() if HAND_EFFECT.search(ability["text"])), None)
 
     def play_climax(self):
         """A climax, the one a character's cx combo wants if there is one."""
@@ -397,8 +427,13 @@ class Mind:
         if not climaxes:
             return None
         lines = [line for card in game.stage_cards(self.side) for line in self.combo_climaxes(card)]
-        wanted = [c for c in climaxes if any(f'"{abilities.plain_name(self.details(c).get("name"))}"' in line for line in lines)]
-        return {"type": "move", "uid": (wanted or climaxes)[0]["uid"], "to": "climax"}
+        wanted = [c for c in climaxes if any(self.names_climax(line, c) for line in lines)]
+        spare = wanted or self.spare_climaxes(climaxes)
+        return {"type": "move", "uid": spare[0]["uid"], "to": "climax"} if spare else None
+
+    def spare_climaxes(self, climaxes):
+        """The climaxes it's happy to play without a combo."""
+        return climaxes
 
     def declare(self):
         """Reverse what it can, biggest first; then direct attacks; then side attacks instead of losing
@@ -455,6 +490,8 @@ class Mind:
             return {"type": "ability_answer", "uids": self.pick_cards(prompt)}
         options = [option["value"] for option in prompt["options"]]
         purpose = prompt["for"]
+        if purpose == "may" and not self.can_spend(stock_cost(prompt["step"])):
+            return {"type": "ability_answer", "value": "no"}
         if purpose == "dest":
             return {"type": "ability_answer", "value": min(options, key=CHOICE_DESTINATIONS.index)}
         if purpose == "place":
@@ -482,3 +519,150 @@ class Mind:
 
     def front_uids(self):
         return {self.side["stage"][s]["uid"] for s in game.OPPOSITE if self.side["stage"][s]}
+
+
+def stock_cost(ability):
+    return sum(part.get("n", 0) for part in ability.get("cost", []) if part["part"] == "stock")
+
+
+def all_steps(steps):
+    for step in steps:
+        yield step
+        yield from all_steps(step.get("then", []))
+        for option in step.get("options", []):
+            if isinstance(option, dict):
+                yield from all_steps(option["steps"])
+
+
+def fills_waiting(ability):
+    """Whether this puts cards from the top of its own deck into the waiting room, as brainstorm does."""
+    steps = list(all_steps(ability.get("steps", [])))
+    return (any(s["do"] == "top" and s.get("to") == "waiting" and s.get("owner") == "me" for s in steps)
+            or (any(s["do"] == "flip" for s in steps) and any(s["do"] == "move_it" and s.get("to") == "waiting" for s in steps)))
+
+
+def takes_from_waiting(ability):
+    """Whether this lets it choose cards in its own waiting room."""
+    return any(s["do"] == "choose" and s.get("zone") == "waiting" and s.get("owner", "me") == "me" for s in all_steps(ability.get("steps", [])))
+
+
+class Focused(Mind):
+    @cached_property
+    def plan(self):
+        """The combo it's working towards: the highest level one it could play by its next level, one it
+        already holds or has out if that's a choice, and only if its climax can still turn up."""
+        zones = self.zones
+        out = game.stage_cards(self.side)
+        climaxes = [c for c in zones["hand"] + zones["deck"] + zones["waiting"] + zones["climax"] if self.kind(c) == "climax"]
+        best, best_rank = None, None
+        for card in zones["hand"] + out + zones["deck"] + zones["waiting"]:
+            level = game.number(self.details(card).get("level"))
+            if self.kind(card) != "character" or level > self.my_level() + 1:
+                continue
+            lines = self.combo_climaxes(card)
+            needed = {c["card"] for c in climaxes if any(self.names_climax(line, c) for line in lines)}
+            ready = any(c["uid"] == card["uid"] for c in zones["hand"] + out)
+            if needed and (best is None or (level, ready) > best_rank):
+                best, best_rank = SimpleNamespace(card=card["card"], climaxes=needed, details=self.details(card)), (level, ready)
+        return best
+
+    def in_plan(self, card):
+        return bool(self.plan) and (card["card"] == self.plan.card or card["card"] in self.plan.climaxes)
+
+    def reserve(self):
+        """The stock being saved for the combo. None's needed once it's out."""
+        if not self.plan or any(c["card"] == self.plan.card for c in game.stage_cards(self.side)):
+            return 0
+        return game.number(self.plan.details.get("cost"))
+
+    def can_spend(self, stock):
+        return not stock or len(self.zones["stock"]) - stock >= self.reserve()
+
+    def value(self, card):
+        return super().value(card) + (PLAN_VALUE if self.in_plan(card) else 0)
+
+    def can_play(self, card):
+        if not super().can_play(card):
+            return False
+        return (self.in_plan(card) or self.combo_live(card) or self.can_spend(game.number(self.details(card).get("cost")))
+                or len(self.front_uids()) < MIN_FRONT_LINE)
+
+    def worth_encore(self, card):
+        return self.can_spend(game.ENCORE_COST) and super().worth_encore(card)
+
+    def move_bonus(self, card, src, slot):
+        """A combo character waiting in the back row goes to where it can attack."""
+        return COMBO_BONUS if src not in game.OPPOSITE and slot in game.OPPOSITE and self.combo_live(card) else 0
+
+    def spare_climaxes(self, climaxes):
+        return [c for c in climaxes if not self.in_plan(c)]
+
+    def colors_wanted(self):
+        return super().colors_wanted() | ({self.plan.details.get("color")} if self.plan else set())
+
+    def level_up_choices(self, cards):
+        return [c for c in cards if not self.in_plan(c)] or cards
+
+
+class Strategic(Mind):
+    def main(self):
+        return self.prepare() or super().main()
+
+    def open_slot(self, front_too=True):
+        slots = [s for s in ("B1", "B2", *game.OPPOSITE) if not self.side["stage"][s]]
+        return next((s for s in slots if front_too or s not in game.OPPOSITE), None)
+
+    def from_hand(self):
+        """(action, ability) for what it can do from its hand: events, and characters for what they do when played."""
+        slot = self.open_slot()
+        for card in self.zones["hand"]:
+            kind = self.kind(card)
+            if kind not in ("event", "character") or not self.can_play(card) or (kind == "character" and not slot):
+                continue
+            for ability in abilities.parse(self.details(card).get("text")):
+                if self.by_hand_only(ability):
+                    continue
+                if kind == "event" and ability["kind"] == "event":
+                    yield {"type": "move", "uid": card["uid"], "to": "resolution"}, ability
+                elif kind == "character" and ability["kind"] == "auto" and any(w["on"] == "play" for w in ability.get("when") or []):
+                    yield {"type": "move", "uid": card["uid"], "to": slot}, ability
+
+    def set_out(self):
+        """A character from the hand for the back row, for an ability it could then use right away."""
+        slot = self.open_slot(front_too=False)
+        for card in self.zones["hand"] if slot else ():
+            if self.kind(card) != "character" or not self.can_play(card):
+                continue
+            left = len(self.zones["stock"]) - game.number(self.details(card).get("cost"))
+            for ability in abilities.parse(self.details(card).get("text")):
+                parts = {part["part"] for part in ability.get("cost", [])}
+                if (ability["kind"] == "act" and not self.by_hand_only(ability) and stock_cost(ability) <= left
+                        and "pick" not in parts and ("self_rest" in parts or ability.get("once")) and self.brings_cards(ability)):
+                    return {"type": "move", "uid": card["uid"], "to": slot}
+        return None
+
+    def brings_cards(self, ability):
+        return fills_waiting(ability) or takes_from_waiting(ability) or HAND_EFFECT.search(ability["text"])
+
+    def prepare(self):
+        """Whatever brings it the most cards to work with, in the order that brings the most."""
+        placed = self.set_out()
+        if placed:
+            return placed
+        options = [*self.usable_acts(), *self.from_hand()]
+        deck_ok = len(self.zones["deck"]) >= FILL_MIN_DECK
+        if deck_ok and any(takes_from_waiting(ability) for _, ability in options):
+            for action, ability in options:
+                if fills_waiting(ability):
+                    return action
+        for action, ability in options:
+            if HAND_EFFECT.search(ability["text"]) and not takes_from_waiting(ability) and (deck_ok or not fills_waiting(ability)):
+                return action
+        if self.zones["waiting"]:
+            for action, ability in options:
+                if takes_from_waiting(ability) and (deck_ok or not fills_waiting(ability)):
+                    return action
+        return None
+
+
+MINDS = {"standard": Mind, "focused": Focused, "strategic": Strategic}

@@ -1,6 +1,7 @@
 import secrets
 
 from django.db import models
+from django.urls import reverse
 
 
 class Card(models.Model):
@@ -124,7 +125,37 @@ class CardListEntry(models.Model):
         return f"{self.quantity}× {self.card}"
 
 
-class CpuProfile(models.Model):
+class Avatar(models.Model):
+    """A picture cut from a card: a circle on its image, measured in widths of the image."""
+
+    avatar_card = models.ForeignKey(Card, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    avatar_x = models.FloatField(default=.5)
+    avatar_y = models.FloatField(default=.5)
+    avatar_r = models.FloatField(default=.5)
+
+    class Meta:
+        abstract = True
+
+    @property
+    def avatar(self):
+        """How to show it: the image, and where it goes in a square that clips it to a circle (percentages)."""
+        if not self.avatar_card_id:
+            return None
+        across = 2 * self.avatar_r
+        return {"image": reverse("weiss:card_image", args=[self.avatar_card_id]), "width": round(100 / across, 3),
+                "left": round(-(self.avatar_x - self.avatar_r) / across * 100, 3), "top": round(-(self.avatar_y - self.avatar_r) / across * 100, 3)}
+
+
+class PlayerProfile(Avatar):
+    """What a player has chosen for their profile."""
+
+    user = models.OneToOneField("auth.User", on_delete=models.CASCADE, related_name="player_profile")
+
+    def __str__(self):
+        return str(self.user)
+
+
+class CpuProfile(Avatar):
     """A CPU opponent: how it plays and with what. Players can challenge it once it's finalized."""
 
     name = models.CharField(max_length=100)
@@ -132,6 +163,10 @@ class CpuProfile(models.Model):
     aggression = models.PositiveSmallIntegerField(default=1, help_text="1 is the standard behaviour")
     deck = models.ForeignKey(CardList, null=True, blank=True, on_delete=models.SET_NULL, related_name="cpu_profiles")
     finalized = models.BooleanField(default=False, help_text="Offered to players under VS CPU")
+    image_key = models.CharField(max_length=500, blank=True, help_text="An image uploaded by staff, in the S3 bucket")
+    intro_text = models.TextField(blank=True, help_text="Shown on its screen before a match")
+    player_win_text = models.TextField(blank=True, help_text="Shown on the victory screen, when the player beats it")
+    player_lose_text = models.TextField(blank=True, help_text="Shown on the defeat screen, when the player loses to it")
     created_by = models.ForeignKey("auth.User", null=True, on_delete=models.SET_NULL, related_name="+")
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -141,6 +176,96 @@ class CpuProfile(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def image_url(self):
+        """Stable until the image changes, so browsers can keep it; a new upload has a new key, so a new link."""
+        if not self.image_key:
+            return ""
+        return reverse("weiss:cpu_image", args=[self.pk]) + "?v=" + self.image_key.rsplit("/", 1)[-1]
+
+
+class ArcadeScenario(models.Model):
+    """A list of CPUs to fight through in arcade mode."""
+
+    name = models.CharField(max_length=100, unique=True)
+    created_by = models.ForeignKey("auth.User", null=True, on_delete=models.SET_NULL, related_name="+")
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def ordered_entries(self):
+        """Opener, fillers, anchor: the order they're fought in, though the fillers shuffle."""
+        order = ArcadeEntry.Role.values
+        return sorted(self.entries.all(), key=lambda entry: (order.index(entry.role), entry.cpu.name))
+
+
+class ArcadeEntry(models.Model):
+    class Role(models.TextChoices):
+        OPENER = "opener", "Opener"
+        FILLER = "filler", "Filler"
+        ANCHOR = "anchor", "Anchor"
+
+    scenario = models.ForeignKey(ArcadeScenario, on_delete=models.CASCADE, related_name="entries")
+    cpu = models.ForeignKey(CpuProfile, on_delete=models.CASCADE, related_name="arcade_entries")
+    role = models.CharField(max_length=10, choices=Role.choices)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["scenario", "cpu"], name="one_entry_per_cpu_per_scenario")]
+
+    def __str__(self):
+        return f"{self.cpu} as {self.role} in {self.scenario}"
+
+
+class ArcadeRun(models.Model):
+    """One player's attempt at a scenario. It keeps the names, so it outlasts the scenario and deck."""
+
+    class Status(models.TextChoices):
+        ACTIVE = "active", "In progress"
+        CLEARED = "cleared", "Cleared"
+        ABANDONED = "abandoned", "Stopped"
+
+    user = models.ForeignKey("auth.User", on_delete=models.CASCADE, related_name="arcade_runs")
+    scenario = models.ForeignKey(ArcadeScenario, null=True, on_delete=models.SET_NULL, related_name="runs")
+    scenario_name = models.CharField(max_length=100)
+    deck_name = models.CharField(max_length=100, blank=True)
+    order = models.JSONField(default=list, help_text="CpuProfile ids, in the order they're fought")
+    position = models.PositiveSmallIntegerField(default=0, help_text="How many of them have been beaten")
+    losses = models.PositiveSmallIntegerField(default=0)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIVE)
+    started = models.DateTimeField(auto_now_add=True)
+    finished = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-started", "-pk"]
+
+    def __str__(self):
+        return f"{self.user}: {self.scenario_name} ({self.status})"
+
+    @property
+    def total(self):
+        return len(self.order)
+
+
+class ArcadeClear(models.Model):
+    """A deck's marker: which scenario it has cleared, and how many times."""
+
+    deck = models.ForeignKey("CardList", on_delete=models.CASCADE, related_name="arcade_clears")
+    scenario = models.ForeignKey(ArcadeScenario, null=True, on_delete=models.SET_NULL, related_name="+")
+    name = models.CharField(max_length=100)
+    count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["name"]
+        constraints = [models.UniqueConstraint(fields=["deck", "scenario"], name="one_marker_per_scenario_per_deck")]
+
+    def __str__(self):
+        return f"{self.deck}: {self.name} x{self.count}"
 
 
 CPU_USERNAME = "cpu-player"
@@ -178,6 +303,7 @@ class GameRoom(models.Model):
     # In a game against a CPU, the guest is cpu_user() and these say which CPU it is. The name stays if the profile goes.
     cpu_name = models.CharField(max_length=100, blank=True, help_text="The CPU in the guest seat, if it's a game against one")
     cpu_profile = models.ForeignKey(CpuProfile, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    arcade_run = models.ForeignKey(ArcadeRun, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.SETUP)
     state = models.JSONField(default=dict, blank=True, help_text="See weiss.game for the format")
     version = models.PositiveIntegerField(default=0, help_text="Goes up on every change, so browsers can poll cheaply")
@@ -207,3 +333,36 @@ class GameRoom(models.Model):
     @property
     def guest_name(self):
         return self.cpu_name or (self.guest.username if self.guest else "")
+
+
+class GameRecord(models.Model):
+    """One finished game, for the players' profiles. It keeps the names, so it outlasts the room and decks."""
+
+    SEATS = [("host", "Host"), ("guest", "Guest")]
+
+    host = models.ForeignKey("auth.User", null=True, on_delete=models.SET_NULL, related_name="+")
+    guest = models.ForeignKey("auth.User", null=True, on_delete=models.SET_NULL, related_name="+")
+    host_name = models.CharField(max_length=150)
+    guest_name = models.CharField(max_length=150)
+    host_deck_name = models.CharField(max_length=100, blank=True)
+    guest_deck_name = models.CharField(max_length=100, blank=True)
+    cpu = models.BooleanField(default=False)
+    cpu_profile = models.ForeignKey(CpuProfile, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    winner = models.CharField(max_length=5, choices=SEATS)
+    reason = models.CharField(max_length=20, blank=True)
+    game_number = models.PositiveSmallIntegerField(default=1)
+    turns = models.PositiveSmallIntegerField(default=0)
+    finished = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-finished", "-pk"]
+
+    def __str__(self):
+        return f"{self.host_name} vs {self.guest_name}: {self.winner} won"
+
+    def view_for(self, user):
+        """Set what the profile page shows, from this user's side."""
+        hosting = user.pk == self.host_id
+        self.won = self.winner == ("host" if hosting else "guest")
+        self.opponent_name = self.guest_name if hosting else self.host_name
+        self.my_deck_name = self.host_deck_name if hosting else self.guest_deck_name

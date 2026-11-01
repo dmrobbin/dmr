@@ -47,6 +47,10 @@ def upload(key, fileobj, content_type=""):
     client().upload_fileobj(fileobj, settings.AWS_S3_BUCKET, key, ExtraArgs=extra)
 
 
+def delete(key):
+    client().delete_object(Bucket=settings.AWS_S3_BUCKET, Key=key)
+
+
 def create_folder(prefix):
     """An empty object named like the prefix makes the 'folder' show up in the S3 console."""
     client().put_object(Bucket=settings.AWS_S3_BUCKET, Key=prefix, Body=b"")

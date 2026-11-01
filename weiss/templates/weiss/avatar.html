@@ -1,0 +1,2 @@
+{# A circle cut from a card, or the first letter of the name if there's no picture. #}
+<span class="avatar {{ size }}" role="img" aria-label="{{ name }}" title="{{ name }}">{% if avatar %}<img src="{{ avatar.image }}" alt="" draggable="false" style="width: {{ avatar.width }}%; left: {{ avatar.left }}%; top: {{ avatar.top }}%">{% else %}<span class="avatar-letter" aria-hidden="true">{{ name|slice:":1"|upper }}</span>{% endif %}</span>

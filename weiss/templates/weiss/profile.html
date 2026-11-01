@@ -1,0 +1,73 @@
+{% extends "weiss/base.html" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block weiss_content %}
+  <div class="profile-head">
+    {% include "weiss/avatar.html" with avatar=avatar name=user.username size="avatar-large" %}
+    <div>
+      <h1>{{ user.username }}</h1>
+      <a class="button-small secondary" href="{% url 'weiss:profile_picture' %}">{% if avatar %}Change picture{% else %}Choose a picture{% endif %}</a>
+    </div>
+  </div>
+
+  <section class="cpu-section">
+    <h2>Card lists</h2>
+    {% if lists %}
+      <ul class="cpu-list">
+        {% for card_list in lists %}
+          <li>
+            <a href="{% url 'weiss:list' card_list.pk %}">{{ card_list.name }}</a>{% if card_list.is_deck %} <span class="deck-tag">Deck</span>{% endif %}
+            <span class="muted small">{{ card_list.total|default:0 }} card{{ card_list.total|default:0|pluralize }}</span>
+            {% include "weiss/deck_wins.html" with deck=card_list %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty">No lists yet. <a href="{% url 'weiss:lists' %}">Make one.</a></p>
+    {% endif %}
+  </section>
+
+  <section class="cpu-section">
+    <h2>Arcade runs</h2>
+    {% if runs %}
+      <ul class="match-list">
+        {% for run in runs %}
+          <li>
+            <span class="match-result {% if run.status == 'cleared' %}match-won{% elif run.status == 'abandoned' %}match-lost{% endif %}">{{ run.get_status_display }}</span>
+            <span>{{ run.scenario_name }}
+              <span class="muted small">{% if run.deck_name %}with {{ run.deck_name }} · {% endif %}{{ run.position }} of {{ run.total }} beaten · {{ run.losses }} loss{{ run.losses|pluralize:"es" }} · {{ run.started|date:"M j, Y" }}</span></span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty">No arcade runs yet.</p>
+    {% endif %}
+  </section>
+
+  <section class="cpu-section">
+    <h2>Matches played</h2>
+    {% if played %}
+      <p class="muted small">{{ played }} game{{ played|pluralize }}: {{ won }} won, {{ lost }} lost.</p>
+      <ul class="match-list">
+        {% for record in records %}
+          <li>
+            <span class="match-result {% if record.won %}match-won{% else %}match-lost{% endif %}">{% if record.won %}Won{% else %}Lost{% endif %}</span>
+            {% include "weiss/avatar.html" with avatar=record.opponent_avatar name=record.opponent_name size="" %}
+            <span>vs {{ record.opponent_name }}{% if record.cpu %} <span class="deck-tag">CPU</span>{% endif %}
+              <span class="muted small">{% if record.my_deck_name %}with {{ record.my_deck_name }} · {% endif %}game {{ record.game_number }} · {{ record.turns }} turns · {{ record.finished|date:"M j, Y" }}</span></span>
+          </li>
+        {% endfor %}
+      </ul>
+      {% if page.has_other_pages %}
+        <p class="small">
+          {% if page.has_previous %}<a href="?page={{ page.previous_page_number }}">← Newer</a>{% endif %}
+          Page {{ page.number }} of {{ page.paginator.num_pages }}
+          {% if page.has_next %}<a href="?page={{ page.next_page_number }}">Older →</a>{% endif %}
+        </p>
+      {% endif %}
+    {% else %}
+      <p class="empty">No finished games yet.</p>
+    {% endif %}
+  </section>
+{% endblock %}

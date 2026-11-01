@@ -28,13 +28,33 @@
       </form>
     {% endif %}
   </section>
+  <section class="vs-cpu">
+    <h2>Arcade Mode</h2>
+    <p class="muted small">Fight through a list of CPUs in a row, and beat the last one to mark your deck.</p>
+    {% if not scenarios %}
+      <p class="muted small">No arcade lists are available yet.</p>
+    {% elif not decks %}
+      <p class="muted small">You need a deck to play with first. <a href="{% url 'weiss:lists' %}">Make one in your lists.</a></p>
+    {% else %}
+      <form method="post" action="{% url 'weiss:arcade_start' %}" class="cpu-form">
+        {% csrf_token %}
+        <label class="small">Scenario
+          <select name="scenario">{% for scenario in scenarios %}<option value="{{ scenario.pk }}">{{ scenario.name }} ({{ scenario.entries.all|length }} fight{{ scenario.entries.all|length|pluralize }})</option>{% endfor %}</select>
+        </label>
+        <label class="small">Your deck
+          <select name="deck">{% for deck in decks %}<option value="{{ deck.pk }}">{{ deck.name }}</option>{% endfor %}</select>
+        </label>
+        <button type="submit" class="button-small">Start run</button>
+      </form>
+    {% endif %}
+  </section>
   {% if rooms %}
     <ul class="set-list">
       {% for room in rooms %}
         <li>
           <a href="{% url 'weiss:play_room' room.pk %}">
             <span class="set-name">
-              {% if room.host == user %}You vs {{ room.guest_name|default:"(waiting for opponent)" }}{% else %}{{ room.host.username }} vs you{% endif %}
+              {% if room.host == user %}You vs {{ room.guest_name|default:"(waiting for opponent)" }}{% else %}{{ room.host.username }} vs you{% endif %}{% if room.arcade_run %} <span class="deck-tag">Arcade: {{ room.arcade_run.scenario_name }}</span>{% endif %}
             </span>
             <span class="muted">{{ room.get_status_display }} · updated {{ room.updated|timesince }} ago</span>
           </a>

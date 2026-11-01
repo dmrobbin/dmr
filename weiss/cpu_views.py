@@ -1,18 +1,32 @@
-"""The staff's CPU creation tab: decks reserved for CPUs, and the profiles players can challenge."""
+"""The staff's CPU creation tab: decks reserved for CPUs, the profiles players can challenge, and arcade lists."""
+import logging
+import uuid
 from functools import wraps
 
+from botocore.exceptions import BotoCoreError, ClientError
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Max, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+from core import s3
 from core.access import weiss_access_required
 
-from . import abilities, cpu
+from . import abilities, arcade, cpu
 from .lists import EXPRESS_PROMPT, SESSION_KEY, deck_checks, sorted_entries
-from .models import Card, CardList, CpuProfile
+from .models import ArcadeEntry, ArcadeScenario, Card, CardList, CpuProfile
+from .profiles import avatar_picker
+
+
+log = logging.getLogger(__name__)
+
+MAX_IMAGE_BYTES = 5 * 1024 * 1024
+MAX_TEXT = 1000
+TEXT_FIELDS = ("intro_text", "player_win_text", "player_lose_text")
 
 
 def staff_required(view):
@@ -79,7 +93,8 @@ def read_profile_form(request):
     if not cpu.MIN_AGGRESSION <= aggression <= cpu.MAX_AGGRESSION:
         return None, f"Aggression goes from {cpu.MIN_AGGRESSION} to {cpu.MAX_AGGRESSION}."
     deck = CardList.objects.filter(pk=request.POST.get("deck") or None, reserved_for_cpu=True).first()
-    return {"name": name, "model": model, "aggression": aggression, "deck": deck}, None
+    texts = {field: request.POST.get(field, "").strip()[:MAX_TEXT] for field in TEXT_FIELDS}
+    return {"name": name, "model": model, "aggression": aggression, "deck": deck, **texts}, None
 
 
 @staff_required
@@ -88,8 +103,12 @@ def cpu_home(request):
     profiles = list(CpuProfile.objects.select_related("deck"))
     for profile in profiles:
         profile.problem = deck_problem(profile.deck)
+    scenarios = arcade.all_scenarios()
+    for scenario in scenarios:
+        scenario.problem = arcade.scenario_problem(scenario)
     return render(request, "weiss/cpu_home.html", {
         "decks": decks, "profiles": profiles, "models": cpu.MODELS.items(),
+        "scenarios": scenarios, "arcade_roles": ArcadeEntry.Role.choices,
         "aggressions": range(cpu.MIN_AGGRESSION, cpu.MAX_AGGRESSION + 1),
     })
 
@@ -153,6 +172,120 @@ def cpu_profile_update(request, pk):
         profile.finalized = False
         messages.warning(request, f"{profile.name} is no longer available to players: {deck_problem(profile.deck)}")
     profile.save()
+    return redirect("weiss:cpu_home")
+
+
+@staff_required
+def cpu_picture(request, pk):
+    profile = get_object_or_404(CpuProfile, pk=pk)
+    return avatar_picker(request, profile, profile.name, reverse("weiss:cpu_home"))
+
+
+def image_type(head):
+    """(extension, content type) from a file's first bytes, whatever it's called. SVG isn't on the list: it can hold scripts."""
+    if head.startswith(b"\x89PNG\r\n\x1a\n"):
+        return ".png", "image/png"
+    if head.startswith(b"\xff\xd8\xff"):
+        return ".jpg", "image/jpeg"
+    if head[:6] in (b"GIF87a", b"GIF89a"):
+        return ".gif", "image/gif"
+    if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+        return ".webp", "image/webp"
+    return None
+
+
+def forget_image(key):
+    """The old file isn't needed. If it can't be deleted it's only a stray file, nothing to stop for."""
+    try:
+        s3.delete(key)
+    except (BotoCoreError, ClientError):
+        log.warning("Couldn't delete %s from S3", key, exc_info=True)
+
+
+@staff_required
+@require_POST
+def cpu_image_upload(request, pk):
+    """Staff only: nobody else can put a file on the site. Its name and stated type are never used."""
+    profile = get_object_or_404(CpuProfile, pk=pk)
+    upload = request.FILES.get("image")
+    if not upload:
+        messages.error(request, "Choose an image to upload.")
+    elif upload.size > MAX_IMAGE_BYTES:
+        messages.error(request, "That image is over 5 MB.")
+    else:
+        kind = image_type(upload.read(12))
+        upload.seek(0)
+        if not kind:
+            messages.error(request, "That isn't a PNG, JPEG, GIF or WebP image.")
+        elif not settings.AWS_S3_BUCKET:
+            messages.error(request, "Image storage isn't set up here.")
+        else:
+            key = f"{settings.WEISS_S3_PREFIX}cpu-images/{profile.pk}-{uuid.uuid4().hex}{kind[0]}"
+            try:
+                s3.upload(key, upload, kind[1])
+            except (BotoCoreError, ClientError):
+                log.exception("Couldn't upload a CPU image")
+                messages.error(request, "The image couldn't be uploaded. Try again.")
+            else:
+                old, profile.image_key = profile.image_key, key
+                profile.save(update_fields=["image_key", "updated"])
+                if old:
+                    forget_image(old)
+    return redirect("weiss:cpu_home")
+
+
+@staff_required
+@require_POST
+def cpu_image_remove(request, pk):
+    profile = get_object_or_404(CpuProfile, pk=pk)
+    old, profile.image_key = profile.image_key, ""
+    profile.save(update_fields=["image_key", "updated"])
+    if old:
+        forget_image(old)
+    return redirect("weiss:cpu_home")
+
+
+@staff_required
+@require_POST
+def arcade_create(request):
+    name = request.POST.get("name", "").strip()[:100]
+    if not name:
+        messages.error(request, "Give the arcade list a name.")
+    elif ArcadeScenario.objects.filter(name=name).exists():
+        messages.error(request, f"There's already an arcade list called {name}.")
+    else:
+        ArcadeScenario.objects.create(name=name, created_by=request.user)
+    return redirect("weiss:cpu_home")
+
+
+@staff_required
+@require_POST
+def arcade_delete(request, pk):
+    get_object_or_404(ArcadeScenario, pk=pk).delete()  # runs under way carry on, and decks keep their markers
+    return redirect("weiss:cpu_home")
+
+
+@staff_required
+@require_POST
+def arcade_entry_add(request, pk):
+    scenario = get_object_or_404(ArcadeScenario, pk=pk)
+    profile = get_object_or_404(CpuProfile, pk=request.POST.get("cpu"))
+    role = request.POST.get("role")
+    if role not in ArcadeEntry.Role.values:
+        messages.error(request, "That isn't a place in an arcade list.")
+    elif scenario.entries.filter(cpu=profile).exists():
+        messages.error(request, f"{profile.name} is already in {scenario.name}.")
+    elif role != ArcadeEntry.Role.FILLER and scenario.entries.filter(role=role).exists():
+        messages.error(request, f"{scenario.name} already has an {role}. Remove that one first.")
+    else:
+        ArcadeEntry.objects.create(scenario=scenario, cpu=profile, role=role)
+    return redirect("weiss:cpu_home")
+
+
+@staff_required
+@require_POST
+def arcade_entry_remove(request, pk):
+    get_object_or_404(ArcadeEntry, pk=pk).delete()
     return redirect("weiss:cpu_home")
 
 

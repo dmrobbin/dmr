@@ -39,11 +39,23 @@
   <section class="cpu-section">
     <h2>CPU profiles</h2>
     <p class="muted small">Aggression 1 is the standard behaviour. Higher values chase enemy characters harder and protect their own less.</p>
+    <p class="muted small">Focused works towards its climax combos, saving cards and stock for the next one it can reach. Strategic gets the most cards it can before building its board, filling its waiting room first if it can take cards from there.</p>
     {% for profile in profiles %}
       <div class="cpu-profile">
+        <p class="cpu-picture">{% include "weiss/avatar.html" with avatar=profile.avatar name=profile.name size="" %}
+          <a class="small" href="{% url 'weiss:cpu_picture' profile.pk %}">{% if profile.avatar %}Change picture{% else %}Choose a picture{% endif %}</a></p>
+        <div class="cpu-form cpu-image-row">
+          {% if profile.image_url %}<img class="cpu-image-thumb" src="{{ profile.image_url }}" alt="{{ profile.name }}'s avatar">{% endif %}
+          <form method="post" action="{% url 'weiss:cpu_image_upload' profile.pk %}" enctype="multipart/form-data" class="cpu-form">
+            {% csrf_token %}
+            <label class="small">Avatar image <input type="file" name="image" accept="image/png,image/jpeg,image/gif,image/webp" required></label>
+            <button type="submit" class="button-small secondary">Upload</button>
+          </form>
+          {% if profile.image_url %}<form method="post" action="{% url 'weiss:cpu_image_remove' profile.pk %}">{% csrf_token %}<button type="submit" class="button-small secondary">Remove image</button></form>{% endif %}
+        </div>
         <form method="post" action="{% url 'weiss:cpu_profile_update' profile.pk %}" class="cpu-form">
           {% csrf_token %}
-          {% include "weiss/cpu_fields.html" with name=profile.name model=profile.model aggression=profile.aggression deck_id=profile.deck_id %}
+          {% include "weiss/cpu_fields.html" with name=profile.name model=profile.model aggression=profile.aggression deck_id=profile.deck_id intro_text=profile.intro_text player_win_text=profile.player_win_text player_lose_text=profile.player_lose_text %}
           <button type="submit" class="button-small secondary">Save</button>
         </form>
         <div class="cpu-form">
@@ -68,10 +80,12 @@
     <h3>New profile</h3>
     <form method="post" action="{% url 'weiss:cpu_profile_create' %}" class="cpu-form">
       {% csrf_token %}
-      {% include "weiss/cpu_fields.html" with name="" model="standard" aggression=1 deck_id=None %}
+      {% include "weiss/cpu_fields.html" with name="" model="standard" aggression=1 deck_id=None intro_text="" player_win_text="" player_lose_text="" %}
       <button type="submit" class="button-small">Create profile</button>
     </form>
   </section>
+
+  {% include "weiss/cpu_arcade.html" %}
 {% endblock %}
 
 {% block weiss_scripts %}

@@ -59,6 +59,10 @@
 
   let version = "";
   let board = null;
+  let avatars = {}; // {player name: picture}, for those who have one
+  let cpuInfo = null; // the CPU in a game against one: its images and what it says
+  let arcade = null; // where an arcade run has got to
+  let intro = false; // the CPU's screen is up, and the match waits for it
   const cards = {}; // card pk -> details; entries are never replaced so image URLs stay stable
   let modal = null; // {title, owner: "me"|"opponent", zone} or {title, revealed: [...]}
   let error = "";
@@ -118,6 +122,10 @@
     }
     const before = opponentSnapshot();
     board = data.board;
+    avatars = data.avatars || {};
+    cpuInfo = data.cpu || null;
+    arcade = data.arcade || null;
+    intro = Boolean(data.intro);
     if (data.revealed) modal = { title: data.revealed.title, revealed: data.revealed.cards };
     render();
     animateOpponent(before);
@@ -539,6 +547,10 @@
         body: JSON.stringify(action),
       });
       const data = await response.json();
+      if (data.redirect) {
+        window.location.href = data.redirect;
+        return;
+      }
       error = data.error || "";
       if (modal && modal.revealed && action.uid && !data.error) {
         modal.revealed = modal.revealed.filter((c) => c.uid !== action.uid);
@@ -555,6 +567,25 @@
   // --- Drawing ---------------------------------------------------------------------------------
 
   const esc = (text) => String(text ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+  // A player, for writing into the page: their picture if they have one, otherwise their name.
+  function who(name, extraClass = "") {
+    const avatar = avatars[name];
+    if (!avatar) return esc(name);
+    return `<span class="avatar ${extraClass}" role="img" aria-label="${esc(name)}" title="${esc(name)}"><img src="${esc(avatar.image)}" alt="" draggable="false" style="width:${avatar.width}%;left:${avatar.left}%;top:${avatar.top}%"></span>`;
+  }
+  const whose = (name) => (avatars[name] ? who(name) : `${esc(name)}'s`);
+  // A log line's text. Only lines the game writes about the players themselves are changed, so a card
+  // sharing a player's name stays as it is: those with nobody as their subject, and who won.
+  function logHtml(entry) {
+    let html = cxHtml(entry.text);
+    for (const name of Object.keys(avatars)) {
+      const plain = esc(name);
+      html = entry.who ? html.replace(`: ${plain} wins!`, () => `: ${who(name)} wins!`) : html.split(plain).join(who(name));
+    }
+    return html;
+  }
+  const handPortrait = (name) => (avatars[name] ? who(name, "hand-portrait") : "");
+  const opponentWho = (otherwise = "your opponent") => (board.opponent ? who(board.opponent.name) : otherwise);
   // Text as HTML with the word "climax" (or the label "CX") drawn as the stylized CX mark.
   const CX_HTML = '<span class="cx" title="Climax">CX</span>';
   const cxHtml = (text) => esc(text).replace(/\b(climax|CX)\b/gi, CX_HTML);
@@ -901,14 +932,14 @@
     const oppHand = opp ? opp.zones.hand.count : 0;
     boardEl.innerHTML = `
       ${opp ? `<div class="table-side side-opponent">
-        <div class="hand hand-opponent"><span class="zone-label">${esc(opp.name)}'s hand <b>${oppHand}</b></span>
+        <div class="hand hand-opponent${avatars[opp.name] ? " has-portrait" : ""}">${handPortrait(opp.name)}<span class="zone-label">${avatars[opp.name] ? "Hand" : `${whose(opp.name)} hand`} <b>${oppHand}</b></span>
           <div class="hand-cards">${Array.from({ length: oppHand }, backHtml).join("")}</div></div>
         ${matHtml(opp, "opponent")}</div>` : ""}
-      <div class="table-divider">${matchStarsHtml(0)}<span class="table-turn">${board.rps ? `Game ${gameNumber()} · rock, paper, scissors` : `${board.my_turn ? "Your turn" : `${esc(opp ? opp.name : "Opponent")}'s turn`} · game ${gameNumber()} · turn ${board.turn_number} · ${cxHtml(PHASES[board.phase])} phase`}</span>${matchStarsHtml(1)}</div>
+      <div class="table-divider">${matchStarsHtml(0)}<span class="table-turn">${board.rps ? `Game ${gameNumber()} · rock, paper, scissors` : `${board.my_turn ? "Your turn" : `${opp ? whose(opp.name) : "Opponent's"} turn`} · game ${gameNumber()} · turn ${board.turn_number} · ${cxHtml(PHASES[board.phase])} phase`}</span>${matchStarsHtml(1)}</div>
       <div class="table-side side-me">
         ${matHtml(me, "me")}
         ${activeColorsHtml(me)}
-        <div class="hand hand-me zone" data-drop="hand" data-owner="me"><span class="zone-label">Your hand <b>${me.zones.hand.length}</b></span>
+        <div class="hand hand-me zone${avatars[me.name] ? " has-portrait" : ""}" data-drop="hand" data-owner="me">${handPortrait(me.name)}<span class="zone-label">Your hand <b>${me.zones.hand.length}</b></span>
           <div class="hand-cards">${me.zones.hand.map((c) => `<div class="hand-card">${cardHtml(c, "me", "hand")}${handActionsHtml(c)}</div>`).join("")}</div></div>
       </div>`;
 
@@ -917,12 +948,13 @@
 
     const atBottom = logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 20;
     logEl.innerHTML = board.log.map((entry) => entry.chat
-      ? `<p class="log-chat"><b>${esc(entry.who)}:</b> ${esc(entry.text)}</p>`
-      : `<p>${entry.who ? `<b>${esc(entry.who)}</b> ` : ""}${cxHtml(entry.text)}</p>`).join("");
+      ? `<p class="log-chat"><b>${who(entry.who)}:</b> ${esc(entry.text)}</p>`
+      : `<p>${entry.who ? `<b>${who(entry.who)}</b> ` : ""}${logHtml(entry)}</p>`).join("");
     if (atBottom) logEl.scrollTop = logEl.scrollHeight;
 
     renderModal();
     renderGameOver();
+    renderIntro();
   }
 
   const gameNumber = () => board.game_number || 1;
@@ -990,13 +1022,13 @@
     renderAttackPanel();
     const note = controlsEl.querySelector(".phase-note");
     const ability = board.ability;
-    note.textContent = board.ability_show && board.ability_show.check ? `${board.ability_show.label || "Trigger check"}…`
-      : ability && !ability.mine ? `Waiting for ${ability.by} to resolve ${ability.resolving ? "an ability" : "their abilities"}…`
+    note.innerHTML = board.ability_show && board.ability_show.check ? `${esc(board.ability_show.label || "Trigger check")}…`
+      : ability && !ability.mine ? `Waiting for ${who(ability.by)} to resolve ${ability.resolving ? "an ability" : "their abilities"}…`
       : ability && ability.resolving && !ability.prompt ? "Finishing the ability…"
-      : board.reveal && board.reveal.mine ? `Waiting for ${board.opponent ? board.opponent.name : "your opponent"} to close the card you revealed.`
+      : board.reveal && board.reveal.mine ? `Waiting for ${opponentWho()} to close the card you revealed.`
       : board.discard ? (board.discard.mine ? `End phase: discard ${board.discard.count} to get down to 7.`
-        : `Waiting for ${board.opponent ? board.opponent.name : "your opponent"} to discard down to 7…`)
-      : board.mulligan ? (board.mulligan.me ? `Waiting for ${board.opponent ? board.opponent.name : "your opponent"} to finish their mulligan…` : "Mulligan: choose cards to swap.")
+        : `Waiting for ${opponentWho()} to discard down to 7…`)
+      : board.mulligan ? (board.mulligan.me ? `Waiting for ${opponentWho()} to finish their mulligan…` : "Mulligan: choose cards to swap.")
       : !board.rules ? "Turn rules are off: anything goes."
       : board.attack ? ""
       : board.phase === "encore" && reversedLeft() ? "Encore step: every reversed character needs Encore or 🪦 before the turn can end."
@@ -1015,22 +1047,22 @@
     const attack = board.rules && board.phase === "attack" ? board.attack : null;
     const mode = attack ? "attack" : "phases";
     if (attack) {
-      const oppName = board.opponent ? board.opponent.name : "Your opponent";
+      const oppName = opponentWho("Your opponent");
       const kinds = { front: "Front attack", side: "Side attack", direct: "Direct attack" };
       const steps = Object.entries(ATTACK_STEPS).map(([step, label]) =>
         `<span class="attack-step${step === attack.step ? " current" : ""}"${step === attack.step ? ' aria-current="step"' : ""}>${label}</span>`).join("");
       let status = "";
       let buttons = "";
       if (attack.step === "declare") {
-        status = board.my_turn ? "Choose an attacker: hover a standing center-stage character." : `Waiting for ${esc(oppName)} to attack…`;
+        status = board.my_turn ? "Choose an attacker: hover a standing center-stage character." : `Waiting for ${oppName} to attack…`;
         if (board.my_turn) buttons = '<button type="button" data-phase="encore">End attack phase</button>';
       } else {
         status = `${kinds[attack.kind]} · ${attack.soul} damage${attack.backup ? ` · backup +${attack.backup}` : ""}`;
         if (attack.step === "trigger" && attack.prompt) {
-          status += board.my_turn ? ` — resolve the ${attack.prompt.kind} trigger.` : ` — waiting for ${esc(oppName)} to resolve a ${attack.prompt.kind} trigger…`;
+          status += board.my_turn ? ` — resolve the ${attack.prompt.kind} trigger.` : ` — waiting for ${oppName} to resolve a ${attack.prompt.kind} trigger…`;
         }
         if (attack.step === "counter") {
-          status += board.my_turn ? ` — waiting for ${esc(oppName)} to counter…` : " — play a counter from your hand, or:";
+          status += board.my_turn ? ` — waiting for ${oppName} to counter…` : " — play a counter from your hand, or:";
           if (!board.my_turn) buttons = `<button type="button" data-act='{"type":"no_counter"}'>No counter</button>`;
         }
       }
@@ -1081,7 +1113,7 @@
     const asked = request && !request.mine;
     prompt.hidden = !asked;
     if (asked) {
-      prompt.innerHTML = `<p><b>${esc(board.opponent ? board.opponent.name : "Your opponent")}</b> wants to turn the turn rules
+      prompt.innerHTML = `<p><b>${opponentWho("Your opponent")}</b> wants to turn the turn rules
         <b>${request.on ? "on" : "off"}</b>. ${request.on ? "Phases and attacks will follow the rules again." : "Phases, attacks and costs will no longer be enforced."}</p>
         <div class="attack-buttons">
           <button type="button" data-act='{"type":"rules_answer","accept":true}'>Agree</button>
@@ -1096,16 +1128,16 @@
 
   function renderRps() {
     const rps = board.rps;
-    const name = board.opponent ? board.opponent.name : "Your opponent";
-    const hand = (choice, label, extra = "") => `<div class="rps-hand ${extra}"><span class="rps-symbol" role="img" aria-label="${RPS_HANDS[choice][1]}">${RPS_HANDS[choice][0]}</span><span class="small muted">${esc(label)}</span></div>`;
+    const name = opponentWho("Your opponent");
+    const hand = (choice, label, extra = "") => `<div class="rps-hand ${extra}"><span class="rps-symbol" role="img" aria-label="${RPS_HANDS[choice][1]}">${RPS_HANDS[choice][0]}</span><span class="small muted">${label}</span></div>`;
     const faceOff = rps.last ? `<div class="rps-faceoff">${hand(rps.last.me, "You", rps.won === false ? "rps-lost" : "")}<span class="rps-vs">vs</span>${hand(rps.last.opponent, name, rps.won ? "rps-lost" : "")}</div>` : "";
     let body;
     if (rps.won !== null) {
-      body = `<p class="rps-result ${rps.won ? "rps-won" : "rps-beaten"}">${rps.won ? "You win! You go first." : `${esc(name)} wins and goes first.`}</p>`;
+      body = `<p class="rps-result ${rps.won ? "rps-won" : "rps-beaten"}">${rps.won ? "You win! You go first." : `${name} wins and goes first.`}</p>`;
     } else if (rps.mine) {
-      body = `<p>You chose ${RPS_HANDS[rps.mine][1].toLowerCase()}. Waiting for ${esc(name)}…</p>`;
+      body = `<p>You chose ${RPS_HANDS[rps.mine][1].toLowerCase()}. Waiting for ${name}…</p>`;
     } else {
-      body = `<p>${rps.last ? "A tie! Choose again." : "The winner goes first."}${rps.opponent_chose ? ` ${esc(name)} has chosen.` : ""}</p>
+      body = `<p>${rps.last ? "A tie! Choose again." : "The winner goes first."}${rps.opponent_chose ? ` ${name} has chosen.` : ""}</p>
         <div class="rps-choices">${Object.entries(RPS_HANDS).map(([choice, [symbol, label]]) => `<button type="button" data-act='${esc(JSON.stringify({ type: "rps", choice }))}'>
           <span class="rps-symbol" aria-hidden="true">${symbol}</span>${label}</button>`).join("")}</div>`;
     }
@@ -1138,6 +1170,48 @@
   </svg>`;
   let gameOverEl = null;
 
+  const fightLabel = () => `${esc(arcade.scenario)} · fight ${arcade.fight} of ${arcade.total}`;
+
+  // A CPU's image, or else its picture, for the screens either side of a match.
+  function cpuPortrait(imageClass) {
+    if (cpuInfo.image) return `<img class="${imageClass}" src="${esc(cpuInfo.image)}" alt="${esc(cpuInfo.name)}">`;
+    const picture = cpuInfo.picture;
+    return picture ? `<span class="avatar cpu-intro-picture" role="img" aria-label="${esc(cpuInfo.name)}"><img src="${esc(picture.image)}" alt="" style="width:${picture.width}%;left:${picture.left}%;top:${picture.top}%"></span>` : "";
+  }
+
+  // The CPU's screen before a match. Built once, as the board underneath keeps redrawing.
+  let introEl = null;
+
+  function renderIntro() {
+    if (!intro || !cpuInfo) {
+      if (introEl) introEl.remove();
+      introEl = null;
+      return;
+    }
+    if (introEl) return;
+    introEl = document.createElement("div");
+    introEl.className = "cpu-intro";
+    introEl.setAttribute("role", "dialog");
+    introEl.setAttribute("aria-label", `${cpuInfo.name} challenges you`);
+    introEl.innerHTML = `<div class="cpu-intro-box">
+      ${arcade ? `<p class="cpu-intro-stage">${fightLabel()}</p>` : ""}
+      ${cpuPortrait("cpu-intro-image")}
+      <h2 class="cpu-intro-name">${esc(cpuInfo.name)}</h2>
+      ${cpuInfo.intro ? `<p class="cpu-speech">${esc(cpuInfo.intro)}</p>` : ""}
+      <button type="button" class="button-small" data-act='{"type":"intro_done"}'>Begin</button></div>`;
+    root.appendChild(introEl);
+  }
+
+  function gameOverButtons(over) {
+    if (!arcade) {
+      return `<button type="button" data-act='{"type":"rematch"}'${over.rematch ? " disabled" : ""}>Rematch</button>
+      <button type="button" class="game-over-end" data-act='{"type":"end_match"}'>End match</button>`;
+    }
+    if (arcade.cleared) return `<button type="button" data-act='{"type":"arcade_quit"}'>Finish</button>`;
+    return `<button type="button" data-act='{"type":"${over.won ? "arcade_continue" : "arcade_retry"}"}'>${over.won ? "Continue" : "Retry"}</button>
+      <button type="button" class="game-over-end" data-act='{"type":"arcade_quit"}'>End run</button>`;
+  }
+
   function renderGameOver() {
     const over = board.game_over;
     if (!over) {
@@ -1149,24 +1223,26 @@
       hideMenu();
       hideZoom();
       gameOverEl = document.createElement("div");
-      gameOverEl.className = `game-over ${over.won ? "game-over-victory" : "game-over-defeat"}${animations ? " animated" : ""}`;
+      const custom = cpuInfo && cpuInfo.image; // a CPU with an avatar has its own screen, and its own words
+      const said = custom && (over.won ? cpuInfo.win : cpuInfo.lose);
+      gameOverEl.className = `game-over ${over.won ? "game-over-victory" : "game-over-defeat"}${custom ? " game-over-custom" : ""}${animations ? " animated" : ""}`;
       gameOverEl.setAttribute("role", "alertdialog");
       gameOverEl.setAttribute("aria-label", over.won ? "Victory" : "Defeat");
-      const loser = over.won ? (board.opponent ? board.opponent.name : "Your opponent") : "You";
-      const reason = over.reason === "deck" ? `${esc(loser)} can't refresh ${over.won ? "their" : "your"} deck.` : `${esc(loser)} reached level 4.`;
+      const loser = over.won ? opponentWho("Your opponent") : "You";
+      const reason = over.reason === "deck" ? `${loser} can't refresh ${over.won ? "their" : "your"} deck.` : `${loser} reached level 4.`;
       gameOverEl.innerHTML = `<div class="game-over-rays"></div>
-        <div class="game-over-banner">${CREST}<h2 class="game-over-word">${over.won ? "Victory" : "Defeat"}</h2>
+        <div class="game-over-banner">${CREST}${custom ? `<div class="game-over-cpu">${cpuPortrait("game-over-cpu-image")}${said ? `<p class="cpu-speech">${esc(said)}</p>` : ""}</div>` : ""}
+          <h2 class="game-over-word">${over.won ? "Victory" : "Defeat"}</h2>
           <p class="game-over-reason">${reason}</p>
+          ${arcade ? `<p class="game-over-arcade">${arcade.cleared ? `🏆 ${esc(arcade.scenario)} cleared!` : over.won ? `Up next: fight ${arcade.fight} of ${arcade.total}` : `${esc(arcade.scenario)}: fight ${arcade.fight} of ${arcade.total}`}</p>` : ""}
           <p class="game-over-status" data-game-over-status></p>
           <div class="game-over-buttons" data-game-over-buttons></div></div>`;
       root.appendChild(gameOverEl);
     }
-    const name = board.opponent ? board.opponent.name : "Your opponent";
-    gameOverEl.querySelector("[data-game-over-status]").textContent = error
+    const name = opponentWho("Your opponent");
+    gameOverEl.querySelector("[data-game-over-status]").innerHTML = (error && esc(error))
       || (over.rematch ? `Waiting for ${name} to accept the rematch…` : over.opponent_rematch ? `${name} wants a rematch.` : "");
-    gameOverEl.querySelector("[data-game-over-buttons]").innerHTML = `
-      <button type="button" data-act='{"type":"rematch"}'${over.rematch ? " disabled" : ""}>Rematch</button>
-      <button type="button" class="game-over-end" data-act='{"type":"end_match"}'>End match</button>`;
+    gameOverEl.querySelector("[data-game-over-buttons]").innerHTML = gameOverButtons(over);
   }
 
   function renderModal() {
@@ -1202,7 +1278,7 @@
     }
     modalEl.hidden = false;
     modalEl.innerHTML = `<div class="play-modal-box" role="dialog" aria-label="${esc(modal.title)}">
-      <div class="play-modal-head"><h2>${esc(modal.title)}</h2><button type="button" data-close>Close</button></div>
+      <div class="play-modal-head"><h2>${modal.owner && modal.owner !== "me" && board.opponent ? `${whose(board.opponent.name)} ${LABELS[modal.zone].toLowerCase()}` : esc(modal.title)}</h2><button type="button" data-close>Close</button></div>
       <p class="muted small">${owner === "me" ? "Click a card to move it. Top of the pile first." : "Top of the pile first."}</p>
       <div class="play-modal-cards">${list.join("") || '<p class="empty">Empty.</p>'}</div>
     </div>`;
@@ -1302,7 +1378,7 @@
     const info = cards[board.reveal.card];
     modalEl.hidden = false;
     modalEl.innerHTML = `<div class="play-modal-box reveal-box" role="dialog" aria-label="Revealed card">
-      <div class="play-modal-head"><h2>${esc(board.reveal.by)} reveals</h2>
+      <div class="play-modal-head"><h2>${who(board.reveal.by)} reveals</h2>
         <button type="button" data-act='{"type":"close_reveal"}'>Close</button></div>
       ${info ? `<div class="reveal-card"><img src="${esc(info.image)}" alt="${esc(info.name)}">
         <div><p class="play-preview-name">${esc(info.name)}</p>

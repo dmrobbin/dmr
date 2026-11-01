@@ -1,0 +1,31 @@
+<section class="cpu-section">
+  <h2>Arcade lists</h2>
+  <p class="muted small">Each list is one arcade scenario. The opener is always fought first and the anchor last, with the fillers in a random order between.</p>
+  <form method="post" action="{% url 'weiss:arcade_create' %}" class="panel-row cpu-form">
+    {% csrf_token %}
+    <input type="text" name="name" maxlength="100" placeholder="e.g. NIKKE gauntlet" aria-label="Arcade list name" required>
+    <button type="submit" class="button-small">Create list</button>
+  </form>
+  {% for scenario in scenarios %}
+    <div class="cpu-profile">
+      <p><strong>{{ scenario.name }}</strong>
+        {% if scenario.problem %}<span class="small panel-error">{{ scenario.problem }}</span>{% else %}<span class="deck-tag">Available to players</span>{% endif %}</p>
+      <ul class="cpu-list">
+        {% for entry in scenario.ordered_entries %}
+          <li><span class="deck-tag">{{ entry.get_role_display }}</span> {{ entry.cpu.name }}
+            <form method="post" action="{% url 'weiss:arcade_entry_remove' entry.pk %}" class="inline-form">{% csrf_token %}<button type="submit" class="link-button">Remove</button></form></li>
+        {% endfor %}
+      </ul>
+      <form method="post" action="{% url 'weiss:arcade_entry_add' scenario.pk %}" class="cpu-form">
+        {% csrf_token %}
+        <label class="small">CPU <select name="cpu">{% for profile in profiles %}<option value="{{ profile.pk }}">{{ profile.name }}</option>{% endfor %}</select></label>
+        <label class="small">As <select name="role">{% for value, label in arcade_roles %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
+        <button type="submit" class="button-small secondary"{% if not profiles %} disabled{% endif %}>Add</button>
+      </form>
+      <form method="post" action="{% url 'weiss:arcade_delete' scenario.pk %}" onsubmit="return confirm('Delete {{ scenario.name|escapejs }}? Decks keep their markers.')">{% csrf_token %}
+        <button type="submit" class="button-small danger">Delete list</button></form>
+    </div>
+  {% empty %}
+    <p class="empty">No arcade lists yet.</p>
+  {% endfor %}
+</section>

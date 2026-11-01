@@ -1783,6 +1783,197 @@ class NoEndlessRearrangingTests(TestCase):
         self.assertEqual(action, {"type": "phase", "phase": "climax"})
 
 
+class FocusedModelTests(TestCase):
+    def table(self):
+        t = Table()
+        t.card(800, name="Big Finish", card_type="Climax", level=None, cost=None, power=None)
+        t.card(801, level=3, cost=2, power=9000, color="Red", text='【AUTO】 【CXCOMBO】 When this card attacks, if "Big Finish" is in your climax zone, draw 1 card.')
+        t.card(802, level=1, cost=1, power=9000)
+        t.level(2)
+        t.me["zones"]["deck"] = [game.new_card(801), game.new_card(800), *[game.new_card(1) for _ in range(20)]]
+        return t
+
+    def next(self, t, model="focused"):
+        t.refresh()
+        return cpu.next_action(t.state, "2", t.info, 1, random.Random(1), model=model)
+
+    def fill_front(self, t):
+        t.seat(t.me, "C1", t.card(1001, power=1000))
+        t.seat(t.me, "C2", t.card(1002, power=1000))
+
+    def test_at_level_2_it_saves_stock_for_its_level_3_combo(self):
+        t = self.table()
+        self.fill_front(t)
+        t.stock(2)
+        t.hand(802)
+        self.assertEqual(self.next(t), {"type": "phase", "phase": "climax"})
+        self.assertEqual(self.next(t, "standard")["type"], "move")
+
+    def test_it_spends_what_it_can_spare(self):
+        t = self.table()
+        self.fill_front(t)
+        t.stock(3)
+        cards = t.hand(802)
+        self.assertEqual(self.next(t)["uid"], cards[0]["uid"])
+
+    def test_it_doesnt_save_with_too_few_characters_out(self):
+        t = self.table()
+        t.stock(2)
+        cards = t.hand(802)
+        self.assertEqual(self.next(t)["uid"], cards[0]["uid"])
+
+    def test_it_doesnt_think_ahead_too_far(self):
+        t = self.table()
+        t.me["zones"]["level"] = t.me["zones"]["level"][:1]
+        self.fill_front(t)
+        t.stock(1)
+        cards = t.hand(802)
+        self.assertEqual(self.next(t)["uid"], cards[0]["uid"])
+
+    def test_it_holds_the_climax_for_the_combo(self):
+        t = self.table()
+        t.state["phase"] = "climax"
+        t.hand(800)
+        self.assertEqual(self.next(t), {"type": "phase", "phase": "attack"})
+        self.assertEqual(self.next(t, "standard")["to"], "climax")
+
+    def test_it_plays_a_climax_that_isnt_for_the_combo(self):
+        t = self.table()
+        t.state["phase"] = "climax"
+        t.card(803, card_type="Climax", level=None, cost=None, power=None)
+        cards = t.hand(800, 803)
+        self.assertEqual(self.next(t)["uid"], cards[1]["uid"])
+
+    def test_it_plays_the_climax_once_the_combo_is_out(self):
+        t = self.table()
+        t.state["phase"] = "climax"
+        t.seat(t.me, "C2", 801)
+        cards = t.hand(800)
+        self.assertEqual(self.next(t)["uid"], cards[0]["uid"])
+
+    def test_it_clocks_something_other_than_the_combo(self):
+        t = self.table()
+        t.state["phase"] = "clock"
+        t.card(804, level=0, power=9000)
+        cards = t.hand(801, 800, 804)
+        self.assertEqual(self.next(t)["uid"], cards[2]["uid"])
+
+    def test_it_takes_the_combo_from_a_choice(self):
+        t = self.table()
+        mind = cpu.Focused(t.state, "2", t.info, cpu.Temper(), random.Random(1))
+        combo, other = game.new_card(801), game.new_card(802)
+        self.assertEqual(mind.pick_cards({"cards": [other, combo], "options": [other["uid"], combo["uid"]], "max": 1, "min": 1, "zone": "waiting"}), [combo["uid"]])
+
+    def test_it_levels_up_with_the_color_it_needs_and_keeps_the_combo(self):
+        t = self.table()
+        t.card(805, color="Red", level=0)
+        t.card(806, color="Blue", level=2)
+        t.me["zones"]["clock"] = [game.new_card(806), game.new_card(805), game.new_card(801), *[game.new_card(806) for _ in range(4)]]
+        action = self.next(t)
+        self.assertEqual(action["type"], "level_up")
+        self.assertEqual(action["uid"], t.me["zones"]["clock"][1]["uid"])
+
+    def test_a_combo_in_the_back_row_moves_up_when_its_climax_is_ready(self):
+        t = self.table()
+        t.hand(800)
+        card = t.seat(t.me, "B1", 801)
+        action = self.next(t)
+        self.assertEqual(action["uid"], card["uid"])
+        self.assertIn(action["to"], game.OPPOSITE)
+
+    def test_it_declines_an_optional_cost_it_is_saving_for(self):
+        t = self.table()
+        mind = cpu.Focused(t.state, "2", t.info, cpu.Temper(), random.Random(1))
+        t.stock(2)
+        prompt = {"kind": "choice", "for": "may", "step": {"cost": [{"part": "stock", "n": 1}]}, "options": [{"value": "yes"}, {"value": "no"}]}
+        self.assertEqual(mind.answer({"prompt": prompt})["value"], "no")
+
+    def test_with_no_combo_in_the_deck_it_plays_like_standard(self):
+        t = Table()
+        t.card(802, level=0, cost=1, power=9000)
+        t.stock(1)
+        t.hand(802)
+        t.refresh()
+        self.assertEqual(self.next(t)["type"], self.next(t, "standard")["type"])
+
+
+class StrategicModelTests(TestCase):
+    BRAINSTORM = "【ACT】 Brainstorm [(1) 【REST】 this card] Flip over 4 cards from the top of your deck, and put them into your waiting room. For each climax revealed among those cards, draw 1 card."
+    SALVAGE = "【ACT】 [(1) 【REST】 this card] Choose 1 character in your waiting room, and return it to your hand."
+
+    def next(self, t, model="strategic"):
+        t.refresh()
+        return cpu.next_action(t.state, "2", t.info, 1, random.Random(1), model=model)
+
+    def test_it_fills_the_waiting_room_before_taking_from_it(self):
+        t = Table()
+        salvage = t.seat(t.me, "B1", t.card(1001, text=self.SALVAGE))
+        brainstorm = t.seat(t.me, "B2", t.card(1002, text=self.BRAINSTORM))
+        t.me["zones"]["waiting"] = [game.new_card(1)]
+        t.stock(2)
+        self.assertEqual(self.next(t)["uid"], brainstorm["uid"])
+        t.apply(2, self.next(t))
+        while t.state.get("ability_show"):
+            t.apply(2, {"type": "ability_show_done", "id": t.state["ability_show"]["id"]})
+        self.assertEqual(self.next(t)["uid"], salvage["uid"])
+
+    def test_it_acts_before_building_its_board(self):
+        t = Table()
+        t.card(1003, power=9000)
+        t.hand(1003)
+        brainstorm = t.seat(t.me, "B1", t.card(1002, text=self.BRAINSTORM))
+        t.stock(1)
+        self.assertEqual(self.next(t)["uid"], brainstorm["uid"])
+
+    def test_it_sets_out_a_character_to_use_its_ability(self):
+        t = Table()
+        t.card(1003, power=9000)
+        strong, brainstorm = t.hand(1003, t.card(1002, power=500, text=self.BRAINSTORM))
+        t.stock(1)
+        self.assertEqual(self.next(t), {"type": "move", "uid": brainstorm["uid"], "to": "B1"})
+        self.assertEqual(self.next(t, "standard")["uid"], strong["uid"])
+
+    def test_a_card_that_mills_when_played_counts(self):
+        t = Table()
+        salvage = t.seat(t.me, "B1", t.card(1001, text=self.SALVAGE))
+        mill = t.hand(t.card(1004, text="【AUTO】 When this card is placed on the stage from your hand, put the top 2 cards of your deck into your waiting room."))[0]
+        t.stock(1)
+        action = self.next(t)
+        self.assertEqual(action["uid"], mill["uid"])
+        self.assertNotEqual(action["uid"], salvage["uid"])
+
+    def test_milling_alone_isnt_worth_doing(self):
+        t = Table()
+        t.card(1005, text="【ACT】 [【REST】 this card] Put the top 2 cards of your deck into your waiting room.")
+        t.seat(t.me, "B1", 1005)
+        self.assertNotEqual(self.next(t)["type"], "activate")
+
+    def test_it_wont_mill_a_small_deck(self):
+        t = Table()
+        t.seat(t.me, "B1", t.card(1001, text=self.SALVAGE))
+        t.seat(t.me, "B2", t.card(1002, text=self.BRAINSTORM))
+        t.me["zones"]["deck"] = t.me["zones"]["deck"][:cpu.FILL_MIN_DECK - 1]
+        t.me["zones"]["waiting"] = [game.new_card(1)]
+        t.stock(2)
+        self.assertEqual(self.next(t)["uid"], t.me["stage"]["B1"]["uid"])
+
+    def test_salvage_with_an_empty_waiting_room_waits(self):
+        t = Table()
+        t.seat(t.me, "B1", t.card(1001, text=self.SALVAGE))
+        t.stock(1)
+        self.assertNotEqual(self.next(t)["type"], "activate")
+
+
+class ModelChoiceTests(TestCase):
+    def test_every_model_has_a_mind(self):
+        self.assertEqual(set(cpu.MODELS), set(cpu.MINDS))
+
+    def test_an_unknown_model_plays_as_standard(self):
+        t = Table()
+        t.refresh()
+        self.assertEqual(cpu.next_action(t.state, "2", t.info, model="gone"), {"type": "phase", "phase": "climax"})
+
+
 class EndOfTurnTimingTests(TestCase):
     TRIGGER = "【AUTO】 At the end of your turn, this card gets +1000 power until end of turn."
 
@@ -2189,6 +2380,8 @@ class PagesTests(TestCase):
         response = self.client.post(reverse("weiss:play_vs_cpu"), {"cpu": profile.pk, "deck": mine.pk})
         room = GameRoom.objects.get(host=self.player)
         self.assertRedirects(response, reverse("weiss:play_room", args=[room.pk]))
+        self.client.post(reverse("weiss:play_action", args=[room.pk]), json.dumps({"type": "intro_done"}), content_type="application/json")
+        room.refresh_from_db()
         return room, profile
 
     def test_only_finalized_cpus_are_offered(self):
@@ -2287,6 +2480,14 @@ class PagesTests(TestCase):
 
     def test_a_deck_with_no_wins_shows_neither(self):
         self.assertNotContains(self.client.get(reverse("weiss:list", args=[self.legal_deck().pk])), "deck-wins")
+
+    def test_a_room_plays_by_its_profiles_model(self):
+        room, profile = self.challenge()
+        CpuProfile.objects.filter(pk=profile.pk).update(model="strategic", aggression=3)
+        with mock.patch.object(cpu, "next_action", return_value=None) as chooser:
+            play.cpu_step(room, wait=False)
+        self.assertEqual(chooser.call_args.args[3], 3)
+        self.assertEqual(chooser.call_args.kwargs["model"], "strategic")
 
     def test_a_whole_game_a_win_and_a_rematch_against_the_cpu(self):
         room, profile = self.challenge()

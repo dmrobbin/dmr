@@ -218,7 +218,7 @@ def attach_covers(lists):
 
 @weiss_access_required
 def list_index(request):
-    lists = CardList.objects.filter(user=request.user, reserved_for_cpu=False).annotate(total=Sum("entries__quantity"))
+    lists = CardList.objects.filter(user=request.user, reserved_for_cpu=False).annotate(total=Sum("entries__quantity")).prefetch_related("arcade_clears")
     return render(request, "weiss/list_index.html", {"lists": attach_covers(lists)})
 
 

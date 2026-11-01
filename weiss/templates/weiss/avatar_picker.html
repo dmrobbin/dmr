@@ -1,0 +1,40 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Choose a picture{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{{ back }}">← Back</a></p>
+  <h1>Picture for {{ name }}</h1>
+  <div class="avatar-picker" data-avatar-picker data-search-url="{% url 'weiss:avatar_search' %}" data-name="{{ name }}">
+    <section>
+      <label class="small" for="avatar-search">Find a card</label>
+      <input id="avatar-search" type="search" placeholder="Card name or number" autocomplete="off" data-search>
+      <p class="muted small" data-search-note>Type at least 2 letters.</p>
+      <div class="avatar-results" data-results></div>
+    </section>
+    <section>
+      <p class="muted small" data-help>Choose a card, then drag the circle over the part you want.</p>
+      <div class="avatar-stage" data-stage hidden>
+        <img alt="The chosen card" draggable="false" data-image>
+        <div class="avatar-circle" data-circle tabindex="0" role="application" aria-label="Circle on the card: arrow keys move it"></div>
+      </div>
+      <label class="small avatar-size" data-size-label hidden>Size <input type="range" min="5" max="50" step="0.5" data-size></label>
+      <div class="avatar-preview" data-preview-row hidden>
+        <span class="avatar avatar-large" data-preview><img alt="" draggable="false"></span>
+        <span class="avatar" data-preview><img alt="" draggable="false"></span>
+      </div>
+      <form method="post" class="list-actions">
+        {% csrf_token %}
+        <input type="hidden" name="card" data-field="card">
+        <input type="hidden" name="x" data-field="x">
+        <input type="hidden" name="y" data-field="y">
+        <input type="hidden" name="r" data-field="r">
+        <button type="submit" class="button-small" data-save disabled>Save picture</button>
+        {% if avatar %}<button type="submit" class="button-small secondary" name="remove" value="1" formnovalidate>Remove picture</button>{% endif %}
+      </form>
+    </section>
+  </div>
+  {{ current|json_script:"avatar-current" }}
+  <script src="{% static 'weiss/avatar.js' %}" defer></script>
+{% endblock %}
