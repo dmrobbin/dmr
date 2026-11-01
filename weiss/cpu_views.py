@@ -3,7 +3,7 @@ from functools import wraps
 
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.db.models import Sum
+from django.db.models import Count, Max, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
@@ -44,15 +44,24 @@ def deck_problem(deck):
     return None
 
 
+excluded_memo = (None, None)  # (what the cards looked like, the answer): reading every card's text takes a while
+
+
 def excluded_cards():
     """Cards left out of CPU decks, one printing of each name, with the parts that need doing by hand."""
+    global excluded_memo
+    version = Card.objects.exclude(description="").aggregate(Count("pk"), Max("updated"))
+    if excluded_memo[0] == version:
+        return excluded_memo[1]
     found = {}
     for card in Card.objects.exclude(description="").only("name", "serial_number", "description").order_by("serial_number"):
         if card.name not in found:
             parts = abilities.by_hand_parts(card.description)
             if parts:
                 found[card.name] = {"name": card.name, "serial": card.serial_number, "text": card.description, "parts": parts}
-    return sorted(found.values(), key=lambda c: c["name"])
+    cards = sorted(found.values(), key=lambda c: c["name"])
+    excluded_memo = (version, cards)
+    return cards
 
 
 def read_profile_form(request):
@@ -82,8 +91,13 @@ def cpu_home(request):
     return render(request, "weiss/cpu_home.html", {
         "decks": decks, "profiles": profiles, "models": cpu.MODELS.items(),
         "aggressions": range(cpu.MIN_AGGRESSION, cpu.MAX_AGGRESSION + 1),
-        "excluded": excluded_cards(),
     })
+
+
+@staff_required
+def cpu_excluded(request):
+    """The list of cards a CPU can't play. It's long and slow to work out, so the tab fetches it when it's opened."""
+    return render(request, "weiss/cpu_excluded.html", {"excluded": excluded_cards()})
 
 
 @staff_required

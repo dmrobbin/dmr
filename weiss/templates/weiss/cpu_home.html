@@ -30,15 +30,9 @@
 
   <section class="cpu-section">
     <p><a class="button-small secondary" href="{% url 'weiss:cpu_excluded_export' %}" download>Export unplayable cards</a></p>
-    <details>
-      <summary>{{ excluded|length }} card{{ excluded|length|pluralize }} a CPU can't play</summary>
-      <p class="muted small">Part of each of these has to be done by hand, so they're left out of CPU decks. So are anchors that name one of them.</p>
-      <ul class="cpu-excluded">
-        {% for card in excluded %}
-          <li><strong>{{ card.name }}</strong> <span class="muted small">{{ card.serial }}</span>
-            {% for part in card.parts %}<br><span class="small">{{ part }}</span>{% endfor %}</li>
-        {% endfor %}
-      </ul>
+    <details data-excluded="{% url 'weiss:cpu_excluded' %}">
+      <summary>Cards a CPU can't play</summary>
+      <div data-excluded-list><p class="muted small">Loading…</p></div>
     </details>
   </section>
 
@@ -78,4 +72,23 @@
       <button type="submit" class="button-small">Create profile</button>
     </form>
   </section>
+{% endblock %}
+
+{% block weiss_scripts %}
+  <script>
+    document.querySelector("[data-excluded]").addEventListener("toggle", async (event) => {
+      const details = event.target;
+      if (!details.open || details.dataset.loaded) return;
+      details.dataset.loaded = "yes";
+      const list = details.querySelector("[data-excluded-list]");
+      try {
+        const response = await fetch(details.dataset.excluded, { credentials: "same-origin" });
+        if (!response.ok) throw new Error(response.status);
+        list.innerHTML = await response.text();
+      } catch (error) {
+        delete details.dataset.loaded;  // closing and opening it again tries again
+        list.innerHTML = '<p class="small panel-error">The list could not be loaded.</p>';
+      }
+    });
+  </script>
 {% endblock %}

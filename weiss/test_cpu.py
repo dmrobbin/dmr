@@ -1,5 +1,6 @@
 import json
 import random
+from unittest import mock
 
 from django.contrib.auth.models import Group, User
 from django.test import TestCase
@@ -7,7 +8,7 @@ from django.urls import reverse
 
 from core.access import WEISS_GROUP
 
-from . import abilities, cpu, express, game, play
+from . import abilities, cpu, cpu_views, express, game, play
 from .models import Card, CardList, CardListEntry, CpuProfile, GameRoom, cpu_user
 
 
@@ -1156,7 +1157,8 @@ class UnusualCardTextTests(TestCase):
         self.client.force_login(staff)
         Card.objects.create(serial_number="ODD/1", name="Odd", expansion="E", expansion_id=9, card_type="Character", level=0,
                             description="【AUTO】 [(1) Put 1 card from your hand into your waiting room When this card attacks, draw 1 card.")
-        page = self.client.get(reverse("weiss:cpu_home"))
+        self.assertEqual(self.client.get(reverse("weiss:cpu_home")).status_code, 200)
+        page = self.client.get(reverse("weiss:cpu_excluded"))
         self.assertEqual(page.status_code, 200)
         self.assertEqual([c["name"] for c in page.context["excluded"]], ["Odd"])
 
@@ -2064,9 +2066,35 @@ class CpuDeckBuildingTests(TestCase):
         self.assertEqual(self.client.get(reverse("weiss:cpu_excluded_export")).status_code, 403)
 
     def test_the_tab_lists_them(self):
-        page = self.client.get(reverse("weiss:cpu_home"))
+        page = self.client.get(reverse("weiss:cpu_excluded"))
         self.assertEqual([c["name"] for c in page.context["excluded"]], ["Bad 0", "Bad 1", "Bad 2", "Bad 3", "Bad 4", "Bad 5", "Bad 6", "Bad 7", "Bad Anchor"])
         self.assertContains(page, "juggle the dice")
+
+    def test_the_tab_itself_doesnt_read_any_card_text(self):
+        with mock.patch.object(cpu_views, "excluded_cards") as excluded:
+            page = self.client.get(reverse("weiss:cpu_home"))
+        excluded.assert_not_called()
+        self.assertContains(page, reverse("weiss:cpu_excluded"))
+        self.assertNotContains(page, "juggle the dice")
+
+    def test_the_list_is_only_worked_out_again_when_the_cards_change(self):
+        with mock.patch.object(abilities, "by_hand_parts", wraps=abilities.by_hand_parts) as reader:
+            first = cpu_views.excluded_cards()
+            reader.reset_mock()
+            self.assertEqual(cpu_views.excluded_cards(), first)
+            reader.assert_not_called()
+        Card.objects.create(serial_number="NEW/1", name="Brand New", expansion="E", expansion_id=9, card_type="Character", level=0, description="【AUTO】 When this card attacks, juggle the dice.")
+        self.assertIn("Brand New", [c["name"] for c in cpu_views.excluded_cards()])
+        card = Card.objects.get(serial_number="NEW/1")
+        card.description = "【AUTO】 When this card attacks, draw 1 card."
+        card.save()
+        self.assertNotIn("Brand New", [c["name"] for c in cpu_views.excluded_cards()])
+
+    def test_only_staff_can_see_the_list(self):
+        player = User.objects.create_user("player2", password="x")
+        Group.objects.get_or_create(name=WEISS_GROUP)[0].user_set.add(player)
+        self.client.force_login(player)
+        self.assertEqual(self.client.get(reverse("weiss:cpu_excluded")).status_code, 403)
 
     def test_a_series_with_nothing_left_isnt_offered_for_a_cpu(self):
         Card.objects.create(serial_number="ONLY/1", name="Only", expansion="O", expansion_id=2, card_type="Character", level=0, description=self.COMBO + "\n" + self.JUGGLE)
