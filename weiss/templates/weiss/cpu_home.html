@@ -40,8 +40,23 @@
     <h2>CPU profiles</h2>
     <p class="muted small">Aggression 1 is the standard behaviour. Higher values chase enemy characters harder and protect their own less.</p>
     <p class="muted small">Focused works towards its climax combos, saving cards and stock for the next one it can reach. Strategic gets the most cards it can before building its board, filling its waiting room first if it can take cards from there.</p>
+    {% if profiles %}<p class="muted small">Click a box to open or close it.</p>{% endif %}
+    <ul class="cpu-grid">
     {% for profile in profiles %}
-      <div class="cpu-profile">
+      <li>
+      <details class="cpu-box" data-collapse="profile-{{ profile.pk }}">
+        <summary class="cpu-box-head">
+          {% if profile.image_url %}<img class="cpu-box-image" src="{{ profile.image_url }}" alt="" loading="lazy">
+          {% elif profile.avatar %}<span class="cpu-box-image cpu-box-picture">{% include "weiss/avatar.html" with avatar=profile.avatar name=profile.name size="avatar-fill" %}</span>
+          {% else %}<span class="cpu-box-image cpu-box-picture">{% include "weiss/avatar.html" with avatar=None name=profile.name size="avatar-fill" %}</span>{% endif %}
+          <span class="cpu-box-title">
+            <span class="set-name">{{ profile.name }}</span>
+            <span class="muted small">{{ profile.model_label }} · aggression {{ profile.aggression }}</span>
+            <span class="muted small">{% if profile.deck %}{{ profile.deck.name }}{% else %}No deck{% endif %}</span>
+            {% if profile.finalized %}<span class="deck-tag">Available to players</span>{% elif profile.problem %}<span class="small panel-error">Not ready</span>{% else %}<span class="muted small">Ready to finalize</span>{% endif %}
+          </span>
+        </summary>
+        <div class="cpu-box-body">
         <p class="cpu-picture">{% include "weiss/avatar.html" with avatar=profile.avatar name=profile.name size="" %}
           <a class="small" href="{% url 'weiss:cpu_picture' profile.pk %}">{% if profile.avatar %}Change picture{% else %}Choose a picture{% endif %}</a></p>
         <div class="cpu-form cpu-image-row">
@@ -73,10 +88,12 @@
           <form method="post" action="{% url 'weiss:cpu_profile_delete' profile.pk %}" onsubmit="return confirm('Delete {{ profile.name|escapejs }}?')">{% csrf_token %}
             <button type="submit" class="button-small danger">Delete</button></form>
         </div>
-      </div>
-    {% empty %}
-      <p class="empty">No CPU profiles yet.</p>
+        </div>
+      </details>
+      </li>
     {% endfor %}
+    </ul>
+    {% if not profiles %}<p class="empty">No CPU profiles yet.</p>{% endif %}
     <h3>New profile</h3>
     <form method="post" action="{% url 'weiss:cpu_profile_create' %}" class="cpu-form">
       {% csrf_token %}
@@ -90,6 +107,21 @@
 
 {% block weiss_scripts %}
   <script>
+    // Saving a form reloads the page, so which boxes are open is remembered in this browser.
+    (() => {
+      const KEY = "weiss-cpu-open";
+      let open = [];
+      try { open = JSON.parse(localStorage.getItem(KEY)) || []; } catch (error) { /* start with them all closed */ }
+      const boxes = [...document.querySelectorAll("[data-collapse]")];
+      for (const box of boxes) {
+        box.open = open.includes(box.dataset.collapse);
+        box.addEventListener("toggle", () => {
+          const now = boxes.filter((b) => b.open).map((b) => b.dataset.collapse);
+          try { localStorage.setItem(KEY, JSON.stringify(now)); } catch (error) { /* only this visit, then */ }
+        });
+      }
+    })();
+
     document.querySelector("[data-excluded]").addEventListener("toggle", async (event) => {
       const details = event.target;
       if (!details.open || details.dataset.loaded) return;

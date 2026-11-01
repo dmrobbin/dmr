@@ -2293,6 +2293,12 @@ class CpuDeckBuildingTests(TestCase):
         self.assertNotIn("ONLY", codes)
         self.assertIn("ONLY", {c["code"] for c in express.series_choices()})
 
+    def test_the_menu_can_be_searched_by_name_and_code(self):
+        page = self.client.get(reverse("weiss:list_express", args=[self.deck.pk]))
+        self.assertContains(page, "data-series-search")
+        self.assertContains(page, 'data-series-text="')
+        self.assertRegex(page.content.decode(), r'data-series-text="[^"]* TST"')
+
     def test_the_menu_counts_what_the_next_step_offers(self):
         counts = express.cpu_anchor_counts()
         self.assertEqual(counts["TST"], len(express.cpu_anchor_choices("TST")))

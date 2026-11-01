@@ -7,9 +7,15 @@
   <h1>Express build</h1>
   <p class="lead-meta">Step 1 of 2: choose a series.</p>
   {% if series %}
-    <ul class="set-grid">
+    <div class="lead-filters">
+      <label>Search series
+        <input type="search" placeholder="Series name or code" autocomplete="off" autofocus data-series-search>
+      </label>
+    </div>
+    <p class="empty" data-series-none aria-live="polite" hidden>No series match that search.</p>
+    <ul class="set-grid" data-series-list>
       {% for choice in series %}
-        <li>
+        <li data-series-text="{{ choice.name }} {{ choice.code }}">
           <a href="{% url 'weiss:list_express' card_list.pk %}?series={{ choice.code|urlencode }}">
             {% if choice.cover.image_src %}<img src="{{ choice.cover.image_src }}" alt="" loading="lazy">{% else %}<span class="set-cover-missing" aria-hidden="true"></span>{% endif %}
             <span class="set-name">{{ choice.name }}</span>
@@ -21,4 +27,28 @@
   {% else %}
     <p class="empty">No saved series has cx combo cards to build around yet.</p>
   {% endif %}
+{% endblock %}
+
+{% block weiss_scripts %}
+  <script>
+    (() => {
+      const search = document.querySelector("[data-series-search]");
+      if (!search) return;
+      // Accents and case don't matter, and every word has to match, in any order.
+      const plain = (text) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      const items = [...document.querySelectorAll("[data-series-text]")].map((item) => [item, plain(item.dataset.seriesText)]);
+      const none = document.querySelector("[data-series-none]");
+      const filter = () => {
+        const words = plain(search.value).split(/\s+/).filter(Boolean);
+        let shown = 0;
+        for (const [item, text] of items) {
+          item.hidden = !words.every((word) => text.includes(word));
+          if (!item.hidden) shown += 1;
+        }
+        none.hidden = shown > 0;
+      };
+      search.addEventListener("input", filter);
+      filter(); // the browser may have kept what was typed, coming back to this page
+    })();
+  </script>
 {% endblock %}

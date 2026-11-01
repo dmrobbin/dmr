@@ -541,6 +541,30 @@ select option { color: var(--text); background: var(--surface); }
 .cpu-image-thumb { max-width: 6rem; max-height: 6rem; border-radius: .3rem; }
 .inline-form { display: inline; }
 .deck-arcade { font-size: .8rem; font-weight: 700; color: var(--accent); white-space: nowrap; }
+.set-grid li[hidden] { display: none; }
+/* The CPU tab's boxes, laid out like cards and sets. An open one takes the whole row, for its forms. */
+.cpu-grid { list-style: none; margin: .75rem 0 1.5rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); grid-auto-flow: dense; gap: 1.25rem; }
+.cpu-grid li:has(> .cpu-box[open]) { grid-column: 1 / -1; }
+.cpu-box, .cpu-row { border: 1px solid var(--border); border-radius: .75rem; background: var(--surface); }
+.cpu-box:hover, .cpu-box[open], .cpu-row:hover, .cpu-row[open] { border-color: var(--accent); }
+.cpu-box-head, .cpu-row-head { list-style: none; cursor: pointer; border-radius: .75rem; }
+.cpu-box-head::-webkit-details-marker, .cpu-row-head::-webkit-details-marker { display: none; }
+.cpu-box-head:focus-visible, .cpu-row-head:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cpu-box-head { display: flex; flex-direction: column; gap: .5rem; padding: 1rem; }
+.cpu-box-image { display: block; width: 100%; aspect-ratio: 5 / 7; object-fit: cover; border-radius: .5rem; background: var(--bg); }
+.cpu-box-picture { display: grid; place-items: center; }
+.avatar-fill { width: 70%; height: auto; aspect-ratio: 1; font-size: 3rem; }
+.cpu-box-title { display: flex; flex-direction: column; align-items: flex-start; gap: .15rem; min-width: 0; overflow-wrap: anywhere; }
+.cpu-box-title .set-name { font-weight: 600; font-size: .95rem; line-height: 1.3; }
+.cpu-box[open] .cpu-box-head { flex-direction: row; align-items: center; gap: 1rem; border-bottom: 1px solid var(--border); border-radius: .75rem .75rem 0 0; }
+.cpu-box[open] .cpu-box-image { flex: none; width: 4.5rem; }
+.cpu-box[open] .avatar-fill { font-size: 1.5rem; }
+.cpu-box-body, .cpu-row-body { padding: .75rem 1rem 1rem; }
+.cpu-row { margin: .5rem 0; }
+.cpu-row-head { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .75rem; padding: .65rem 2.4rem .65rem 1rem; position: relative; }
+.cpu-row-head::after { content: ""; position: absolute; right: 1rem; top: 50%; width: .5rem; height: .5rem; border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent); transform: translateY(-70%) rotate(45deg); transition: transform .15s; }
+.cpu-row[open] .cpu-row-head::after { transform: translateY(-30%) rotate(-135deg); }
+.cpu-row[open] .cpu-row-head { border-bottom: 1px solid var(--border); border-radius: .75rem .75rem 0 0; }
 .cpu-profile { margin: .75rem 0; padding: .6rem .8rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--surface); }
 /* Express deck building: the prompt on creating a list, and tiles of cards to tick. */
 .express-prompt { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 1rem; background: rgb(0 0 0 / .6); }

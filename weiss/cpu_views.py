@@ -103,6 +103,7 @@ def cpu_home(request):
     profiles = list(CpuProfile.objects.select_related("deck"))
     for profile in profiles:
         profile.problem = deck_problem(profile.deck)
+        profile.model_label = cpu.MODELS.get(profile.model, profile.model)
     scenarios = arcade.all_scenarios()
     for scenario in scenarios:
         scenario.problem = arcade.scenario_problem(scenario)

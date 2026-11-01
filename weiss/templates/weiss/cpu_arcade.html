@@ -7,9 +7,14 @@
     <button type="submit" class="button-small">Create list</button>
   </form>
   {% for scenario in scenarios %}
-    <div class="cpu-profile">
-      <p><strong>{{ scenario.name }}</strong>
-        {% if scenario.problem %}<span class="small panel-error">{{ scenario.problem }}</span>{% else %}<span class="deck-tag">Available to players</span>{% endif %}</p>
+    <details class="cpu-row" data-collapse="arcade-{{ scenario.pk }}">
+      <summary class="cpu-row-head">
+        <strong>{{ scenario.name }}</strong>
+        <span class="muted small">{{ scenario.entries.all|length }} CPU{{ scenario.entries.all|length|pluralize }}</span>
+        {% if scenario.problem %}<span class="small panel-error">Not ready</span>{% else %}<span class="deck-tag">Available to players</span>{% endif %}
+      </summary>
+      <div class="cpu-row-body">
+      {% if scenario.problem %}<p class="small panel-error">{{ scenario.problem }}</p>{% endif %}
       <ul class="cpu-list">
         {% for entry in scenario.ordered_entries %}
           <li><span class="deck-tag">{{ entry.get_role_display }}</span> {{ entry.cpu.name }}
@@ -24,7 +29,8 @@
       </form>
       <form method="post" action="{% url 'weiss:arcade_delete' scenario.pk %}" onsubmit="return confirm('Delete {{ scenario.name|escapejs }}? Decks keep their markers.')">{% csrf_token %}
         <button type="submit" class="button-small danger">Delete list</button></form>
-    </div>
+      </div>
+    </details>
   {% empty %}
     <p class="empty">No arcade lists yet.</p>
   {% endfor %}

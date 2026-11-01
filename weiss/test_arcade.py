@@ -221,6 +221,12 @@ class ArcadeBuilderTests(Base):
         self.add(self.cpu("A"), "opener")
         self.assertContains(self.client.get(reverse("weiss:cpu_home")), "Ark")
 
+    def test_profiles_and_lists_can_each_be_collapsed(self):
+        cpu = self.cpu("A")
+        page = self.client.get(reverse("weiss:cpu_home"))
+        self.assertContains(page, f'data-collapse="profile-{cpu.pk}"')
+        self.assertContains(page, f'data-collapse="arcade-{self.scenario.pk}"')
+
 
 class ArcadeRunTests(Base):
     def setUp(self):
