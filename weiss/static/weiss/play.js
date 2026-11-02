@@ -741,8 +741,10 @@
       } else if (inPhase("attack") && board.attack && board.attack.step === "declare"
           && !(board.turn_number === 1 && board.attacks >= 1)) { // only one attack on turn 1
         const attack = (kind, label) => `<button type="button" data-act='${esc(JSON.stringify({ type: "attack", uid: card.uid, kind }))}'>⚔ ${label}</button>`;
+        const bans = (board.attack_bans || {})[card.uid] || [];
+        const allowed = (kind, label) => (bans.includes("all") || bans.includes(kind) ? "" : attack(kind, label));
         quick = board.opponent && board.opponent.stage[OPPOSITE[slot]]
-          ? attack("front", "Front") + attack("side", "Side") : attack("direct", "Direct");
+          ? allowed("front", "Front") + allowed("side", "Side") : allowed("direct", "Direct");
       }
     }
     return `<div class="slot-actions">

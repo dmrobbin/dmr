@@ -450,14 +450,17 @@ class Mind:
             card = self.side["stage"][slot]
             if not card or card["pos"] != "stand":
                 continue
+            bans = game.attack_bans(self.state, self.me, card, self.env)
+            if "all" in bans:
+                continue
             enemy = self.their_side["stage"][facing]
             if not enemy:
                 directs.append({"type": "attack", "uid": card["uid"], "kind": "direct"})
                 continue
             power, theirs = self.stat(card, "power"), self.stat(enemy, "power")
-            if power + self.temper.risk >= theirs:
+            if "front" not in bans and (power + self.temper.risk >= theirs or "side" in bans):
                 wins.append((theirs, {"type": "attack", "uid": card["uid"], "kind": "front"}))
-            else:
+            elif "side" not in bans:
                 sides.append({"type": "attack", "uid": card["uid"], "kind": "side"})
         ordered = [a for _, a in sorted(wins, key=lambda w: -w[0])] + directs + sides
         return ordered[0] if ordered else None
