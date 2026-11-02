@@ -1,0 +1,64 @@
+{% extends "weiss/base.html" %}
+
+{% block title %}Avatar image for {{ profile.name }}{% endblock %}
+
+{% block weiss_content %}
+  <p class="back"><a href="{% url 'weiss:cpu_home' %}">← CPU creation</a></p>
+  <h1>Avatar image for {{ profile.name }}</h1>
+  <p class="lead-meta">Every CPU chooses from the same images. Deleting one takes it away from any CPU using it.</p>
+
+  <nav class="cpu-screens" aria-label="Which screen to choose for">
+    {% for choice in screens %}
+      <a href="?screen={{ choice.key }}"{% if choice.key == screen %} class="current" aria-current="page"{% endif %}>{{ choice.label }}{% if choice.image %} ✓{% endif %}</a>
+    {% endfor %}
+  </nav>
+  <div class="cpu-form cpu-image-row">
+    {% if current %}
+      <img class="cpu-image-thumb" src="{% url 'weiss:cpu_pool_image' current.pk %}" alt="{{ current.name }}">
+      <form method="post" action="{% url 'weiss:cpu_image_remove' profile.pk %}">{% csrf_token %}<input type="hidden" name="screen" value="{{ screen }}"><button type="submit" class="button-small secondary">{% if screen == "main" %}Use no image{% else %}Use the main image{% endif %}</button></form>
+    {% elif screen == "main" %}
+      <span class="muted small">No image chosen.</span>
+    {% else %}
+      <span class="muted small">Shows the main image.</span>
+    {% endif %}
+  </div>
+
+  <form method="post" action="{% url 'weiss:cpu_image_upload' profile.pk %}" enctype="multipart/form-data" class="cpu-form">
+    {% csrf_token %}<input type="hidden" name="screen" value="{{ screen }}">
+    <label class="small">Add an image <input type="file" name="image" accept="image/png,image/jpeg,image/gif,image/webp" required></label>
+    <label class="small">Who it shows <input type="text" name="name" maxlength="200"></label>
+    <button type="submit" class="button-small secondary">Upload and use it</button>
+  </form>
+
+  <form method="get" class="panel-row express-search">
+    <input type="hidden" name="screen" value="{{ screen }}">
+    <input type="search" name="q" value="{{ query }}" placeholder="Character or series" aria-label="Search the images">
+    <button type="submit" class="button-small secondary">Search</button>
+  </form>
+
+  {% if page.object_list %}
+    <ul class="cpu-pool">
+      {% for image in page.object_list %}
+        <li{% if image.pk == current.pk %} class="current"{% endif %}>
+          <form method="post" action="{% url 'weiss:cpu_image_choose' profile.pk %}">
+            {% csrf_token %}<input type="hidden" name="image" value="{{ image.pk }}"><input type="hidden" name="screen" value="{{ screen }}">
+            <button type="submit" class="cpu-pool-pick" title="Use this image"><img src="{% url 'weiss:cpu_pool_image' image.pk %}" alt="{{ image.name }}" loading="lazy"></button>
+          </form>
+          <span class="small">{{ image.name|default:"Unnamed" }}</span>
+          {% if image.series or image.kind %}<span class="muted small">{{ image.series }}{% if image.series and image.kind %} · {% endif %}{{ image.kind|capfirst }}</span>{% endif %}
+          <form method="post" action="{% url 'weiss:cpu_image_delete' image.pk %}" onsubmit="return confirm('Delete this image for every CPU? This can’t be undone.')">
+            {% csrf_token %}<input type="hidden" name="profile" value="{{ profile.pk }}">
+            <button type="submit" class="link-button">Delete{% if image.uses %} (used by {{ image.uses }}){% endif %}</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+    <p class="small muted">
+      {% if page.has_previous %}<a href="?screen={{ screen }}&amp;q={{ query|urlencode }}&amp;page={{ page.previous_page_number }}">← Previous</a> · {% endif %}
+      Page {{ page.number }} of {{ page.paginator.num_pages }}
+      {% if page.has_next %} · <a href="?screen={{ screen }}&amp;q={{ query|urlencode }}&amp;page={{ page.next_page_number }}">Next →</a>{% endif %}
+    </p>
+  {% else %}
+    <p class="empty">{% if query %}No images match “{{ query }}”.{% else %}No images yet. Upload one above.{% endif %}</p>
+  {% endif %}
+{% endblock %}

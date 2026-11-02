@@ -10,7 +10,7 @@ from django.urls import reverse
 from core.access import WEISS_GROUP
 
 from . import arcade, play
-from .models import ArcadeClear, ArcadeEntry, ArcadeRun, ArcadeScenario, Card, CardList, CardListEntry, CpuProfile, GameRecord, GameRoom
+from .models import ArcadeClear, ArcadeEntry, ArcadeRun, ArcadeScenario, Card, CardList, CardListEntry, CpuImage, CpuProfile, GameRecord, GameRoom
 
 PNG = b"\x89PNG\r\n\x1a\n" + b"\0" * 32
 
@@ -56,7 +56,7 @@ class CpuImageTests(Base):
             self.upload(b"\xff\xd8\xff" + b"\0" * 32, "sneaky.png")
         self.profile.refresh_from_db()
         key = upload.call_args.args[0]
-        self.assertEqual(self.profile.image_key, key)
+        self.assertEqual(self.profile.image.key, key)
         self.assertTrue(key.endswith(".jpg"))
         self.assertNotIn("sneaky", key)
         self.assertEqual(upload.call_args.args[2], "image/jpeg")
@@ -78,7 +78,7 @@ class CpuImageTests(Base):
                 self.upload(content)
             upload.assert_not_called()
         self.profile.refresh_from_db()
-        self.assertEqual(self.profile.image_key, "")
+        self.assertIsNone(self.profile.image)
 
     @override_settings(AWS_S3_BUCKET="bucket")
     def test_too_big_is_refused(self):
@@ -88,26 +88,87 @@ class CpuImageTests(Base):
 
     @override_settings(AWS_S3_BUCKET="bucket")
     def test_a_failed_upload_keeps_the_old_one(self):
-        self.profile.image_key = "old"
+        self.profile.image = CpuImage.objects.create(key="old")
         self.profile.save()
         from botocore.exceptions import BotoCoreError
         with mock.patch("weiss.cpu_views.s3.upload", side_effect=BotoCoreError()):
             self.assertEqual(self.upload().status_code, 302)
         self.profile.refresh_from_db()
-        self.assertEqual(self.profile.image_key, "old")
+        self.assertEqual(self.profile.image.key, "old")
 
-    @override_settings(AWS_S3_BUCKET="bucket")
-    def test_removing_it(self):
-        self.profile.image_key = "weiss/cpu-images/x.png"
+    def test_removing_it_leaves_it_in_the_pool(self):
+        self.profile.image = image = CpuImage.objects.create(key="weiss/cpu-images/x.png")
         self.profile.save()
         with mock.patch("weiss.cpu_views.s3.delete") as delete:
             self.client.post(reverse("weiss:cpu_image_remove", args=[self.profile.pk]))
-        delete.assert_called_once_with("weiss/cpu-images/x.png")
+        delete.assert_not_called()
         self.profile.refresh_from_db()
-        self.assertEqual(self.profile.image_key, "")
+        self.assertIsNone(self.profile.image)
+        self.assertTrue(CpuImage.objects.filter(pk=image.pk).exists())
+
+    def test_each_screen_can_have_its_own_image(self):
+        main, intro = CpuImage.objects.create(key="main.png"), CpuImage.objects.create(key="intro.png")
+        choose = reverse("weiss:cpu_image_choose", args=[self.profile.pk])
+        self.client.post(choose, {"image": main.pk})
+        self.client.post(choose, {"image": intro.pk, "screen": "intro"})
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.screen_image("intro"), intro)
+        self.assertEqual(self.profile.screen_image("win"), main)  # falls back on the main one
+        self.assertEqual(self.profile.image, main)
+        with mock.patch("weiss.play.s3.presigned_image_urls", side_effect=lambda keys: {k: f"https://s3/{k}" for k in keys}):
+            self.assertRedirects(self.client.get(self.profile.screen_url("intro")), "https://s3/intro.png", fetch_redirect_response=False)
+            self.assertRedirects(self.client.get(self.profile.screen_url("lose")), "https://s3/main.png", fetch_redirect_response=False)
+        self.client.post(reverse("weiss:cpu_image_remove", args=[self.profile.pk]), {"screen": "intro"})
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.screen_image("intro"), main)
+
+    def test_the_page_says_which_screen_and_counts_uses_across_them(self):
+        image = CpuImage.objects.create(key="k.png")
+        CpuProfile.objects.filter(pk=self.profile.pk).update(image=image, intro_image=image)
+        page = self.client.get(reverse("weiss:cpu_images", args=[self.profile.pk]), {"screen": "lose"})
+        self.assertEqual(page.context["screen"], "lose")
+        self.assertIsNone(page.context["current"])
+        self.assertEqual(page.context["page"].object_list[0].uses, 2)
+        self.assertContains(page, 'name="screen" value="lose"')
+        self.assertEqual(self.client.get(reverse("weiss:cpu_images", args=[self.profile.pk]), {"screen": "nope"}).context["screen"], "main")
+
+    def test_two_cpus_can_share_one(self):
+        image = CpuImage.objects.create(key="shared.png")
+        other = self.cpu("Other")
+        for profile in (self.profile, other):
+            self.client.post(reverse("weiss:cpu_image_choose", args=[profile.pk]), {"image": image.pk})
+            profile.refresh_from_db()
+            self.assertEqual(profile.image, image)
+
+    def test_deleting_from_the_pool_clears_it_everywhere(self):
+        self.profile.image = image = CpuImage.objects.create(key="gone.png")
+        self.profile.save()
+        with mock.patch("weiss.cpu_views.s3.delete") as delete:
+            self.client.post(reverse("weiss:cpu_image_delete", args=[image.pk]), {"profile": self.profile.pk})
+        delete.assert_called_once_with("gone.png")
+        self.profile.refresh_from_db()
+        self.assertIsNone(self.profile.image)
+
+    def test_the_pool_page_searches_and_pages(self):
+        for i in range(61):
+            CpuImage.objects.create(key=f"k{i}.png", name=f"Levi {i}", series="Attack on Titan")
+        CpuImage.objects.create(key="other.png", name="Rapi", series="NIKKE")
+        page = self.client.get(reverse("weiss:cpu_images", args=[self.profile.pk]), {"q": "levi"})
+        self.assertEqual(len(page.context["page"].object_list), 60)
+        self.assertEqual(page.context["page"].paginator.count, 61)
+        self.assertNotContains(page, "Rapi")
+        self.assertContains(self.client.get(reverse("weiss:cpu_images", args=[self.profile.pk]), {"q": "nikke"}), "Rapi")
+
+    def test_only_staff_see_the_pool(self):
+        image = CpuImage.objects.create(key="k.png")
+        self.client.force_login(self.alice)
+        self.assertEqual(self.client.get(reverse("weiss:cpu_images", args=[self.profile.pk])).status_code, 403)
+        self.assertEqual(self.client.get(reverse("weiss:cpu_pool_image", args=[image.pk])).status_code, 403)
+        self.assertEqual(self.client.post(reverse("weiss:cpu_image_choose", args=[self.profile.pk]), {"image": image.pk}).status_code, 403)
+        self.assertEqual(self.client.post(reverse("weiss:cpu_image_delete", args=[image.pk])).status_code, 403)
 
     def test_players_can_view_it(self):
-        self.profile.image_key = "k.png"
+        self.profile.image = CpuImage.objects.create(key="k.png")
         self.profile.save()
         self.client.force_login(self.alice)
         with mock.patch("weiss.play.s3.presigned_image_urls", return_value={"k.png": "https://s3/k"}):
@@ -164,11 +225,12 @@ class IntroAndEndScreenTests(Base):
 
     def test_the_end_screen_gets_both_texts_and_the_image(self):
         room, profile = self.challenge()
-        CpuProfile.objects.filter(pk=profile.pk).update(image_key="k.png")
+        CpuProfile.objects.filter(pk=profile.pk).update(image=CpuImage.objects.create(key="k.png"))
         room.refresh_from_db()
         cpu = play.board_payload(room, self.alice)["cpu"]
         self.assertEqual((cpu["win"], cpu["lose"]), ("You got me", "Too easy"))
         self.assertIn("/image/", cpu["image"])
+        self.assertIn("screen=win", cpu["images"]["win"])
 
 
 class ArcadeBuilderTests(Base):

@@ -71,10 +71,11 @@ def cpu_payload(room):
         payload["intro"] = True
     profile = room.cpu_profile
     if profile:
-        payload["cpu"] = {"name": profile.name, "image": profile.image_url, "picture": profile.avatar, "intro": profile.intro_text,
+        payload["cpu"] = {"name": profile.name, "image": profile.image_url, "images": {screen: profile.screen_url(screen) for screen in ("intro", "win", "lose")},
+                          "picture": profile.avatar, "intro": profile.intro_text,
                           "win": profile.player_win_text, "lose": profile.player_lose_text}
     else:  # it was deleted during the game
-        payload["cpu"] = {"name": room.cpu_name, "image": "", "picture": None, "intro": "", "win": "", "lose": ""}
+        payload["cpu"] = {"name": room.cpu_name, "image": "", "images": {}, "picture": None, "intro": "", "win": "", "lose": ""}
     run = room.arcade_run
     if run:
         payload["arcade"] = {"scenario": run.scenario_name, "fight": min(run.position + 1, run.total), "total": run.total,
@@ -208,9 +209,10 @@ def arcade_action(request, room, action):
 def cpu_image(request, pk):
     """A stable link to a CPU's uploaded image, redirecting to a fresh S3 link, as card images do."""
     profile = get_object_or_404(CpuProfile, pk=pk)
-    if not profile.image_key:
+    image = profile.screen_image(request.GET.get("screen", "main"))
+    if not image:
         raise Http404("This CPU has no image")
-    response = redirect(s3.presigned_image_urls([profile.image_key])[profile.image_key])
+    response = redirect(s3.presigned_image_urls([image.key])[image.key])
     response["Cache-Control"] = f"private, max-age={settings.IMAGE_LINK_SECONDS - 300}"
     return response
 

@@ -155,15 +155,41 @@ class PlayerProfile(Avatar):
         return str(self.user)
 
 
+class CpuImage(models.Model):
+    """An image in the pool every CPU's avatar is chosen from. Only staff and the find_card_images command add them."""
+
+    key = models.CharField(max_length=500, unique=True, help_text="Where it is in the S3 bucket")
+    name = models.CharField(max_length=200, blank=True, help_text="Who or what it shows")
+    series = models.CharField(max_length=200, blank=True, help_text="The show it's from, when known")
+    kind = models.CharField(max_length=20, blank=True, help_text="official or unofficial, for a found image")
+    source_url = models.URLField(max_length=1000, blank=True, help_text="Where a found image came from")
+    source_card = models.ForeignKey(Card, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", help_text="The card it was found for")
+    created_by = models.ForeignKey("auth.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["series", "name", "pk"]
+
+    def __str__(self):
+        return self.name or self.key
+
+
 class CpuProfile(Avatar):
     """A CPU opponent: how it plays and with what. Players can challenge it once it's finalized."""
+
+    # Its screens, and the field holding each one's image. One left empty shows the main image.
+    SCREENS = {"main": "image", "intro": "intro_image", "win": "player_win_image", "lose": "player_lose_image"}
+    SCREEN_LABELS = {"main": "Main", "intro": "Intro", "win": "When the player wins", "lose": "When the player loses"}
 
     name = models.CharField(max_length=100)
     model = models.CharField(max_length=20, default="standard", help_text="Which behaviour it plays by; see weiss.cpu")
     aggression = models.PositiveSmallIntegerField(default=1, help_text="1 is the standard behaviour")
     deck = models.ForeignKey(CardList, null=True, blank=True, on_delete=models.SET_NULL, related_name="cpu_profiles")
     finalized = models.BooleanField(default=False, help_text="Offered to players under VS CPU")
-    image_key = models.CharField(max_length=500, blank=True, help_text="An image uploaded by staff, in the S3 bucket")
+    image = models.ForeignKey(CpuImage, null=True, blank=True, on_delete=models.SET_NULL, related_name="profiles")
+    intro_image = models.ForeignKey(CpuImage, null=True, blank=True, on_delete=models.SET_NULL, related_name="intro_profiles")
+    player_win_image = models.ForeignKey(CpuImage, null=True, blank=True, on_delete=models.SET_NULL, related_name="win_profiles")
+    player_lose_image = models.ForeignKey(CpuImage, null=True, blank=True, on_delete=models.SET_NULL, related_name="lose_profiles")
     intro_text = models.TextField(blank=True, help_text="Shown on its screen before a match")
     player_win_text = models.TextField(blank=True, help_text="Shown on the victory screen, when the player beats it")
     player_lose_text = models.TextField(blank=True, help_text="Shown on the defeat screen, when the player loses to it")
@@ -180,9 +206,17 @@ class CpuProfile(Avatar):
     @property
     def image_url(self):
         """Stable until the image changes, so browsers can keep it; a new upload has a new key, so a new link."""
-        if not self.image_key:
+        return self.screen_url("main")
+
+    def screen_image(self, screen):
+        """The image for one of its screens: its own, or else the main one."""
+        return getattr(self, self.SCREENS.get(screen, "image")) or self.image
+
+    def screen_url(self, screen):
+        image = self.screen_image(screen)
+        if not image:
             return ""
-        return reverse("weiss:cpu_image", args=[self.pk]) + "?v=" + self.image_key.rsplit("/", 1)[-1]
+        return reverse("weiss:cpu_image", args=[self.pk]) + f"?screen={screen}&v=" + image.key.rsplit("/", 1)[-1]
 
 
 class ArcadeScenario(models.Model):

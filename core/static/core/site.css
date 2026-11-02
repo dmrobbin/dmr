@@ -539,6 +539,14 @@ select option { color: var(--text); background: var(--surface); }
 .cpu-text textarea { width: 100%; }
 .cpu-image-row { align-items: center; margin-bottom: .5rem; }
 .cpu-image-thumb { max-width: 6rem; max-height: 6rem; border-radius: .3rem; }
+.cpu-screens { display: flex; flex-wrap: wrap; gap: .4rem; margin: 1rem 0; }
+.cpu-screens a { padding: .35rem .7rem; border: 1px solid var(--border); border-radius: .4rem; text-decoration: none; font-size: .85rem; }
+.cpu-screens a.current { border-color: var(--accent); color: var(--accent); }
+.cpu-pool { list-style: none; margin: 1rem 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 1rem; }
+.cpu-pool li { display: flex; flex-direction: column; gap: .2rem; min-width: 0; overflow-wrap: anywhere; }
+.cpu-pool-pick { display: block; width: 100%; padding: 0; background: var(--surface); border: 2px solid var(--border); border-radius: .5rem; overflow: hidden; cursor: pointer; }
+.cpu-pool-pick:hover, .cpu-pool li.current .cpu-pool-pick { border-color: var(--accent); }
+.cpu-pool-pick img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; }
 .inline-form { display: inline; }
 .deck-arcade { font-size: .8rem; font-weight: 700; color: var(--accent); white-space: nowrap; }
 .set-grid li[hidden] { display: none; }

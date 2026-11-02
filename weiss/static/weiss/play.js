@@ -1212,8 +1212,9 @@
   const fightLabel = () => `${esc(arcade.scenario)} · fight ${arcade.fight} of ${arcade.total}`;
 
   // A CPU's image, or else its picture, for the screens either side of a match.
-  function cpuPortrait(imageClass) {
-    if (cpuInfo.image) return `<img class="${imageClass}" src="${esc(cpuInfo.image)}" alt="${esc(cpuInfo.name)}">`;
+  const cpuImage = (screen) => (cpuInfo.images || {})[screen] || cpuInfo.image;
+  function cpuPortrait(imageClass, screen) {
+    if (cpuImage(screen)) return `<img class="${imageClass}" src="${esc(cpuImage(screen))}" alt="${esc(cpuInfo.name)}">`;
     const picture = cpuInfo.picture;
     return picture ? `<span class="avatar cpu-intro-picture" role="img" aria-label="${esc(cpuInfo.name)}"><img src="${esc(picture.image)}" alt="" style="width:${picture.width}%;left:${picture.left}%;top:${picture.top}%"></span>` : "";
   }
@@ -1234,7 +1235,7 @@
     introEl.setAttribute("aria-label", `${cpuInfo.name} challenges you`);
     introEl.innerHTML = `<div class="cpu-intro-box">
       ${arcade ? `<p class="cpu-intro-stage">${fightLabel()}</p>` : ""}
-      ${cpuPortrait("cpu-intro-image")}
+      ${cpuPortrait("cpu-intro-image", "intro")}
       <h2 class="cpu-intro-name">${esc(cpuInfo.name)}</h2>
       ${cpuInfo.intro ? `<p class="cpu-speech">${esc(cpuInfo.intro)}</p>` : ""}
       <button type="button" class="button-small" data-act='{"type":"intro_done"}'>Begin</button></div>`;
@@ -1262,7 +1263,8 @@
       hideMenu();
       hideZoom();
       gameOverEl = document.createElement("div");
-      const custom = cpuInfo && cpuInfo.image; // a CPU with an avatar has its own screen, and its own words
+      const outcome = over.won ? "win" : "lose"; // for the player
+      const custom = cpuInfo && cpuImage(outcome); // a CPU with an avatar has its own screen, and its own words
       const said = custom && (over.won ? cpuInfo.win : cpuInfo.lose);
       gameOverEl.className = `game-over ${over.won ? "game-over-victory" : "game-over-defeat"}${custom ? " game-over-custom" : ""}${animations ? " animated" : ""}`;
       gameOverEl.setAttribute("role", "alertdialog");
@@ -1270,7 +1272,7 @@
       const loser = over.won ? opponentWho("Your opponent") : "You";
       const reason = over.reason === "deck" ? `${loser} can't refresh ${over.won ? "their" : "your"} deck.` : `${loser} reached level 4.`;
       gameOverEl.innerHTML = `<div class="game-over-rays"></div>
-        <div class="game-over-banner">${CREST}${custom ? `<div class="game-over-cpu">${cpuPortrait("game-over-cpu-image")}${said ? `<p class="cpu-speech">${esc(said)}</p>` : ""}</div>` : ""}
+        <div class="game-over-banner">${CREST}${custom ? `<div class="game-over-cpu">${cpuPortrait("game-over-cpu-image", outcome)}${said ? `<p class="cpu-speech">${esc(said)}</p>` : ""}</div>` : ""}
           <h2 class="game-over-word">${over.won ? "Victory" : "Defeat"}</h2>
           <p class="game-over-reason">${reason}</p>
           ${arcade ? `<p class="game-over-arcade">${arcade.cleared ? `🏆 ${esc(arcade.scenario)} cleared!` : over.won ? `Up next: fight ${arcade.fight} of ${arcade.total}` : `${esc(arcade.scenario)}: fight ${arcade.fight} of ${arcade.total}`}</p>` : ""}

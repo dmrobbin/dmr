@@ -7,7 +7,8 @@ from botocore.exceptions import BotoCoreError, ClientError
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count, Max, Sum
+from django.core.paginator import Paginator
+from django.db.models import Count, Max, Q, Sum, Value
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -18,7 +19,8 @@ from core.access import weiss_access_required
 
 from . import abilities, arcade, cpu
 from .lists import EXPRESS_PROMPT, SESSION_KEY, deck_checks, sorted_entries
-from .models import ArcadeEntry, ArcadeScenario, Card, CardList, CpuProfile
+from .card_images import image_type
+from .models import ArcadeEntry, ArcadeScenario, Card, CardList, CpuImage, CpuProfile
 from .profiles import avatar_picker
 
 
@@ -26,6 +28,7 @@ log = logging.getLogger(__name__)
 
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 MAX_TEXT = 1000
+IMAGES_PER_PAGE = 60
 TEXT_FIELDS = ("intro_text", "player_win_text", "player_lose_text")
 
 
@@ -100,7 +103,7 @@ def read_profile_form(request):
 @staff_required
 def cpu_home(request):
     decks = CardList.objects.filter(reserved_for_cpu=True).select_related("user").annotate(total=Sum("entries__quantity"))
-    profiles = list(CpuProfile.objects.select_related("deck"))
+    profiles = list(CpuProfile.objects.select_related("deck", "image"))
     for profile in profiles:
         profile.problem = deck_problem(profile.deck)
         profile.model_label = cpu.MODELS.get(profile.model, profile.model)
@@ -182,19 +185,6 @@ def cpu_picture(request, pk):
     return avatar_picker(request, profile, profile.name, reverse("weiss:cpu_home"))
 
 
-def image_type(head):
-    """(extension, content type) from a file's first bytes, whatever it's called. SVG isn't on the list: it can hold scripts."""
-    if head.startswith(b"\x89PNG\r\n\x1a\n"):
-        return ".png", "image/png"
-    if head.startswith(b"\xff\xd8\xff"):
-        return ".jpg", "image/jpeg"
-    if head[:6] in (b"GIF87a", b"GIF89a"):
-        return ".gif", "image/gif"
-    if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
-        return ".webp", "image/webp"
-    return None
-
-
 def forget_image(key):
     """The old file isn't needed. If it can't be deleted it's only a stray file, nothing to stop for."""
     try:
@@ -203,10 +193,56 @@ def forget_image(key):
         log.warning("Couldn't delete %s from S3", key, exc_info=True)
 
 
+def chosen_screen(params):
+    screen = params.get("screen")
+    return screen if screen in CpuProfile.SCREENS else "main"
+
+
+def set_screen_image(profile, screen, image):
+    field = CpuProfile.SCREENS[screen]
+    setattr(profile, field, image)
+    profile.save(update_fields=[field, "updated"])
+    return redirect(f"{reverse('weiss:cpu_images', args=[profile.pk])}?screen={screen}")
+
+
+@staff_required
+def cpu_images(request, pk):
+    """The pool of images, to choose this CPU's avatar from. A page of its own: the pool can be large."""
+    profile = get_object_or_404(CpuProfile.objects.select_related("image", "intro_image", "player_win_image", "player_lose_image"), pk=pk)
+    screen = chosen_screen(request.GET)
+    query = request.GET.get("q", "").strip()
+    images = CpuImage.objects.annotate(uses=sum((Count(field, distinct=True) for field in ("profiles", "intro_profiles", "win_profiles", "lose_profiles")), Value(0)))
+    if query:
+        images = images.filter(Q(name__icontains=query) | Q(series__icontains=query))
+    return render(request, "weiss/cpu_images.html", {
+        "profile": profile, "query": query, "page": Paginator(images, IMAGES_PER_PAGE).get_page(request.GET.get("page")),
+        "screen": screen, "current": getattr(profile, CpuProfile.SCREENS[screen]),
+        "screens": [{"key": key, "label": label, "image": getattr(profile, CpuProfile.SCREENS[key])} for key, label in CpuProfile.SCREEN_LABELS.items()],
+    })
+
+
+@staff_required
+def cpu_pool_image(request, pk):
+    """A stable link to an image in the pool, redirecting to a fresh S3 link, as card images do."""
+    image = get_object_or_404(CpuImage, pk=pk)
+    response = redirect(s3.presigned_image_urls([image.key])[image.key])
+    response["Cache-Control"] = f"private, max-age={settings.IMAGE_LINK_SECONDS - 300}"
+    return response
+
+
+@staff_required
+@require_POST
+def cpu_image_choose(request, pk):
+    profile = get_object_or_404(CpuProfile, pk=pk)
+    value = request.POST.get("image", "")
+    return set_screen_image(profile, chosen_screen(request.POST), get_object_or_404(CpuImage, pk=value) if value.isdigit() else None)
+
+
 @staff_required
 @require_POST
 def cpu_image_upload(request, pk):
-    """Staff only: nobody else can put a file on the site. Its name and stated type are never used."""
+    """Staff only: nobody else can put a file on the site. Its name and stated type are never used.
+    The image joins the pool, and this CPU starts using it."""
     profile = get_object_or_404(CpuProfile, pk=pk)
     upload = request.FILES.get("image")
     if not upload:
@@ -221,28 +257,35 @@ def cpu_image_upload(request, pk):
         elif not settings.AWS_S3_BUCKET:
             messages.error(request, "Image storage isn't set up here.")
         else:
-            key = f"{settings.WEISS_S3_PREFIX}cpu-images/{profile.pk}-{uuid.uuid4().hex}{kind[0]}"
+            key = f"{settings.WEISS_S3_PREFIX}cpu-images/pool-{uuid.uuid4().hex}{kind[0]}"
             try:
                 s3.upload(key, upload, kind[1])
             except (BotoCoreError, ClientError):
                 log.exception("Couldn't upload a CPU image")
                 messages.error(request, "The image couldn't be uploaded. Try again.")
             else:
-                old, profile.image_key = profile.image_key, key
-                profile.save(update_fields=["image_key", "updated"])
-                if old:
-                    forget_image(old)
-    return redirect("weiss:cpu_home")
+                return set_screen_image(profile, chosen_screen(request.POST), CpuImage.objects.create(key=key, name=request.POST.get("name", "").strip()[:200], created_by=request.user))
+    return redirect(f"{reverse('weiss:cpu_images', args=[profile.pk])}?screen={chosen_screen(request.POST)}")
 
 
 @staff_required
 @require_POST
 def cpu_image_remove(request, pk):
-    profile = get_object_or_404(CpuProfile, pk=pk)
-    old, profile.image_key = profile.image_key, ""
-    profile.save(update_fields=["image_key", "updated"])
-    if old:
-        forget_image(old)
+    """This CPU stops using its image. The image stays in the pool for any other."""
+    return set_screen_image(get_object_or_404(CpuProfile, pk=pk), chosen_screen(request.POST), None)
+
+
+@staff_required
+@require_POST
+def cpu_image_delete(request, pk):
+    """Out of the pool for good: any CPU using it goes back to having no image."""
+    image = get_object_or_404(CpuImage, pk=pk)
+    key = image.key
+    image.delete()
+    forget_image(key)
+    back = request.POST.get("profile", "")
+    if back.isdigit() and CpuProfile.objects.filter(pk=back).exists():
+        return redirect("weiss:cpu_images", pk=back)
     return redirect("weiss:cpu_home")
 
 
