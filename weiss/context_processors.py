@@ -1,6 +1,7 @@
 from core.access import has_weiss_access
 
 from .lists import panel_context
+from .play import paused_run
 
 
 def card_lists(request):
@@ -9,4 +10,4 @@ def card_lists(request):
     user = getattr(request, "user", None)
     if not match or match.namespace != "weiss" or not (user and has_weiss_access(user)):
         return {}
-    return panel_context(request)
+    return {**panel_context(request), "arcade_paused": paused_run(request)}

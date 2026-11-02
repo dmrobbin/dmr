@@ -527,8 +527,8 @@ class Mind:
             return {"type": "ability_answer", "uids": self.pick_cards(prompt)}
         options = [option["value"] for option in prompt["options"]]
         purpose = prompt["for"]
-        if purpose == "may" and not self.can_spend(stock_cost(prompt["step"])):
-            return {"type": "ability_answer", "value": "no"}
+        if purpose == "may" and (not self.can_spend(stock_cost(prompt["step"])) or prompt["step"].get("again")):
+            return {"type": "ability_answer", "value": "no"}  # an action it may repeat, it does once
         if purpose == "dest":
             return {"type": "ability_answer", "value": min(options, key=CHOICE_DESTINATIONS.index)}
         if purpose == "place":

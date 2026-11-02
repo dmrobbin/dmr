@@ -22,7 +22,7 @@ from django.views.decorators.http import require_POST
 from core import s3
 from core.access import has_weiss_access, weiss_access_required
 
-from . import arcade, cpu, game, scoring
+from . import arcade, cpu, game, lists, scoring
 from .models import ArcadeRun, ArcadeScenario, Card, CardList, CpuProfile, GameRecord, GameRoom, PlayerProfile, cpu_user
 
 log = logging.getLogger(__name__)
@@ -90,6 +90,22 @@ def board_payload(room, user, extra=None):
         pks.update(c["card"] for c in extra["revealed"]["cards"])
     return {"version": room.version, "status": room.status, "board": board, "cards": card_info(pks),
             "avatars": room_avatars(room), **cpu_payload(room), **(extra or {})}
+
+
+ARCADE_EDITING = "arcade_editing"  # session: the room of a run whose player has gone to change their deck
+
+
+def paused_run(request):
+    """The arcade room this player left between fights to change their deck, while that's still so; else None."""
+    pk = request.session.get(ARCADE_EDITING)
+    if not pk:
+        return None
+    room = GameRoom.objects.filter(pk=pk, host=request.user).select_related("arcade_run", "host_deck").first()
+    run = room and room.arcade_run
+    if not run or run.status != ArcadeRun.Status.ACTIVE or not room.state.get("game_over"):
+        request.session.pop(ARCADE_EDITING, None)
+        return None
+    return room
 
 
 @weiss_access_required
@@ -218,6 +234,14 @@ def arcade_action(request, room, action):
         return JsonResponse({"redirect": reverse("weiss:profile")})
     over = room.state.get("game_over")
     won = over and over["winner"] == str(room.host_id)
+    if kind == "arcade_edit_deck":
+        # Between fights: off to change the deck, with the side panel adding to it and a way back here.
+        # The next fight deals the deck as it is then.
+        if not over or run.status != ArcadeRun.Status.ACTIVE or not room.host_deck:
+            return JsonResponse({"error": "That isn't possible right now.", **board_payload(room, request.user)}, status=400)
+        request.session[ARCADE_EDITING] = room.pk
+        request.session[lists.SESSION_KEY] = room.host_deck_id
+        return JsonResponse({"redirect": reverse("weiss:list", args=[room.host_deck_id])})
     if not over or run.status != ArcadeRun.Status.ACTIVE or (kind == "arcade_continue") != bool(won):
         return JsonResponse({"error": "That isn't possible right now.", **board_payload(room, request.user)}, status=400)
     profile = arcade.current_cpu(run)
@@ -265,6 +289,8 @@ def room_detail(request, pk):
     room = my_room(request, pk)
     if not room:
         return HttpResponseForbidden("This room is for its two players only.")
+    if request.session.get(ARCADE_EDITING) == room.pk:  # back from changing the deck
+        request.session.pop(ARCADE_EDITING)
     seat = room.seat_of(request.user)
     return render(request, "weiss/play_room.html", {
         "room": room,
@@ -414,7 +440,7 @@ def room_action(request, pk):
             room.version += 1
             room.save()
             return JsonResponse(board_payload(room, request.user))
-        if kind in ("arcade_continue", "arcade_retry", "arcade_quit"):
+        if kind in ("arcade_continue", "arcade_retry", "arcade_quit", "arcade_edit_deck"):
             return arcade_action(request, room, action)
         if room.arcade_run_id and kind in ("rematch", "end_match"):
             return JsonResponse({"error": "An arcade run goes on with Continue or Retry.", **board_payload(room, request.user)}, status=400)

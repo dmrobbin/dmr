@@ -485,6 +485,8 @@ select option { color: var(--text); background: var(--surface); }
 .list-actions form { margin: 0; }
 /* The CPU creation tab, and the VS CPU option under Play. */
 .cpu-section, .vs-cpu { margin-bottom: 2rem; }
+.arcade-paused { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; margin: 0 0 1rem;
+  padding: .75rem 1rem; border: 1px solid var(--accent); border-radius: .75rem; background: var(--accent-soft); }
 .arcade-tabs { display: flex; gap: .25rem; margin: 0 0 1rem; border-bottom: 1px solid var(--border); }
 .arcade-tabs a { padding: .4rem .8rem; color: var(--muted); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; }
 .arcade-tabs a:hover { color: var(--text); }

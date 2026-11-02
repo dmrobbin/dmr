@@ -1250,6 +1250,7 @@
     }
     if (arcade.cleared) return `<button type="button" data-act='{"type":"arcade_quit"}'>Finish</button>`;
     return `<button type="button" data-act='{"type":"${over.won ? "arcade_continue" : "arcade_retry"}"}'>${over.won ? "Continue" : "Retry"}</button>
+      <button type="button" class="game-over-end" data-act='{"type":"arcade_edit_deck"}' title="Change your deck, then come back for the next fight">Edit deck</button>
       <button type="button" class="game-over-end" data-act='{"type":"arcade_quit"}'>End run</button>`;
   }
 

@@ -3017,6 +3017,244 @@ class ScoringTests(TestCase):
         self.assertEqual(t.state["tallies"]["2"]["drawn"], 3)
 
 
+class RwbyHololiveReZeroTests(PersonaTests):
+    BEYOND = "【COUNTER】 Choose 1 of your 《hololive》 characters, that character gets +1500 power until end of turn, and perform the following action. \"You may choose 1 card in your hand, and put it into your waiting room. If you do, look at the top card of your deck, and put it on the top of your deck or into your waiting room.\" You may perform that action as many times as you like."
+    WORKED = "【CONT】 If all of your characters are 《Memory Snow》, this card gets the following ability. \"【AUTO】 During the climax phase or attack phase, when your or your opponent's character is placed onto the stage from the waiting room due to the respective player's card effects, all characters on that player's center stage get -X power until end of turn. X is equal to the cost of the character placed on the stage ×2000.\"\n【ACT】 Brainstorm [(1) 【REST】 2 of your characters] Flip over 4 cards from the top of your deck, and put them into your waiting room. For each climax revealed among those cards, search your deck for up to 1 《Memory Snow》 character, reveal it to your opponent, put it into your hand, and shuffle your deck."
+    LEAVE = "【AUTO】 Memory When this card is put into your memory or at the beginning of your turn, if this card is in your memory, and all of your characters are 《Memory Snow》, all players cannot receive damage of 1 or less dealt by 【AUTO】 effects of their respective opponent's characters until the end of your opponent's next turn.\n【ACT】 [(1) Put this card into your memory] Look at up to 3 cards from the top of your deck, choose up to 1 《Memory Snow》 character from among them, reveal it to your opponent, put it into your hand, and put the rest into your waiting room."
+    STRONG = "【AUTO】 When this card attacks, if the character facing this card is level 3 or higher, this card gets +6000 power until end of turn.\n【ACT】 [(1) Put 1 \"Great Spirit Attack, Puck\" from your stage into your waiting room & Put this card into your waiting room] Put all players' characters in the middle position of their center stage into their waiting room. All players cannot choose the middle position of their center stage to place cards on or move characters to until the end of your opponent's next turn. (Playing onto, moving to or placing onto by effects are also not allowed)"
+    LUNA = "【CONT】 This card gets -1 level while in the stage.\n【AUTO】 【CXCOMBO】 [Put the top card of your stock into your waiting room or put 1 \"Sweet~ Sweet Princess\" from your climax area into your waiting room] When this card attacks, if \"Sweet~ Sweet Princess\" is in your climax area, you may pay the cost. If you do, choose this card and 1 of your other characters, and those cards get the following ability until end of turn. \"【AUTO】 When this card's battle opponent becomes 【REVERSE】, you may choose 1 \"#hololive4thGeneration\" or 《hololive》 character in your waiting room, and return it to your hand.\""
+    ELECTION = "Choose a card from your hand, and put it into your waiting room.\nDeclare one of the following combinations.\n\"A character with \"Crusch(クルシュ) in its card name and a character with \"Felix(フェリックス)\" or \"Ferris(フェリス)\" in its card name\"\n\"A character with \"Priscilla(プリシラ)\" in its card name and a character with \"Al(アル)\" in its card name\"\n\"A character with \"Anastasia(アナスタシア)\" in its card name and a character with \"Julius(ユリウス)\" in its card name\"\n\"A character with \"Emilia(エミリア)\" in its card name and a character with \"Roswaal(ロズワール)\" or \"Puck(パック)\" or \"Subaru(スバル)\" in its card name\"\n\"A character with \"Felt(フェルト)\" in its card name and a character with \"Reinhard(ラインハルト)\" in its card name\"\nSearch your deck for one of each character in the combination you declared, reveal them to your opponent, put them into your hand, and shuffle your deck."
+    COCO = "【CONT】 During your turn, this card gets +500 power for each of your other 《hololive》 characters.\n【AUTO】 When this card is placed on the stage from your hand, you may put the top card of your clock into your waiting room.\n【AUTO】 【CXCOMBO】 [(1) Put 1 card from your hand into your waiting room] When this card's battle opponent becomes 【REVERSE】, if \"Welcome to the Kiryu Club\" is in your climax area, this card gets the color red until end of turn, and you may pay the cost up to 5 times. Perform the following action X number of times. \"Put the bottom 3 cards of your opponent's deck into their waiting room. If there is a climax among those cards, deal 1 damage to your opponent.\" X is equal to the number of times you paid the cost +1. (Damage may be canceled)"
+    CAREFREE = "【AUTO】 When this card is placed on the stage from your hand, look at up to 3 cards from the top of your deck, choose up to 1 card from among them, put it into your hand, and put the rest into your waiting room.\n【AUTO】 【CXCOMBO】 [(2) Put 2 cards from your hand into your waiting room] When this card attacks, if \"Encouraging Words\" is in your climax area, you may pay the cost. If you do, reveal the top card of your deck. If that card is a level 0 or lower character, deal 3 damage to your opponent 2 times, otherwise, deal 1 damage to your opponent 2 times. (Damage may be canceled. Return the revealed card to its original place)"
+    PEKORA = "【CONT】 All of your other 《hololive》 characters get +500 power.\n【AUTO】 When this card is placed on the stage from your hand, you may choose 1 《hololive》 character in your waiting room, and put it face down underneath this card as a marker.\n【AUTO】 During your turn, if this card is put into your waiting room from the stage with a marker underneath it, and you have another 《hololive》 character, you may return this card to its previous stage position as 【REST】."
+    FATHER = "【AUTO】 【CXCOMBO】 When \"Encounter Between the Two\" is placed on your climax area, if you have another 《Magic》 or 《Weapon》 character, this card gets the following 2 abilities until end of turn. \"【AUTO】 When this card attacks, you may choose 1 《Magic》 or 《Weapon》 character in your waiting room, and put it into your stock.\" \"【AUTO】 [(1)] When this card attacks, you may pay the cost. If you do, during that attack, perform a trigger check 2 times on the trigger step.\"\n【AUTO】 When this card's trigger check reveals a climax, if that card's trigger is [stock], you may choose 1 character in your waiting room, and return it to your hand."
+    PAJAMA = "【CONT】 If all of your characters are 《Magic》 or 《Weapon》, this card gets +2000 power.\n【AUTO】 【CXCOMBO】 When this card attacks, if \"Release From the Contract\" is in your climax area, and you have another 《Magic》 or 《Weapon》 character, reveal the top card of your deck, choose 1 level X or lower 《Magic》 or 《Weapon》 character in your waiting room, and return it to your hand or put it at the bottom of your stock. X is equal to the level of the revealed card. (Climax are regarded as level 0. Return the revealed card to its original place)"
+    CARMILLA = "【AUTO】 [Put 1 《Magic》 or 《Weapon》 character from your hand into your waiting room] At the beginning of your attack phase, if there is no character facing this card, you may pay the cost. If you do, choose 1 of your opponent's characters, and move it to the stage position facing this card.\n【AUTO】 When this card attacks, this card gets +X power until end of turn. X is equal to the number of other 《Magic》 or 《Weapon》 characters you have ×1000."
+    GOA = "You may choose 1 character on your stage with level lower than or equal to your level, and put it into your waiting room. If you do, search your deck for up to 1 character with the same level as that character, put it on any position of your stage, and shuffle your deck."
+    SHION = "【AUTO】 [(1)] At the beginning of your opponent's attack phase, you may pay the cost. If you do, choose 1 character facing this card and another character in your opponent's center stage, and exchange them as 【STAND】."
+    NATSUKI = "【CONT】 Great Performance\n【AUTO】 Memory At the beginning of your climax phase, if a card named \"Subaru Natsuki\" is in your memory, choose one of your 《Magic》 or 《Weapon》 characters, and that character gets the following ability until end of turn. \"【AUTO】 When this card attacks, you may deal one damage to your opponent.\" (This damage may be canceled)\n【AUTO】 【CXCOMBO】 Memory [(7) Put four cards and a card named \"Like A Demon\" from your hand into your waiting room & Put this card into your memory] At the beginning of the encore step, if you have a card named \"Return by Death\" in your memory, and this card is 【REVERSE】, you may pay the cost. If you do, put all cards from your clock into your waiting room, all players return all their characters to their hand, and return all cards in their waiting room to their deck. Search your deck afterwards for up to one card named \"Subaru Natsuki\", put it on the stage position that this card was on, and all players shuffle their decks."
+
+    def test_they_are_all_read(self):
+        for name in ("BEYOND", "WORKED", "LEAVE", "STRONG", "LUNA", "ELECTION", "COCO", "CAREFREE", "PEKORA", "FATHER", "PAJAMA", "CARMILLA", "GOA", "SHION", "NATSUKI"):
+            self.assertEqual(abilities.by_hand_parts(getattr(self, name)), [], name)
+
+    def test_one_stock_card_goes_back_on_the_deck(self):
+        t = Table()
+        t.card(2000, text=JoJoTests.ABBACCHIO)
+        abbacchio = t.seat(t.me, "C1", 2000)
+        pay = t.hand(800)[0]
+        t.stock(3)
+        top = t.me["zones"]["stock"][-1]
+        self.run_ability(t, abbacchio, JoJoTests.ABBACCHIO)
+        self.answer(t, uids=[pay["uid"]])
+        self.assertEqual(len(t.me["zones"]["stock"]), 2)
+        self.assertIs(t.me["zones"]["deck"][-1], top)
+
+    def test_an_action_as_many_times_as_you_like(self):
+        t = Table()
+        t.card(2000, text=self.BEYOND, card_type="Event")
+        t.card(3000, traits="hololive")
+        mine = t.seat(t.me, "C1", 3000)
+        first, second = t.hand(800, 801)
+        self.run_ability(t, game.new_card(2000), self.BEYOND)
+        self.answer(t, uids=[mine["uid"]])
+        self.assertFalse(self.prompt(t)["step"].get("again"))
+        self.answer(t, value="yes")
+        self.answer(t, uids=[first["uid"]])
+        self.answer(t, value="waiting")
+        self.assertTrue(self.prompt(t)["step"]["again"])  # the CPU takes it once
+        self.answer(t, value="yes")
+        self.answer(t, uids=[second["uid"]])
+        self.answer(t, value="deck")
+        self.answer(t, value="no")
+        self.assertIsNone(t.state.get("resolving"))
+        self.assertEqual(t.me["zones"]["hand"], [])
+
+    def test_a_character_from_the_waiting_room_weakens_its_owners_center(self):
+        granted = abilities.parse(self.WORKED)[0]["effects"][0]["grant"][0]
+        ability = abilities.parse(granted)[0]
+        self.assertEqual(ability["when"], [{"on": "placed_from_own_waiting"}])
+        t = Table()
+        env = game.SimpleNamespace(info=t.info)
+        rem = t.seat(t.me, "B1", 800)
+        self.assertEqual(game.when_matches(ability["when"][0], "placed", {"uid": "x", "src": "waiting", "owner": "1", "actor": "1"}, "2", rem, env), {"that": "x"})
+        self.assertIsNone(game.when_matches(ability["when"][0], "placed", {"uid": "x", "src": "waiting", "owner": "1", "actor": "2"}, "2", rem, env))
+        t.card(3000, cost=2)
+        placed, other = t.seat(t.them, "C1", 3000), t.seat(t.them, "C2", 800)
+        self.run_ability(t, rem, granted, that=placed["uid"])
+        self.assertEqual({b["uid"]: b["power"] for b in t.state["buffs"]}, {placed["uid"]: -4000, other["uid"]: -4000})
+
+    def test_small_damage_from_the_opponents_auto_effects_is_barred(self):
+        t = Table()
+        t.card(2000, text=self.LEAVE)
+        rem = game.new_card(2000)
+        t.me["zones"]["memory"] = [rem]
+        self.run_ability(t, rem, self.LEAVE)
+        self.assertEqual({b["player"] for b in t.state["bans"] if b["what"] == "small_auto_damage"}, {"1", "2"})
+        for n, taken in ((1, 0), (2, 2)):
+            text = f"【AUTO】 When this card attacks, deal {n} damage to your opponent."
+            t.card(2100 + n, text=text)
+            before = len(t.them["zones"]["clock"])
+            self.run_ability(t, t.seat(t.me, "C1", 2100 + n), text)
+            self.assertEqual(len(t.them["zones"]["clock"]) - before, taken, n)
+
+    def test_the_middle_position_closes(self):
+        t = Table()
+        t.card(2000, text=self.STRONG)
+        roswaal = t.seat(t.me, "B1", 2000)
+        mine, theirs = t.seat(t.me, "C2", 800), t.seat(t.them, "C2", 800)
+        self.run_ability(t, roswaal, self.STRONG, 1)  # an 【ACT】, run straight
+        self.assertIsNone(t.me["stage"]["C2"])
+        self.assertIsNone(t.them["stage"]["C2"])
+        card = t.hand(800)[0]
+        t.refresh()
+        with self.assertRaises(game.GameError):
+            t.apply(2, {"type": "move", "uid": card["uid"], "to": "C2"})
+
+    def test_a_cost_paid_one_way_or_another(self):
+        t = Table()
+        t.card(2000, text=self.LUNA)
+        t.card(2100, name="Sweet~ Sweet Princess", card_type="Climax")
+        luna = t.seat(t.me, "C1", 2000)
+        other = t.seat(t.me, "C2", 800)
+        climax = game.new_card(2100)
+        t.me["zones"]["climax"] = [climax]
+        t.stock(1)
+        self.run_ability(t, luna, self.LUNA, 1)
+        self.assertEqual(self.prompt(t)["for"], "cost_either")
+        self.answer(t, value=1)
+        self.answer(t, uids=[climax["uid"]])
+        self.assertIn(climax, t.me["zones"]["waiting"])
+        self.assertEqual(len(t.me["zones"]["stock"]), 1)
+        self.answer(t, uids=[other["uid"]])
+        self.assertEqual(len([b for b in t.state["buffs"] if b["grant"]]), 2)
+
+    def test_a_declared_combination_is_searched_for(self):
+        t = Table()
+        t.card(2000, text=self.ELECTION, card_type="Event")
+        t.card(3000, name="Royal Election Candidate, Felt")
+        t.card(3001, name="Sword Saint Reinhard")
+        felt, reinhard = game.new_card(3000), game.new_card(3001)
+        t.me["zones"]["deck"] += [felt, reinhard]
+        pay = t.hand(800)[0]
+        self.run_ability(t, game.new_card(2000), self.ELECTION)
+        self.answer(t, uids=[pay["uid"]])
+        self.assertEqual(len(self.prompt(t)["options"]), 5)
+        self.answer(t, value=4)  # Felt and Reinhard
+        self.answer(t, uids=[felt["uid"]])
+        self.answer(t, uids=[reinhard["uid"]])
+        self.assertEqual({c["uid"] for c in t.me["zones"]["hand"]}, {felt["uid"], reinhard["uid"]})
+
+    def test_a_cost_paid_up_to_5_times(self):
+        t = Table()
+        t.card(2000, text=self.COCO)
+        coco = t.seat(t.me, "C1", 2000)
+        pay = t.hand(800, 801, 802)
+        t.stock(3)
+        t.them["zones"]["deck"] = [game.new_card(900) for _ in range(12)]
+        self.run_ability(t, coco, self.COCO, 2)
+        self.assertEqual([o["value"] for o in self.prompt(t)["options"]], [3, 2, 1, 0])
+        self.answer(t, value=2)
+        self.answer(t, uids=[pay[0]["uid"], pay[1]["uid"]])
+        self.assertEqual(len(t.me["zones"]["stock"]), 1)
+        self.assertEqual(len(t.them["zones"]["waiting"]), 9)  # once, and once more for each time paid
+
+    def test_otherwise_is_only_if_paid(self):
+        steps = abilities.parse(self.CAREFREE)[1]["steps"][0]["then"]
+        self.assertEqual(steps[0]["do"], "may")
+        check = steps[0]["then"][-1]
+        self.assertEqual((check["do"], [s["n"] for s in check["otherwise"]]), ("if", [1, 1]))
+
+    def test_triggers_conditions_and_filters(self):
+        t = Table()
+        env = game.SimpleNamespace(info=t.info)
+        pekora = t.seat(t.me, "C1", 800)
+        self.assertEqual(game.when_matches({"on": "leave"}, "leave", {"uid": pekora["uid"], "had_markers": True}, "2", pekora, env), {"had_markers": True})
+        when = abilities.parse(self.FATHER)[1]["when"][0]
+        t.card(3000, card_type="Climax", trigger="pool")
+        self.assertEqual(game.when_matches(when, "check_card", {"uid": pekora["uid"], "player": "2", "card": 3000}, "2", pekora, env), {"revealed": 3000})
+        self.assertTrue(abilities.matches_filter({"any": [{"icon": "stock"}]}, t.info(3000)))
+        steps = abilities.parse(self.PAJAMA)[1]["steps"]
+        self.assertTrue(all(alt["level_max"] == "X" for alt in steps[1]["filter"]["any"]))
+        self.assertEqual(abilities.parse(self.PEKORA)[2]["cond"][1], {"type": "had_markers"})
+
+    def test_carmilla_pulls_one_in_front_of_her(self):
+        t = Table()
+        t.card(2000, text=self.CARMILLA)
+        t.card(3000, traits="Magic")
+        carmilla = t.seat(t.me, "C1", 2000)
+        theirs = t.seat(t.them, "C3", 800)
+        pay = t.hand(3000)[0]
+        self.run_ability(t, carmilla, self.CARMILLA)
+        self.answer(t, uids=[pay["uid"]])
+        self.answer(t, uids=[theirs["uid"]])
+        self.assertIs(t.them["stage"][game.OPPOSITE["C1"]], theirs)
+
+    def test_rental_goa_finds_the_same_level(self):
+        t = Table()
+        t.card(2000, text=self.GOA, card_type="Event")
+        t.card(3001, level=1)
+        t.card(3002, level=2)
+        t.level(2)
+        mine = t.seat(t.me, "C1", 3001)
+        same, higher = game.new_card(3001), game.new_card(3002)
+        t.me["zones"]["deck"] += [same, higher]
+        self.run_ability(t, game.new_card(2000), self.GOA)
+        self.answer(t, uids=[mine["uid"]])
+        self.assertEqual(self.prompt(t)["options"], [same["uid"]])
+
+    def test_reversing_by_an_effect_counts_as_a_knockout(self):
+        text = "【AUTO】 When this card becomes 【REVERSE】, if this card's battle opponent is level 1 or lower, you may 【REVERSE】 that character."
+        t = Table()
+        t.card(2000, text=text)
+        ram = t.seat(t.me, "C1", 2000, pos="reverse")
+        theirs = t.seat(t.them, game.OPPOSITE["C1"], 800)
+        self.run_ability(t, ram, text, that=theirs["uid"])
+        self.assertEqual(theirs["pos"], "reverse")
+        self.assertEqual(t.state["tallies"]["2"]["knocked"], 1)
+
+    def test_neopolitan_puts_their_characters_on_their_stage(self):
+        text = "【AUTO】 [Put 1 《Remnant》 character from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, choose up to 2 characters in your opponent's waiting room, and put them on separate open positions of their stage."
+        t = Table()
+        t.card(2000, text=text)
+        t.card(3000, traits="Remnant")
+        neo = t.seat(t.me, "C1", 2000)
+        first, second = game.new_card(800), game.new_card(801)
+        t.them["zones"]["waiting"] = [first, second]
+        pay = t.hand(3000)[0]
+        self.run_ability(t, neo, text)
+        self.answer(t, uids=[pay["uid"]])
+        self.answer(t, uids=[first["uid"], second["uid"]])
+        self.answer(t, value="C1")
+        self.assertNotIn("C1", [o["value"] for o in self.prompt(t)["options"]])
+        self.answer(t, value="B2")
+        self.assertEqual((t.them["stage"]["C1"], t.them["stage"]["B2"]), (first, second))
+
+    def test_carmilla_in_the_back_row_does_nothing(self):
+        t = Table()
+        t.card(2000, text=self.CARMILLA)
+        t.card(3000, traits="Magic")
+        carmilla = t.seat(t.me, "B1", 2000)
+        theirs = t.seat(t.them, "C3", 800)
+        pay = t.hand(3000)[0]
+        self.run_ability(t, carmilla, self.CARMILLA)
+        self.answer(t, uids=[pay["uid"]])
+        self.answer(t, uids=[theirs["uid"]])
+        self.assertIs(t.them["stage"]["C3"], theirs)
+
+    def test_shion_swaps_the_facing_one_with_another(self):
+        t = Table()
+        t.card(2000, text=self.SHION)
+        shion = t.seat(t.me, "C1", 2000)
+        facing = t.seat(t.them, game.OPPOSITE["C1"], 800)
+        others = [t.seat(t.them, s, 801) for s in game.OPPOSITE if s != game.OPPOSITE["C1"]]
+        t.stock(1)
+        self.run_ability(t, shion, self.SHION)
+        self.assertEqual(set(self.prompt(t)["options"]), {c["uid"] for c in others})
+        self.answer(t, uids=[others[0]["uid"]])
+        self.assertIs(t.them["stage"][game.OPPOSITE["C1"]], others[0])
+
+
 class HardModeTests(TestCase):
     def test_aggression_rises_as_the_opponent_nears_defeat(self):
         t = Table()

@@ -506,6 +506,33 @@ class ArcadeRunTests(Base):
         self.assertContains(self.client.get(reverse("weiss:play_rooms")), f'href="{reverse("weiss:arcade")}"')
         self.assertNotContains(self.client.get(reverse("weiss:play_rooms")), "Start run")
 
+    def test_between_fights_the_deck_can_be_changed_for_the_next_one(self):
+        room = self.start()
+        self.assertIn(self.post(self.url, {"type": "arcade_edit_deck"}).status_code, (400, 409))  # not mid-fight
+        self.assertNotContains(self.client.get(reverse("weiss:lists")), "Back to the run")
+        self.end_fight("me")
+        data = self.post(self.url, {"type": "arcade_edit_deck"}).json()
+        self.assertEqual(data["redirect"], reverse("weiss:list", args=[self.deck.pk]))
+        page = self.client.get(data["redirect"])
+        self.assertEqual(page.context["editing_list"], self.deck)  # the side panel adds to it
+        self.assertContains(page, "Back to the run")
+        self.assertContains(page, reverse("weiss:play_room", args=[room.pk]))
+        new = Card.objects.create(serial_number="T/2", name="Anis", expansion="E", expansion_id=1, card_type="Character", level=0)
+        self.client.post(reverse("weiss:list_change", args=[self.deck.pk]), {"card": new.pk, "delta": 1})
+        self.client.get(reverse("weiss:play_room", args=[room.pk]))  # back to the run
+        self.assertNotContains(self.client.get(reverse("weiss:lists")), "Back to the run")
+        self.post(self.url, {"type": "arcade_continue"})
+        room = GameRoom.objects.get(pk=room.pk)
+        self.assertIn(new.pk, play.game.card_pks(room.state))  # the next fight deals the changed deck
+
+    def test_after_a_loss_too_and_the_note_goes_with_the_run(self):
+        self.start()
+        self.end_fight("cpu")
+        self.assertIn("redirect", self.post(self.url, {"type": "arcade_edit_deck"}).json())
+        self.assertContains(self.client.get(reverse("weiss:lists")), "Back to the run")
+        self.post(self.url, {"type": "arcade_quit"})
+        self.assertNotContains(self.client.get(reverse("weiss:lists")), "Back to the run")
+
     def test_wins_are_scored_and_added_to_the_run(self):
         self.start()
         self.end_fight("cpu", {"knocked": 9})

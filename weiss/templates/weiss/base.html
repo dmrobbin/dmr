@@ -3,7 +3,17 @@
 
 {% block content %}
   <div class="weiss-layout">
-    <div class="weiss-main">{% block weiss_content %}{% endblock %}</div>
+    <div class="weiss-main">
+      {% if arcade_paused %}
+        <div class="arcade-paused" role="status">
+          <span>Your <strong>{{ arcade_paused.arcade_run.scenario_name }}</strong> run is paused while you change
+            {% if arcade_paused.host_deck %}<a href="{% url 'weiss:list' arcade_paused.host_deck_id %}">{{ arcade_paused.host_deck.name }}</a>{% else %}your deck{% endif %}.
+            The next fight uses the deck as it is then.</span>
+          <a class="button-small" href="{% url 'weiss:play_room' arcade_paused.pk %}">Back to the run</a>
+        </div>
+      {% endif %}
+      {% block weiss_content %}{% endblock %}
+    </div>
     <aside class="list-panel" aria-label="Card lists" data-list-panel>
       {% include "weiss/list_panel.html" %}
     </aside>
