@@ -14,15 +14,20 @@
       <button type="submit" class="button-small">Create deck</button>
     </form>
     {% if decks %}
-      <ul class="cpu-list">
-        {% for deck in decks %}
-          <li>
-            {% if deck.user == user %}<a href="{% url 'weiss:list' deck.pk %}">{{ deck.name }}</a>{% else %}<span>{{ deck.name }}</span>{% endif %}
-            <span class="muted small">{{ deck.total|default:0 }} / 50 cards · by {{ deck.user.username }}</span>
-            {% if deck.wins %}<span class="deck-stars" title="{{ deck.wins }} win{{ deck.wins|pluralize }}">{{ deck.win_stars }}</span>{% endif %}
-          </li>
-        {% endfor %}
-      </ul>
+      <details class="cpu-row" data-collapse="decks">
+        <summary class="cpu-row-head"><strong>{{ decks|length }} reserved deck{{ decks|length|pluralize }}</strong></summary>
+        <div class="cpu-row-body">
+          <ul class="cpu-list">
+            {% for deck in decks %}
+              <li>
+                {% if deck.user == user %}<a href="{% url 'weiss:list' deck.pk %}">{{ deck.name }}</a>{% else %}<span>{{ deck.name }}</span>{% endif %}
+                <span class="muted small">{{ deck.total|default:0 }} / 50 cards · by {{ deck.user.username }}</span>
+                {% if deck.wins %}<span class="deck-stars" title="{{ deck.wins }} win{{ deck.wins|pluralize }}">{{ deck.win_stars }}</span>{% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </details>
     {% else %}
       <p class="empty">No reserved decks yet.</p>
     {% endif %}

@@ -1727,6 +1727,12 @@ def condition_met(cond, state, player, source, ctx, env):
         return bool(facing) and compare(number(details_of(facing, env).get("level")), limit, cond["dir"])
     if kind == "revealed_level_declared":
         return number((env.info(ctx.get("revealed")) or {}).get("level")) == ctx.get("declared")
+    if kind == "played_or_placed_by":
+        if not source:
+            return False
+        if source.get("played_turn") == state["turn_number"]:
+            return True
+        return source.get("placed_turn") == state["turn_number"] and abilities.matches_filter(cond["filter"], env.info(source.get("placed_by")) or {})
     if kind == "it_is":
         return any(fits(cond["filter"], c, env) for c in (locate(state, uid)[1] for uid in ctx.get("it", [])) if c)
     if kind == "cancelled_this_turn":
@@ -1914,6 +1920,8 @@ def x_value(spec, state, player, target, ctx, env, stats=None):
     elif kind == "facing_cost":
         facing = facing_card(state, player, locate(state, (ctx or {}).get("source_uid"))[1], ctx)
         value = number(details_of(facing, env).get("cost")) if facing else 0
+    elif kind == "stock_paid":
+        value = (ctx or {}).get("stock_paid", 0)
     elif kind == "declared":
         value = (ctx or {}).get("declared", 0) + spec.get("plus", 0)
     elif kind == "opp_chars":
@@ -3048,10 +3056,14 @@ def run_step(step, res, state, env):
     elif do == "stock_card":
         owner = opponent if step.get("owner") == "opp" else player
         target = state["players"][owner]
-        for _ in range(step.get("n", 1)):
+        count = ctx.get(step["n_from"], 0) if step.get("n_from") else step.get("n", 1)
+        paid = 0
+        for _ in range(count):
             if target["zones"]["stock"]:
                 put(target, target["zones"]["stock"].pop(0 if step["end"] == "bottom" else -1), "waiting")
-        add_log(state, owner, f"put {step.get('n', 1)} card(s) from their stock into their waiting room")
+                paid += 1
+        ctx["stock_paid"] = paid  # "the number of cards put into your waiting room by this effect"
+        add_log(state, owner, f"put {paid} card{'s' if paid != 1 else ''} from their stock into their waiting room")
     elif do == "that_it":
         if ctx.get("that") and locate(state, ctx["that"])[1]:  # otherwise "that character" is the card just revealed
             ctx["it"], ctx["it_owner"] = [ctx["that"]], locate(state, ctx["that"])[0]
@@ -3370,6 +3382,7 @@ def answer_ability(state, player, action, env):
                     fire(state, env, "leave", uid=occupant["uid"], source=occupant, source_owner=player, slot=value)
                 add_log(state, player, f"put {env.name(card['card'])} on {LABELS[value]}")
                 card["placed_turn"] = state["turn_number"]
+                card["placed_by"] = res["card"]
                 fire(state, env, "placed", uid=card["uid"], by=res["card"], src=src, card=card["card"], owner=prompt.get("owner", player))
                 break
 

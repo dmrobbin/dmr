@@ -38,19 +38,23 @@
 
   {% if page.object_list %}
     <ul class="cpu-pool">
-      {% for image in page.object_list %}
-        <li{% if image.pk == current.pk %} class="current"{% endif %}>
-          <form method="post" action="{% url 'weiss:cpu_image_choose' profile.pk %}">
-            {% csrf_token %}<input type="hidden" name="image" value="{{ image.pk }}"><input type="hidden" name="screen" value="{{ screen }}">
-            <button type="submit" class="cpu-pool-pick" title="Use this image"><img src="{% url 'weiss:cpu_pool_image' image.pk %}" alt="{{ image.name }}" loading="lazy"></button>
-          </form>
-          <span class="small">{{ image.name|default:"Unnamed" }}</span>
-          {% if image.series or image.kind %}<span class="muted small">{{ image.series }}{% if image.series and image.kind %} · {% endif %}{{ image.kind|capfirst }}</span>{% endif %}
-          <form method="post" action="{% url 'weiss:cpu_image_delete' image.pk %}" onsubmit="return confirm('Delete this image for every CPU? This can’t be undone.')">
-            {% csrf_token %}<input type="hidden" name="profile" value="{{ profile.pk }}">
-            <button type="submit" class="link-button">Delete{% if image.uses %} (used by {{ image.uses }}){% endif %}</button>
-          </form>
-        </li>
+      {% for group in page.object_list %}
+        {% if group.images|length == 1 %}
+          {% include "weiss/cpu_pool_item.html" with image=group.images.0 %}
+        {% else %}
+          <li class="cpu-pool-group{% if group.current %} current{% endif %}">
+            <details{% if group.current %} open{% endif %}>
+              <summary title="Show all {{ group.images|length }}">
+                <img src="{% url 'weiss:cpu_pool_image' group.images.0.pk %}" alt="{{ group.name }}" loading="lazy">
+                <span class="small">{{ group.name }}</span>
+                <span class="muted small">{% if group.series %}{{ group.series }} · {% endif %}{{ group.images|length }} images</span>
+              </summary>
+              <ul class="cpu-pool">
+                {% for image in group.images %}{% include "weiss/cpu_pool_item.html" %}{% endfor %}
+              </ul>
+            </details>
+          </li>
+        {% endif %}
       {% endfor %}
     </ul>
     <p class="small muted">

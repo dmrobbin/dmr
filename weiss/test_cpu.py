@@ -2476,6 +2476,101 @@ class MemoryKeywordTests(TestCase):
         self.assertEqual(abilities.parse(text)[0]["where"], "memory")
 
 
+class WitchTests(PersonaTests):
+    WITCH = '【AUTO】 [(1) 【REST】 1 of your other 【STAND】 characters] During the turn that this card is placed on the stage from your hand or by the 【AUTO】 effect of "The Witches\' Tea Party", when this card\'s battle opponent becomes 【REVERSE】, you may pay the cost. If you do, reveal the top 2 cards of your deck, your opponent chooses 1 event or character from among them, puts it into your hand, puts the rest into your waiting room, you look at the top card of your deck, and put it on the top of your deck or into your waiting room.'
+    PARTY = 'Choose 1 of your 《Witch》 characters, and that character gets +1000 power and +1 soul until end of turn. Put this card into your memory.\n【AUTO】 Memory [Put 1 "The Witches\' Tea Party" or 《Witch》 character from your hand into your waiting room] If this card is in your memory, at the beginning of your climax phase, you may pay the cost. If you do, declare 0 or 1 or 2, put the declared number of cards from your stock into your waiting room, choose up to 1 cost X or lower 《Witch》 character with level equal to or lower than your level in your waiting room, and put it in any position of your stage. X is equal to the number of cards put into your waiting room by this effect.'
+    MAGIC = '【CONT】 During your turn, all of your other 《Magic》 or 《Weapon》 characters get +2000 power.\n【AUTO】 [【REST】 this 【STAND】 card] At the beginning of your attack phase, you may pay the cost. If you do, all of your characters get +1 soul until end of turn. This card cannot 【STAND】 during your next stand phase.'
+
+    def test_they_are_all_read(self):
+        for text in (self.WITCH, self.PARTY, self.MAGIC):
+            self.assertEqual(abilities.by_hand_parts(text), [], text[:40])
+
+    def test_the_witch_triggers_the_turn_the_tea_party_puts_it_out(self):
+        ability = abilities.parse(self.WITCH)[0]
+        self.assertEqual(ability["cond"][0]["type"], "played_or_placed_by")
+        t = Table()
+        t.card(2000, text=self.WITCH)
+        t.card(3000, card_type="Event", name="The Witches' Tea Party")
+        t.card(3001, name="Something Else")
+        card = t.seat(t.me, "C1", 2000)
+        env = game.SimpleNamespace(info=t.info)
+        met = lambda: game.condition_met(ability["cond"][0], t.state, "2", card, {}, env)
+        self.assertFalse(met())
+        card.update(placed_turn=t.state["turn_number"], placed_by=3001)
+        self.assertFalse(met())
+        card["placed_by"] = 3000
+        self.assertTrue(met())
+        card.update(placed_turn=None, played_turn=t.state["turn_number"])
+        self.assertTrue(met())
+
+    def test_the_witch_ends_with_a_look_at_the_top(self):
+        steps = abilities.parse(self.WITCH)[0]["steps"][0]["then"]
+        self.assertEqual([s["do"] for s in steps][-2:], ["look", "dest"])
+
+    def test_the_tea_party_calls_back_a_witch_within_what_was_paid(self):
+        t = Table()
+        t.card(2000, text=self.PARTY, card_type="Event", name="The Witches' Tea Party")
+        t.card(801, traits="Witch", cost=1, level=0)
+        t.card(802, traits="Witch", cost=2, level=0)
+        t.card(803, traits="Witch", cost=0, level=3)  # above my level
+        party = game.new_card(2000)
+        t.me["zones"]["memory"] = [party]
+        pay = t.hand(801)[0]
+        t.stock(1)
+        cheap, dear, high = game.new_card(801), game.new_card(802), game.new_card(803)
+        t.me["zones"]["waiting"] = [cheap, dear, high]
+        self.run_ability(t, party, self.PARTY, 0)
+        self.answer(t, uids=[pay["uid"]])
+        self.answer(t, value=2)  # only 1 in stock, so X is 1
+        self.assertEqual(t.me["zones"]["stock"], [])
+        self.assertEqual(set(self.prompt(t)["options"]), {cheap["uid"], pay["uid"]})  # the Witch paid as the cost is there now too
+        self.answer(t, uids=[cheap["uid"]])
+        self.answer(t, value="C1")
+        self.assertIs(t.me["stage"]["C1"], cheap)
+
+    def test_the_rest_cost_and_staying_rested_only_when_paid(self):
+        ability = abilities.parse(self.MAGIC)[1]
+        self.assertEqual([p["part"] for p in ability["cost"]], ["self_rest"])
+        self.assertEqual([s["do"] for s in ability["steps"]], ["may"])
+        self.assertEqual(ability["steps"][0]["then"][-1]["status"], "no_stand")
+
+
+class HardModeTests(TestCase):
+    def test_aggression_rises_as_the_opponent_nears_defeat(self):
+        t = Table()
+        them = t.them["zones"]
+        them["level"], them["clock"] = [], []
+        self.assertEqual(cpu.hard_aggression(t.state, "2", 1), 1)
+        them["level"] = [game.new_card(900) for _ in range(2)]
+        them["clock"] = [game.new_card(900) for _ in range(3)]
+        middle = cpu.hard_aggression(t.state, "2", 1)
+        self.assertTrue(1 < middle < cpu.MAX_AGGRESSION)
+        them["level"] = [game.new_card(900) for _ in range(3)]
+        them["clock"] = [game.new_card(900) for _ in range(6)]
+        self.assertEqual(cpu.hard_aggression(t.state, "2", 1), cpu.MAX_AGGRESSION)
+        self.assertEqual(cpu.hard_aggression(t.state, "2", cpu.MAX_AGGRESSION), cpu.MAX_AGGRESSION)
+
+    def test_its_mind_gets_that_temper(self):
+        t = Table()
+        t.them["zones"]["level"] = [game.new_card(900) for _ in range(3)]
+        t.them["zones"]["clock"] = [game.new_card(900) for _ in range(6)]
+        t.refresh()
+        seen = []
+        real = cpu.Temper.__init__
+
+        def spy(self, aggression=cpu.MIN_AGGRESSION):
+            seen.append(aggression)
+            real(self, aggression)
+        with mock.patch.object(cpu.Temper, "__init__", spy):
+            cpu.next_action(t.state, "2", t.info, 1, random.Random(1), model="hard")
+            cpu.next_action(t.state, "2", t.info, 1, random.Random(1), model="strategic")
+        self.assertEqual(seen, [cpu.MAX_AGGRESSION, 1])
+
+    def test_it_can_be_chosen(self):
+        self.assertIn("hard", cpu.MODELS)
+        self.assertTrue(issubclass(cpu.MINDS["hard"], cpu.Strategic))
+
+
 class FreePlayTests(TestCase):
     TEXT = '【CONT】 When this card is played from your hand, you may choose one of your cards named "Chie Satonaka", and put it into your waiting room. If you do, you may play this card with 0 cost.'
 

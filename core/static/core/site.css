@@ -545,8 +545,17 @@ select option { color: var(--text); background: var(--surface); }
 .cpu-pool { list-style: none; margin: 1rem 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 1rem; }
 .cpu-pool li { display: flex; flex-direction: column; gap: .2rem; min-width: 0; overflow-wrap: anywhere; }
 .cpu-pool-pick { display: block; width: 100%; padding: 0; background: var(--surface); border: 2px solid var(--border); border-radius: .5rem; overflow: hidden; cursor: pointer; }
-.cpu-pool-pick:hover, .cpu-pool li.current .cpu-pool-pick { border-color: var(--accent); }
+.cpu-pool-pick:hover, .cpu-pool li.current > form > .cpu-pool-pick { border-color: var(--accent); }
 .cpu-pool-pick img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; }
+/* A character with several images: one tile, opening across the whole row to show them all. */
+.cpu-pool li:has(> details[open]) { grid-column: 1 / -1; }
+.cpu-pool-group summary { display: flex; flex-direction: column; gap: .2rem; list-style: none; cursor: pointer; }
+.cpu-pool-group summary::-webkit-details-marker { display: none; }
+.cpu-pool-group summary img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; background: var(--surface); border: 2px dashed var(--border); border-radius: .5rem; }
+.cpu-pool-group summary:hover img, .cpu-pool-group.current summary img { border-color: var(--accent); }
+.cpu-pool-group details[open] summary { flex-direction: row; align-items: center; }
+.cpu-pool-group details[open] summary img { width: 3rem; }
+.cpu-pool-group details[open] > .cpu-pool { margin-top: .5rem; padding: .75rem; border: 1px solid var(--border); border-radius: .5rem; }
 .inline-form { display: inline; }
 .deck-arcade { font-size: .8rem; font-weight: 700; color: var(--accent); white-space: nowrap; }
 .set-grid li[hidden] { display: none; }
@@ -1181,7 +1190,7 @@ button .cx, .phase-bar button.current .cx { filter: drop-shadow(0 0 2px rgb(0 0 
 .reveal-card { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); gap: 1rem; align-items: start; }
 .reveal-card img { width: 100%; border-radius: .6rem; display: block; }
 @media (max-width: 40rem) { .reveal-card { grid-template-columns: 1fr; } }
-.play-zoom { position: fixed; top: 50%; left: 2rem; z-index: 40; transform: translateY(-50%); pointer-events: none; }
+.play-zoom { position: fixed; top: 50%; left: 2rem; z-index: 48; /* above every animation (44-46), below prompts */ transform: translateY(-50%); pointer-events: none; }
 .play-zoom[hidden] { display: none; }
 .play-zoom img { display: block; height: min(80vh, 44rem); width: auto; border-radius: .9rem; box-shadow: 0 20px 60px rgb(0 0 0 / .75); }
 .play-zoom.zoom-climax img { height: min(68vh, 37.4rem); } /* landscape, so a little smaller */

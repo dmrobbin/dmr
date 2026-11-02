@@ -26,6 +26,8 @@ The other models play as standard does, apart from:
 - "strategic" (Strategic) gets as many cards to work with as it can before building its board: it sets out and
   uses abilities and events that bring cards to the hand, and if one of them can take cards from the waiting
   room, it first uses what puts cards in there, such as brainstorm.
+- "hard" (Hard) plays as strategic does, and gets more aggressive the closer its opponent is to defeat: from
+  its own aggression with the opponent at level 0 and an empty clock, up to the most there is at level 3, 6 clock.
 """
 import copy
 import random
@@ -35,7 +37,7 @@ from types import SimpleNamespace
 
 from . import abilities, game
 
-MODELS = {"standard": "Standard", "focused": "Focused", "strategic": "Strategic"}
+MODELS = {"standard": "Standard", "focused": "Focused", "strategic": "Strategic", "hard": "Hard mode"}
 MIN_AGGRESSION = 1
 MAX_AGGRESSION = 5
 ENCORE_MIN_LEVEL = 2
@@ -67,7 +69,18 @@ def wait_seconds(state):
 
 def next_action(state, me, info, aggression=MIN_AGGRESSION, rng=random, model="standard"):
     """The CPU's next action in this game, or None if there's nothing for it to do yet."""
+    if model == "hard":
+        aggression = hard_aggression(state, str(me), aggression)
     return with_free_play(MINDS.get(model, Mind)(state, str(me), info, Temper(aggression), rng).act(), state, str(me), info)
+
+
+def hard_aggression(state, me, aggression):
+    """Hard mode's aggression right now: its own, rising to the most there is as the opponent nears defeat,
+    measured by the damage they've taken towards level 4 (7 clock cards a level)."""
+    them = state["players"][game.other_player(state, me)]["zones"]
+    taken = len(them["level"]) * game.LEVEL_UP_AT + len(them["clock"])
+    nearness = min(1, taken / (game.LOSING_LEVEL * game.LEVEL_UP_AT - 1))
+    return aggression + (MAX_AGGRESSION - aggression) * nearness
 
 
 def with_free_play(action, state, me, info):
@@ -689,4 +702,8 @@ class Strategic(Mind):
         return None
 
 
-MINDS = {"standard": Mind, "focused": Focused, "strategic": Strategic}
+class Hard(Strategic):
+    """Strategic, with its aggression set by how close the opponent is to defeat (see hard_aggression)."""
+
+
+MINDS = {"standard": Mind, "focused": Focused, "strategic": Strategic, "hard": Hard}

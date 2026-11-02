@@ -205,6 +205,18 @@ def set_screen_image(profile, screen, image):
     return redirect(f"{reverse('weiss:cpu_images', args=[profile.pk])}?screen={screen}")
 
 
+def image_groups(images, current=None):
+    """The images, one group to each character of a series, in the order their newest image comes.
+    An image with no name is a group of its own. A page is so many groups, so none is split."""
+    groups = {}
+    for image in images:
+        key = (image.name.strip().lower(), image.series.strip().lower()) if image.name.strip() else image.pk
+        groups.setdefault(key, {"name": image.name, "series": image.series, "images": []})["images"].append(image)
+    for group in groups.values():
+        group["current"] = bool(current) and any(image.pk == current.pk for image in group["images"])
+    return list(groups.values())
+
+
 @staff_required
 def cpu_images(request, pk):
     """The pool of images, to choose this CPU's avatar from. A page of its own: the pool can be large."""
@@ -214,8 +226,9 @@ def cpu_images(request, pk):
     images = CpuImage.objects.order_by("-created", "-pk").annotate(uses=sum((Count(field, distinct=True) for field in ("profiles", "intro_profiles", "win_profiles", "lose_profiles")), Value(0)))
     if query:
         images = images.filter(Q(name__icontains=query) | Q(series__icontains=query))
+    current = getattr(profile, CpuProfile.SCREENS[screen])
     return render(request, "weiss/cpu_images.html", {
-        "profile": profile, "query": query, "page": Paginator(images, IMAGES_PER_PAGE).get_page(request.GET.get("page")),
+        "profile": profile, "query": query, "page": Paginator(image_groups(images, current), IMAGES_PER_PAGE).get_page(request.GET.get("page")),
         "screen": screen, "current": getattr(profile, CpuProfile.SCREENS[screen]),
         "screens": [{"key": key, "label": label, "image": getattr(profile, CpuProfile.SCREENS[key])} for key, label in CpuProfile.SCREEN_LABELS.items()],
     })

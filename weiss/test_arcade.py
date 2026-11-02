@@ -128,7 +128,7 @@ class CpuImageTests(Base):
         page = self.client.get(reverse("weiss:cpu_images", args=[self.profile.pk]), {"screen": "lose"})
         self.assertEqual(page.context["screen"], "lose")
         self.assertIsNone(page.context["current"])
-        self.assertEqual(page.context["page"].object_list[0].uses, 2)
+        self.assertEqual(page.context["page"].object_list[0]["images"][0].uses, 2)
         self.assertContains(page, 'name="screen" value="lose"')
         self.assertEqual(self.client.get(reverse("weiss:cpu_images", args=[self.profile.pk]), {"screen": "nope"}).context["screen"], "main")
 
@@ -157,8 +157,30 @@ class CpuImageTests(Base):
         self.assertEqual(len(page.context["page"].object_list), 60)
         self.assertEqual(page.context["page"].paginator.count, 61)
         self.assertNotContains(page, "Rapi")
-        self.assertEqual(page.context["page"].object_list[0].name, "Levi 60")  # the newest first
+        self.assertEqual(page.context["page"].object_list[0]["images"][0].name, "Levi 60")  # the newest first
         self.assertContains(self.client.get(reverse("weiss:cpu_images", args=[self.profile.pk]), {"q": "nikke"}), "Rapi")
+
+    def test_images_of_one_character_are_one_group(self):
+        CpuImage.objects.create(key="a.png", name="Levi", series="Attack on Titan", kind="official")
+        chosen = CpuImage.objects.create(key="b.png", name="levi ", series="Attack on Titan", kind="unofficial")
+        CpuImage.objects.create(key="c.png", name="Levi", series="Other Show")
+        CpuImage.objects.create(key="d.png")
+        CpuImage.objects.create(key="e.png")
+        self.profile.image = chosen
+        self.profile.save()
+        page = self.client.get(reverse("weiss:cpu_images", args=[self.profile.pk]))
+        groups = page.context["page"].object_list
+        self.assertEqual(sorted(len(g["images"]) for g in groups), [1, 1, 1, 2])
+        levi = next(g for g in groups if len(g["images"]) == 2)
+        self.assertTrue(levi["current"])
+        self.assertContains(page, "2 images")
+        self.assertContains(page, "<details open>")
+
+    def test_the_decks_list_folds_away(self):
+        CardList.objects.create(user=self.staff, name="Bot deck", reserved_for_cpu=True)
+        page = self.client.get(reverse("weiss:cpu_home"))
+        self.assertContains(page, 'data-collapse="decks"')
+        self.assertRegex(page.content.decode(), r"<strong>\d+ reserved decks?</strong>")
 
     def test_only_staff_see_the_pool(self):
         image = CpuImage.objects.create(key="k.png")

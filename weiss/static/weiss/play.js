@@ -965,7 +965,8 @@
 
   function render() {
     if (!board) return;
-    if (zoomCard) hideZoom();
+    // Redrawing replaces the card being hovered: the zoom carries over to whatever card is under the pointer then.
+    if (zoomCard) queueMicrotask(keepZoom);
     const me = board.me;
     const opp = board.opponent;
     const oppHand = opp ? opp.zones.hand.count : 0;
@@ -1632,6 +1633,18 @@
     zoomEl.hidden = true;
   }
 
+  let pointer = null; // where the mouse last was, to find the hovered card again after a redraw
+
+  // After a redraw (as animations cause), the zoom stays up on the card still under the pointer.
+  function keepZoom() {
+    const under = pointer && document.elementFromPoint(pointer.x, pointer.y);
+    const el = under && under.closest && under.closest(".pcard[data-card]");
+    if (!el) return hideZoom();
+    const showing = !zoomEl.hidden;
+    zoomCard = el;
+    if (showing) showZoom(el);
+  }
+
   function showZoom(el) {
     const info = cards[el.dataset.card];
     if (!info) return;
@@ -1641,6 +1654,7 @@
   }
 
   root.addEventListener("mousemove", (event) => {
+    pointer = { x: event.clientX, y: event.clientY };
     const el = event.target.closest(".pcard[data-card]");
     if (el === zoomCard) return;
     hideZoom();

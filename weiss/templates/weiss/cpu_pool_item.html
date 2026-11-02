@@ -1,0 +1,13 @@
+{# One image in the CPU image pool: choose it for the screen being edited, or delete it. Expects image, profile, screen, current. #}
+<li{% if image.pk == current.pk %} class="current"{% endif %}>
+  <form method="post" action="{% url 'weiss:cpu_image_choose' profile.pk %}">
+    {% csrf_token %}<input type="hidden" name="image" value="{{ image.pk }}"><input type="hidden" name="screen" value="{{ screen }}">
+    <button type="submit" class="cpu-pool-pick" title="Use this image"><img src="{% url 'weiss:cpu_pool_image' image.pk %}" alt="{{ image.name }}" loading="lazy"></button>
+  </form>
+  <span class="small">{{ image.name|default:"Unnamed" }}</span>
+  {% if image.series or image.kind %}<span class="muted small">{{ image.series }}{% if image.series and image.kind %} · {% endif %}{{ image.kind|capfirst }}</span>{% endif %}
+  <form method="post" action="{% url 'weiss:cpu_image_delete' image.pk %}" onsubmit="return confirm('Delete this image for every CPU? This can’t be undone.')">
+    {% csrf_token %}<input type="hidden" name="profile" value="{{ profile.pk }}">
+    <button type="submit" class="link-button">Delete{% if image.uses %} (used by {{ image.uses }}){% endif %}</button>
+  </form>
+</li>

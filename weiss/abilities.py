@@ -115,6 +115,8 @@ PRINT_ERRORS = [
 
 WORDING = [
     (r"\bwaitimg room\b", "waiting room"),
+    # Kept apart from the rule that folds "or by an effect" into "from your hand": here it decides when.
+    (r"\b(During the turn that this card is placed on the stage from your hand) or by the (?:【\w+】 )?effect of (⟦\d+⟧)", r"\1 or by \2"),
     (r"\bWhen you other\b", "When your other"),
     (r"\bthis cards' battle\b", "this card's battle"),
     (r"\bbattle opponent battle opponent\b", "battle opponent"),
@@ -626,7 +628,8 @@ def matches_filter(filter_, details, x=None, my_level=0):
         if "color" in alt and alt["color"] != (details.get("color") or "").lower():
             continue
         cost = details.get("cost") or 0
-        if ("cost_min" in alt and cost < alt["cost_min"]) or ("cost_max" in alt and cost > alt["cost_max"]):
+        cost_max = (x or 0) if alt.get("cost_max") == "X" else alt.get("cost_max")
+        if ("cost_min" in alt and cost < alt["cost_min"]) or (cost_max is not None and cost > cost_max):
             continue
         if "icon" in alt:  # "soulx2" is [soul][soul]
             icon, _, times = alt["icon"].partition("x")
@@ -655,6 +658,9 @@ def persona_condition(text, quotes):
     match = re.fullmatch(r"that character is named (⟦\d+⟧)", text, re.I)
     if match and (f := parse_filter(match[1], quotes)):
         return {"type": "it_is", "filter": f}
+    match = re.fullmatch(r"during the turn that this card is placed on the stage from your hand or by (⟦\d+⟧)", text, re.I)
+    if match and (f := parse_filter(match[1], quotes)):
+        return {"type": "played_or_placed_by", "filter": f}
     if re.fullmatch(r"this card's damage was canceled this turn", text, re.I):
         return {"type": "cancelled_this_turn"}
     match = re.fullmatch(r"there are (⟦\d+⟧) and (⟦\d+⟧) in your memory", text, re.I)
@@ -1067,7 +1073,7 @@ def parse_cost(words, quotes):
             if int(match[1]):
                 parts.append({"part": "stock", "n": int(match[1])})
             continue
-        if re.fullmatch(r"【REST】 this card", raw):
+        if re.fullmatch(r"【REST】 this (?:【STAND】 )?card", raw):
             parts.append({"part": "self_rest"})
             continue
         match = re.fullmatch(r"Put this (【STAND】 )?card (?:from your hand )?(into your|at the bottom of your) (waiting room|clock|memory|deck|stock)", raw)
@@ -1445,6 +1451,15 @@ def persona_clause(text, clause, quotes):
         return [{"do": "opp_looks_top"}]
     if text == "puts it on the top or at the bottom of their deck":
         return []
+    if text == "you look at the top card of your deck":
+        return [{"do": "look", "n": 1, "owner": "me"}]
+    if text == "put the declared number of cards from your stock into your waiting room":
+        return [{"do": "stock_card", "owner": "me", "end": "top", "n_from": "declared"}]
+    match = re.fullmatch(r"choose (up to )?(\d+) cost X or lower (.+?) in your waiting room", text)
+    if match and (f := parse_filter(match[3], quotes)):
+        f = carries_type_back(f)
+        f = {**f, "any": [{**alt, "cost_max": "X"} for alt in f["any"]]}
+        return [{"do": "choose", "zone": "waiting", "filter": f, "x": {"of": "stock_paid"}, "min": 0 if match[1] else int(match[2]), "max": int(match[2]), "text": unmask(clause, quotes)}]
     if text == "put the character chosen by this card's effect into your waiting room":
         return [{"do": "chosen_to", "to": "waiting"}]
     if text == "put all of your other characters face down in any order underneath this card as markers":
@@ -2228,6 +2243,13 @@ def parse_clauses(parts, quotes, cost):
     return steps
 
 
+def walk_steps(steps):
+    for step in steps:
+        yield step
+        yield from walk_steps(step.get("then", []))
+        yield from walk_steps(step.get("otherwise", []))
+
+
 def last_may(steps):
     for step in reversed(steps):
         if step["do"] == "may":
@@ -2294,6 +2316,12 @@ def parse_effect(text, cost=None, masked=None):
             continue
         if plain == "X is equal to the total level and cost of the characters put into your waiting room by this effect while they were on the stage":
             continue  # the search keeps count (see total_within_moved)
+        if plain == "X is equal to the number of cards put into your waiting room by this effect" and any(
+                s.get("x", {}).get("of") == "stock_paid" for s in walk_steps(steps)):
+            continue  # the choice already knows (see stock_paid)
+        if re.fullmatch(r"This card cannot 【STAND】 during your next stand phase", plain) and steps and steps[-1]["do"] == "may":
+            steps[-1]["then"] += parse_clauses([plain], quotes, cost)  # the price of what was just paid for, not of declining
+            continue
         if re.fullmatch(r"Put all level 1 or higher cards revealed by this damage into your opponent's clock in the revealed order, even if this damage is canceled", plain):
             found = [s for s in [*(last_may(steps) or {"then": []})["then"], *steps] if s["do"] == "damage"]
             if found:
