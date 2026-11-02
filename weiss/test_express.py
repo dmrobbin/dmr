@@ -587,6 +587,29 @@ class ChoosingByHandTests(TestCase):
         self.assertEqual(new[green.pk], 0)  # one it wasn't told about still gives way
 
 
+class CardDetailsFromDeckTests(TestCase):
+    def setUp(self):
+        make_series()
+        self.user = User.objects.create_user("daryl", password="x", is_staff=True)
+        self.client.force_login(self.user)
+        self.card = Card.objects.get(serial_number="TST/S1-001")
+        self.card.image_url = "https://example.com/card.png"
+        self.card.save()
+        self.deck = CardList.objects.create(user=self.user, name="Deck", express={"series": "TST", "anchors": [], "required": []})
+        CardListEntry.objects.create(card_list=self.deck, card=self.card, quantity=1)
+        self.popup = reverse("weiss:card_popup", args=[self.card.pk])
+
+    def test_the_deck_page_opens_them(self):
+        self.assertContains(self.client.get(reverse("weiss:list", args=[self.deck.pk])), f'data-card-popup="{self.popup}"')
+
+    def test_the_picture_on_the_review_page_opens_them_and_the_box_still_selects(self):
+        page = self.client.get(reverse("weiss:list_express_review", args=[self.deck.pk])).content.decode()
+        tile = page.split('class="express-tile')[1].split("</div>")[0]
+        self.assertRegex(tile, rf'data-card-popup="{self.popup}"[^>]*><img')
+        self.assertIn(f'name="replace" value="{self.card.pk}"', tile)
+        self.assertLess(tile.index("</a>"), tile.index('name="replace"'))  # the box isn't inside the link
+
+
 class PagesTests(TestCase):
     def setUp(self):
         make_series()

@@ -38,7 +38,8 @@
     <ul class="card-grid">
       {% for entry in entries %}
         <li>
-          <a href="{% url 'weiss:card' entry.card.pk %}?list={{ card_list.pk }}">
+          {% url 'weiss:card_popup' entry.card.pk as popup_url %}
+          <a href="{% url 'weiss:card' entry.card.pk %}?list={{ card_list.pk }}" data-card-popup="{{ popup_url }}">
             {% if entry.card.image_src %}<img src="{{ entry.card.image_src }}" alt="{{ entry.card.name }}" loading="lazy">{% endif %}
             <span class="card-title-row">
               <span class="card-name">{{ entry.quantity }}× {{ entry.card.name }}{% include "weiss/cpu_flag.html" with card=entry.card %}</span>

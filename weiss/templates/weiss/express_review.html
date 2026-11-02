@@ -5,7 +5,7 @@
 {% block weiss_content %}
   <h1>Review {{ card_list.name }}</h1>
   <p class="lead-meta">
-    Select any cards you want swapped.
+    Click a card to read it, and tick the box on any you want swapped.
     Damage {{ roles.damage }} · Utility {{ roles.utility }}{% if roles.both %} ({{ roles.both }} count as both){% endif %}{% if roles.neither %} · {{ roles.neither }} neither{% endif %}.
   </p>
   {% include "weiss/deck_checks.html" %}
@@ -40,8 +40,8 @@
             <ul class="express-picks">
               {% for card in picks %}
                 <li>
-                  {% if card.image_src %}<img src="{{ card.image_src }}" alt="{{ card.name }}" loading="lazy">{% endif %}
                   {% url 'weiss:card_popup' card.pk as popup_url %}
+                  {% if card.image_src %}<a href="{% url 'weiss:card' card.pk %}" data-card-popup="{{ popup_url }}" class="express-pick-image" tabindex="-1" aria-hidden="true"><img src="{{ card.image_src }}" alt="" loading="lazy"></a>{% endif %}
                   <a href="{% url 'weiss:card' card.pk %}" data-card-popup="{{ popup_url }}" class="card-name small">{{ card.name }}</a>
                   <span class="small muted">{{ card.serial_number }}{% if card.in_deck %} · {{ card.in_deck }} in deck{% endif %}</span>
                   <button type="submit" class="button-small" name="card" value="{{ card.pk }}" formaction="{% url 'weiss:list_express_pick' card_list.pk %}">Put in</button>
@@ -55,16 +55,16 @@
     <ul class="card-grid express-grid express-review">
       {% for tile in tiles %}
         <li>
-          <label class="express-tile color-{{ tile.card.color|lower }}{% if tile.locked %} locked{% endif %}" title="{{ tile.card.name }}{% if tile.locked %}: required by your anchors, so one copy stays{% endif %}">
-            {% if not tile.locked %}<input type="checkbox" name="replace" value="{{ tile.card.pk }}" aria-label="Replace a copy of {{ tile.card.name }}">{% endif %}
-            {% if tile.card.image_src %}<img src="{{ tile.card.image_src }}" alt="{{ tile.card.name }}" loading="lazy">{% endif %}
+          {% url 'weiss:card_popup' tile.card.pk as popup_url %}
+          <div class="express-tile color-{{ tile.card.color|lower }}{% if tile.locked %} locked{% endif %}" title="{{ tile.card.name }}{% if tile.locked %}: required by your anchors, so one copy stays{% endif %}">
+            {% if tile.card.image_src %}<a href="{% url 'weiss:card' tile.card.pk %}" data-card-popup="{{ popup_url }}" tabindex="-1" aria-hidden="true"><img src="{{ tile.card.image_src }}" alt="" loading="lazy"></a>{% endif %}
+            {% if not tile.locked %}<label class="express-tick" title="Select to replace"><input type="checkbox" name="replace" value="{{ tile.card.pk }}" aria-label="Replace a copy of {{ tile.card.name }}"></label>{% endif %}
             <span class="express-roles">
               {% if tile.locked %}<span class="express-role role-locked" title="Required by your anchors">🔒</span>{% endif %}
               {% if tile.card.damage %}<span class="express-role role-damage" title="Damage">D</span>{% endif %}
               {% if tile.card.utility %}<span class="express-role role-utility" title="Utility">U</span>{% endif %}
             </span>
-          </label>
-          {% url 'weiss:card_popup' tile.card.pk as popup_url %}
+          </div>
           <a href="{% url 'weiss:card' tile.card.pk %}" data-card-popup="{{ popup_url }}" class="card-name small">{{ tile.card.name }}</a>{% include "weiss/cpu_flag.html" with card=tile.card %}
         </li>
       {% endfor %}

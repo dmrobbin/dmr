@@ -588,8 +588,9 @@ select option { color: var(--text); background: var(--surface); }
 .express-picks { list-style: none; margin: 0; padding: 0 0 .4rem; display: flex; gap: .75rem; overflow-x: auto; }
 /* Compact, since the bar stays on screen beside the deck while its copies get ticked. */
 .express-picks li { flex: 0 0 12rem; display: grid; grid-template-columns: 3.75rem minmax(0, 1fr); grid-auto-rows: min-content; column-gap: .5rem; row-gap: .15rem; min-width: 0; }
-.express-picks img { grid-row: 1 / span 3; width: 100%; aspect-ratio: 5 / 7; object-fit: cover; border-radius: .3rem; }
-.express-picks a, .express-picks span, .express-picks button { grid-column: 2; }
+.express-pick-image { grid-column: 1; grid-row: 1 / span 3; }
+.express-picks img { display: block; width: 100%; aspect-ratio: 5 / 7; object-fit: cover; border-radius: .3rem; }
+.express-picks .card-name, .express-picks span, .express-picks button { grid-column: 2; }
 .express-picks .small { overflow-wrap: anywhere; line-height: 1.2; }
 .express-review { grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); }
 .express-tile { position: relative; display: block; border-radius: .55rem; outline: 3px solid transparent; outline-offset: 1px; cursor: pointer; }
@@ -601,7 +602,11 @@ select option { color: var(--text); background: var(--surface); }
 .express-tile:has(input:disabled) { cursor: not-allowed; opacity: .45; }
 .express-tile.locked { cursor: default; }
 .express-tile input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: inherit; }
-.express-roles { position: absolute; right: .3rem; bottom: .3rem; display: flex; gap: .2rem; }
+/* On the review page the card itself opens its details, so selecting has its own box. */
+.express-tick { position: absolute; top: .3rem; left: .3rem; display: grid; padding: .4rem; background: rgb(0 0 0 / .7); border-radius: .35rem; cursor: pointer; }
+.express-tile .express-tick input { position: static; width: 1.15rem; height: 1.15rem; opacity: 1; cursor: pointer; }
+.express-review .express-tile { cursor: default; }
+.express-roles { pointer-events: none; position: absolute; right: .3rem; bottom: .3rem; display: flex; gap: .2rem; }
 .express-role { display: grid; place-items: center; min-width: 1.3rem; height: 1.3rem; font-size: .72rem; font-weight: 800; color: #fff; border-radius: .3rem; box-shadow: 0 1px 4px rgb(0 0 0 / .6); }
 .role-damage { background: #b23a3a; }
 .role-utility { background: #2f5fa8; }
