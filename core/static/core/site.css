@@ -581,6 +581,16 @@ select option { color: var(--text); background: var(--surface); }
 .express-mode legend { float: left; margin-right: .25rem; padding: 0; }
 .express-mode label { display: inline-flex; align-items: center; gap: .3rem; cursor: pointer; }
 .express-grid { gap: .85rem; }
+.express-search { flex-wrap: wrap; align-items: center; gap: .6rem; margin-top: 1rem; }
+.express-search input[type="search"] { flex: 1 1 16rem; }
+.express-picks-box { flex: 1 1 100%; min-width: 0; }
+.express-picks-box p { margin: 0 0 .4rem; }
+.express-picks { list-style: none; margin: 0; padding: 0 0 .4rem; display: flex; gap: .75rem; overflow-x: auto; }
+/* Compact, since the bar stays on screen beside the deck while its copies get ticked. */
+.express-picks li { flex: 0 0 12rem; display: grid; grid-template-columns: 3.75rem minmax(0, 1fr); grid-auto-rows: min-content; column-gap: .5rem; row-gap: .15rem; min-width: 0; }
+.express-picks img { grid-row: 1 / span 3; width: 100%; aspect-ratio: 5 / 7; object-fit: cover; border-radius: .3rem; }
+.express-picks a, .express-picks span, .express-picks button { grid-column: 2; }
+.express-picks .small { overflow-wrap: anywhere; line-height: 1.2; }
 .express-review { grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); }
 .express-tile { position: relative; display: block; border-radius: .55rem; outline: 3px solid transparent; outline-offset: 1px; cursor: pointer; }
 .express-tile:hover { outline-color: var(--border); }
@@ -605,7 +615,7 @@ button.button-small.secondary { border: 1px solid var(--border); }
   .weiss-layout { grid-template-columns: minmax(0, 1fr) 20rem; gap: 1.5rem; }
 }
 @media (max-width: 60rem) {
-  .weiss-layout { grid-template-columns: 1fr; }
+  .weiss-layout { grid-template-columns: minmax(0, 1fr); }
   .list-panel { position: static; max-height: none; order: -1; }
 }
 .list-total { display: flex; justify-content: space-between; align-items: baseline; margin: .25rem 0 .2rem; padding: .6rem 0 0; border-top: 1px dashed var(--border); }

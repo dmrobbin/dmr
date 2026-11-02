@@ -16,10 +16,11 @@ A card can be both; a climax is neither.
 import random
 import re
 from collections import Counter
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Count, Max
+from django.db.models import Count, Max, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -36,6 +37,8 @@ CX_COMBO = "【CXCOMBO】"
 ANCHOR_COPIES = 4
 NAMED_COPIES = 2  # of a character or event an anchor names
 CLIMAX_COUNT = next(target for label, target, required, counts in DECK_GROUPS if required)
+PICK_RESULTS = 48  # cards shown for a search when choosing one by hand
+PICK_SCAN = 2000  # cards read to find them: a very broad search just stops early
 # The share of the deck's damage and utility cards that should be damage. By default damage/utility
 # is 2/3, so 2 parts in 5; a replacement can lean further either way.
 DAMAGE_SHARE = {"balanced": 2 / 5, "damage": 3 / 4, "utility": 1 / 8}
@@ -412,13 +415,14 @@ def group_of(card):
     return next((i for i, (_, _, _, counts) in enumerate(DECK_GROUPS) if counts(card)), None)
 
 
-def replace_cards(pool, anchors, copies, required, removing, mode, rng=random, known=None):
+def replace_cards(pool, anchors, copies, required, removing, mode, rng=random, known=None, picked=()):
     """Swap copies out for new draws. Each new card comes from the same group as the one it replaces
     (so the climax count and the level spread stay as they are), or, if that group has nothing else,
     from any other that isn't climaxes. Every required name keeps at least one copy.
 
     `copies` and `removing` are {card pk: copies}. Returns (new copies, [(old name, new name), ...]),
-    and a copy that has nothing to replace it stays."""
+    and a copy that has nothing to replace it stays. `picked`: names chosen by hand, climaxes among
+    which stay even with nothing of their color in the deck yet."""
     builder = Builder(pool, anchors, rng, DAMAGE_SHARE[mode], copies, known)
     removed = {builder.by_pk[pk].name for pk in removing if pk in builder.by_pk}
     swaps = []
@@ -448,7 +452,7 @@ def replace_cards(pool, anchors, copies, required, removing, mode, rng=random, k
                 break
             builder.copies[new.pk] += 1
             swaps.append((old.name, new.name))
-    swaps += replace_unplayable_climaxes(builder, anchors, required)
+    swaps += replace_unplayable_climaxes(builder, anchors, set(required) | set(picked))
     return +builder.copies, swaps
 
 
@@ -525,6 +529,37 @@ def role_counts(copies):
     return {"damage": damage, "utility": utility, "both": both, "neither": sum(n for card, n in copies if not is_climax(card) and not card.damage and not card.utility)}
 
 
+def pick_results(query, code, everywhere):
+    """What a search finds to put in a CPU deck by hand, one printing of each name:
+    (cards, how many it found that a CPU can't play)."""
+    if not query:
+        return [], 0
+    cards = Card.objects.filter(Q(name__icontains=query) | Q(serial_number__icontains=query)
+                                | Q(traits__icontains=query) | Q(description__icontains=query))
+    if not everywhere:
+        cards = cards.filter(serial_number__startswith=f"{code}/")
+    found, unplayable, seen = [], 0, set()
+    for card in cards.order_by("serial_number")[:PICK_SCAN]:
+        if card.name in seen:
+            continue
+        seen.add(card.name)
+        if abilities.by_hand_parts(card.description):
+            unplayable += 1
+        elif len(found) < PICK_RESULTS:
+            found.append(card)
+    return found, unplayable
+
+
+def review_url(card_list, mode, post):
+    """Back to the review page, with the search that was showing."""
+    params = {"mode": mode}
+    if post.get("q"):
+        params["q"] = post["q"]
+    if post.get("scope") == "all":
+        params["scope"] = "all"
+    return f"{reverse('weiss:list_express_review', args=[card_list.pk])}?{urlencode(params)}"
+
+
 @weiss_access_required
 def express_review(request, pk):
     """Every card in the built deck, one tile per copy, with what's selected to be replaced."""
@@ -547,9 +582,18 @@ def express_review(request, pk):
             kept.add(card.name)
             tiles.append({"card": card, "locked": locked})
     mode = request.GET.get("mode")
+    query = request.GET.get("q", "").strip()
+    everywhere = request.GET.get("scope") == "all"
+    picks, unplayable = pick_results(query, card_list.express["series"], everywhere) if card_list.reserved_for_cpu else ([], 0)
+    in_deck = Counter()
+    for entry in entries:
+        in_deck[entry.card.name] += entry.quantity
+    for card in with_image_urls(picks):
+        card.in_deck = in_deck[card.name]
     return render(request, "weiss/express_review.html", {
         "card_list": card_list, "tiles": tiles, "deck": deck_checks(entries), "roles": role_counts(copies),
         "mode": mode if mode in DAMAGE_SHARE else "balanced",
+        "query": query, "everywhere": everywhere, "picks": picks, "unplayable": unplayable,
     })
 
 
@@ -561,7 +605,7 @@ def express_replace(request, pk):
         return redirect("weiss:list", pk=card_list.pk)
     mode = request.POST.get("mode")
     mode = mode if mode in DAMAGE_SHARE else "balanced"
-    back = f"{reverse('weiss:list_express_review', args=[card_list.pk])}?mode={mode}"
+    back = review_url(card_list, mode, request.POST)
     removing = Counter()
     for value in request.POST.getlist("replace"):
         if value.isdigit():
@@ -577,7 +621,8 @@ def express_replace(request, pk):
         copies = dict(card_list.entries.values_list("card_id", "quantity"))
         # A card added by hand from another printing or series isn't in the pool, so replace_cards leaves it.
         removing =Counter({card: min(n, copies.get(card, 0)) for card, n in removing.items()})
-        new, swaps = replace_cards(pool, anchors, copies, set(card_list.express["required"]), removing, mode, known=whole)
+        new, swaps = replace_cards(pool, anchors, copies, set(card_list.express["required"]), removing, mode, known=whole,
+                                   picked=card_list.express.get("picked", ()))
         card_list.entries.all().delete()
         CardListEntry.objects.bulk_create(CardListEntry(card_list=card_list, card_id=card, quantity=n) for card, n in new.items())
         card_list.save(update_fields=["updated"])
@@ -586,4 +631,62 @@ def express_replace(request, pk):
         messages.success(request, "Replaced " + "; ".join(f"{old} → {new_name}" + (f" ×{n}" if n > 1 else "") for (old, new_name), n in lines.items()) + ".")
     else:
         messages.warning(request, "Nothing could be replaced: those cards are required, or there's nothing else that fits.")
+    return redirect(back)
+
+
+@weiss_access_required
+@require_POST
+def express_pick(request, pk):
+    """Put the card chosen by hand into a CPU deck, one copy for each copy ticked to come out, or
+    one extra if the deck has room and none are ticked. Unlike a replacement, it can be any card a
+    CPU can play, from any set: what fits is the choice of whoever's building the deck."""
+    card_list = own_list(request, pk)
+    if not card_list.reserved_for_cpu or not card_list.express:
+        return redirect("weiss:list", pk=card_list.pk)
+    mode = request.POST.get("mode")
+    mode = mode if mode in DAMAGE_SHARE else "balanced"
+    back = review_url(card_list, mode, request.POST)
+    value = request.POST.get("card", "")
+    card = get_object_or_404(Card, pk=value) if value.isdigit() else None
+    if not card:
+        messages.error(request, "Choose a card to put in.")
+        return redirect(back)
+    if abilities.by_hand_parts(card.description):
+        messages.error(request, f"A CPU can't play {card.name}: part of it has to be done by hand.")
+        return redirect(back)
+    removing = Counter(int(v) for v in request.POST.getlist("replace") if v.isdigit())
+    removing.pop(card.pk, None)  # swapping a card for itself changes nothing
+    with transaction.atomic():
+        card_list = CardList.objects.select_for_update().get(pk=card_list.pk)
+        entries = list(card_list.entries.select_related("card"))
+        copies = Counter({e.card_id: e.quantity for e in entries})
+        names = {e.card_id: e.card.name for e in entries}
+        removing = Counter({pk: min(n, copies[pk]) for pk, n in removing.items() if copies[pk]})
+        copies -= removing
+        by_name = Counter()
+        for pk, n in copies.items():
+            by_name[names[pk]] += n
+        adding = sum(removing.values()) or 1
+        lost = [names[pk] for pk in removing if names[pk] in card_list.express["required"] and not by_name[names[pk]] and names[pk] != card.name]
+        if lost:
+            error = f"{lost[0]} is required by your anchors, so one copy stays."
+        elif not removing and sum(copies.values()) >= DECK_SIZE:
+            error = "The deck is full: tick the copies to take out first."
+        elif by_name[card.name] + adding > COPY_LIMIT:
+            error = f"That would be more than {COPY_LIMIT} copies of {card.name}."
+        else:
+            error = ""
+            copies[card.pk] += adding
+            card_list.entries.all().delete()
+            CardListEntry.objects.bulk_create(CardListEntry(card_list=card_list, card_id=pk, quantity=n) for pk, n in copies.items() if n)
+            card_list.express = {**card_list.express, "picked": sorted({*card_list.express.get("picked", ()), card.name})}
+            card_list.save(update_fields=["express", "updated"])
+    if error:
+        messages.error(request, error)
+        return redirect(back)
+    taken = "; ".join(f"{names[pk]}" + (f" ×{n}" if n > 1 else "") for pk, n in removing.items())
+    messages.success(request, f"Put in {card.name}" + (f" ×{adding}" if adding > 1 else "") + (f", taking out {taken}." if taken else "."))
+    climaxes = sum(e.quantity for e in card_list.entries.select_related("card") if is_climax(e.card))
+    if climaxes != CLIMAX_COUNT:
+        messages.warning(request, f"The deck now has {climaxes} climaxes, not {CLIMAX_COUNT}: a CPU can't use it until that's fixed.")
     return redirect(back)

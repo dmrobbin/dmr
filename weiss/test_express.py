@@ -483,6 +483,110 @@ class HighLevelBalanceTests(TestCase):
         self.assertEqual(builder.total(), 50)
 
 
+class ChoosingByHandTests(TestCase):
+    BY_HAND = "If the moon is full, this card cannot be played from your hand."
+
+    def setUp(self):
+        make_series()
+        make_series("OTH", per_group=1)
+        self.user = User.objects.create_user("daryl", password="x", is_staff=True)
+        self.client.force_login(self.user)
+        self.filler = Card.objects.get(serial_number="TST/S1-001")
+        self.kept = Card.objects.get(name="Combo Red", serial_number__startswith="TST/")
+        self.deck = self.make_deck({self.filler: 4, self.kept: 2})
+        self.review = reverse("weiss:list_express_review", args=[self.deck.pk])
+        self.pick = reverse("weiss:list_express_pick", args=[self.deck.pk])
+        self.outside = Card.objects.get(serial_number="OTH/S1-001")
+
+    def make_deck(self, cards, reserved=True):
+        deck = CardList.objects.create(user=self.user, name="CPU", reserved_for_cpu=reserved, express={"series": "TST", "anchors": [], "required": ["Combo Red"]})
+        for card, quantity in cards.items():
+            CardListEntry.objects.create(card_list=deck, card=card, quantity=quantity)
+        return deck
+
+    def copies(self, deck=None):
+        return dict((deck or self.deck).entries.values_list("card_id", "quantity"))
+
+    def test_a_search_stays_in_the_series_unless_told_not_to(self):
+        page = self.client.get(self.review, {"q": "S1-001"})
+        self.assertEqual([c.serial_number for c in page.context["picks"]], ["TST/S1-001"])
+        page = self.client.get(self.review, {"q": "S1-001", "scope": "all"})
+        self.assertEqual([c.serial_number for c in page.context["picks"]], ["OTH/S1-001", "TST/S1-001"])
+
+    def test_a_search_reads_card_text_and_says_what_it_left_out(self):
+        by_hand = Card.objects.create(serial_number="TST/S1-900", name="Moon", expansion="Test set", expansion_id=1, card_type="Character", level=0, color="Red", description=self.BY_HAND)
+        Card.objects.create(serial_number="TST/S1-901", name="Lunar", expansion="Test set", expansion_id=1, card_type="Character", level=0, color="Red", description="【AUTO】 When this card attacks, choose 1 《Moon》 character in your waiting room, and return it to your hand.")
+        page = self.client.get(self.review, {"q": "moon"})
+        self.assertEqual([c.name for c in page.context["picks"]], ["Lunar"])
+        self.assertEqual(page.context["unplayable"], 1)
+        self.assertContains(page, "1 match a CPU can't play is left out")
+        self.assertNotContains(page, f'value="{by_hand.pk}"')
+
+    def test_players_decks_dont_get_it(self):
+        deck = self.make_deck({self.filler: 2}, reserved=False)
+        review = reverse("weiss:list_express_review", args=[deck.pk])
+        self.assertEqual(self.client.get(review, {"q": "S1-001"}).context["picks"], [])
+        self.client.post(reverse("weiss:list_express_pick", args=[deck.pk]), {"card": self.outside.pk})
+        self.assertEqual(self.copies(deck), {self.filler.pk: 2})
+
+    def test_swapping_ticked_copies_for_a_card_from_another_set(self):
+        response = self.client.post(self.pick, {"card": self.outside.pk, "replace": [self.filler.pk, self.filler.pk], "q": "S1-001", "scope": "all", "mode": "damage"}, follow=True)
+        self.assertEqual(self.copies(), {self.filler.pk: 2, self.kept.pk: 2, self.outside.pk: 2})
+        self.assertContains(response, "Put in")
+        self.assertEqual(response.context["query"], "S1-001")  # the search is still showing
+        self.assertEqual(response.context["mode"], "damage")
+        self.deck.refresh_from_db()
+        self.assertEqual(self.deck.express["picked"], [self.outside.name])
+
+    def test_with_none_ticked_it_is_one_extra_copy_if_theres_room(self):
+        self.client.post(self.pick, {"card": self.outside.pk})
+        self.assertEqual(self.copies()[self.outside.pk], 1)
+        self.deck.entries.filter(card=self.filler).update(quantity=47)
+        self.client.post(self.pick, {"card": self.outside.pk})
+        self.assertEqual(self.copies()[self.outside.pk], 1)  # 50 cards: nothing to make way for it
+
+    def test_a_card_a_cpu_cant_play_is_refused(self):
+        by_hand = Card.objects.create(serial_number="OTH/S1-900", name="Moon", expansion="Test set", expansion_id=1, card_type="Character", level=0, color="Red", description=self.BY_HAND)
+        self.client.post(self.pick, {"card": by_hand.pk, "replace": [self.filler.pk]})
+        self.assertEqual(self.copies(), {self.filler.pk: 4, self.kept.pk: 2})
+
+    def test_the_copy_limit_counts_every_printing_of_a_name(self):
+        other_printing = Card.objects.create(serial_number="OTH/S1-901", name=self.filler.name, expansion="Test set", expansion_id=1, card_type="Character", level=0, color="Red", description="")
+        response = self.client.post(self.pick, {"card": other_printing.pk}, follow=True)
+        self.assertContains(response, "more than 4 copies")
+        self.assertEqual(self.copies(), {self.filler.pk: 4, self.kept.pk: 2})
+
+    def test_the_last_copy_of_a_required_card_stays(self):
+        response = self.client.post(self.pick, {"card": self.outside.pk, "replace": [self.kept.pk, self.kept.pk]}, follow=True)
+        self.assertContains(response, "required by your anchors")
+        self.assertEqual(self.copies(), {self.filler.pk: 4, self.kept.pk: 2})
+
+    def test_bad_input_changes_nothing(self):
+        self.client.post(self.pick, {"card": "nope", "replace": [self.filler.pk]})
+        self.client.post(self.pick, {"card": self.filler.pk, "replace": [self.filler.pk]})  # for itself: 1 extra would pass the limit
+        self.assertEqual(self.copies(), {self.filler.pk: 4, self.kept.pk: 2})
+
+    def test_someone_elses_deck_is_out_of_reach(self):
+        self.client.force_login(User.objects.create_user("other", password="x", is_staff=True))
+        self.assertEqual(self.client.post(self.pick, {"card": self.outside.pk}).status_code, 404)
+
+    def test_it_warns_when_the_climax_count_comes_off_eight(self):
+        climax = Card.objects.get(name="BIG", serial_number__startswith="OTH/")
+        response = self.client.post(self.pick, {"card": climax.pk, "replace": [self.filler.pk]}, follow=True)
+        self.assertContains(response, "1 climaxes, not 8")
+
+    def test_a_replacement_later_leaves_a_chosen_climax_alone(self):
+        pool = express.series_pool("TST")
+        anchor = in_pool(pool, "Combo Naming")
+        green = next(c for c in pool if c.card_type == "Climax" and c.color == "Green")
+        red = next(c for c in pool if c.card_type == "Character" and c.level == 0 and c.color == "Red")
+        copies = {anchor.pk: 4, red.pk: 4, in_pool(pool, "BIG").pk: 2, green.pk: 2}
+        new, _ = express.replace_cards(pool, [anchor], copies, {"Combo Naming", "BIG"}, {red.pk: 1}, "balanced", random.Random(1), picked=[green.name])
+        self.assertEqual(new[green.pk], 2)
+        new, _ = express.replace_cards(pool, [anchor], copies, {"Combo Naming", "BIG"}, {red.pk: 1}, "balanced", random.Random(1))
+        self.assertEqual(new[green.pk], 0)  # one it wasn't told about still gives way
+
+
 class PagesTests(TestCase):
     def setUp(self):
         make_series()

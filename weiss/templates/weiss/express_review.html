@@ -9,6 +9,14 @@
     Damage {{ roles.damage }} · Utility {{ roles.utility }}{% if roles.both %} ({{ roles.both }} count as both){% endif %}{% if roles.neither %} · {{ roles.neither }} neither{% endif %}.
   </p>
   {% include "weiss/deck_checks.html" %}
+  {% if card_list.reserved_for_cpu %}
+    <form method="get" class="panel-row express-search" action="{% url 'weiss:list_express_review' card_list.pk %}">
+      <input type="hidden" name="mode" value="{{ mode }}">
+      <input type="search" name="q" value="{{ query }}" placeholder="Name, number, trait or card text" aria-label="Search for a card to put in">
+      <label class="small"><input type="checkbox" name="scope" value="all"{% if everywhere %} checked{% endif %}> All sets</label>
+      <button type="submit" class="button-small secondary">Find a card</button>
+    </form>
+  {% endif %}
   <form method="post" action="{% url 'weiss:list_express_replace' card_list.pk %}">
     {% csrf_token %}<input type="hidden" name="next" value="{% if card_list.reserved_for_cpu %}{% url 'weiss:cpu_home' %}{% else %}{% url 'weiss:lists' %}{% endif %}">
     <div class="express-bar">
@@ -21,6 +29,28 @@
       <button type="submit" class="button-small">Replace selected</button>
       {# Counts as "Done editing", then on to the lists. #}
       <button type="submit" class="button-small secondary" formaction="{% url 'weiss:list_stop_editing' %}">Looks good, I'm done</button>
+      {% if query %}
+        <input type="hidden" name="q" value="{{ query }}">{% if everywhere %}<input type="hidden" name="scope" value="all">{% endif %}
+        <div class="express-picks-box">
+          <p class="small muted">
+            {% if picks %}Tick the copies to take out below, then choose the card to put in their place. With none ticked, it goes in as one extra copy.{% else %}No cards a CPU can play match “{{ query }}”{% if not everywhere %} in this series{% endif %}.{% endif %}
+            {% if unplayable %}{{ unplayable }} match{{ unplayable|pluralize:"es" }} a CPU can't play {{ unplayable|pluralize:"is,are" }} left out.{% endif %}
+          </p>
+          {% if picks %}
+            <ul class="express-picks">
+              {% for card in picks %}
+                <li>
+                  {% if card.image_src %}<img src="{{ card.image_src }}" alt="{{ card.name }}" loading="lazy">{% endif %}
+                  {% url 'weiss:card_popup' card.pk as popup_url %}
+                  <a href="{% url 'weiss:card' card.pk %}" data-card-popup="{{ popup_url }}" class="card-name small">{{ card.name }}</a>
+                  <span class="small muted">{{ card.serial_number }}{% if card.in_deck %} · {{ card.in_deck }} in deck{% endif %}</span>
+                  <button type="submit" class="button-small" name="card" value="{{ card.pk }}" formaction="{% url 'weiss:list_express_pick' card_list.pk %}">Put in</button>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      {% endif %}
     </div>
     <ul class="card-grid express-grid express-review">
       {% for tile in tiles %}

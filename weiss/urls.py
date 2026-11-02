@@ -52,6 +52,7 @@ urlpatterns = [
     path("lists/<int:pk>/express/", express.express_start, name="list_express"),
     path("lists/<int:pk>/express/review/", express.express_review, name="list_express_review"),
     path("lists/<int:pk>/express/replace/", express.express_replace, name="list_express_replace"),
+    path("lists/<int:pk>/express/pick/", express.express_pick, name="list_express_pick"),
     path("lists/<int:pk>/cards/", lists.list_change, name="list_change"),
     path("lists/<int:pk>/cover/", lists.list_cover, name="list_cover"),
     path("lists/<int:pk>/deck/",lists.list_deck, name="list_deck"),
