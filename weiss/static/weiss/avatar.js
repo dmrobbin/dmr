@@ -111,15 +111,21 @@
     return button;
   }
 
-  async function search(query) {
+  const seriesBox = $("[data-series]");
+  const searchBox = $("[data-search]");
+
+  async function search() {
     const mine = ++latest;
-    if (query.length < 2) {
+    const query = searchBox.value.trim();
+    const series = seriesBox.value;
+    if (query.length < 2 && !series) {
       results.replaceChildren();
-      note.textContent = "Type at least 2 letters.";
+      note.textContent = "Type at least 2 letters, or choose a series.";
       return;
     }
     try {
-      const response = await fetch(`${root.dataset.searchUrl}?q=${encodeURIComponent(query)}`, { credentials: "same-origin" });
+      const params = new URLSearchParams({ q: query.length < 2 ? "" : query, series });
+      const response = await fetch(`${root.dataset.searchUrl}?${params}`, { credentials: "same-origin" });
       if (!response.ok) throw new Error(response.status);
       const { cards } = await response.json();
       if (mine !== latest) return;
@@ -129,9 +135,13 @@
       if (mine === latest) note.textContent = "The search didn't work. Try again.";
     }
   }
-  $("[data-search]").addEventListener("input", (event) => {
+  searchBox.addEventListener("input", () => {
     clearTimeout(timer);
-    timer = setTimeout(() => search(event.target.value.trim()), 250);
+    timer = setTimeout(search, 250);
+  });
+  seriesBox.addEventListener("change", () => {
+    clearTimeout(timer);
+    search();
   });
 
   const current = JSON.parse(document.getElementById("avatar-current").textContent);

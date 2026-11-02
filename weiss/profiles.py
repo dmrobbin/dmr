@@ -14,7 +14,9 @@ from django.urls import reverse
 
 from core.access import weiss_access_required
 
+from .card_images import series_title
 from .models import ArcadeRun, Card, CardList, CpuProfile, GameRecord, PlayerProfile
+from .views import summarize_sets
 
 MIN_RADIUS = .05
 MAX_TALL = 2  # how many image widths tall a card can be, for checking a circle's center
@@ -39,6 +41,14 @@ def read_avatar(post):
     return {"avatar_card": card, "avatar_x": x, "avatar_y": y, "avatar_r": r}, None
 
 
+def series_options():
+    """[(code, name)] for limiting the search to a series, by name: each under its newest set's title."""
+    newest = {}
+    for summary in sorted(summarize_sets(), key=lambda s: s["expansion_id"]):
+        newest[summary["code"]] = series_title(summary["name"])
+    return sorted(newest.items(), key=lambda item: item[1].lower())
+
+
 def avatar_picker(request, owner, name, back):
     """The page for choosing owner's picture, and what it posts: a new picture, or none."""
     if request.method == "POST":
@@ -53,16 +63,23 @@ def avatar_picker(request, owner, name, back):
     current = None
     if owner.avatar:
         current = {"card": owner.avatar_card_id, "image": owner.avatar["image"], "x": owner.avatar_x, "y": owner.avatar_y, "r": owner.avatar_r}
-    return render(request, "weiss/avatar_picker.html", {"name": name, "avatar": owner.avatar, "current": current, "back": back})
+    return render(request, "weiss/avatar_picker.html", {"name": name, "avatar": owner.avatar, "current": current, "back": back,
+                                                        "series": series_options()})
 
 
 @weiss_access_required
 def avatar_search(request):
-    """Cards to choose a picture from."""
+    """Cards to choose a picture from. With a series chosen, no words are needed: its cards come up."""
     query = request.GET.get("q", "").strip()
-    if len(query) < 2:
+    series = request.GET.get("series", "").strip()
+    if len(query) < 2 and not series:
         return JsonResponse({"cards": []})
-    cards = Card.objects.filter(HAS_IMAGE).filter(Q(name__icontains=query) | Q(serial_number__icontains=query))[:SEARCH_RESULTS]
+    cards = Card.objects.filter(HAS_IMAGE)
+    if series:
+        cards = cards.filter(serial_number__startswith=f"{series}/")
+    if query:
+        cards = cards.filter(Q(name__icontains=query) | Q(serial_number__icontains=query))
+    cards = cards[:SEARCH_RESULTS]
     return JsonResponse({"cards": [{"pk": c.pk, "name": c.name, "serial": c.serial_number,
                                     "image": reverse("weiss:card_image", args=[c.pk])} for c in cards]})
 

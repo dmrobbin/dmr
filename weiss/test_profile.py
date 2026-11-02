@@ -87,6 +87,18 @@ class PictureTests(TestCase):
         self.assertEqual([c["name"] for c in self.client.get(search, {"q": "nik/"}).json()["cards"]], ["Anis"])
         self.assertEqual(self.client.get(search, {"q": "r"}).json()["cards"], [])
 
+    def test_search_can_keep_to_one_series(self):
+        Card.objects.create(serial_number="NIK/S1-E001", name="Rapi: Red Hood", expansion="[TD] GODDESS OF VICTORY: NIKKE", expansion_id=2,
+                            card_type="Character", image_url="https://example.com/r.png")
+        search = reverse("weiss:avatar_search")
+        found = lambda **query: [c["name"] for c in self.client.get(search, query).json()["cards"]]
+        self.assertEqual(found(q="rapi", series="NIK"), ["Rapi: Red Hood"])
+        self.assertEqual(found(q="", series="NIK"), ["Rapi: Red Hood"])  # a series alone is enough
+        self.assertEqual(found(q="rapi"), ["Rapi", "Rapi: Red Hood"])
+        page = self.client.get(self.url)
+        self.assertIn(("NIK", "GODDESS OF VICTORY: NIKKE"), page.context["series"])
+        self.assertContains(page, '<option value="NIK">GODDESS OF VICTORY: NIKKE</option>', html=True)
+
     def test_logged_out_visitors_are_sent_to_log_in(self):
         self.client.logout()
         for name in ("profile", "profile_picture", "avatar_search"):

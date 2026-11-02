@@ -8,9 +8,14 @@
   <h1>Picture for {{ name }}</h1>
   <div class="avatar-picker" data-avatar-picker data-search-url="{% url 'weiss:avatar_search' %}" data-name="{{ name }}">
     <section>
+      <label class="small" for="avatar-series">Series</label>
+      <select id="avatar-series" data-series>
+        <option value="">All series</option>
+        {% for code, title in series %}<option value="{{ code }}">{{ title }}</option>{% endfor %}
+      </select>
       <label class="small" for="avatar-search">Find a card</label>
       <input id="avatar-search" type="search" placeholder="Card name or number" autocomplete="off" data-search>
-      <p class="muted small" data-search-note>Type at least 2 letters.</p>
+      <p class="muted small" data-search-note>Type at least 2 letters, or choose a series.</p>
       <div class="avatar-results" data-results></div>
     </section>
     <section>
