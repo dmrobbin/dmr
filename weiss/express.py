@@ -1,10 +1,15 @@
 """Express deck building: pick a series and 2 cx combo anchor cards, and a legal deck is built
 around them, then every card can be reviewed and swapped.
 
-Cards are drawn at random, by weight: towards the anchors' colors (more strongly if they're all one
-color) and traits, and towards whichever of damage and utility the deck is short of. Anchors, and any
-card named in an anchor's text, always go in. A card whose cx combo names climaxes the deck doesn't
-have is very unlikely to be drawn. A color's level 1 and higher cards only go in once the
+Anchors, and any card named in an anchor's text, always go in, with the climaxes the anchors name
+taking as many of the climax slots as they can. Next come the deck's synergy cards: every card in the
+deck's colors that names an anchor or a climax in the deck, as far as each level's share allows.
+
+The rest are drawn at random, by weight: towards synergy, the anchors' colors (more strongly if
+they're all one color) and traits, and towards whichever of damage and utility the deck is short of,
+with cards that are only utility scarcer the higher their level. A card with a cx combo naming neither
+an anchor nor a climax in the deck is only drawn if nothing else fits. An initial build holds at most 3 backups and events
+together, and few copies of high level cards. A color's level 1 and higher cards only go in once the
 deck has 5 level 0 cards of that color to get it started, except backups and cards any color can play.
 A climax needs a character or event of its color in the deck, or it could never be played: one
 without gives way to more of the climaxes the anchors need.
@@ -35,6 +40,7 @@ from .views import series_code, summarize_sets, with_image_urls
 ANCHORS = 2  # anchor cards to choose (or all there are, in a series with fewer)
 CX_COMBO = "【CXCOMBO】"
 ANCHOR_COPIES = 4
+LEVEL_THREE_ANCHOR_COPIES = 3
 NAMED_COPIES = 2  # of a character or event an anchor names
 CLIMAX_COUNT = next(target for label, target, required, counts in DECK_GROUPS if required)
 PICK_RESULTS = 48  # cards shown for a search when choosing one by hand
@@ -49,6 +55,13 @@ NO_ROLE_WEIGHT = .05  # a card that's neither damage nor utility, against a shar
 MISSING_COMBO_WEIGHT = .02  # a card whose cx combo's climax isn't in the deck (draw weights can't go below 0)
 MIN_LEVEL_ZERO = 5  # copies of level 0 cards of a color before its higher levels are drawn
 COPY_WEIGHTS = {1: 1, 2: 2, 3: 2, 4: 3}  # how many copies of a card to add at a time
+# Low levels are needed too early to wait for, so they want more copies than high ones do.
+LOW_LEVEL_COPY_WEIGHTS = {1: 1, 2: 3, 3: 4, 4: 5}
+HIGH_LEVEL_COPY_WEIGHTS = {1: 1, 2: 5, 3: 2}
+HIGH_LEVEL_COPIES = max(HIGH_LEVEL_COPY_WEIGHTS)  # the most of a level 2 or 3 card an initial build draws
+SUPPORT_LIMIT = 3  # backups and events together, in an initial build
+SYNERGY_WEIGHT = 10  # for a card naming an anchor or a climax in the deck
+PURE_UTILITY_WEIGHT = {0: 1.5, 1: 1, 2: .5, 3: .25}  # by level, for a card that's utility and not damage
 
 UTILITY = re.compile(r"\bin your waiting room|from your waiting room|\bclock\b|your opponent's [^.,]*characters?"
                      r"|your opponent's (?:center|back) stage|(?:put|【REVERSE】) that character|the character facing", re.I)
@@ -98,6 +111,22 @@ def combo_climaxes(card, climax_names):
     that takes any climax."""
     lines = [line for line in abilities.plain_name_lines(card.description) if CX_COMBO in line]
     return {name for name in climax_names if any(f'"{name}"' in line for line in lines)}
+
+
+def is_support(card):
+    """A backup or an event: there to help the characters, so a deck only wants a few."""
+    return card.card_type.lower() == "event" or any(a["kind"] == "backup" for a in abilities.parse(card.description))
+
+
+def anchor_copies(card):
+    return LEVEL_THREE_ANCHOR_COPIES if card.level == 3 else ANCHOR_COPIES
+
+
+def mentions(card, names):
+    """Whether this card's text names one of these (plain) names, in full or as "with X in its name"."""
+    text = abilities.plain_name(card.description)
+    parts = re.findall(r'with "([^"]+)"', text)
+    return any(f'"{name}"' in text or any(part in name for part in parts) for name in names)
 
 
 def needs_level_zero(card):
@@ -222,9 +251,23 @@ class Builder:
         self.traits = {t for a in anchors for t in re.split(r"[・/]", a.traits or "") if t}
         self.copies = Counter(copies or {})  # card pk -> copies
         self.by_pk = {card.pk: card for card in known or pool}  # `known`: cards it may find in the deck but won't draw
+        self.anchor_names = {abilities.plain_name(a.name) for a in anchors}
+        self.initial = False  # an initial build also keeps to the limits on copies and support cards
 
     def room(self, card):
-        return COPY_LIMIT - self.copies[card.pk]
+        limit = HIGH_LEVEL_COPIES if self.initial and (card.level or 0) >= 2 else COPY_LIMIT
+        return limit - self.copies[card.pk]
+
+    def support_room(self):
+        return SUPPORT_LIMIT - sum(n for pk, n in self.copies.items() if pk in self.by_pk and is_support(self.by_pk[pk]))
+
+    def climax_names(self):
+        return {abilities.plain_name(self.by_pk[pk].name) for pk, n in self.copies.items() if n and pk in self.by_pk and is_climax(self.by_pk[pk])}
+
+    def has_synergy(self, card, names=None):
+        """Whether its text names an anchor or a climax in the deck."""
+        names = self.anchor_names | self.climax_names() if names is None else names
+        return mentions(card, names - {abilities.plain_name(card.name)})
 
     def total(self):
         return sum(self.copies.values())
@@ -261,6 +304,12 @@ class Builder:
         return any(n and pk in self.by_pk and self.by_pk[pk].color == color and not is_climax(self.by_pk[pk])
                    for pk, n in self.copies.items())
 
+    def dead_combo(self, card, names):
+        """It has a cx combo for a particular climax, and names neither an anchor nor a climax in the deck.
+        A combo that takes any climax still works, whatever the deck has."""
+        lines = [line for line in abilities.plain_name_lines(card.description) if CX_COMBO in line]
+        return bool(lines) and all('"' in line for line in lines) and not self.has_synergy(card, names)
+
     def role_weight(self, card):
         damage = sum(n for pk, n in self.copies.items() if pk in self.by_pk and self.by_pk[pk].damage)
         utility = sum(n for pk, n in self.copies.items() if pk in self.by_pk and self.by_pk[pk].utility)
@@ -269,7 +318,9 @@ class Builder:
         wants_utility = (1 - self.share) * (2 if current > self.share else .5)
         if card.damage and card.utility:
             return max(wants_damage, wants_utility)
-        return wants_damage if card.damage else wants_utility if card.utility else NO_ROLE_WEIGHT
+        if card.utility and not card.damage:
+            return wants_utility * PURE_UTILITY_WEIGHT.get(card.level, 1)
+        return wants_damage if card.damage else NO_ROLE_WEIGHT
 
     def weight(self, card):
         weight = 1
@@ -281,12 +332,16 @@ class Builder:
             weight *= self.role_weight(card)
         if self.missing_combo(card):
             weight *= MISSING_COMBO_WEIGHT
+        if self.has_synergy(card):
+            weight *= SYNERGY_WEIGHT
         return weight
 
     def draw(self, candidates):
-        candidates = [c for c in candidates if self.room(c) > 0]
+        candidates = [c for c in candidates if self.room(c) > 0 and not (self.initial and is_support(c) and self.support_room() <= 0)]
         if not candidates:
             return None
+        names = self.anchor_names | self.climax_names()
+        candidates = [c for c in candidates if not self.dead_combo(c, names)] or candidates
         return self.rng.choices(candidates, [self.weight(c) for c in candidates])[0]
 
     def fill(self, fits, count, level_rule=True):
@@ -295,13 +350,39 @@ class Builder:
             card = self.draw([c for c in self.pool if fits(c)])
             if not card:
                 break
-            wanted = self.rng.choices(list(COPY_WEIGHTS), list(COPY_WEIGHTS.values()))[0]
-            added = min(wanted, self.room(card), count)
+            added = min(self.copies_to_add(card), self.room(card), count)
             if level_rule and card.level == 3:
                 added = min(added, self.level_three_room())
             self.copies[card.pk] += added
             count -= added
         return count
+
+    def copies_to_add(self, card):
+        """How many copies of a card to add at a time, which in an initial build depends on its level."""
+        weights = COPY_WEIGHTS
+        if self.initial and not is_climax(card):
+            weights = HIGH_LEVEL_COPY_WEIGHTS if (card.level or 0) >= 2 else LOW_LEVEL_COPY_WEIGHTS
+        wanted = self.rng.choices(list(weights), list(weights.values()))[0]
+        return min(wanted, self.support_room()) if self.initial and is_support(card) else wanted
+
+
+def add_synergy(builder, colors, levels):
+    """Put in every card of the deck's colors at these levels that names an anchor or a climax in the
+    deck, those naming an anchor first, up to what each level's share has left."""
+    anchors, climaxes = builder.anchor_names, builder.climax_names()
+    found = [c for c in builder.pool if c.level in levels and not is_climax(c) and c.color in colors
+             and not builder.copies[c.pk] and builder.has_synergy(c, anchors | climaxes)]
+    builder.rng.shuffle(found)
+    found.sort(key=lambda c: (c.level, not builder.has_synergy(c, anchors)))
+    for card in found:
+        target, counts = next((target, counts) for _, target, _, counts in DECK_GROUPS if counts(card))
+        share = target - sum(n for pk, n in builder.copies.items() if counts(builder.by_pk[pk]))
+        if share <= 0 or not builder.allowed(card) or (is_support(card) and builder.support_room() <= 0):
+            continue
+        added = min(builder.copies_to_add(card), builder.room(card), share)
+        if card.level == 3:
+            added = min(added, builder.level_three_room())
+        builder.copies[card.pk] += added
 
 
 def before_high(builder):
@@ -351,6 +432,7 @@ def build_deck(pool, anchors, rng=random):
     """Returns (Builder with the deck in it, names that must stay in it, notes for the player)."""
     notes = []
     builder = Builder(pool, anchors, rng)
+    builder.initial = True
     named, missing = named_in(anchors, pool)
     if missing:
         notes.append("Named on your anchors but not in the card database, so left out: " + ", ".join(sorted(missing)) + ".")
@@ -362,21 +444,28 @@ def build_deck(pool, anchors, rng=random):
         notes.append(f"Your anchors name more than {CLIMAX_COUNT} climaxes; only the first {CLIMAX_COUNT} fit.")
         required = [n for n in required if n not in {c.name for c in named_climaxes[CLIMAX_COUNT:]}]
         named_climaxes = named_climaxes[:CLIMAX_COUNT]
-    per_climax = min(COPY_LIMIT, CLIMAX_COUNT // max(len(named_climaxes), 1))
-    builder.copies.update(spread(named_climaxes, min(CLIMAX_COUNT, per_climax * len(named_climaxes))))
+    builder.copies.update(spread(named_climaxes, CLIMAX_COUNT))
     for card in anchors:
-        builder.copies[card.pk] = ANCHOR_COPIES
+        builder.copies[card.pk] = anchor_copies(card)
     for card in named:
         if not is_climax(card):
             builder.copies[card.pk] = NAMED_COPIES
+    colors = {c.color for c in anchors if c.color} | {c.color for c in named_climaxes if c.color} | {c.color for c in [*anchors, *named] if needs_level_zero(c)}
+    # Any climax slots the anchors leave, then the synergy that the climaxes make possible.
+    wanted = CLIMAX_COUNT - sum(n for pk, n in builder.copies.items() if is_climax(builder.by_pk[pk]))
+    wanted = builder.fill(lambda c: is_climax(c) and c.color in colors, wanted)
+    short = builder.fill(is_climax, wanted)
+    if short:
+        notes.append(f"This series doesn't have enough climaxes for {CLIMAX_COUNT}; {short} short.")
+    add_synergy(builder, colors, {0})
     # Colors that have to be played get their level 0s now, before the level spread is shared out.
-    for color in sorted({c.color for c in anchors if c.color} | {c.color for c in named_climaxes if c.color}
-                        | {c.color for c in [*anchors, *named] if needs_level_zero(c)}):
+    for color in sorted(colors):
         builder.fill(lambda c: c.level == 0 and c.color == color and not is_climax(c), MIN_LEVEL_ZERO - builder.level_zero_copies(color))
         if builder.level_zero_copies(color) < MIN_LEVEL_ZERO:
             notes.append(f"This series doesn't have {MIN_LEVEL_ZERO} level 0 {color} cards to support your required cards.")
-    # Then the rest, group by group: climaxes to the rule, the others to the usual level spread,
-    # taking from the biggest groups if what's required has used up more than its share.
+    add_synergy(builder, colors, {1, 2, 3})
+    # Then the rest, group by group, to the usual level spread, taking from the biggest
+    # groups if what's required has used up more than its share.
     wanting = []
     for label, target, needed, counts in DECK_GROUPS:
         have = sum(n for pk, n in builder.copies.items() if counts(builder.by_pk[pk]))
@@ -392,14 +481,13 @@ def build_deck(pool, anchors, rng=random):
         if counts is high_group[0]:  # level 2s first, if required level 3s are waiting for them
             builder.fill(lambda c: c.level == 2 and builder.allowed(c), min(count, max(0, -builder.level_three_room())))
             count = max(0, count - max(0, builder.level_copies(2) - before_high(builder)))
-        short = builder.fill(fits, count)
-        if short and needed:
-            notes.append(f"This series doesn't have enough climaxes for {CLIMAX_COUNT}; {short} short.")
+        builder.fill(fits, count)
     # A small series can run out of some level: anything else that isn't a climax makes up the size,
     # keeping to the level 0 rule if it possibly can.
     builder.fill(lambda c: not is_climax(c) and builder.allowed(c), DECK_SIZE - builder.total())
     if builder.total() < DECK_SIZE and any(not is_climax(c) and builder.room(c) > 0 for c in pool):
         notes.append(f"To reach {DECK_SIZE} cards, some colors have higher levels without {MIN_LEVEL_ZERO} level 0s.")
+    builder.initial = False  # the size comes before the limits
     short = builder.fill(lambda c: not is_climax(c), DECK_SIZE - builder.total(), level_rule=False)
     if short:
         notes.append(f"This series only has enough cards for {DECK_SIZE - short} of the {DECK_SIZE}.")

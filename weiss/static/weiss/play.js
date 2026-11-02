@@ -431,7 +431,7 @@
         const other = STAGE.includes(el.dataset.zone) && STAGE.includes(action.to) && topCardEl(action.to);
         if (other) fly(layoutBox(other), el.dataset.zone, faceOf(other), 1, FLIGHT_MS, other);
         const info = el.dataset.card ? cards[el.dataset.card] : null;
-        if (el.dataset.zone === "hand" && PLAY_ZONES.includes(action.to) && info && info.cost) {
+        if (el.dataset.zone === "hand" && PLAY_ZONES.includes(action.to) && info && info.cost && !action.free_with) {
           fromZone("stock", "waiting", info.cost); // paying the cost
         }
         break;
@@ -552,6 +552,17 @@
   }
 
   async function act(action) {
+    // A card its own text lets us play for free by giving up a character: asks how to pay.
+    if (action.type === "move" && !action.free_with && !action.pay_full && (board.free_plays || {})[action.uid]
+        && (action.to in board.me.stage || action.to === "resolution" || action.to === "climax")) {
+      modal = { confirmFree: action };
+      renderModal();
+      return;
+    }
+    if (modal && modal.confirmFree) {
+      modal = null;
+      renderModal();
+    }
     busy = true;
     hideMenu();
     try {
@@ -801,7 +812,7 @@
   // With turn rules off every shortcut is offered, in any phase.
   const inPhase = (...phases) => !board.rules || (board.my_turn && phases.includes(board.phase));
   // Whether our stock covers a card's cost (cards with no cost are free; so is everything with the rules off).
-  const canPay = (card, info) => !board.rules || !info || !handStat(card, info, "cost") || board.me.zones.stock.count >= handStat(card, info, "cost");
+  const canPay = (card, info) => (board.free_plays || {})[card.uid] || !board.rules || !info || !handStat(card, info, "cost") || board.me.zones.stock.count >= handStat(card, info, "cost");
   // What the server says a hand card counts as, if an ability has lowered it; or what's printed.
   const handMod = (card) => (board.hand_mods || {})[card.uid] || null;
   const handStat = (card, info, stat) => (handMod(card) ? handMod(card)[stat] : info[stat]);
@@ -1281,6 +1292,7 @@
     if (board.rps) return renderRps();
     if (board.reveal && board.reveal.card) return renderReveal();
     if (modal && modal.confirmClimax) return renderClimaxConfirm();
+    if (modal && modal.confirmFree) return renderFreeConfirm();
     if (board.mulligan && !board.mulligan.me) return renderMulligan();
     if (board.discard && board.discard.mine) return renderDiscard();
     if (board.level_up_pending) return renderLevelUp();
@@ -1413,6 +1425,35 @@
           <p class="small muted">${esc([info.type, info.color, info.level != null ? `Level ${info.level}` : "", info.cost != null ? `Cost ${info.cost}` : "",
             info.power != null ? `Power ${info.power}` : "", info.soul != null ? `Soul ${info.soul}` : ""].filter(Boolean).join(" · "))}</p>
           ${info.text ? `<div class="card-peek-text">${esc(info.text).replace(/\n/g, "<br>")}</div>` : ""}</div></div>` : ""}
+    </div>`;
+  }
+
+  // How to pay for a card that can be played with 0 cost by giving up a character.
+  function renderFreeConfirm() {
+    const action = modal.confirmFree;
+    const card = board.me.zones.hand.find((c) => c.uid === action.uid);
+    const options = (board.free_plays || {})[action.uid];
+    if (!card || !options) {
+      modal = null;
+      return renderModal();
+    }
+    const info = cards[card.card];
+    const stage = Object.values(board.me.stage).filter(Boolean);
+    const give = options.map((uid) => {
+      const given = stage.find((c) => c.uid === uid);
+      const name = given && cards[given.card] ? cards[given.card].name : "that character";
+      return `<button type="button" data-act='${esc(JSON.stringify({ ...action, free_with: uid }))}'>Send ${esc(name)} to the waiting room, pay 0</button>`;
+    }).join("");
+    const cost = handStat(card, info, "cost") || 0;
+    const enough = board.me.zones.stock.count >= cost;
+    modalEl.hidden = false;
+    modalEl.innerHTML = `<div class="play-modal-box confirm-box" role="alertdialog" aria-label="Choose how to pay">
+      <div class="play-modal-head"><h2>Play ${info ? esc(info.name) : "this card"}</h2></div>
+      <div class="trigger-buttons">
+        ${give}
+        <button type="button" data-act='${esc(JSON.stringify({ ...action, pay_full: true }))}'${enough ? "" : " disabled"}>Pay ${cost} stock</button>
+        <button type="button" class="button-cancel" data-close>Cancel</button>
+      </div>
     </div>`;
   }
 

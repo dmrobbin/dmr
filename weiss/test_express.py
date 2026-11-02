@@ -324,7 +324,30 @@ class MissingComboTests(TestCase):
         self.assertTrue(builder.missing_combo(self.combo))
         builder.copies[in_pool(self.pool, "BIG").pk] = 1
         self.assertFalse(builder.missing_combo(self.combo))
-        self.assertAlmostEqual(without, builder.weight(self.combo) * express.MISSING_COMBO_WEIGHT)
+        # Once the climax is there, the card counts as synergy too.
+        self.assertAlmostEqual(without * express.SYNERGY_WEIGHT, builder.weight(self.combo) * express.MISSING_COMBO_WEIGHT)
+
+    def test_a_dead_combo_is_only_drawn_if_nothing_else_fits(self):
+        plain = next(c for c in self.pool if not c.combos and c.card_type == "Character" and c.level == self.combo.level)
+        builder = express.Builder(self.pool, [], random.Random(1))
+        self.assertEqual({builder.draw([self.combo, plain]) for _ in range(50)}, {plain})
+        self.assertEqual(builder.draw([self.combo]), self.combo)
+
+    def test_a_combo_is_alive_with_its_climax_or_an_anchor_named(self):
+        plain = next(c for c in self.pool if not c.combos and c.card_type == "Character")
+        builder = express.Builder(self.pool, [], random.Random(1))
+        self.assertTrue(builder.dead_combo(self.combo, {"Other"}))
+        self.assertFalse(builder.dead_combo(self.combo, {"BIG"}))
+        builder.copies[in_pool(self.pool, "BIG").pk] = 1
+        self.assertEqual(len({builder.draw([self.combo, plain]) for _ in range(200)}), 2)
+        names_anchor = Card(card_type="Character", description='【AUTO】 【CXCOMBO】 When this card attacks, if "Nowhere" is in your climax area and you have "Friend", draw 1 card.')
+        self.assertTrue(builder.dead_combo(names_anchor, {"BIG"}))  # its climax isn't even in the series
+        self.assertFalse(builder.dead_combo(names_anchor, {"BIG", "Friend"}))
+
+    def test_a_combo_for_any_climax_and_no_combo_arent_dead(self):
+        builder = express.Builder(self.pool, [], random.Random(1))
+        self.assertFalse(builder.dead_combo(Card(description="【AUTO】 【CXCOMBO】 When a climax is placed on your climax area, draw 1 card."), {"BIG"}))
+        self.assertFalse(builder.dead_combo(Card(description='【AUTO】 When "Other" is placed on your climax area, draw 1 card.'), {"BIG"}))
 
     def test_a_combo_with_any_of_its_climaxes_is_fine(self):
         self.combo.combos = {"BIG", "OTHER"}
@@ -347,7 +370,7 @@ class MissingComboTests(TestCase):
     def test_anchors_stay_whatever_their_weight(self):
         no_big = [c for c in self.pool if c.name != "BIG"]
         builder, required, _ = express.build_deck(no_big, [self.combo], random.Random(1))
-        self.assertEqual(builder.copies[self.combo.pk], 4)
+        self.assertEqual(builder.copies[self.combo.pk], 3)  # a level 3 anchor
 
 
 class UnplayableClimaxTests(TestCase):
@@ -460,8 +483,8 @@ class HighLevelBalanceTests(TestCase):
         for seed in range(30):
             builder, _, notes = express.build_deck(pool, [in_pool(pool, a.name) for a in anchors], random.Random(seed))
             two, three = self.levels(builder)
-            self.assertEqual(three, 8)
-            self.assertGreaterEqual(two, 8)
+            self.assertGreaterEqual(three, 6)
+            self.assertGreaterEqual(two, three)
             self.assertEqual(builder.total(), 50)
             self.assertEqual(sum(n for pk, n in builder.copies.items() if builder.by_pk[pk].card_type == "Climax"), 8)
 
@@ -481,6 +504,108 @@ class HighLevelBalanceTests(TestCase):
         pool = express.series_pool("TST")
         builder, _, _ = express.build_deck(pool, [in_pool(pool, "Combo Red")], random.Random(1))
         self.assertEqual(builder.total(), 50)
+
+
+class SynergyBuildTests(TestCase):
+    BACKUP = "COUNTER@ Backup 2500, Level 2 [Put this card from your hand into your waiting room]"
+
+    def setUp(self):
+        make_series()
+
+    def add(self, name, level=0, color="Red", card_type="Character", description=""):
+        return Card.objects.create(serial_number=f"TST/S1-X{Card.objects.count()}", name=name, expansion="Test set", expansion_id=1,
+                                   card_type=card_type, level=level, power=3000, soul=1, color=color, description=description)
+
+    def build(self, *anchor_names, seed=1):
+        pool = express.series_pool("TST")
+        return express.build_deck(pool, [in_pool(pool, n) for n in anchor_names], random.Random(seed))[0], pool
+
+    def test_a_card_naming_an_anchor_is_always_in(self):
+        ally = self.add("Ally", 1, description='【AUTO】 When this card attacks, if you have "Combo Red", draw 1 card.')
+        for seed in range(20):
+            builder, _ = self.build("Combo Red", "Combo Blue", seed=seed)
+            self.assertGreater(builder.copies[ally.pk], 0, seed)
+
+    def test_a_card_naming_part_of_an_anchors_name_counts(self):
+        ally = self.add("Ally", 1, description='【AUTO】 When this card attacks, choose 1 character with "Combo Red" in its card name, and that character gets +500 power until end of turn.')
+        for seed in range(20):
+            builder, _ = self.build("Combo Red", "Combo Blue", seed=seed)
+            self.assertGreater(builder.copies[ally.pk], 0, seed)
+
+    def test_a_card_naming_a_climax_in_the_deck_is_always_in(self):
+        ally = self.add("Fan", 2, description='【AUTO】 When "BIG" is placed on your climax area, draw 1 card.')
+        for seed in range(20):
+            builder, _ = self.build("Combo Red", "Combo Blue", seed=seed)
+            self.assertGreater(builder.copies[in_pool(express.series_pool("TST"), "BIG").pk], 0)
+            self.assertGreater(builder.copies[ally.pk], 0, seed)
+
+    def test_synergy_keeps_to_the_decks_colors(self):
+        stranger = self.add("Stranger", 1, color="Yellow", description='【AUTO】 When this card attacks, if you have "Combo Red", draw 1 card.')
+        pool = express.series_pool("TST")
+        red = in_pool(pool, "Combo Red")
+        red2 = in_pool(pool, "Combo Naming")
+        for seed in range(20):
+            builder = express.Builder(pool, [red, red2], random.Random(seed))
+            builder.initial = True
+            express.add_synergy(builder, {"Red"}, {0, 1, 2, 3})
+            self.assertEqual(builder.copies[stranger.pk], 0)
+
+    def test_synergy_stays_within_a_levels_share(self):
+        fans = [self.add(f"Fan {i}", 1, description='【AUTO】 When "BIG" is placed on your climax area, draw 1 card.') for i in range(20)]
+        builder, _ = self.build("Combo Red", "Combo Blue")
+        self.assertLessEqual(sum(builder.copies[f.pk] for f in fans), 12)
+        self.assertEqual(builder.total(), 50)
+
+    def test_backups_and_events_share_a_limit_of_three(self):
+        for i in range(6):
+            self.add(f"Backup {i}", 1, description=self.BACKUP)
+            self.add(f"Event {i}", 1, card_type="Event", description="Draw 1 card.")
+            self.add(f"Fan event {i}", 1, card_type="Event", description='If you have "Combo Red", draw 1 card.')
+        for seed in range(20):
+            builder, _ = self.build("Combo Red", "Combo Blue", seed=seed)
+            self.assertLessEqual(sum(n for pk, n in builder.copies.items() if express.is_support(builder.by_pk[pk])), 3, seed)
+            self.assertEqual(builder.total(), 50)
+
+    def test_a_backup_is_recognized(self):
+        self.assertTrue(express.is_support(Card(card_type="Character", description=self.BACKUP)))
+        self.assertFalse(express.is_support(Card(card_type="Character", description=FIXER)))
+
+    def test_anchor_copies_depend_on_level(self):
+        builder, pool = self.build("Combo Red", "Combo Blue")
+        self.assertEqual(builder.copies[in_pool(pool, "Combo Red").pk], 4)
+        self.assertEqual(builder.copies[in_pool(pool, "Combo Blue").pk], 3)
+
+    def test_high_levels_stop_at_three_copies(self):
+        for seed in range(20):
+            builder, _ = self.build("Combo Red", "Combo Blue", seed=seed)
+            for pk, n in builder.copies.items():
+                if (builder.by_pk[pk].level or 0) >= 2:
+                    self.assertLessEqual(n, 3, builder.by_pk[pk].name)
+
+    def test_climaxes_the_anchors_name_take_every_slot_they_can(self):
+        for name in ("Two", "Three"):
+            self.add(name, card_type="Climax", color="Red")
+        pool = express.series_pool("TST")
+        anchor = self.add("Namer", 1, description='【AUTO】 【CXCOMBO】 When this card attacks, if "BIG" is in your climax area, draw 1 card.\n【AUTO】 【CXCOMBO】 When this card attacks, if "Two" is in your climax area, draw 1 card.\n【AUTO】 【CXCOMBO】 When this card attacks, if "Three" is in your climax area, draw 1 card.')
+        pool = express.series_pool("TST")
+        builder = express.build_deck(pool, [in_pool(pool, "Namer")], random.Random(1))[0]
+        self.assertEqual(sorted(builder.copies[in_pool(pool, n).pk] for n in ("BIG", "Two", "Three")), [2, 3, 3])
+        self.assertGreater(builder.copies[anchor.pk], 0)
+
+    def test_pure_utility_gets_scarcer_with_level(self):
+        pool = express.series_pool("TST")
+        builder = express.Builder(pool, [], random.Random(1))
+        low, high = Card(level=0, card_type="Character"), Card(level=3, card_type="Character")
+        for card in (low, high):
+            card.damage, card.utility = False, True
+        self.assertGreater(builder.role_weight(low), builder.role_weight(high))
+        both = Card(level=3, card_type="Character")
+        both.damage, both.utility = True, True
+        self.assertGreater(builder.role_weight(both), builder.role_weight(high))
+
+    def test_replacing_isnt_held_to_the_initial_limits(self):
+        pool = express.series_pool("TST")
+        self.assertFalse(express.Builder(pool, [], random.Random(1)).initial)
 
 
 class ChoosingByHandTests(TestCase):

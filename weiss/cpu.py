@@ -67,7 +67,20 @@ def wait_seconds(state):
 
 def next_action(state, me, info, aggression=MIN_AGGRESSION, rng=random, model="standard"):
     """The CPU's next action in this game, or None if there's nothing for it to do yet."""
-    return MINDS.get(model, Mind)(state, str(me), info, Temper(aggression), rng).act()
+    return with_free_play(MINDS.get(model, Mind)(state, str(me), info, Temper(aggression), rng).act(), state, str(me), info)
+
+
+def with_free_play(action, state, me, info):
+    """A hand card it can't pay for, but may play by giving up a character: gives up the weakest."""
+    if not action or action.get("type") != "move":
+        return action
+    card = next((c for c in state["players"][me]["zones"]["hand"] if c["uid"] == action.get("uid")), None)
+    if card and game.play_cost(state, me, card, info) > len(state["players"][me]["zones"]["stock"]):
+        options = game.free_play_options(state, me, card, info)
+        if options:
+            stats = state.get("stats", {})
+            return {**action, "free_with": min(options, key=lambda c: stats.get(c["uid"], {}).get("power", 0))["uid"]}
+    return action
 
 
 def fallback_action(state, me):
@@ -121,6 +134,8 @@ class Mind:
         return game.play_level(self.state, self.me, card, self.info)
 
     def play_cost(self, card):
+        if game.free_play_options(self.state, self.me, card, self.info):
+            return 0  # it can always give up the character instead (see with_free_play)
         return game.play_cost(self.state, self.me, card, self.info)
 
     def can_play(self, card):
