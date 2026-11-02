@@ -23,11 +23,13 @@ class Command(BaseCommand):
         parser.add_argument("--delay", type=float, default=1.0, help="Seconds between requests to the card site")
         parser.add_argument("--refresh-prices", action="store_true",
                             help=f"Also update prices for saved sets not priced in the last {PRICE_REFRESH_HOURS} hours")
+        parser.add_argument("--prices-only", action="store_true", help="Don't look for new sets, only do --refresh-prices")
         parser.add_argument("--dry-run", action="store_true", help="Only list what would be fetched")
 
     def handle(self, *args, **options):
-        self.fetch_new(options)
-        if options["refresh_prices"]:
+        if not options["prices_only"]:
+            self.fetch_new(options)
+        if options["refresh_prices"] or options["prices_only"]:
             self.refresh_prices(options["dry_run"])
 
     def fetch_new(self, options):

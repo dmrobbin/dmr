@@ -1,5 +1,5 @@
 #!/bin/bash
-# Install (or update) the timer that fetches new Weiss Schwarz sets every 2 hours.
+# Install (or update) the timer that refreshes Weiss Schwarz prices.
 # Amazon Linux 2023 has no cron, so this uses a systemd timer instead.
 set -euo pipefail
 cd /var/app/current

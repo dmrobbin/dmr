@@ -51,6 +51,15 @@ class ArtChoiceTests(TestCase):
         self.assertFalse(card_images.fits_art(post(tag_string_character=f"{TAG} eren_yeager"), TAG, SHOWS, False))
         self.assertFalse(card_images.fits_art(post(tag_string_copyright="fear_&_hunger"), TAG, SHOWS, False))
         self.assertFalse(card_images.fits_art(post(image_width=40), TAG, SHOWS, False))
+        self.assertTrue(card_images.fits_art(post(tag_string_character=f"{TAG} levi_(cleaning)_(shingeki_no_kyojin)"), TAG, SHOWS, False))
+
+    @mock.patch("weiss.card_images.time.sleep")
+    def test_it_looks_further_than_the_first_page(self, _):
+        first = [post(id=n, tag_string_copyright="other_show") for n in range(100)]
+        pages = {1: first, 2: [post(id=500)]}
+        with mock.patch("weiss.card_images.booru_posts", side_effect=lambda tags, page=1: pages.get(page, [])), \
+                mock.patch("weiss.card_images.download_image", return_value=(PNG, ".png", "image/png")):
+            self.assertEqual(card_images.booru_art(TAG, SHOWS, False)[3], "https://danbooru.donmai.us/posts/500")
 
     def test_official_and_unofficial_are_kept_apart(self):
         official = post(tag_string="solo official_art")
@@ -80,7 +89,7 @@ class ArtChoiceTests(TestCase):
     def test_a_tag_has_to_be_from_this_show(self, _):
         tags = json.dumps([{"name": "levi_(fear_&_hunger)"}, {"name": "leviathan_(nikke)"}, {"name": TAG}]).encode()
         with mock.patch("weiss.card_images.get", return_value=(tags, "application/json")), \
-                mock.patch("weiss.card_images.booru_posts", side_effect=lambda q: [post(tag_string_copyright="fear_&_hunger")] if "fear" in q else [post()]):
+                mock.patch("weiss.card_images.booru_posts", side_effect=lambda q, page=1: [post(tag_string_copyright="fear_&_hunger")] if "fear" in q else [post()]):
             self.assertEqual(card_images.character_tag("Levi", SHOWS), TAG)
 
 
@@ -118,6 +127,17 @@ class WhoIsItAboutTests(TestCase):
         self.assertEqual(card_images.series_title("Attack on Titan Vol.2"), "Attack on Titan")
         self.assertEqual(card_images.series_title("GODDESS OF VICTORY: NIKKE Vol. 2"), "GODDESS OF VICTORY: NIKKE")
         self.assertEqual(card_images.series_title("Persona 5"), "Persona 5")
+        self.assertEqual(card_images.series_title("[EX] Premium Booster Persona 3 Reload™"), "Persona 3 Reload")
+        self.assertEqual(card_images.series_title("[TD] Persona 5"), "Persona 5")
+        self.assertEqual(card_images.series_title("Persona 4 ver.E"), "Persona 4")
+        self.assertEqual(card_images.series_title("Premium Booster Attack on Titan"), "Attack on Titan")
+
+    def test_a_short_title_doesnt_match_by_chance(self):
+        self.assertFalse(card_images.from_the_show({"tag_string_copyright": "exia_the_game"}, {"ex"}))
+        self.assertTrue(card_images.from_the_show({"tag_string_copyright": "persona_3 persona_3_reload"}, {"persona3reload"}))
+
+    def test_wiki_addresses_narrow_down(self):
+        self.assertEqual(card_images.fandom_slugs("Persona 3 Reload"), ["persona3reload", "persona3", "persona"])
 
     def test_names_in_the_order_given(self):
         found = card_images.characters_named("Mikasa and Eren, Together", CAST)
@@ -135,6 +155,22 @@ class WhoIsItAboutTests(TestCase):
         for name, expected in (('"Cleanup" Levi', ["Levi"]), ("“Cleanup” Levi", ["Levi"]), ("Levi: Cleanup", ["Levi"]), ("Cleaning Up, Levi", ["Levi"]),
                                ("Ann as PANTHER & Carmen", ["Ann"]), ("Simon & Nia", ["Simon", "Nia"]), ("Yosuke in Yukata", ["Yosuke"])):
             self.assertEqual(card_images.names_in_card(name), expected, name)
+
+    def test_one_word_is_one_character(self):
+        cast = [MIKASA, {"name": "Mikasa no Chichi", "names": ["Mikasa no Chichi"], "image": None}, EREN]
+        self.assertEqual([c["name"] for c in card_images.characters_named('"To Seize Freedom" Mikasa', cast)], ["Mikasa Ackerman"])
+        self.assertEqual([c["name"] for c in card_images.characters_named("Mikasa & Eren", cast)], ["Mikasa Ackerman", "Eren Yeager"])
+
+    def test_a_protagonist_is_the_shows_lead(self):
+        card = make("A/1", "Protagonist & Orpheus: Reload")
+        orpheus = {"name": "Orpheus", "names": ["Orpheus"], "image": None}
+        self.assertEqual([c["name"] for c in card_images.card_characters(card, [EREN, MIKASA, orpheus])], ["Eren Yeager", "Orpheus"])
+        self.assertEqual([c["name"] for c in card_images.card_characters(card, [])], ["Protagonist", "Orpheus"])
+
+    def test_spellings_of_a_long_vowel_match(self):
+        self.assertTrue(card_images.names_match(["mitsuru", "kirijo"], "kirijou_mitsuru"))
+        self.assertTrue(card_images.names_match(["ohno"], "ohno"))
+        self.assertFalse(card_images.names_match(["mitsuru", "kirijo"], "mitsuru_(other)"))
 
     def test_a_show_it_doesnt_know_is_no_characters_and_it_tries_the_short_title(self):
         tried = []

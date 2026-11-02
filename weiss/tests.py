@@ -887,6 +887,13 @@ class RefreshPricesTests(TestCase):
         self.assertEqual([c.kwargs["expansion"] for c in fake_call.call_args_list], [2, 3])
         self.assertIn("Refreshing prices for 2 sets: 2, 3", output)
 
+    def test_prices_only_never_looks_for_new_sets(self):
+        with patch("weiss.management.commands.fetch_new_sets.expansions") as site, \
+                patch("weiss.management.commands.fetch_new_sets.call_command") as fake_call:
+            call_command("fetch_new_sets", "--prices-only", stdout=StringIO())
+        site.assert_not_called()
+        self.assertEqual([c.args[0] for c in fake_call.call_args_list], ["fetch_prices", "fetch_prices"])
+
     def test_without_the_option_prices_are_left_alone(self):
         fake_call, _ = self.run_command()
         fake_call.assert_not_called()

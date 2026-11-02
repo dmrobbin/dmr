@@ -1,6 +1,6 @@
-# Run weiss-fetch.service 15 minutes after boot, then again 2 hours after each run finishes.
+# Run weiss-fetch.service 15 minutes after boot, then again an hour after each run finishes.
 [Unit]
-Description=Fetch new Weiss Schwarz sets every 2 hours (measured from the end of the last run)
+Description=Refresh Weiss Schwarz prices every hour (measured from the end of the last run)
 
 [Timer]
 OnBootSec=15min
