@@ -20,7 +20,7 @@
             {% if card.image_src %}<img src="{{ card.image_src }}" alt="{{ card.name }}" loading="lazy">{% endif %}
           </label>
           {% url 'weiss:card_popup' card.pk as popup_url %}
-          <a href="{% url 'weiss:card' card.pk %}" data-card-popup="{{ popup_url }}" class="card-name">{{ card.name }}</a>
+          <a href="{% url 'weiss:card' card.pk %}" data-card-popup="{{ popup_url }}" class="card-name">{{ card.name }}</a>{% include "weiss/cpu_flag.html" %}
           <span class="muted small">{{ card.color }} · {{ card.card_type }}{% if card.level is not None %} · Level {{ card.level }}{% endif %}</span>
         </li>
       {% endfor %}

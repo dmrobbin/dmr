@@ -125,6 +125,7 @@ class Mind:
 
     def can_play(self, card):
         return (self.play_level(card) <= self.my_level()
+                and not game.play_banned(self.state, self.me, card, self.info)
                 and self.play_cost(card) <= len(self.zones["stock"])
                 and not game.color_needed(self.state, self.me, card, self.info))
 

@@ -68,7 +68,7 @@
           <a href="{% url 'weiss:card' card.pk %}">
             {% if card.image_src %}<img src="{{ card.image_src }}" alt="{{ card.name }}" loading="lazy">{% endif %}
             <span class="card-title-row">
-              <span class="card-name">{{ card.name }}</span>
+              <span class="card-name">{{ card.name }}{% include "weiss/cpu_flag.html" %}</span>
               {% with price=card.tcgplayer_price %}{% if price.market_price is not None %}<span class="card-price">${{ price.market_price|floatformat:2 }}</span>{% endif %}{% endwith %}
             </span>
             <span class="muted">{{ card.serial_number }} · {{ card.rarity }}</span>

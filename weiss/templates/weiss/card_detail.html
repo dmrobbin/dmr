@@ -14,7 +14,7 @@
       <p class="muted card-serial">{{ card.serial_number }}</p>
       {% with price=card.tcgplayer_price %}
       <div class="card-title-row">
-        <h1>{{ card.name }}</h1>
+        <h1>{{ card.name }}{% include "weiss/cpu_flag.html" %}</h1>
         {% if price.market_price is not None %}<span class="card-price">${{ price.market_price|floatformat:2 }}</span>{% endif %}
       </div>
       {% if price %}
@@ -44,6 +44,7 @@
         <dt>Traits</dt><dd>{{ card.traits|default:"—" }}</dd>
       </dl>
       {% if card.description %}<div class="card-text">{{ card.description|linebreaksbr }}</div>{% endif %}
+      {% include "weiss/cpu_flag.html" with detail=True %}
       {% if card.flavor_text %}<p class="card-flavor">{{ card.flavor_text|linebreaksbr }}</p>{% endif %}
       <p class="muted small">
         {% if card.image_s3_key %}Image: <code>{{ card.image_s3_key }}</code>{% else %}Image not copied to S3 yet{% endif %}

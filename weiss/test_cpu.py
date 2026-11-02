@@ -1783,6 +1783,567 @@ class NoEndlessRearrangingTests(TestCase):
         self.assertEqual(action, {"type": "phase", "phase": "climax"})
 
 
+class WordingSpeedTests(TestCase):
+    def test_the_shortcut_only_names_text_every_match_has(self):
+        self.assertEqual(abilities.required_text(r"\bmultiplied by by\b"), "multiplied by by")
+        self.assertEqual(abilities.required_text(r"(?i)some text"), "")
+        self.assertIn(abilities.required_text(r"\b(?:on|at) the bottom of\b"), (" the bottom of",))
+        self.assertEqual(abilities.required_text(r"a|b"), "")
+
+    def test_every_rule_still_matches_what_it_says_it_needs(self):
+        for pattern, _, needs in abilities.WORDING_RULES:
+            self.assertIsInstance(needs, str, pattern.pattern)
+
+    def test_the_shortcut_never_changes_a_reading(self):
+        samples = ["【AUTO】 When this card attacks, choose two of your other characters, and until end of turn, those characters get +500 power and the following ability. \"【CONT】 This card gets +1 soul.\"",
+                   "【ACT】 [Put a blue card from your hand into waiting room] Search you deck for up to one character with \"Rapi\", reveal it to your opponent, put it into your hand, and shuffle your deck afterwards.",
+                   "COUNTER@ Backup 2500, Level 2 [Put this card from your hand into your waiting room]"]
+        for text in samples:
+            slow = abilities.mask(text.translate(abilities.FULL_WIDTH))[0]
+            for _ in range(2):
+                for pattern, replacement in abilities.WORDING:
+                    slow = abilities._re.sub(pattern, replacement, slow)
+            fast = abilities.mask(abilities.canonical(text))[0]
+            self.assertEqual(abilities.mask(abilities.unmask(slow, abilities.mask(text.translate(abilities.FULL_WIDTH))[1]))[0], fast)
+
+
+class SeventhBatchTests(TestCase):
+    def table(self, text, stock=0):
+        t = Table()
+        t.card(2000, text=text)
+        card = t.hand(2000)[0]
+        t.stock(stock)
+        t.refresh()
+        return t, card
+
+    def fire(self, t):
+        t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+
+    def shows(self, t):
+        while t.state.get("ability_show"):
+            t.apply(2, {"type": "ability_show_done", "id": t.state["ability_show"]["id"]})
+
+    def test_the_sentence_after_a_quote_is_its_own(self):
+        steps = abilities.parse('【AUTO】 When this card attacks, this card gets the following ability until end of turn. "【CONT】 This card gets +500 power." Then, reveal the top card of your deck.')[0]["steps"]
+        self.assertEqual([s["do"] for s in steps], ["buff", "reveal_top"])
+        self.assertEqual(len(steps[0]["grant"]), 1)
+
+    def test_x_after_a_quote(self):
+        text = '【AUTO】 When this card attacks, choose 1 character facing this card, deal X damage to your opponent, and that character gets the following ability until end of turn. \n"【CONT】 This card gets +500 power." X is equal to that character\'s soul.'
+        self.assertEqual(abilities.by_hand_parts(text), [])
+
+    def test_several_quoted_names_arent_split(self):
+        ability = abilities.parse('【AUTO】 When this card attacks, if "One" is in your climax area, this card gets +500 power until end of turn.')[0]
+        self.assertEqual(ability["steps"][0]["power"], 500)
+
+    def test_if_you_do_after_a_plain_action(self):
+        text = '【COUNTER】 Choose 1 of your characters, and put it into your waiting room. If you do, draw 1 card.'
+        steps = abilities.parse(text)[0]["steps"]
+        self.assertEqual(steps[-1]["cond"], [{"type": "did_it"}])
+        self.assertEqual(abilities.by_hand_parts(text), [])
+
+    def test_if_you_do_after_something_that_just_happens(self):
+        for text in ("【AUTO】 At the beginning of your climax phase, put this card into your memory. If you do, draw 1 card.",
+                     "【AUTO】 When this card is placed on the stage from your hand, return all cards in your waiting room to your deck. If you do, shuffle your deck, and draw 1 card."):
+            steps = abilities.parse(text)[0]["steps"]
+            self.assertNotIn("if", [s["do"] for s in steps], text)
+            self.assertEqual(steps[-1]["do"], "draw", text)
+
+    BANNED = 'If you do not have a 《Hero》 character, this card cannot be played from your hand.\nDraw 1 card.'
+
+    def test_a_card_that_cant_be_played_yet(self):
+        t = Table()
+        event = t.hand(t.card(2000, card_type="Event", text=self.BANNED))[0]
+        t.refresh()
+        self.assertEqual(t.state["play_banned"]["2"], [event["uid"]])
+        self.assertEqual(abilities.by_hand_parts(self.BANNED), [])
+        with self.assertRaises(game.GameError):
+            t.apply(2, {"type": "move", "uid": event["uid"], "to": "resolution"})
+        t.seat(t.me, "C1", t.card(800, traits="Hero"))
+        t.refresh()
+        self.assertEqual(t.state["play_banned"]["2"], [])
+        t.apply(2, {"type": "move", "uid": event["uid"], "to": "resolution"})
+        t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+        self.assertEqual(len(t.me["zones"]["hand"]), 1)
+
+    def test_the_cpu_keeps_to_it_too(self):
+        t = Table()
+        t.card(800, traits="Hero")
+        event = t.hand(t.card(2000, card_type="Event", text="If you do not have a 《Hero》 character, this card cannot be played from your hand.\nDraw 1 card."))[0]
+        mind = cpu.Mind(t.state, "2", t.info, cpu.Temper(), random.Random(1))
+        self.assertFalse(mind.can_play(event))
+        t.seat(t.me, "C1", 800)
+        self.assertTrue(mind.can_play(event))
+
+    def test_a_counter_with_a_condition_stays_a_counter(self):
+        text = '【COUNTER】 If you have 1 or less 《Hero》 characters, this card cannot be played from your hand.\nChoose 1 character in battle, and that character gets +1000 power until end of turn.'
+        kinds = [a["kind"] for a in abilities.parse(text)]
+        self.assertEqual(kinds, ["cont", "counter"])
+        t = Table()
+        t.card(2000, text=text)
+        t.card(800, traits="Hero")
+        card = game.new_card(2000)
+        self.assertIsNone(game.counter_play(t.state, "2", card, t.info))
+        t.seat(t.me, "C1", 800)
+        t.seat(t.me, "C2", 800)
+        self.assertIsNotNone(game.counter_play(t.state, "2", card, t.info))
+
+    def test_a_ban_it_cant_read_is_flagged(self):
+        self.assertTrue(abilities.by_hand_parts("If the moon is full, this card cannot be played from your hand.\nDraw 1 card."))
+
+    def test_if_you_do_needs_it_to_have_happened(self):
+        t = Table()
+        env = game.SimpleNamespace(info=t.info)
+        self.assertFalse(game.condition_met({"type": "did_it"}, t.state, "2", None, {"it": []}, env))
+        self.assertTrue(game.condition_met({"type": "did_it"}, t.state, "2", None, {"it": ["x"]}, env))
+
+    FUSION = ('【ACT】 Fusion [Put 1 "Partner" from your stage face up underneath this card as a marker] Search your deck for up to 1 "Merged", put it in the stage position that this card was in, '
+              'put this card and all markers underneath this card underneath it as markers, and shuffle your deck.')
+
+    def test_fusion_end_to_end(self):
+        self.assertEqual(abilities.by_hand_parts(self.FUSION), [])
+        t = Table()
+        me = t.seat(t.me, "C2", t.card(2000, text=self.FUSION))
+        partner = t.seat(t.me, "B1", t.card(801, name="Partner"))
+        merged = game.new_card(t.card(802, name="Merged"))
+        t.me["zones"]["deck"].append(merged)
+        t.refresh()
+        t.apply(2, {"type": "activate", "uid": me["uid"], "index": 0})
+        t.apply(2, {"type": "ability_answer", "uids": [partner["uid"]]})
+        self.assertEqual(t.state["resolving"]["prompt"]["options"], [merged["uid"]])
+        t.apply(2, {"type": "ability_answer", "uids": [merged["uid"]]})
+        self.assertEqual(t.me["stage"]["C2"]["uid"], merged["uid"])
+        self.assertEqual({c["uid"] for c in t.me["markers"]["C2"]}, {me["uid"], partner["uid"]})
+        self.assertIsNone(t.me["stage"]["B1"])
+
+    def test_the_old_position_still_works_once_this_card_has_gone(self):
+        t = Table()
+        me = t.seat(t.me, "C2", t.card(2000, text='【ACT】 [Put this card into your waiting room] Choose 1 "Next" in your waiting room, and put it in the stage position that this card was in.'))
+        nxt = game.new_card(t.card(802, name="Next"))
+        t.me["zones"]["waiting"] = [nxt]
+        t.refresh()
+        t.apply(2, {"type": "activate", "uid": me["uid"], "index": 0})
+        t.apply(2, {"type": "ability_answer", "uids": [nxt["uid"]]})
+        self.assertEqual(t.me["stage"]["C2"]["uid"], nxt["uid"])
+        self.assertEqual(t.me["markers"]["C2"], [])
+
+    def test_an_all_hand_discard_counts(self):
+        text = "【AUTO】 When this card is placed on the stage from your hand, put all cards from your hand into your waiting room, and draw X cards. X is equal to the number of cards revealed."
+        self.assertEqual(abilities.by_hand_parts(text), [])
+
+    def test_position_conditions(self):
+        t = Table()
+        me = t.seat(t.me, "C3", t.card(2000))
+        env = game.SimpleNamespace(info=t.info)
+        cond = abilities.parse_condition("if this card is in the right position of your center stage", [])
+        self.assertTrue(game.condition_met(cond, t.state, "2", me, {}, env))
+        self.assertFalse(game.condition_met({**cond, "slot": "C1"}, t.state, "2", me, {}, env))
+
+    def test_colors_turned_over(self):
+        cond = abilities.parse_condition("if there are 3 or more colors", [])
+        t = Table()
+        t.card(801, color="Red"); t.card(802, color="Blue"); t.card(803, color="Green")
+        env = game.SimpleNamespace(info=t.info)
+        self.assertTrue(game.condition_met(cond, t.state, "2", None, {"flipped": [801, 802, 803]}, env))
+        self.assertFalse(game.condition_met(cond, t.state, "2", None, {"flipped": [801, 802]}, env))
+
+
+class SixthBatchTests(TestCase):
+    def play(self, text, stock=0, **details):
+        t = Table()
+        t.card(2000, text=text, **details)
+        card = t.hand(2000)[0]
+        t.stock(stock)
+        t.refresh()
+        t.apply(2, {"type": "move", "uid": card["uid"], "to": "C1"})
+        return t, card
+
+    def fire(self, t):
+        t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+
+    def shows(self, t):
+        while t.state.get("ability_show"):
+            t.apply(2, {"type": "ability_show_done", "id": t.state["ability_show"]["id"]})
+
+    def test_choose_with_nowhere_named_means_the_stage(self):
+        t = Table()
+        t.card(2000, text="【AUTO】 When this card is placed on the stage from your hand, choose up to 1 《Hero》 character, and that character gets +1500 power until end of turn.")
+        ally = t.seat(t.me, "C2", t.card(800, traits="Hero"))
+        card = t.hand(2000)[0]
+        t.refresh()
+        t.apply(2, {"type": "move", "uid": card["uid"], "to": "C1"})
+        self.fire(t)
+        self.assertEqual(t.state["resolving"]["prompt"]["options"], [ally["uid"]])
+        t.apply(2, {"type": "ability_answer", "uids": [ally["uid"]]})
+        self.shows(t)
+        t.refresh()
+        self.assertEqual(t.state["stats"][ally["uid"]]["power"], 2500)
+
+    def test_choose_with_nowhere_named_after_looking_means_those(self):
+        t = Table()
+        t.card(2000, text="【AUTO】 When this card is placed on the stage from your hand, look at up to 1 cards from the top of your deck, choose up to 1 《Hero》 character, reveal it to your opponent, put it into your hand, and put the rest into your waiting room.")
+        t.seat(t.me, "C2", t.card(800, traits="Hero"))
+        top = game.new_card(800)
+        t.me["zones"]["deck"].append(top)
+        card = t.hand(2000)[0]
+        t.refresh()
+        t.apply(2, {"type": "move", "uid": card["uid"], "to": "C1"})
+        self.fire(t)
+        t.apply(2, {"type": "ability_answer", "value": 1})
+        self.assertEqual(t.state["resolving"]["prompt"]["options"], [top["uid"]])
+
+    def test_x_with_a_plus(self):
+        spec = abilities.parse_x("the number of colors of your characters on the stage +1", [])
+        self.assertEqual((spec["of"], spec["add"]), ("colors_stage", 1))
+        t = Table()
+        t.seat(t.me, "C1", t.card(801, color="Red"))
+        t.seat(t.me, "C2", t.card(802, color="Blue"))
+        self.assertEqual(game.x_value(spec, t.state, "2", None, {}, game.SimpleNamespace(info=t.info)), 3)
+
+    def test_x_multiplied_in_words(self):
+        step = abilities.parse("【AUTO】 When this card attacks, this card gets +X power until end of turn. X is equal to 500 multiplied by the number of your other 《Hero》 characters.")[0]["steps"][0]
+        self.assertEqual((step["x"]["of"], step["x"]["times"]), ("my_chars", 500))
+
+    def test_the_older_x_with_a_plus_is_unchanged(self):
+        self.assertEqual(abilities.parse_x("the level of that card +1", [])["plus"], 1)
+
+    def test_characters_named_or_of_a_trait(self):
+        f = abilities.parse_filter("characters with 《Hero》 or ⟦0⟧ in its card name", ["Rapi"])
+        self.assertTrue(abilities.matches_filter(f, {"card_type": "Character", "traits": "Hero"}))
+        self.assertTrue(abilities.matches_filter(f, {"card_type": "Character", "name": "Rapi: Red"}))
+        self.assertFalse(abilities.matches_filter(f, {"card_type": "Character", "name": "Anis"}))
+
+    def test_the_low_cost_wording(self):
+        steps = abilities.parse("【AUTO】 When this card attacks, choose 1 of your opponent's cost 1 or less characters, and put it into their waiting room.")[0]["steps"]
+        self.assertEqual(steps[0]["filter"]["any"][0]["cost_max"], 1)
+
+    IF_ELSE = ("【AUTO】 When this card is placed on the stage from your hand, reveal the top card of your deck. If that card is a 《Hero》 character, this card gets +1000 power until end of turn. "
+               "If it is not, this card gets +500 power until end of turn.")
+
+    def test_if_it_is_not_takes_the_other_branch(self):
+        self.assertEqual(abilities.by_hand_parts(self.IF_ELSE), [])
+        for traits, power in (("Hero", 2000), ("Villain", 1500)):
+            t, card = self.play(self.IF_ELSE)
+            t.card(801, traits=traits)
+            t.me["zones"]["deck"].append(game.new_card(801))
+            self.fire(t)
+            self.shows(t)
+            t.refresh()
+            self.assertEqual(t.state["stats"][card["uid"]]["power"], power, traits)
+
+    def test_otherwise_reads_the_same(self):
+        steps = abilities.parse("【AUTO】 When this card attacks, if you have another 《Hero》 character, draw 1 card. Otherwise, put this card into your waiting room.")[0]
+        self.assertEqual(abilities.by_hand_parts(steps["text"]), [])
+
+    def test_exchanging_this_card_with_a_chosen_one(self):
+        t = Table()
+        t.card(801, name="Partner")
+        me = t.seat(t.me, "C1", t.card(2000, text='【ACT】 [【REST】 this card] Choose this card and 1 "Partner" in your hand, and exchange them.'))
+        partner = t.hand(801)[0]
+        t.refresh()
+        t.apply(2, {"type": "activate", "uid": me["uid"], "index": 0})
+        t.apply(2, {"type": "ability_answer", "uids": [partner["uid"]]})
+        self.assertEqual(t.me["stage"]["C1"]["uid"], partner["uid"])
+        self.assertIn(me["uid"], [c["uid"] for c in t.me["zones"]["hand"]])
+
+    def test_exchanging_written_the_other_way_round(self):
+        self.assertEqual(abilities.by_hand_parts("【AUTO】 When this card attacks, choose 1 character in your waiting room and this card, and exchange them."), [])
+
+    def test_several_picks_together(self):
+        text = "【AUTO】 When this card is placed on the stage from your hand, look at up to 3 cards from the top of your deck, choose up to 1 yellow character and up to 1 red character from among them, put them into your hand, and put the rest into your waiting room."
+        self.assertEqual(abilities.by_hand_parts(text), [])
+        t, _ = self.play(text)
+        t.card(801, color="Yellow")
+        t.card(802, color="Red")
+        t.card(803, color="Blue")
+        yellow, red, blue = game.new_card(801), game.new_card(802), game.new_card(803)
+        t.me["zones"]["deck"] += [blue, red, yellow]
+        self.fire(t)
+        t.apply(2, {"type": "ability_answer", "value": 3})
+        t.apply(2, {"type": "ability_answer", "uids": [yellow["uid"]]})
+        t.apply(2, {"type": "ability_answer", "uids": [red["uid"]]})
+        hand = [c["uid"] for c in t.me["zones"]["hand"]]
+        self.assertIn(yellow["uid"], hand)
+        self.assertIn(red["uid"], hand)
+        self.assertIn(blue["uid"], [c["uid"] for c in t.me["zones"]["waiting"]])
+
+    def test_a_random_card_from_their_hand(self):
+        text = "【AUTO】 When this card is placed on the stage from your hand, choose 1 random card in your opponent's hand, and put it into their waiting room."
+        self.assertEqual(abilities.by_hand_parts(text), [])
+        t, _ = self.play(text)
+        t.them["zones"]["hand"] = [game.new_card(1)]
+        self.fire(t)
+        self.assertEqual((t.them["zones"]["hand"], len(t.them["zones"]["waiting"])), ([], 1))
+
+    def test_a_level_limit_on_the_character_facing(self):
+        step = abilities.parse("【AUTO】 When this card attacks, choose 1 level 1 or lower character facing this card, and put it into their waiting room.")[0]["steps"][0]
+        self.assertEqual(step["filter"]["any"][0]["level_max"], 1)
+
+    def test_a_marker_or_a_named_card(self):
+        steps = abilities.parse('【AUTO】 At the beginning of your encore step, you may choose 1 marker underneath this card or 1 "Father" in your waiting room, and put it in the stage position that this card was in.')[0]["steps"]
+        self.assertEqual(steps[0]["then"][0]["do"], "options")
+
+    def test_cannot_be_chosen_for_a_turn(self):
+        t, card = self.play("【AUTO】 When this card is placed on the stage from your hand, this card gets +1000 power and this card cannot be chosen by your opponent's effects until end of turn.")
+        self.fire(t)
+        self.shows(t)
+        t.refresh()
+        self.assertTrue(game.has_status(t.state, card["uid"], "no_chosen"))
+        self.assertEqual(t.state["stats"][card["uid"]]["power"], 2000)
+
+    def test_conditions_on_what_was_turned_over(self):
+        cond = abilities.parse_condition("if there are 2 or more climax among those cards", [])
+        t = Table()
+        t.card(913, card_type="Climax")
+        env = game.SimpleNamespace(info=t.info)
+        self.assertFalse(game.condition_met(cond, t.state, "2", None, {"flipped": [913, 1]}, env))
+        self.assertTrue(game.condition_met(cond, t.state, "2", None, {"flipped": [913, 913]}, env))
+
+    def test_typos_on_real_cards(self):
+        for text in ("【AUTO】 When this card attacks, search you deck for up to 1 level 1 or lower character, reveal it to your opponent, put it into your hand, and shuffle your deck.",
+                     "【ACT】 [(1)] Choose up to 2 of your ?Strange? characters, and those characters get +500 power until end of turn.",
+                     "【CONT】 All of your other <<Master>> or <<Homunculus>> characters get +500 power."):
+            self.assertEqual(abilities.by_hand_parts(text), [], text)
+
+
+class FifthBatchTests(TestCase):
+    def play(self, text, stock=0, **details):
+        t = Table()
+        t.card(2000, text=text, **details)
+        card = t.hand(2000)[0]
+        t.stock(stock)
+        t.refresh()
+        t.apply(2, {"type": "move", "uid": card["uid"], "to": "C1"})
+        return t, card
+
+    def fire(self, t):
+        t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+
+    def shows(self, t):
+        while t.state.get("ability_show"):
+            t.apply(2, {"type": "ability_show_done", "id": t.state["ability_show"]["id"]})
+
+    def queued(self, t):
+        return [e["ability"]["text"] for e in t.state.get("ability_queue", [])]
+
+    def test_a_backup_marked_with_the_climax_icon(self):
+        t = Table()
+        t.card(2000, text="【ACT】 [c-icon] Backup 1500, Level 0 [Put this card from your hand into your waiting room] (Choose one of your characters that is being frontal attacked.)")
+        self.assertEqual(abilities.by_hand_parts(t.info(2000)["text"]), [])
+        self.assertEqual(game.counter_play(t.state, "2", game.new_card(2000), t.info), (0, 1500))
+
+    def test_two_of_an_icon(self):
+        two = {"any": [{"icon": "soulx2"}]}
+        self.assertTrue(abilities.matches_filter(two, {"trigger": "soul soul"}))
+        self.assertFalse(abilities.matches_filter(two, {"trigger": "soul"}))
+        when = abilities.parse("【AUTO】 When your character's trigger check reveals a climax with [soul][soul] in its trigger icon, this card gets +500 power until end of turn.")[0]["when"][0]
+        self.assertEqual(when["filter"]["any"][0]["icon"], "soulx2")
+
+    def test_a_trigger_icon_written_with_a_tag(self):
+        self.assertEqual(abilities.parse_condition("if that card's trigger icon is [treasure]", [])["filter"]["any"][0]["icon"], "treasure")
+        self.assertEqual(abilities.by_hand_parts("【AUTO】 When this card attacks, reveal the top card of your deck. If that card's trigger icon is 【TREASURE】, draw 1 card."), [])
+
+    def test_color_free_and_lowered_together(self):
+        ability = abilities.parse("【CONT】 If you have 4 or more 《Hero》 characters, this card can be played from your hand without fulfilling color requirements, and this card gets -1 level while in your hand.")[0]
+        self.assertEqual((ability["color_free"], ability["hand_mod"]["level"], len(ability["cond"])), ({"self": True}, -1, 1))
+
+    def test_into_stock_instead_of_the_waiting_room(self):
+        text = ("【AUTO】 When this card is placed on the stage from your hand, put up to 1 card from the top of your clock into your waiting room. "
+                "If you have 1 or more other 《Hero》 characters, you may put that card into your stock instead of into your waiting room.")
+        self.assertEqual(abilities.by_hand_parts(text), [])
+        t = Table()
+        t.card(2000, text=text)
+        t.seat(t.me, "C2", t.card(800, traits="Hero"))
+        top = game.new_card(1)
+        t.me["zones"]["clock"] = [top]
+        card = t.hand(2000)[0]
+        t.refresh()
+        t.apply(2, {"type": "move", "uid": card["uid"], "to": "C1"})
+        self.fire(t)
+        t.apply(2, {"type": "ability_answer", "value": 1})
+        t.apply(2, {"type": "ability_answer", "value": "yes"})
+        self.assertEqual(t.me["zones"]["stock"][-1]["uid"], top["uid"])
+
+    def test_if_the_character_chosen_is(self):
+        text = "【AUTO】 When this card attacks, choose 1 character in your waiting room, and return it to your hand. If the character chosen is level 3 or higher, this card gets +3000 power until end of turn."
+        step = abilities.parse(text)[0]["steps"][-1]
+        self.assertEqual(step["cond"][0]["type"], "it_is")
+        t = Table()
+        t.card(801, level=3)
+        high = game.new_card(801)
+        env = game.SimpleNamespace(info=t.info)
+        t.me["zones"]["hand"] = [high]
+        self.assertTrue(game.condition_met(step["cond"][0], t.state, "2", None, {"it": [high["uid"]]}, env))
+        t.cards[801]["level"] = 2
+        self.assertFalse(game.condition_met(step["cond"][0], t.state, "2", None, {"it": [high["uid"]]}, env))
+
+    def test_if_x_is(self):
+        text = ("【AUTO】 When this card is placed on the stage from your hand, reveal the top card of your deck, choose 1 level X or lower character in your waiting room, and return it to your hand. "
+                "If X is 2 or higher, you may draw 1 card. X is equal to the level of the revealed card.")
+        self.assertEqual(abilities.by_hand_parts(text), [])
+        cond = abilities.parse(text)[0]["steps"][-1]["cond"][0]
+        self.assertEqual((cond["type"], cond["x"]["of"]), ("x_is", "revealed_level"))
+
+    def test_the_opponent_character_triggers(self):
+        t = Table()
+        watcher = t.seat(t.me, "C1", t.card(2000, text="【AUTO】 When your opponent's character attacks, this card gets +500 power until end of turn."))
+        attacker = t.seat(t.them, "C1", 1)
+        t.state.update(turn="1", phase="attack", attack={"step": "declare"})
+        t.refresh()
+        t.apply(1, {"type": "attack", "uid": attacker["uid"], "kind": "direct"})
+        self.assertEqual(t.state["ability_queue"][0]["uid"], watcher["uid"])
+
+    def test_the_opponent_reversed(self):
+        t = Table()
+        watcher = t.seat(t.me, "C1", t.card(2000, text="【AUTO】 When your opponent's character becomes 【REVERSE】, this card gets +500 power until end of turn."))
+        enemy = t.seat(t.them, "C2", 1)
+        t.refresh()
+        t.apply(1, {"type": "position", "uid": enemy["uid"], "pos": "reverse"})
+        self.assertEqual(t.state["ability_queue"][0]["uid"], watcher["uid"])
+
+    def test_the_middle_position_attacking(self):
+        t = Table()
+        watcher = t.seat(t.me, "B1", t.card(2000, text="【AUTO】 When your character in the middle position of your center stage attacks, this card gets +500 power until end of turn."))
+        left, middle = t.seat(t.me, "C1", 1), t.seat(t.me, "C2", 2)
+        t.state.update(phase="attack", attack={"step": "declare"})
+        t.refresh()
+        t.apply(2, {"type": "attack", "uid": left["uid"], "kind": "direct"})
+        self.assertFalse(any(e["uid"] == watcher["uid"] for e in t.state.get("ability_queue", [])))
+        t2 = Table()
+        watcher = t2.seat(t2.me, "B1", t2.card(2000, text=t.info(2000)["text"]))
+        middle = t2.seat(t2.me, "C2", 2)
+        t2.state.update(phase="attack", attack={"step": "declare"})
+        t2.refresh()
+        t2.apply(2, {"type": "attack", "uid": middle["uid"], "kind": "direct"})
+        self.assertEqual(t2.state["ability_queue"][0]["uid"], watcher["uid"])
+
+    def test_refreshing_triggers(self):
+        t = Table()
+        watcher = t.seat(t.me, "C1", t.card(2000, text="【AUTO】 When you refresh your deck, you may put this card into your stock."))
+        t.me["zones"]["deck"] = [game.new_card(1)]
+        t.me["zones"]["waiting"] = [game.new_card(2), game.new_card(3)]
+        t.refresh()
+        game.refresh(t.state, "2", lambda pk: "x", no_shuffle)
+        game.run_abilities(t.state, game.SimpleNamespace(info=t.info, name=lambda pk: "x"))
+        self.assertEqual(t.state["ability_queue"][0]["uid"], watcher["uid"])
+
+    def test_a_card_going_to_memory_triggers(self):
+        t = Table()
+        watcher = t.seat(t.me, "C1", t.card(2000, text="【AUTO】 When your card is put into your memory, this card gets +500 power until end of turn."))
+        event = t.hand(t.card(801, card_type="Event", text="Put this card into your memory."))[0]
+        t.refresh()
+        t.apply(2, {"type": "move", "uid": event["uid"], "to": "resolution"})
+        self.fire(t)
+        self.assertEqual(t.state["ability_queue"][0]["uid"], watcher["uid"])
+
+    def test_playing_a_named_card_triggers(self):
+        t = Table()
+        watcher = t.seat(t.me, "C1", t.card(2000, text='【AUTO】 When you play "Named", this card gets +500 power until end of turn.'))
+        named = t.hand(t.card(801, name="Named"))[0]
+        t.refresh()
+        t.apply(2, {"type": "move", "uid": named["uid"], "to": "C2"})
+        self.assertEqual(t.state["ability_queue"][0]["uid"], watcher["uid"])
+
+    def test_moving_triggers(self):
+        t = Table()
+        watcher = t.seat(t.me, "B1", t.card(2000, text="【AUTO】 When your character moves to another stage position, this card gets +500 power until end of turn."))
+        mover = t.seat(t.me, "C1", 1)
+        t.refresh()
+        t.apply(2, {"type": "move", "uid": mover["uid"], "to": "C2"})
+        self.assertEqual(t.state["ability_queue"][0]["uid"], watcher["uid"])
+
+    def test_opponent_cannot_play_events(self):
+        t, _ = self.play("【AUTO】 When this card is placed on the stage from your hand, until the end of your opponent's next turn, your opponent cannot play event from your hand.")
+        self.fire(t)
+        self.shows(t)
+        event = game.new_card(t.card(801, card_type="Event"))
+        t.them["zones"]["hand"].append(event)
+        with self.assertRaisesMessage(game.GameError, "events"):
+            t.apply(1, {"type": "move", "uid": event["uid"], "to": "resolution"})
+        game.finish_turn(t.state, "2", lambda pk: "x")
+        self.assertTrue(game.banned(t.state, "1", "event"))  # through their next turn
+        game.finish_turn(t.state, "1", lambda pk: "x")
+        self.assertFalse(game.banned(t.state, "1", "event"))
+
+    def test_no_backup_this_turn(self):
+        t, _ = self.play('【AUTO】 When this card is placed on the stage from your hand, until end of turn, your opponent cannot use "Backup".')
+        self.fire(t)
+        self.shows(t)
+        t.card(801, text="【ACT】 【COUNTER】 Backup 1000, Level 0 [Put this card from your hand into your waiting room]")
+        self.assertIsNone(game.counter_play(t.state, "1", game.new_card(801), t.info))
+
+    def test_this_card_and_a_marker_go_under_the_new_character(self):
+        text = ("【AUTO】 Inspire When your other character is placed on the stage from your hand, if there are no markers underneath that character, you may choose this card and up to 1 marker underneath this card, "
+                "and put them face up underneath that card in any order as markers. If you do, put the rest of the markers into your waiting room.")
+        self.assertEqual(abilities.by_hand_parts(text), [])
+        t = Table()
+        me = t.seat(t.me, "C1", t.card(2000, text=text))
+        keep, drop = game.new_card(1), game.new_card(2)
+        t.me["markers"]["C1"] = [keep, drop]
+        arrival = t.hand(t.card(801))[0]
+        t.refresh()
+        t.apply(2, {"type": "move", "uid": arrival["uid"], "to": "C2"})
+        self.fire(t)
+        t.apply(2, {"type": "ability_answer", "uids": [keep["uid"]]})
+        self.assertIsNone(t.me["stage"]["C1"])
+        self.assertEqual(sorted(c["uid"] for c in t.me["markers"]["C2"]), sorted([me["uid"], keep["uid"]]))
+        self.assertIn(drop["uid"], [c["uid"] for c in t.me["zones"]["waiting"]])
+
+    def test_a_marker_from_the_hand_as_a_cost(self):
+        text = '【ACT】 [Put 1 "Named" from your hand face up underneath this card as a marker] Draw 1 card.'
+        self.assertEqual(abilities.by_hand_parts(text), [])
+        t = Table()
+        me = t.seat(t.me, "C1", t.card(2000, text=text))
+        named = t.hand(t.card(801, name="Named"))[0]
+        t.refresh()
+        t.apply(2, {"type": "activate", "uid": me["uid"], "index": 0})
+        t.apply(2, {"type": "ability_answer", "uids": [named["uid"]]})
+        self.assertEqual(t.me["markers"]["C1"][0]["uid"], named["uid"])
+
+
+class UnplayableMarkTests(TestCase):
+    MARK = "cpu-flag"
+
+    def setUp(self):
+        common = {"expansion": "E", "expansion_id": 77, "card_type": "Character", "level": 0}
+        self.bad = Card.objects.create(serial_number="MRK/1", name="Bad One", description="【AUTO】 When this card attacks, juggle the dice.", **common)
+        self.good = Card.objects.create(serial_number="MRK/2", name="Good One", description="【AUTO】 When this card attacks, draw 1 card.", **common)
+        self.staff = User.objects.create_user("staff2", password="x", is_staff=True)
+        self.player = User.objects.create_user("player3", password="x")
+        Group.objects.get_or_create(name=WEISS_GROUP)[0].user_set.add(self.player)
+
+    def pages(self, user):
+        deck = CardList.objects.create(user=user, name="Marked")
+        CardListEntry.objects.create(card_list=deck, card=self.bad, quantity=1)
+        self.client.force_login(user)
+        session = self.client.session
+        session["weiss_editing_list"] = deck.pk
+        session.save()
+        return [reverse("weiss:set", args=[77]), reverse("weiss:card", args=[self.bad.pk]), reverse("weiss:card_popup", args=[self.bad.pk]), reverse("weiss:list", args=[deck.pk])]
+
+    def test_staff_see_it_everywhere_a_card_shows(self):
+        for url in self.pages(self.staff):
+            self.assertContains(self.client.get(url), self.MARK)
+
+    def test_players_never_do(self):
+        for url in self.pages(self.player):
+            self.assertNotContains(self.client.get(url), self.MARK)
+
+    def test_it_says_why_on_the_card(self):
+        self.pages(self.staff)
+        self.assertContains(self.client.get(reverse("weiss:card", args=[self.bad.pk])), "juggle the dice")
+
+    def test_a_playable_card_has_no_mark(self):
+        self.client.force_login(self.staff)
+        self.assertNotContains(self.client.get(reverse("weiss:card", args=[self.good.pk])), self.MARK)
+
+    def test_the_side_panel_keeps_it_when_redrawn(self):
+        pages = self.pages(self.staff)
+        deck = CardList.objects.get(user=self.staff)
+        data = self.client.post(reverse("weiss:list_change", args=[deck.pk]), {"card": self.good.pk, "delta": 1}, HTTP_ACCEPT="application/json").json()
+        self.assertIn(self.MARK, data["panel"])
+
+
 class AuditFixesTests(TestCase):
     def test_the_top_of_their_deck_is_the_top(self):
         step = abilities.parse("【AUTO】 When this card attacks, put the top X of your opponent's deck into his or her waiting room. X is equal to the number of 《Music》 characters you have.")[0]["steps"][0]
@@ -3258,6 +3819,20 @@ class CpuDeckBuildingTests(TestCase):
         self.assertEqual(self.deck.entries.count(), 0)
         self.client.post(url, {"card": self.clean_anchor.pk, "delta": 1})
         self.assertEqual(self.deck.entries.count(), 1)
+
+    def test_a_built_cpu_deck_opens_on_the_regular_deck_page(self):
+        response = self.client.post(self.start, {"series": "TST", "anchor": [self.clean_anchor.pk, self.other_anchor.pk]})
+        self.assertRedirects(response, reverse("weiss:list", args=[self.deck.pk]))
+        page = self.client.get(reverse("weiss:list", args=[self.deck.pk]))
+        self.assertContains(page, "Add cards to this list")
+        self.assertContains(page, reverse("weiss:list_rename", args=[self.deck.pk]))
+        self.assertContains(page, "Adding cards to")  # the side panel has it open for editing
+        self.assertContains(page, reverse("weiss:list_express_review", args=[self.deck.pk]))  # the replace tool is still a click away
+
+    def test_a_players_built_deck_still_goes_to_the_review(self):
+        mine = CardList.objects.create(user=self.staff, name="Mine")
+        response = self.client.post(reverse("weiss:list_express", args=[mine.pk]), {"series": "TST", "anchor": [self.clean_anchor.pk, self.other_anchor.pk]})
+        self.assertRedirects(response, reverse("weiss:list_express_review", args=[mine.pk]))
 
     def test_a_players_deck_can_still_have_them(self):
         mine = CardList.objects.create(user=self.staff, name="Mine")

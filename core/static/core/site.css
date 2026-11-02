@@ -542,6 +542,11 @@ select option { color: var(--text); background: var(--surface); }
 .inline-form { display: inline; }
 .deck-arcade { font-size: .8rem; font-weight: 700; color: var(--accent); white-space: nowrap; }
 .set-grid li[hidden] { display: none; }
+.cpu-flag { margin-left: .35rem; padding: 0 .3rem; border: 1px solid #e0605b; border-radius: .3rem; font-size: .7rem; font-weight: 400; white-space: nowrap; color: #ffb4b0; background: rgb(224 96 91 / .15); vertical-align: middle; }
+.cpu-flag-detail { margin: .5rem 0; padding: .4rem .6rem; border-left: 3px solid #e0605b; border-radius: .3rem; background: rgb(224 96 91 / .08); }
+.cpu-flag-detail .cpu-flag { margin-left: 0; }
+.cpu-flag-detail p { margin: 0 0 .2rem; }
+.cpu-flag-detail ul { margin: 0; padding-left: 1.1rem; overflow-wrap: anywhere; }
 /* The CPU tab's boxes, laid out like cards and sets. An open one takes the whole row, for its forms. */
 .cpu-grid { list-style: none; margin: .75rem 0 1.5rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); grid-auto-flow: dense; gap: 1.25rem; }
 .cpu-grid li:has(> .cpu-box[open]) { grid-column: 1 / -1; }

@@ -35,7 +35,7 @@
             </span>
           </label>
           {% url 'weiss:card_popup' tile.card.pk as popup_url %}
-          <a href="{% url 'weiss:card' tile.card.pk %}" data-card-popup="{{ popup_url }}" class="card-name small">{{ tile.card.name }}</a>
+          <a href="{% url 'weiss:card' tile.card.pk %}" data-card-popup="{{ popup_url }}" class="card-name small">{{ tile.card.name }}</a>{% include "weiss/cpu_flag.html" with card=tile.card %}
         </li>
       {% endfor %}
     </ul>

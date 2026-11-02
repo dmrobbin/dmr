@@ -5,6 +5,7 @@
     <p class="card-peek-name">{{ card.name }}</p>
     {% with price=card.tcgplayer_price %}{% if price.market_price is not None %}<span class="card-price">${{ price.market_price|floatformat:2 }}</span>{% endif %}{% endwith %}
   </div>
+  {% include "weiss/cpu_flag.html" with detail=True %}
   <dl class="card-stats">
     <dt>Type</dt><dd>{{ card.card_type|default:"—" }} · {{ card.rarity|default:"—" }}</dd>
     <dt>Color</dt><dd>{{ card.color|default:"—" }} · {{ card.side|default:"—" }}</dd>

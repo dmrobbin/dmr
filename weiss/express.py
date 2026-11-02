@@ -27,7 +27,7 @@ from django.views.decorators.http import require_POST
 from core.access import weiss_access_required
 
 from . import abilities
-from .lists import COPY_LIMIT, DECK_GROUPS, DECK_SIZE, EXPRESS_PROMPT, deck_checks, is_climax, sorted_entries
+from .lists import COPY_LIMIT, DECK_GROUPS, DECK_SIZE, EXPRESS_PROMPT, SESSION_KEY, deck_checks, is_climax, sorted_entries
 from .models import Card, CardList, CardListEntry
 from .views import series_code, summarize_sets, with_image_urls
 
@@ -510,6 +510,9 @@ def express_start(request, pk):
             card_list.save(update_fields=["is_deck", "cover_card", "express", "updated"])
         for note in notes:
             messages.warning(request, note)
+        if card_list.reserved_for_cpu:  # staff carry on from the regular deck page, editing it in the side panel
+            request.session[SESSION_KEY] = card_list.pk
+            return redirect("weiss:list", pk=card_list.pk)
         return redirect("weiss:list_express_review", pk=card_list.pk)
     with_image_urls(choices)
     return render(request, "weiss/express_anchors.html", {"card_list": card_list, "code": code, "choices": choices, "needed": needed})

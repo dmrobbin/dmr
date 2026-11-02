@@ -766,7 +766,8 @@
     const clock = inPhase("clock") ? move("clock", "🕒") : "";
     const reveal = board.reveal ? "" : iconButton({ type: "reveal", uid: card.uid }, "👁", "Reveal to your opponent");
     const piles = `<div class="hand-center">${clock}${move("waiting", "🪦")}${clockDraw}${reveal}</div>`;
-    const affordable = canPay(card, info) && !colorMissing(card) && !levelMissing(card, info);
+    const held = (board.play_banned || []).includes(card.uid); // its own text says it can't be played yet
+    const affordable = canPay(card, info) && !colorMissing(card) && !levelMissing(card, info) && !held;
     let rows = "";
     if (type === "character" && affordable && inPhase("main")) {
       rows = `<div class="hand-center">${move("C1", "L")}${move("C2", "M")}${move("C3", "R")}</div>
@@ -786,6 +787,7 @@
     }
     const needs = inPhase("main", "climax") ? colorMissing(card) : null;
     if (needs) rows = `<span class="hand-needs">Needs ${esc(needs)}</span>` + rows;
+    if (inPhase("main", "climax") && held) rows = `<span class="hand-needs">Can't be played yet</span>` + rows;
     if (inPhase("main", "climax") && levelMissing(card, info)) rows = `<span class="hand-needs">Needs level ${esc(handStat(card, info, "level"))}</span>` + rows;
     rows += piles;
     return `<div class="hand-actions">
