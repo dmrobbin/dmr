@@ -11,6 +11,9 @@
     <div class="express-bar">
       <button type="submit" class="button-small" data-express-build disabled>Build my deck</button>
       <span class="muted small" data-express-count aria-live="polite">0 of {{ needed }} chosen</span>
+      <label class="small express-focus" title="For a deck themed on a character: cards featuring a character your anchors feature are chosen over others wherever the deck's rules allow">
+        <input type="checkbox" name="focus" value="on"> Character focus
+      </label>
     </div>
     <ul class="card-grid express-grid">
       {% for card in choices %}

@@ -175,7 +175,7 @@ class Mind:
 
     def combo_climaxes(self, card):
         """The lines of this card's text with a cx combo."""
-        return [line for line in abilities.plain_name_lines(self.details(card).get("text")) if "【CXCOMBO】" in line]
+        return abilities.combo_lines(self.details(card).get("text"))
 
     def combo_live(self, card):
         """Whether this card has a cx combo whose climax is in the climax zone or the hand."""

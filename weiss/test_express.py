@@ -316,8 +316,12 @@ class MissingComboTests(TestCase):
         self.assertEqual(next(c for c in self.pool if c.description == FIXER).combos, set())
 
     def test_a_named_climax_outside_a_combo_line_doesnt_count(self):
-        card = Card(card_type="Character", description='【AUTO】 When "BIG" is placed on your climax area, draw 1 card.\n【AUTO】 【CXCOMBO】 When a climax is placed on your climax area, draw 1 card.')
+        card = Card(card_type="Character", description='【AUTO】 When this card attacks, if you have "BIG" in your memory, draw 1 card.\n【AUTO】 【CXCOMBO】 When a climax is placed on your climax area, draw 1 card.')
         self.assertEqual(express.combo_climaxes(card, {"BIG"}), set())
+
+    def test_older_unmarked_wording_is_a_combo_line(self):
+        card = Card(card_type="Character", description='【AUTO】 When "BIG" is placed on your climax area, draw 1 card.')
+        self.assertEqual(express.combo_climaxes(card, {"BIG"}), {"BIG"})
 
     def test_its_weight_drops_until_the_climax_is_in_the_deck(self):
         builder = express.Builder(self.pool, [], random.Random(1))
@@ -348,7 +352,9 @@ class MissingComboTests(TestCase):
     def test_a_combo_for_any_climax_and_no_combo_arent_dead(self):
         builder = express.Builder(self.pool, [], random.Random(1))
         self.assertFalse(builder.dead_combo(Card(description="【AUTO】 【CXCOMBO】 When a climax is placed on your climax area, draw 1 card."), {"BIG"}))
-        self.assertFalse(builder.dead_combo(Card(description='【AUTO】 When "Other" is placed on your climax area, draw 1 card.'), {"BIG"}))
+        self.assertFalse(builder.dead_combo(Card(description='【AUTO】 When this card attacks, draw 1 card.'), {"BIG"}))
+        # Older cards' combos have no mark, and are dead the same way.
+        self.assertTrue(builder.dead_combo(Card(description='【AUTO】 When "Other" is placed on your climax area, draw 1 card.'), {"BIG"}))
 
     def test_a_combo_with_any_of_its_climaxes_is_fine(self):
         self.combo.combos = {"BIG", "OTHER"}
@@ -507,6 +513,37 @@ class HighLevelBalanceTests(TestCase):
         self.assertEqual(builder.total(), 50)
 
 
+class OldComboTests(TestCase):
+    HOMURA = ('【AUTO】 When this card is placed on stage from your hand or by a "Change" effect, you may put the top card of your clock into your waiting room.\n'
+              '【AUTO】［Put this card into your memory］ When a card named "Madoka\'s Wish" is placed on your climax area, you may pay the cost. If you do, '
+              'search your deck for up to one card named "Homura "Fights On"", and put it on the stage position that this card was on. Shuffle your deck '
+              'afterwards, and that character gets +3000 power until end of your opponent\'s next turn.')
+    IN_AREA = '【AUTO】 When this card attacks, if a card named "Gentle Time" is in your climax area, this card gets +3000 power until end of turn.'
+    ANY = "【AUTO】 When a climax is placed on your climax area, this card gets +1000 power until end of turn."
+
+    def test_older_wording_counts_as_a_combo(self):
+        from . import abilities
+        self.assertTrue(abilities.has_combo(self.HOMURA))
+        self.assertEqual(len(abilities.combo_lines(self.HOMURA)), 1)
+        self.assertTrue(abilities.has_combo(self.IN_AREA))
+        self.assertFalse(abilities.has_combo(self.ANY))  # any climax: no particular one to build around
+        self.assertTrue(abilities.has_combo(COMBO))
+
+    def test_such_cards_are_anchors_and_name_their_climax(self):
+        make_series()
+        Card.objects.create(serial_number="TST/S1-900", name="Homura", expansion="Test set", expansion_id=1, card_type="Character",
+                            level=1, color="Red", power=3000, soul=1, description=self.HOMURA)
+        Card.objects.create(serial_number="TST/S1-901", name="Madoka's Wish", expansion="Test set", expansion_id=1, card_type="Climax",
+                            color="Red", description="")
+        Card.objects.create(serial_number="TST/S1-902", name="Plain", expansion="Test set", expansion_id=1, card_type="Character",
+                            level=1, color="Red", power=3000, soul=1, description=self.ANY)
+        pool = express.series_pool("TST")
+        anchors = {c.name for c in express.anchor_choices(pool)}
+        self.assertIn("Homura", anchors)
+        self.assertNotIn("Plain", anchors)
+        self.assertEqual(in_pool(pool, "Homura").combos, {"Madoka's Wish"})
+
+
 class SynergyBuildTests(TestCase):
     BACKUP = "COUNTER@ Backup 2500, Level 2 [Put this card from your hand into your waiting room]"
 
@@ -654,6 +691,73 @@ class CharacterWeightTests(TestCase):
         with mock.patch("weiss.express.Builder", wraps=express.Builder) as built:
             express.build_deck(pool, [in_pool(pool, "Combo Red")], random.Random(1), deck_name="Red")
         self.assertEqual(built.call_args.kwargs["deck_name"], "Red")
+
+
+class CharacterFocusTests(TestCase):
+    def setUp(self):
+        make_series()
+        levis = [Card(serial_number=f"TST/L-{i:02}", expansion="Test set", expansion_id=1, card_type="Character", level=level, color=color,
+                      power=3000, soul=1, traits="Hero", name=f"Levi: Form {i}", description=HITTER if i % 2 else FIXER)
+                 for i, (level, color) in enumerate([(0, "Red"), (0, "Red"), (1, "Red"), (1, "Red"), (2, "Red"), (0, "Blue"), (1, "Blue")])]
+        Card.objects.bulk_create(levis)
+        Card.objects.filter(name="Combo Red").update(name="Levi: Captain")
+        self.pool = express.series_pool("TST")
+        self.anchor = in_pool(self.pool, "Levi: Captain")
+
+    def levis(self, builder, color):
+        return sum(n for pk, n in builder.copies.items() if builder.by_pk[pk].name.startswith("Levi: Form") and builder.by_pk[pk].color == color)
+
+    def test_the_weight_is_for_the_decks_colors(self):
+        builder = express.Builder(self.pool, [self.anchor], random.Random(1), focus=True)
+        self.assertEqual(builder.character_weight(in_pool(self.pool, "Levi: Form 0")), express.FOCUS_WEIGHT)
+        self.assertEqual(builder.character_weight(in_pool(self.pool, "Levi: Form 5")), express.CHARACTER_WEIGHT)  # blue, off color
+        self.assertEqual(express.Builder(self.pool, [self.anchor], random.Random(1)).character_weight(in_pool(self.pool, "Levi: Form 0")),
+                         express.CHARACTER_WEIGHT)
+
+    def test_focus_fills_the_deck_with_the_character(self):
+        seeds = range(12)
+        plain = [express.build_deck(self.pool, [self.anchor], random.Random(seed))[0] for seed in seeds]
+        focused = [express.build_deck(self.pool, [self.anchor], random.Random(seed), focus=True)[0] for seed in seeds]
+        self.assertGreater(sum(self.levis(b, "Red") for b in focused), 1.5 * sum(self.levis(b, "Red") for b in plain))
+        for builder in focused:
+            self.assertGreaterEqual(self.levis(builder, "Red"), 12)  # nearly all 5 of them, 3 or 4 copies each
+            self.assertFalse(builder.is_filler(in_pool(self.pool, "Levi: Form 0")))  # so they aren't held to 3
+            self.assertEqual(builder.total(), express.DECK_SIZE)
+            self.assertLessEqual(self.levis(builder, "Blue"), self.levis(builder, "Red") // 2)
+
+    def test_the_build_page_passes_it_on_and_keeps_it(self):
+        user = User.objects.create_user("daryl", password="x", is_staff=True)
+        self.client.force_login(user)
+        deck = CardList.objects.create(user=user, name="Deck")
+        start = reverse("weiss:list_express", args=[deck.pk])
+        self.assertContains(self.client.get(start, {"series": "TST", "anchor": ""}), 'name="focus"')
+        with mock.patch("weiss.express.build_deck", wraps=express.build_deck) as built:
+            self.client.post(start, {"series": "TST", "anchor": [self.anchor.pk, Card.objects.get(name="Combo Blue").pk], "focus": "on"})
+        self.assertTrue(built.call_args.kwargs["focus"])
+        self.assertTrue(CardList.objects.get(pk=deck.pk).express["focus"])
+
+
+class VarietyTests(TestCase):
+    def setUp(self):
+        make_series()
+        self.pool = express.series_pool("TST")
+
+    def test_what_has_no_tie_to_the_anchors_or_climaxes_is_filler(self):
+        builder, _, _ = express.build_deck(self.pool, [in_pool(self.pool, "Combo Naming")], random.Random(1))
+        self.assertFalse(builder.is_filler(in_pool(self.pool, "Combo Naming")))  # an anchor
+        self.assertFalse(builder.is_filler(in_pool(self.pool, "“Curly” Friend")))  # named by it
+        self.assertFalse(builder.is_filler(in_pool(self.pool, "BIG")))
+        self.assertTrue(builder.is_filler(in_pool(self.pool, "TST card 1")))
+        self.assertFalse(builder.is_filler(in_pool(self.pool, "Combo Red")))  # names a climax in the deck
+        self.assertTrue(express.Builder(self.pool, [in_pool(self.pool, "Combo Red")], random.Random(1)).is_filler(in_pool(self.pool, "Combo Blue")))  # BIG isn't in that deck
+
+    def test_filler_is_spread_out(self):
+        for seed in range(15):
+            builder, _, _ = express.build_deck(self.pool, [in_pool(self.pool, "Combo Red"), in_pool(self.pool, "Combo Blue")], random.Random(seed))
+            builder.initial = True
+            over = {builder.by_pk[pk].name: n for pk, n in builder.copies.items() if n > express.FILLER_COPY_LIMIT and builder.is_filler(builder.by_pk[pk])}
+            self.assertEqual(over, {}, seed)
+            self.assertEqual(builder.copies[in_pool(self.pool, "Combo Red").pk], express.ANCHOR_COPIES)
 
 
 class ChoosingByHandTests(TestCase):

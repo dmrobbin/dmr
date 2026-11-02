@@ -741,6 +741,19 @@ def plain_name_lines(text):
     return [plain_name(line) for line in ability_lines(text)]
 
 
+# Older cards have no 【CXCOMBO】 mark: a combo is a named card "is placed on" or "is in" your climax area.
+OLD_COMBO = re.compile(r'"\s+is (?:placed on|put on|in) your climax area', re.I)
+
+
+def combo_lines(text):
+    """The lines of a card's text (quotes straightened) that are a climax combo."""
+    return [line for line in plain_name_lines(text) if "【CXCOMBO】" in line or OLD_COMBO.search(line)]
+
+
+def has_combo(text):
+    return bool(combo_lines(text))
+
+
 ICON_NAMES = {"stock": ("stock", "pool", "bag")}  # [stock], as card data may call it
 
 
