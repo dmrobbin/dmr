@@ -1,0 +1,31 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Arcade high scores{% endblock %}
+
+{% block content %}
+  <h1>Arcade Mode</h1>
+  {% include "weiss/arcade_tabs.html" with current="scores" %}
+  <p class="muted small">A run scores each CPU it beats; its total is what counts here. Only wins score:
+    {% for label, weight in weights %}{{ label }} {{ weight }} each{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
+  {% if not scenarios %}
+    <p class="empty">No arcade lists yet.</p>
+  {% else %}
+    <ul class="arcade-scenarios">
+      {% for scenario in scenarios %}
+        <li class="arcade-scenario">
+          <h2>{{ scenario.name }}</h2>
+          {% if scenario.best %}
+            <p class="arcade-best">{{ scenario.best.score }}</p>
+            <p class="small">by <strong>{{ scenario.best.user.username }}</strong>
+              <span class="muted">· {{ scenario.best.deck_name|default:"a deleted deck" }} · {% if scenario.best.status == "cleared" %}cleared{% else %}{{ scenario.best.position }} of {{ scenario.best.total }} beaten{% endif %} · {{ scenario.best.started|date:"j M Y" }}</span></p>
+            <ol class="arcade-best-fights small muted">
+              {% for fight in scenario.best.scores %}<li>{{ fight.name }}: {{ fight.score }}</li>{% endfor %}
+            </ol>
+          {% else %}
+            <p class="muted small">No scores yet. Beat a CPU in a run to set one.</p>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endblock %}

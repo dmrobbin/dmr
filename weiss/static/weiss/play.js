@@ -1253,6 +1253,12 @@
       <button type="button" class="game-over-end" data-act='{"type":"arcade_quit"}'>End run</button>`;
   }
 
+  // A win's score, and what made it up.
+  function scoreLines(score) {
+    const parts = score.parts.filter((part) => part.count).map((part) => `${part.count} ${esc(part.label)}: ${part.points}`);
+    return `<p class="game-over-score">Score ${score.total}</p>${parts.length ? `<p class="game-over-score-parts">${parts.join(" · ")}</p>` : ""}`;
+  }
+
   function renderGameOver() {
     const over = board.game_over;
     if (!over) {
@@ -1276,7 +1282,8 @@
         <div class="game-over-banner">${CREST}${custom ? `<div class="game-over-cpu">${cpuPortrait("game-over-cpu-image", outcome)}${said ? `<p class="cpu-speech">${esc(said)}</p>` : ""}</div>` : ""}
           <h2 class="game-over-word">${over.won ? "Victory" : "Defeat"}</h2>
           <p class="game-over-reason">${reason}</p>
-          ${arcade ? `<p class="game-over-arcade">${arcade.cleared ? `🏆 ${esc(arcade.scenario)} cleared!` : over.won ? `Up next: fight ${arcade.fight} of ${arcade.total}` : `${esc(arcade.scenario)}: fight ${arcade.fight} of ${arcade.total}`}</p>` : ""}
+          ${over.score ? scoreLines(over.score) : ""}
+          ${arcade ? `<p class="game-over-arcade">${arcade.cleared ? `🏆 ${esc(arcade.scenario)} cleared!` : over.won ? `Up next: fight ${arcade.fight} of ${arcade.total}` : `${esc(arcade.scenario)}: fight ${arcade.fight} of ${arcade.total}`}${arcade.score ? ` · run score ${arcade.score}` : ""}</p>` : ""}
           <p class="game-over-status" data-game-over-status></p>
           <div class="game-over-buttons" data-game-over-buttons></div></div>`;
       root.appendChild(gameOverEl);

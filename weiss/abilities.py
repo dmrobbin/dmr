@@ -20,6 +20,7 @@ silently dropped. A condition it doesn't recognize counts as met (the player can
 Inside the parser, quoted text (card names, granted abilities) is masked as ⟦n⟧ first, so commas and
 full stops inside quotes can't confuse the splitting into sentences and clauses.
 """
+import contextvars
 import logging
 import re as _re
 from functools import lru_cache
@@ -128,6 +129,24 @@ WORDING = [
     (r"(?<=[a-z])\.(?=[A-Z])", ". "),
     (r"\byour climax area has (a climax with \[\w+\] in its trigger icon)", r"\1 is in your climax area"),
     (r"\bWhen this character attacks\b", "When this card attacks"),
+    (r"\bput the rest into the waiting room\b", "put the rest into your waiting room"),
+    (r"\bput all markers from underneath this card and this card face up underneath that (⟦\d+⟧) as a marker in any order\b",
+     r"put this card and all markers underneath this card face up in any order underneath the \1 as markers"),
+    (r"\bReveal 1 (⟦\d+⟧) in your hand & Put it face up underneath this card as a marker\b", r"Put 1 \1 in your hand face up underneath this card as a marker"),
+    (r"\bperform the following action X number of times\b", "perform the following action X times"),
+    (r"\byou may have this card get\b", "you may this card gets"),
+    (r"(?<=1/TURN@ )(During the turn that this card is placed on the stage from your hand), if the damage dealt by this card is canceled\b",
+     r"\1, when damage dealt by this card is canceled"),
+    (r"(?<=, when )(⟦\d+⟧ is placed on your climax area), (your level is \d+ or higher)\b", r"\1, if \2"),
+    (r"\bthis card is placed on the stage from the effect of (⟦\d+⟧)", r"this card is placed on the stage by the effect of \1"),
+    (r"\b[Dd]uring your opponent's turn, if this card becomes 【REVERSE】", "During your opponent's turn, when this card becomes 【REVERSE】"),
+    (r"\bput it on any stage position as 【REST】", "put it in any position of your stage as 【REST】"),
+    (r"\bchoose 1 level (\d+) or higher battle opponent facing this card\b", r"choose 1 level \1 or higher character facing this card"),
+    (r"\bchoose 1 of your opponent's characters and up to 1 trait of that character, put all markers from underneath that character into your opponent's waiting room, and that character loses all of that trait until end of turn\b",
+     "choose 1 of your opponent's characters and 1 trait of that character, put all markers underneath that character into their waiting room, and that character loses all of that trait until end of turn"),
+    # Price of Gambling's whole wager, which is one thing to do
+    (r"\byour opponent declares higher or lower\. Your opponent puts the top card of their deck into the waiting room, if that card is level 0 or lower and your opponent declared higher, or if that card is level 1 and higher and your opponent declared lower, your opponent puts the top card of their stock into their waiting room\. If that card is level 0 or lower and your opponent declared lower, or if that card is level 1 and higher and your opponent declared higher, your opponent may put the top card of their deck into their stock\.",
+     "your opponent wagers on higher or lower."),
     (r"(?<=same card name as a character in your memory, )you may put that character into your memory\b", "you may put it into your memory"),
     (r"\byour waiting room has 1 (character with ⟦\d+⟧ in its card name)((?:, (?:and )?1 other character with ⟦\d+⟧ in its card name)+)",
      lambda m: "your waiting room has 1 " + " & 1 ".join([m[1]] + re.findall(r"1 (other character with ⟦\d+⟧ in its card name)", m[2]))),
@@ -573,6 +592,9 @@ def parse_filter(words, quotes):
     if words.endswith(" in battle"):
         words = words.removesuffix(" in battle")
         flags["in_battle"] = True
+    if words.endswith(" with the same card name as a character on your stage"):
+        words = words.removesuffix(" with the same card name as a character on your stage")
+        flags["same_name_on_stage"] = True
     if words.endswith(" with level higher than your opponent's level"):
         words = words.removesuffix(" with level higher than your opponent's level")
         flags["above_opponent_level"] = True
@@ -969,6 +991,14 @@ def parse_condition(words, quotes):
     match = re.fullmatch(r"the number of (other )?characters you have with (.+?) is (\d+) or (more|less)", text, re.I)
     if match and (f := parse_filter(f"characters with {match[2]}", quotes)):
         return {"type": "have", "n": int(match[3]), "dir": match[4].lower(), "filter": {**f, **({"other": True} if match[1] else {})}}
+    if re.fullmatch(r"the character facing this card is 【REVERSE】", text, re.I):
+        return {"type": "facing_pos", "pos": "reverse"}
+    if re.fullmatch(r"this card's battle opponent has level higher than your opponent's level", text, re.I):
+        return {"type": "facing_above_their_level"}
+    if re.fullmatch(r"there is a climax in your opponent's waiting room with the same card name as the climax placed", text, re.I):
+        return {"type": "placed_climax_in_opp_waiting"}
+    if re.fullmatch(r"that card has 1 or more of the same trait as the character put into your stock by this effect", text, re.I):
+        return {"type": "revealed_shares_trait"}
     match = re.fullmatch(r"(that card|that character) has the same card name as a character (on your stage|in your memory)", text, re.I)
     if match:
         return {"type": "same_name", "of": "revealed" if match[1].lower() == "that card" else "it", "zone": "stage" if "stage" in match[2] else "memory"}
@@ -1142,6 +1172,9 @@ def parse_cost(words, quotes):
             continue
         if raw == "Shuffle your deck":
             parts.append({"part": "shuffle"})
+            continue
+        if raw == "Put the top card of your stock on the top of your deck":
+            parts.append({"part": "stock_to_deck"})
             continue
         if raw == "Put the top card of your stock into your clock":
             parts.append({"part": "stock_to_clock"})
@@ -1817,6 +1850,29 @@ def clause_steps(clause, quotes, cost):
         return [{"do": "self_it"}, {"do": "place", "open": True, "zone": match[1], "keep_pos": True}]
     if text == "move this card to the open middle position of your center stage":
         return [{"do": "self_it"}, {"do": "place", "open": True, "only": "C2", "keep_pos": True}]
+    if (body := REPLAYS.get().get(text)) is not None:  # a 【REPLAY】 the card names, written out on it
+        return replay_steps(body)
+    match = re.fullmatch(r"your opponent looks at up to \d+ cards from the top of their deck|puts them on the top of their deck in the original order", text)
+    if match:
+        return []  # only for them to know: nothing moves
+    match = re.fullmatch(r"your opponent chooses (\d+) cards in their memory", text)
+    if match:
+        return [{"do": "choose", "zone": "memory", "owner": "opp", "chooser": "opp", "filter": None, "min": int(match[1]), "max": int(match[1]), "text": unmask(clause, quotes)}]
+    if text == "puts all cards in their memory except those cards into their waiting room":
+        return [{"do": "memory_except_it", "owner": "opp"}]
+    match = re.fullmatch(r"search your deck for (?:up to )?(\d+) character with the same card name as a character on your stage", text)
+    if match:
+        return [{"do": "search", "max": int(match[1]), "filter": {"any": [{"type": "character"}]}, "same_name_as": {"type": "character", "zone": "stage"}, "text": unmask(clause, quotes)}]
+    if text == "put all markers underneath that character into their waiting room":
+        return [{"do": "markers_of_it"}]
+    if text == "you get 1 additional turn":
+        return [{"do": "extra_turn"}]
+    if text == "terminate the attack and proceed to the next attack declaration step":
+        return [{"do": "terminate_attack"}]
+    if text == "your opponent wagers on higher or lower":
+        return [{"do": "declare_hl", "chooser": "opp"}, {"do": "wager_hl"}]
+    if text == "put this card in any position of your stage":
+        return [{"do": "self_it"}, {"do": "place"}]
     if text == "move it to the stage position that the character in battle was on":
         return [{"do": "to_moved_from", "move": True}]
     match = re.fullmatch(r"puts it on the stage position that (?:that )?(?:character|card) was on", text)
@@ -2482,6 +2538,8 @@ def parse_one_when(words, quotes):
     if begin:
         if text == "the encore step":
             return [{"on": "phase", "phase": "encore", "whose": "any"}]
+        if text == "the counter step during your opponent's turn":
+            return [{"on": "counter_step"}]
         match = re.fullmatch(r"the (draw|clock|main|climax|attack) phase", text)
         if match:
             return [{"on": "phase", "phase": match[1], "whose": "any"}]
@@ -2617,6 +2675,10 @@ def parse_one_when(words, quotes):
         return [{"on": "attack", "kind": "side"}]
     if text == "damage dealt by this card is not canceled":
         return [{"on": "no_cancel"}]
+    if text == "your other character is placed on the stage from a marker area":
+        return [{"on": "placed_from_marker"}]
+    if text == "the counter step during your opponent's turn":
+        return [{"on": "counter_step"}]
     if text == "another character is put into your waiting room from the stage":
         return [{"on": "leave_other", "filter": {"any": [{"type": "character"}]}}]
     if text == "this card is put into your waiting room from your memory":
@@ -2992,13 +3054,45 @@ def play_ban(line):
     return ability, unmask(match[3], quotes), match[1] == "COUNTER"
 
 
+REPLAYS = contextvars.ContextVar("replays", default={})  # the card being read's 【REPLAY】 names: {name: what it does}
+REPLAY_LINE = re.compile(r"(?:\[replay\]|【REPLAY】)\s*(?P<name>[A-Z][^A-Z.]*?) (?P<body>[A-Z].*)")
+DARBY_WAGER = "All players choose 1 of their characters, and put the top card of their decks into their waiting rooms."
+
+
+def replay_steps(body):
+    """What a 【REPLAY】 does where a card's ability names it."""
+    if body.startswith(DARBY_WAGER):  # each stakes a character on whose top card is the higher level
+        return [{"do": "choose", "zone": "stage", "filter": {"any": [{"type": "character"}]}, "min": 1, "max": 1, "text": "Choose 1 of your characters to wager"},
+                {"do": "keep_it", "key": "wager_mine"},
+                {"do": "choose", "zone": "stage", "owner": "opp", "chooser": "opp", "filter": {"any": [{"type": "character"}]}, "min": 1, "max": 1,
+                 "text": "Choose 1 of your characters to wager"},
+                {"do": "keep_it", "key": "wager_theirs"},
+                {"do": "wager_levels"}]
+    return parse_effect(body)
+
+
 @lru_cache(maxsize=4096)
 def parse_cached(text):
     """Card text comes from outside and new sets have new wording, so no line of it may ever stop a page or a game."""
+    lines, replays = [], {}
+    for line in ability_lines(canonical(text)):
+        replay = REPLAY_LINE.fullmatch(line)
+        if replay:  # "Wager your soul in a game" and so on: the card's abilities say when it happens
+            replays[replay["name"][:1].lower() + replay["name"][1:]] = replay["body"]
+        else:
+            lines.append(line)
+    token = REPLAYS.set(replays)
+    try:
+        return read_lines(text, lines)
+    finally:
+        REPLAYS.reset(token)
+
+
+def read_lines(text, lines):
     abilities = []
     event_lines = []
     counter_card = False
-    for line in ability_lines(canonical(text)):
+    for line in lines:
         banned = play_ban(line)
         if banned:
             ability, rest, counter = banned

@@ -9,7 +9,7 @@ from django.urls import reverse
 
 from core.access import WEISS_GROUP
 
-from . import abilities, cpu, cpu_views, express, game, play
+from . import abilities, cpu, cpu_views, express, game, play, scoring
 from .models import Card, CardList, CardListEntry, CpuProfile, GameRoom, cpu_user
 
 
@@ -2822,6 +2822,199 @@ class MadokaMagicaTests(PersonaTests):
         steps = abilities.parse(self.SEANCE)[-1]["steps"][-1]["then"]
         self.assertEqual(steps[1]["cond"], [{"type": "same_name", "of": "it", "zone": "memory"}])
         self.assertEqual(abilities.parse(self.GUIDE)[2]["steps"][0]["then"][0]["filter"]["reverse"], True)
+
+
+class JoJoTests(PersonaTests):
+    JOTARO = "【AUTO】 [(1)] When this card is placed on the stage from your hand, you may pay the cost. If you do, Wager your soul in a game.\n[replay] Wager your soul in a game Shuffle your deck, and reveal the top card of your deck. If that card is a 《Stand User》 or 《Stand》 character, choose 1 character in your waiting room, return it to your hand, and this card gets +3000 power until end of turn. Otherwise, put this card into your waiting room. (Return the revealed card to its original place)"
+    ELDER = "【AUTO】 When this card is placed on the stage from your hand, Wager your soul in a game.\n【ACT】 [【REST】 this card] Choose 1 of your other characters, and put it into your stock.\n[replay] Wager your soul in a game All players choose 1 of their characters, and put the top card of their decks into their waiting rooms. If the level of the card put into your waiting room by this effect is lower than the level of the card put into your opponent's waiting room by this effect, put the character you chose into your waiting room. Otherwise, your opponent puts the character they chose into their waiting room. (Climax are regarded as level 0)"
+    PLAYBACK = "【AUTO】 【CXCOMBO】 When your opponent levels up, Playback.\n【ACT】 Brainstorm [(1) 【REST】 this card] Flip over 4 cards from the top of your deck, and put them into your waiting room. For each climax revealed among those cards, choose up to 1 cost 0 or lower character in your waiting room, and put them on separate positions of your stage.\n【REPLAY】 Playback You may choose 1 \"Under the Falling Sky\" in your climax area, and return it to your hand."
+    MH = "【AUTO】 【CXCOMBO】 [⑧ Put 4 cards from your hand into your waiting room & Put 1 \"A New World\" from your climax area into your waiting room] At the beginning of your encore step, if this card is in your center stage, you may pay the cost. If you do, you get 1 additional turn."
+    EC = "【AUTO】 When this card is placed on the stage from your hand or by the 【ACT】 effect of \"Pride of a King, Diavolo\", you may put the top card of your clock into your waiting room.\n【AUTO】 [(4) Put 3 《Golden Wind》 characters from your hand into your waiting room] When this card is frontal attacked, you may pay the cost. If you do, terminate the attack and proceed to the next attack declaration step. (\"Trigger, Counter, Damage, and Battle Step\" are skipped)"
+    DIAVOLO = "【CONT】 If this card is in your center stage, all of your 《Golden Wind》 characters get +1500 power.\n【AUTO】 【CXCOMBO】 [(2) Put 2 cards from your hand into your waiting room] When this card is placed on the stage from the effect of \"Eternal Ruler\", you may pay the cost. If you do, 【STAND】 this card. (This ability can also be used when this card is placed on the stage by the 【STANDBY】 effect of \"Eternal Ruler\" that was revealed during trigger check)"
+    GAMBLING = "【AUTO】 When this card is placed on the stage from your hand, your opponent declares higher or lower. Your opponent puts the top card of their deck into the waiting room, if that card is level 0 or lower and your opponent declared higher, or if that card is level 1 and higher and your opponent declared lower, your opponent puts the top card of their stock into their waiting room. If that card is level 0 or lower and your opponent declared lower, or if that card is level 1 and higher and your opponent declared higher, your opponent may put the top card of their deck into their stock. (Climax are regarded as level 0)\n【ACT】 [【REST】 2 of your characters] All of your characters get +1 soul until end of turn."
+    ILLUSO = "【AUTO】 [(5) Put 2 cards from your hand into your waiting room] At the beginning of the counter step during your opponent's turn, you may pay the cost. If you do, choose 1 level 1 or higher battle opponent facing this card, and put it at the bottom of your opponent's deck."
+    ARROW = "Choose 1 of your characters, and put it into your stock. If you do, reveal the top card of your deck. If that card has 1 or more of the same trait as the character put into your stock by this effect, put that card on any position of your stage. (Otherwise, return it to its original place)"
+    DISCS = "【AUTO】 When this card is placed on the stage from your hand, choose 1 of your opponent's characters and up to 1 trait of that character, put all markers from underneath that character into your opponent's waiting room, and that character loses all of that trait until end of turn.\n【AUTO】 [Put 1 card from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, reveal the top card of your deck, choose 1 level X or lower 《Stand User》 or 《Stand》 character in your waiting room, and return it to your hand. X is equal to the level of the revealed card. (Climax are regarded as level 0. Return the revealed card to its original place)"
+    STICKER = "【AUTO】 [Put 1 《Stand User》 or 《Stand》 character from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, search your deck for 1 character with the same card name as a character on your stage, reveal it to your opponent, put it into your hand, and shuffle your deck."
+    BOSS = "【CONT】 Assist All of your characters in front of this card get +X power. X is equal to that character's level ×500.\n【ACT】 [(2) Put 1 card from your hand into your waiting room & 【REST】 this card] Choose 1 character with the same card name as a character on your stage in your waiting room, and put it in any position of your stage."
+    OBSERVER = "【AUTO】 When this card is placed on the stage from your hand, this card gets +X power until end of turn. X is equal to the number of 《Golden Wind》 characters you have ×1000.\n【AUTO】 [(1) Put 1 card from your hand into your waiting room] When a climax is placed on your opponent's climax area, if there is a climax in your opponent's waiting room with the same card name as the climax placed, you may pay the cost. If you do, put the top card of your opponent's deck into his or her waiting room, and deal X damage to your opponent. X is equal to that card's level. (Climax are regarded as level 0. Damage may be canceled)"
+    ABBACCHIO = "【AUTO】 【CXCOMBO】 [Put 1 card from your hand into your waiting room & Put the top card of your stock on the top of your deck & Put this card into your waiting room] At the end of this card's attack, if \"Under the Falling Sky\" is in your climax area, you may pay the cost. If you do, choose 1 \"Playback Investigation, M.J\" in your waiting room, and put it on the stage position this card was on."
+    VETERAN = "【AUTO】 When your other character is placed on the stage from a marker area, choose 1 of your characters, and that character gets +2000 power until end of turn.\n【ACT】 Brainstorm [(1) 【REST】 this card] Flip over 4 cards from the top of your deck, and put them into your waiting room. For each climax revealed among those cards, search your deck for up to 1 《Stand User》 or 《Stand》 or 《Hamon》 character, reveal it to your opponent, put it into your hand, and shuffle your deck."
+    MEW = "【AUTO】 When this card is placed on the stage from your hand, if your opponent's memory has 4 or more cards, your opponent chooses 3 cards in their memory, and puts all cards in their memory except those cards into their waiting room.\n【ACT】 [(2) 【REST】 this card] Choose 1 of your opponent's characters, and return it to their hand."
+
+    def test_they_are_all_read(self):
+        for name in ("JOTARO", "ELDER", "PLAYBACK", "MH", "EC", "DIAVOLO", "GAMBLING", "ILLUSO", "ARROW", "DISCS", "STICKER", "BOSS", "OBSERVER", "ABBACCHIO", "VETERAN", "MEW"):
+            self.assertEqual(abilities.by_hand_parts(getattr(self, name)), [], name)
+
+    def test_a_replay_is_done_where_the_card_names_it(self):
+        jotaro = abilities.parse(self.JOTARO)
+        self.assertEqual(len(jotaro), 1)  # the 【REPLAY】 line itself isn't an ability
+        self.assertEqual([s["do"] for s in jotaro[0]["steps"][0]["then"]], ["shuffle", "reveal_top", "if"])
+        playback = abilities.parse(self.PLAYBACK)[0]
+        self.assertEqual(playback["when"], [{"on": "level_up", "whose": "opp"}])
+        self.assertEqual(playback["steps"][0]["then"][0]["zone"], "climax")
+
+    def test_darby_wagers_a_character_on_the_higher_level(self):
+        for mine, theirs, loser in ((0, 2, "mine"), (2, 1, "theirs"), (1, 1, "theirs")):
+            t = Table()
+            t.card(2000, text=self.ELDER)
+            t.card(3000, level=mine)
+            t.card(3001, level=theirs)
+            darby = t.seat(t.me, "C1", 2000)
+            my_pick, their_pick = t.seat(t.me, "C2", 800), t.seat(t.them, "C1", 800)
+            t.me["zones"]["deck"].append(game.new_card(3000))
+            t.them["zones"]["deck"].append(game.new_card(3001))
+            self.run_ability(t, darby, self.ELDER)
+            self.answer(t, uids=[my_pick["uid"]])
+            self.assertEqual(self.prompt(t)["player"], "1")
+            self.answer(t, player=1, uids=[their_pick["uid"]])
+            lost, kept = (my_pick, their_pick) if loser == "mine" else (their_pick, my_pick)
+            self.assertIn(lost["uid"], [c["uid"] for c in t.me["zones"]["waiting"] + t.them["zones"]["waiting"]], (mine, theirs))
+            self.assertIn(kept, list(t.me["stage"].values()) + list(t.them["stage"].values()))
+
+    def test_an_additional_turn(self):
+        t = Table()
+        self.assertEqual(abilities.parse(self.MH)[0]["steps"][0]["then"], [{"do": "extra_turn"}])
+        t.state["extra_turn"] = "2"
+        game.finish_turn(t.state, "2", lambda pk: "x")
+        self.assertEqual(t.state["turn"], "2")
+        game.finish_turn(t.state, "2", lambda pk: "x")
+        self.assertEqual(t.state["turn"], "1")
+
+    def test_terminating_the_attack(self):
+        t = Table()
+        t.card(2000, text=self.EC)
+        t.card(3000, traits="Golden Wind")
+        ec = t.seat(t.me, "C1", 2000)
+        pay = t.hand(3000, 3000, 3000)
+        t.stock(4)
+        t.state["attack"] = {"step": "trigger", "uid": "x", "target": "C1", "kind": "front", "checking": True}
+        self.run_ability(t, ec, self.EC, 1)
+        self.answer(t, uids=[c["uid"] for c in pay])
+        self.assertEqual(t.state["attack"], {"step": "declare"})
+
+    def gamble(self, call, top_level):
+        t = Table()
+        t.card(2000, text=self.GAMBLING)
+        t.card(3000, level=top_level)
+        miraschon = t.seat(t.me, "C1", 2000)
+        t.them["zones"]["deck"].append(game.new_card(3000))
+        t.them["zones"]["stock"] = [game.new_card(900)]
+        self.run_ability(t, miraschon, self.GAMBLING)
+        self.assertEqual(self.prompt(t)["player"], "1")
+        self.answer(t, player=1, value=call)
+        return t
+
+    def test_a_right_call_may_earn_a_stock_card(self):
+        t = self.gamble("higher", 2)
+        self.assertEqual(self.prompt(t)["player"], "1")
+        self.answer(t, player=1, value="yes")
+        self.assertEqual(len(t.them["zones"]["stock"]), 2)
+
+    def test_a_wrong_call_costs_one(self):
+        t = self.gamble("higher", 0)
+        self.assertEqual(t.them["zones"]["stock"], [])
+
+    def test_the_arrow_calls_one_sharing_a_trait(self):
+        t = Table()
+        t.card(2000, text=self.ARROW, card_type="Event")
+        t.card(3000, traits="Stand User・Stand")
+        t.card(3001, traits="Stand")
+        mine = t.seat(t.me, "C1", 3000)
+        top = game.new_card(3001)
+        t.me["zones"]["deck"].append(top)
+        self.run_ability(t, game.new_card(2000), self.ARROW)
+        self.answer(t, uids=[mine["uid"]])
+        self.answer(t, value="C1")
+        self.assertIs(t.me["stage"]["C1"], top)
+        self.assertIn(mine, t.me["zones"]["stock"])
+
+    def test_the_discs_take_the_markers(self):
+        t = Table()
+        t.card(2000, text=self.DISCS)
+        t.card(3000, traits="Stand")
+        discs = t.seat(t.me, "C1", 2000)
+        theirs = t.seat(t.them, "C1", 3000)
+        t.them["markers"] = {s: [] for s in game.STAGE_SLOTS}
+        t.them["markers"]["C1"] = [game.new_card(900)]
+        self.run_ability(t, discs, self.DISCS)
+        self.answer(t, uids=[theirs["uid"]])
+        self.answer(t, value="Stand")
+        self.assertEqual(t.them["markers"]["C1"], [])
+        self.assertEqual(len(t.them["zones"]["waiting"]), 1)
+
+    def test_only_a_name_already_on_the_stage(self):
+        t = Table()
+        t.card(2000, text=self.BOSS)
+        t.card(3000, name="Jolyne")
+        boss = t.seat(t.me, "B1", 2000)
+        t.seat(t.me, "C1", 3000)
+        twin, other = game.new_card(3000), game.new_card(800)
+        t.me["zones"]["waiting"] = [twin, other]
+        self.run_ability(t, boss, self.BOSS, 1)  # an 【ACT】 run straight: its cost isn't part of this
+        self.assertEqual(self.prompt(t)["options"], [twin["uid"]])
+
+    def test_triggers_and_conditions(self):
+        t = Table()
+        env = game.SimpleNamespace(info=t.info)
+        card = t.seat(t.me, "B1", 800)
+        self.assertEqual(abilities.parse(self.ILLUSO)[0]["when"], [{"on": "counter_step"}])
+        self.assertEqual(game.when_matches({"on": "counter_step"}, "counter_step", {"player": "1"}, "2", card, env), {})
+        self.assertIsNone(game.when_matches({"on": "counter_step"}, "counter_step", {"player": "2"}, "2", card, env))
+        self.assertEqual(abilities.parse(self.VETERAN)[0]["when"], [{"on": "placed_from_marker"}])
+        placed = {"uid": 5, "src": game.MARKER + "C1", "owner": "2"}
+        self.assertEqual(game.when_matches({"on": "placed_from_marker"}, "placed", placed, "2", card, env), {"that": 5})
+        self.assertIsNone(game.when_matches({"on": "placed_from_marker"}, "placed", {**placed, "src": "hand"}, "2", card, env))
+        self.assertEqual(abilities.parse(self.DIAVOLO)[1]["when"], [{"on": "placed_by", "filter": {"any": [{"name": "Eternal Ruler"}]}}])
+        t.card(3000, name="Fate", card_type="Climax")
+        cond = abilities.parse(self.OBSERVER)[1]["cond"][0]
+        self.assertFalse(game.condition_met(cond, t.state, "2", card, {"placed_climax": 3000}, env))
+        t.them["zones"]["waiting"].append(game.new_card(3000))
+        self.assertTrue(game.condition_met(cond, t.state, "2", card, {"placed_climax": 3000}, env))
+        self.assertIn({"part": "stock_to_deck"}, abilities.parse(self.ABBACCHIO)[0]["cost"])
+        self.assertEqual([s["do"] for s in abilities.parse(self.MEW)[0]["steps"]], ["choose", "memory_except_it"])
+
+
+class ScoringTests(TestCase):
+    def test_the_weights(self):
+        t = Table()
+        t.state["tallies"] = {"2": {"knocked": 4, "drawn": 6, "abilities": 10}}
+        t.them["zones"]["level"] = [game.new_card(900) for _ in range(3)]
+        t.me["zones"]["level"] = [game.new_card(900)]
+        score = scoring.win_score(t.state, "2")
+        self.assertEqual({p["key"]: (p["count"], p["points"]) for p in score["parts"]},
+                         {"level_gap": (2, 2000), "knocked": (4, 400), "drawn": (6, 60), "abilities": (10, 20)})
+        self.assertEqual(score["total"], 2480)
+        t.me["zones"]["level"] = [game.new_card(900) for _ in range(3)]  # winning from higher is no gap, not a negative one
+        self.assertEqual(scoring.win_score(t.state, "2")["parts"][0]["count"], 0)
+
+    def knocked(self, t):
+        return t.state.get("tallies", {}).get("2", {}).get("knocked", 0)
+
+    def test_a_knockout_counts_once_for_the_other_player(self):
+        t = Table()
+        theirs = t.seat(t.them, "C1", 800)
+        env = game.SimpleNamespace(info=t.info, name=lambda pk: "x")
+        game.fire(t.state, env, "reverse", uid=theirs["uid"], by="a", owner="1", card=800)
+        self.assertEqual(self.knocked(t), 1)
+        game.move_card(t.state, env, "1", "1", theirs["uid"], "waiting")  # the encore step's clean-up: the same knockout
+        self.assertEqual(self.knocked(t), 1)
+        other = t.seat(t.them, "C2", 800)
+        game.move_card(t.state, env, "2", "1", other["uid"], "waiting")  # my effect sends theirs away
+        self.assertEqual(self.knocked(t), 2)
+        mine = t.seat(t.me, "C1", 800)
+        game.move_card(t.state, env, "2", "2", mine["uid"], "waiting")  # my own, by me: nobody's knockout
+        self.assertEqual(t.state["tallies"].get("1", {}).get("knocked", 0), 0)
+
+    def test_draws_and_abilities_are_counted(self):
+        t = Table()
+        t.card(2000, text="【AUTO】 When this card attacks, draw 2 cards.")
+        card = t.seat(t.me, "C1", 2000)
+        t.state["ability_queue"] = [{"id": "x", "player": "2", "uid": card["uid"], "card": 2000, "ability": abilities.parse(t.cards[2000]["text"])[0], "ctx": {}}]
+        t.apply(2, {"type": "ability_trigger", "id": "x", "accept": True})
+        self.assertEqual({k: t.state["tallies"]["2"][k] for k in ("drawn", "abilities")}, {"drawn": 2, "abilities": 1})
+        game.draw_step(t.state, "2", lambda pk: "x", no_shuffle)
+        self.assertEqual(t.state["tallies"]["2"]["drawn"], 3)
 
 
 class HardModeTests(TestCase):

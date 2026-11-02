@@ -1,0 +1,47 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Arcade Mode{% endblock %}
+
+{% block content %}
+  <h1>Arcade Mode</h1>
+  {% include "weiss/arcade_tabs.html" with current="runs" %}
+  <p class="muted small">Fight through a list of CPUs in a row, and beat the last one to mark your deck. You meet each CPU the first time you play it.</p>
+  {% if not scenarios %}
+    <p class="empty">No arcade lists are available yet.</p>
+  {% else %}
+    {% if not decks %}<p class="muted small">You need a deck to play with first. <a href="{% url 'weiss:lists' %}">Make one in your lists.</a></p>{% endif %}
+    <ul class="arcade-scenarios">
+      {% for scenario in scenarios %}
+        <li class="arcade-scenario">
+          <h2>{{ scenario.name }}</h2>
+          <p class="muted small">{{ scenario.lineup|length }} fight{{ scenario.lineup|length|pluralize }}{% if scenario.clears %} · cleared {{ scenario.clears }} time{{ scenario.clears|pluralize }}{% endif %}{% if scenario.my_best %} · your best score {{ scenario.my_best }}{% endif %}</p>
+          <ol class="arcade-lineup">
+            {% for fighter in scenario.lineup %}
+              <li class="arcade-fighter{% if not fighter.met %} unknown{% endif %}">
+                {% if fighter.met %}
+                  {% if fighter.cpu.image_url %}<img src="{{ fighter.cpu.image_url }}" alt="" loading="lazy">
+                  {% else %}{% include "weiss/avatar.html" with avatar=fighter.cpu.avatar name=fighter.cpu.name size="avatar-fill" %}{% endif %}
+                  <span class="small">{{ fighter.cpu.name }}</span>
+                {% else %}
+                  <span class="arcade-mystery" aria-hidden="true">?</span>
+                  <span class="small muted">Not met yet</span>
+                {% endif %}
+                {% if fighter.role != "filler" %}<span class="muted small">{{ fighter.role_label }}</span>{% endif %}
+              </li>
+            {% endfor %}
+          </ol>
+          {% if decks %}
+            <form method="post" action="{% url 'weiss:arcade_start' %}" class="cpu-form">
+              {% csrf_token %}
+              <input type="hidden" name="scenario" value="{{ scenario.pk }}">
+              <label class="small">Your deck
+                <select name="deck">{% for deck in decks %}<option value="{{ deck.pk }}">{{ deck.name }}</option>{% endfor %}</select>
+              </label>
+              <button type="submit" class="button-small">Start run</button>
+            </form>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endblock %}

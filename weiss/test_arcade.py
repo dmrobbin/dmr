@@ -182,6 +182,11 @@ class CpuImageTests(Base):
         self.assertContains(page, 'data-collapse="decks"')
         self.assertRegex(page.content.decode(), r"<strong>\d+ reserved decks?</strong>")
 
+    def test_the_profiles_fold_away(self):
+        page = self.client.get(reverse("weiss:cpu_home"))
+        self.assertContains(page, 'data-collapse="profiles"')
+        self.assertRegex(page.content.decode(), r"<strong>\d+ CPU profiles?</strong>")
+
     def test_only_staff_see_the_pool(self):
         image = CpuImage.objects.create(key="k.png")
         self.client.force_login(self.alice)
@@ -329,13 +334,15 @@ class ArcadeRunTests(Base):
         self.url = reverse("weiss:play_action", args=[room.pk])
         return room
 
-    def end_fight(self, winner):
+    def end_fight(self, winner, stats=None):
         room = GameRoom.objects.get(host=self.alice)
         room.state.pop("cpu_intro", None)
         who = room.host_id if winner == "me" else room.guest_id
 
         def ends(state, *args, **kwargs):
             state["game_over"] = {"winner": str(who), "reason": "level", "rematch": []}
+            if stats:
+                state["tallies"] = {str(who): stats}
             return {}
         with mock.patch.object(play.game, "apply", side_effect=ends):
             play.play_action(room, room.host_id, {"type": "x"}, lookups={"info": None})
@@ -491,7 +498,61 @@ class ArcadeRunTests(Base):
         self.end_fight("me")
         self.assertEqual(GameRecord.objects.count(), 2)
 
-    def test_the_play_page_offers_ready_scenarios(self):
-        page = self.client.get(reverse("weiss:play_rooms"))
+    def test_the_arcade_tab_offers_ready_scenarios(self):
+        page = self.client.get(reverse("weiss:arcade"))
         self.assertContains(page, "Arcade Mode")
         self.assertContains(page, "Ark")
+        self.assertContains(page, f'href="{reverse("weiss:arcade")}" class="current"')
+        self.assertContains(self.client.get(reverse("weiss:play_rooms")), f'href="{reverse("weiss:arcade")}"')
+        self.assertNotContains(self.client.get(reverse("weiss:play_rooms")), "Start run")
+
+    def test_wins_are_scored_and_added_to_the_run(self):
+        self.start()
+        self.end_fight("cpu", {"knocked": 9})
+        self.assertIsNone(GameRecord.objects.get().score)  # losses aren't scored
+        self.post(self.url, {"type": "arcade_retry"})
+        room = self.end_fight("me", {"knocked": 3, "drawn": 5, "abilities": 4})
+        self.assertEqual(room.state["game_over"]["score"]["total"], 358)
+        self.assertEqual(GameRecord.objects.order_by("pk").last().score, 358)
+        run = ArcadeRun.objects.get()
+        self.assertEqual((run.score, run.scores), (358, [{"cpu": self.opener.pk, "name": "Open", "score": 358}]))
+        self.post(self.url, {"type": "arcade_continue"})
+        self.end_fight("me", {"knocked": 1})
+        self.assertEqual(ArcadeRun.objects.get().score, 458)
+        board = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()
+        self.assertEqual(board["board"]["game_over"]["score"]["total"], 100)
+        self.assertEqual(board["arcade"]["score"], 458)
+
+    def test_high_scores_show_each_scenarios_best_run_and_who_played_it(self):
+        page = self.client.get(reverse("weiss:arcade_scores"))
+        self.assertContains(page, "No scores yet")
+        bob = player("bob")
+        ArcadeRun.objects.create(user=self.alice, scenario=self.scenario, scenario_name="Ark", score=500, scores=[{"cpu": 1, "name": "Open", "score": 500}])
+        ArcadeRun.objects.create(user=bob, scenario=self.scenario, scenario_name="Ark", score=900, status="cleared",
+                                 scores=[{"cpu": 1, "name": "Open", "score": 400}, {"cpu": 2, "name": "F1", "score": 500}])
+        page = self.client.get(reverse("weiss:arcade_scores"))
+        self.assertEqual(page.context["scenarios"][0].best.user, bob)
+        self.assertContains(page, "<strong>bob</strong>", html=True)
+        self.assertContains(page, "F1: 500")
+        self.assertContains(page, f'href="{reverse("weiss:arcade")}" class="current"')  # still the Arcade tab
+        self.assertContains(self.client.get(reverse("weiss:arcade")), "your best score 500")
+
+    def met(self):
+        lineup = self.client.get(reverse("weiss:arcade")).context["scenarios"][0].lineup
+        return {fighter["cpu"].name for fighter in lineup if fighter["met"]}
+
+    def test_only_the_opener_shows_before_a_run(self):
+        self.assertEqual(self.met(), {"Open"})
+        self.assertContains(self.client.get(reverse("weiss:arcade")), "Not met yet", count=3)
+
+    def test_each_cpu_shows_once_played_won_or_lost(self):
+        room = self.start()
+        self.end_fight("me")
+        self.post(self.url, {"type": "arcade_continue"})
+        second = CpuProfile.objects.get(pk=GameRoom.objects.get(pk=room.pk).cpu_profile_id)
+        self.assertEqual(self.met(), {"Open"})  # not yet played
+        self.end_fight("cpu")
+        self.assertEqual(self.met(), {"Open", second.name})
+        self.assertEqual(ArcadeRun.objects.get().fought, [self.opener.pk, second.pk])
+        self.client.force_login(player("bob"))  # what one player has met, another hasn't
+        self.assertEqual(self.met(), {"Open"})

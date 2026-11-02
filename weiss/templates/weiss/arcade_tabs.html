@@ -1,0 +1,5 @@
+{# The Arcade tab's own pages. Expects current: "runs" or "scores". #}
+<nav class="arcade-tabs" aria-label="Arcade">
+  <a href="{% url 'weiss:arcade' %}"{% if current == "runs" %} class="current" aria-current="page"{% endif %}>Runs</a>
+  <a href="{% url 'weiss:arcade_scores' %}"{% if current == "scores" %} class="current" aria-current="page"{% endif %}>High scores</a>
+</nav>

@@ -22,7 +22,7 @@ from django.views.decorators.http import require_POST
 from core import s3
 from core.access import has_weiss_access, weiss_access_required
 
-from . import arcade, cpu, game
+from . import arcade, cpu, game, scoring
 from .models import ArcadeRun, ArcadeScenario, Card, CardList, CpuProfile, GameRecord, GameRoom, PlayerProfile, cpu_user
 
 log = logging.getLogger(__name__)
@@ -79,7 +79,7 @@ def cpu_payload(room):
     run = room.arcade_run
     if run:
         payload["arcade"] = {"scenario": run.scenario_name, "fight": min(run.position + 1, run.total), "total": run.total,
-                             "cleared": run.status == ArcadeRun.Status.CLEARED}
+                             "cleared": run.status == ArcadeRun.Status.CLEARED, "score": run.score}
     return payload
 
 
@@ -99,9 +99,35 @@ def room_list(request):
     return render(request, "weiss/play_list.html", {
         "rooms": rooms,
         "cpus": CpuProfile.objects.filter(finalized=True, deck__isnull=False),
-        "scenarios": arcade.ready_scenarios(),
         "decks": CardList.objects.filter(user=request.user, reserved_for_cpu=False),
     })
+
+
+@weiss_access_required
+def arcade_home(request):
+    """The Arcade tab: each scenario with the CPUs this player has met in it, and a run to start."""
+    scenarios = arcade.ready_scenarios()
+    clears = {}
+    for run in ArcadeRun.objects.filter(user=request.user, status=ArcadeRun.Status.CLEARED):
+        clears[run.scenario_id] = clears.get(run.scenario_id, 0) + 1
+    best = {}
+    for run in ArcadeRun.objects.filter(user=request.user, score__gt=0).only("scenario_id", "score"):
+        best[run.scenario_id] = max(best.get(run.scenario_id, 0), run.score)
+    for scenario in scenarios:
+        scenario.lineup = arcade.lineup(scenario, request.user)
+        scenario.clears = clears.get(scenario.pk, 0)
+        scenario.my_best = best.get(scenario.pk, 0)
+    return render(request, "weiss/arcade.html", {
+        "scenarios": scenarios,
+        "decks": CardList.objects.filter(user=request.user, reserved_for_cpu=False),
+    })
+
+
+@weiss_access_required
+def arcade_scores(request):
+    """The Arcade tab's high scores: each scenario's best run, and who played it."""
+    return render(request, "weiss/arcade_scores.html", {"scenarios": arcade.high_scores(arcade.all_scenarios()),
+                                                       "weights": [(scoring.LABELS[key], weight) for key, weight in scoring.WEIGHTS.items()]})
 
 
 @weiss_access_required
@@ -145,15 +171,15 @@ def arcade_start(request):
     """A new run: its order is settled now, and the first fight is under way."""
     if GameRoom.objects.filter(host=request.user).count() >= GameRoom.MAX_OPEN_ROOMS:
         messages.error(request, f"You already host {GameRoom.MAX_OPEN_ROOMS} rooms; delete an old one first.")
-        return redirect("weiss:play_rooms")
+        return redirect("weiss:arcade")
     scenario = get_object_or_404(ArcadeScenario.objects.prefetch_related("entries__cpu"), pk=request.POST.get("scenario"))
     deck = get_object_or_404(CardList, pk=request.POST.get("deck"), user=request.user, reserved_for_cpu=False)
     if arcade.scenario_problem(scenario):
         messages.error(request, f"{scenario.name} isn't available right now.")
-        return redirect("weiss:play_rooms")
+        return redirect("weiss:arcade")
     if not deck.entries.exists():
         messages.error(request, f"“{deck.name}” is empty; add some cards first.")
-        return redirect("weiss:play_rooms")
+        return redirect("weiss:arcade")
     with transaction.atomic():
         run = ArcadeRun.objects.create(user=request.user, scenario=scenario, scenario_name=scenario.name, deck_name=deck.name, order=arcade.fight_order(scenario))
         room = GameRoom(host=request.user, host_deck=deck, arcade_run=run, status=GameRoom.Status.PLAYING)
@@ -431,9 +457,9 @@ def card_lookups(state):
             "cost": lambda card_pk: lookup(card_pk).get("cost"), "info": lookup}
 
 
-def record_game(room, over):
+def record_game(room, over, score=None):
     players = room.state["players"]
-    GameRecord.objects.create(
+    GameRecord.objects.create(score=score,
         host_id=room.host_id, guest_id=room.guest_id, host_name=players[str(room.host_id)]["name"], guest_name=players[str(room.guest_id)]["name"],
         host_deck_name=room.host_deck.name if room.host_deck else "", guest_deck_name=room.guest_deck.name if room.guest_deck else "",
         cpu=room.vs_cpu, cpu_profile=room.cpu_profile, winner="host" if over["winner"] == str(room.host_id) else "guest",
@@ -452,8 +478,12 @@ def play_action(room, player, action, lookups=None):
         # The player's deck beating a CPU counts apart; a CPU's deck has beaten a human.
         field = "cpu_wins" if room.vs_cpu and host_won else "wins"
         CardList.objects.filter(pk=deck_id).update(**{field: F(field) + 1})
-        record_game(room, over)
-        arcade.game_finished(room, over)
+        score = None
+        if room.vs_cpu and host_won:  # only a player's win against a CPU is scored
+            over["score"] = scoring.win_score(room.state, room.host_id)
+            score = over["score"]["total"]
+        record_game(room, over, score)
+        arcade.game_finished(room, over, score)
     if game.rematch_agreed(room.state):
         if room.host_deck and room.guest_deck:
             deal(room)

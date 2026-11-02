@@ -28,26 +28,7 @@
       </form>
     {% endif %}
   </section>
-  <section class="vs-cpu">
-    <h2>Arcade Mode</h2>
-    <p class="muted small">Fight through a list of CPUs in a row, and beat the last one to mark your deck.</p>
-    {% if not scenarios %}
-      <p class="muted small">No arcade lists are available yet.</p>
-    {% elif not decks %}
-      <p class="muted small">You need a deck to play with first. <a href="{% url 'weiss:lists' %}">Make one in your lists.</a></p>
-    {% else %}
-      <form method="post" action="{% url 'weiss:arcade_start' %}" class="cpu-form">
-        {% csrf_token %}
-        <label class="small">Scenario
-          <select name="scenario">{% for scenario in scenarios %}<option value="{{ scenario.pk }}">{{ scenario.name }} ({{ scenario.entries.all|length }} fight{{ scenario.entries.all|length|pluralize }})</option>{% endfor %}</select>
-        </label>
-        <label class="small">Your deck
-          <select name="deck">{% for deck in decks %}<option value="{{ deck.pk }}">{{ deck.name }}</option>{% endfor %}</select>
-        </label>
-        <button type="submit" class="button-small">Start run</button>
-      </form>
-    {% endif %}
-  </section>
+  <p class="muted small">Fighting through a list of CPUs in a row is on the <a href="{% url 'weiss:arcade' %}">Arcade</a> tab.</p>
   {% if rooms %}
     <ul class="set-list">
       {% for room in rooms %}

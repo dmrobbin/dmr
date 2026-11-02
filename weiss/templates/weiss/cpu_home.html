@@ -45,7 +45,11 @@
     <h2>CPU profiles</h2>
     <p class="muted small">Aggression 1 is the standard behaviour. Higher values chase enemy characters harder and protect their own less.</p>
     <p class="muted small">Focused works towards its climax combos, saving cards and stock for the next one it can reach. Strategic gets the most cards it can before building its board, filling its waiting room first if it can take cards from there.</p>
-    {% if profiles %}<p class="muted small">Click a box to open or close it.</p>{% endif %}
+    {% if profiles %}
+    <details class="cpu-row" data-collapse="profiles">
+    <summary class="cpu-row-head"><strong>{{ profiles|length }} CPU profile{{ profiles|length|pluralize }}</strong></summary>
+    <div class="cpu-row-body">
+    <p class="muted small">Click a box to open or close it.</p>
     <ul class="cpu-grid">
     {% for profile in profiles %}
       <li>
@@ -93,7 +97,9 @@
       </li>
     {% endfor %}
     </ul>
-    {% if not profiles %}<p class="empty">No CPU profiles yet.</p>{% endif %}
+    </div>
+    </details>
+    {% else %}<p class="empty">No CPU profiles yet.</p>{% endif %}
     <h3>New profile</h3>
     <form method="post" action="{% url 'weiss:cpu_profile_create' %}" class="cpu-form">
       {% csrf_token %}
