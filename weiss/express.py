@@ -5,8 +5,9 @@ Anchors, and any card named in an anchor's text, always go in, with the climaxes
 taking as many of the climax slots as they can. Next come the deck's synergy cards: every card in the
 deck's colors that names an anchor or a climax in the deck, as far as each level's share allows.
 
-The rest are drawn at random, by weight: towards synergy, the anchors' colors (more strongly if
-they're all one color) and traits, and towards whichever of damage and utility the deck is short of,
+The rest are drawn at random, by weight: towards synergy, the anchors' characters (more strongly
+for one both anchors feature, and more again if the deck is named after them), the anchors' colors
+(more strongly if they're all one color) and traits, and towards whichever of damage and utility the deck is short of,
 with cards that are only utility scarcer the higher their level. A card with a cx combo naming neither
 an anchor nor a climax in the deck is only drawn if nothing else fits. An initial build holds at most 3 backups and events
 together, and few copies of high level cards. A color's level 1 and higher cards only go in once the
@@ -33,6 +34,7 @@ from django.views.decorators.http import require_POST
 from core.access import weiss_access_required
 
 from . import abilities
+from .card_images import names_in_card
 from .lists import COPY_LIMIT, DECK_GROUPS, DECK_SIZE, EXPRESS_PROMPT, SESSION_KEY, deck_checks, is_climax, sorted_entries
 from .models import Card, CardList, CardListEntry
 from .views import series_code, summarize_sets, with_image_urls
@@ -61,6 +63,7 @@ HIGH_LEVEL_COPY_WEIGHTS = {1: 1, 2: 5, 3: 2}
 HIGH_LEVEL_COPIES = max(HIGH_LEVEL_COPY_WEIGHTS)  # the most of a level 2 or 3 card an initial build draws
 SUPPORT_LIMIT = 3  # backups and events together, in an initial build
 SYNERGY_WEIGHT = 10  # for a card naming an anchor or a climax in the deck
+CHARACTER_WEIGHT = 3  # for a card featuring a character an anchor features; doubled if both do, and again if the deck is named after them
 PURE_UTILITY_WEIGHT = {0: 1.5, 1: 1, 2: .5, 3: .25}  # by level, for a card that's utility and not damage
 
 UTILITY = re.compile(r"\bin your waiting room|from your waiting room|\bclock\b|your opponent's [^.,]*characters?"
@@ -116,6 +119,28 @@ def combo_climaxes(card, climax_names):
 def is_support(card):
     """A backup or an event: there to help the characters, so a deck only wants a few."""
     return card.card_type.lower() == "event" or any(a["kind"] == "backup" for a in abilities.parse(card.description))
+
+
+def characters_in(name):
+    """The characters a card's name features, as lower case names: '"Cleanup" Levi' -> ['levi']."""
+    return [character.lower() for character in names_in_card(name)]
+
+
+def features(card, character):
+    """Whether a card's name features this character, as whole words: "Eren Titan" features Eren."""
+    return any(re.search(rf"(?<!\w){re.escape(character)}(?!\w)", name) for name in characters_in(card.name))
+
+
+def character_weights(anchors, deck_name=""):
+    """{character: weight} for the characters the anchors feature."""
+    counts = Counter(character for anchor in anchors for character in set(characters_in(anchor.name)))
+    weights = {}
+    for character, count in counts.items():
+        weight = CHARACTER_WEIGHT * (2 if count > 1 else 1)
+        if re.search(rf"(?<!\w){re.escape(character)}(?!\w)", (deck_name or "").lower()):
+            weight *= 2
+        weights[character] = weight
+    return weights
 
 
 def anchor_copies(card):
@@ -243,7 +268,7 @@ def parsed_names(node):
 class Builder:
     """A deck being put together: card -> copies, and the weights for what to add next."""
 
-    def __init__(self, pool, anchors, rng, share=DAMAGE_SHARE["balanced"], copies=None, known=None):
+    def __init__(self, pool, anchors, rng, share=DAMAGE_SHARE["balanced"], copies=None, known=None, deck_name=""):
         self.pool = pool
         self.rng = rng
         self.share = share
@@ -252,6 +277,7 @@ class Builder:
         self.copies = Counter(copies or {})  # card pk -> copies
         self.by_pk = {card.pk: card for card in known or pool}  # `known`: cards it may find in the deck but won't draw
         self.anchor_names = {abilities.plain_name(a.name) for a in anchors}
+        self.characters = character_weights(anchors, deck_name)
         self.initial = False  # an initial build also keeps to the limits on copies and support cards
 
     def room(self, card):
@@ -334,7 +360,11 @@ class Builder:
             weight *= MISSING_COMBO_WEIGHT
         if self.has_synergy(card):
             weight *= SYNERGY_WEIGHT
-        return weight
+        return weight * self.character_weight(card)
+
+    def character_weight(self, card):
+        """The most of the anchors' characters' weights this card has: one character at most counts."""
+        return max((weight for character, weight in self.characters.items() if features(card, character)), default=1)
 
     def draw(self, candidates):
         candidates = [c for c in candidates if self.room(c) > 0 and not (self.initial and is_support(c) and self.support_room() <= 0)]
@@ -428,10 +458,10 @@ def replace_unplayable_climaxes(builder, anchors, required):
     return swaps
 
 
-def build_deck(pool, anchors, rng=random):
+def build_deck(pool, anchors, rng=random, deck_name=""):
     """Returns (Builder with the deck in it, names that must stay in it, notes for the player)."""
     notes = []
-    builder = Builder(pool, anchors, rng)
+    builder = Builder(pool, anchors, rng, deck_name=deck_name)
     builder.initial = True
     named, missing = named_in(anchors, pool)
     if missing:
@@ -503,7 +533,7 @@ def group_of(card):
     return next((i for i, (_, _, _, counts) in enumerate(DECK_GROUPS) if counts(card)), None)
 
 
-def replace_cards(pool, anchors, copies, required, removing, mode, rng=random, known=None, picked=()):
+def replace_cards(pool, anchors, copies, required, removing, mode, rng=random, known=None, picked=(), deck_name=""):
     """Swap copies out for new draws. Each new card comes from the same group as the one it replaces
     (so the climax count and the level spread stay as they are), or, if that group has nothing else,
     from any other that isn't climaxes. Every required name keeps at least one copy.
@@ -511,7 +541,7 @@ def replace_cards(pool, anchors, copies, required, removing, mode, rng=random, k
     `copies` and `removing` are {card pk: copies}. Returns (new copies, [(old name, new name), ...]),
     and a copy that has nothing to replace it stays. `picked`: names chosen by hand, climaxes among
     which stay even with nothing of their color in the deck yet."""
-    builder = Builder(pool, anchors, rng, DAMAGE_SHARE[mode], copies, known)
+    builder = Builder(pool, anchors, rng, DAMAGE_SHARE[mode], copies, known, deck_name)
     removed = {builder.by_pk[pk].name for pk in removing if pk in builder.by_pk}
     swaps = []
     for pk, count in removing.items():
@@ -592,7 +622,7 @@ def express_start(request, pk):
         if len(anchors) != needed or len(anchors) != len(set(wanted)):
             messages.error(request, f"Choose {needed} anchor card{'s' if needed != 1 else ''}.")
             return redirect(f"{reverse('weiss:list_express', args=[card_list.pk])}?series={code}")
-        builder, required, notes = build_deck(pool, anchors)
+        builder, required, notes = build_deck(pool, anchors, deck_name=card_list.name)
         with transaction.atomic():
             CardListEntry.objects.bulk_create(CardListEntry(card_list=card_list, card_id=card, quantity=n)
                                               for card, n in builder.copies.items() if n)
@@ -710,7 +740,7 @@ def express_replace(request, pk):
         # A card added by hand from another printing or series isn't in the pool, so replace_cards leaves it.
         removing =Counter({card: min(n, copies.get(card, 0)) for card, n in removing.items()})
         new, swaps = replace_cards(pool, anchors, copies, set(card_list.express["required"]), removing, mode, known=whole,
-                                   picked=card_list.express.get("picked", ()))
+                                   picked=card_list.express.get("picked", ()), deck_name=card_list.name)
         card_list.entries.all().delete()
         CardListEntry.objects.bulk_create(CardListEntry(card_list=card_list, card_id=card, quantity=n) for card, n in new.items())
         card_list.save(update_fields=["updated"])

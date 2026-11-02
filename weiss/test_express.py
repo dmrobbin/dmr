@@ -1,5 +1,6 @@
 import random
 from collections import Counter
+from unittest import mock
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -606,6 +607,53 @@ class SynergyBuildTests(TestCase):
     def test_replacing_isnt_held_to_the_initial_limits(self):
         pool = express.series_pool("TST")
         self.assertFalse(express.Builder(pool, [], random.Random(1)).initial)
+
+
+class CharacterWeightTests(TestCase):
+    def card(self, name, **fields):
+        card = Card(name=name, card_type="Character", level=0, color="Red", description="", **fields)
+        card.damage = card.utility = False
+        card.combos = set()
+        return card
+
+    def builder(self, anchors, deck_name=""):
+        return express.Builder([], anchors, random.Random(1), deck_name=deck_name)
+
+    def test_names_come_from_the_cards_own_name(self):
+        self.assertEqual(express.characters_in('"Cleanup" Levi'), ["levi"])
+        self.assertEqual(express.characters_in("Levi: Humanity's Strongest"), ["levi"])
+        self.assertEqual(express.characters_in("Simon & Nia"), ["simon", "nia"])
+        self.assertTrue(express.features(self.card('"Single Ray of Light" Eren Titan'), "eren"))
+        self.assertFalse(express.features(self.card("Erenhart"), "eren"))
+
+    def test_one_anchor_with_the_character(self):
+        builder = self.builder([self.card('"Cleanup" Levi'), self.card("Mikasa: Resolve")])
+        self.assertEqual(builder.character_weight(self.card("Levi: Strongest")), express.CHARACTER_WEIGHT)
+        self.assertEqual(builder.character_weight(self.card("Armin: Strategist")), 1)
+        plain, levi = self.card("Armin: Strategist"), self.card("Levi: Strongest")
+        self.assertAlmostEqual(builder.weight(levi) / builder.weight(plain), express.CHARACTER_WEIGHT)
+
+    def test_both_anchors_doubles_it(self):
+        builder = self.builder([self.card('"Cleanup" Levi'), self.card("Levi: Strongest")])
+        self.assertEqual(builder.character_weight(self.card('"Resisting Fate" Levi')), express.CHARACTER_WEIGHT * 2)
+
+    def test_the_deck_named_after_them_doubles_it_again(self):
+        anchors = [self.card('"Cleanup" Levi'), self.card("Levi: Strongest")]
+        self.assertEqual(self.builder(anchors, "Levi").character_weight(self.card("Levi Squad, Levi")), express.CHARACTER_WEIGHT * 4)
+        self.assertEqual(self.builder(anchors[:1], "levi deck").character_weight(self.card("Levi Squad, Levi")), express.CHARACTER_WEIGHT * 2)
+        self.assertEqual(self.builder(anchors, "Levitation").character_weight(self.card("Levi Squad, Levi")), express.CHARACTER_WEIGHT * 2)
+
+    def test_two_characters_on_one_card_counts_the_bigger(self):
+        builder = self.builder([self.card("Simon & Nia"), self.card("Simon: Drill")])
+        self.assertEqual(builder.character_weight(self.card("Nia & Simon")), express.CHARACTER_WEIGHT * 2)
+
+    def test_the_deck_name_reaches_the_builder(self):
+        make_series()
+        CardList.objects.all().delete()
+        pool = express.series_pool("TST")
+        with mock.patch("weiss.express.Builder", wraps=express.Builder) as built:
+            express.build_deck(pool, [in_pool(pool, "Combo Red")], random.Random(1), deck_name="Red")
+        self.assertEqual(built.call_args.kwargs["deck_name"], "Red")
 
 
 class ChoosingByHandTests(TestCase):

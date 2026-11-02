@@ -211,7 +211,7 @@ def cpu_images(request, pk):
     profile = get_object_or_404(CpuProfile.objects.select_related("image", "intro_image", "player_win_image", "player_lose_image"), pk=pk)
     screen = chosen_screen(request.GET)
     query = request.GET.get("q", "").strip()
-    images = CpuImage.objects.annotate(uses=sum((Count(field, distinct=True) for field in ("profiles", "intro_profiles", "win_profiles", "lose_profiles")), Value(0)))
+    images = CpuImage.objects.order_by("-created", "-pk").annotate(uses=sum((Count(field, distinct=True) for field in ("profiles", "intro_profiles", "win_profiles", "lose_profiles")), Value(0)))
     if query:
         images = images.filter(Q(name__icontains=query) | Q(series__icontains=query))
     return render(request, "weiss/cpu_images.html", {

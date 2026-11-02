@@ -157,6 +157,7 @@ class CpuImageTests(Base):
         self.assertEqual(len(page.context["page"].object_list), 60)
         self.assertEqual(page.context["page"].paginator.count, 61)
         self.assertNotContains(page, "Rapi")
+        self.assertEqual(page.context["page"].object_list[0].name, "Levi 60")  # the newest first
         self.assertContains(self.client.get(reverse("weiss:cpu_images", args=[self.profile.pk]), {"q": "nikke"}), "Rapi")
 
     def test_only_staff_see_the_pool(self):

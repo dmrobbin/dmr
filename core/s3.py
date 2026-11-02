@@ -1,6 +1,7 @@
 """Thin wrappers around the private S3 bucket that holds documents and resumes."""
 import boto3
 from botocore.config import Config
+from botocore.exceptions import ClientError
 from django.conf import settings
 
 
@@ -45,6 +46,17 @@ def list_files(prefix):
 def upload(key, fileobj, content_type=""):
     extra = {"ContentType": content_type} if content_type else {}
     client().upload_fileobj(fileobj, settings.AWS_S3_BUCKET, key, ExtraArgs=extra)
+
+
+def exists(key):
+    """Whether an object is really there, as after an upload."""
+    try:
+        client().head_object(Bucket=settings.AWS_S3_BUCKET, Key=key)
+    except ClientError as exc:
+        if exc.response.get("Error", {}).get("Code") in ("404", "NoSuchKey", "NotFound"):
+            return False
+        raise
+    return True
 
 
 def delete(key):

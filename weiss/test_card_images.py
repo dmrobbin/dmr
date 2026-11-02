@@ -3,6 +3,7 @@ import json
 from unittest import mock
 
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
 from django.test import TestCase, TransactionTestCase, override_settings
@@ -192,6 +193,7 @@ class WhoIsItAboutTests(TestCase):
 
 
 @override_settings(AWS_S3_BUCKET="bucket")
+@mock.patch("weiss.management.commands.find_card_images.s3.exists", new=lambda key: True)
 @mock.patch("weiss.management.commands.find_card_images.time.sleep")
 class CommandTests(TestCase):
     def run_it(self, *args):
@@ -277,6 +279,35 @@ class CommandTests(TestCase):
             self.run_it("--skip-missing")
         self.assertEqual(upload.call_count, 1)
         self.assertEqual(CpuImage.objects.filter(kind="official").count(), 1)
+
+    def test_a_failed_upload_of_any_kind_is_reported_and_saves_nothing(self, _):
+        from boto3.exceptions import S3UploadFailedError
+        make("AOT/4", "Eren", description=COMBO, image_s3_key="a.png")
+        with mock.patch("weiss.card_images.anilist_show", return_value=(CAST, [])), mock.patch("weiss.card_images.character_art", return_value=self.ART), \
+                mock.patch("weiss.management.commands.find_card_images.s3.upload", side_effect=S3UploadFailedError("Access Denied")):
+            with self.assertRaises(CommandError) as raised:
+                self.run_it("--skip-missing")
+        self.assertIn("couldn't be saved", str(raised.exception))
+        self.assertIn("Access Denied", str(raised.exception))
+        self.assertEqual(CpuImage.objects.count(), 0)
+
+    def test_an_upload_that_isnt_there_afterwards_counts_as_failed(self, _):
+        make("AOT/4", "Eren", description=COMBO, image_s3_key="a.png")
+        with mock.patch("weiss.card_images.anilist_show", return_value=(CAST, [])), mock.patch("weiss.card_images.character_art", return_value=self.ART), \
+                mock.patch("weiss.management.commands.find_card_images.s3.upload"), \
+                mock.patch("weiss.management.commands.find_card_images.s3.exists", return_value=False):
+            with self.assertRaises(CommandError):
+                self.run_it("--skip-missing")
+        self.assertEqual(CpuImage.objects.count(), 0)
+
+    def test_it_says_where_it_saves_and_what_it_saved(self, _):
+        make("AOT/4", "Eren", description=COMBO, image_s3_key="a.png")
+        with mock.patch("weiss.card_images.anilist_show", return_value=(CAST, [])), mock.patch("weiss.card_images.character_art", return_value=self.ART), \
+                mock.patch("weiss.management.commands.find_card_images.s3.upload"):
+            output = self.run_it("--skip-missing")
+        self.assertIn("Saving to the sqlite database", output)
+        self.assertIn("s3://bucket/weiss/", output)
+        self.assertIn(f"saved as image {CpuImage.objects.first().pk}", output)
 
     def test_a_series_can_be_chosen(self, _):
         make("AOT/4", "Eren", image_s3_key="a.png")

@@ -6,6 +6,7 @@ from collections import defaultdict
 from botocore.exceptions import BotoCoreError, ClientError
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+from django.db import connection
 
 from core import s3
 from weiss import card_images
@@ -29,6 +30,12 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.delay = options["delay"]
         self.dry_run = options["dry_run"]
+        self.failed = []
+        database = connection.settings_dict
+        # Said first, so a run against the wrong database or bucket is plain to see.
+        self.stdout.write(f"Saving to the {connection.vendor} database {database.get('NAME')}" + (f" on {database['HOST']}" if database.get("HOST") else "")
+                          + f", images to s3://{settings.AWS_S3_BUCKET or '(no bucket set)'}/{settings.WEISS_S3_PREFIX}"
+                          + (" (dry run: nothing will be saved)" if self.dry_run else ""))
         if not settings.AWS_S3_BUCKET and not self.dry_run and not options["skip_art"]:
             raise CommandError("AWS_S3_BUCKET isn't set, so there's nowhere to put avatar images. Use --skip-art or --dry-run.")
         cards = Card.objects.select_related().prefetch_related("prices").order_by("serial_number")
@@ -42,6 +49,8 @@ class Command(BaseCommand):
             self.fix_missing(by_series)
         if not options["skip_art"]:
             self.combo_art(by_series)
+        if self.failed:
+            raise CommandError(f"{len(self.failed)} image{'s' if len(self.failed) != 1 else ''} couldn't be saved: " + "; ".join(self.failed))
 
     # --- Card pictures --------------------------------------------------------------------------------
 
@@ -100,16 +109,16 @@ class Command(BaseCommand):
         if self.dry_run:
             return source
         data, extension, content_type = found
-        try:
-            if settings.AWS_S3_BUCKET:
-                key = image_key({"expansion_id": card.expansion_id, "serial_number": card.serial_number}) + extension
-                s3.upload(key, io.BytesIO(data), content_type)
-                card.image_s3_key = key
-            card.image_url = url
-            card.save(update_fields=["image_s3_key", "image_url"])
-        except (BotoCoreError, ClientError) as exc:
-            self.stderr.write(self.style.ERROR(f"  {card.serial_number}: {exc}"))
-            return None
+        if settings.AWS_S3_BUCKET:
+            key = image_key({"expansion_id": card.expansion_id, "serial_number": card.serial_number}) + extension
+            problem = self.upload(key, data, content_type)
+            if problem:
+                self.stderr.write(self.style.ERROR(f"  {card.serial_number}: not saved: {problem}"))
+                self.failed.append(f"{card.serial_number}: {problem}")
+                return None
+            card.image_s3_key = key
+        card.image_url = url
+        card.save(update_fields=["image_s3_key", "image_url"])
         return source
 
     # --- Character art --------------------------------------------------------------------------------
@@ -163,12 +172,23 @@ class Command(BaseCommand):
                 added += 1
                 continue
             key = f"{settings.WEISS_S3_PREFIX}cpu-images/pool-{uuid.uuid4().hex}{extension}"
-            try:
-                s3.upload(key, io.BytesIO(data), content_type)
-            except (BotoCoreError, ClientError) as exc:
-                self.stderr.write(self.style.ERROR(f"  {name}: {exc}"))
-                missing.append(kind)
+            problem = self.upload(key, data, content_type)
+            if problem:
+                self.stderr.write(self.style.ERROR(f"    not saved: {problem}"))
+                self.failed.append(f"{name} ({kind}): {problem}")
                 continue
-            CpuImage.objects.create(key=key, name=name, series=title, kind=kind, source_url=url, source_card=card)
+            image = CpuImage.objects.create(key=key, name=name, series=title, kind=kind, source_url=url, source_card=card)
+            self.stdout.write(f"    saved as image {image.pk}, {key}")
             added += 1
         return added, missing
+
+    def upload(self, key, data, content_type):
+        """Upload and make sure it arrived. What went wrong, or None. Every failure counts:
+        boto3 wraps a refused upload in an error of its own, outside the botocore ones."""
+        try:
+            s3.upload(key, io.BytesIO(data), content_type)
+            if not s3.exists(key):
+                return "the upload said it worked, but the image isn't in the bucket"
+        except Exception as exc:  # noqa: BLE001: whatever it is, it's reported and the run carries on
+            return f"{type(exc).__name__}: {exc}"
+        return None
