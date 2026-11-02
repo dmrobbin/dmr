@@ -2535,6 +2535,295 @@ class WitchTests(PersonaTests):
         self.assertEqual(ability["steps"][0]["then"][-1]["status"], "no_stand")
 
 
+class OshiNoKoTests(PersonaTests):
+    SAYA = '【CONT】 If you have 2 or more other 《Show Business》 characters, this card gets +2000 power.【AUTO】 [Put 1 card from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, choose 1 level - or lower 《Show Business》 character in your waiting room, and put it in any position of your stage.'
+    FAVE = 'Choose 1 《Show Business》 character in your waiting room, and return it to your hand.Put this card into your memory.【AUTO】 Memory [Put 1 climax from your hand into your waiting room] If this card is in your memory, at the beginning of your main phase, you may pay the cost. If you do, return this card to your hand.'
+    PROFILING = '【AUTO】 [Put 1 "Perfect Trace, Akane Kurokawa" in your hand face up underneath this card as a marker] At the beginning of your climax phase, you may pay the cost. If you do, choose this card and 1 "Perfect Trace, Akane Kurokawa" marker underneath this card, and exchange them. If you do, at the end of the turn, exchange those characters, choose 1 marker underneath that "Profiling, Akane Kurokawa", and return it to your hand.'
+    RUBY = '【AUTO】 【CXCOMBO】 Memory [Put 1 card from your hand into your waiting room] When this card attacks, if "Hidden Passion" is in your climax area, you may pay the cost. If you do, look at up to 2 cards from the top of your opponent\'s deck, choose up to 2 characters with X or lower total power from among them, put them into their clock in any order, and put the rest into their waiting room. X is equal to the number of cards with different card names in your memory ×4000.'
+    AUTHOR = '【AUTO】 During the turn that this card is placed on the stage from your hand, at the beginning of your attack phase, you may put all players\' characters except this card into their waiting rooms. If you do, all players put up to 3 cards from the top of their clock into their waiting room.【AUTO】 When this card becomes 【REVERSE】, you may return this card to your hand.'
+    FIRST_STAGE = 'Choose 1 of the following effects and perform it.\n"Search your deck for up to 1 climax, reveal it to your opponent, put it into your hand, and shuffle your deck."\n"Choose 1 of your characters, that character gets +4000 power until end of turn, and put this card into your stock."\n"[(4)] You may pay the cost. If you do, choose 1 of your characters, and that character gets the following ability until end of turn. "【AUTO】 This ability activates up to 1 time per turn. When this card attacks, you may deal 3 damage to your opponent." (Damage may be canceled)'
+    MEMCHO = '【CONT】 This card gets +1000 power for each of your other 《Show Business》 characters.\n【AUTO】 【CXCOMBO】 Experience When "Fake Wings" is placed on your climax area, if this card is in your center stage, and the total level of the cards in your level is 3 or higher, choose up to 1 《Show Business》 character in your waiting room, return it to your hand, and this card gets the following ability until end of turn."【AUTO】 This ability activates up to 1 time per turn. When damage dealt by this card is canceled, choose up to 2 《Show Business》 characters in your waiting room, and put them into your stock in any order."'
+    BOND = '【AUTO】 Bond/"Unshakable Center, Ai" "Idol-Fan Dance, Aqua" [Put 1 card from your hand into your waiting room] When this card is played and placed on the stage, you may pay the cost. If you do, choose 1 "Unshakable Center, Ai" or "Idol-Fan Dance, Aqua" in your waiting room, and return it to your hand)'
+    LYING = '【CONT】 Experience If this card is in your level, this card gets +3 level.\n【ACT】 [(1) Put 1 《Show Business》 character in your level into your waiting room & Put this card into your level] Look at up to 4 cards from the top of your deck, choose up to 1 level 1 or higher card from among them, reveal it to your opponent, put it into your hand, and put the rest into your waiting room. (Climax are regarded as level 0)'
+    KANA = '【AUTO】 When this card attacks, if your climax area has a climax with [choice] in its trigger icon, look at up to 2 cards from the top of your deck, put them on the top of your deck in any order, and this card gets +1000 power until end of turn.'
+    DIRECTOR = '【AUTO】 When this card attacks, choose 1 of your other 《Show Business》 characters, that character gets +X power until end of turn, and if that character has "Aqua(アクア)" in its card name, that character gets 《Precocious》 until end of turn. X is equal to that character\'s soul ×1000.'
+    AQUA = '【AUTO】 At the beginning of your opponent\'s attack phase, you may choose 1 of your 《Show Business》 characters, and move it to the open middle position of your center stage.'
+    AKANE = '【CONT】 This card gets +500 power for each of your other 《Show Business》 characters.【AUTO】 【CXCOMBO】 [(1) Put 1 card from your hand into your waiting room] When this card attacks, if "Wound-shifting Scabbard" is in your climax area, your hand has 5 or less cards, and you have 2 or more other 《Show Business》 characters, you may pay the cost. If you do, perform the following action 3 times. "Put the bottom card of your opponent\'s deck into their waiting room. If that card is level - or lower, deal 1 damage to your opponent, and put up to 1 card from the top of your clock into your waiting room." (Climax are regarded as level -. Damage may be canceled)'
+
+    def test_they_are_all_read(self):
+        for text in (self.SAYA, self.FAVE, self.PROFILING, self.RUBY, self.AUTHOR, self.FIRST_STAGE, self.MEMCHO, self.BOND, self.LYING,
+                     self.KANA, self.DIRECTOR, self.AQUA, self.AKANE):
+            self.assertEqual(abilities.by_hand_parts(text), [], text[:40])
+
+    def test_a_dash_is_a_0(self):
+        steps = abilities.parse(self.SAYA)[1]["steps"][0]["then"]
+        self.assertEqual(steps[0]["filter"]["any"][0]["level_max"], 0)
+        steps = abilities.parse(self.AKANE)[1]["steps"][0]["then"]
+        self.assertEqual([s["do"] for s in steps], ["top", "if"] * 3)
+        self.assertEqual(steps[1]["cond"][0]["filter"]["any"][0]["level_max"], 0)
+
+    def test_sentences_run_together(self):
+        steps = abilities.parse(self.FAVE)[-1]["steps"]
+        self.assertEqual([s["do"] for s in steps], ["choose", "move_it", "self_to"])
+
+    def test_the_first_stage_offers_all_3(self):
+        options = abilities.parse(self.FIRST_STAGE)[0]["steps"][0]["options"]
+        self.assertEqual(len(options), 3)
+        self.assertEqual(options[2]["steps"][0]["cost"], [{"part": "stock", "n": 4}])
+
+    def test_the_director_grants_the_trait_only_to_aqua(self):
+        steps = abilities.parse(self.DIRECTOR)[0]["steps"]
+        self.assertEqual(steps[1]["x"], {"of": "target_soul", "times": 1000})
+        self.assertEqual(steps[2]["cond"][0]["type"], "it_is")
+        self.assertEqual(steps[2]["then"][0]["traits"], ["Precocious"])
+
+    def test_lying_about_her_age_goes_into_the_level(self):
+        cost = abilities.parse(self.LYING)[1]["cost"]
+        self.assertEqual([(p["part"], p.get("zone"), p["to"]) for p in cost[1:]], [("pick", "level", "waiting"), ("self_to", None, "level")])
+
+    def test_profiling_trades_places_with_its_marker_and_back(self):
+        t = Table()
+        t.card(2000, text=self.PROFILING, name="Profiling, Akane Kurokawa")
+        t.card(2001, name="Perfect Trace, Akane Kurokawa", power=9000)
+        profiling = t.seat(t.me, "C2", 2000, pos="rest")
+        trace = t.hand(2001)[0]
+        self.run_ability(t, profiling, self.PROFILING)
+        self.answer(t, uids=[trace["uid"]])  # the cost: it goes underneath
+        self.assertEqual(t.me["markers"]["C2"], [trace])
+        self.answer(t, uids=[trace["uid"]])
+        self.assertIs(t.me["stage"]["C2"], trace)
+        self.assertEqual(trace["pos"], "rest")  # in the state this card was in
+        self.assertEqual(t.me["markers"]["C2"], [profiling])
+        self.assertEqual(t.state["delayed"][0]["phase"], "end")
+        t.apply(2, {"type": "phase", "phase": "end"})
+        t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+        self.assertIs(t.me["stage"]["C2"], profiling)
+        self.assertEqual(t.me["markers"]["C2"], [trace])
+        self.answer(t, uids=[trace["uid"]])
+        self.assertEqual(t.me["markers"]["C2"], [])
+        self.assertIn(trace, t.me["zones"]["hand"])
+
+    def ruby_table(self, *powers):
+        t = Table()
+        t.card(2000, text=self.RUBY)
+        t.card(2100, name="Hidden Passion", card_type="Climax")
+        for i, power in enumerate(powers):
+            t.card(3000 + i, power=power)
+        t.me["zones"]["memory"] = [game.new_card(2500), game.new_card(2501)]  # 2 names: X is 8000
+        t.them["zones"]["deck"] = [game.new_card(900) for _ in range(5)] + [game.new_card(3000 + i) for i in range(len(powers))]
+        ruby = t.seat(t.me, "C1", 2000)
+        pay = t.hand(900)[0]
+        self.run_ability(t, ruby, self.RUBY)
+        self.answer(t, uids=[pay["uid"]])
+        self.answer(t, value=2)
+        return t
+
+    def test_ruby_clocks_characters_within_x_power_together(self):
+        t = self.ruby_table(5000, 4000)
+        prompt = self.prompt(t)
+        self.assertEqual(prompt["max_power"], 8000)
+        both = list(prompt["options"])
+        with self.assertRaises(game.GameError):
+            self.answer(t, uids=both)
+        self.answer(t, uids=[both[0]])
+        self.assertEqual(len(t.them["zones"]["clock"]), 1)
+        self.assertEqual(len(t.them["zones"]["waiting"]), 1)
+
+    def test_one_too_strong_cant_be_chosen_and_the_cpu_fits_in_what_it_can(self):
+        t = self.ruby_table(9000, 3000)
+        prompt = self.prompt(t)
+        self.assertEqual(len(prompt["options"]), 1)
+        t = self.ruby_table(2000, 5000)
+        mind = cpu.Mind(t.state, "2", t.info, cpu.Temper(1), random.Random(1))
+        self.assertEqual(len(mind.pick_cards(self.prompt(t))), 2)
+        t = self.ruby_table(5000, 4000)
+        self.assertEqual(len(mind.pick_cards(self.prompt(t))), 1)
+
+    def test_the_author_lets_each_player_say_how_much_to_heal(self):
+        t = Table()
+        t.card(2000, text=self.AUTHOR)
+        author = t.seat(t.me, "C1", 2000)
+        t.me["zones"]["clock"] = [game.new_card(900) for _ in range(4)]
+        t.them["zones"]["clock"] = [game.new_card(900) for _ in range(4)]
+        steps = abilities.parse(self.AUTHOR)[0]["steps"][0]["then"]
+        self.assertEqual([s.get("owner") for s in steps[1:]], ["me", "opp"])
+        self.run_ability(t, author, self.AUTHOR)
+        self.answer(t, value=3)
+        self.assertEqual(self.prompt(t)["player"], "1")
+        self.answer(t, player=1, value=1)
+        self.assertEqual((len(t.me["zones"]["clock"]), len(t.them["zones"]["clock"])), (1, 3))
+
+    def test_moving_to_the_open_middle(self):
+        steps = abilities.parse(self.AQUA)[0]["steps"][0]["then"]
+        self.assertEqual(steps[-1], {"do": "place", "open": True, "only": "C2", "keep_pos": True})
+
+
+class MadokaMagicaTests(PersonaTests):
+    NEW_STORY = "【AUTO】 When this card is placed on the stage from your hand, this card gets +X power until end of turn. X is equal to the number of 《Magic》 characters you have ×500.\n【AUTO】 When this card's battle opponent becomes 【REVERSE】, put the top card of your deck into your waiting room. If that card has the same card name as a character on your stage, put that card into your stock."
+    NAGISA = "【AUTO】 When this card is placed on the stage from your hand, you may put the top card of your clock into your waiting room.\n\n【AUTO】 [(1)] When a card named \"Bearer of Memories\" is placed on your climax area, if this card is in your center stage, you may pay the cost. If you do, choose one of your opponent's level 3 or lower characters, put it into your opponent's memory, your opponent chooses up to one level 0 or lower character from his or her waiting room, and puts it on the stage position that character was on."
+    TSURUNO = "【AUTO】 [Put 1 card from your hand into your waiting room] When this card is placed on the stage from your hand, if your memory has 2 or less cards, you may pay the cost. If you do, choose up to 1 《Magic》 character in your waiting room, put it into your memory, and this card gets +3000 power until end of turn.\n【AUTO】 [(1)] At the beginning of your opponent's attack phase, you may pay the cost. If you do, choose any number of \"Shop's Poster Girl, Tsuruno\" in your memory, put them into your waiting room, and perform the following action X times. \"Choose 1 of your opponent's characters, and that character gets -1 soul until end of turn.\" X is equal to the number of cards put into your waiting room from your memory by this effect."
+    KYUBEY = "【CONT】 You can put any number of cards with the same card name as this card into your deck.\n\n【AUTO】 [(2) Put a card from your hand into your waiting room] When this card becomes 【REVERSE】 in battle, you may pay the cost. If you do, choose up to two cards named \"Kyubey Saying Kyu-\" in your waiting room, put them on separate positions of your stage as 【REST】, choose one of your characters, and that character gets +2000 power until end of turn."
+    OWL = "If you do not have a 《Magic》 character, this card cannot be played from your hand.\nDraw up to 2 cards, and put this card into your memory.\n【AUTO】 When this card is put into your waiting room from your memory, choose 4 cards in your hand, and put them into your waiting room.\n【AUTO】 Memory At the beginning of your climax phase, if this card is in your memory and you did not play \"Lucky Owl Water\" during this turn, put this card into your waiting room."
+    MOMOKO = "【AUTO】 When this card is placed on the stage from your hand, if you have another 《Magic》 character, this card gets +1000 power until the end of your opponent's next turn.\n【AUTO】 This ability activates up to 1 time per turn. When your opponent's character is placed into their waiting room from the stage or becomes 【REVERSE】 in battle, choose 1 of your 《Magic》 characters, and that character gets +1000 power until end of turn."
+    MAMI = "【AUTO】 At the beginning of your climax phase, if this card is in your center stage, choose 1 of your characters, and that character gets +1 or -1 level until end of turn.\n【AUTO】 At the beginning of your attack phase, choose 1 character in your center stage, and if all of your characters in your center stage are the same level as the chosen character, this card gets +1000 power and +1 soul until end of turn. \n【AUTO】 When this card attacks, if the character facing this card is level 3 or higher, this card gets +6000 power until end of turn."
+    DOPPEL = "【CONT】 If you have 2 or more other 《Magic》 characters, this card gets +2000 power.\n【AUTO】 During the turn that this card is placed on the stage by the 【AUTO】 effect of \"Everyone's Own Feelings, Kaede\", at the beginning of your climax phase, look at up to 4 cards from the top of your deck, choose up to 2 《Magic》 characters from among them, reveal them to your opponent, put them into your hand, choose up to 2 cards from the remaining cards, put them in any order on the top of your deck, and put the rest into your waiting room.\n【AUTO】 At the beginning of your draw phase, put this card into your waiting room, choose up to 1 \"Pursuing the Truth of Rumors, Kaede\" in your waiting room, and put it on the stage position that this card was on."
+    ALLEY = "【COUNTER】 Choose 1 of your characters in battle, return it to your hand, choose 1 character in your center stage, and move it to the stage position that the character in battle was on as the defending character."
+    STANCE = "【CONT】 All of your other characters get +500 power.\n\n【AUTO】 This ability activates up to one time per turn. When you use \"Shift\", until the end of your opponent's next turn, this card gets \"【CONT】 Assist All of your characters in front of this card get +500 power.\"."
+    GUIDE = "【AUTO】 When this card is placed on the stage from your hand, you may choose 1  《Magic》 character in your waiting room, and return it to your hand.\n【AUTO】 When this card attacks, choose 1 of your characters, and that character gets +1000 power until end of turn.\n【AUTO】 【CXCOMBO】 [(2) Put 2 cards from your hand into your waiting room] This ability activates up to 1 time per turn. At the end of this card's attack, if \"Connections\" is in your climax area, you may pay the cost. If you do, choose 1 of your other 【REVERSE】 《Magic》 characters, and 【STAND】 it."
+    REGRESSOR = "【AUTO】 When this card is placed on stage from your hand, if the number of cards in your deck is five or less, return all cards in your waiting room to your deck. If you do, shuffle your deck, choose one of your characters named \"End of Karma for Madoka\", put up to two cards from the top of your deck underneath that character as a marker, and all of your characters get +2000 power until end of turn."
+    ROOMMATE = "If you do not have a character with \"Yachiyo(やちよ)\" in its card name, this card cannot be played from your hand.\nIf your waiting room has 1 character with \"Iroha(いろは)\" in its card name, 1 other character with \"Yachiyo(やちよ)\" in its card name, 1 other character with \"Tsuruno(鶴乃)\" in its card name, 1 other character with \"Felicia(フェリシア)\" in its card name, and 1 other character with \"Sana(さな)\" in its card name, choose 1 of your characters, and that character gets +5000 power and the following ability until the end of your opponent's next turn. \"【CONT】 During this card's battle, your opponent cannot play \"Backup\" from hand.\""
+    SEANCE = "【COUNTER】 If you have 1 or less 《Magic》 characters, this card cannot be played from your hand.\nChoose 1 of your characters, and that character gets +2500 power until end of turn.\nIf your memory has 2 or less cards, perform the following action. \"Choose 1 character in your waiting room, and if that character has the same card name as a character in your memory, you may put that character into your memory.\""
+    CHAIN = "Look at up to three cards from the top of your opponent's deck, choose up to one card from among them, and put it on the bottom of your opponent's deck. Put the rest on top of your opponent's deck in any order."
+
+    def test_they_are_all_read(self):
+        for name in ("NEW_STORY", "NAGISA", "TSURUNO", "KYUBEY", "OWL", "MOMOKO", "MAMI", "DOPPEL", "ALLEY", "STANCE", "GUIDE", "REGRESSOR", "ROOMMATE", "SEANCE", "CHAIN"):
+            self.assertEqual(abilities.by_hand_parts(getattr(self, name)), [], name)
+
+    def test_a_card_named_like_one_on_the_stage_goes_to_stock(self):
+        for top, to in ((2001, "stock"), (2002, "waiting")):
+            t = Table()
+            t.card(2000, text=self.NEW_STORY, name="A New Story, Madoka")
+            t.card(2001, name="Sayaka")
+            story = t.seat(t.me, "C1", 2000)
+            t.seat(t.me, "C2", 2001)
+            card = game.new_card(top)
+            t.me["zones"]["deck"].append(card)
+            self.run_ability(t, story, self.NEW_STORY, 1)
+            self.assertIn(card, t.me["zones"][to])
+
+    def test_the_opponent_fills_the_position_theirs_left(self):
+        t = Table()
+        t.card(2000, text=self.NAGISA)
+        t.card(3000, level=1)
+        nagisa = t.seat(t.me, "C1", 2000)
+        theirs = t.seat(t.them, "C2", 3000)
+        small = game.new_card(800)
+        t.them["zones"]["waiting"] = [small]
+        t.stock(1)
+        self.run_ability(t, nagisa, self.NAGISA, 1)
+        self.answer(t, uids=[theirs["uid"]])
+        self.assertIn(theirs, t.them["zones"]["memory"])
+        self.assertEqual(self.prompt(t)["player"], "1")
+        self.answer(t, player=1, uids=[small["uid"]])
+        self.assertIs(t.them["stage"]["C2"], small)
+
+    def test_tsuruno_takes_a_soul_for_each_card_from_memory(self):
+        t = Table()
+        t.card(2000, text=self.TSURUNO)
+        t.card(2001, name="Shop's Poster Girl, Tsuruno")
+        tsuruno = t.seat(t.me, "C1", 2000)
+        girls = [game.new_card(2001), game.new_card(2001)]
+        t.me["zones"]["memory"] = list(girls)
+        one, two = t.seat(t.them, "C1", 800), t.seat(t.them, "C2", 800)
+        t.stock(1)
+        self.run_ability(t, tsuruno, self.TSURUNO, 1)
+        self.answer(t, uids=[g["uid"] for g in girls])
+        self.answer(t, uids=[one["uid"]])
+        self.answer(t, uids=[two["uid"]])
+        self.assertEqual(sorted(b["uid"] for b in t.state["buffs"] if b["soul"] == -1), sorted([one["uid"], two["uid"]]))
+        self.assertIsNone(t.state.get("resolving"))
+
+    def test_kyubeys_go_to_positions_of_their_own(self):
+        t = Table()
+        t.card(2000, text=self.KYUBEY, name="Kyubey Saying Kyu-")
+        kyubey = t.seat(t.me, "C1", 2000, pos="reverse")
+        others = [game.new_card(2000), game.new_card(2000)]
+        t.me["zones"]["waiting"] = list(others)
+        pay = t.hand(800)[0]
+        t.stock(2)
+        self.run_ability(t, kyubey, self.KYUBEY, 1)
+        self.answer(t, uids=[pay["uid"]])
+        self.answer(t, uids=[o["uid"] for o in others])
+        self.answer(t, value="C2")
+        self.assertNotIn("C2", [o["value"] for o in self.prompt(t)["options"]])
+        self.answer(t, value="B1")
+        self.assertEqual([t.me["stage"]["C2"], t.me["stage"]["B1"]], others)
+        self.assertEqual({o["pos"] for o in others}, {"rest"})
+
+    def test_lucky_owl_leaving_memory_costs_the_hand(self):
+        t = Table()
+        t.card(2000, text=self.OWL, card_type="Event", name="Lucky Owl Water")
+        owl = game.new_card(2000)
+        t.me["zones"]["memory"] = [owl]
+        self.run_ability(t, owl, self.OWL, 2)
+        self.assertIn(owl, t.me["zones"]["waiting"])
+        self.assertIn("choose 4 cards in your hand", t.state["ability_queue"][0]["ability"]["text"])
+
+    def test_triggers_and_conditions(self):
+        t = Table()
+        env = game.SimpleNamespace(info=t.info)
+        card = t.seat(t.me, "B1", 800)
+        when = abilities.parse(self.MOMOKO)[1]["when"]
+        self.assertEqual(when, [{"on": "opp_leave"}, {"on": "opp_reverse"}])
+        self.assertEqual(game.when_matches(when[0], "leave", {"uid": 5, "source_owner": "1"}, "2", card, env), {"that": 5})
+        self.assertIsNone(game.when_matches(when[0], "leave", {"uid": 5, "source_owner": "2"}, "2", card, env))
+        self.assertEqual(abilities.parse(self.STANCE)[1]["when"], [{"on": "shift"}])
+        self.assertEqual(game.when_matches({"on": "shift"}, "shift", {"player": "2"}, "2", card, env), {})
+        self.assertTrue(game.position_fits({"reverse": True}, {"pos": "reverse"}))
+        self.assertFalse(game.position_fits({"reverse": True}, {"pos": "stand"}))
+
+    def test_all_the_same_level_in_the_center(self):
+        t = Table()
+        t.card(3001, level=1)
+        t.card(3002, level=2)
+        env = game.SimpleNamespace(info=t.info)
+        cond = abilities.parse(self.MAMI)[1]["steps"][1]["cond"][0]
+        first = t.seat(t.me, "C1", 3001)
+        t.seat(t.me, "C2", 3001)
+        self.assertTrue(game.condition_met(cond, t.state, "2", first, {"it": [first["uid"]]}, env))
+        t.seat(t.me, "C3", 3002)
+        self.assertFalse(game.condition_met(cond, t.state, "2", first, {"it": [first["uid"]]}, env))
+
+    def test_five_different_girls_in_the_waiting_room(self):
+        t = Table()
+        env = game.SimpleNamespace(info=t.info)
+        cond = abilities.parse(self.ROOMMATE)[-1]["steps"][0]["cond"][0]
+        for pk, name in enumerate(("Iroha", "Yachiyo", "Tsuruno", "Felicia", "Sana"), start=3000):
+            t.card(pk, name=f"{name} Tamaki")
+            t.me["zones"]["waiting"].append(game.new_card(pk))
+        self.assertTrue(game.condition_met(cond, t.state, "2", None, {}, env))
+        t.me["zones"]["waiting"].pop()
+        self.assertFalse(game.condition_met(cond, t.state, "2", None, {}, env))
+
+    def test_the_doppel_puts_back_only_what_it_chose(self):
+        t = Table()
+        t.card(2000, text=self.DOPPEL)
+        t.card(3000, traits="Magic")
+        doppel = t.seat(t.me, "C1", 2000)
+        magic, kept, dropped = game.new_card(3000), game.new_card(800), game.new_card(801)
+        t.me["zones"]["deck"] += [dropped, kept, magic]
+        self.run_ability(t, doppel, self.DOPPEL, 1)
+        self.answer(t, value=3)
+        self.answer(t, uids=[magic["uid"]])
+        self.assertEqual(set(self.prompt(t)["options"]), {kept["uid"], dropped["uid"]})
+        self.answer(t, uids=[kept["uid"]])
+        self.assertIn(magic, t.me["zones"]["hand"])
+        self.assertIs(t.me["zones"]["deck"][-1], kept)
+        self.assertEqual(t.me["zones"]["waiting"], [dropped])
+
+    def test_time_regressor_puts_markers_under_madoka(self):
+        t = Table()
+        t.card(2000, text=self.REGRESSOR)
+        t.card(2001, name="End of Karma for Madoka")
+        homura = t.seat(t.me, "C1", 2000)
+        madoka = t.seat(t.me, "C2", 2001)
+        t.me["zones"]["deck"] = [game.new_card(800) for _ in range(3)]
+        t.me["zones"]["waiting"] = [game.new_card(801)]
+        self.run_ability(t, homura, self.REGRESSOR)
+        self.answer(t, uids=[madoka["uid"]])
+        self.answer(t, value=2)
+        self.assertEqual(len(t.me["markers"]["C2"]), 2)
+        self.assertEqual(len(t.me["zones"]["deck"]), 2)
+
+    def test_what_the_rest_read_as(self):
+        steps = abilities.parse(self.ALLEY)[0]["steps"]
+        self.assertEqual(steps[-1], {"do": "to_moved_from", "move": True})
+        self.assertEqual(abilities.parse(self.CHAIN)[0]["steps"][-1], {"do": "order_top"})
+        steps = abilities.parse(self.SEANCE)[-1]["steps"][-1]["then"]
+        self.assertEqual(steps[1]["cond"], [{"type": "same_name", "of": "it", "zone": "memory"}])
+        self.assertEqual(abilities.parse(self.GUIDE)[2]["steps"][0]["then"][0]["filter"]["reverse"], True)
+
+
 class HardModeTests(TestCase):
     def test_aggression_rises_as_the_opponent_nears_defeat(self):
         t = Table()

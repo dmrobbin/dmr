@@ -552,6 +552,14 @@ class Mind:
             ranked = sorted(cards, key=lambda c: (c["uid"] not in self.front_uids(), -self.stat(c, "power")))  # helping its front line
         else:
             ranked = sorted(cards, key=self.value, reverse=True)
+        if prompt.get("max_power") is not None:  # as many as fit in the power allowed, the biggest first
+            ranked = sorted(cards, key=lambda c: -prompt["powers"].get(c["uid"], 0))
+            picked, power = [], 0
+            for card in ranked:
+                if len(picked) < count and power + prompt["powers"].get(card["uid"], 0) <= prompt["max_power"]:
+                    picked.append(card["uid"])
+                    power += prompt["powers"].get(card["uid"], 0)
+            return picked
         return [c["uid"] for c in ranked[:count]]
 
     def front_uids(self):
