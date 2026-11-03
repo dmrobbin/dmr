@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import cpu_views, express, lists, play, profiles, views
+from . import cpu_views, express, lists, pack_views, play, profiles, views
 
 app_name = "weiss"
 
@@ -17,6 +17,8 @@ urlpatterns = [
     path("play/", play.room_list, name="play_rooms"),
     path("play/new/", play.room_create, name="play_create"),
     path("play/cpu/", play.room_vs_cpu, name="play_vs_cpu"),
+    path("play/packs/", pack_views.pack_home, name="play_packs"),
+    path("play/packs/open/", pack_views.pack_open, name="play_packs_open"),
     path("arcade/", play.arcade_home, name="arcade"),
     path("arcade/scores/", play.arcade_scores, name="arcade_scores"),
     path("play/arcade/", play.arcade_start, name="arcade_start"),

@@ -12,8 +12,9 @@ class CardPriceInline(admin.TabularInline):
 @admin.register(Card)
 class CardAdmin(admin.ModelAdmin):
     inlines = [CardPriceInline]
-    list_display = ("serial_number", "name", "expansion", "card_type", "rarity", "color", "level", "power")
-    list_filter = ("expansion", "card_type", "color", "side", "rarity")
+    list_display = ("serial_number", "name", "expansion", "card_type", "rarity", "pack_rarity", "color", "level", "power")
+    list_editable = ("pack_rarity",)  # retune a set's packs straight from the list
+    list_filter = ("expansion", "card_type", "color", "side", "rarity", "pack_rarity")
     search_fields = ("serial_number", "name", "traits", "description")
 
 

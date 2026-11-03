@@ -16,6 +16,10 @@ class Card(models.Model):
     traits = models.CharField(max_length=300, blank=True, help_text="Separated by '・' as on the site")
     card_type = models.CharField(max_length=50, blank=True)
     rarity = models.CharField(max_length=20, blank=True)
+    pack_rarity = models.CharField(
+        max_length=20, blank=True,
+        help_text="The rarity booster packs treat this card as; blank uses its printed rarity. 'PR' keeps it out of packs.",
+    )
     side = models.CharField(max_length=10, blank=True, help_text="Weiss or Schwarz")
     color = models.CharField(max_length=20, blank=True)
     level = models.IntegerField(null=True, blank=True)

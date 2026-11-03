@@ -29,6 +29,12 @@
     {% endif %}
   </section>
   <p class="muted small">Fighting through a list of CPUs in a row is on the <a href="{% url 'weiss:arcade' %}">Arcade</a> tab.</p>
+  {% if user.is_staff %}
+    <section class="vs-cpu">
+      <h2>Booster packs <span class="deck-tag">Staff</span></h2>
+      <p class="muted small">Open packs of a set and see what you pull. <a href="{% url 'weiss:play_packs' %}">Open packs</a></p>
+    </section>
+  {% endif %}
   {% if rooms %}
     <ul class="set-list">
       {% for room in rooms %}

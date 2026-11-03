@@ -1,0 +1,30 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Opening packs{% endblock %}
+
+{% block head %}<script src="{% static 'weiss/packs.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:play_packs' %}">&larr; Booster packs</a></p>
+  <h1>{{ set_name }}</h1>
+  <div class="pack-table" data-pack-table>
+    <p class="muted small" data-pack-hint>{{ count }} pack{{ count|pluralize }}. Click {% if count == 1 %}it{% else %}the first{% endif %} to open.</p>
+    <div class="pack-row">
+      {% for _ in opening.packs %}
+        <button type="button" class="pack-button" data-pack="{{ forloop.counter0 }}"{% if not forloop.first %} disabled{% endif %}
+                aria-label="Open pack {{ forloop.counter }} of {{ count }}">{% include "weiss/pack_art.html" %}</button>
+      {% endfor %}
+    </div>
+  </div>
+  <section class="pack-results" data-pack-results hidden>
+    <h2 data-pack-total></h2>
+    <ul class="pack-tally" data-pack-tally></ul>
+    <ul class="pack-grid" data-pack-grid></ul>
+    <p class="list-actions">
+      <a class="button-small" href="{% url 'weiss:play_packs_open' %}?set={{ set_id }}&amp;count={{ count }}">Open {{ count }} more</a>
+      <a class="button-small secondary" href="{% url 'weiss:play_packs' %}">Choose another set</a>
+    </p>
+  </section>
+  {{ opening|json_script:"pack-opening" }}
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Booster packs{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:play_rooms' %}">&larr; Play</a></p>
+  <h1>Booster packs <span class="deck-tag">Staff</span></h1>
+  {% if not sets %}
+    <p class="empty">No set has cards that come in packs yet.</p>
+  {% else %}
+    <div class="pack-picker">
+      <div class="pack-picker-art">{% include "weiss/pack_art.html" with set_name="Choose a set" %}</div>
+      <form method="get" action="{% url 'weiss:play_packs_open' %}" class="pack-form">
+        <label class="small">Set
+          <select name="set" required>
+            {% for set in sets %}<option value="{{ set.id }}">{{ set.name }} ({{ set.cards }} cards)</option>{% endfor %}
+          </select>
+        </label>
+        <label class="small">Packs
+          <input type="number" name="count" value="1" min="1" max="{{ max_packs }}" required>
+        </label>
+        <div class="pack-form-buttons">
+          <button type="submit" class="button-small">Open</button>
+          <button type="submit" name="count" value="{{ box }}" class="button-small secondary">Open a box ({{ box }})</button>
+        </div>
+      </form>
+    </div>
+    <h2>What's in a pack</h2>
+    <p class="muted small">{{ pack_size }} cards from the one set, revealed with the best last. Promos and trial deck cards never turn up.
+      A card's pack rarity can be changed in the admin (Cards, “Pack rarity”) without a card refresh undoing it.</p>
+    <ul class="pack-slots small">
+      {% for slot in slots %}
+        <li><strong>{{ slot.count }} × {{ slot.name }}</strong>
+          <span class="muted">{% for table in slot.odds %}{% if not forloop.first %} — or if the set has none, {% endif %}{% for rarity, weight in table.items %}{{ rarity }} {{ weight }}{% if not forloop.last %} : {% endif %}{% endfor %}{% endfor %}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endblock %}
