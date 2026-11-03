@@ -332,11 +332,11 @@ class MissingComboTests(TestCase):
         # Once the climax is there, the card counts as synergy too.
         self.assertAlmostEqual(without * express.SYNERGY_WEIGHT, builder.weight(self.combo) * express.MISSING_COMBO_WEIGHT)
 
-    def test_a_dead_combo_is_only_drawn_if_nothing_else_fits(self):
+    def test_a_dead_combo_is_never_drawn(self):
         plain = next(c for c in self.pool if not c.combos and c.card_type == "Character" and c.level == self.combo.level)
         builder = express.Builder(self.pool, [], random.Random(1))
         self.assertEqual({builder.draw([self.combo, plain]) for _ in range(50)}, {plain})
-        self.assertEqual(builder.draw([self.combo]), self.combo)
+        self.assertIsNone(builder.draw([self.combo]))  # it names BIG, which isn't in the deck
 
     def test_a_combo_is_alive_with_its_climax_or_an_anchor_named(self):
         plain = next(c for c in self.pool if not c.combos and c.card_type == "Character")
@@ -362,17 +362,11 @@ class MissingComboTests(TestCase):
         builder.copies[in_pool(self.pool, "BIG").pk] = 1
         self.assertFalse(builder.missing_combo(self.combo))
 
-    def test_decks_rarely_draw_a_card_whose_combo_is_missing(self):
-        # Combo Blue names BIG; an anchor naming nothing leaves BIG to chance, and if it's not drawn
-        # the card should almost never be.
-        anchor = in_pool(self.pool, "Combo Naming")
-        anchor.description = ""
-        seen = 0
-        for seed in range(60):
+    def test_decks_never_draw_a_card_whose_combo_is_missing(self):
+        for seed in range(20):
             big_free = [c for c in self.pool if c.name != "BIG"]
             builder, _, _ = express.build_deck(big_free, [self.other], random.Random(seed))
-            seen += self.combo.pk in builder.copies
-        self.assertLessEqual(seen, 3)
+            self.assertFalse(builder.copies[self.combo.pk])
 
     def test_anchors_stay_whatever_their_weight(self):
         no_big = [c for c in self.pool if c.name != "BIG"]
@@ -760,8 +754,149 @@ class VarietyTests(TestCase):
             self.assertEqual(builder.copies[in_pool(self.pool, "Combo Red").pk], express.ANCHOR_COPIES)
 
 
+class ReferenceTests(TestCase):
+    RAM = '【CONT】 This card gets +1000 power for each of your other cards named "The Younger Twin, Rem".'
+
+    def setUp(self):
+        make_series()
+        self.add("The Older Twin, Ram", 901, self.RAM)
+        self.add("The Younger Twin, Rem", 902, "")
+        self.pool = express.series_pool("TST")
+        self.ram, self.rem = in_pool(self.pool, "The Older Twin, Ram"), in_pool(self.pool, "The Younger Twin, Rem")
+
+    def add(self, name, n, text, color="Red", level=1):
+        Card.objects.create(serial_number=f"TST/S1-{n}", name=name, expansion="Test set", expansion_id=1, card_type="Character",
+                            level=level, color=color, power=3000, soul=1, traits="Hero", description=text)
+
+    def assert_no_missing_references(self, builder):
+        missing = {c.name: builder.missing_refs(c) for c in builder.deck_cards() if builder.missing_refs(c)}
+        self.assertEqual(missing, {})
+
+    def test_what_counts_as_naming_a_card(self):
+        names = {"The Younger Twin, Rem", "Rem", '"Curly" Friend', "The Older Twin, Ram"}
+        self.assertEqual(express.references(self.ram, names), {"The Younger Twin, Rem"})
+        self.assertEqual(express.references(Card(name="X", description='choose 1 of your characters with "Rem" in its name'), names), set())
+        self.assertEqual(express.references(Card(name="X", description='choose 1 ""Curly" Friend"'), names), {'"Curly" Friend'})
+        self.assertEqual(express.references(Card(name="The Older Twin, Ram", description=self.RAM.replace("Younger Twin, Rem", "Older Twin, Ram")), names), set())
+        self.assertEqual(self.ram.refs, {"The Younger Twin, Rem"})
+
+    def red_base(self, builder):
+        """5 red level 0s, so red's level 1s can go in."""
+        builder.copies.update({c.pk: 1 for c in [c for c in self.pool if c.level == 0 and c.color == "Red"][:5]})
+
+    def test_a_card_comes_with_what_it_names_or_not_at_all(self):
+        builder = express.Builder(self.pool, [], random.Random(1))
+        builder.initial = True
+        self.assertFalse(builder.refs_ok(self.ram))  # Rem couldn't go in yet: red has no level 0s
+        self.red_base(builder)
+        self.assertTrue(builder.refs_ok(self.ram))  # Rem could come in with it
+        builder.initial = False
+        self.assertFalse(builder.refs_ok(self.ram))  # a replacement needs Rem there already
+        builder.copies[self.rem.pk] = 1
+        self.assertTrue(builder.refs_ok(self.ram))
+
+    def test_two_cards_naming_each_other_can_come_in_together(self):
+        self.rem.refs = {"The Older Twin, Ram"}
+        builder = express.Builder(self.pool, [], random.Random(1))
+        builder.initial = True
+        self.red_base(builder)
+        self.assertTrue(builder.refs_ok(self.ram))
+
+    def test_the_named_card_is_brought_in_for_a_copy_of_the_commonest_of_its_level(self):
+        level_1s = [c for c in self.pool if c.level == 1 and c.color == "Red" and not c.refs and c.name != "The Younger Twin, Rem"]
+        level_0s = [c for c in self.pool if c.level == 0 and c.color == "Red"][:5]
+        builder = express.Builder(self.pool, [], random.Random(1))
+        builder.initial = True
+        builder.copies.update({self.ram.pk: 4, level_1s[0].pk: 4, level_1s[1].pk: 2, **{c.pk: 1 for c in level_0s}})
+        express.keep_references(builder, [])
+        self.assertEqual((builder.copies[self.rem.pk], builder.copies[level_1s[0].pk], builder.copies[self.ram.pk]), (1, 3, 4))
+
+    def test_a_card_whose_named_card_cant_come_in_goes_instead(self):
+        rem_free = [c for c in self.pool if c.pk != self.rem.pk]
+        level_0s = [c for c in self.pool if c.level == 0 and c.color == "Red"][:5]
+        builder = express.Builder(rem_free, [], random.Random(1))
+        builder.initial = True
+        builder.copies.update({self.ram.pk: 3, **{c.pk: 1 for c in level_0s}})
+        express.keep_references(builder, [])
+        self.assertFalse(builder.copies[self.ram.pk])
+        self.assertEqual(builder.total(), 8)  # made up with other cards
+        self.assertIsNone(builder.draw([self.ram]))  # and not drawn again
+
+    def test_a_required_card_brings_what_it_names_in_whatever(self):
+        builder = express.Builder(self.pool, [], random.Random(1))
+        builder.initial = True
+        level_0 = next(c for c in self.pool if c.level == 0 and c.color == "Blue")
+        builder.copies.update({self.ram.pk: 4, level_0.pk: 4})  # Rem is level 1 red: no room by the usual rules
+        express.keep_references(builder, ["The Older Twin, Ram"])
+        self.assertEqual((builder.copies[self.ram.pk], builder.copies[self.rem.pk], builder.copies[level_0.pk]), (4, 1, 3))
+
+    def test_built_decks_never_leave_a_named_card_out(self):
+        self.add("Ram's Fan", 903, '【AUTO】 When this card attacks, if you have "The Older Twin, Ram", draw 1 card.', level=0)
+        self.add("Blue Rem Fan", 904, '【AUTO】 When this card attacks, if you have "Lonely Blue", draw 1 card.', level=0)
+        self.add("Lonely Blue", 905, "", color="Blue", level=2)  # no blue in a red deck, so its fan can't go in
+        pool = express.series_pool("TST")
+        seen = Counter()
+        for seed in range(30):
+            builder, _, notes = express.build_deck(pool, [in_pool(pool, "Combo Red")], random.Random(seed))
+            self.assertEqual(builder.total(), 50)
+            self.assert_no_missing_references(builder)
+            seen.update(builder.by_pk[pk].name for pk, n in builder.copies.items() if n)
+        self.assertGreater(seen["The Older Twin, Ram"], 0)  # it does get in, bringing Rem
+        self.assertEqual(seen["Blue Rem Fan"], 0)
+
+    def test_a_required_card_can_bring_a_climax_in_of_a_color_the_deck_plays(self):
+        Card.objects.create(serial_number="TST/S1-950", name="RED DAY", expansion="Test set", expansion_id=1, card_type="Climax", color="Red", description="")
+        Card.objects.create(serial_number="TST/S1-951", name="YELLOW DAY", expansion="Test set", expansion_id=1, card_type="Climax", color="Yellow", description="")
+        self.add("Red Fan", 906, '【AUTO】 【CXCOMBO】 When "RED DAY" is placed on your climax area, draw 1 card.')
+        self.add("Sunny Fan", 907, '【AUTO】 【CXCOMBO】 When "YELLOW DAY" is placed on your climax area, draw 1 card.')
+        self.add("Anchor", 908, '【AUTO】 【CXCOMBO】 When "BIG" is placed on your climax area, if you have "Red Fan" and "Sunny Fan", draw 1 card.')
+        pool = express.series_pool("TST")
+        for seed in range(5):
+            builder, required, notes = express.build_deck(pool, [in_pool(pool, "Anchor")], random.Random(seed))
+            copies = {builder.by_pk[pk].name: n for pk, n in builder.copies.items() if n}
+            self.assertEqual(sum(n for pk, n in builder.copies.items() if builder.by_pk[pk].card_type == "Climax"), 8)
+            self.assertEqual(copies["BIG"], 4)  # the slot came from a climax nothing needs
+            self.assertGreaterEqual(copies["RED DAY"], 1)
+            # YELLOW DAY only comes in if the deck has yellow cards to play it with; otherwise it's noted.
+            if builder.supported("Yellow"):
+                self.assertGreaterEqual(copies["YELLOW DAY"], 1)
+                self.assertEqual(notes, [])
+            else:
+                self.assertNotIn("YELLOW DAY", copies)
+                self.assertEqual(notes, ["Sunny Fan names YELLOW DAY, which couldn't go in the deck."])
+
+    def test_replacing_a_named_card_replaces_what_names_it(self):
+        anchors = [in_pool(self.pool, "Combo Red")]
+        for seed in range(10):
+            builder, required, _ = express.build_deck(self.pool, anchors, random.Random(seed))
+            if not builder.copies[self.ram.pk]:
+                builder.copies = Counter({pk: n for pk, n in builder.copies.items()})
+                filler = next(c for c in builder.deck_cards() if c.level == 1 and c.name not in required and c.pk != self.rem.pk and builder.copies[c.pk] >= 2)
+                builder.copies[filler.pk] -= 2
+                builder.copies[self.ram.pk] += 1
+                builder.copies[self.rem.pk] += 1
+            new, swaps = express.replace_cards(self.pool, anchors, builder.copies, set(required), {self.rem.pk: builder.copies[self.rem.pk]}, "balanced", random.Random(seed))
+            self.assertFalse(new.get(self.rem.pk))
+            self.assertFalse(new.get(self.ram.pk))
+            self.assertEqual(sum(new.values()), 50)
+            self.assertIn("The Older Twin, Ram", {old for old, _ in swaps})
+
+    def test_a_card_a_required_card_names_keeps_a_copy(self):
+        anchors = [in_pool(self.pool, "Combo Red")]
+        builder, required, _ = express.build_deck(self.pool, anchors, random.Random(1))
+        required = [*required, "The Older Twin, Ram"]
+        copies = Counter(builder.copies)
+        donors = [c for c in builder.deck_cards() if c.level == 1 and c.name not in required and c.pk != self.rem.pk]
+        copies[donors[0].pk] -= 1
+        copies[donors[1].pk] -= 1
+        copies[self.ram.pk] += 1
+        copies[self.rem.pk] += 1
+        new, _ = express.replace_cards(self.pool, anchors, copies, set(required), {self.rem.pk: copies[self.rem.pk]}, "balanced", random.Random(1))
+        self.assertEqual(new[self.rem.pk], 1)
+
+
 class ChoosingByHandTests(TestCase):
-    BY_HAND = "If the moon is full, this card cannot be played from your hand."
+    BY_HAND ="If the moon is full, this card cannot be played from your hand."
 
     def setUp(self):
         make_series()

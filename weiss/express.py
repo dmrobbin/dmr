@@ -1,6 +1,12 @@
 """Express deck building: pick a series and 2 cx combo anchor cards, and a legal deck is built
 around them, then every card can be reviewed and swapped.
 
+Above every rule but the deck's size: a card whose text names another card by its full name only goes in
+with that card. A build brings the named card in, a copy in place of one of the commonest of its level,
+or if it can't (wrong color, no room, a climax the deck doesn't have) leaves the card naming it out. A
+replacement only takes cards whose named cards are in the deck, and replacing a named card replaces
+whatever names it too.
+
 Anchors, and any card named in an anchor's text, always go in, with the climaxes the anchors name
 taking as many of the climax slots as they can. Next come the deck's synergy cards: every card in the
 deck's colors that names an anchor or a climax in the deck, as far as each level's share allows.
@@ -157,6 +163,17 @@ def mentions(card, names):
     return any(f'"{name}"' in text or any(part in name for part in parts) for name in names)
 
 
+NAME_PART = re.compile(r'with "[^"]+" in (?:its|their) (?:card )?names?', re.I)  # any card with that in its name will do
+
+
+def references(card, names):
+    """The card names, out of these (plain) names, that this card's text quotes in full, its own aside:
+    '... for each of your other cards named "The Younger Twin, Rem"' references that card."""
+    text = NAME_PART.sub("", abilities.plain_name(card.description))
+    own = abilities.plain_name(card.name)
+    return {name for name in names if name != own and f'"{name}"' in text}
+
+
 def needs_level_zero(card):
     """Whether the level 0 rule applies to this card: level 1 or higher, not a backup (played as a
     counter, whatever the color) and not a card that can be played without its color."""
@@ -191,10 +208,12 @@ def series_pool(code, for_cpu=False):
     cards = list(cards.values())
     averages = power_averages(cards)
     climaxes = {abilities.plain_name(c.name) for c in cards if is_climax(c)}
+    names = {abilities.plain_name(c.name) for c in cards}
     for card in cards:
         card.damage = is_damage(card, averages)
         card.utility = is_utility(card)
         card.combos = combo_climaxes(card, climaxes) if not is_climax(card) else set()
+        card.refs = references(card, names)  # before a CPU's pool drops some: naming a card it can't play still counts
     return [c for c in cards if not abilities.by_hand_parts(c.description)] if for_cpu else cards
 
 
@@ -285,6 +304,61 @@ class Builder:
         self.focus = focus  # "character focus": the anchors' characters over anything else
         self.named_names = set()  # what the anchors name (see build_deck)
         self.initial = False  # an initial build also keeps to the limits on copies and support cards
+        self.names = {abilities.plain_name(c.name) for c in self.by_pk.values()}
+        self.by_name = {abilities.plain_name(c.name): c for c in pool}  # what a named card can be brought in as
+        self.banned = set()  # names taken out for naming what couldn't come in: not drawn again
+        self.forced = set()  # names brought in for a required card, so required in turn (see bring_references)
+        self.references_rule = True  # off only as the last resort for the deck's size
+
+    def refs(self, card):
+        """The cards this one names (see references)."""
+        if getattr(card, "refs", None) is None:
+            card.refs = references(card, self.names)
+        return card.refs
+
+    def deck_names(self):
+        return {abilities.plain_name(self.by_pk[pk].name) for pk, n in self.copies.items() if n and pk in self.by_pk}
+
+    def deck_cards(self):
+        return [self.by_pk[pk] for pk, n in sorted(self.copies.items()) if n and pk in self.by_pk]
+
+    def missing_refs(self, card):
+        return self.refs(card) - self.deck_names()
+
+    def refs_ok(self, card, bringing=frozenset()):
+        """The rule above the others: a card naming another card only goes in with that card. A replacement
+        needs what it names in the deck already; an initial build can bring it in (see keep_references),
+        if it could be drawn itself. `bringing`: names on their way in already, as two cards can name each other."""
+        if not self.references_rule:
+            return True
+        bringing = bringing | {abilities.plain_name(card.name)}
+        for name in self.missing_refs(card) - bringing:
+            ref = self.by_name.get(name)
+            if not self.initial or not ref or is_climax(ref) or ref.name in self.banned or not self.allowed(ref) \
+                    or (is_support(ref) and self.support_room() <= 0) or not self.refs_ok(ref, bringing):
+                return False
+        return True
+
+    def referenced(self, card):
+        """Whether a card in the deck names this one."""
+        name = abilities.plain_name(card.name)
+        return any(name in self.refs(other) for other in self.deck_cards() if other.pk != card.pk)
+
+    def flaws(self, card):
+        """What's wrong with the deck that taking copies of this card out could cause: a color stranded below
+        its level 0s, more level 3s than 2s, too many support cards, and, once it's gone, a climax left
+        without its color or a card naming it left without it."""
+        flaws = {"level 3s"} if self.level_three_room() < 0 else set()
+        if self.strands_color(card.color):
+            flaws.add("level 0s")
+        if self.initial and self.support_room() < 0:
+            flaws.add("support")
+        if self.copies[card.pk] <= 0 and self.referenced(card):
+            flaws.add("named")
+        if self.copies[card.pk] <= 0 and not self.supported(card.color) and any(
+                n and pk in self.by_pk and is_climax(self.by_pk[pk]) and self.by_pk[pk].color == card.color for pk, n in self.copies.items()):
+            flaws.add("climax color")
+        return flaws
 
     def room(self, card):
         limit = HIGH_LEVEL_COPIES if self.initial and (card.level or 0) >= 2 else COPY_LIMIT
@@ -396,7 +470,8 @@ class Builder:
         return max(weights, default=1)
 
     def draw(self, candidates):
-        candidates = [c for c in candidates if self.room(c) > 0 and not (self.initial and is_support(c) and self.support_room() <= 0)]
+        candidates = [c for c in candidates if self.room(c) > 0 and not (self.initial and is_support(c) and self.support_room() <= 0)
+                      and c.name not in self.banned and self.refs_ok(c)]
         if not candidates:
             return None
         names = self.anchor_names | self.climax_names()
@@ -430,7 +505,7 @@ def add_synergy(builder, colors, levels):
     deck, those naming an anchor first, up to what each level's share has left."""
     anchors, climaxes = builder.anchor_names, builder.climax_names()
     found = [c for c in builder.pool if c.level in levels and not is_climax(c) and c.color in colors
-             and not builder.copies[c.pk] and builder.has_synergy(c, anchors | climaxes)]
+             and not builder.copies[c.pk] and builder.has_synergy(c, anchors | climaxes) and builder.refs_ok(c)]
     builder.rng.shuffle(found)
     found.sort(key=lambda c: (c.level, not builder.has_synergy(c, anchors)))
     for card in found:
@@ -485,6 +560,82 @@ def replace_unplayable_climaxes(builder, anchors, required):
             builder.copies[new.pk] += 1
             swaps.append((old.name, new.name))
     return swaps
+
+
+def swap_in(builder, ref, donors, strict):
+    """A copy of `ref` in place of one of the first donor that can give it up: `strict`, without making the
+    deck any worse (see Builder.flaws; a climax just mustn't lose the last copy of one that's named)."""
+    for donor in donors:
+        before = builder.flaws(donor)
+        builder.copies[donor.pk] -= 1
+        builder.copies[ref.pk] += 1
+        if not strict or (builder.copies[donor.pk] or not builder.referenced(donor) if is_climax(ref) else builder.flaws(donor) <= before):
+            return True
+        builder.copies[donor.pk] += 1
+        builder.copies[ref.pk] -= 1
+    return False
+
+
+def bring_references(builder, card, required, force=False):
+    """Put in a copy of each card this one names that's missing, each in place of a copy of the most plentiful
+    card of its level group that can give one up. `force`, for a required card, which can't come out instead:
+    from any group, whatever rules that bends, and a climax it names comes in for a copy of the commonest
+    climax that isn't required, or failing that one that is, if the deck plays its color (one it doesn't could never be played). What a required card brings
+    in counts as required too. Returns whether it could; if not, the deck is as it was."""
+    saved, forced = Counter(builder.copies), set(builder.forced)
+    for name in sorted(builder.missing_refs(card)):
+        ref = builder.by_name.get(name)
+        if not ref or (ref.name in builder.banned and not force) or builder.room(ref) <= 0 or not (force or builder.allowed(ref)) \
+                or (is_climax(ref) and not (force and builder.supported(ref.color))):
+            builder.copies, builder.forced = saved, forced
+            return False
+        if is_climax(ref):
+            donors = sorted((c for c in builder.deck_cards() if is_climax(c) and c.pk != ref.pk and (builder.copies[c.pk] > 1 or c.name not in required)),
+                            key=lambda c: (c.name in required, -builder.copies[c.pk], c.pk))
+        else:
+            donors = sorted((c for c in builder.deck_cards() if c.pk not in (ref.pk, card.pk) and not is_climax(c) and c.name not in required
+                             and (force or group_of(c) == group_of(ref))),
+                            key=lambda c: (group_of(c) != group_of(ref), -builder.copies[c.pk], c.pk))
+        # A donor that leaves the deck sound if there is one; only when forced, failing that, any.
+        if not (swap_in(builder, ref, donors, strict=True) or force and not is_climax(ref) and swap_in(builder, ref, donors, strict=False)):
+            builder.copies, builder.forced = saved, forced
+            return False
+        if force:
+            builder.forced.add(ref.name)
+            builder.banned.discard(ref.name)
+    return True
+
+
+def take_out(builder, card):
+    """Every copy of this card out for good, made up with others of its level group (its color first),
+    then anything else. Returns how many copies nothing could make up."""
+    count = builder.copies[card.pk]
+    builder.copies[card.pk] = 0
+    builder.banned.add(card.name)
+    group = group_of(card)
+    count = builder.fill(lambda c: group_of(c) == group and c.color == card.color and builder.allowed(c), count)
+    count = builder.fill(lambda c: group_of(c) == group and builder.allowed(c), count)
+    return builder.fill(lambda c: not is_climax(c) and builder.allowed(c), count)
+
+
+REFERENCE_ROUNDS = 200  # bringing cards in and taking them out, before giving up
+
+
+def keep_references(builder, required):
+    """See Builder.refs_ok: a card in the deck whose named cards are missing either brings them in or comes
+    out. A required card stays, and what it names comes in whatever that bends, if it can come in at all."""
+    given_up = set()
+    for _ in range(REFERENCE_ROUNDS):
+        card = next((c for c in builder.deck_cards() if builder.missing_refs(c) and c.name not in given_up), None)
+        protected = set(required) | builder.forced
+        if not card or bring_references(builder, card, protected):
+            if not card:
+                break
+            continue
+        if card.name not in protected:
+            take_out(builder, card)
+        elif not bring_references(builder, card, protected, force=True):
+            given_up.add(card.name)  # nothing more to try for it
 
 
 def build_deck(pool, anchors, rng=random, deck_name="", focus=False):
@@ -546,13 +697,25 @@ def build_deck(pool, anchors, rng=random, deck_name="", focus=False):
     # A small series can run out of some level: anything else that isn't a climax makes up the size,
     # keeping to the level 0 rule if it possibly can.
     builder.fill(lambda c: not is_climax(c) and builder.allowed(c), DECK_SIZE - builder.total())
+    keep_references(builder, required)
     if builder.total() < DECK_SIZE and any(not is_climax(c) and builder.room(c) > 0 for c in pool):
         notes.append(f"To reach {DECK_SIZE} cards, some colors have higher levels without {MIN_LEVEL_ZERO} level 0s.")
     builder.initial = False  # the size comes before the limits
-    short = builder.fill(lambda c: not is_climax(c), DECK_SIZE - builder.total(), level_rule=False)
+    builder.fill(lambda c: not is_climax(c), DECK_SIZE - builder.total(), level_rule=False)
+    replace_unplayable_climaxes(builder, anchors, required)
+    keep_references(builder, required)  # a climax swapped out may have been named
+    builder.fill(lambda c: not is_climax(c), DECK_SIZE - builder.total(), level_rule=False)
+    if builder.total() < DECK_SIZE:
+        builder.references_rule = False  # the very last resort: a deck has to have its size
+        builder.fill(lambda c: not is_climax(c), DECK_SIZE - builder.total(), level_rule=False)
+        builder.references_rule = True
+    for card in builder.deck_cards():
+        if builder.missing_refs(card):
+            notes.append(f"{card.name} names {', '.join(sorted(builder.missing_refs(card)))}, which couldn't go in the deck.")
+    short = DECK_SIZE - builder.total()
     if short:
         notes.append(f"This series only has enough cards for {DECK_SIZE - short} of the {DECK_SIZE}.")
-    replace_unplayable_climaxes(builder, anchors, required)
+    required += sorted(name for name in builder.forced if name not in required and any(c.name == name for c in builder.deck_cards()))
     stranded = sorted({builder.by_pk[pk].color for pk, n in builder.copies.items()
                        if n and is_climax(builder.by_pk[pk]) and not builder.supported(builder.by_pk[pk].color)})
     if stranded:
@@ -575,11 +738,10 @@ def replace_cards(pool, anchors, copies, required, removing, mode, rng=random, k
     builder = Builder(pool, anchors, rng, DAMAGE_SHARE[mode], copies, known, deck_name, focus)
     removed = {builder.by_pk[pk].name for pk in removing if pk in builder.by_pk}
     swaps = []
-    for pk, count in removing.items():
-        old = builder.by_pk.get(pk)
-        if not old:
-            continue
-        count = min(count, builder.copies[pk] - (1 if old.name in required else 0))
+
+    def swap_out(old, count):
+        """Returns whether every copy found a replacement."""
+        pk = old.pk
         for _ in range(max(count, 0)):
             builder.copies[pk] -= 1
             # A level 0 that's holding up its color's higher cards can only give way to the same color.
@@ -598,10 +760,27 @@ def replace_cards(pool, anchors, copies, required, removing, mode, rng=random, k
                 new = builder.draw([c for c in others if not is_climax(c)])
             if not new:
                 builder.copies[pk] += 1
-                break
+                return False
             builder.copies[new.pk] += 1
             swaps.append((old.name, new.name))
+        return True
+
+    for pk, count in removing.items():
+        old = builder.by_pk.get(pk)
+        if not old:
+            continue
+        # A required card keeps a copy, and so does a card a required card names.
+        held = old.name in required or any(abilities.plain_name(old.name) in builder.refs(c) for c in builder.deck_cards() if c.name in required)
+        swap_out(old, min(count, builder.copies[pk] - (1 if held else 0)))
     swaps += replace_unplayable_climaxes(builder, anchors, set(required) | set(picked))
+    # Whatever named a card that's now gone goes too (a card chosen by hand is the chooser's business).
+    kept = set(required) | set(picked) | {a.name for a in anchors}
+    for _ in range(REFERENCE_ROUNDS):
+        orphan = next((c for c in builder.deck_cards() if c.name not in kept and c.name not in removed and builder.missing_refs(c)), None)
+        if not orphan:
+            break
+        removed.add(orphan.name)
+        swap_out(orphan, builder.copies[orphan.pk])
     return +builder.copies, swaps
 
 
