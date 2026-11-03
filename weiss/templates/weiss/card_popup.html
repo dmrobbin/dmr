@@ -1,6 +1,6 @@
 {# Contents of the deck-builder popup (loaded by lists.js into the dialog in weiss/base.html). Expects `card`. #}
 <div class="card-popup-content">
-  {% if card.image_src %}<img class="card-popup-image" src="{{ card.image_src }}" alt="{{ card.name }}">{% endif %}
+  {% if card.image_src %}{% include "weiss/card_art.html" with img_class="card-popup-image" alt=card.name %}{% endif %}
   <div>
     {% include "weiss/card_summary.html" %}
     <div class="card-popup-actions">

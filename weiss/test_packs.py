@@ -2,13 +2,15 @@ import random
 from collections import Counter
 
 from django.contrib.auth.models import Group, User
+from django.template import Context, Template
 from django.test import TestCase
 from django.urls import reverse
 
 from core.access import WEISS_GROUP
 
-from . import packs
+from . import packs, play
 from .models import Card
+from .templatetags.weiss_lists import rarity_grade
 
 
 def make_set(expansion_id=1, name="Vol.1", **rarities):
@@ -107,6 +109,29 @@ class PackTests(TestCase):
         self.assertEqual(shown["image"], reverse("weiss:card_image", args=[card.pk]))
 
 
+class RarityEffectTests(TestCase):
+    def test_grades_for_the_effects(self):
+        for rarity, grade in (("C", 0), ("U", 0), ("PR", 0), ("TD", 0), ("", 0), ("R", 1), ("CR", 1), ("RR", 2),
+                              ("SR", 3), ("RRR", 3), ("SP", 4), ("SR ⁑", 4), ("SSP", 5), ("SEC", 5)):
+            self.assertEqual(rarity_grade(Card(rarity=rarity)), grade, rarity)
+        self.assertEqual(rarity_grade(Card(rarity="C", pack_rarity="SP")), 4)  # what the packs treat it as
+
+    def test_a_picture_in_its_rarity_frame(self):
+        def art(rarity):
+            card = Card(rarity=rarity)
+            card.image_src = "https://example.com/a.png"  # set by views.with_image_urls
+            return Template('{% include "weiss/card_art.html" with alt="x" lazy=True %}').render(Context({"card": card}))
+        self.assertEqual(art("C"), '<span class="rfx"><img src="https://example.com/a.png" alt="x" loading="lazy"></span>')
+        self.assertIn('data-grade="1"', art("R"))
+        self.assertNotIn("rfx-sheen", art("RR"))
+        self.assertIn('<span class="rfx" data-grade="3">', art("SR"))
+        self.assertIn("rfx-sheen", art("SR"))  # SR and up shine
+
+    def test_the_board_knows_each_cards_grade(self):
+        card, = make_set(SSP=1)
+        self.assertEqual(play.card_info([card.pk])[str(card.pk)]["grade"], 5)
+
+
 class PackPageTests(TestCase):
     def setUp(self):
         self.staff = User.objects.create_user("staff", password="x", is_staff=True)
@@ -136,6 +161,11 @@ class PackPageTests(TestCase):
         self.assertContains(response, 'id="pack-opening"')
         self.assertContains(response, 'data-pack="2"')
         self.assertContains(response, "weiss/packs.js")
+        # A pulled card opens its details, as in the deck builder.
+        self.assertContains(response, "data-card-popup-dialog")
+        self.assertContains(response, "weiss/lists.js")
+        pull = opening["packs"][0][0]
+        self.assertEqual(pull["popup"], reverse("weiss:card_popup", args=[pull["id"]]))
 
     def test_the_count_is_kept_in_bounds(self):
         many = self.client.get(reverse("weiss:play_packs_open"), {"set": 1, "count": 500})

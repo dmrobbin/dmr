@@ -1,5 +1,5 @@
 {# Details shown beside a card while hovering it in a set grid (positioned by peek.js). Expects `card`. #}
 <div class="card-peek" role="tooltip" hidden>
-  {% if card.image_src %}<img src="{{ card.image_src }}" alt="" loading="lazy">{% endif %}
+  {% if card.image_src %}{% include "weiss/card_art.html" with alt="" lazy=True %}{% endif %}
   {% include "weiss/card_summary.html" %}
 </div>

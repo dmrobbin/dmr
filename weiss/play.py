@@ -22,7 +22,7 @@ from django.views.decorators.http import require_POST
 from core import s3
 from core.access import has_weiss_access, weiss_access_required
 
-from . import arcade, cpu, game, lists, scoring
+from . import arcade, cpu, game, lists, packs, scoring
 from .models import ArcadeRun, ArcadeScenario, Card, CardList, CpuProfile, GameRecord, GameRoom, PlayerProfile, cpu_user
 
 log = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ def card_info(pks):
     for card in Card.objects.filter(pk__in=pks).prefetch_related("prices"):
         info[str(card.pk)] = {
             "name": card.name, "serial": card.serial_number, "image": reverse("weiss:card_image", args=[card.pk]),
-            "type": card.card_type, "rarity": card.rarity, "color": card.color, "level": card.level,
+            "type": card.card_type, "rarity": card.rarity, "grade": packs.grade_of(packs.rarity_of(card)), "color": card.color, "level": card.level,
             "cost": card.cost, "power": card.power, "soul": card.soul, "trigger": card.trigger,
             "traits": card.traits, "text": card.description,
         }

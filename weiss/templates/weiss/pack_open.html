@@ -27,4 +27,10 @@
     </p>
   </section>
   {{ opening|json_script:"pack-opening" }}
+  {# Clicking a pulled card opens its details, as in the deck builder (lists.js). #}
+  <dialog class="card-popup" data-card-popup-dialog aria-label="Card details">
+    <form method="dialog"><button class="card-popup-close" aria-label="Close">×</button></form>
+    <div data-card-popup-body></div>
+  </dialog>
+  <script src="{% static 'weiss/lists.js' %}" defer></script>
 {% endblock %}

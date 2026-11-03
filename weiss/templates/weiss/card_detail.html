@@ -9,7 +9,7 @@
     · <a href="{% url 'weiss:series' series %}">All {{ series }} cards</a>
   </p>
   <div class="card-detail">
-    {% if card.image_src %}<img class="card-image" src="{{ card.image_src }}" alt="{{ card.name }}">{% endif %}
+    {% if card.image_src %}{% include "weiss/card_art.html" with img_class="card-image" alt=card.name %}{% endif %}
     <div>
       <p class="muted card-serial">{{ card.serial_number }}</p>
       {% with price=card.tcgplayer_price %}

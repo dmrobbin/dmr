@@ -20,7 +20,7 @@
         <li>
           <label class="express-tile color-{{ card.color|lower }}">
             <input type="checkbox" name="anchor" value="{{ card.pk }}">
-            {% if card.image_src %}<img src="{{ card.image_src }}" alt="{{ card.name }}" loading="lazy">{% endif %}
+            {% if card.image_src %}{% include "weiss/card_art.html" with alt=card.name lazy=True %}{% endif %}
           </label>
           {% url 'weiss:card_popup' card.pk as popup_url %}
           <a href="{% url 'weiss:card' card.pk %}" data-card-popup="{{ popup_url }}" class="card-name">{{ card.name }}</a>{% include "weiss/cpu_flag.html" %}

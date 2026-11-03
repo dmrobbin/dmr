@@ -266,8 +266,7 @@
     const thumb = document.createElement("li");
     thumb.className = "pk-thumb";
     thumb.dataset.grade = card.grade;
-    thumb.title = `${card.name} (${card.rarity})`;
-    thumb.innerHTML = face(card, true);
+    thumb.innerHTML = `<a href="${esc(card.url)}" data-card-popup="${esc(card.popup)}" title="${esc(card.name)} (${esc(card.rarity)})">${face(card, true)}</a>`;
     tray.append(withFallbacks(thumb));
     el.animate([{ opacity: 1 }, { transform: "translate(0, 45vh) scale(.2)", opacity: 0 }], { duration: 350, easing: "ease-in", fill: "forwards" })
       .finished.then(() => el.remove());
@@ -323,7 +322,7 @@
     const sorted = [...all].sort((a, b) => b.grade - a.grade);
     const grid = results.querySelector("[data-pack-grid]");
     grid.innerHTML = sorted.map((card, i) => `
-      <li><a class="pk-result" data-grade="${card.grade}" style="--i: ${i}" href="${esc(card.url)}" target="_blank" rel="noopener">
+      <li><a class="pk-result" data-grade="${card.grade}" style="--i: ${i}" href="${esc(card.url)}" data-card-popup="${esc(card.popup)}">
         ${face(card, true)}
         <span class="pk-result-name"><span class="pk-rarity" data-grade="${card.grade}">${esc(card.rarity)}</span> ${esc(card.name)}</span>
         <span class="pk-result-meta">${esc(card.serial)}${packs.length > 1 ? ` · pack ${card.pack}` : ""}</span>

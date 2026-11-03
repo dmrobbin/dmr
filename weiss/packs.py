@@ -22,6 +22,7 @@ from .models import Card
 
 # How grand a rarity's reveal is: 0 plain, up to 5 for the rarest pulls. A rarity not listed is some special foil.
 GRADES = {
+    "": 0, "PR": 0, "TD": 0, "TD+": 0,  # never in packs (see NOT_IN_PACKS), and shown plainly elsewhere
     "C": 0, "CC": 0, "U": 0,
     "R": 1, "CR": 1,
     "RR": 2, "RR+": 2,
@@ -82,7 +83,8 @@ class Pull:
         card = self.card
         return {"id": card.pk, "name": card.name, "serial": card.serial_number, "type": card.card_type,
                 "rarity": self.rarity, "grade": self.grade, "slot": self.slot,
-                "image": reverse("weiss:card_image", args=[card.pk]), "url": reverse("weiss:card", args=[card.pk])}
+                "image": reverse("weiss:card_image", args=[card.pk]), "url": reverse("weiss:card", args=[card.pk]),
+                "popup": reverse("weiss:card_popup", args=[card.pk])}
 
 
 class Pool:

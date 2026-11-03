@@ -40,7 +40,7 @@
         <li>
           {% url 'weiss:card_popup' entry.card.pk as popup_url %}
           <a href="{% url 'weiss:card' entry.card.pk %}?list={{ card_list.pk }}" data-card-popup="{{ popup_url }}">
-            {% if entry.card.image_src %}<img src="{{ entry.card.image_src }}" alt="{{ entry.card.name }}" loading="lazy">{% endif %}
+            {% if entry.card.image_src %}{% include "weiss/card_art.html" with card=entry.card alt=entry.card.name lazy=True %}{% endif %}
             <span class="card-title-row">
               <span class="card-name">{{ entry.quantity }}× {{ entry.card.name }}{% include "weiss/cpu_flag.html" with card=entry.card %}</span>
               {% with price=entry.card.tcgplayer_price %}{% if price.market_price is not None %}<span class="card-price">${{ price.market_price|floatformat:2 }}</span>{% endif %}{% endwith %}

@@ -41,7 +41,7 @@
               {% for card in picks %}
                 <li>
                   {% url 'weiss:card_popup' card.pk as popup_url %}
-                  {% if card.image_src %}<a href="{% url 'weiss:card' card.pk %}" data-card-popup="{{ popup_url }}" class="express-pick-image" tabindex="-1" aria-hidden="true"><img src="{{ card.image_src }}" alt="" loading="lazy"></a>{% endif %}
+                  {% if card.image_src %}<a href="{% url 'weiss:card' card.pk %}" data-card-popup="{{ popup_url }}" class="express-pick-image" tabindex="-1" aria-hidden="true">{% include "weiss/card_art.html" with alt="" lazy=True %}</a>{% endif %}
                   <a href="{% url 'weiss:card' card.pk %}" data-card-popup="{{ popup_url }}" class="card-name small">{{ card.name }}</a>
                   <span class="small muted">{{ card.serial_number }}{% if card.in_deck %} · {{ card.in_deck }} in deck{% endif %}</span>
                   <button type="submit" class="button-small" name="card" value="{{ card.pk }}" formaction="{% url 'weiss:list_express_pick' card_list.pk %}">Put in</button>
@@ -57,7 +57,7 @@
         <li>
           {% url 'weiss:card_popup' tile.card.pk as popup_url %}
           <div class="express-tile color-{{ tile.card.color|lower }}{% if tile.locked %} locked{% endif %}" title="{{ tile.card.name }}{% if tile.locked %}: required by your anchors, so one copy stays{% endif %}">
-            {% if tile.card.image_src %}<a href="{% url 'weiss:card' tile.card.pk %}" data-card-popup="{{ popup_url }}" tabindex="-1" aria-hidden="true"><img src="{{ tile.card.image_src }}" alt="" loading="lazy"></a>{% endif %}
+            {% if tile.card.image_src %}<a href="{% url 'weiss:card' tile.card.pk %}" data-card-popup="{{ popup_url }}" tabindex="-1" aria-hidden="true">{% include "weiss/card_art.html" with card=tile.card alt="" lazy=True %}</a>{% endif %}
             {% if not tile.locked %}<label class="express-tick" title="Select to replace"><input type="checkbox" name="replace" value="{{ tile.card.pk }}" aria-label="Replace a copy of {{ tile.card.name }}"></label>{% endif %}
             <span class="express-roles">
               {% if tile.locked %}<span class="express-role role-locked" title="Required by your anchors">🔒</span>{% endif %}

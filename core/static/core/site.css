@@ -1365,7 +1365,68 @@ body.pk-locked { overflow: hidden; }
 .pk-result-name { font-size: .85rem; line-height: 1.25; }
 .pk-result-meta { font-size: .75rem; color: var(--muted); }
 
+.pk-thumb a { display: block; }
+
+/* Rarity effects, wherever a card is shown: menus wrap the picture in .rfx (weiss/card_art.html), the board's
+   cards and its zoom carry the grade themselves (play.js). data-grade is packs.grade_of: 1 R and CR, 2 RR,
+   3 SR and RRR, 4 SP and other specials, 5 SSP and SEC. A glow for all of them, a shine sweeping across
+   from SR up, a rainbow from SP up, turning for SSP and SEC. The shine moves by transform only, so a
+   page full of SRs stays smooth. */
+.rfx { position: relative; display: block; border-radius: .5rem; }
+.rfx > img { display: block; }
+.card-detail .rfx { border-radius: .75rem; }
+.card-popup-content > .rfx { align-self: start; }
+.panel-thumb .rfx { height: 100%; border-radius: 0; }
+.play-zoom[data-grade] { border-radius: .9rem; }
+@media (max-width: 40rem) { .card-detail .rfx { max-width: 20rem; } }
+@media (max-width: 34rem) { .card-popup .rfx { max-width: 14rem; margin: 0 auto; } }
+.rfx-sheen { position: absolute; inset: 0; z-index: 1; overflow: hidden; border-radius: inherit; pointer-events: none; }
+.pcard > .rfx-sheen { border-radius: .35rem; }
+/* The band goes from just off one side to just off the other (--rfx-from/--rfx-to, in its own widths, allowing
+   for its skew) at a steady pace, so even across a big picture each frame moves it only a few pixels. */
+.rfx-sheen::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 45%; --rfx-from: -160%; --rfx-to: 280%;
+  background: linear-gradient(100deg, transparent, rgb(255 255 255 / .42), transparent); transform: translateX(var(--rfx-from)) skewX(-14deg);
+  animation: rfx-sweep 7s linear infinite; }
+[data-grade="4"] > .rfx-sheen::after, [data-grade="5"] > .rfx-sheen::after { width: 65%; --rfx-from: -150%; --rfx-to: 185%;
+  background: linear-gradient(100deg, transparent, rgb(255 107 139 / .32), rgb(255 211 107 / .38), rgb(125 255 176 / .32), rgb(107 198 255 / .32), transparent); }
+[data-grade="5"] > .rfx-sheen::after { animation-duration: 5s; }
+/* Not every card shining at once down a grid. */
+li:nth-child(3n + 1) .rfx-sheen::after { animation-delay: -2.3s; }
+li:nth-child(3n + 2) .rfx-sheen::after { animation-delay: -4.6s; }
+@keyframes rfx-sweep { 0%, 60% { transform: translateX(var(--rfx-from)) skewX(-14deg); } 95%, 100% { transform: translateX(var(--rfx-to)) skewX(-14deg); } }
+:is(.rfx, .pcard, .play-zoom)[data-grade="1"] { box-shadow: 0 0 0 1px rgb(160 205 255 / .55), 0 0 10px 1px rgb(160 205 255 / .4); }
+:is(.rfx, .pcard, .play-zoom)[data-grade="2"] { box-shadow: 0 0 0 1px rgb(255 205 90 / .7), 0 0 12px 2px rgb(255 205 90 / .5); }
+:is(.rfx, .pcard, .play-zoom)[data-grade="3"] { box-shadow: 0 0 0 1px rgb(255 225 140 / .85), 0 0 16px 3px rgb(255 215 110 / .6); }
+:is(.rfx, .pcard, .play-zoom):is([data-grade="4"], [data-grade="5"]) {
+  box-shadow: 0 0 0 1px rgb(255 255 255 / .55), -3px -3px 12px rgb(255 107 139 / .6), 3px -3px 12px rgb(255 211 107 / .6),
+              3px 3px 12px rgb(125 255 176 / .6), -3px 3px 12px rgb(107 198 255 / .6);
+}
+/* SSP and SEC: a rainbow behind the card, its colors going round. Turned by a filter, which the graphics card
+   animates by itself, so the blurred rainbow is painted once rather than every frame. */
+:is(.rfx, .pcard, .play-zoom)[data-grade="5"] { isolation: isolate; }
+:is(.rfx, .pcard, .play-zoom)[data-grade="5"]::before { content: ""; position: absolute; inset: -4px; z-index: -1; border-radius: inherit; filter: blur(7px);
+  background: conic-gradient(#ff6b8b, #ffd36b, #7dffb0, #6bc6ff, #c88bff, #ff6b8b); animation: rfx-turn 4s linear infinite; will-change: filter; }
+.pcard[data-grade="5"]::before { border-radius: .35rem; }
+@keyframes rfx-turn { from { filter: blur(7px) hue-rotate(0deg); } to { filter: blur(7px) hue-rotate(360deg); } }
+
+/* A card of R and up coming into play (play.js): a ring, sparks, and from SP up its rarity and rays. Sized by --size, the card's. */
+.rarity-burst { position: fixed; z-index: 45; width: 0; height: 0; pointer-events: none; }
+.rarity-burst > span { position: absolute; left: 0; top: 0; }
+.rb-ring { width: var(--size); height: var(--size); margin: calc(var(--size) / -2) 0 0 calc(var(--size) / -2); border: 3px solid; border-radius: 50%; opacity: 0; }
+.rb-spark { width: .4rem; height: .4rem; margin: -.2rem 0 0 -.2rem; border-radius: 50%; background: currentColor; box-shadow: 0 0 .4rem currentColor; }
+.rb-rays { width: calc(var(--size) * 3); height: calc(var(--size) * 3); margin: calc(var(--size) * -1.5) 0 0 calc(var(--size) * -1.5); border-radius: 50%;
+  background: repeating-conic-gradient(rgb(255 225 140 / .3) 0 6deg, transparent 6deg 18deg); -webkit-mask: radial-gradient(circle, #000 10%, transparent 70%); mask: radial-gradient(circle, #000 10%, transparent 70%);
+  animation: rb-rays 1.5s ease-out forwards; }
+.rarity-burst[data-grade="5"] .rb-rays { background: repeating-conic-gradient(rgb(255 110 150 / .32) 0 5deg, transparent 5deg 12deg, rgb(110 200 255 / .32) 12deg 17deg, transparent 17deg 24deg); }
+@keyframes rb-rays { from { opacity: 0; transform: rotate(0deg) scale(.6); } 25% { opacity: 1; } to { opacity: 0; transform: rotate(60deg) scale(1.1); } }
+.rb-label { transform: translate(-50%, -50%); font: 800 calc(var(--size) * .3) / 1 Georgia, serif; letter-spacing: .05em; white-space: nowrap; color: transparent;
+  background: linear-gradient(90deg, #ff6b8b, #ffd36b, #7dffb0, #6bc6ff, #c88bff); -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 0 .2em rgb(0 0 0 / .8));
+  animation: rb-label 1.5s cubic-bezier(.2,1.2,.4,1) forwards; }
+@keyframes rb-label { from { opacity: 0; transform: translate(-50%, -50%) scale(2); } 20% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 70% { opacity: 1; } to { opacity: 0; transform: translate(-50%, -160%) scale(1); } }
+
 @media (prefers-reduced-motion: reduce) {
   .ws-pack-sheen, .pk-sheen, .pk-rays, .pk-pack .ws-pack, .pk-card .pk-wobble, .pk-result, .pk-thumb, .pk-result .pk-face, .pk-thumb .pk-face { animation: none !important; }
   .pk-flip { transition-duration: .01s; }
+  .rfx-sheen::after, [data-grade="5"]::before, .rb-rays { animation: none !important; }
+  .rfx-sheen::after { opacity: 0; }
 }

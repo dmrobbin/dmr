@@ -1,8 +1,14 @@
 from django import template
 
-from weiss import abilities
+from weiss import abilities, packs
 
 register = template.Library()
+
+
+@register.filter
+def rarity_grade(card):
+    """How grand a card's rarity effect is, 0 (none) for commons up to 5 for SSP and SEC (see packs.GRADES)."""
+    return packs.grade_of(packs.rarity_of(card))
 
 
 @register.filter

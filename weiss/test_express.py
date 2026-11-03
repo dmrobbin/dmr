@@ -1017,7 +1017,7 @@ class CardDetailsFromDeckTests(TestCase):
     def test_the_picture_on_the_review_page_opens_them_and_the_box_still_selects(self):
         page = self.client.get(reverse("weiss:list_express_review", args=[self.deck.pk])).content.decode()
         tile = page.split('class="express-tile')[1].split("</div>")[0]
-        self.assertRegex(tile, rf'data-card-popup="{self.popup}"[^>]*><img')
+        self.assertRegex(tile, rf'data-card-popup="{self.popup}"[^>]*><span class="rfx"[^>]*><img')  # in its rarity's frame
         self.assertIn(f'name="replace" value="{self.card.pk}"', tile)
         self.assertLess(tile.index("</a>"), tile.index('name="replace"'))  # the box isn't inside the link
 

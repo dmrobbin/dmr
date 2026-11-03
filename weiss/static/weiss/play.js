@@ -121,6 +121,7 @@
       if (!cards[pk]) cards[pk] = info;
     }
     const before = opponentSnapshot();
+    const wasInPlay = board ? inPlay(board) : null;
     board = data.board;
     avatars = data.avatars || {};
     cpuInfo = data.cpu || null;
@@ -129,6 +130,7 @@
     if (data.revealed) modal = { title: data.revealed.title, revealed: data.revealed.cards };
     render();
     animateOpponent(before);
+    if (wasInPlay && animations) celebrate(wasInPlay);
     announce();
     // A climax cancelled our damage: leave it on the board for a moment, then let the server clean up.
     if (board.damage_pending && !resolveTimer) {
@@ -214,6 +216,70 @@
       }
     }
     seen = now;
+  }
+
+  // --- Rarity: a card of R and up coming into play bursts, the rarer the grander ----------------------
+
+  const RAINBOW = ["#ff6b8b", "#ffd36b", "#7dffb0", "#6bc6ff", "#c88bff"];
+  const RARITY_COLORS = [[], ["#bcdcff"], ["#ffd36b", "#fff1c1"], ["#ffd36b", "#ffffff", "#fff1c1"], RAINBOW, [...RAINBOW, "#ffffff"]];
+  const RARITY_SPARKS = [0, 0, 8, 14, 24, 40];
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // {uid: card pk} for the cards in play: on the stage, in the climax area, and events being played.
+  function inPlay(b) {
+    const found = {};
+    for (const side of [b.me, b.opponent]) {
+      if (!side) continue;
+      const cardsHere = [...STAGE.map((slot) => side.stage[slot]), ...(Array.isArray(side.zones.climax) ? side.zones.climax : []),
+        ...(Array.isArray(side.zones.resolution) ? side.zones.resolution.filter((c) => c.card && (cards[c.card] || {}).type === "Event") : [])];
+      for (const card of cardsHere) if (card && card.card && !card.face_down) found[card.uid] = card.card;
+    }
+    return found;
+  }
+
+  function celebrate(before) {
+    for (const [uid, pk] of Object.entries(inPlay(board))) {
+      const info = cards[pk];
+      if (before[uid] || !info || !info.grade) continue;
+      const el = boardEl.querySelector(`.pcard[data-uid="${CSS.escape(uid)}"]`);
+      if (!el) continue;
+      // The opponent's card flies in first (animateOpponent): burst once it lands.
+      setTimeout(() => { if (el.isConnected) rarityBurst(el, info); }, el.style.visibility === "hidden" ? FLIGHT_MS + 80 : 0);
+    }
+  }
+
+  function rarityBurst(el, info) {
+    const grade = Math.min(info.grade, RARITY_COLORS.length - 1);
+    const palette = RARITY_COLORS[grade];
+    const box = el.getBoundingClientRect();
+    const burst = document.createElement("div");
+    burst.className = "rarity-burst";
+    burst.dataset.grade = grade;
+    Object.assign(burst.style, { left: `${box.left + box.width / 2}px`, top: `${box.top + box.height / 2}px` });
+    burst.style.setProperty("--size", `${Math.max(box.width, box.height)}px`);
+    document.body.appendChild(burst);
+    const add = (className) => burst.appendChild(Object.assign(document.createElement("span"), { className }));
+    const ring = add("rb-ring");
+    ring.style.borderColor = palette[0];
+    ring.animate([{ transform: "scale(.6)", opacity: 0.9 }, { transform: `scale(${1.6 + grade * 0.35})`, opacity: 0 }], { duration: 650 + grade * 80, easing: "ease-out" });
+    if (grade >= 2) el.animate([{ filter: "brightness(1)" }, { filter: "brightness(1.9)", offset: 0.25 }, { filter: "brightness(1)" }], { duration: 600 });
+    if (grade >= 4) add("rb-rays");
+    if (grade >= 4) {
+      const label = add("rb-label");
+      label.textContent = info.rarity;
+    }
+    if (!reducedMotion) {
+      for (let n = 0; n < RARITY_SPARKS[grade]; n++) {
+        const spark = add("rb-spark");
+        spark.style.color = palette[n % palette.length];
+        const angle = Math.random() * Math.PI * 2;
+        const reach = box.height * (0.6 + Math.random() * (0.4 + grade * 0.15));
+        spark.animate([{ transform: "translate(0, 0) scale(1.2)", opacity: 1 },
+                       { transform: `translate(${Math.cos(angle) * reach}px, ${Math.sin(angle) * reach}px) scale(.3)`, opacity: 0 }],
+                      { duration: 650 + Math.random() * 500, easing: "cubic-bezier(.1,.8,.3,1)", fill: "forwards" });
+      }
+    }
+    setTimeout(() => burst.remove(), 1800);
   }
 
   // A climax just played, in the middle of the screen, coming in with a randomly picked effect and
@@ -623,13 +689,15 @@
     const classes = ["pcard", `pos-${card.pos}`, extraClass];
     if (card.face_down) classes.push("face-down");
     const mine = owner === "me";
+    const grade = info && !card.face_down ? info.grade || 0 : 0; // its rarity's glow and shine (site.css, "Rarity effects")
     const attrs = [
       `data-uid="${esc(card.uid)}"`, `data-owner="${owner}"`, `data-zone="${zone}"`,
       card.card ? `data-card="${card.card}"` : "",
+      grade ? `data-grade="${grade}"` : "",
       mine && zone !== "deck" ? 'draggable="true"' : "",
     ].join(" ");
     const face = info
-      ? `<img src="${esc(info.image)}" alt="${esc(info.name)}" loading="lazy" draggable="false">`
+      ? `<img src="${esc(info.image)}" alt="${esc(info.name)}" loading="lazy" draggable="false">${grade >= 3 ? '<span class="rfx-sheen" aria-hidden="true"></span>' : ""}`
       : '<span class="pcard-back"></span>';
     const badge = card.pos === "reverse" ? '<span class="pcard-badge">REVERSE</span>'
       : card.face_down && info ? '<span class="pcard-badge">face down</span>' : "";
@@ -1656,8 +1724,9 @@
   function showZoom(el) {
     const info = cards[el.dataset.card];
     if (!info) return;
-    zoomEl.innerHTML = `<img src="${esc(info.image)}" alt="${esc(info.name)}">`;
+    zoomEl.innerHTML = `<img src="${esc(info.image)}" alt="${esc(info.name)}">${info.grade >= 3 ? '<span class="rfx-sheen" aria-hidden="true"></span>' : ""}`;
     zoomEl.classList.toggle("zoom-climax", (info.type || "").toLowerCase() === "climax");
+    if (info.grade) zoomEl.dataset.grade = info.grade; else delete zoomEl.dataset.grade;
     zoomEl.hidden = false;
   }
 
