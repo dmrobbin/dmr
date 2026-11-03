@@ -945,8 +945,8 @@
   }
 
   // Quick actions shown on one of our characters while hovering it: attack (⚔) for a standing
-  // center-stage character on our turn, encore once reversed (with enough stock), and waiting
-  // room (🪦). Stand, rest and reverse are the corner buttons (slotPosHtml); everything else is in
+  // center-stage character on our turn, and, with turn rules off, the waiting room (🪦). With them on,
+  // the encore step asks what happens to reversed characters (renderEncorePrompt); anything else is in
   // the full menu that opens beside the slot.
   // With turn rules on, a standing center character in our attack's declare step offers the
   // attacks the rules allow: front or side against the character facing it, direct if there's none.
@@ -964,10 +964,8 @@
           ? allowed("front", "Front") + allowed("side", "Side") : allowed("direct", "Direct");
       }
     }
-    return `<div class="slot-actions">
-      ${quick}
-      ${iconButton({ type: "move", uid: card.uid, to: "waiting" }, "🪦", "Waiting room")}
-    </div>`;
+    const waiting = board.rules ? "" : iconButton({ type: "move", uid: card.uid, to: "waiting" }, "🪦", "Waiting room");
+    return quick || waiting ? `<div class="slot-actions">${quick}${waiting}</div>` : "";
   }
 
   // Quick moves shown on a hand card while hovering it: where characters and climaxes usually go
@@ -1037,31 +1035,19 @@
     return `<div class="active-colors"><span class="zone-label">Active colors</span>${chips || '<span class="muted small">none yet</span>'}</div>`;
   }
 
-  // In the encore step every reversed character of ours gets two always-visible choices: encore
-  // (pay 3 stock, stay rested; unavailable without the stock) or the waiting room. The turn can't
-  // go on until each reversed character on the table has had one.
-  function encoreChoiceHtml(card) {
-    if (board.phase !== "encore" || card.pos !== "reverse") return "";
-    const encore = canEncore() && !(board.no_encore || []).includes(card.uid)
-      ? `<button type="button" data-act='${esc(JSON.stringify({ type: "encore", uid: card.uid }))}' title="Pay ${ENCORE_COST} stock, stay rested">Encore</button>`
-      : `<button type="button" disabled title="Encore needs ${ENCORE_COST} stock">Encore</button>`;
-    return `<div class="encore-choice" role="group" aria-label="Encore or waiting room">
-      ${encore}${iconButton({ type: "move", uid: card.uid, to: "waiting" }, "🪦", "Waiting room")}
-    </div>`;
-  }
-
   // Any reversed character on either side (the encore step waits for them).
   const reversedLeft = () => [board.me, board.opponent].some((side) => side && Object.values(side.stage).some((c) => c && c.pos === "reverse"));
 
   const zoneMenuButton = (zone) => `<button type="button" class="zone-menu" title="More actions" aria-label="More actions" data-zone-menu="${zone}">[…]</button>`;
 
   // Small always-visible buttons in the corners of our occupied slots: stand (|) and rest (—) top
-  // left, reverse (↷, center stage only) top right, and back to hand (✋) bottom left.
+  // left and reverse (↷, center stage only) top right, with turn rules off (with them on, the game
+  // turns cards itself; the […] menu still can); the menu top right, and back to hand (✋) bottom left.
   function slotPosHtml(card, slot) {
     const button = (action, symbol, label, pressed = false) => `<button type="button" title="${label}" aria-label="${label}"
       aria-pressed="${pressed}" data-act='${esc(JSON.stringify(action))}'>${symbol}</button>`;
-    const pos = (p, symbol, label) => button({ type: "position", uid: card.uid, pos: p }, symbol, label, card.pos === p);
-    return `<div class="slot-pos">${pos("stand", "|", "Stand")}${pos("rest", "—", "Rest")}</div>
+    const pos = (p, symbol, label) => (board.rules ? "" : button({ type: "position", uid: card.uid, pos: p }, symbol, label, card.pos === p));
+    return `${board.rules ? "" : `<div class="slot-pos">${pos("stand", "|", "Stand")}${pos("rest", "—", "Rest")}</div>`}
       <div class="slot-pos slot-pos-right">${slot.startsWith("C") ? pos("reverse", "↷", "Reverse") : ""}${zoneMenuButton(slot)}</div>
       <div class="slot-pos slot-pos-bottom">${button({ type: "move", uid: card.uid, to: "hand" }, "✋", "To hand")}</div>`;
   }
@@ -1102,7 +1088,7 @@
       ${center ? label : ""}
       <div class="zone slot" data-slot="${slot}" data-drop="${owner === "me" ? slot : ""}" data-owner="${owner}">
         ${cardHtml(card, owner, slot) || '<span class="zone-empty"></span>'}
-        ${card && owner === "me" ? slotPosHtml(card, slot) + slotActionsHtml(card, slot) + encoreChoiceHtml(card) : ""}
+        ${card && owner === "me" ? slotPosHtml(card, slot) + slotActionsHtml(card, slot) : ""}
         ${card && owner === "me" && board.acts && board.acts[card.uid] ? `<div class="slot-pos slot-pos-right slot-pos-bottom">${activateButtonHtml(card)}</div>` : ""}
         ${markerHtml(side, owner, slot)}
         ${owner === "me" ? slotLinksHtml(side, slot) : ""}
@@ -1277,7 +1263,8 @@
       : board.mulligan ? (board.mulligan.me ? `Waiting for ${opponentWho()} to finish their mulligan…` : "Mulligan: choose cards to swap.")
       : !board.rules ? "Turn rules are off: anything goes."
       : board.attack ? ""
-      : board.phase === "encore" && reversedLeft() ? "Encore step: every reversed character needs Encore or 🪦 before the turn can end."
+      : board.phase === "encore" && reversedLeft() ? (myReversed().length ? "Encore step: encore your reversed characters or send them to the waiting room."
+        : `Encore step: waiting for ${opponentWho()} to encore their reversed characters…`)
       : inPhase("draw") ? "Draw phase: draw a card (✋ on your deck) to move on."
       : "End clears your climax zone and passes the turn.";
     note.hidden = !note.textContent;
@@ -1532,6 +1519,7 @@
     if (board.ability && board.ability.mine && board.ability.prompt && board.ability.prompt.kind !== "manual") return renderAbilityPrompt();
     if (modal && modal.abilities) return renderAbilityList();
     if (board.my_turn && board.attack && board.attack.step === "trigger" && board.attack.prompt && !board.ability_show) return renderTriggerPrompt();
+    if (encoreDue()) return renderEncorePrompt();
     if (!modal) {
       modalEl.hidden = true;
       return;
@@ -1766,6 +1754,34 @@
     modalEl.innerHTML = `<div class="play-modal-box" role="dialog" aria-label="${trigger.title}">
       <div class="play-modal-head"><h2>${trigger.title}</h2></div>
       <p class="muted small">${trigger.text}</p>${body}
+    </div>`;
+  }
+
+  // The encore step, with turn rules on: each reversed character of ours, on either player's turn, is
+  // encored (3 stock, stays rested) or goes to the waiting room, here, one at a time. The turn waits for
+  // every reversed character on the table (see reversedLeft); anything they trigger is resolved first.
+  const myReversed = () => STAGE.map((slot) => [slot, board.me.stage[slot]]).filter(([, c]) => c && c.pos === "reverse");
+  const encoreDue = () => board.rules && board.phase === "encore" && !board.ability && !board.ability_show && myReversed().length > 0;
+
+  function renderEncorePrompt() {
+    const enough = canEncore();
+    const stock = board.me.zones.stock.count;
+    const rows = myReversed().map(([slot, card]) => {
+      const blocked = (board.no_encore || []).includes(card.uid);
+      const why = blocked ? "It can't be encored this turn." : enough ? "" : `Encore needs ${ENCORE_COST} stock; you have ${stock}.`;
+      return `<div class="encore-option">${cardHtml(card, "view", "encore")}
+        <span class="muted small">${esc(LABELS[slot])}</span>
+        <div class="trigger-buttons">
+          <button type="button" data-act='${esc(JSON.stringify({ type: "encore", uid: card.uid }))}'${why ? ` disabled title="${esc(why)}"` : ""}>Encore (${ENCORE_COST} stock)</button>
+          <button type="button" class="button-cancel" data-act='${esc(JSON.stringify({ type: "move", uid: card.uid, to: "waiting" }))}'>🪦 Waiting room</button>
+        </div>
+        ${why ? `<span class="muted small">${esc(why)}</span>` : ""}</div>`;
+    });
+    modalEl.hidden = false;
+    modalEl.innerHTML = `<div class="play-modal-box" role="alertdialog" aria-label="Encore step">
+      <div class="play-modal-head"><h2>Encore step</h2></div>
+      <p class="muted small">Your reversed character${rows.length === 1 ? "" : "s"}: pay ${ENCORE_COST} stock to encore (it stays on the stage, rested), or send ${rows.length === 1 ? "it" : "each"} to the waiting room. You have ${stock} stock.</p>
+      <div class="play-modal-cards">${rows.join("")}</div>
     </div>`;
   }
 

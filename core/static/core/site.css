@@ -1049,10 +1049,9 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .rules-prompt p { margin: 0; }
 .rules-prompt[hidden] { display: none; }
 /* Encore step choices on a reversed character: greyed until pointed at, so they read as undecided. */
-.encore-choice { position: absolute; left: 50%; bottom: .3rem; z-index: 5; display: flex; gap: .25rem; transform: translateX(-50%); }
-.encore-choice button { font: inherit; font-size: .72rem; font-weight: 700; line-height: 1; padding: .3rem .5rem; color: #c9ccd3; background: #3a3d45; border: 1px solid #5a5e69; border-radius: .35rem; cursor: pointer; filter: grayscale(1); opacity: .8; box-shadow: 0 2px 6px rgb(0 0 0 / .6); }
-.encore-choice button:hover:not(:disabled), .encore-choice button:focus-visible { filter: none; opacity: 1; color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
-.encore-choice button:disabled { opacity: .35; cursor: not-allowed; }
+/* The encore step's prompt (play.js renderEncorePrompt): each reversed character, with its two choices. */
+.encore-option { display: flex; flex-direction: column; align-items: center; gap: .35rem; max-width: 11rem; text-align: center; }
+.encore-option .trigger-buttons { justify-content: center; }
 /* A climax played in the climax phase, in the middle of the screen for both players. play.js picks
    one of these entrances at random and sets the duration (2s). */
 .climax-show { position: fixed; left: 50%; top: 50%; z-index: 46; pointer-events: none; transform: translate(-50%, -50%); animation-fill-mode: forwards; animation-timing-function: ease-out; }
