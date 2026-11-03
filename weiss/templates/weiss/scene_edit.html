@@ -7,14 +7,31 @@
 
 {% block content %}
   <p class="back"><a href="{% url 'weiss:cpu_home' %}?tab=scenes">&larr; Scenes</a></p>
+  {# Three columns: the lines a script can say (left), the script (middle), and things to put in it (right). scene_editor.js does the rest. #}
   <form method="post" class="scene-editor" data-scene-editor data-check-url="{% url 'weiss:cpu_scene_check' scene.pk %}">
     {% csrf_token %}
+    <aside class="scene-lines" aria-label="What a script can say">
+      <h2>Lines</h2>
+      <input type="search" class="scene-lines-search" placeholder="Find a line… (e.g. choice, give)" aria-label="Find a line" data-lines-search>
+      <p class="muted small">Click one to put it in the script at the cursor.</p>
+      <dl class="scene-commands" data-lines>
+        {% for example, meaning, insert in reference %}
+          <div class="scene-command" data-search="{{ example|lower }} {{ meaning|lower }}">
+            <dt><button type="button" class="link-button scene-example" data-insert="{{ insert }}">{{ example }}</button></dt>
+            <dd class="muted small">{{ meaning }}</dd>
+          </div>
+        {% endfor %}
+      </dl>
+      <p class="muted small" data-lines-none hidden>No line matches.</p>
+    </aside>
+
     <div class="scene-editor-main">
       <div class="scene-editor-head">
         <label class="scene-name">Scene <input type="text" name="name" value="{{ scene.name }}" maxlength="100" required></label>
         <div class="scene-editor-actions">
-          <button type="submit" class="button-small secondary">Save</button>
-          <button type="submit" class="button-small" name="then" value="play">Save &amp; play</button>
+          <span class="small scene-save-state" data-save-state aria-live="polite">Saved</span>
+          <button type="submit" class="button-small secondary" title="Ctrl+S">Save</button>
+          <button type="submit" class="button-small" name="then" value="play" title="Ctrl+Enter" data-save-play>Save &amp; play</button>
         </div>
       </div>
       <div class="scene-script-wrap">
@@ -30,34 +47,36 @@
         {% endif %}
       </div>
       <div class="scene-editor-foot">
+        <span class="small" data-scene-labels data-labels="{{ labels|join:',' }}"></span>
         {% if not errors %}<a class="small" href="{% url 'weiss:cpu_scene_play' scene.pk %}">Play the saved version</a>{% endif %}
-        <span class="muted small" data-scene-labels>{% if labels %}Labels: {{ labels|join:", " }}{% endif %}</span>
+        <span class="muted small">Ctrl+S saves · Ctrl+Enter saves and plays</span>
       </div>
     </div>
-    <aside class="scene-reference" aria-label="What a script can say">
-      <h2>Reference</h2>
-      <p class="muted small">Click anything to put it in the script where the cursor is.</p>
-      <h3>CPUs</h3>
-      <ul class="scene-chips">
-        {% for profile in profiles %}<li><button type="button" class="scene-chip" data-insert="cast {{ profile.cast_name }} as {{ profile.name }}&#10;" title="Cast {{ profile.name }}">{{ profile.name }}</button></li>
-        {% empty %}<li class="muted small">No CPU profiles yet.</li>{% endfor %}
-      </ul>
-      <h3>Backgrounds</h3>
-      <ul class="scene-backdrops">
-        {% for name in backgrounds %}<li><button type="button" class="scene-backdrop" data-insert="background {{ name }}" title="background {{ name }}">
-          <span class="scene-backdrop-art" data-backdrop="{{ name }}"></span><code>{{ name }}</code></button></li>{% endfor %}
-      </ul>
-      <h3>Animations</h3>
-      <ul class="scene-chips">{% for animation in animations %}<li><button type="button" class="scene-chip" data-insert="{{ animation }}">{{ animation }}</button></li>{% endfor %}</ul>
-      <h3>Buffs (in challenges)</h3>
-      <ul class="scene-chips">{% for buff in buffs %}<li><button type="button" class="scene-chip" data-insert="give {{ buff.id }}" title="{{ buff.name }}: {{ buff.description }}">{{ buff.id }}</button></li>{% endfor %}</ul>
-      <h3>Lines</h3>
-      <dl class="scene-commands">
-        {% for example, meaning, insert in reference %}
-          <dt><button type="button" class="link-button scene-example" data-insert="{{ insert }}">{{ example }}</button></dt>
-          <dd class="muted small">{{ meaning }}</dd>
-        {% endfor %}
-      </dl>
+
+    <aside class="scene-palette" aria-label="Things to put in the script">
+      <details class="scene-palette-part" data-part="cpus" open>
+        <summary>CPUs <span class="muted small">cast them</span></summary>
+        <ul class="scene-chips">
+          {% for profile in profiles %}<li><button type="button" class="scene-chip" data-insert="cast {{ profile.cast_name }} as {{ profile.name }}&#10;" data-whole-line title="cast {{ profile.cast_name }} as {{ profile.name }}">{{ profile.name }}</button></li>
+          {% empty %}<li class="muted small">No CPU profiles yet.</li>{% endfor %}
+        </ul>
+      </details>
+      <details class="scene-palette-part" data-part="backgrounds">
+        <summary>Backgrounds <span class="muted small">{{ backgrounds|length }}</span></summary>
+        <ul class="scene-backdrops">
+          {% for name in backgrounds %}<li><button type="button" class="scene-backdrop" data-insert="background {{ name }}" data-whole-line title="background {{ name }}">
+            <span class="scene-backdrop-art" data-backdrop="{{ name }}"></span><code>{{ name }}</code></button></li>{% endfor %}
+        </ul>
+      </details>
+      <details class="scene-palette-part" data-part="animations" open>
+        <summary>Animations <span class="muted small">after a name</span></summary>
+        <ul class="scene-chips">{% for animation in animations %}<li><button type="button" class="scene-chip" data-insert=" {{ animation }}" title="e.g. “rapi {{ animation }}”">{{ animation }}</button></li>{% endfor %}</ul>
+      </details>
+      <details class="scene-palette-part" data-part="buffs">
+        <summary>Buffs <span class="muted small">in challenges</span></summary>
+        <ul class="scene-chips">{% for buff in buffs %}<li><button type="button" class="scene-chip{% if buff.pact %} scene-chip-pact{% endif %}" data-insert="give {{ buff.id }}" data-whole-line title="{{ buff.name }}: {{ buff.description }}">{{ buff.id }}</button></li>{% endfor %}</ul>
+        <p class="muted small">Red ones are pacts: buffs with a price. “give random”, “give pact” and “offer 2 pacts: …” pick for you.</p>
+      </details>
     </aside>
   </form>
   <form method="post" action="{% url 'weiss:cpu_scene_delete' scene.pk %}" onsubmit="return confirm('Delete {{ scene.name|escapejs }}?')">{% csrf_token %}
