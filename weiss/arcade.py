@@ -119,7 +119,8 @@ def game_finished(room, over, score=None):
     cleared = run.position >= len(run.order)
     if queued := scenes_after(run, room.cpu_profile_id, cleared):
         room.state["scenes"] = queued
-    challenge.fight_finished(run, won=True, cleared=cleared)
+    if prize := challenge.fight_finished(run, won=True, cleared=cleared):
+        room.state["prize"] = challenge.prize_shown(prize)  # the Victory screen draws it, slot machine and all
     if not cleared:
         run.save(update_fields=["position", "scores", "score", "order"])
         return

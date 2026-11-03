@@ -62,6 +62,7 @@
   let avatars = {}; // {player name: picture}, for those who have one
   let cpuInfo = null; // the CPU in a game against one: its images and what it says
   let arcade = null; // where an arcade run has got to
+  let prize = null; // an infinite challenge's prize for this win: what the Victory screen's slot machine lands on
   let sceneData = null; // a scene the run plays before the board goes on (weiss.scenes), until the server hears it's done
   let sceneViewer = ""; // the player's name, for {player} in a scene
   let sceneShown = null; // the key of the scene being played, so a poll doesn't start it again
@@ -131,6 +132,7 @@
     arcade = data.arcade || null;
     intro = Boolean(data.intro);
     sceneData = data.scene || null;
+    prize = data.prize || null;
     sceneViewer = data.player_name || sceneViewer;
     if (data.revealed) modal = { title: data.revealed.title, revealed: data.revealed.cards };
     render();
@@ -286,6 +288,51 @@
       }
     }
     setTimeout(() => burst.remove(), 1800);
+  }
+
+  // --- An infinite challenge's prize: a slot machine on the Victory screen -----------------------------------
+
+  const PRIZE_ICONS = { climax_pack: "⚡", color_pack: "🎨", lucky_pack: "💎" };
+  const SLOT_SPINS = 8; // times round the reel before it stops
+
+  function slotHtml(drawn) {
+    // The reel: round and round, then the prize, as the last of its items.
+    const items = [];
+    for (let turn = 0; turn < SLOT_SPINS; turn++) items.push(...drawn.reel);
+    items.push(...drawn.reel.slice(0, drawn.won + 1));
+    return `<div class="slot" role="img" aria-label="Your prize: ${esc(drawn.reel[drawn.won].name)}">
+      <div class="slot-lights" aria-hidden="true">${"<i></i>".repeat(10)}</div>
+      <div class="slot-window" aria-hidden="true"><div class="slot-reel">${items.map((item) =>
+        `<div class="slot-item"><span class="slot-icon">${PRIZE_ICONS[item.buff] || "★"}</span><span>${esc(item.name)}</span></div>`).join("")}</div></div>
+      <p class="slot-result" hidden>+${drawn.packs} pack and a <strong>${esc(drawn.reel[drawn.won].name)}</strong>!</p>
+    </div>`;
+  }
+
+  // Spin the reel down to its last item, slowing as it goes, then light up. Seen once a win: a redraw shows it stopped.
+  let slotSpun = null;
+  function spinSlot(el, drawn) {
+    const reel = el.querySelector(".slot-reel");
+    const items = reel.children;
+    const stop = items.length - 1;
+    const height = items[0].getBoundingClientRect().height;
+    const done = () => {
+      reel.style.transform = `translateY(${-stop * height}px)`;
+      el.classList.add("slot-won");
+      el.querySelector(".slot-result").hidden = false;
+    };
+    const key = `${version}:${drawn.won}`;
+    if (!animations || slotSpun === key || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      done();
+      return;
+    }
+    slotSpun = key;
+    el.classList.add("slot-spinning");
+    reel.animate([{ transform: "translateY(0)" }, { transform: `translateY(${-stop * height}px)` }],
+                 { duration: 3200, delay: 900, easing: "cubic-bezier(.15,.55,.15,1)", fill: "forwards" })
+      .finished.then(() => {
+        el.classList.remove("slot-spinning");
+        done();
+      }, () => {});
   }
 
   // A scene the run plays: over the whole board, then the server is told it's done and the run goes on. After a
@@ -1394,12 +1441,14 @@
           <h2 class="game-over-word">${over.won ? "Victory" : "Defeat"}</h2>
           <p class="game-over-reason">${reason}</p>
           ${over.score ? scoreLines(over.score) : ""}
-          ${arcade && arcade.challenge && over.won ? `<p class="game-over-arcade">Won: ${esc(arcade.challenge.won)} · ${arcade.challenge.packs} packs to open</p>` : ""}
+          ${arcade && arcade.challenge && over.won ? `<p class="game-over-arcade">${prize ? "" : `Won: ${esc(arcade.challenge.won)} · `}${arcade.challenge.packs} packs to open</p>` : ""}
           ${arcade && arcade.challenge && !over.won ? `<p class="game-over-arcade">${arcade.challenge.going ? `A second chance: you can fight again${arcade.challenge.lives ? ` (${arcade.challenge.lives} more left)` : ""}.` : "The challenge is over."}</p>` : ""}
           ${arcade ? `<p class="game-over-arcade">${arcade.cleared ? `🏆 ${esc(arcade.scenario)} cleared!` : over.won ? `Up next: ${fightOf()}` : `${esc(arcade.scenario)}: ${fightOf()}`}${arcade.score ? ` · run score ${arcade.score}` : ""}</p>` : ""}
+          ${over.won && prize ? slotHtml(prize) : ""}
           <p class="game-over-status" data-game-over-status></p>
           <div class="game-over-buttons" data-game-over-buttons></div></div>`;
       root.appendChild(gameOverEl);
+      if (over.won && prize) spinSlot(gameOverEl.querySelector(".slot"), prize);
     }
     const name = opponentWho("Your opponent");
     gameOverEl.querySelector("[data-game-over-status]").innerHTML = (error && esc(error))

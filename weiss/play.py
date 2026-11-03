@@ -97,6 +97,8 @@ def board_payload(room, user, extra=None):
     if extra and "revealed" in extra:
         pks.update(c["card"] for c in extra["revealed"]["cards"])
     scene = {"scene": room.state["scenes"][0], "player_name": user.username} if room.state.get("scenes") else {}
+    if room.state.get("prize"):
+        scene["prize"] = room.state["prize"]
     return {"version": room.version, "status": room.status, "board": board, "cards": card_info(pks),
             "avatars": room_avatars(room), **cpu_payload(room), **scene, **(extra or {})}
 

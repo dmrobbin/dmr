@@ -268,24 +268,29 @@ class InfiniteChallengeTests(ArcadeSetup):
         self.assertIn(room.cpu_profile, [self.opener, self.filler, self.anchor])
         data = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()
         self.assertEqual((data["arcade"]["fight"], data["arcade"]["total"]), (1, None))
+        packs = self.run.packs
         for fight in range(1, 5):
-            with mock.patch("weiss.buffs.roll", return_value=["climax_pack"]):
-                self.end_fight("me")
+            self.end_fight("me")
             run.refresh_from_db()
             self.assertEqual((run.position, len(run.order), run.status), (fight, fight + 1, ArcadeRun.Status.ACTIVE))
             self.assertNotEqual(run.order[-1], run.order[-2])  # not the same one twice running
             self.post(reverse("weiss:play_action", args=[self.room().pk]), {"type": "arcade_continue"})
         self.run.refresh_from_db()
-        self.assertEqual([r["buff"] for r in self.run.rewards], ["climax_pack"] * 4)  # a random reward each time
+        self.assertEqual(self.run.packs, packs + 4 * challenge.INFINITE_WIN_PACKS)  # a pack each win
+        self.assertEqual(len(self.run.rewards), 4)  # and a prize to claim
+        self.assertTrue(all(r["buff"] in challenge.INFINITE_PRIZES for r in self.run.rewards))
         self.assertEqual(self.run.status, "active")
 
-    def test_a_reward_that_needs_nothing_more_happens_at_once(self):
+    def test_the_victory_screen_draws_the_prize_won(self):
         self.client.post(reverse("weiss:arcade_challenge_fight"))
-        packs = self.run.packs
-        with mock.patch("weiss.buffs.roll", return_value=["extra_packs"]):
-            self.end_fight("me")
+        room = self.end_fight("me")
         self.run.refresh_from_db()
-        self.assertEqual((self.run.packs, self.run.rewards), (packs + 2, []))
+        won = self.run.rewards[-1]["buff"]
+        prize = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()["prize"]
+        self.assertEqual([item["name"] for item in prize["reel"]], ["Climax pack", "Color pack", "Lucky pack"])
+        self.assertEqual((prize["reel"][prize["won"]]["buff"], prize["packs"]), (won, 1))  # what it lands on is what's given
+        self.post(reverse("weiss:play_action", args=[room.pk]), {"type": "arcade_continue"})
+        self.assertNotIn("prize", self.client.get(reverse("weiss:play_state", args=[room.pk])).json())  # gone with the next fight
 
     def test_a_loss_ends_it_and_the_deck_can_be_kept(self):
         self.client.post(reverse("weiss:arcade_challenge_fight"))

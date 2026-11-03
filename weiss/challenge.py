@@ -29,6 +29,8 @@ NARRATIVE_WIN_PACKS = 2  # ...and in a narrative one, with these rewards to clai
 NARRATIVE_WIN_REWARDS = ("color_pack",)
 STAFF_ONLY = True  # being tried out, as booster packs are
 INFINITE_NAME = "Infinite challenge"
+INFINITE_WIN_PACKS = 1  # what a win in an infinite challenge brings, with one of these besides, at random: its prize,
+INFINITE_PRIZES = ("climax_pack", "color_pack", "lucky_pack")  # which the Victory screen's slot machine lands on (play.js)
 # How an infinite challenge's CPUs play, whatever their own model: (fights, the model or the models to pick from),
 # in turn, then hard, from an aggression picked at random, for the rest.
 INFINITE_MODELS = ((2, ("easy",)), (1, ("standard",)), (3, ("focused", "strategic")))
@@ -45,11 +47,12 @@ def start_packs(kind):
 
 
 def win_reward(kind):
-    """(packs, rewards) that a win brings a challenge of this kind; "random" is any buff (weiss.buffs)."""
+    """(packs, rewards) that a win brings a challenge of this kind; "random" is any buff (weiss.buffs), "prize" one
+    of the INFINITE_PRIZES."""
     if kind == ChallengeRun.Kind.NARRATIVE:
         return NARRATIVE_WIN_PACKS, NARRATIVE_WIN_REWARDS
     if kind == ChallengeRun.Kind.INFINITE:
-        return 0, ("random",)
+        return INFINITE_WIN_PACKS, ("prize",)
     return WIN_PACKS, ()
 
 
@@ -57,7 +60,8 @@ def win_reward_text(kind):
     """What a win brings, for the player: "3 packs", "2 packs and a color pack"."""
     from .buffs import BUFFS  # weiss.buffs uses this module
     if kind == ChallengeRun.Kind.INFINITE:
-        return "a random reward"
+        names = [BUFFS[prize].name.lower() for prize in INFINITE_PRIZES]
+        return f"a pack and a {', '.join(names[:-1])} or {names[-1]}"
     count, rewards = win_reward(kind)
     parts = [f"{count} pack{'s' if count != 1 else ''}"] + [f"a {BUFFS[buff].name.lower()}" for buff in rewards]
     return " and ".join([", ".join(parts[:-1]), parts[-1]] if len(parts) > 1 else parts)
@@ -176,16 +180,25 @@ def save_deck(run, copies):
     return None
 
 
-def fight_finished(arcade_run, won, cleared):
-    """A fight in a challenge's run has ended (see arcade.game_finished): a win brings packs; a loss ends it."""
+def fight_finished(arcade_run, won, cleared, rng=random):
+    """A fight in a challenge's run has ended (see arcade.game_finished): a win brings packs; a loss ends it.
+    Returns the prize a win drew (an infinite challenge's), for the Victory screen to show being drawn; or None."""
     run = of(arcade_run)
     if not run:
-        return
+        return None
+    prize = None
     if won:
         from .buffs import EXTRA_PACKS, roll  # weiss.buffs uses this module
         count, rewards = win_reward(run.kind)
         run.packs += count
-        for buff in (roll(1)[0] if buff == "random" else buff for buff in rewards):
+        drawn = []
+        for buff in rewards:
+            if buff == "prize":
+                buff = prize = rng.choice(INFINITE_PRIZES)
+            elif buff == "random":
+                buff = roll(1, rng)[0]
+            drawn.append(buff)
+        for buff in drawn:
             if buff == "extra_packs":  # those needing nothing more happen now, as buffs.grant does them
                 run.packs += EXTRA_PACKS
             elif buff == "second_chance":
@@ -201,6 +214,14 @@ def fight_finished(arcade_run, won, cleared):
         arcade_run.status, arcade_run.finished = ArcadeRun.Status.ABANDONED, timezone.now()
         arcade_run.save(update_fields=["status", "finished"])
     run.save(update_fields=["packs", "rewards", "status", "lives"])
+    return prize
+
+
+def prize_shown(prize):
+    """What the slot machine needs: its reel (the prizes there are) and which one it stops on."""
+    from .buffs import BUFFS  # weiss.buffs uses this module
+    return {"reel": [{"buff": buff, "name": BUFFS[buff].name} for buff in INFINITE_PRIZES],
+            "won": INFINITE_PRIZES.index(prize), "packs": INFINITE_WIN_PACKS}
 
 
 def stop_fighting(run):
