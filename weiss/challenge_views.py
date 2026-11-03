@@ -43,7 +43,8 @@ def challenge_home(request):
     run = challenge.current(request.user)
     if not run:
         return render(request, "weiss/challenge.html", {"scenarios": arcade.ready_scenarios(), "narratives": narratives(),
-                                                        "start_packs": challenge.START_PACKS, "win_packs": challenge.WIN_PACKS})
+                                                        "start_packs": challenge.START_PACKS, "narrative_packs": challenge.NARRATIVE_START_PACKS,
+                                                        "win_packs": challenge.WIN_PACKS})
     deck_total = sum(run.deck.entries.values_list("quantity", flat=True)) if run.deck else 0
     names = {entry["id"]: entry["name"] for entry in packs.pack_sets()}
     return render(request, "weiss/challenge.html", {
@@ -245,7 +246,7 @@ def challenge_reset(request):
     run = challenge.current(request.user)
     if run:
         challenge.reset(run)
-        messages.success(request, f"{run.name} starts again: {challenge.START_PACKS} new packs, and a new deck.")
+        messages.success(request, f"{run.name} starts again: {challenge.start_packs(run.kind)} new packs, and a new deck.")
     return redirect("weiss:arcade_challenge")
 
 

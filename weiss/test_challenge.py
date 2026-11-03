@@ -251,9 +251,9 @@ class ChallengeTests(ArcadeSetup):
         self.client.force_login(self.staff)
         self.assertContains(self.client.get(reverse("weiss:arcade")), "Challenge</a>")
 
-    def test_starting_gives_ten_packs_and_a_deck_kept_out_of_the_lists(self):
+    def test_starting_gives_its_packs_and_a_deck_kept_out_of_the_lists(self):
         run = self.start()
-        self.assertEqual((run.kind, run.packs, run.name, run.scenario), ("free", 10, "Ark", self.scenario))
+        self.assertEqual((run.kind, run.packs, run.name, run.scenario), ("free", challenge.START_PACKS, "Ark", self.scenario))
         self.assertTrue(run.deck.challenge)
         self.assertNotIn(run.deck, CardList.objects.players(self.staff))
         self.assertNotIn(run.deck, self.client.get(reverse("weiss:lists")).context["lists"])
@@ -265,14 +265,15 @@ class ChallengeTests(ArcadeSetup):
         run = self.start()
         self.assertRedirects(self.open(4), reverse("weiss:arcade_challenge_opened"))
         run.refresh_from_db()
-        self.assertEqual((run.packs, run.opened, sum(run.pool.values())), (6, 4, 32))
+        left = challenge.START_PACKS - 4
+        self.assertEqual((run.packs, run.opened, sum(run.pool.values())), (left, 4, 32))
         self.assertEqual(len(run.last_opening["packs"]), 4)
         page = self.client.get(reverse("weiss:arcade_challenge_opened"))
         self.assertContains(page, "Build your deck")
         self.assertContains(page, 'data-pack="3"')
-        self.open(7)  # more than are left
+        self.open(left + 1)  # more than are left
         run.refresh_from_db()
-        self.assertEqual(run.packs, 6)
+        self.assertEqual(run.packs, left)
 
     def test_a_narrative_challenge_only_opens_its_own_sets(self):
         narrative = NarrativeChallenge.objects.create(name="Story", scenario=self.scenario, sets=[8])
@@ -280,12 +281,16 @@ class ChallengeTests(ArcadeSetup):
         run = challenge.current(self.staff)
         self.assertEqual((run.kind, run.name, run.sets), ("narrative", "Story", [8]))
         self.assertEqual([s["id"] for s in challenge.allowed_sets(run)], [8])
+        self.assertEqual(run.packs, challenge.NARRATIVE_START_PACKS)
         self.open(1, set_id=7)
         run.refresh_from_db()
-        self.assertEqual(run.packs, 10)
+        self.assertEqual(run.packs, challenge.NARRATIVE_START_PACKS)
         self.open(1, set_id=8)
         run.refresh_from_db()
-        self.assertEqual(run.packs, 9)
+        self.assertEqual(run.packs, challenge.NARRATIVE_START_PACKS - 1)
+        self.client.post(reverse("weiss:arcade_challenge_reset"))
+        run.refresh_from_db()
+        self.assertEqual(run.packs, challenge.NARRATIVE_START_PACKS)  # and again after a reset
         narrative.sets = [7]
         narrative.save()  # a challenge under way keeps its sets
         run.refresh_from_db()
@@ -322,10 +327,11 @@ class ChallengeTests(ArcadeSetup):
         self.assertEqual((room.host_deck, room.cpu_profile), (run.deck, self.opener))
         self.assertRedirects(self.client.post(reverse("weiss:arcade_challenge_fight")), reverse("weiss:play_room", args=[room.pk]))  # the same room
         data = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()
-        self.assertEqual(data["arcade"]["challenge"], {"packs": 0, "won": 3, "lives": 0, "going": True, "rewards": 0})
+        left = challenge.START_PACKS - 10  # ready_to_fight opened 10
+        self.assertEqual(data["arcade"]["challenge"], {"packs": left, "won": 3, "lives": 0, "going": True, "rewards": 0})
         self.end_fight("me")
         run.refresh_from_db()
-        self.assertEqual((run.packs, run.status), (3, "active"))
+        self.assertEqual((run.packs, run.status), (left + challenge.WIN_PACKS, "active"))
         url = reverse("weiss:play_action", args=[room.pk])
         self.assertEqual(self.post(url, {"type": "arcade_edit_deck"}).status_code, 400)  # packs and the deck are on the challenge's page
         self.assertEqual(self.post(url, {"type": "challenge_leave"}).json()["redirect"], reverse("weiss:arcade_challenge"))
@@ -373,7 +379,7 @@ class ChallengeTests(ArcadeSetup):
         self.client.post(reverse("weiss:arcade_challenge_reset"))
         run.refresh_from_db()
         self.assertFalse(CardList.objects.filter(pk=old_deck).exists())
-        self.assertEqual((run.packs, run.pool, run.arcade_run, run.status), (10, {}, None, "active"))
+        self.assertEqual((run.packs, run.pool, run.arcade_run, run.status), (challenge.START_PACKS, {}, None, "active"))
         self.assertTrue(run.deck.challenge)
         self.assertFalse(GameRoom.objects.exists())
 

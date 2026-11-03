@@ -1,6 +1,6 @@
 """Challenge mode: build a deck from packs, then fight through an arcade list with it.
 
-A challenge starts with START_PACKS packs. Opening them adds their cards to the challenge's pool, and its
+A challenge starts with START_PACKS packs (NARRATIVE_START_PACKS for a narrative one). Opening them adds their cards to the challenge's pool, and its
 deck can hold only what's in the pool (sealed: nothing else, so a deck can be short of 50 or of climaxes
 until more packs come). Each win in its arcade run brings WIN_PACKS more; a loss ends the challenge. In a
 free challenge the player picks any set for each pack, an arbitrary arcade list to fight; a narrative one
@@ -19,7 +19,8 @@ from . import packs
 from .lists import DECK_SIZE
 from .models import ArcadeRun, Card, CardList, CardListEntry, ChallengeRun, GameRoom
 
-START_PACKS = 10
+START_PACKS = 20  # packs to open at the start of a free challenge
+NARRATIVE_START_PACKS = 20  # ...and of a narrative one
 WIN_PACKS = 3
 STAFF_ONLY = True  # being tried out, as booster packs are
 
@@ -27,6 +28,11 @@ STAFF_ONLY = True  # being tried out, as booster packs are
 def current(user):
     """This player's challenge, from starting it until they've kept or discarded its deck; or None."""
     return ChallengeRun.objects.filter(user=user, finished__isnull=True).select_related("deck", "arcade_run", "scenario", "narrative").first()
+
+
+def start_packs(kind):
+    """How many packs a challenge of this kind starts with."""
+    return NARRATIVE_START_PACKS if kind == ChallengeRun.Kind.NARRATIVE else START_PACKS
 
 
 def of(arcade_run):
@@ -46,12 +52,12 @@ def deck_name(name):
 
 
 def start(user, kind, scenario, narrative=None):
-    """A new challenge: an empty deck and START_PACKS packs to open."""
+    """A new challenge: an empty deck and its packs to open (see start_packs)."""
     name = narrative.name if narrative else scenario.name
     with transaction.atomic():
         deck = CardList.objects.create(user=user, name=deck_name(name), challenge=True)
         return ChallengeRun.objects.create(user=user, kind=kind, narrative=narrative, scenario=scenario, name=name, deck=deck,
-                                           sets=list(narrative.sets) if narrative else [], packs=START_PACKS)
+                                           sets=list(narrative.sets) if narrative else [], packs=start_packs(kind))
 
 
 def allowed_sets(run):
@@ -145,7 +151,7 @@ def reset(run):
         if run.deck:
             run.deck.delete()
         run.deck = CardList.objects.create(user=run.user, name=deck_name(run.name), challenge=True)
-        run.pool, run.packs, run.opened, run.last_opening, run.rewards, run.lives = {}, START_PACKS, 0, {}, [], 0
+        run.pool, run.packs, run.opened, run.last_opening, run.rewards, run.lives = {}, start_packs(run.kind), 0, {}, [], 0
         run.arcade_run, run.status, run.started = None, ChallengeRun.Status.ACTIVE, timezone.now()
         run.save()
 

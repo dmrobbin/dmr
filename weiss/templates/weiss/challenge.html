@@ -7,7 +7,7 @@
   {% include "weiss/arcade_tabs.html" with current="challenge" %}
 
   {% if not run %}
-    <p class="muted small">Build a deck from scratch: open {{ start_packs }} packs, make a deck from only the cards you pull, and fight through an arcade list with it.
+    <p class="muted small">Build a deck from scratch: open {{ start_packs }} packs{% if narrative_packs != start_packs %} ({{ narrative_packs }} in a narrative challenge){% endif %}, make a deck from only the cards you pull, and fight through an arcade list with it.
       Each win brings {{ win_packs }} more packs to improve your deck; one loss ends the challenge. At the end, keep the deck or let it go.</p>
     <div class="challenge-choices">
       <section class="challenge-choice">

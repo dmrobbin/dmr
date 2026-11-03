@@ -91,7 +91,7 @@ class ClaimTests(ChallengeBuffBase):
     def test_granting(self):
         buffs.grant(self.run, ["extra_packs", "second_chance", "climax_pack"], "Gifts")
         self.run.refresh_from_db()
-        self.assertEqual((self.run.packs, self.run.lives), (12, 1))
+        self.assertEqual((self.run.packs, self.run.lives), (challenge.START_PACKS + buffs.EXTRA_PACKS, 1))
         self.assertEqual([(r["buff"], r["source"]) for r in self.run.rewards], [("climax_pack", "Gifts")])
         page = self.client.get(reverse("weiss:arcade_challenge"))
         self.assertContains(page, "Rewards to claim")
@@ -216,7 +216,7 @@ class SceneBuffFlowTests(ChallengeBuffBase):
         data = self.post(url, {"type": "scene_done", "key": scene["key"], "buffs": [[1, None], [3, 0], [3, 1]]}).json()
         self.assertEqual(data["redirect"], reverse("weiss:arcade_challenge"))  # off to claim them and change the deck
         self.run.refresh_from_db()
-        self.assertEqual(self.run.packs, 2)  # two more packs, at once
+        self.assertEqual(self.run.packs, challenge.START_PACKS - 10 + buffs.EXTRA_PACKS)  # two more packs, at once
         self.assertEqual([r["buff"] for r in self.run.rewards], ["lucky_pack"])  # the second pick of one step doesn't count
         # Back to the fight: it's dealt again, with the deck as it is now.
         card = next(iter(self.run.pool))
