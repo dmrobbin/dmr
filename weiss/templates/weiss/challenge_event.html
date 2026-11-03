@@ -1,0 +1,40 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Event{% endblock %}
+
+{% block head %}<script src="{% static 'weiss/scene.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+  {# An infinite challenge's event: its scene, then what was chosen goes back to the challenge (challenge_views.challenge_event_done). #}
+  <div class="challenge-event">
+    <p class="challenge-event-head"><span class="deck-tag">Event</span> {{ payload.title }}</p>
+    <div class="challenge-event-stage" data-scene-root></div>
+    <form method="post" action="{% url 'weiss:arcade_challenge_event_done' %}" data-event-done class="challenge-event-foot">
+      {% csrf_token %}
+      <input type="hidden" name="key" value="{{ payload.key }}">
+      <input type="hidden" name="buffs" value="[]">
+      <button type="submit" class="link-button" data-event-skip title="Leave without taking anything">Walk away</button>
+    </form>
+  </div>
+  {{ payload|json_script:"scene-payload" }}
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const scene = JSON.parse(document.getElementById("scene-payload").textContent);
+      const form = document.querySelector("[data-event-done]");
+      let sent = false;
+      const finish = (picked) => {
+        if (sent) return;
+        sent = true;
+        form.elements.buffs.value = JSON.stringify((picked ? picked.buffs : []).map((given) => [given.step, given.option]));
+        form.submit();
+      };
+      form.addEventListener("submit", (event) => { event.preventDefault(); finish(null); });
+      const player = new ScenePlayer(document.querySelector("[data-scene-root]"), scene, {
+        playerName: "{{ player_name|escapejs }}",
+        onEnd: (state) => setTimeout(() => finish(state), 600),
+      });
+      player.start();
+    });
+  </script>
+{% endblock %}

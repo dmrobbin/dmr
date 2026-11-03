@@ -5,6 +5,10 @@ settled when the scene is queued (`resolve`), and when the scene's done, what th
 against the scene (`given`) before `grant` puts it on the challenge. A buff that needs nothing more happens then;
 the rest wait on the challenge's page as rewards, claimed (`claim`) before the next fight, deck changes and all.
 
+Pacts are buffs with a price (an infinite challenge's events mostly give them): some happen at once, cards lost
+and all; the rest change the next fight (`fight_mods`), a handicap in it with a reward for winning it, and last
+until it's won. A random buff is never a pact unless a scene asks for one ("give pact", "offer 2 pacts").
+
 Outside a challenge there's nothing for a buff to do, so a scene's buffs are left out (`resolve` with enabled off).
 """
 import copy
@@ -21,6 +25,14 @@ COPIES = 3
 CLIMAX_COPIES = 2
 LEVELS = (0, 1, 2, 3)
 COLORS = ("Yellow", "Green", "Red", "Blue", "Purple")
+REFORGE_CARDS = 10  # spare cards a reforge takes from the pool...
+REFORGE_PACKS = 2  # ...for this many packs
+BLOOD_PACKS = 3
+AMBUSH_DAMAGE = 2  # cards in the clock an ambushed fight starts with...
+AMBUSH_PACKS = 2  # ...and the packs winning it brings
+ALL_IN_PACKS = 2  # lucky packs, for every second chance
+OUTPACED_PACKS = 2
+WAR_CHEST = 3  # cards in the stock a war chest's fight starts with
 
 
 @dataclass(frozen=True)
@@ -30,6 +42,8 @@ class Buff:
     description: str
     claim: str = ""  # what claiming it asks for; "" for one that happens at once
     pack: str = ""  # for a pack: which cards it's made of
+    pact: bool = False  # it has a price: never given at random unless a scene asks for a pact
+    next_fight: bool = False  # it changes the next fight (see fight_mods), until that's won
 
 
 BUFFS = {buff.id: buff for buff in (
@@ -44,13 +58,28 @@ BUFFS = {buff.id: buff for buff in (
     Buff("trade_in", "Trade-in", f"Give up {TRADE_IN} cards from your pool for a new pack.", "trade_in"),
     Buff("wild_pack", "Wild pack", "Open a pack from any set at all, even one this challenge doesn't use.", "pack", "wild"),
     Buff("climax_pick", "Climax pick", f"Choose any climax from this challenge's sets: {CLIMAX_COPIES} copies go in your pool.", "climax"),
+    # Pacts: something for something.
+    Buff("reforge", "Reforge", f"Up to {REFORGE_CARDS} random cards from your pool that aren't in your deck are melted down: open {REFORGE_PACKS} new packs.", pact=True),
+    Buff("sacrifice", "Sacrifice", "Every copy of a random card in your deck leaves your pool for good. In return: a lucky pack and a climax pick.", pact=True),
+    Buff("all_in", "All in", f"Give up every second chance you have, for {ALL_IN_PACKS} lucky packs each.", pact=True),
+    Buff("blood_pact", "Blood pact", f"Open {BLOOD_PACKS} packs now. Your next opponent plays at its hardest.", pact=True, next_fight=True),
+    Buff("ambush", "Ambush", f"Your next fight starts with {AMBUSH_DAMAGE} damage in your clock. Win it for {AMBUSH_PACKS} more packs.", pact=True, next_fight=True),
+    Buff("outpaced", "Outpaced", f"Open {OUTPACED_PACKS} packs now. Your next opponent takes the first turn.", pact=True, next_fight=True),
+    Buff("war_chest", "War chest", f"Your next fight starts with {WAR_CHEST} cards in your stock.", next_fight=True),
 )}
 RANDOM = "random"
+PACT = "pact"  # a scene's "give pact": a pact, at random
 
 
-def roll(count, rng=random):
-    """Some different buffs, at random."""
-    return rng.sample(sorted(BUFFS), min(count, len(BUFFS)))
+def roll(count, rng=random, pacts=False):
+    """Some different buffs, at random: pacts, or the rest."""
+    found = sorted(buff_id for buff_id, buff in BUFFS.items() if buff.pact == pacts)
+    return rng.sample(found, min(count, len(found)))
+
+
+def fight_mods(run):
+    """The buffs changing a challenge's next fight (see grant), until it's won."""
+    return [buff_id for buff_id in ((run.path or {}).get("next") or []) if buff_id in BUFFS] if run else []
 
 
 def shown(buff_id):
@@ -67,17 +96,18 @@ def resolve(payload, enabled, rng=random):
         if step["do"] in ("give", "offer") and not enabled:
             payload["steps"][i] = {"do": "skip", "line": step["line"]}
         elif step["do"] == "give":
-            step.update(shown(roll(1, rng)[0] if step["buff"] == RANDOM else step["buff"]))
+            step.update(shown(roll(1, rng, step["buff"] == PACT)[0] if step["buff"] in (RANDOM, PACT) else step["buff"]))
         elif step["do"] == "offer":
-            step["options"] = [shown(buff) for buff in (step.get("choices") or roll(step["count"], rng))]
+            step["options"] = [shown(buff) for buff in (step.get("choices") or roll(step["count"], rng, step.get("pacts", False)))]
         elif step["do"] == "choice":
             for option in step["options"]:
                 if not enabled:
                     option.pop("give", None)
                 elif option.get("give"):
-                    if option["give"] == RANDOM:
-                        option["give"] = roll(1, rng)[0]
+                    if option["give"] in (RANDOM, PACT):
+                        option["give"] = roll(1, rng, option["give"] == PACT)[0]
                     option["give_name"] = BUFFS[option["give"]].name
+                    option["give_text"] = BUFFS[option["give"]].description  # shown with the option: a pact's price is seen first
     return payload
 
 
@@ -104,16 +134,68 @@ def given(payload, picks):
     return found
 
 
-def grant(run, buff_ids, source=""):
-    """Put these buffs on a challenge: those needing nothing more happen now, the rest wait to be claimed."""
+def grant(run, buff_ids, source="", rng=random):
+    """Put these buffs on a challenge: those needing nothing more happen now, the rest wait to be claimed. Returns
+    what happened, a line for each that did something the player should hear about (pacts mostly)."""
+    said = []
+
+    def reward(buff_id):
+        run.rewards.append({"key": secrets.token_hex(6), "buff": buff_id, "source": source})
+
     for buff_id in buff_ids:
         if buff_id == "extra_packs":
             run.packs += EXTRA_PACKS
         elif buff_id == "second_chance":
             run.lives += 1
+        elif buff_id == "reforge":
+            lost = take_spares(run, REFORGE_CARDS, rng)
+            run.packs += REFORGE_PACKS
+            said.append(f"Reforge: {cards_said(lost)} melted down, for {REFORGE_PACKS} packs to open.")
+        elif buff_id == "sacrifice":
+            in_deck = list(run.deck.entries.values_list("card_id", flat=True)) if run.deck else []
+            pk = rng.choice(in_deck or [int(pk) for pk in run.pool] or [0])
+            copies = run.pool.get(str(pk), 0)
+            if copies:
+                take_from_pool(run, {pk: copies})
+            reward("lucky_pack")
+            reward("climax_pick")
+            said.append(f"Sacrifice: {cards_said({pk: copies}) if copies else 'nothing'} gone for good; a lucky pack and a climax pick to claim.")
+        elif buff_id == "all_in":
+            for _ in range(run.lives * ALL_IN_PACKS):
+                reward("lucky_pack")
+            said.append(f"All in: {run.lives} second chance{'s' if run.lives != 1 else ''} given up, for {run.lives * ALL_IN_PACKS} lucky packs."
+                        if run.lives else "All in: you had no second chances to give up, and nothing to show for it.")
+            run.lives = 0
+        elif BUFFS.get(buff_id) and BUFFS[buff_id].next_fight:
+            run.packs += {"blood_pact": BLOOD_PACKS, "outpaced": OUTPACED_PACKS}.get(buff_id, 0)
+            run.path = {**(run.path or {}), "next": [*fight_mods(run), buff_id]}
+            said.append(f"{BUFFS[buff_id].name}: {BUFFS[buff_id].description}")
         else:
-            run.rewards.append({"key": secrets.token_hex(6), "buff": buff_id, "source": source})
-    run.save(update_fields=["packs", "lives", "rewards"])
+            reward(buff_id)
+    run.save(update_fields=["packs", "lives", "rewards", "pool", "path"])
+    return said
+
+
+def take_spares(run, count, rng=random):
+    """Take up to `count` random cards from the pool that the deck isn't using (copies beyond what it has).
+    Returns {card id: copies taken}."""
+    in_deck = dict(run.deck.entries.values_list("card_id", "quantity")) if run.deck else {}
+    spares = [int(pk) for pk, n in run.pool.items() for _ in range(n - in_deck.get(int(pk), 0))]
+    taken = {}
+    for pk in rng.sample(spares, min(count, len(spares))):
+        taken[pk] = taken.get(pk, 0) + 1
+    take_from_pool(run, taken)
+    return taken
+
+
+def cards_said(copies):
+    """"3 cards (Rapi x2, Anis)": what some {card id: copies} are, for the player."""
+    names = dict(Card.objects.filter(pk__in=copies).values_list("pk", "name"))
+    total = sum(copies.values())
+    if not total:
+        return "no cards"
+    listed = ", ".join(f"{names.get(pk, 'a card')}{f' ×{n}' if n > 1 else ''}" for pk, n in copies.items())
+    return f"{total} card{'s' if total != 1 else ''} ({listed})"
 
 
 def reward_of(run, key):

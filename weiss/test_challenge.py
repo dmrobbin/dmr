@@ -401,8 +401,8 @@ class InfiniteChallengeTests(ArcadeSetup):
         self.fight()
         run = self.room().arcade_run
         models = []
-        for position in range(9):
-            run.position = position
+        for floor in range(9):  # by how far up the path it is, events and all
+            ChallengeRun.objects.filter(pk=self.run.pk).update(path={**self.path(), "done": floor})
             models.append(challenge.infinite_style(run, self.opener))
         self.assertEqual([m for m, _ in models[:3]], ["easy", "easy", "standard"])
         self.assertTrue(all(m in ("focused", "strategic") for m, _ in models[3:6]))

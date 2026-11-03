@@ -20,6 +20,7 @@ from core.access import weiss_access_required
 from . import abilities, arcade, cpu, packs, scenes
 from .lists import EXPRESS_PROMPT, SESSION_KEY, deck_checks, sorted_entries
 from .card_images import image_type
+from .event_scenes import STARTERS
 from .models import ArcadeEntry, ArcadeScenario, Card, CardList, CpuImage, CpuProfile, NarrativeChallenge, Scene
 from .profiles import avatar_picker
 
@@ -111,7 +112,7 @@ def cpu_home(request):
     for scenario in scenarios:
         scenario.problem = arcade.scenario_problem(scenario)
     return render(request, "weiss/cpu_home.html", {
-        "decks": decks, "profiles": profiles, "models": cpu.MODELS.items(), "scenes": scenes.scene_list(),
+        "decks": decks, "profiles": profiles, "models": cpu.MODELS.items(), "scenes": scenes.scene_list(), "starter_count": len(STARTERS),
         "narratives": NarrativeChallenge.objects.select_related("scenario"), "pack_sets": packs.pack_sets(),
         "scenarios": scenarios, "arcade_roles": ArcadeEntry.Role.choices,
         "aggressions": range(cpu.MIN_AGGRESSION, cpu.MAX_AGGRESSION + 1),

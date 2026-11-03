@@ -1640,6 +1640,16 @@ li:nth-child(3n + 2) .rfx-sheen::after { animation-delay: -4.6s; }
 .defeated-faces .avatar { width: 2rem; height: 2rem; font-size: 1rem; border: 2px solid var(--accent); box-shadow: 0 0 0 2px var(--bg); }
 .play-defeated { flex: none; margin: 0; border-radius: 1.2rem; }
 .play-defeated .defeated-faces .avatar { width: 1.8rem; height: 1.8rem; }
+/* An infinite challenge's event: its scene on a page of its own (weiss/challenge_event.html). */
+.challenge-event { display: flex; flex-direction: column; align-items: center; gap: .6rem; }
+.challenge-event-head { margin: 0; font-weight: 600; }
+.challenge-event-stage { width: min(100%, 72rem, calc((100vh - 12rem) * 16 / 9)); }
+.challenge-event-foot { margin: 0; }
+/* Pacts and buffs on the next fight (weiss/challenge.html). */
+.challenge-mods { display: grid; gap: .35rem; margin: .8rem 0; padding: .6rem .9rem; border: 1px solid rgb(200 60 60 / .5); border-radius: .6rem; background: rgb(120 18 30 / .18); }
+.challenge-mods h3 { margin: 0; font-size: .9rem; }
+.challenge-mod { margin: 0; font-size: .85rem; }
+.challenge-mod.pact strong { color: #f2a4a4; }
 /* An infinite challenge's path (weiss/challenge_path.html): floors from the bottom up, lines to where each leads. */
 .spire { margin: 1rem 0; padding: .8rem 1rem 1.2rem; border: 1px solid var(--border); border-radius: .6rem;
   background: radial-gradient(ellipse at 50% 100%, rgb(212 175 55 / .07), transparent 70%), var(--bg); }
@@ -1669,6 +1679,8 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .spire-node button:disabled .spire-portrait { animation: none; }
 @keyframes spire-pulse { 50% { box-shadow: 0 0 0 7px rgb(212 175 55 / .2), 0 0 2rem rgb(212 175 55 / .5); } }
 .spire-node.won .spire-portrait { border-color: var(--accent); }
+.spire-event { font-family: "Cinzel", var(--serif); font-size: 2rem; font-weight: 700; color: #f2c4c4;
+  background: radial-gradient(circle at 50% 40%, rgb(150 30 50), rgb(40 8 16)); border-color: rgb(212 90 90 / .8); }
 .spire-node.won .spire-act { color: var(--muted); }
 .spire-node.reach { opacity: .85; }
 .spire-node.ahead { opacity: .4; }

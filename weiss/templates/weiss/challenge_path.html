@@ -1,7 +1,8 @@
 {# An infinite challenge's path, from the bottom up: the floors won, the one to choose from, and those ahead. See challenge_views.path_view. #}
 <section class="spire" aria-labelledby="spire-title">
   <h3 id="spire-title">The path</h3>
-  <p class="muted small">Choose who to fight next. Each one leads on to two or three more: the lit paths show where you can go from here.</p>
+  <p class="muted small">Choose who to fight next. Each one leads on to two or three more: the lit paths show where you can go from here.
+    A <strong>?</strong> is an event: no fight, but something happens, mostly a bargain with a price.</p>
   <div class="spire-map" style="height: {{ path.height }}rem">
     <svg class="spire-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
       {% for line in path.lines %}<line class="{{ line.state }}" x1="{{ line.x1 }}" y1="{{ line.y1 }}" x2="{{ line.x2 }}" y2="{{ line.y2 }}" vector-effect="non-scaling-stroke"/>{% endfor %}
@@ -14,12 +15,26 @@
             <form method="post" action="{% url 'weiss:arcade_challenge_fight' %}">
               {% csrf_token %}
               <input type="hidden" name="node" value="{{ node.node }}">
-              <button type="submit" class="spire-node-face"{% if not deck_total %} disabled title="Your deck needs cards first"{% endif %}>
-                {% include "weiss/avatar.html" with avatar=node.cpu.avatar name=node.cpu.name size="spire-portrait" %}
-                <span class="spire-name">{{ node.cpu.name }}</span>
-                <span class="spire-act">{% if room %}Back to the fight{% else %}Fight{% endif %}</span>
-              </button>
+              {% if node.event %}
+                <button type="submit" class="spire-node-face" title="An event: something happens, mostly a bargain with a price">
+                  <span class="avatar spire-portrait spire-event" aria-hidden="true">?</span>
+                  <span class="spire-name">Event</span>
+                  <span class="spire-act">{% if event_due %}Back to the event{% else %}Enter{% endif %}</span>
+                </button>
+              {% else %}
+                <button type="submit" class="spire-node-face"{% if not deck_total %} disabled title="Your deck needs cards first"{% endif %}>
+                  {% include "weiss/avatar.html" with avatar=node.cpu.avatar name=node.cpu.name size="spire-portrait" %}
+                  <span class="spire-name">{{ node.cpu.name }}</span>
+                  <span class="spire-act">{% if room %}Back to the fight{% else %}Fight{% endif %}</span>
+                </button>
+              {% endif %}
             </form>
+          {% elif node.event %}
+            <span class="spire-node-face" title="An event: something happens, mostly a bargain with a price">
+              <span class="avatar spire-portrait spire-event" aria-hidden="true">?</span>
+              <span class="spire-name">Event</span>
+              {% if node.state == "won" %}<span class="spire-act">Done</span>{% endif %}
+            </span>
           {% else %}
             <span class="spire-node-face">
               {% include "weiss/avatar.html" with avatar=node.cpu.avatar name=node.cpu.name|default:"?" size="spire-portrait" %}

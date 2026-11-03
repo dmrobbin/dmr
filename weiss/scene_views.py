@@ -6,6 +6,7 @@ from django.views.decorators.http import require_POST
 
 from . import buffs, scenes
 from .cpu_views import staff_required
+from .event_scenes import STARTERS
 from .models import CpuProfile, Scene
 
 
@@ -77,6 +78,27 @@ def scene_play(request, pk):
         "scene": scene, "payload": buffs.resolve(scenes.scene_payload(compiled, scene.name, viewer=request.user), True), "labels": sorted(compiled["labels"]),
         "start": start if start in compiled["labels"] else "", "player_name": request.user.username,
     })
+
+
+@staff_required
+@require_POST
+def scene_event(request, pk):
+    """Make a scene one of the infinite challenge's events, or not."""
+    scene = get_object_or_404(Scene, pk=pk)
+    scene.infinite_event = request.POST.get("on") == "1"
+    scene.save(update_fields=["infinite_event", "updated"])
+    messages.success(request, f"{scene.name} is {'now' if scene.infinite_event else 'no longer'} an infinite challenge event.")
+    return redirect("weiss:cpu_home")
+
+
+@staff_required
+@require_POST
+def starter_events(request):
+    """Add the starter events (weiss.event_scenes) that aren't here yet, as infinite challenge events."""
+    added = [Scene.objects.create(name=name, script=script, infinite_event=True, created_by=request.user)
+             for name, script in STARTERS if not Scene.objects.filter(name=name).exists()]
+    messages.success(request, f"Added {len(added)} starter event{'s' if len(added) != 1 else ''}." if added else "The starter events are all here already.")
+    return redirect("weiss:cpu_home")
 
 
 @staff_required

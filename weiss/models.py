@@ -239,6 +239,7 @@ class Scene(models.Model):
 
     name = models.CharField(max_length=100, unique=True)
     script = models.TextField(blank=True)
+    infinite_event = models.BooleanField(default=False, help_text="One of the scenes an infinite challenge's event spaces play, at random")
     created_by = models.ForeignKey("auth.User", null=True, on_delete=models.SET_NULL, related_name="+")
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)

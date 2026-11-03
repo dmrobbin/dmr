@@ -51,10 +51,12 @@ REFERENCE = [
     ("rapi exits right with fade", "Takes them off stage, optionally to one side and by any of the ways in.", " exits with fade"),
     ("choice What do you say?", "Asks the player. The options follow, one a line; each can go to a label, or carry on below.", "choice "),
     ("- Fight her -> fight", "An option, under a choice. “-> label” is optional; after it, “(set brave)” sets a flag and “(give lucky_pack)” a buff (both: “(set brave, give lucky_pack)”).", "- "),
-    ("give lucky_pack", "In a challenge, gives the player a buff (or “give random”). It's theirs at the end of the scene, to use before the next fight.", "give "),
+    ("give lucky_pack", "In a challenge, gives the player a buff (or “give random”; “give pact” for a random pact, a buff with a price). "
+     "It's theirs at the end of the scene, to use before the next fight.", "give "),
     ("fight anis", "Makes Anis the next fight in the run (the CPU must be in its arcade list, often as a branch). In a scene "
      "before a fight that hasn't started, it's the fight about to start. On an option: “(fight anis)”.", "fight "),
-    ("offer 3: Take a gift", "In a challenge, the player picks one of 3 random buffs (or of the ones named: “offer lucky_pack, climax_pack”).", "offer 3: "),
+    ("offer 3: Take a gift", "In a challenge, the player picks one of 3 random buffs (“offer 2 pacts: …” for pacts; or of the ones named: "
+     "“offer lucky_pack, climax_pack”).", "offer 3: "),
     ("set brave / unset brave", "Remembers (or forgets) something for later.", "set "),
     ("if brave goto boast", "Goes to a label if a flag is set (“if not brave …” for the opposite).", "if  goto "),
     ("goto fight", "Goes to a label.", "goto "),
@@ -143,7 +145,7 @@ def compile_scene(script, find=find_cpu):
                     found = OPTION_ACT.fullmatch(act)
                     if not found:
                         problem = "After an option, write “(set flag)”, “(unset flag)”, “(give buff)” or “(fight cpu)”, with commas between."
-                    elif found["verb"].lower() == "give" and found["what"].lower() not in (*buffs.BUFFS, buffs.RANDOM):
+                    elif found["verb"].lower() == "give" and found["what"].lower() not in (*buffs.BUFFS, buffs.RANDOM, buffs.PACT):
                         problem = buff_problem(found["what"])
                     elif found["verb"].lower() == "fight" and found["what"].lower() not in cast:
                         problem = fight_problem(found["what"])
@@ -187,14 +189,16 @@ def compile_scene(script, find=find_cpu):
                 problem = fight_problem(match["who"])
             step.update({"do": "fight", "who": match["who"].lower()})
         elif match := GIVE.fullmatch(line):
-            if match["buff"].lower() not in (*buffs.BUFFS, buffs.RANDOM):
+            if match["buff"].lower() not in (*buffs.BUFFS, buffs.RANDOM, buffs.PACT):
                 problem = buff_problem(match["buff"])
             step.update({"do": "give", "buff": match["buff"].lower()})
         elif match := OFFER.fullmatch(line):
             what = match["what"].strip().lower()
             step.update({"do": "offer", "prompt": (match["prompt"] or "").strip()})
-            if count := re.fullmatch(r"(\d+)(?:\s+(?:buffs?|rewards?))?", what):
-                step["count"] = min(max(int(count[1]), 1), len(buffs.BUFFS))
+            if count := re.fullmatch(r"(\d+)(?:\s+(?:buffs?|rewards?|(?P<pacts>pacts?)))?", what):
+                step["count"] = max(int(count[1]), 1)
+                if count["pacts"]:
+                    step["pacts"] = True
             else:
                 step["choices"] = [name.strip() for name in what.split(",")]
                 problem = next((buff_problem(name) for name in step["choices"] if name not in buffs.BUFFS), None)
@@ -247,7 +251,7 @@ def fight_problem(name):
 
 
 def buff_problem(name):
-    return f"There's no buff called “{name}”. Buffs are {', '.join(buffs.BUFFS)}, or random."
+    return f"There's no buff called “{name}”. Buffs are {', '.join(buffs.BUFFS)}, or random, or pact (a random pact)."
 
 
 def direction(step, verb, rest):

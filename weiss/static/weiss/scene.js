@@ -260,7 +260,8 @@
       if (this.options.onBuff) this.options.onBuff(buff, name);
     }
 
-    // A choice, or an offer of buffs: an offer's options are the buffs, with what each does.
+    // A choice, or an offer of buffs: an offer's options are the buffs, with what each does; so is a choice's option
+    // that gives one, under what it says.
     choose(step, at) {
       const offer = step.do === "offer";
       this.box.hidden = true;
@@ -271,7 +272,9 @@
       const options = this.choicesEl.querySelector(".vn-options");
       options.innerHTML = step.options.map((option, i) => offer
         ? `<button type="button" class="vn-option vn-buff" data-i="${i}"><span class="vn-key">${i + 1}</span><span><strong>${esc(option.name)}</strong><span class="vn-buff-text">${esc(option.text)}</span></span></button>`
-        : `<button type="button" class="vn-option" data-i="${i}"><span class="vn-key">${i + 1}</span>${esc(this.fill(option.text))}</button>`).join("");
+        : option.give_text
+          ? `<button type="button" class="vn-option vn-buff" data-i="${i}"><span class="vn-key">${i + 1}</span><span>${esc(this.fill(option.text))}<span class="vn-buff-text"><strong>${esc(option.give_name)}:</strong> ${esc(option.give_text)}</span></span></button>`
+          : `<button type="button" class="vn-option" data-i="${i}"><span class="vn-key">${i + 1}</span>${esc(this.fill(option.text))}</button>`).join("");
       options.querySelector(".vn-option").focus({ preventScroll: true });
       return new Promise((resolve) => {
         options.onclick = (event) => {

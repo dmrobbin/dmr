@@ -6,22 +6,23 @@ until more packs come). Each win in its arcade run brings more (see win_reward);
 free challenge the player picks any set for each pack, an arbitrary arcade list to fight; a narrative one
 (NarrativeChallenge, set up by staff) fixes the list, and the sets its packs come from. An infinite one has no
 list: a path of every CPU there is, floor after floor of two or three to choose from, laid ahead of the player as far
-as PATH_AHEAD (see path_of), harder as it goes (INFINITE_MODELS), for as long as the player wins, each win bringing
-a random reward and no scenes.
+as PATH_AHEAD (see path_of), harder floor by floor (INFINITE_MODELS), for as long as the player wins, each win
+bringing a random reward and no scenes. Some spaces on the path are events instead of fights: a random scene from
+the ones staff have chosen (Scene.infinite_event), whose choices mostly give pacts (weiss.buffs), something for
+something.
 
 Stopping partway keeps the run where it is: the next fight starts with the CPU it stopped at. Resetting
 starts again from nothing, deck and all. At the end, cleared or lost, the player keeps the deck (it joins
 their lists) or discards it; until then it's kept out of their lists (CardList.challenge).
 """
 import random
-import secrets
 
 from django.db import transaction
 from django.utils import timezone
 
 from . import packs
 from .lists import DECK_SIZE
-from .models import ArcadeRun, Card, CardList, CardListEntry, ChallengeRun, CpuProfile, GameRoom
+from .models import ArcadeRun, Card, CardList, CardListEntry, ChallengeRun, CpuProfile, GameRoom, Scene
 
 START_PACKS = 20  # packs to open at the start of a free challenge
 NARRATIVE_START_PACKS = 20  # ...and of a narrative one
@@ -38,6 +39,8 @@ INFINITE_MODELS = ((2, ("easy",)), (1, ("standard",)), (3, ("focused", "strategi
 INFINITE_TIERS = ("Easy", "Standard", "Tough")  # what the path calls each of those, and "Hard" after
 PATH_WIDTHS = (2, 3)  # how many CPUs a floor of the path offers, at random (fewer if there aren't that many)
 PATH_AHEAD = 3  # floors of the path laid out past the one being fought
+EVENT = "event"  # a space on the path that plays an event scene instead of a fight
+EVENT_CHANCE = .4  # that a floor (after the first) has an event among its spaces, if there are event scenes
 
 
 def current(user):
@@ -97,42 +100,62 @@ def links(count, ahead):
     return led
 
 
-def new_floor(before, found, rng):
-    """A floor's CPUs, all different, and none from the floor before it if there are enough others."""
+def new_floor(before, found, rng, events=False):
+    """A floor's CPUs, all different, and none from the floor before it if there are enough others; and with
+    `events`, sometimes an event in place of one of them (see EVENT_CHANCE)."""
     width = min(rng.choice(PATH_WIDTHS), len(found))
     fresh = [pk for pk in found if pk not in before]
     floor = rng.sample(fresh, min(width, len(fresh)))
-    return floor + rng.sample([pk for pk in found if pk not in floor], width - len(floor))
+    floor += rng.sample([pk for pk in found if pk not in floor], width - len(floor))
+    if events and rng.random() < EVENT_CHANCE:
+        floor.insert(rng.randrange(len(floor) + 1), EVENT)
+        if len(floor) > max(PATH_WIDTHS):
+            floor.remove(next(pk for pk in floor if pk != EVENT))
+    return floor
 
 
 def floor_at(run):
-    """The floor of the path an infinite challenge is on: the fights it has won."""
-    return run.arcade_run.position if run.arcade_run_id else 0
+    """The floor of the path an infinite challenge is on: the spaces it's been through, fights won and events."""
+    path = run.path or {}
+    if "done" in path:
+        return path["done"]
+    return run.arcade_run.position if run.arcade_run_id else 0  # begun before events: a floor a win
+
+
+def event_scenes():
+    """The scenes an infinite challenge's events can play: those staff have chosen, without mistakes."""
+    from .scenes import compile_scene  # weiss.scenes uses weiss.buffs, which uses this module
+    return [scene for scene in Scene.objects.filter(infinite_event=True) if not compile_scene(scene.script)[1]]
 
 
 def path_of(run, rng=random):
-    """An infinite challenge's path, {"floors": [[CPU id, ...], ...], "picks": [the node fought on each floor]},
-    laid out PATH_AHEAD floors past the one it's on. CPUs that can't be fought any more are taken off the floors
-    still to come (one picked for a fight is let go too), a floor left empty laid again. Saved if it changed."""
-    path = {"floors": [list(f) for f in (run.path or {}).get("floors", [])], "picks": list((run.path or {}).get("picks", []))}
+    """An infinite challenge's path, {"floors": [[CPU id or EVENT, ...], ...], "picks": [the node taken on each
+    floor], "done": floors been through}, laid out PATH_AHEAD floors past the one it's on, plus anything else kept
+    with it (the next fight's modifiers, an event under way). CPUs that can't be fought any more are taken off the
+    floors still to come (one picked for a fight is let go too), and events if there are no event scenes; a floor
+    left empty is laid again. Saved if it changed."""
+    path = {**(run.path or {}), "floors": [list(f) for f in (run.path or {}).get("floors", [])], "picks": list((run.path or {}).get("picks", []))}
     floors, picks = path["floors"], path["picks"]
-    at = floor_at(run)
+    at = path["done"] = floor_at(run)
     if not floors and at:  # begun before there were paths: the fights so far, one CPU to a floor
         floors[:] = [[pk] for pk in run.arcade_run.order[:at]]
         picks[:] = [0] * at
+    events = bool(event_scenes())
     found = [cpu.pk for cpu in opponents()]
+    found_or_event = found + ([EVENT] if events else [])
+    found_here = found_or_event if not path.get("event") else found_or_event + [EVENT]  # an event under way stays
     del picks[at + 1:]
-    if len(picks) > at and floors[at][picks[at]] not in found:
+    if len(picks) > at and floors[at][picks[at]] not in found_here:
         del picks[at:]
     for f in range(at, len(floors)):
-        kept = [pk for pk in floors[f] if pk in found]
+        kept = [pk for pk in floors[f] if pk in (found_here if f == at else found_or_event)]
         if f < len(picks):
             picks[f] = kept.index(floors[f][picks[f]])
         floors[f] = kept
     first_empty = next((f for f in range(at, len(floors)) if not floors[f]), len(floors))
     del floors[first_empty:]
     while found and len(floors) < at + 1 + PATH_AHEAD:
-        floors.append(new_floor(floors[-1] if floors else [], found, rng))
+        floors.append(new_floor(floors[-1] if floors else [], found, rng, events=events and len(floors) > 0))
     if path != run.path:
         run.path = path
         run.save(update_fields=["path"])
@@ -152,8 +175,9 @@ def choices(path, at):
 
 
 def pick(run, node):
-    """Choose who an infinite challenge fights next: a node of the floor it's on that the path leads to. Returns
-    that CPU's id, or None if it can't be chosen. A choice made stands until the fight's won (or the CPU's gone)."""
+    """Choose where an infinite challenge goes next: a node of the floor it's on that the path leads to. Returns
+    that CPU's id (or EVENT), or None if it can't be chosen. A choice made stands until the fight's won or the
+    event's over (or the CPU's gone)."""
     path = path_of(run)
     at = floor_at(run)
     if at < len(path["picks"]):
@@ -168,7 +192,7 @@ def pick(run, node):
 
 
 def tier(fight):
-    """What the path calls how hard its fight number `fight` (from 0) is (see INFINITE_MODELS)."""
+    """What the path calls how hard its floor number `fight` (from 0) is (see INFINITE_MODELS)."""
     for (count, _), name in zip(INFINITE_MODELS, INFINITE_TIERS):
         if fight < count:
             return name
@@ -179,19 +203,58 @@ def tier(fight):
 def defeated(run):
     """The CPUs an infinite challenge has beaten, in order, as ids."""
     path = run.path or {}
-    return [path["floors"][f][node] for f, node in enumerate(path.get("picks", [])[:floor_at(run)])]
+    taken = [path["floors"][f][node] for f, node in enumerate(path.get("picks", [])[:floor_at(run)])]
+    return [pk for pk in taken if pk != EVENT]
+
+
+def start_event(run, rng=random):
+    """The event space just picked: a random event scene, one this challenge hasn't had if there's one left, settled
+    now (buffs and all, see buffs.resolve) and kept with the path until it's over (see end_event). Returns its
+    payload, or None if there are no event scenes any more (the space is passed by then)."""
+    from .scenes import playable  # weiss.scenes uses weiss.buffs, which uses this module
+    path = path_of(run)
+    if path.get("event"):
+        return path["event"]
+    found = event_scenes()
+    fresh = [scene for scene in found if scene.pk not in path.get("seen", [])] or found
+    payload = next(iter(playable([rng.choice(fresh)], with_buffs=True, rng=rng, viewer=run.user) if fresh else []), None)
+    if payload:
+        path["event"] = payload
+        path["seen"] = [*path.get("seen", []), int(payload["key"].split("-")[0])]
+    else:
+        path["done"] += 1
+    run.path = path
+    run.save(update_fields=["path"])
+    return payload
+
+
+def end_event(run, picks, rng=random):
+    """The event scene's been played: what its choices gave (from the page: see buffs.given) goes on the challenge,
+    and the path moves on a floor. Returns what happened, for the player (see buffs.grant)."""
+    from .buffs import given, grant  # weiss.buffs uses this module
+    path = path_of(run)
+    payload = path.pop("event", None)
+    if not payload:
+        return []
+    path["done"] += 1
+    run.path = path
+    return grant(run, given(payload, picks), f"Event: {payload.get('title', '')}", rng)
 
 
 def infinite_style(arcade_run, profile):
-    """(model, aggression) a CPU plays an infinite challenge's fight with, by how many fights there have been (see
-    INFINITE_MODELS). Random choices are settled by the run and fight, so a fight keeps them, reloads and all."""
-    rng = random.Random(f"{arcade_run.pk}:{arcade_run.position}")
-    fight = arcade_run.position
+    """(model, aggression) a CPU plays an infinite challenge's fight with, by how far up the path it is (see
+    INFINITE_MODELS); or at its hardest, after a blood pact. Random choices are settled by the run and floor, so a
+    fight keeps them, reloads and all."""
+    from .cpu import MAX_AGGRESSION, MIN_AGGRESSION  # weiss.cpu needs nothing from here; this keeps it that way
+    run = of(arcade_run)
+    fight = floor_at(run) if run else arcade_run.position
+    if run and "blood_pact" in (run.path or {}).get("next", []):
+        return "hard", MAX_AGGRESSION
+    rng = random.Random(f"{arcade_run.pk}:{fight}")
     for count, models in INFINITE_MODELS:
         if fight < count:
             return rng.choice(models), profile.aggression
         fight -= count
-    from .cpu import MAX_AGGRESSION, MIN_AGGRESSION  # weiss.cpu needs nothing from here; this keeps it that way
     return "hard", rng.randint(MIN_AGGRESSION, MAX_AGGRESSION)
 
 
@@ -278,9 +341,15 @@ def fight_finished(arcade_run, won, cleared, rng=random):
         return None
     prize = None
     if won:
-        from .buffs import EXTRA_PACKS, roll  # weiss.buffs uses this module
+        from .buffs import AMBUSH_PACKS, fight_mods, grant, roll  # weiss.buffs uses this module
         count, rewards = win_reward(run.kind)
         run.packs += count
+        if "ambush" in fight_mods(run):
+            run.packs += AMBUSH_PACKS
+        path = {**(run.path or {}), "next": []}  # the fight's modifiers are done with
+        if run.kind == ChallengeRun.Kind.INFINITE:
+            path["done"] = floor_at(run) + 1  # up a floor
+        run.path = path
         drawn = []
         for buff in rewards:
             if buff == "prize":
@@ -288,13 +357,7 @@ def fight_finished(arcade_run, won, cleared, rng=random):
             elif buff == "random":
                 buff = roll(1, rng)[0]
             drawn.append(buff)
-        for buff in drawn:
-            if buff == "extra_packs":  # those needing nothing more happen now, as buffs.grant does them
-                run.packs += EXTRA_PACKS
-            elif buff == "second_chance":
-                run.lives += 1
-            else:
-                run.rewards = [*run.rewards, {"key": secrets.token_hex(6), "buff": buff, "source": "Victory"}]
+        grant(run, drawn, "Victory", rng)
         if cleared:
             run.status = ChallengeRun.Status.WON
     elif run.lives:  # a second chance: the fight's there to try again
@@ -303,7 +366,7 @@ def fight_finished(arcade_run, won, cleared, rng=random):
         run.status = ChallengeRun.Status.LOST
         arcade_run.status, arcade_run.finished = ArcadeRun.Status.ABANDONED, timezone.now()
         arcade_run.save(update_fields=["status", "finished"])
-    run.save(update_fields=["packs", "rewards", "status", "lives"])
+    run.save(update_fields=["packs", "rewards", "status", "lives", "path"])
     return prize
 
 

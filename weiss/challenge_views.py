@@ -55,6 +55,8 @@ def challenge_home(request):
         "lineup": arcade.lineup(run.scenario, request.user) if run.scenario else [],
         "set_names": [names.get(pk, f"Set {pk}") for pk in run.sets],
         "path": path_view(run) if run.kind == ChallengeRun.Kind.INFINITE else None,
+        "mods": [buffs.BUFFS[buff_id] for buff_id in buffs.fight_mods(run)],
+        "event_due": bool((run.path or {}).get("event")),
     })
 
 
@@ -63,14 +65,14 @@ PATH_BEHIND = 2  # floors of an infinite challenge's path still shown once they'
 
 def path_view(run):
     """An infinite challenge's path for its page, from the bottom up: {"floors": [{"number", "tier", "current",
-    "nodes": [{"cpu", "node", "x", "y", "state"}]}], "lines": [{"x1", "y1", "x2", "y2", "state"}], "defeated":
+    "nodes": [{"cpu" (None for an event), "event", "node", "x", "y", "state"}]}], "lines": [{"x1", "y1", "x2", "y2", "state"}], "defeated":
     [CPU, ...]}. Positions are percentages of the map. A node's state is "won", "passed" (not taken), "open" (can
     be fought now), "picked" (chosen, its fight under way), "closed" (on this floor, out of reach), "reach" (ahead,
     on the way from here) or "ahead"."""
     path = challenge.path_of(run)
     floors, picks = path["floors"], path["picks"]
     at = challenge.floor_at(run)
-    cpus = CpuProfile.objects.in_bulk({pk for floor in floors for pk in floor} | set(challenge.defeated(run)))
+    cpus = CpuProfile.objects.in_bulk({pk for floor in floors for pk in floor if pk != challenge.EVENT} | set(challenge.defeated(run)))
     defeated = [cpus.get(pk) for pk in challenge.defeated(run)]
     first, last = max(0, at - PATH_BEHIND), min(len(floors), at + 1 + challenge.PATH_AHEAD)
     shown = range(first, last)
@@ -96,7 +98,7 @@ def path_view(run):
         nodes = []
         for i, pk in enumerate(floors[f]):
             x, y = place(f, i)
-            nodes.append({"cpu": cpus.get(pk), "node": i, "x": x, "y": y, "state": state(f, i)})
+            nodes.append({"cpu": cpus.get(pk), "event": pk == challenge.EVENT, "node": i, "x": x, "y": y, "state": state(f, i)})
         view_floors.append({"number": f + 1, "tier": challenge.tier(f), "current": f == at, "nodes": nodes})
         if f + 1 < last:
             for i, led in enumerate(challenge.links(len(floors[f]), len(floors[f + 1]))):
@@ -250,18 +252,30 @@ def challenge_fight(request):
     run = challenge.current(request.user)
     if not run or run.status != ChallengeRun.Status.ACTIVE:
         return redirect("weiss:arcade_challenge")
-    if not run.deck or not run.deck.entries.exists():
+    endless = run.kind == ChallengeRun.Kind.INFINITE
+    heading, node = None, None
+    if endless:
+        # Where next is the player's choice, on the path: a CPU it leads to, or an event.
+        path, at = challenge.path_of(run), challenge.floor_at(run)
+        options = challenge.choices(path, at)
+        node = request.POST.get("node", "")
+        node = int(node) if node.isdigit() else options[0] if len(options) == 1 else None
+        if at < len(path["picks"]):
+            node = path["picks"][at]
+        heading = path["floors"][at][node] if node in options else None
+    if heading != challenge.EVENT and (not run.deck or not run.deck.entries.exists()):  # an event needs no deck
         messages.error(request, "Your deck is empty: open some packs and build it first.")
         return redirect("weiss:arcade_challenge")
-    endless = run.kind == ChallengeRun.Kind.INFINITE
     if endless:
-        # Who's next is the player's choice, on the path: a CPU it leads to.
-        options = challenge.choices(challenge.path_of(run), challenge.floor_at(run))
-        node = request.POST.get("node", "")
-        chosen = challenge.pick(run, int(node) if node.isdigit() else options[0] if len(options) == 1 else None)
+        chosen = challenge.pick(run, node)
         if not chosen:
             messages.error(request, "Choose who to fight next on the path." if options else "There are no CPUs to fight right now.")
             return redirect("weiss:arcade_challenge")
+        if chosen == challenge.EVENT:
+            if not challenge.start_event(run):
+                messages.info(request, "Nothing happened there: on up the path.")
+                return redirect("weiss:arcade_challenge")
+            return redirect("weiss:arcade_challenge_event")
         arcade_run = run.arcade_run
         if arcade_run and arcade_run.status == ArcadeRun.Status.ACTIVE and arcade_run.order[arcade_run.position:] != [chosen]:
             arcade_run.order[arcade_run.position:] = [chosen]
@@ -311,6 +325,39 @@ def challenge_fight(request):
         seat_cpu(room, profile, arcade.scenes_before(run.arcade_run, profile))
         room.save()
     return redirect("weiss:play_room", pk=room.pk)
+
+
+@challenge_access
+def challenge_event(request):
+    """An infinite challenge's event: its scene, played; the page posts what was chosen (challenge_event_done)."""
+    run = challenge.current(request.user)
+    payload = run and (run.path or {}).get("event")
+    if not payload or run.status != ChallengeRun.Status.ACTIVE:
+        return redirect("weiss:arcade_challenge")
+    return render(request, "weiss/challenge_event.html", {"run": run, "payload": payload, "player_name": request.user.username})
+
+
+@challenge_access
+@require_POST
+def challenge_event_done(request):
+    """The event's scene is over: what its choices gave goes on the challenge, and the path moves on."""
+    run = challenge.current(request.user)
+    if not run or run.status != ChallengeRun.Status.ACTIVE:
+        return redirect("weiss:arcade_challenge")
+    try:
+        picks = json.loads(request.POST.get("buffs", "[]"))
+    except ValueError:
+        picks = []
+    with transaction.atomic():
+        run = ChallengeRun.objects.select_for_update().get(pk=run.pk)
+        if (run.path or {}).get("event", {}).get("key") != request.POST.get("key"):
+            return redirect("weiss:arcade_challenge")  # an old page's: that event is over
+        said = challenge.end_event(run, picks)
+    for line in said:
+        messages.info(request, line)
+    if not said:
+        messages.success(request, "The event's over: on up the path.")
+    return redirect("weiss:arcade_challenge")
 
 
 @challenge_access

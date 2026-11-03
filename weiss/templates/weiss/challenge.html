@@ -87,6 +87,12 @@
       {% if run.status == "active" %}
         {% if run.lives %}<p class="small"><span class="deck-tag">Second chance ×{{ run.lives }}</span> A loss lets you fight again instead of ending the challenge.</p>{% endif %}
         {% if rewards %}{% include "weiss/challenge_rewards.html" %}{% endif %}
+        {% if mods %}
+          <div class="challenge-mods">
+            <h3>Your next fight, until you win it</h3>
+            {% for mod in mods %}<p class="challenge-mod{% if mod.pact %} pact{% endif %}"><strong>{{ mod.name }}</strong> {{ mod.description }}</p>{% endfor %}
+          </div>
+        {% endif %}
         <div class="challenge-steps">
           <section>
             <h3>1. Open packs</h3>

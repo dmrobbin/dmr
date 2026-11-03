@@ -407,6 +407,27 @@ def deal(room, intro=False):
         room.state["cpu_intro"] = True
     if room.cpu_profile_id and room.cpu_profile and room.cpu_profile.combo_text and not challenge.narrative(room.arcade_run):
         room.state["cut_ins"] = {str(room.guest_id): anchor_cards(room.guest_deck)}
+    fight_mods(room, buffs.fight_mods(challenge.of(room.arcade_run)) if room.arcade_run_id else [])
+
+
+def fight_mods(room, mods):
+    """A challenge's fight dealt with the pacts and buffs on its next fight (see buffs.fight_mods): a head start
+    for the CPU, or cards already in the player's clock or stock. A blood pact is how the CPU plays (cpu_step)."""
+    if not mods:
+        return
+    state, me = room.state, str(room.host_id)
+    side = state["players"][me]
+    if "outpaced" in mods and state.get("rps"):
+        state.pop("rps")
+        state["turn"] = state["first_player"] = str(room.guest_id)
+        game.add_log(state, None, f"Outpaced: {room.guest_name} goes first.")
+    for buff_id, zone, count in (("ambush", "clock", buffs.AMBUSH_DAMAGE), ("war_chest", "stock", buffs.WAR_CHEST)):
+        if buff_id in mods:
+            for _ in range(min(count, len(side["zones"]["deck"]))):
+                game.put(side, side["zones"]["deck"].pop(), zone)
+            game.add_log(state, me, f"starts with {count} card{'s' if count != 1 else ''} in their {zone} ({buffs.BUFFS[buff_id].name})")
+    if "blood_pact" in mods:
+        game.add_log(state, None, f"Blood pact: {room.guest_name} plays at its hardest.")
 
 
 def anchor_cards(deck):
@@ -629,6 +650,8 @@ def cpu_step(room, wait=True):
         model = room.cpu_profile.model if room.cpu_profile else "standard"
         if room.cpu_profile and challenge.infinite(room.arcade_run):  # harder as it goes, whatever the CPU
             model, aggression = challenge.infinite_style(room.arcade_run, room.cpu_profile)
+        elif room.arcade_run_id and "blood_pact" in buffs.fight_mods(challenge.of(room.arcade_run)):
+            model, aggression = "hard", cpu.MAX_AGGRESSION
         action = cpu.next_action(room.state, room.guest_id, lookups["info"], aggression, model=model)
         if not action:
             return room

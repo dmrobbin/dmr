@@ -6,13 +6,25 @@
     <input type="text" name="name" maxlength="100" placeholder="e.g. Rapi's welcome" aria-label="Scene name" required>
     <button type="submit" class="button-small">Create scene</button>
   </form>
+  <h3 class="small">Infinite challenge events</h3>
+  <p class="muted small">An infinite challenge's path has event spaces (?) as well as fights. An event plays one of the scenes marked <span class="deck-tag">Event</span> below, at random.
+    Give it a choice with a buff, usually a pact: a buff with a price (“give reforge”, “offer 2 pacts”, “(give pact)”; the script reference lists them all).</p>
+  <form method="post" action="{% url 'weiss:cpu_starter_events' %}" class="cpu-form">
+    {% csrf_token %}<button type="submit" class="button-small secondary">Add the starter events</button>
+    <span class="muted small">{{ starter_count }} ready-made events, one for each pact, to play as they are or change.</span>
+  </form>
   {% if scenes %}
     <ul class="cpu-list">
       {% for scene in scenes %}
         <li>
           <a href="{% url 'weiss:cpu_scene_edit' scene.pk %}">{{ scene.name }}</a>
-          {% if scene.errors %}<span class="small panel-error">{{ scene.errors }} mistake{{ scene.errors|pluralize }}</span>
+          {% if scene.infinite_event %}<span class="deck-tag">Event</span>{% endif %}
+          {% if scene.errors %}<span class="small panel-error">{{ scene.errors }} mistake{{ scene.errors|pluralize }}{% if scene.infinite_event %}: left out of events until fixed{% endif %}</span>
           {% else %}<a class="small" href="{% url 'weiss:cpu_scene_play' scene.pk %}">Play</a>{% endif %}
+          <form method="post" action="{% url 'weiss:cpu_scene_event' scene.pk %}" class="inline-form">
+            {% csrf_token %}<input type="hidden" name="on" value="{% if scene.infinite_event %}0{% else %}1{% endif %}">
+            <button type="submit" class="link-button small">{% if scene.infinite_event %}Not an event{% else %}Make it an event{% endif %}</button>
+          </form>
           <span class="muted small">updated {{ scene.updated|timesince }} ago</span>
         </li>
       {% endfor %}
