@@ -1767,6 +1767,12 @@ def condition_met(cond, state, player, source, ctx, env):
         stocked = locate(state, (ctx.get("moved") or [None])[-1])[1] if ctx.get("moved") else None
         traits = lambda details: {t.strip() for t in re.split(r"[・･/]", details.get("traits") or "") if t.strip()}
         return bool(stocked) and ctx.get("revealed") is not None and bool(traits(details_of(stocked, env)) & traits(env.info(ctx["revealed"]) or {}))
+    if kind == "found_at_least":
+        return len(ctx.get("it", [])) >= cond["n"]
+    if kind == "self_slot":
+        return bool(source) and slot_of(side, source["uid"]) == cond["slot"]
+    if kind == "played":
+        return any(abilities.matches_filter(cond["filter"], env.info(pk) or {}) for pk in state.get("played_cards", {}).get(player, []))
     if kind == "phase_in":
         return state.get("phase") in cond["phases"]
     if kind == "markers_total":
@@ -1796,7 +1802,7 @@ def condition_met(cond, state, player, source, ctx, env):
         level = lambda c: number(details_of(c, env).get("level")) + level_buff(state, c["uid"])
         return all(level(c) == level(chosen) for c in (side["stage"][s] for s in OPPOSITE) if c)
     if kind == "zone_has_each":  # a different card for each
-        left = list(zones[cond["zone"]])
+        left = [c for c in stage_cards(side) if not (cond.get("other") and c["uid"] == uid)] if cond["zone"] == "stage" else list(zones[cond["zone"]])
         for f in cond["filters"]:
             found = next((c for c in left if fits(f, c, env)), None)
             if not found:
@@ -1988,6 +1994,13 @@ def x_value(spec, state, player, target, ctx, env, stats=None):
         value = number(details_of(facing, env).get("cost")) if facing else 0
     elif kind == "stock_paid":
         value = (ctx or {}).get("stock_paid", 0)
+    elif kind == "revealed_power":
+        value = number((env.info((ctx or {}).get("revealed")) or {}).get("power")) if (ctx or {}).get("revealed") is not None else 0
+    elif kind == "text_count":
+        cards = side["zones"]["clock"] + stage_cards(side)
+        value = sum(spec["text"] in (details_of(c, env).get("text") or "") and (details_of(c, env).get("card_type") or "").lower() == "character" for c in cards)
+    elif kind == "opp_stand":
+        value = sum(c["pos"] == "stand" for c in stage_cards(state["players"][other_player(state, player)]))
     elif kind == "that_cost":
         that = locate(state, (ctx or {}).get("that"))[1] if (ctx or {}).get("that") else None
         value = number(details_of(that, env).get("cost")) if that else 0
@@ -2145,9 +2158,11 @@ def cost_options(part, state, player, source, env):
     else:
         cards = side["zones"][part["zone"]]
     level = len(side["zones"]["level"])
+    in_level = {abilities.plain_name(details_of(c, env).get("name")) for c in side["zones"]["level"]}
     return [c for c in cards if fits(filter_, c, env, level=level)
             and not (filter_.get("other") and source and c["uid"] == source["uid"])
-            and not (filter_.get("stand") and c["pos"] != "stand")]
+            and not (filter_.get("stand") and c["pos"] != "stand")
+            and not (filter_.get("same_name_in_level") and abilities.plain_name(details_of(c, env).get("name")) not in in_level)]
 
 
 def can_pay(cost, state, player, source, env):
@@ -2292,6 +2307,10 @@ def when_matches(when, event, data, player, card, env):
         return {"that": data["uid"]} if event == "to_memory" and data.get("owner") == player else None
     if on == "to_memory_self":
         return {} if event == "to_memory" and data.get("uid") == uid else None
+    if on == "placed_other":  # put on the stage by an effect
+        if event == "placed" and data.get("owner") == player and data.get("uid") != uid and abilities.matches_filter(when["filter"], env.info(data["card"]) or {}):
+            return {"that": data["uid"]}
+        return None
     if on == "placed_from_own_waiting":  # either player's, by that player's own effect
         if event == "placed" and data.get("src") == "waiting" and data.get("actor") == data.get("owner"):
             return {"that": data["uid"]}
@@ -2910,7 +2929,7 @@ def run_step(step, res, state, env):
             shown = [c for c in (locate(state, uid)[1] for uid in ctx["it"]) if c]
             ask_choice(res, "place", "Choose a stage position", [(s, LABELS[s].capitalize()) for s in slots],
                        cards=[dict(c) for c in shown], owner=owner, rest=step.get("rest", False), keep_pos=step.get("keep_pos", False))
-            if step.get("opponent_places"):
+            if step.get("opponent_places") or step.get("chooser") == "opp":
                 res["prompt"]["player"] = opponent
     elif do == "to_old_slot":
         uid = ctx.get("that") if step.get("that") else res["uid"] if step.get("self") else (ctx.get("it") or [None])[0]
@@ -3025,6 +3044,8 @@ def run_step(step, res, state, env):
         add_log(state, owner, f"put the top {len(moved)} of their deck into {LABELS[step['to']]}"
                 + (": " + ", ".join(env.name(c["card"]) for c in moved) if step["to"] != "stock" else ""))
     elif do == "clock_card":
+        if step.get("x_stat"):
+            step = {**step, "n": max(0, x_value(step.get("x"), state, player, None, ctx, env)), "x_stat": None}
         if step.get("upto"):
             ask_number(res, {**step, "upto": False}, "How many cards?")
             if step.get("chooser") == "opp":  # "all players put up to ...": they say how many of theirs
@@ -3291,7 +3312,8 @@ def run_step(step, res, state, env):
             target = state["players"][owner]
             target["stage"][first], target["stage"][second] = two, one
             swap_markers(target, first, second)
-            one["pos"] = two["pos"] = step.get("pos", "stand")
+            if step.get("pos"):
+                one["pos"] = two["pos"] = step["pos"]
             add_log(state, player, f"exchanged {env.name(one['card'])} and {env.name(two['card'])}, both {'resting' if step.get('pos') == 'rest' else 'standing'}")
     elif do == "status_all":
         owner = opponent if step.get("owner") == "opp" else player
@@ -3482,6 +3504,11 @@ def run_step(step, res, state, env):
         ctx["times_paid"] = 0
         if most:
             ask_choice(res, "pay_repeat", "Pay the cost how many times?", [(n, str(n)) for n in range(most, -1, -1)], step=step)
+    elif do == "pos_all":
+        owner = opponent if step.get("owner") == "opp" else player
+        for card in stage_cards(state["players"][owner]):
+            if card["pos"] != step["pos"]:
+                set_position(state, env, player, card, step["pos"])
     elif do == "markers_of_it":
         for uid in ctx.get("it", []):
             owner, _, where = locate(state, uid)
@@ -3749,6 +3776,7 @@ def answer_ability(state, player, action, env):
             for uid in ctx.get("it", []):
                 if locate(state, uid)[1]:
                     move_card(state, env, player, owner, uid, value)
+                    counted(ctx, value)  # "if you put 1 card into your stock"
                     ctx.setdefault("moved", []).append(uid)
                     if value in ("hand", "stock"):
                         counted(ctx, value)

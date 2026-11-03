@@ -3255,6 +3255,114 @@ class RwbyHololiveReZeroTests(PersonaTests):
         self.assertIs(t.them["stage"][game.OPPOSITE["C1"]], others[0])
 
 
+class BanGDreamTests(PersonaTests):
+    COOKIES = "【CONT】 This card gets +500 power for each of your other 《Music》 characters.\n【AUTO】 【CXCOMBO】 At the beginning of your encore step, if \"Making Cookies\" is in your climax area, this card is on your center stage, and your opponent does not have any characters on his or her center stage, or all characters on your opponent's center stage are 【REVERSE】, Trigger FEVER.\n【REPLAY】 Trigger FEVER Search your deck for up to 1 character, reveal it to your opponent, put it into your hand, shuffle your deck, choose up to 1  《Music》 character in your waiting room, put it into your stock, choose 1 of your other characters, and that character gets +1000 power until the end of your opponent's next turn."
+    STARRIN = "【AUTO】  When this card is placed on the stage from your hand, search your deck for up to one 《Music》 character, reveal it to your opponent, put it into your hand, and shuffle your deck.\n【AUTO】  【CXCOMBO】  [(4) Put three cards from your hand into your waiting room] At the beginning of your attack phase, if a card named \"We Are Poppin'Party\" is in your climax area, this card is in your center stage, and you have other cards named \"Starrin' PARTY, Tae Hanazono\", \"Starrin'PARTY, Rimi Ushigome\", \"Starrin'PARTY, Saya Yamabuki\" and \"Starrin'PARTY, Arisa Ichigaya\", you may pay the cost. If you do, 【STAND】  all of your opponent's characters, deal X damage to your opponent, and put up to X cards from the top of your clock into your waiting room. X is equal to the number of your opponent's 【STAND】  characters. (This damage may be canceled)"
+    TOMOE = "【AUTO】 【CLOCK】 Alarm If this card is the top card of your clock, and you have an 《Afterglow》 character, at the beginning of your climax phase, look at up to 2 cards from the top of your deck, and put them on the top of your deck in any order.\n【ACT】 [【REST】 this card] Choose 1 of your 《Afterglow》 characters, and that character gets +1500 power until end of turn. If that character has \"Alarm\", that card gets +2500 power until end of turn instead."
+    OBLIVIONIS = "【CONT】 During your turn, if you have another 《Music》 character, this card gets +1500 power.\n【AUTO】 【CXCOMBO】 When this card attacks, if \"Invitation to Entrust Your Life to Me\" is in your climax area, and you have 2 or more other 《Music》 characters, look at up to 4 cards from the top of your deck, choose up to 1 《Music》 character from among them, reveal it to your opponent, put it into your hand or your stock, and put the rest into your waiting room. If you put 1 card into your stock, this card gets +1000 power until end of turn."
+    KANON = "【AUTO】 At the beginning of your opponent's attack phase, your opponent may move this card to an empty position of your center stage.\n【AUTO】 When you level up, put this card into your waiting room."
+    SMILES = "【AUTO】 When this card attacks, you may choose 1 yellow card in your waiting room, and put it on the top of your deck.\n【AUTO】 【CXCOMBO】 [Put 2 cards in your hand into your waiting room & Put this card into your waiting room] At the end of this card's attack, if \"Smile in the Night Sky\" is in your climax area, you may pay the cost. If you do, search your stock and choose up to 1 《Hello, Happy World!》 character that is not \"\"Music of Smiles\" Kokoro Tsurumaki\", put it on the stage position that this card was on, and shuffle your stock."
+    HIMARI = "【AUTO】 When this card is placed on the stage from your hand, draw up to 2 cards, choose 1 card in your hand, and put it into your waiting room.\n【AUTO】 【CXCOMBO】 When this card attacks, if \"Our Melody\" is in your climax area, this card gets +1000 power until end of turn, put the top 2 cards of your deck into your waiting room, and for each card with \"Alarm\" or event card, perform the following action. \"Deal 1 damage to your opponent.\" (Damage may be canceled)"
+    TOMORI = "【CONT】 During your turn, if you have 2 or more other 《Music》 characters, this card gets +4000 power.\n【AUTO】 Experience Resonate [Put 1 card from your hand into your waiting room & Reveal 1 character from your hand with the same card name as a character in your level] When this card is placed on the stage from your hand, you may pay the cost. If you do, look at up to 4 cards from the top of your deck, choose up to 1 《Music》 character from among them, reveal it to your opponent, put it into your hand, and put the rest into your waiting room."
+    BONDS = "【CONT】 Assist All of your 《Poppin'Party》 characters in front of this card get +X power. X is equal to that character's level ×500.\n【AUTO】 When this card is placed on the stage from your hand, you may put the top 3 cards of your deck into your waiting room.\n【ACT】 [【REST】 this card] If your waiting room has 1 character with \"Tae(たえ)\" in its card name, 1 other character with \"Rimi(りみ)\" in its card name, 1 other character with \"Saya(沙綾)\" in its card name and 1 other character with \"Arisa(有咲)\" in its card name, choose 1 of your \"\"Star-Shaped Tambourine\" Kasumi Toyama\", and that character gets +4500 power until end of turn."
+    SOYO = "【AUTO】 When this card is placed on the stage from your hand or by the 【AUTO】 effect of \"Song of How We Became Us, Tomori Takamatsu\", you may put the top card of your clock into your waiting room.\n【AUTO】 【CXCOMBO】 [Put 1 card from your hand into your waiting room & 【REST】 this card] At the beginning of your attack phase, if \"Utakotoba\" is in your climax area, and this card is in the right position of your back stage, and all of your characters are 《MyGO!!!!!》, you may pay the cost. If you do, deal 1 damage to your opponent, and all of your characters get +1500 power until end of turn. (Damage may be canceled)"
+
+    def test_they_are_all_read(self):
+        for name in ("COOKIES", "STARRIN", "TOMOE", "OBLIVIONIS", "KANON", "SMILES", "HIMARI", "TOMORI", "BONDS", "SOYO"):
+            self.assertEqual(abilities.by_hand_parts(getattr(self, name)), [], name)
+
+    def test_a_replay_named_in_capitals(self):
+        steps = abilities.parse(self.COOKIES)[1]["steps"]
+        self.assertEqual(steps[0]["do"], "search")  # Trigger FEVER, written out
+
+    def test_starrin_party_stands_them_all_and_counts_them(self):
+        t = Table()
+        t.card(2000, text=self.STARRIN, name="Starrin'PARTY, Kasumi Toyama")
+        kasumi = t.seat(t.me, "C1", 2000)
+        theirs = [t.seat(t.them, s, 800, pos="rest") for s in ("C1", "C2", "B1")]
+        t.me["zones"]["clock"] = [game.new_card(900) for _ in range(5)]
+        t.stock(4)
+        pay = t.hand(800, 801, 802)
+        self.run_ability(t, kasumi, self.STARRIN, 1)
+        self.answer(t, uids=[c["uid"] for c in pay])
+        self.assertEqual({c["pos"] for c in theirs}, {"stand"})
+        self.assertEqual(len(t.them["zones"]["clock"]), 3)  # X is 3
+        self.assertEqual([o["value"] for o in self.prompt(t)["options"]], [3, 2, 1, 0])
+
+    def test_the_five_of_them_on_the_stage(self):
+        t = Table()
+        env = game.SimpleNamespace(info=t.info)
+        cond = abilities.parse(self.STARRIN)[1]["steps"][0]["cond"] if abilities.parse(self.STARRIN)[1]["steps"][0]["do"] == "if" else abilities.parse(self.STARRIN)[1]["cond"][-1]
+        self.assertEqual(cond["type"], "zone_has_each")
+        kasumi = t.seat(t.me, "C1", 800)
+        for pk, (slot, name) in enumerate(zip(("C2", "C3", "B1", "B2"), ("Starrin' PARTY, Tae Hanazono", "Starrin'PARTY, Rimi Ushigome",
+                                                                         "Starrin'PARTY, Saya Yamabuki", "Starrin'PARTY, Arisa Ichigaya")), start=3000):
+            t.card(pk, name=name)
+            t.seat(t.me, slot, pk)
+        self.assertTrue(game.condition_met(cond, t.state, "2", kasumi, {}, env))
+        t.me["stage"]["B2"] = None
+        self.assertFalse(game.condition_met(cond, t.state, "2", kasumi, {}, env))
+
+    def test_more_power_instead_for_an_alarm(self):
+        t = Table()
+        t.card(2000, text=self.TOMOE)
+        t.card(3000, traits="Afterglow", text="【AUTO】 【CLOCK】 Alarm If this card is the top card of your clock, draw 1 card.")
+        t.card(3001, traits="Afterglow")
+        tomoe = t.seat(t.me, "B1", 2000)
+        alarm, plain = t.seat(t.me, "C1", 3000), t.seat(t.me, "C2", 3001)
+        for target, total in ((alarm, 2500), (plain, 1500)):
+            t.state["buffs"] = []
+            self.run_ability(t, tomoe, self.TOMOE, 1)
+            self.answer(t, uids=[target["uid"]])
+            self.assertEqual(sum(b["power"] for b in t.state["buffs"] if b["uid"] == target["uid"]), total)
+
+    def test_a_card_put_into_stock_counts(self):
+        t = Table()
+        t.card(2000, text=self.OBLIVIONIS)
+        t.card(3000, traits="Music")
+        oblivionis = t.seat(t.me, "C1", 2000)
+        music = game.new_card(3000)
+        t.me["zones"]["deck"].append(music)
+        self.run_ability(t, oblivionis, self.OBLIVIONIS, 1)
+        self.answer(t, value=1)
+        self.answer(t, uids=[music["uid"]])
+        self.answer(t, value="stock")
+        self.assertIn(music, t.me["zones"]["stock"])
+        self.assertEqual(sum(b["power"] for b in t.state["buffs"] if b["uid"] == oblivionis["uid"]), 1000)
+
+    def test_the_opponent_moves_kanon(self):
+        t = Table()
+        t.card(2000, text=self.KANON)
+        kanon = t.seat(t.me, "B1", 2000)
+        self.run_ability(t, kanon, self.KANON)
+        self.assertEqual(self.prompt(t)["player"], "1")
+        self.answer(t, player=1, value="yes")
+        self.assertEqual(self.prompt(t)["player"], "1")
+        self.answer(t, player=1, value="C2")
+        self.assertIs(t.me["stage"]["C2"], kanon)
+
+    def test_alarm_cards_and_events_each_deal_damage(self):
+        t = Table()
+        t.card(2000, text=self.HIMARI)
+        t.card(3000, text="【AUTO】 【CLOCK】 Alarm If this card is the top card of your clock, draw 1 card.")
+        t.card(3001, card_type="Event")
+        himari = t.seat(t.me, "C1", 2000)
+        t.me["zones"]["deck"] += [game.new_card(3000), game.new_card(3001)]
+        before = len(t.them["zones"]["clock"])
+        self.run_ability(t, himari, self.HIMARI, 1)
+        self.assertEqual(len(t.them["zones"]["clock"]) - before, 2)
+
+    def test_a_reveal_cost_needs_a_name_in_the_level(self):
+        t = Table()
+        env = game.SimpleNamespace(info=t.info)
+        part = abilities.parse(self.TOMORI)[1]["cost"][1]
+        t.card(3000, name="Tomori")
+        in_hand = t.hand(3000)[0]
+        self.assertEqual(game.cost_options(part, t.state, "2", None, env), [])
+        t.me["zones"]["level"] = [game.new_card(3000)]
+        self.assertEqual(game.cost_options(part, t.state, "2", None, env), [in_hand])
+
+
 class HardModeTests(TestCase):
     def test_aggression_rises_as_the_opponent_nears_defeat(self):
         t = Table()
