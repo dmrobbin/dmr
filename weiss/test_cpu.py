@@ -1092,6 +1092,196 @@ class AutomatedEffectTests(TestCase):
         self.assertFalse(self.t.state.get("ability_queue"))
 
 
+class DandadanTests(TestCase):
+    """Dandadan (DDD) cards, as printed, that used to need doing by hand."""
+
+    # AutomatedEffectTests' helpers, without its tests running again here.
+    setUp, play, fire, prompt, answer, done = (getattr(AutomatedEffectTests, name) for name in ("setUp", "play", "fire", "prompt", "answer", "done"))
+
+    ENDLESS = ("If you do not have a 《Human》 or 《Strange》 character, this card cannot be played from your hand.Choose 1 character in your level, "
+               "return it to your hand, choose 1 card in your hand or waiting room, and put it into your level.")
+    GAZE = ('【AUTO】 When this card is placed on the stage from your hand, you may choose 1 "Pretty Girl\'s Gaze, Aira" in your level and 1 character '
+            'in your stage, and exchange them. (The character is placed on your stage as 【STAND】)')
+    ARRIVED = ('【AUTO】 When this card is placed on your stage from your waiting room, choose up to 2 characters with "Acrobatic Silky(アクロバティックさらさら)" '
+               'in their card names in your waiting room, return them to your deck, and shuffle your deck.')
+    SERPO = ("【AUTO】 When this card is placed on the stage from your hand, choose 1 level 3 or lower character in your opponent's back stage. "
+             "That character cannot @STAND during your opponent's next stand phase.")
+    FUSION = ('【ACT】 Fusion [Put 1 "You\'re Being a Pest, Okarun" from your stage face up underneath this card as a marker] Search your deck for up to 1 '
+              '"Cursed Power, Okarun", put it in the stage position that this card is in, put this card and all markers underneath this card face up '
+              'underneath that "Cursed Power, Okarun" as a marker in any order, and shuffle your deck.')
+    SACRED = ('If all of your characters are 《Human》 or 《Strange》, choose up to 1 character in your clock, return it to your hand, choose 1 of your characters, '
+              'and that character gets the following ability until end of turn. "【AUTO】 [(1)] When this card attacks, you may pay the cost. If you do, during that '
+              'attack, perform a trigger check 2 times on the trigger step."Put this card into your clock.')
+
+    def test_they_are_all_read(self):
+        for text in (self.ENDLESS, self.GAZE, self.ARRIVED, self.SERPO, self.FUSION, self.SACRED):
+            self.assertEqual(abilities.by_hand_parts(text), [], text[:60])
+
+    def test_a_level_card_back_to_hand_and_another_into_the_level(self):
+        self.t.card(900, traits="Human")
+        self.t.seat(self.me, "C1", 900)
+        old = game.new_card(self.t.card(901, name="Old"))
+        self.me["zones"]["level"] = [old]
+        new = game.new_card(self.t.card(902, name="New"))
+        self.me["zones"]["waiting"] = [new]
+        self.play(self.ENDLESS, card_type="Event", to="resolution", level=0)
+        self.fire()
+        self.answer(uids=[old["uid"]])
+        self.assertIn(old, self.me["zones"]["hand"])
+        self.assertIn(new["uid"], self.prompt()["options"])  # from the waiting room, or the hand
+        self.assertIn(old["uid"], self.prompt()["options"])
+        self.answer(uids=[new["uid"]])
+        self.assertEqual(self.me["zones"]["level"], [new])
+        self.done()
+
+    def test_a_level_card_and_a_character_change_places(self):
+        aira = game.new_card(self.t.card(950, name="Pretty Girl's Gaze, Aira"))
+        self.me["zones"]["level"] = [aira]
+        other = self.t.seat(self.me, "C1", self.t.card(951, name="Other"), pos="rest")
+        self.play(self.GAZE, to="C3", name="Pretty Girl's Gaze, Aira")
+        self.fire()
+        if self.prompt() and self.prompt()["kind"] == "choice":  # "you may"
+            self.answer(value=self.prompt()["options"][0]["value"])
+        self.answer(uids=[aira["uid"]])
+        self.answer(uids=[other["uid"]])
+        self.assertIs(self.me["stage"]["C1"], aira)
+        self.assertEqual(aira["pos"], "stand")
+        self.assertIn(other, self.me["zones"]["level"])
+
+    def test_placed_from_the_waiting_room_triggers_itself_and_not_from_hand(self):
+        ability = abilities.parse(self.ARRIVED)[0]
+        self.assertEqual(ability["when"], [{"on": "placed_self", "src": "waiting"}])
+        self.t.card(2000, text=self.ARRIVED)
+        card = self.t.seat(self.me, "C1", 2000)
+        env = game.SimpleNamespace(info=self.t.info, name=lambda pk: "x")
+        game.fire(self.t.state, env, "placed", uid=card["uid"], src="hand", card=2000, owner="2")
+        self.assertFalse(self.t.state.get("ability_queue"))
+        game.fire(self.t.state, env, "placed", uid=card["uid"], src="waiting", card=2000, owner="2")
+        self.assertEqual(len(self.t.state["ability_queue"]), 1)
+
+    def test_a_back_stage_character_kept_rested(self):
+        self.t.card(970, level=1)
+        target = self.t.seat(self.them, "B1", 970, pos="rest")
+        self.play(self.SERPO)
+        self.fire()
+        if self.prompt():
+            self.answer(uids=[target["uid"]])
+        self.assertTrue(game.has_status(self.t.state, target["uid"], "no_stand"))
+
+
+class SwordArtOnlineTests(TestCase):
+    """Sword Art Online (SAO) cards, as printed, that used to need doing by hand."""
+
+    setUp, play, fire, prompt, answer, done = (getattr(AutomatedEffectTests, name) for name in ("setUp", "play", "fire", "prompt", "answer", "done"))
+
+    def run_ability(self, text, slot="C1", pk=2000, index=-1, **details):
+        """Seat a card with this text and run one of its abilities' steps (its last, by default), as if it had triggered."""
+        self.t.card(pk, text=text, **details)
+        card = self.t.seat(self.me, slot, pk)
+        ability = abilities.parse(text)[index]
+        self.t.state["resolving"] = {"player": "2", "uid": card["uid"], "card": pk, "text": ability["text"], "prompt": None,
+                                     "steps": list(ability["steps"]), "ctx": {"source_uid": card["uid"]}}
+        self.t.apply(2, {"type": "chat", "text": "."})
+        return card
+
+    def top_of_deck(self, side, pk):
+        card = game.new_card(pk)
+        side["zones"]["deck"].append(card)  # the deck's top is its end
+        return card
+
+    def test_soul_for_each_soul_icon_on_the_card_milled(self):
+        text = ("【AUTO】 When this card attacks, you may put the top card of your deck into your waiting room. If you do, for each [soul] trigger icon "
+                "on that card, this card gets +1 soul until end of turn.")
+        self.assertEqual(abilities.by_hand_parts(text), [])
+        self.top_of_deck(self.me, self.t.card(980, trigger="soul soul"))
+        card = self.run_ability(text, soul=1)
+        if self.prompt():
+            self.answer(value=self.prompt()["options"][0]["value"])
+        self.t.refresh()
+        self.assertEqual(self.t.state["stats"][card["uid"]]["soul"], 3)
+
+    def test_x_from_the_cost_of_the_card_milled(self):
+        text = ('【AUTO】 【CXCOMBO】 Memory When this card attacks, if "Night-Sky Blade" is in your climax area, put the top card of your deck into your '
+                "waiting room, and deal X damage to your opponent. X is equal to the cost of that card +1. (Climax are regarded as 0 cost. Damage may be canceled)")
+        self.assertEqual(abilities.by_hand_parts(text), [])
+        steps = abilities.parse(text)[0]["steps"]
+        damage = next(s for s in steps if s["do"] == "damage")
+        self.assertEqual((damage["x"]["of"], damage["x"].get("stat"), damage["x"]["plus"]), ("flipped_level", "cost", 1))
+
+    def test_x_counts_the_characters_sharing_the_chosen_ones_name(self):
+        text = ("【AUTO】 At the beginning of your attack phase, choose 1 of your 《Dark Territory》 characters, and that character gets +X power until end of "
+                "turn. X is equal to the number of characters with the same card name as that card ×500.")
+        self.t.card(990, name="Dark Knight", traits="Dark Territory", power=1000)
+        knight = self.t.seat(self.me, "C2", 990)
+        self.t.seat(self.me, "C3", 990)
+        self.t.seat(self.me, "B1", self.t.card(991, name="Other"))
+        self.run_ability(text, slot="B2", pk=2001)
+        self.answer(uids=[knight["uid"]])
+        self.t.refresh()
+        self.assertEqual(self.t.state["stats"][knight["uid"]]["power"], 2000)  # two of that name: +1000
+
+    def test_both_center_stages(self):
+        text = ("【AUTO】 At the beginning of your climax phase, if this card is on the center stage, all characters on the center stage get "
+                "-1000 power until end of turn.")
+        mine = self.t.seat(self.me, "C2", self.t.card(992, power=3000))
+        theirs = self.t.seat(self.them, "C2", self.t.card(993, power=3000))
+        back = self.t.seat(self.them, "B1", self.t.card(994, power=3000))
+        self.run_ability(text, power=3000)
+        self.t.refresh()
+        stats = self.t.state["stats"]
+        self.assertEqual((stats[mine["uid"]]["power"], stats[theirs["uid"]]["power"], stats[back["uid"]]["power"]), (2000, 2000, 3000))
+
+    def test_from_the_stage_to_memory_triggers(self):
+        text = "【AUTO】 When this card is put into your memory from the stage, put this card into your stock."
+        self.assertEqual(abilities.parse(text)[0]["when"], [{"on": "leave_memory"}])
+        self.t.card(2002, text=text)
+        card = self.t.seat(self.me, "C1", 2002)
+        self.t.refresh()
+        self.t.apply(2, {"type": "move", "uid": card["uid"], "to": "memory"})
+        self.assertEqual(len(self.t.state.get("ability_queue", [])), 1)
+
+    def test_no_events_or_backups_for_the_rest_of_the_turn(self):
+        text = 'Choose 1 of your characters, and that character gets +3000 power until end of turn.\nUntil end of turn, your opponent cannot play event cards and "Backup" from hand.'
+        self.assertEqual(abilities.by_hand_parts(text), [])
+        bans = [s for a in abilities.parse(text) for s in a.get("steps", []) if s["do"] == "ban"]
+        self.assertEqual({(b["what"], b["owner"], b["until"]) for b in bans}, {("event", "opp", "turn"), ("backup", "opp", "turn")})
+
+    def test_only_if_all_their_characters_have_the_trait(self):
+        text = ("【AUTO】 When this card attacks, if all of your opponent's characters are 《Target》, you may deal 1 damage to your opponent. "
+                "(This damage may be canceled)")
+        cond = abilities.parse(text)[0]["cond"][0]
+        self.assertEqual(cond, {"type": "all_trait", "traits": ["Target"], "owner": "opp"})
+        source = self.t.seat(self.me, "C1", self.t.card(2003, text=text))
+        env = game.SimpleNamespace(info=self.t.info, name=lambda pk: "x")
+        met = lambda: game.condition_met(cond, self.t.state, "2", source, {}, env)
+        self.assertFalse(met())  # nobody there to be one
+        self.t.seat(self.them, "C1", self.t.card(995, traits="Target"))
+        self.assertTrue(met())
+        self.t.seat(self.them, "C2", self.t.card(996, traits="Other"))
+        self.assertFalse(met())
+
+    def test_discarding_exactly_x(self):
+        text = ("【ACT】 Brainstorm [(1)] Flip over 4 cards from the top of your deck, and put them into your waiting room. Draw up to X cards, choose X cards "
+                "in your hand, and put them into your waiting room. X is equal to the number of climax revealed among those cards ×2.")
+        self.assertEqual(abilities.by_hand_parts(text), [])
+        choose = next(s for s in abilities.parse(text)[0]["steps"] if s["do"] == "choose")
+        self.assertTrue(choose["min_x"] and choose["max_x"])
+
+    def test_the_clock_into_the_waiting_room(self):
+        text = ('【AUTO】 【CXCombo】 [(2) Put four cards from your hand into your waiting room & Put a card named "White Holy Tree" from your climax area face down '
+                "underneath this card as a marker] At the beginning of your encore step, if this card is in your center stage, you may pay the cost. If you do, "
+                "put all the cards in your clock into your waiting room.")
+        self.assertEqual(abilities.by_hand_parts(text), [])
+        ability = abilities.parse(text)[0]
+        self.assertEqual(ability["cost"][-1]["zone"], "climax")
+        clock = [game.new_card(997) for _ in range(5)]
+        self.me["zones"]["clock"] = list(clock)
+        self.t.card(997)
+        self.t.state["resolving"] = {"player": "2", "uid": "x", "card": 1, "text": "t", "prompt": None, "steps": [{"do": "zone_all", "zone": "clock", "to": "waiting"}], "ctx": {}}
+        self.t.apply(2, {"type": "chat", "text": "."})
+        self.assertEqual((self.me["zones"]["clock"], self.me["zones"]["waiting"][-5:]), ([], clock))
+
+
 class NoBackupTests(TestCase):
     TEXT = '【CONT】 During this card\'s battle, all players cannot play "Backup" from their hands.'
     BACKUP = "【ACT】 【COUNTER】 Backup 3000, Level 0 [(0) Put this card from your hand into your waiting room]"
@@ -5709,7 +5899,7 @@ class CpuDeckBuildingTests(TestCase):
         self.assertIn(self.COMBO, text)  # the card's full text
         self.assertIn("  - juggle the dice", text)
         self.assertNotIn("Clean Anchor", text)
-        self.assertContains(self.client.get(reverse("weiss:cpu_home")), reverse("weiss:cpu_excluded_export"))
+        self.assertContains(self.client.get(reverse("weiss:cpu_home") + "?tab=unplayable"), reverse("weiss:cpu_excluded_export"))
 
     def test_only_staff_can_export(self):
         player = User.objects.create_user("player", password="x")
@@ -5724,7 +5914,7 @@ class CpuDeckBuildingTests(TestCase):
 
     def test_the_tab_itself_doesnt_read_any_card_text(self):
         with mock.patch.object(cpu_views, "excluded_cards") as excluded:
-            page = self.client.get(reverse("weiss:cpu_home"))
+            page = self.client.get(reverse("weiss:cpu_home") + "?tab=unplayable")
         excluded.assert_not_called()
         self.assertContains(page, reverse("weiss:cpu_excluded"))
         self.assertNotContains(page, "juggle the dice")

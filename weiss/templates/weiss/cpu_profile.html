@@ -1,0 +1,68 @@
+{% extends "weiss/base.html" %}
+
+{% block title %}{{ profile.name }} · CPU{% endblock %}
+
+{% block weiss_content %}
+  {# One CPU profile, on a page of its own: everything about it, and where it's used. Saving comes back here (cpu_views.cpu_profile). #}
+  <p class="back"><a href="{% url 'weiss:cpu_home' %}?tab=profiles">&larr; Profiles</a></p>
+  <div class="cpu-profile-head">
+    {% if profile.image_url %}<img class="cpu-profile-image" src="{{ profile.image_url }}" alt="">
+    {% else %}<span class="cpu-profile-image">{% include "weiss/avatar.html" with avatar=profile.avatar name=profile.name size="avatar-fill" %}</span>{% endif %}
+    <div>
+      <h1>{{ profile.name }}</h1>
+      <p class="muted small">{{ profile.model_label }} · aggression {{ profile.aggression }} · {% if profile.deck %}<a href="{% url 'weiss:list' profile.deck.pk %}">{{ profile.deck.name }}</a>{% else %}no deck{% endif %}</p>
+      <div class="cpu-form">
+        {% if profile.finalized %}
+          <span class="deck-tag">Available to players</span>
+          <form method="post" action="{% url 'weiss:cpu_profile_finalize' profile.pk %}">{% csrf_token %}
+            <button type="submit" class="button-small secondary">Take back</button></form>
+        {% else %}
+          <form method="post" action="{% url 'weiss:cpu_profile_finalize' profile.pk %}">{% csrf_token %}
+            <input type="hidden" name="finalized" value="on">
+            <button type="submit" class="button-small"{% if profile.problem %} disabled{% endif %}>Finalize</button></form>
+          {% if not profile.problem %}<span class="small cpu-ready">Ready to finalize</span>{% endif %}
+        {% endif %}
+      </div>
+      {% if profile.problem %}<p class="small panel-error">{{ profile.problem }}</p>{% endif %}
+    </div>
+  </div>
+
+  <div class="cpu-profile-grid">
+    <section class="cpu-panel">
+      <h2>How it plays and what it says</h2>
+      <form method="post" action="{% url 'weiss:cpu_profile_update' profile.pk %}" class="cpu-form">
+        {% csrf_token %}
+        {% include "weiss/cpu_fields.html" with name=profile.name model=profile.model aggression=profile.aggression deck_id=profile.deck_id intro_text=profile.intro_text player_win_text=profile.player_win_text player_lose_text=profile.player_lose_text combo_text=profile.combo_text %}
+        <button type="submit" class="button-small">Save</button>
+      </form>
+    </section>
+
+    <div>
+      <section class="cpu-panel">
+        <h2>Pictures</h2>
+        <p class="cpu-picture">{% include "weiss/avatar.html" with avatar=profile.avatar name=profile.name size="avatar-large" %}
+          <span><span class="muted small">Its circle picture: the log, the board and scenes.</span><br>
+          <a class="small" href="{% url 'weiss:cpu_picture' profile.pk %}">{% if profile.avatar %}Change picture{% else %}Choose a picture{% endif %}</a></span></p>
+        <div class="cpu-form cpu-image-row">
+          {% if profile.image_url %}<img class="cpu-image-thumb" src="{{ profile.image_url }}" alt="{{ profile.name }}'s avatar">{% endif %}
+          <span><span class="muted small">Its avatar images: before the match, and on the victory and defeat screens.</span><br>
+          <a class="button-small secondary" href="{% url 'weiss:cpu_images' profile.pk %}">{% if profile.image_url %}Change avatar images{% else %}Choose avatar images{% endif %}</a></span>
+        </div>
+      </section>
+
+      <section class="cpu-panel">
+        <h2>Where it's used</h2>
+        {% if entries %}
+          <ul class="cpu-list small">{% for entry in entries %}<li><span class="deck-tag">{{ entry.get_role_display }}</span> <a href="{% url 'weiss:cpu_home' %}?tab=arcade">{{ entry.scenario.name }}</a></li>{% endfor %}</ul>
+        {% else %}<p class="muted small">In no arcade list yet.</p>{% endif %}
+        {% if cast_in %}
+          <p class="small">Cast in:</p>
+          <ul class="cpu-list small">{% for scene in cast_in %}<li><a href="{% url 'weiss:cpu_scene_edit' scene.pk %}">{{ scene.name }}</a>{% if scene.infinite_event %} <span class="deck-tag">Event</span>{% endif %}</li>{% endfor %}</ul>
+        {% else %}<p class="muted small">In no scene yet.</p>{% endif %}
+      </section>
+
+      <form method="post" action="{% url 'weiss:cpu_profile_delete' profile.pk %}" onsubmit="return confirm('Delete {{ profile.name|escapejs }}?')">{% csrf_token %}
+        <button type="submit" class="button-small danger">Delete {{ profile.name }}</button></form>
+    </div>
+  </div>
+{% endblock %}

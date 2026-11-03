@@ -117,9 +117,11 @@ class CpuPictureTests(TestCase):
     def test_staff_can_set_a_cpus_picture(self):
         self.client.force_login(User.objects.create_user("staff", password="x", is_staff=True))
         self.assertContains(self.client.get(self.url), "Picture for Bot")
-        self.assertRedirects(self.client.post(self.url, {"card": self.card.pk, "x": .5, "y": .5, "r": .25}), reverse("weiss:cpu_home"), fetch_redirect_response=False)
+        page = reverse("weiss:cpu_profile_update", args=[self.profile.pk])
+        self.assertRedirects(self.client.post(self.url, {"card": self.card.pk, "x": .5, "y": .5, "r": .25}), page, fetch_redirect_response=False)
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.avatar_card, self.card)
+        self.assertContains(self.client.get(page), reverse("weiss:card_image", args=[self.card.pk]))
         self.assertContains(self.client.get(reverse("weiss:cpu_home")), reverse("weiss:card_image", args=[self.card.pk]))
 
     def test_players_cant(self):

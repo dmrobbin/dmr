@@ -18,7 +18,7 @@
     </form>
   {% endif %}
   <form method="post" action="{% url 'weiss:list_express_replace' card_list.pk %}">
-    {% csrf_token %}<input type="hidden" name="next" value="{% if card_list.reserved_for_cpu %}{% url 'weiss:cpu_home' %}{% else %}{% url 'weiss:lists' %}{% endif %}">
+    {% csrf_token %}<input type="hidden" name="next" value="{% if card_list.reserved_for_cpu %}{% url 'weiss:cpu_home' %}?tab=decks{% else %}{% url 'weiss:lists' %}{% endif %}">
     <div class="express-bar">
       <fieldset class="express-mode">
         <legend class="small muted">Replacements lean towards</legend>

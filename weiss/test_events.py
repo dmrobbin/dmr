@@ -252,7 +252,7 @@ class EventSetupTests(ArcadeSetup):
         scene = Scene.objects.create(name="Mine", script="narrator: Hi.")
         self.client.post(reverse("weiss:cpu_scene_event", args=[scene.pk]), {"on": "1"})
         self.assertTrue(Scene.objects.get(pk=scene.pk).infinite_event)
-        self.assertContains(self.client.get(reverse("weiss:cpu_home")), "Not an event")
+        self.assertContains(self.client.get(reverse("weiss:cpu_home") + "?tab=scenes"), "Not an event")
         self.client.post(reverse("weiss:cpu_scene_event", args=[scene.pk]), {"on": "0"})
         self.assertFalse(Scene.objects.get(pk=scene.pk).infinite_event)
 

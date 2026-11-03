@@ -4,113 +4,25 @@
 
 {% block weiss_content %}
   <h1>CPU creation</h1>
-
-  <section class="cpu-section">
-    <h2>Reserved decks</h2>
-    <p class="muted small">Built like any deck, but kept for CPUs: they don't appear in anyone's lists or deck choices.</p>
-    <form method="post" action="{% url 'weiss:cpu_deck_create' %}" class="panel-row cpu-form">
-      {% csrf_token %}
-      <input type="text" name="name" maxlength="100" placeholder="e.g. NIKKE red CPU deck" aria-label="Deck name" required>
-      <button type="submit" class="button-small">Create deck</button>
-    </form>
-    {% if decks %}
-      <details class="cpu-row" data-collapse="decks">
-        <summary class="cpu-row-head"><strong>{{ decks|length }} reserved deck{{ decks|length|pluralize }}</strong></summary>
-        <div class="cpu-row-body">
-          <ul class="cpu-list">
-            {% for deck in decks %}
-              <li>
-                {% if deck.user == user %}<a href="{% url 'weiss:list' deck.pk %}">{{ deck.name }}</a>{% else %}<span>{{ deck.name }}</span>{% endif %}
-                <span class="muted small">{{ deck.total|default:0 }} / 50 cards · by {{ deck.user.username }}</span>
-                {% if deck.wins %}<span class="deck-stars" title="{{ deck.wins }} win{{ deck.wins|pluralize }}">{{ deck.win_stars }}</span>{% endif %}
-              </li>
-            {% endfor %}
-          </ul>
-        </div>
-      </details>
-    {% else %}
-      <p class="empty">No reserved decks yet.</p>
-    {% endif %}
-  </section>
-
-  <section class="cpu-section">
-    <p><a class="button-small secondary" href="{% url 'weiss:cpu_excluded_export' %}" download>Export unplayable cards</a></p>
-    <details data-excluded="{% url 'weiss:cpu_excluded' %}">
-      <summary>Cards a CPU can't play</summary>
-      <div data-excluded-list><p class="muted small">Loading…</p></div>
-    </details>
-  </section>
-
-  <section class="cpu-section">
-    <h2>CPU profiles</h2>
-    <p class="muted small">Aggression 1 is the standard behaviour. Higher values chase enemy characters harder and protect their own less.</p>
-    <p class="muted small">Focused works towards its climax combos, saving cards and stock for the next one it can reach. Strategic gets the most cards it can before building its board, filling its waiting room first if it can take cards from there.</p>
-    {% if profiles %}
-    <details class="cpu-row" data-collapse="profiles">
-    <summary class="cpu-row-head"><strong>{{ profiles|length }} CPU profile{{ profiles|length|pluralize }}</strong></summary>
-    <div class="cpu-row-body">
-    <p class="muted small">Click a box to open or close it.</p>
-    <ul class="cpu-grid">
-    {% for profile in profiles %}
-      <li>
-      <details class="cpu-box" data-collapse="profile-{{ profile.pk }}">
-        <summary class="cpu-box-head">
-          {% if profile.image_url %}<img class="cpu-box-image" src="{{ profile.image_url }}" alt="" loading="lazy">
-          {% elif profile.avatar %}<span class="cpu-box-image cpu-box-picture">{% include "weiss/avatar.html" with avatar=profile.avatar name=profile.name size="avatar-fill" %}</span>
-          {% else %}<span class="cpu-box-image cpu-box-picture">{% include "weiss/avatar.html" with avatar=None name=profile.name size="avatar-fill" %}</span>{% endif %}
-          <span class="cpu-box-title">
-            <span class="set-name">{{ profile.name }}</span>
-            <span class="muted small">{{ profile.model_label }} · aggression {{ profile.aggression }}</span>
-            <span class="muted small">{% if profile.deck %}{{ profile.deck.name }}{% else %}No deck{% endif %}</span>
-            {% if profile.finalized %}<span class="deck-tag">Available to players</span>{% elif profile.problem %}<span class="small panel-error">Not ready</span>{% else %}<span class="muted small">Ready to finalize</span>{% endif %}
-          </span>
-        </summary>
-        <div class="cpu-box-body">
-        <p class="cpu-picture">{% include "weiss/avatar.html" with avatar=profile.avatar name=profile.name size="" %}
-          <a class="small" href="{% url 'weiss:cpu_picture' profile.pk %}">{% if profile.avatar %}Change picture{% else %}Choose a picture{% endif %}</a></p>
-        <div class="cpu-form cpu-image-row">
-          {% if profile.image_url %}<img class="cpu-image-thumb" src="{{ profile.image_url }}" alt="{{ profile.name }}'s avatar">{% endif %}
-          <a class="button-small secondary" href="{% url 'weiss:cpu_images' profile.pk %}">{% if profile.image_url %}Change avatar image{% else %}Choose an avatar image{% endif %}</a>
-        </div>
-        <form method="post" action="{% url 'weiss:cpu_profile_update' profile.pk %}" class="cpu-form">
-          {% csrf_token %}
-          {% include "weiss/cpu_fields.html" with name=profile.name model=profile.model aggression=profile.aggression deck_id=profile.deck_id intro_text=profile.intro_text player_win_text=profile.player_win_text player_lose_text=profile.player_lose_text combo_text=profile.combo_text %}
-          <button type="submit" class="button-small secondary">Save</button>
-        </form>
-        <div class="cpu-form">
-          {% if profile.finalized %}
-            <span class="deck-tag">Available to players</span>
-            {% if profile.problem %}<span class="small panel-error">{{ profile.problem }}</span>{% endif %}
-            <form method="post" action="{% url 'weiss:cpu_profile_finalize' profile.pk %}">{% csrf_token %}
-              <button type="submit" class="button-small secondary">Take back</button></form>
-          {% else %}
-            <span class="muted small">{% if profile.problem %}{{ profile.problem }}{% else %}Ready to finalize.{% endif %}</span>
-            <form method="post" action="{% url 'weiss:cpu_profile_finalize' profile.pk %}">{% csrf_token %}
-              <input type="hidden" name="finalized" value="on">
-              <button type="submit" class="button-small"{% if profile.problem %} disabled{% endif %}>Finalize</button></form>
-          {% endif %}
-          <form method="post" action="{% url 'weiss:cpu_profile_delete' profile.pk %}" onsubmit="return confirm('Delete {{ profile.name|escapejs }}?')">{% csrf_token %}
-            <button type="submit" class="button-small danger">Delete</button></form>
-        </div>
-        </div>
-      </details>
-      </li>
+  {# One tab at a time (cpu_views.TABS), each with its own link, so a form sends you back to the tab you were on. #}
+  <nav class="arcade-tabs cpu-tabs" aria-label="CPU creation">
+    {% for key, label, count in tabs %}
+      <a href="?tab={{ key }}"{% if key == tab %} class="current" aria-current="page"{% endif %}>{{ label }}{% if count is not None %} <span class="cpu-tab-count">{{ count }}</span>{% endif %}</a>
     {% endfor %}
-    </ul>
-    </div>
-    </details>
-    {% else %}<p class="empty">No CPU profiles yet.</p>{% endif %}
-    <h3>New profile</h3>
-    <form method="post" action="{% url 'weiss:cpu_profile_create' %}" class="cpu-form">
-      {% csrf_token %}
-      {% include "weiss/cpu_fields.html" with name="" model="standard" aggression=1 deck_id=None intro_text="" player_win_text="" player_lose_text="" combo_text="" %}
-      <button type="submit" class="button-small">Create profile</button>
-    </form>
-  </section>
+  </nav>
 
-  {% include "weiss/cpu_arcade.html" %}
-  {% include "weiss/cpu_scenes.html" %}
-  {% include "weiss/cpu_challenges.html" %}
+  {% if tab == "profiles" %}{% include "weiss/cpu_tab_profiles.html" %}
+  {% elif tab == "scenes" %}{% include "weiss/cpu_scenes.html" %}
+  {% elif tab == "decks" %}{% include "weiss/cpu_tab_decks.html" %}
+  {% elif tab == "arcade" %}{% include "weiss/cpu_arcade.html" %}
+  {% elif tab == "challenges" %}{% include "weiss/cpu_challenges.html" %}
+  {% elif tab == "unplayable" %}
+    <section class="cpu-section">
+      <p class="muted small">Cards whose text needs a step done by hand: a CPU can't play them, so they're left out of its decks.</p>
+      <p><a class="button-small secondary" href="{% url 'weiss:cpu_excluded_export' %}" download>Export unplayable cards</a></p>
+      <div data-excluded="{% url 'weiss:cpu_excluded' %}"><div data-excluded-list><p class="muted small">Loading… it takes a moment to read every card.</p></div></div>
+    </section>
+  {% endif %}
 {% endblock %}
 
 {% block weiss_scripts %}
@@ -122,28 +34,57 @@
       let open = [];
       try { open = JSON.parse(localStorage.getItem(KEY)) || []; } catch (error) { /* start with them all closed */ }
       const boxes = [...document.querySelectorAll("[data-collapse]")];
+      const here = new Set(boxes.map((box) => box.dataset.collapse));
+      const elsewhere = open.filter((key) => !here.has(key));  // other tabs' boxes, kept as they were
       for (const box of boxes) {
         box.open = open.includes(box.dataset.collapse);
         box.addEventListener("toggle", () => {
-          const now = boxes.filter((b) => b.open).map((b) => b.dataset.collapse);
+          const now = [...elsewhere, ...boxes.filter((b) => b.open).map((b) => b.dataset.collapse)];
           try { localStorage.setItem(KEY, JSON.stringify(now)); } catch (error) { /* only this visit, then */ }
         });
       }
     })();
 
-    document.querySelector("[data-excluded]").addEventListener("toggle", async (event) => {
-      const details = event.target;
-      if (!details.open || details.dataset.loaded) return;
-      details.dataset.loaded = "yes";
-      const list = details.querySelector("[data-excluded-list]");
-      try {
-        const response = await fetch(details.dataset.excluded, { credentials: "same-origin" });
-        if (!response.ok) throw new Error(response.status);
-        list.innerHTML = await response.text();
-      } catch (error) {
-        delete details.dataset.loaded;  // closing and opening it again tries again
-        list.innerHTML = '<p class="small panel-error">The list could not be loaded.</p>';
-      }
-    });
+    // A list's search box and filters ([data-filters] over [data-filter-list]): items match on their data-search
+    // text and, for each select or chip group, their data-<name>. The count says how many are showing.
+    for (const bar of document.querySelectorAll("[data-filters]")) {
+      const list = document.querySelector(bar.dataset.filters);
+      if (!list) continue;
+      const items = [...list.querySelectorAll("[data-search]")];
+      const count = bar.querySelector("[data-filter-count]");
+      const sorts = bar.querySelector("[data-sort]");
+      const order = new Map(items.map((item, i) => [item, i]));
+      const apply = () => {
+        const words = (bar.querySelector("[data-filter-text]")?.value || "").trim().toLowerCase().split(/\s+/).filter(Boolean);
+        const wants = [...bar.querySelectorAll("select[data-filter-by]")].map((s) => [s.dataset.filterBy, s.value]).filter(([, v]) => v);
+        let shown = 0;
+        for (const item of items) {
+          const ok = words.every((w) => item.dataset.search.includes(w)) && wants.every(([key, value]) => (item.dataset[key] || "").split(" ").includes(value));
+          item.hidden = !ok;
+          shown += ok;
+        }
+        if (count) count.textContent = shown === items.length ? `${items.length}` : `${shown} of ${items.length}`;
+        bar.closest("section")?.querySelector("[data-filter-none]")?.toggleAttribute("hidden", shown > 0 || !items.length);
+      };
+      const sort = () => {
+        const by = sorts ? sorts.value : "";
+        const key = (item) => item.dataset[`sort${by[0]?.toUpperCase()}${by.slice(1)}`] || "";
+        const sorted = by ? [...items].sort((a, b) => (by.startsWith("updated") ? key(b).localeCompare(key(a)) : key(a).localeCompare(key(b), undefined, { numeric: true })) || order.get(a) - order.get(b)) : items;
+        for (const item of sorted) item.parentElement.appendChild(item);
+      };
+      bar.addEventListener("input", apply);
+      bar.addEventListener("change", (event) => (event.target === sorts ? sort() : apply()));
+      bar.addEventListener("submit", (event) => event.preventDefault());
+      apply();
+    }
+
+    // The unplayable cards, worked out when that tab's opened: it takes a while.
+    const excluded = document.querySelector("[data-excluded]");
+    if (excluded) {
+      fetch(excluded.dataset.excluded, { credentials: "same-origin" })
+        .then((response) => { if (!response.ok) throw new Error(response.status); return response.text(); })
+        .then((html) => { excluded.querySelector("[data-excluded-list]").innerHTML = html; })
+        .catch(() => { excluded.querySelector("[data-excluded-list]").innerHTML = '<p class="small panel-error">The list could not be loaded. Reload to try again.</p>'; });
+    }
   </script>
 {% endblock %}

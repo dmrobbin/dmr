@@ -1,0 +1,58 @@
+{# The CPU creation tab's profiles: a card for each, opening its own page (cpu_profile.html), with a search and filters. #}
+<section class="cpu-section">
+  <details class="cpu-new" data-collapse="new-profile">
+    <summary class="button-small">+ New profile</summary>
+    <form method="post" action="{% url 'weiss:cpu_profile_create' %}" class="cpu-form">
+      {% csrf_token %}
+      {% include "weiss/cpu_fields.html" with name="" model="standard" aggression=1 deck_id=None intro_text="" player_win_text="" player_lose_text="" combo_text="" %}
+      <button type="submit" class="button-small">Create profile</button>
+      <p class="muted small cpu-wide">Its pictures and the rest come next, on its own page.</p>
+    </form>
+  </details>
+
+  {% if profiles %}
+    <form class="lead-filters pool-filters cpu-filters" data-filters="#cpu-profiles" role="search" aria-label="Filter profiles">
+      <label>Search <input type="search" data-filter-text placeholder="Name, deck or arcade list"></label>
+      <label>Status
+        <select data-filter-by="status">
+          <option value="">Any</option><option value="live">Available to players</option><option value="ready">Ready to finalize</option><option value="draft">Not ready</option>
+        </select>
+      </label>
+      <label>Model
+        <select data-filter-by="model"><option value="">Any</option>{% for value, label in models %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
+      </label>
+      <label>Sort
+        <select data-sort><option value="">Name</option><option value="updated">Recently changed</option></select>
+      </label>
+      <span class="muted small cpu-filter-count"><span data-filter-count></span> profiles</span>
+    </form>
+    <ul class="cpu-cards" id="cpu-profiles">
+      {% for profile in profiles %}
+        <li data-search="{{ profile.name|lower }} {{ profile.deck.name|lower }} {% for name in profile.lists %}{{ name|lower }} {% endfor %}"
+            data-status="{{ profile.status }}" data-model="{{ profile.model }}" data-sort-updated="{{ profile.updated|date:'c' }}">
+          <a class="cpu-card cpu-card-{{ profile.status }}" href="{% url 'weiss:cpu_profile_update' profile.pk %}">
+            {% if profile.image_url %}<img class="cpu-card-image" src="{{ profile.image_url }}" alt="" loading="lazy">
+            {% else %}<span class="cpu-card-image">{% include "weiss/avatar.html" with avatar=profile.avatar name=profile.name size="avatar-fill" %}</span>{% endif %}
+            <span class="cpu-card-text">
+              <strong>{{ profile.name }}</strong>
+              <span class="muted small">{{ profile.model_label }} · aggression {{ profile.aggression }}</span>
+              <span class="muted small">{% if profile.deck %}{{ profile.deck.name }}{% else %}No deck{% endif %}</span>
+              {% if profile.lists %}<span class="muted small">In {{ profile.lists|join:", " }}</span>{% endif %}
+              {% if profile.status == "live" %}<span class="deck-tag">Available to players</span>
+              {% elif profile.status == "ready" %}<span class="small cpu-ready">Ready to finalize</span>
+              {% else %}<span class="small panel-error" title="{{ profile.problem }}">Not ready</span>{% endif %}
+            </span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+    <p class="empty" data-filter-none hidden>No profiles match.</p>
+  {% else %}
+    <p class="empty">No CPU profiles yet.</p>
+  {% endif %}
+  <details class="cpu-help">
+    <summary class="muted small">About models and aggression</summary>
+    <p class="muted small">Aggression 1 is the standard behaviour. Higher values chase enemy characters harder and protect their own less.</p>
+    <p class="muted small">Focused works towards its climax combos, saving cards and stock for the next one it can reach. Strategic gets the most cards it can before building its board, filling its waiting room first if it can take cards from there.</p>
+  </details>
+</section>

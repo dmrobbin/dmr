@@ -108,7 +108,7 @@ class ArcadeSceneTests(ArcadeSetup):
         self.scenario.refresh_from_db()
         entry.refresh_from_db()
         self.assertEqual((self.scenario.intro_scene, self.scenario.outro_scene, entry.scene_before, entry.scene_after), (None, self.after, self.before, None))
-        self.assertContains(self.client.get(reverse("weiss:cpu_home")), "Before the first fight")
+        self.assertContains(self.client.get(reverse("weiss:cpu_home") + "?tab=arcade"), "Before the first fight")
 
 
 class FightOrderTests(ArcadeSetup):
@@ -218,7 +218,7 @@ class FightOrderTests(ArcadeSetup):
         self.assertEqual(arcade.fight_order(scenario, fixed=True)[1:3], [self.filler.pk, self.second.pk])
         self.client.post(reverse("weiss:arcade_entry_add", args=[self.scenario.pk]), {"cpu": self.cpu("Third branch").pk, "role": "branch"})
         self.assertEqual(ArcadeEntry.objects.filter(role="branch").count(), 3)  # as many branches as a story needs
-        self.assertContains(self.client.get(reverse("weiss:cpu_home")), "Filler order in narrative challenges")
+        self.assertContains(self.client.get(reverse("weiss:cpu_home") + "?tab=arcade"), "Filler order in narrative challenges")
 
 
 class HeaderTests(ArcadeSetup):

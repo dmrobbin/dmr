@@ -1,0 +1,31 @@
+{# The CPU creation tab's reserved decks: built like any deck, kept out of players' lists and deck choices. #}
+<section class="cpu-section">
+  <form method="post" action="{% url 'weiss:cpu_deck_create' %}" class="panel-row cpu-form">
+    {% csrf_token %}
+    <input type="text" name="name" maxlength="100" placeholder="e.g. NIKKE red CPU deck" aria-label="Deck name" required>
+    <button type="submit" class="button-small">Create deck</button>
+  </form>
+  <p class="muted small">Built like any deck, but kept for CPUs: they don't appear in anyone's lists or deck choices.</p>
+  {% if decks %}
+    <form class="lead-filters pool-filters cpu-filters" data-filters="#cpu-decks" role="search" aria-label="Filter decks">
+      <label>Search <input type="search" data-filter-text placeholder="Deck or CPU name"></label>
+      <label>Used
+        <select data-filter-by="used"><option value="">Any</option><option value="yes">By a CPU</option><option value="no">By no CPU</option></select>
+      </label>
+      <span class="muted small cpu-filter-count"><span data-filter-count></span> decks · most recently changed first</span>
+    </form>
+    <ul class="cpu-list cpu-rows" id="cpu-decks">
+      {% for deck in decks %}
+        <li data-search="{{ deck.name|lower }} {% for name in deck.cpus %}{{ name|lower }} {% endfor %}" data-used="{% if deck.cpus %}yes{% else %}no{% endif %}">
+          {% if deck.user == user %}<a href="{% url 'weiss:list' deck.pk %}">{{ deck.name }}</a>{% else %}<span>{{ deck.name }}</span>{% endif %}
+          <span class="muted small">{{ deck.total|default:0 }} / 50 cards · by {{ deck.user.username }}</span>
+          {% if deck.cpus %}<span class="small">Played by {{ deck.cpus|join:", " }}</span>{% else %}<span class="muted small">No CPU plays it</span>{% endif %}
+          {% if deck.wins %}<span class="deck-stars" title="{{ deck.wins }} win{{ deck.wins|pluralize }}">{{ deck.win_stars }}</span>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+    <p class="empty" data-filter-none hidden>No decks match.</p>
+  {% else %}
+    <p class="empty">No reserved decks yet.</p>
+  {% endif %}
+</section>

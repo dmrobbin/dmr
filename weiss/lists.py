@@ -94,7 +94,8 @@ def sorted_entries(card_list):
 
 def panel_context(request):
     """Everything the side panel and the per-card +/- controls need."""
-    lists = list(CardList.objects.players(request.user).annotate(total=Sum("entries__quantity")))
+    # Grouped for the totals, so the model's ordering doesn't apply: newest-modified first, said here.
+    lists = list(CardList.objects.players(request.user).annotate(total=Sum("entries__quantity")).order_by("-updated", "-pk"))
     active = editing_list(request)
     entries = []
     if active:
@@ -218,7 +219,7 @@ def attach_covers(lists):
 
 @weiss_access_required
 def list_index(request):
-    lists = CardList.objects.players(request.user).annotate(total=Sum("entries__quantity")).prefetch_related("arcade_clears")
+    lists = CardList.objects.players(request.user).annotate(total=Sum("entries__quantity")).order_by("-updated", "-pk").prefetch_related("arcade_clears")
     return render(request, "weiss/list_index.html", {"lists": attach_covers(lists)})
 
 

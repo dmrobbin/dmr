@@ -503,6 +503,55 @@ select option { color: var(--text); background: var(--surface); }
 .arcade-tabs a { padding: .4rem .8rem; color: var(--muted); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; }
 .arcade-tabs a:hover { color: var(--text); }
 .arcade-tabs a.current { color: var(--accent); border-bottom-color: var(--accent); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* The CPU creation tab (weiss/cpu_home.html): its own tabs, lists to search, and a page for each profile. */
+.cpu-tabs { flex-wrap: wrap; }
+.cpu-tab-count { display: inline-block; min-width: 1.4rem; padding: 0 .35rem; font-size: .75rem; text-align: center; color: var(--muted); background: var(--surface); border-radius: 999px; }
+.cpu-tabs a.current .cpu-tab-count { color: var(--on-accent); background: var(--accent); }
+.cpu-new { margin: 0 0 1rem; }
+.cpu-new > summary { display: inline-block; list-style: none; cursor: pointer; }
+.cpu-new > summary::-webkit-details-marker { display: none; }
+.cpu-new[open] > summary { margin-bottom: .6rem; }
+.cpu-new .cpu-form { padding: .8rem 1rem; border: 1px solid var(--border); border-radius: .6rem; background: var(--surface); }
+.cpu-wide { flex-basis: 100%; margin: 0; }
+.cpu-filters { margin: 0 0 .9rem; }
+.cpu-filter-count { align-self: center; padding-bottom: .2rem; }
+.cpu-cards { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: .6rem; }
+.cpu-cards li[hidden], .cpu-rows li[hidden], .cpu-table tr[hidden] { display: none; }
+.cpu-card { display: flex; gap: .75rem; align-items: center; height: 100%; padding: .55rem .7rem; color: var(--text); text-decoration: none;
+  background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--border); border-radius: .6rem; }
+.cpu-card:hover, .cpu-card:focus-visible { border-color: var(--accent); }
+.cpu-card-live { border-left-color: var(--accent); }
+.cpu-card-ready { border-left-color: #4fae7a; }
+.cpu-card-draft { border-left-color: #c84a4a; }
+.cpu-card-image { flex: none; width: 3.6rem; height: 3.6rem; border-radius: .45rem; object-fit: cover; overflow: hidden; display: grid; place-items: center; }
+.cpu-card-image .avatar-fill { width: 100%; font-size: 1.6rem; }
+.cpu-card-text { display: flex; flex-direction: column; gap: .1rem; min-width: 0; overflow-wrap: anywhere; }
+.cpu-card-text .deck-tag, .cpu-card-text .panel-error, .cpu-card-text .cpu-ready { align-self: flex-start; }
+.cpu-ready { color: #6fd39b; }
+.cpu-rows li { padding: .4rem 0; border-bottom: 1px solid var(--border); }
+.cpu-table-wrap { overflow-x: auto; margin: 0 0 1rem; }
+.cpu-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.cpu-table th { text-align: left; font-size: .75rem; font-weight: 600; color: var(--muted); padding: .35rem .5rem; border-bottom: 1px solid var(--border); }
+.cpu-table td { padding: .5rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.cpu-table td:first-child { min-width: 12rem; }
+.cpu-table td:first-child .deck-tag, .cpu-table td:first-child .panel-error { margin-left: .35rem; }
+.cpu-table-actions { white-space: nowrap; }
+.cpu-table-actions > * + * { margin-left: .6rem; }
+.cpu-help { margin-top: 1rem; }
+.cpu-help > summary { cursor: pointer; }
+.cpu-profile-head { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin: 0 0 1.25rem; }
+.cpu-profile-head h1 { margin: 0 0 .2rem; }
+.cpu-profile-head p { margin: 0 0 .4rem; }
+.cpu-profile-image { flex: none; width: 6rem; height: 6rem; border-radius: .6rem; object-fit: cover; overflow: hidden; display: grid; place-items: center; }
+.cpu-profile-image .avatar-fill { width: 100%; font-size: 2.6rem; }
+.cpu-profile-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 1rem; align-items: start; }
+@media (max-width: 52rem) { .cpu-profile-grid { grid-template-columns: minmax(0, 1fr); } }
+.cpu-panel { margin: 0 0 1rem; padding: .9rem 1rem; border: 1px solid var(--border); border-radius: .6rem; background: var(--surface); }
+.cpu-panel h2 { margin: 0 0 .6rem; font-size: 1rem; }
+.cpu-panel .cpu-picture { display: flex; align-items: center; gap: .8rem; }
+.cpu-form input[type="text"] { padding: .4rem .6rem; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: .5rem; }
+.cpu-form input[type="text"]:focus { outline: none; border-color: var(--accent); }
 .arcade-best { font-size: 1.5rem; font-weight: 700; margin: .25rem 0; }
 .arcade-best-fights { list-style: none; margin: .5rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: .25rem 1rem; }
 .game-over-score { font-size: 1.25rem; font-weight: 700; margin: .25rem 0 0; }

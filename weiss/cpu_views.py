@@ -101,22 +101,111 @@ def read_profile_form(request):
     return {"name": name, "model": model, "aggression": aggression, "deck": deck, **texts}, None
 
 
-@staff_required
-def cpu_home(request):
-    decks = CardList.objects.filter(reserved_for_cpu=True).select_related("user").annotate(total=Sum("entries__quantity"))
-    profiles = list(CpuProfile.objects.select_related("deck", "image"))
+# The tab's own tabs: one at a time, each worked out only when it's open (?tab=...).
+TABS = {"profiles": "Profiles", "scenes": "Scenes", "decks": "Decks", "arcade": "Arcade lists", "challenges": "Narrative challenges",
+        "unplayable": "Unplayable cards"}
+
+
+def back_to(tab):
+    """Where a form on one of the tabs goes once it's done: back to that tab."""
+    return redirect(f"{reverse('weiss:cpu_home')}?tab={tab}")
+
+
+def cpu_decks():
+    return CardList.objects.filter(reserved_for_cpu=True).select_related("user").annotate(total=Sum("entries__quantity")).order_by("-updated", "-pk")
+
+
+def profile_form_context():
+    return {"decks": cpu_decks(), "models": cpu.MODELS.items(), "aggressions": range(cpu.MIN_AGGRESSION, cpu.MAX_AGGRESSION + 1)}
+
+
+def with_status(profiles):
+    """Each profile with its label, whether it's ready (problem: why not), and its status for the filters."""
     for profile in profiles:
         profile.problem = deck_problem(profile.deck)
         profile.model_label = cpu.MODELS.get(profile.model, profile.model)
-    scenarios = arcade.all_scenarios()
-    for scenario in scenarios:
-        scenario.problem = arcade.scenario_problem(scenario)
-    return render(request, "weiss/cpu_home.html", {
-        "decks": decks, "profiles": profiles, "models": cpu.MODELS.items(), "scenes": scenes.scene_list(), "starter_count": len(STARTERS),
-        "narratives": NarrativeChallenge.objects.select_related("scenario"), "pack_sets": packs.pack_sets(),
-        "scenarios": scenarios, "arcade_roles": ArcadeEntry.Role.choices,
-        "aggressions": range(cpu.MIN_AGGRESSION, cpu.MAX_AGGRESSION + 1),
-    })
+        profile.status = "live" if profile.finalized else "draft" if profile.problem else "ready"
+    return profiles
+
+
+def scene_uses():
+    """{scene id: [where it plays, ...]}: the arcade lists' moments that play each scene, for the scenes list."""
+    uses = {}
+    for scenario in ArcadeScenario.objects.prefetch_related("entries__cpu"):
+        for scene_id, moment in ((scenario.intro_scene_id, "opening"), (scenario.outro_scene_id, "ending")):
+            if scene_id:
+                uses.setdefault(scene_id, []).append(f"{scenario.name} ({moment})")
+        for entry in scenario.entries.all():
+            for scene_id, moment in ((entry.scene_before_id, "before"), (entry.scene_after_id, "after")):
+                if scene_id:
+                    uses.setdefault(scene_id, []).append(f"{scenario.name} ({moment} {entry.cpu.name})")
+    return uses
+
+
+@staff_required
+def cpu_home(request):
+    tab = request.GET.get("tab") if request.GET.get("tab") in TABS else "profiles"
+    counts = {"profiles": CpuProfile.objects.count(), "scenes": Scene.objects.count(), "decks": CardList.objects.filter(reserved_for_cpu=True).count(),
+              "arcade": ArcadeScenario.objects.count(), "challenges": NarrativeChallenge.objects.count()}
+    context = {"tab": tab, "tabs": [(key, label, counts.get(key)) for key, label in TABS.items()]}
+    if tab == "profiles":
+        profiles = with_status(list(CpuProfile.objects.select_related("deck", "image").order_by("name")))
+        lists = {}
+        for entry in ArcadeEntry.objects.select_related("scenario"):
+            lists.setdefault(entry.cpu_id, set()).add(entry.scenario.name)
+        for profile in profiles:
+            profile.lists = sorted(lists.get(profile.pk, ()))
+        context.update(profiles=profiles, **profile_form_context())
+    elif tab == "scenes":
+        found = scenes.scene_list()
+        uses = scene_uses()
+        for scene in found:
+            scene.uses = uses.get(scene.pk, [])
+        context.update(scenes=found, starter_count=len(STARTERS))
+    elif tab == "decks":
+        users = {}
+        for profile in CpuProfile.objects.exclude(deck=None).only("name", "deck_id"):
+            users.setdefault(profile.deck_id, []).append(profile.name)
+        decks = list(cpu_decks())
+        for deck in decks:
+            deck.cpus = sorted(users.get(deck.pk, []))
+        context.update(decks=decks)
+    elif tab == "arcade":
+        scenarios = arcade.all_scenarios()
+        for scenario in scenarios:
+            scenario.problem = arcade.scenario_problem(scenario)
+        context.update(scenarios=scenarios, profiles=CpuProfile.objects.order_by("name"), scenes=scenes.scene_list(), arcade_roles=ArcadeEntry.Role.choices)
+    elif tab == "challenges":
+        scenarios = arcade.all_scenarios()
+        for scenario in scenarios:
+            scenario.problem = arcade.scenario_problem(scenario)
+        context.update(narratives=NarrativeChallenge.objects.select_related("scenario"), scenarios=scenarios, pack_sets=packs.pack_sets())
+    return render(request, "weiss/cpu_home.html", context)
+
+
+@staff_required
+def cpu_profile(request, pk):
+    """One CPU profile's page: its pictures, how it plays and what it says, and where it's used. Saving comes back here."""
+    profile = get_object_or_404(CpuProfile.objects.select_related("deck", "image"), pk=pk)
+    if request.method == "POST":
+        fields, error = read_profile_form(request)
+        if error:
+            messages.error(request, error)
+            return redirect("weiss:cpu_profile_update", pk=pk)
+        for field, value in fields.items():
+            setattr(profile, field, value)
+        if profile.finalized and deck_problem(profile.deck):
+            profile.finalized = False
+            messages.warning(request, f"{profile.name} is no longer available to players: {deck_problem(profile.deck)}")
+        profile.save()
+        messages.success(request, f"Saved {profile.name}.")
+        return redirect("weiss:cpu_profile_update", pk=pk)
+    with_status([profile])
+    entries = ArcadeEntry.objects.filter(cpu=profile).select_related("scenario").order_by("scenario__name")
+    # The scenes it's cast in (by its name or number, as a script's cast lines find it); only those that could be are read.
+    maybe = Scene.objects.filter(Q(script__icontains=profile.name) | Q(script__contains=f"#{profile.pk}")).order_by("name")
+    cast_in = [scene for scene in maybe if any(p.pk == profile.pk for p in scenes.compile_scene(scene.script)[0]["cast"].values())]
+    return render(request, "weiss/cpu_profile.html", {"profile": profile, "entries": entries, "cast_in": cast_in, **profile_form_context()})
 
 
 @staff_required
@@ -146,45 +235,32 @@ def cpu_deck_create(request):
     name = request.POST.get("name", "").strip()[:100]
     if not name:
         messages.error(request, "Give the deck a name.")
-        return redirect("weiss:cpu_home")
+        return back_to("decks")
     deck = CardList.objects.create(user=request.user, name=name, reserved_for_cpu=True)
     request.session[SESSION_KEY] = deck.pk
     request.session[EXPRESS_PROMPT] = deck.pk
-    return redirect("weiss:cpu_home")
+    return back_to("decks")
 
 
 @staff_required
 @require_POST
 def cpu_profile_create(request):
+    """A new profile, then its own page to finish it: pictures, lines and all."""
     fields, error = read_profile_form(request)
     if error:
         messages.error(request, error)
-    else:
-        CpuProfile.objects.create(created_by=request.user, **fields)
-    return redirect("weiss:cpu_home")
+        return back_to("profiles")
+    profile = CpuProfile.objects.create(created_by=request.user, **fields)
+    return redirect("weiss:cpu_profile_update", pk=profile.pk)
 
 
-@staff_required
-@require_POST
-def cpu_profile_update(request, pk):
-    profile = get_object_or_404(CpuProfile, pk=pk)
-    fields, error = read_profile_form(request)
-    if error:
-        messages.error(request, error)
-        return redirect("weiss:cpu_home")
-    for field, value in fields.items():
-        setattr(profile, field, value)
-    if profile.finalized and deck_problem(profile.deck):
-        profile.finalized = False
-        messages.warning(request, f"{profile.name} is no longer available to players: {deck_problem(profile.deck)}")
-    profile.save()
-    return redirect("weiss:cpu_home")
+cpu_profile_update = cpu_profile  # the profile's page answers both: showing it, and saving it
 
 
 @staff_required
 def cpu_picture(request, pk):
     profile = get_object_or_404(CpuProfile, pk=pk)
-    return avatar_picker(request, profile, profile.name, reverse("weiss:cpu_home"))
+    return avatar_picker(request, profile, profile.name, reverse("weiss:cpu_profile_update", args=[pk]))
 
 
 def forget_image(key):
@@ -301,7 +377,7 @@ def cpu_image_delete(request, pk):
     back = request.POST.get("profile", "")
     if back.isdigit() and CpuProfile.objects.filter(pk=back).exists():
         return redirect("weiss:cpu_images", pk=back)
-    return redirect("weiss:cpu_home")
+    return back_to("profiles")
 
 
 @staff_required
@@ -314,14 +390,14 @@ def arcade_create(request):
         messages.error(request, f"There's already an arcade list called {name}.")
     else:
         ArcadeScenario.objects.create(name=name, created_by=request.user)
-    return redirect("weiss:cpu_home")
+    return back_to("arcade")
 
 
 @staff_required
 @require_POST
 def arcade_delete(request, pk):
     get_object_or_404(ArcadeScenario, pk=pk).delete()  # runs under way carry on, and decks keep their markers
-    return redirect("weiss:cpu_home")
+    return back_to("arcade")
 
 
 @staff_required
@@ -340,14 +416,14 @@ def arcade_entry_add(request, pk):
         # A filler goes after those there are, in a narrative challenge's order.
         last = scenario.entries.filter(role=role).order_by("-position").values_list("position", flat=True).first()
         ArcadeEntry.objects.create(scenario=scenario, cpu=profile, role=role, position=(last or 0) + 1)
-    return redirect("weiss:cpu_home")
+    return back_to("arcade")
 
 
 @staff_required
 @require_POST
 def arcade_entry_remove(request, pk):
     get_object_or_404(ArcadeEntry, pk=pk).delete()
-    return redirect("weiss:cpu_home")
+    return back_to("arcade")
 
 
 @staff_required
@@ -361,7 +437,7 @@ def arcade_order(request, pk):
             entry.position = min(int(value), 99)
             entry.save(update_fields=["position"])
     messages.success(request, f"Saved {scenario.name}'s order.")
-    return redirect("weiss:cpu_home")
+    return back_to("arcade")
 
 
 @staff_required
@@ -377,7 +453,7 @@ def arcade_scenes(request, pk):
         entry.scene_before, entry.scene_after = pick(f"before-{entry.pk}"), pick(f"after-{entry.pk}")
         entry.save(update_fields=["scene_before", "scene_after"])
     messages.success(request, f"Saved {scenario.name}'s scenes.")
-    return redirect("weiss:cpu_home")
+    return back_to("arcade")
 
 
 def narrative_fields(request):
@@ -403,9 +479,9 @@ def narrative_create(request):
             raise ValueError(f"There's already a challenge called {name}.")
     except ValueError as error:
         messages.error(request, str(error))
-        return redirect("weiss:cpu_home")
+        return back_to("challenges")
     NarrativeChallenge.objects.create(name=name, description=description, scenario=scenario, sets=sets, created_by=request.user)
-    return redirect("weiss:cpu_home")
+    return back_to("challenges")
 
 
 @staff_required
@@ -418,18 +494,18 @@ def narrative_update(request, pk):
             raise ValueError(f"There's already a challenge called {name}.")
     except ValueError as error:
         messages.error(request, str(error))
-        return redirect("weiss:cpu_home")
+        return back_to("challenges")
     narrative.name, narrative.description, narrative.scenario, narrative.sets = name, description, scenario, sets
     narrative.save()  # challenges under way keep the sets they started with
     messages.success(request, f"Saved {name}.")
-    return redirect("weiss:cpu_home")
+    return back_to("challenges")
 
 
 @staff_required
 @require_POST
 def narrative_delete(request, pk):
     get_object_or_404(NarrativeChallenge, pk=pk).delete()  # challenges under way carry on
-    return redirect("weiss:cpu_home")
+    return back_to("challenges")
 
 
 @staff_required
@@ -440,10 +516,10 @@ def cpu_profile_finalize(request, pk):
     wanted = request.POST.get("finalized") == "on"
     if wanted and deck_problem(profile.deck):
         messages.error(request, f"{profile.name} can't be finalized yet. {deck_problem(profile.deck)}")
-        return redirect("weiss:cpu_home")
+        return redirect("weiss:cpu_profile_update", pk=pk)
     profile.finalized = wanted
     profile.save(update_fields=["finalized", "updated"])
-    return redirect("weiss:cpu_home")
+    return redirect("weiss:cpu_profile_update", pk=pk)
 
 
 @staff_required
@@ -452,4 +528,4 @@ def cpu_profile_delete(request, pk):
     profile = get_object_or_404(CpuProfile, pk=pk)
     messages.success(request, f"Deleted {profile.name}.")
     profile.delete()  # games against it keep going, at its default settings
-    return redirect("weiss:cpu_home")
+    return back_to("profiles")

@@ -208,7 +208,7 @@ class ScenePageTests(TestCase):
         page = self.client.get(reverse("weiss:cpu_scene_edit", args=[scene.pk]))
         self.assertContains(page, "No mistakes.")
         self.assertContains(page, 'data-insert="cast rapi as Rapi&#10;"')
-        self.assertContains(self.client.get(reverse("weiss:cpu_home")), "Welcome")
+        self.assertContains(self.client.get(reverse("weiss:cpu_home") + "?tab=scenes"), "Welcome")
 
     def test_saving_keeps_a_script_with_mistakes(self):
         scene = Scene.objects.create(name="S", script=SCRIPT)

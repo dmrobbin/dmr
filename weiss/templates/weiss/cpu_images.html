@@ -3,7 +3,7 @@
 {% block title %}Avatar image for {{ profile.name }}{% endblock %}
 
 {% block weiss_content %}
-  <p class="back"><a href="{% url 'weiss:cpu_home' %}">← CPU creation</a></p>
+  <p class="back"><a href="{% url 'weiss:cpu_profile_update' profile.pk %}">← {{ profile.name }}</a></p>
   <h1>Avatar image for {{ profile.name }}</h1>
   <p class="lead-meta">Every CPU chooses from the same images. Deleting one takes it away from any CPU using it.</p>
 

@@ -1,35 +1,67 @@
+{# The CPU creation tab's scenes: a searchable table, each with what it's used for. Writing one is on its own page (scene_edit.html). #}
 <section class="cpu-section">
-  <h2>Scenes</h2>
-  <p class="muted small">Visual novel style scenes: CPUs on a stage, talking, moving and animating, with choices for the player that branch the dialogue. Write one as a short script, then play it to test.</p>
   <form method="post" action="{% url 'weiss:cpu_scene_create' %}" class="panel-row cpu-form">
     {% csrf_token %}
     <input type="text" name="name" maxlength="100" placeholder="e.g. Rapi's welcome" aria-label="Scene name" required>
     <button type="submit" class="button-small">Create scene</button>
   </form>
-  <h3 class="small">Infinite challenge events</h3>
-  <p class="muted small">An infinite challenge's path has event spaces (?) as well as fights. An event plays one of the scenes marked <span class="deck-tag">Event</span> below, at random.
-    Give it a choice with a buff, usually a pact: a buff with a price (“give reforge”, “offer 2 pacts”, “(give pact)”; the script reference lists them all).</p>
-  <form method="post" action="{% url 'weiss:cpu_starter_events' %}" class="cpu-form">
-    {% csrf_token %}<button type="submit" class="button-small secondary">Add the starter events</button>
-    <span class="muted small">{{ starter_count }} ready-made events, one for each pact, to play as they are or change.</span>
-  </form>
+  <p class="muted small">Visual novel style scenes: CPUs on a stage, talking, moving and animating, with choices for the player that branch the dialogue.
+    An arcade list plays them before and after its fights (on the Arcade lists tab); an infinite challenge plays those marked <span class="deck-tag">Event</span> on its event spaces.</p>
+
   {% if scenes %}
-    <ul class="cpu-list">
-      {% for scene in scenes %}
-        <li>
-          <a href="{% url 'weiss:cpu_scene_edit' scene.pk %}">{{ scene.name }}</a>
-          {% if scene.infinite_event %}<span class="deck-tag">Event</span>{% endif %}
-          {% if scene.errors %}<span class="small panel-error">{{ scene.errors }} mistake{{ scene.errors|pluralize }}{% if scene.infinite_event %}: left out of events until fixed{% endif %}</span>
-          {% else %}<a class="small" href="{% url 'weiss:cpu_scene_play' scene.pk %}">Play</a>{% endif %}
-          <form method="post" action="{% url 'weiss:cpu_scene_event' scene.pk %}" class="inline-form">
-            {% csrf_token %}<input type="hidden" name="on" value="{% if scene.infinite_event %}0{% else %}1{% endif %}">
-            <button type="submit" class="link-button small">{% if scene.infinite_event %}Not an event{% else %}Make it an event{% endif %}</button>
-          </form>
-          <span class="muted small">updated {{ scene.updated|timesince }} ago</span>
-        </li>
-      {% endfor %}
-    </ul>
+    <form class="lead-filters pool-filters cpu-filters" data-filters="#cpu-scenes" role="search" aria-label="Filter scenes">
+      <label>Search <input type="search" data-filter-text placeholder="Scene name, or where it's used"></label>
+      <label>Show
+        <select data-filter-by="kind">
+          <option value="">Every scene</option><option value="event">Events</option><option value="arcade">In an arcade list</option>
+          <option value="unused">Not used anywhere</option><option value="broken">With mistakes</option>
+        </select>
+      </label>
+      <label>Sort
+        <select data-sort><option value="">Name</option><option value="updated">Recently changed</option></select>
+      </label>
+      <span class="muted small cpu-filter-count"><span data-filter-count></span> scenes</span>
+    </form>
+    <div class="cpu-table-wrap">
+      <table class="cpu-table">
+        <thead><tr><th scope="col">Scene</th><th scope="col">Used in</th><th scope="col">Changed</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+        <tbody id="cpu-scenes">
+          {% for scene in scenes %}
+            <tr data-search="{{ scene.name|lower }} {% for use in scene.uses %}{{ use|lower }} {% endfor %}"
+                data-kind="{% if scene.infinite_event %}event {% endif %}{% if scene.uses %}arcade{% elif not scene.infinite_event %}unused{% endif %}{% if scene.errors %} broken{% endif %}"
+                data-sort-updated="{{ scene.updated|date:'c' }}">
+              <td>
+                <a href="{% url 'weiss:cpu_scene_edit' scene.pk %}"><strong>{{ scene.name }}</strong></a>
+                {% if scene.infinite_event %}<span class="deck-tag">Event</span>{% endif %}
+                {% if scene.errors %}<span class="small panel-error">{{ scene.errors }} mistake{{ scene.errors|pluralize }}{% if scene.infinite_event or scene.uses %}: skipped until fixed{% endif %}</span>{% endif %}
+              </td>
+              <td class="small">{% if scene.uses %}{{ scene.uses|join:"; " }}{% else %}<span class="muted">{% if scene.infinite_event %}Infinite challenge events{% else %}Nothing yet{% endif %}</span>{% endif %}</td>
+              <td class="muted small" title="{{ scene.updated }}">{{ scene.updated|timesince }} ago</td>
+              <td class="cpu-table-actions small">
+                <a href="{% url 'weiss:cpu_scene_edit' scene.pk %}">Edit</a>
+                {% if not scene.errors %}<a href="{% url 'weiss:cpu_scene_play' scene.pk %}">Play</a>{% endif %}
+                <form method="post" action="{% url 'weiss:cpu_scene_event' scene.pk %}" class="inline-form">
+                  {% csrf_token %}<input type="hidden" name="on" value="{% if scene.infinite_event %}0{% else %}1{% endif %}">
+                  <button type="submit" class="link-button">{% if scene.infinite_event %}Not an event{% else %}Make it an event{% endif %}</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="empty" data-filter-none hidden>No scenes match.</p>
   {% else %}
     <p class="empty">No scenes yet.</p>
   {% endif %}
+
+  <details class="cpu-help">
+    <summary class="small">Infinite challenge events</summary>
+    <p class="muted small">An infinite challenge's path has event spaces (?) as well as fights. An event plays one of the scenes marked <span class="deck-tag">Event</span>, at random.
+      Give it a choice with a buff, usually a pact: a buff with a price (“give reforge”, “offer 2 pacts”, “(give pact)”; the script reference lists them all).</p>
+    <form method="post" action="{% url 'weiss:cpu_starter_events' %}" class="cpu-form">
+      {% csrf_token %}<button type="submit" class="button-small secondary">Add the starter events</button>
+      <span class="muted small">{{ starter_count }} ready-made events, one for each pact, to play as they are or change.</span>
+    </form>
+  </details>
 </section>

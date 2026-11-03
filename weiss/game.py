@@ -1045,8 +1045,8 @@ def apply_action(state, player, action, env):
                 fire(state, env, "leave", uid=occupant["uid"], source=occupant, source_owner=player, slot=to)
             if src in STAGE_SLOTS:
                 discard_markers(state, player, src)
-                if to == "waiting":
-                    fire(state, env, "leave", uid=card["uid"], source=card, source_owner=player, slot=src)
+                if to in ("waiting", "memory"):
+                    fire(state, env, "leave" if to == "waiting" else "leave_memory", uid=card["uid"], source=card, source_owner=player, slot=src)
         add_log(state, player, describe_move(card, src, to, name)
                 + (f" (paid {price} stock)" if price else ""))
         if to == "climax" and rules_on(state) and state["turn"] == player and state.get("phase") == "climax":
@@ -1696,6 +1696,9 @@ def condition_met(cond, state, player, source, ctx, env):
         return compare(sum(fits(cond["filter"], c, env) for c in counted_zones[cond["zone"]]), cond["n"], cond["dir"])
     if kind == "all_trait":
         trait_filter = {"any": [{"trait": trait} for trait in cond.get("traits") or [cond["trait"]]]}
+        if cond.get("owner") == "opp":  # "if all of your opponent's characters are 《Target》": and they have some
+            cards = stage_cards(state["players"][other_player(state, player)])
+            return bool(cards) and all(fits(trait_filter, c, env) for c in cards)
         return all(fits(trait_filter, c, env) for c in stage_cards(side))
     if kind == "have":
         cards = [c for slot, c in side["stage"].items() if c and (cond.get("zone") is None or (slot in OPPOSITE) == (cond["zone"] == "center"))]
@@ -1958,7 +1961,8 @@ def x_value(spec, state, player, target, ctx, env, stats=None):
     elif kind == "flipped_total":
         value = sum(number((env.info(pk) or {}).get("level")) for pk in (ctx or {}).get("flipped", []))
     elif kind == "flipped_icons":
-        value = sum(((env.info(pk) or {}).get("trigger") or "").split().count(spec["icon"]) for pk in (ctx or {}).get("flipped", []))
+        icons = [((env.info(pk) or {}).get("trigger") or "").split() for pk in (ctx or {}).get("flipped", [])]
+        value = sum(len(found) if spec["icon"] == "any" else found.count(spec["icon"]) for found in icons)
     elif kind == "markers":
         slot = slot_of(side, (ctx or {}).get("source_uid"))
         value = len(pile(side, MARKER + slot)) if slot else 0
@@ -1970,7 +1974,7 @@ def x_value(spec, state, player, target, ctx, env, stats=None):
         value = sum(1 for slot, c in them["stage"].items() if c and (slot in OPPOSITE) == (spec["zone"] == "center"))
     elif kind == "flipped_level":
         last = (ctx or {}).get("flipped") or ([ctx["revealed"]] if (ctx or {}).get("revealed") else [])
-        value = (number((env.info(last[-1]) or {}).get("level")) + spec.get("plus", 0)) if last else 0
+        value = (number((env.info(last[-1]) or {}).get(spec.get("stat", "level"))) + spec.get("plus", 0)) if last else 0
     elif kind == "flipped":
         value = sum(abilities.matches_filter(spec["filter"], env.info(pk) or {}) for pk in (ctx or {}).get("flipped", [])) + spec.get("plus", 0)
     elif kind == "marker_tiers":
@@ -2022,6 +2026,10 @@ def x_value(spec, state, player, target, ctx, env, stats=None):
         value = sum(not filter_ or (fits(filter_, c, env) and not (filter_.get("stand") and c["pos"] != "stand")
                                     and not (filter_.get("rest") and c["pos"] != "rest"))
                     for c in stage_cards(state["players"][other_player(state, player)]))
+    elif kind == "same_name_as_it":  # your characters with the card name of the one chosen, it among them
+        chosen = locate(state, ((ctx or {}).get("it") or [None])[0])[1]
+        name = abilities.plain_name(details_of(chosen, env).get("name")) if chosen else None
+        value = sum(abilities.plain_name(details_of(c, env).get("name")) == name for c in stage_cards(side)) if name else 0
     elif kind == "my_chars":
         source_uid = (ctx or {}).get("source_uid")
         zone = spec.get("stage_zone")
@@ -2325,6 +2333,8 @@ def when_matches(when, event, data, player, card, env):
         if event == "placed" and data.get("src") == "waiting" and data.get("actor") == data.get("owner"):
             return {"that": data["uid"]}
         return None
+    if on == "placed_self":  # "when this card is placed on the stage from your waiting room"
+        return {} if event == "placed" and data.get("uid") == uid and data.get("src") == when["src"] else None
     if on == "placed_from_deck":
         return {} if event == "placed" and data.get("uid") == uid and data.get("src") == "deck" else None
     if on == "check_card" and event == "check_card" and data.get("player") == player and (when.get("any") or data.get("uid") == uid):
@@ -2333,6 +2343,8 @@ def when_matches(when, event, data, player, card, env):
         return None
     if on == "check_climax" and event == "check_climax" and data.get("uid") == uid:
         return {"revealed": data.get("card")}  # "if that card's trigger icon is ..."
+    if on == "leave_memory" and event == "leave_memory" and data.get("uid") == uid:
+        return {}
     if on == "leave" and event == "leave" and data.get("uid") == uid:
         return {"had_markers": data.get("had_markers", False)}
     if on == "hand_to_waiting":
@@ -2699,6 +2711,8 @@ def choose_options(step, res, state, env):
     elif zone == "marker":
         slot = slot_of(side, res["uid"])
         cards = pile(side, MARKER + slot) if slot else []
+    elif zone == "hand_or_waiting":
+        cards = side["zones"]["hand"] + side["zones"]["waiting"]
     elif zone == "hand_or_marker":
         slot = slot_of(side, res["uid"])
         cards = side["zones"]["hand"] + (pile(side, MARKER + slot) if slot else [])
@@ -2763,6 +2777,8 @@ def move_card(state, env, actor, owner, uid, to):
         discard_markers(state, owner, src)
         if to == "waiting":
             fire(state, env, "leave", uid=uid, source=card, source_owner=owner, slot=src, by_player=actor, had_markers=had_markers)
+        elif to == "memory":  # "when this card is put into your memory from the stage"
+            fire(state, env, "leave_memory", uid=uid, source=card, source_owner=owner, slot=src)
     target = {"deck_bottom": "deck", "clock_bottom": "clock", "stock_bottom": "stock"}.get(to, to)
     add_log(state, actor, describe_move(card, src, target, env.name)
             + (" (bottom)" if to == "deck_bottom" else "")
@@ -2881,7 +2897,7 @@ def run_step(step, res, state, env):
             if not found:
                 ctx["it_before"], ctx["it"] = ctx.get("it", []), []
                 return
-        minimum = min(step["min"], len(found))
+        minimum = min(max(0, x_value(step.get("x"), state, player, None, ctx, env)) if step.get("min_x") else step["min"], len(found))
         maximum = min(max(0, x_value(step.get("x"), state, player, None, ctx, env)) if step.get("max_x") else step["max"], len(found))
         if not maximum:
             ctx["it_before"], ctx["it"] = ctx.get("it", []), []
@@ -3317,6 +3333,13 @@ def run_step(step, res, state, env):
             if card["uid"] != res["uid"] and fits(step["filter"], card, env) and position_fits(step["filter"], card):
                 card["pos"] = "rest"
         add_log(state, player, "rested their other characters")
+    elif do == "zone_all":  # "put all cards in your clock into your waiting room"
+        owner = opponent if step.get("owner") == "opp" else player
+        target = state["players"][owner]
+        going, target["zones"][step["zone"]] = target["zones"][step["zone"]], []
+        for card in going:
+            put(target, card, step["to"])
+        add_log(state, owner, f"put all {len(going)} cards from their {LABELS[step['zone']].lower()} into {LABELS[step['to']]}")
     elif do == "stock_to_deck":
         owner = opponent if step.get("owner") == "opp" else player
         target = state["players"][owner]

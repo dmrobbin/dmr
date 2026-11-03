@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from . import buffs, scenes
-from .cpu_views import staff_required
+from .cpu_views import back_to, staff_required
 from .event_scenes import STARTERS
 from .models import CpuProfile, Scene
 
@@ -16,10 +16,10 @@ def scene_create(request):
     name = request.POST.get("name", "").strip()[:100]
     if not name:
         messages.error(request, "Give the scene a name.")
-        return redirect("weiss:cpu_home")
+        return back_to("scenes")
     if Scene.objects.filter(name=name).exists():
         messages.error(request, f"There's already a scene called {name}.")
-        return redirect("weiss:cpu_home")
+        return back_to("scenes")
     scene = Scene.objects.create(name=name, script=scenes.starter_script(list(CpuProfile.objects.all()[:1])), created_by=request.user)
     return redirect("weiss:cpu_scene_edit", pk=scene.pk)
 
@@ -88,7 +88,7 @@ def scene_event(request, pk):
     scene.infinite_event = request.POST.get("on") == "1"
     scene.save(update_fields=["infinite_event", "updated"])
     messages.success(request, f"{scene.name} is {'now' if scene.infinite_event else 'no longer'} an infinite challenge event.")
-    return redirect("weiss:cpu_home")
+    return back_to("scenes")
 
 
 @staff_required
@@ -98,7 +98,7 @@ def starter_events(request):
     added = [Scene.objects.create(name=name, script=script, infinite_event=True, created_by=request.user)
              for name, script in STARTERS if not Scene.objects.filter(name=name).exists()]
     messages.success(request, f"Added {len(added)} starter event{'s' if len(added) != 1 else ''}." if added else "The starter events are all here already.")
-    return redirect("weiss:cpu_home")
+    return back_to("scenes")
 
 
 @staff_required
@@ -107,4 +107,4 @@ def scene_delete(request, pk):
     scene = get_object_or_404(Scene, pk=pk)
     scene.delete()
     messages.success(request, f"Deleted {scene.name}.")
-    return redirect("weiss:cpu_home")
+    return back_to("scenes")

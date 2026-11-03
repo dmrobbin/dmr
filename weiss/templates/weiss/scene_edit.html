@@ -6,7 +6,7 @@
 {% block head %}<script src="{% static 'weiss/backdrops.js' %}" defer></script><script src="{% static 'weiss/scene_editor.js' %}" defer></script>{% endblock %}
 
 {% block content %}
-  <p class="back"><a href="{% url 'weiss:cpu_home' %}">&larr; CPU creation</a></p>
+  <p class="back"><a href="{% url 'weiss:cpu_home' %}?tab=scenes">&larr; Scenes</a></p>
   <form method="post" class="scene-editor" data-scene-editor data-check-url="{% url 'weiss:cpu_scene_check' scene.pk %}">
     {% csrf_token %}
     <div class="scene-editor-main">

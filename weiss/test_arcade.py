@@ -9,7 +9,7 @@ from django.urls import reverse
 
 from core.access import WEISS_GROUP
 
-from . import arcade, play
+from . import arcade, lists, play
 from .models import ArcadeClear, ArcadeEntry, ArcadeRun, ArcadeScenario, Card, CardList, CardListEntry, CpuImage, CpuProfile, GameRecord, GameRoom
 
 PNG = b"\x89PNG\r\n\x1a\n" + b"\0" * 32
@@ -176,16 +176,27 @@ class CpuImageTests(Base):
         self.assertContains(page, "2 images")
         self.assertContains(page, "<details open>")
 
-    def test_the_decks_list_folds_away(self):
+    def test_the_decks_have_a_tab_of_their_own(self):
         CardList.objects.create(user=self.staff, name="Bot deck", reserved_for_cpu=True)
-        page = self.client.get(reverse("weiss:cpu_home"))
-        self.assertContains(page, 'data-collapse="decks"')
-        self.assertRegex(page.content.decode(), r"<strong>\d+ reserved decks?</strong>")
+        self.profile.deck.name = "Bot's own deck"
+        self.profile.deck.save()
+        page = self.client.get(reverse("weiss:cpu_home") + "?tab=decks")
+        self.assertContains(page, "Bot deck")
+        self.assertContains(page, "No CPU plays it")
+        self.assertContains(page, "Played by Bot")  # which CPU plays each
+        self.assertNotContains(self.client.get(reverse("weiss:cpu_home")), "No CPU plays it")  # the profiles tab, by default
 
-    def test_the_profiles_fold_away(self):
+    def test_the_profiles_open_a_page_each(self):
         page = self.client.get(reverse("weiss:cpu_home"))
-        self.assertContains(page, 'data-collapse="profiles"')
-        self.assertRegex(page.content.decode(), r"<strong>\d+ CPU profiles?</strong>")
+        self.assertEqual(page.context["tab"], "profiles")
+        self.assertContains(page, reverse("weiss:cpu_profile_update", args=[self.profile.pk]))
+        self.assertContains(page, 'data-filters="#cpu-profiles"')  # searched and filtered on the page
+        self.assertContains(page, 'data-status="live"')  # finalized: available to players
+        draft = CpuProfile.objects.create(name="Draft")
+        self.assertContains(self.client.get(reverse("weiss:cpu_home")), 'data-status="draft"')  # no deck yet: not ready
+        detail = self.client.get(reverse("weiss:cpu_profile_update", args=[draft.pk]))
+        self.assertContains(detail, "Where it's used")
+        self.assertContains(detail, "It needs a deck.")
 
     def test_only_staff_see_the_pool(self):
         image = CpuImage.objects.create(key="k.png")
@@ -206,11 +217,30 @@ class CpuImageTests(Base):
     def test_texts_are_saved_from_the_form(self):
         self.client.post(reverse("weiss:cpu_profile_update", args=[self.profile.pk]), {
             "name": "Bot", "model": "standard", "aggression": 1, "deck": self.profile.deck_id, "intro_text": "Hi", "player_win_text": "Ow", "player_lose_text": "Ha",
-            "combo_text": "Now!"})
+            "combo_text": "Now!"}, follow=True)
         self.profile.refresh_from_db()
         self.assertEqual((self.profile.intro_text, self.profile.player_win_text, self.profile.player_lose_text, self.profile.combo_text),
                          ("Hi", "Ow", "Ha", "Now!"))
-        self.assertContains(self.client.get(reverse("weiss:cpu_home")), "Now!")
+        self.assertContains(self.client.get(reverse("weiss:cpu_profile_update", args=[self.profile.pk])), "Now!")
+
+
+class DeckOrderTests(Base):
+    def test_cpu_decks_come_newest_modified_first(self):
+        old, new = self.deck_for(self.staff, "Old deck", reserved_for_cpu=True), self.deck_for(self.staff, "New deck", reserved_for_cpu=True)
+        self.client.force_login(self.staff)
+        decks = lambda: [d.name for d in self.client.get(reverse("weiss:cpu_home")).context["decks"]]
+        self.assertEqual(decks(), ["New deck", "Old deck"])
+        lists.change_quantity(old, self.card, 1)
+        self.assertEqual(decks(), ["Old deck", "New deck"])  # its cards were just changed
+
+    def test_players_lists_too(self):
+        first, second = self.deck_for(self.alice, "First"), self.deck_for(self.alice, "Second")
+        self.client.force_login(self.alice)
+        names = [l.name for l in self.client.get(reverse("weiss:lists")).context["lists"]]
+        self.assertEqual(names[:3], ["Second", "First", "Mine"])
+        first.save(update_fields=["updated"])
+        names = [l.name for l in self.client.get(reverse("weiss:lists")).context["lists"]]
+        self.assertEqual(names[:2], ["First", "Second"])
 
 
 class ComboCutInTests(Base):
@@ -339,13 +369,18 @@ class ArcadeBuilderTests(Base):
 
     def test_the_tab_shows_it(self):
         self.add(self.cpu("A"), "opener")
-        self.assertContains(self.client.get(reverse("weiss:cpu_home")), "Ark")
+        self.assertContains(self.client.get(reverse("weiss:cpu_home") + "?tab=arcade"), "Ark")
 
-    def test_profiles_and_lists_can_each_be_collapsed(self):
+    def test_lists_can_each_be_collapsed_and_profiles_say_where_they_are(self):
         cpu = self.cpu("A")
-        page = self.client.get(reverse("weiss:cpu_home"))
-        self.assertContains(page, f'data-collapse="profile-{cpu.pk}"')
-        self.assertContains(page, f'data-collapse="arcade-{self.scenario.pk}"')
+        self.add(cpu, "opener")
+        self.assertContains(self.client.get(reverse("weiss:cpu_home") + "?tab=arcade"), f'data-collapse="arcade-{self.scenario.pk}"')
+        self.assertContains(self.client.get(reverse("weiss:cpu_home")), "In Ark")
+        self.assertContains(self.client.get(reverse("weiss:cpu_profile_update", args=[cpu.pk])), "Ark")
+
+    def test_saving_comes_back_to_the_tab(self):
+        response = self.client.post(reverse("weiss:arcade_create"), {"name": "Other"})
+        self.assertRedirects(response, reverse("weiss:cpu_home") + "?tab=arcade", fetch_redirect_response=False)
 
 
 class ArcadeRunTests(Base):
