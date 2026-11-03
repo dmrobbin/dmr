@@ -242,9 +242,21 @@ def challenge_deck(request):
     cards = []
     for card, pulled, in_deck in challenge.pool_cards(run):
         card.image_src = reverse("weiss:card_image", args=[card.pk])
-        cards.append({"card": card, "pulled": pulled, "in_deck": in_deck})
+        rarity = packs.rarity_of(card)
+        cards.append({"card": card, "pulled": pulled, "in_deck": in_deck, "rarity": rarity, "grade": packs.grade_of(rarity)})
     climaxes = next(target for _, target, required, _ in DECK_GROUPS if required)
-    return render(request, "weiss/challenge_deck.html", {"run": run, "cards": cards, "deck_size": DECK_SIZE, "climax_target": climaxes})
+    # What the filters offer: only what's in the pool (as the set pages do, see views.card_browser).
+    pool = [item["card"] for item in cards]
+    options = {
+        "colors": sorted({card.color for card in pool if card.color}),
+        "levels": sorted({card.level for card in pool if card.level is not None}),
+        "costs": sorted({card.cost for card in pool if card.cost is not None}),
+        "types": sorted({card.card_type for card in pool if card.card_type}),
+        "rarities": [rarity for rarity, _ in sorted({(item["rarity"], item["grade"]) for item in cards}, key=lambda pair: (-pair[1], pair[0]))],
+        "sets": sorted({(card.expansion_id, card.expansion) for card in pool}, key=lambda pair: pair[1]),
+    }
+    return render(request, "weiss/challenge_deck.html", {"run": run, "cards": cards, "deck_size": DECK_SIZE, "climax_target": climaxes,
+                                                         "options": options})
 
 
 @challenge_access

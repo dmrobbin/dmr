@@ -12,6 +12,51 @@
   {% if not cards %}
     <p class="empty">You haven't pulled any cards yet. <a href="{% url 'weiss:arcade_challenge' %}">Open some packs first.</a></p>
   {% else %}
+    {# The set pages' filters, on the page: the pool's small, and the deck's changes aren't saved yet (challenge_deck.js). #}
+    <form class="lead-filters pool-filters" data-pool-filters role="search" aria-label="Filter your pool">
+      <label>Name <input type="search" name="name" placeholder="e.g. Rapi"></label>
+      <label>Card text <input type="search" name="text" placeholder="e.g. draw 1 card"></label>
+      <label>Trait <input type="search" name="trait" class="narrow" placeholder="e.g. Nikke"></label>
+      {% if options.colors %}
+        <fieldset class="color-filter">
+          <legend>Colors</legend>
+          <div class="color-chips">
+            {% for color in options.colors %}<label class="color-chip color-{{ color|lower }}"><input type="checkbox" name="color" value="{{ color }}"><span>{{ color }}</span></label>{% endfor %}
+          </div>
+        </fieldset>
+      {% endif %}
+      <label>Level
+        <select name="level"><option value="">Any</option>{% for level in options.levels %}<option value="{{ level }}">{{ level }}</option>{% endfor %}<option value="climax">Climax</option></select>
+      </label>
+      <label>Cost
+        <select name="cost"><option value="">Any</option>{% for cost in options.costs %}<option value="{{ cost }}">{{ cost }}</option>{% endfor %}</select>
+      </label>
+      <label>Type
+        <select name="type"><option value="">Any</option>{% for type in options.types %}<option value="{{ type|lower }}">{{ type }}</option>{% endfor %}</select>
+      </label>
+      <label>Rarity
+        <select name="rarity"><option value="">Any</option>{% for rarity in options.rarities %}<option value="{{ rarity }}">{{ rarity|default:"None" }}</option>{% endfor %}</select>
+      </label>
+      {% if options.sets|length > 1 %}
+        <label>Set
+          <select name="set" data-searchable="sets"><option value="">Any</option>{% for id, name in options.sets %}<option value="{{ id }}">{{ name }}</option>{% endfor %}</select>
+        </label>
+      {% endif %}
+      <label>Show
+        <select name="show"><option value="">Every card</option><option value="deck">In the deck</option><option value="out">Not in the deck</option></select>
+      </label>
+      <label>Sort
+        <select name="sort">
+          <option value="">Level, then type</option><option value="serial">Card number</option>
+          <option value="level">Level, low to high</option><option value="-level">Level, high to low</option>
+          <option value="cost">Cost, low to high</option><option value="-cost">Cost, high to low</option>
+          <option value="power">Power, low to high</option><option value="-power">Power, high to low</option>
+          <option value="-grade">Rarity, rarest first</option><option value="name">Name, A–Z</option>
+        </select>
+      </label>
+      <button type="reset" class="button-small secondary" data-pool-clear>Clear</button>
+    </form>
+    <p class="lead-count small" data-pool-count aria-live="polite"></p>
     <form method="post" class="challenge-deck" data-challenge-deck data-deck-size="{{ deck_size }}" data-climaxes="{{ climax_target }}">
       {% csrf_token %}
       <input type="hidden" name="deck" data-deck-field>
@@ -21,15 +66,6 @@
           <span class="small" data-deck-groups></span>
           <span class="small panel-error" data-deck-warnings></span>
         </div>
-        <label class="small">Show
-          <select data-deck-filter>
-            <option value="all">every card</option>
-            <option value="deck">in the deck</option>
-            <option value="out">not in the deck</option>
-            <option value="0">level 0</option><option value="1">level 1</option><option value="2">level 2</option><option value="3">level 3</option>
-            <option value="climax">climaxes</option>
-          </select>
-        </label>
         <button type="button" class="button-small secondary" data-deck-clear>Empty the deck</button>
         <button type="submit" class="button-small">Save deck</button>
         <a class="button-small secondary" href="{% url 'weiss:arcade_challenge' %}">Back to the challenge</a>
@@ -37,7 +73,10 @@
       <ul class="pool-grid">
         {% for item in cards %}{% with card=item.card %}
           <li class="pool-card" data-card="{{ card.pk }}" data-name="{{ card.name }}" data-pulled="{{ item.pulled }}" data-in-deck="{{ item.in_deck }}"
-              data-level="{% if card.card_type|lower == 'climax' %}climax{% else %}{{ card.level|default_if_none:'' }}{% endif %}">
+              data-level="{% if card.card_type|lower == 'climax' %}climax{% else %}{{ card.level|default_if_none:'' }}{% endif %}"
+              data-text="{{ card.description }}" data-traits="{{ card.traits }}" data-color="{{ card.color }}" data-cost="{{ card.cost|default_if_none:'' }}"
+              data-power="{{ card.power|default_if_none:'' }}" data-type="{{ card.card_type|lower }}" data-rarity="{{ item.rarity }}" data-grade="{{ item.grade }}"
+              data-set="{{ card.expansion_id }}" data-serial="{{ card.serial_number }}">
             <a href="{% url 'weiss:card' card.pk %}" data-card-popup="{% url 'weiss:card_popup' card.pk %}" class="pool-picture">{% include "weiss/card_art.html" with alt=card.name lazy=True %}</a>
             <span class="pool-name small">{{ card.name }}</span>
             <span class="pool-controls">

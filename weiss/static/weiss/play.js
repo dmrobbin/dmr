@@ -353,7 +353,7 @@
   const PRIZE_ICONS = { climax_pack: "⚡", color_pack: "🎨", lucky_pack: "💎" };
   const SLOT_SPINS = 8; // times round the reel before it stops
 
-  function slotHtml(drawn) {
+  function prizeSlotHtml(drawn) {
     // The reel: round and round, then the prize, as the last of its items.
     const items = [];
     for (let turn = 0; turn < SLOT_SPINS; turn++) items.push(...drawn.reel);
@@ -368,7 +368,7 @@
 
   // Spin the reel down to its last item, slowing as it goes, then light up. Seen once a win: a redraw shows it stopped.
   let slotSpun = null;
-  function spinSlot(el, drawn) {
+  function spinPrizeSlot(el, drawn) {
     const reel = el.querySelector(".slot-reel");
     const items = reel.children;
     const stop = items.length - 1;
@@ -749,10 +749,13 @@
 
   async function poll() {
     if (busy || (document.hidden && Math.random() < 0.7)) return; // check less often in background tabs
+    let data = null;
     try {
       const response = await fetch(`${STATE_URL}?v=${version}`, { credentials: "same-origin" });
-      if (response.status === 200) receive(await response.json());
+      if (response.status === 200) data = await response.json();
     } catch (e) { /* offline for a moment; try again next tick */ }
+    // Outside the try: a mistake in drawing the board must show in the console, not pass for being offline.
+    if (data) receive(data);
   }
 
   async function act(action) {
@@ -1491,11 +1494,11 @@
           ${arcade && arcade.challenge && over.won ? `<p class="game-over-arcade">${prize ? "" : `Won: ${esc(arcade.challenge.won)} · `}${arcade.challenge.packs} packs to open</p>` : ""}
           ${arcade && arcade.challenge && !over.won ? `<p class="game-over-arcade">${arcade.challenge.going ? `A second chance: you can fight again${arcade.challenge.lives ? ` (${arcade.challenge.lives} more left)` : ""}.` : "The challenge is over."}</p>` : ""}
           ${arcade ? `<p class="game-over-arcade">${arcade.cleared ? `🏆 ${esc(arcade.scenario)} cleared!` : over.won ? `Up next: ${fightOf()}` : `${esc(arcade.scenario)}: ${fightOf()}`}${arcade.score ? ` · run score ${arcade.score}` : ""}</p>` : ""}
-          ${over.won && prize ? slotHtml(prize) : ""}
+          ${over.won && prize ? prizeSlotHtml(prize) : ""}
           <p class="game-over-status" data-game-over-status></p>
           <div class="game-over-buttons" data-game-over-buttons></div></div>`;
       root.appendChild(gameOverEl);
-      if (over.won && prize) spinSlot(gameOverEl.querySelector(".slot"), prize);
+      if (over.won && prize) spinPrizeSlot(gameOverEl.querySelector(".slot"), prize);
     }
     const name = opponentWho("Your opponent");
     gameOverEl.querySelector("[data-game-over-status]").innerHTML = (error && esc(error))

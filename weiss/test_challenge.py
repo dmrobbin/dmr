@@ -551,6 +551,14 @@ class ChallengeTests(ArcadeSetup):
             self.assertFalse(run.deck.entries.filter(card=unpulled).exists())
         page = self.client.get(reverse("weiss:arcade_challenge_deck"))
         self.assertContains(page, "data-pulled=")
+        # The set pages' filters, offering only what's in the pool.
+        self.assertContains(page, 'data-pool-filters')
+        for field in ("name", "text", "trait", "level", "cost", "type", "rarity", "show", "sort"):
+            self.assertContains(page, f'name="{field}"')
+        pulled = [c for c in self.cards if str(c.pk) in run.pool]
+        for rarity in {c.rarity for c in pulled}:
+            self.assertContains(page, f'<option value="{rarity}">')
+        self.assertContains(page, f'data-rarity="{pulled[0].rarity}"')
 
     def ready_to_fight(self):
         run = self.start()

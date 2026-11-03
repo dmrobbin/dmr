@@ -1,6 +1,7 @@
 /* Booster pack opening. Clicking the pack shakes it as the screen dims, then it bursts and its cards are revealed one
    at a time, the rarer the grander, each shown for CARD_PAUSE_MS before the next; further packs follow on by
-   themselves, and the end shows every card pulled. "Skip to the end" goes straight there.
+   themselves, and the end shows every card pulled. "Skip to the end" goes straight there. "2× speed" (remembered in
+   this browser) runs it all twice as fast, except an SR or rarer card's reveal: that one still takes its time.
    The page gives {set, grades: [name per grade], packs: [[card, ...], ...]}, each pack in reveal order. */
 (() => {
   const source = document.getElementById("pack-opening");
@@ -11,7 +12,13 @@
   const packs = data.packs;
 
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, reduced ? Math.min(ms, 120) : ms));
+  const SPEED_KEY = "weiss-pack-speed";
+  const SLOW_GRADE = 3; // SR (and RRR) and rarer: revealed at full length even at 2x speed (see packs.GRADES)
+  let fast = false; // 2x speed
+  let rare = false; // an SR or rarer card is being revealed: no hurrying it
+  try { fast = localStorage.getItem(SPEED_KEY) === "2"; } catch (e) { /* the default, then */ }
+  const pace = (ms) => (fast && !rare ? ms / 2 : ms);
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, reduced ? Math.min(ms, 120) : pace(ms)));
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const isClimax = (card) => card.type === "Climax";
 
@@ -54,6 +61,15 @@
     return root;
   }
 
+  // The speed the CSS animations go at too, and the button showing it.
+  function setPace() {
+    if (!overlay) return;
+    overlay.classList.toggle("pk-fast", fast && !rare);
+    const button = overlay.querySelector(".pk-speed");
+    button.setAttribute("aria-pressed", String(fast));
+    button.textContent = fast ? "2× speed: on" : "2× speed";
+  }
+
   function setStatus(text) {
     statusEl.textContent = text;
   }
@@ -72,6 +88,7 @@
         <ol class="pk-tray" aria-label="This pack so far"></ol>
         <p class="pk-status" aria-live="polite"></p>
         <div class="pk-controls">
+          <button type="button" class="button-small secondary pk-speed" aria-pressed="false" title="Twice as fast, except SR and rarer cards">2× speed</button>
           <button type="button" class="button-small secondary pk-skip">Skip to the end</button>
         </div>
       </div>`;
@@ -83,6 +100,12 @@
     tray = overlay.querySelector(".pk-tray");
     statusEl = overlay.querySelector(".pk-status");
     overlay.querySelector(".pk-skip").addEventListener("click", finish);
+    overlay.querySelector(".pk-speed").addEventListener("click", () => {
+      fast = !fast;
+      try { localStorage.setItem(SPEED_KEY, fast ? "2" : "1"); } catch (e) { /* only this time, then */ }
+      setPace();
+    });
+    setPace();
     overlay.addEventListener("keydown", (event) => { if (event.key === "Escape") finish(); });
     overlay.querySelector(".pk-skip").focus();
     void overlay.offsetWidth;
@@ -93,6 +116,8 @@
     busy = true;
     packIndex = i;
     cardIndex = -1;
+    rare = false;
+    setPace();
     tray.innerHTML = "";
     const pageButton = table.querySelector(`[data-pack="${i}"]`);
     pageButton.disabled = true;
@@ -106,7 +131,7 @@
     stage.append(pack);
     if (i > 0 && !reduced) {
       await pack.animate([{ transform: "translateY(70vh) rotate(10deg)" }, { transform: "none" }],
-                         { duration: 550, easing: "cubic-bezier(.2,.8,.3,1)" }).finished;
+                         { duration: pace(550), easing: "cubic-bezier(.2,.8,.3,1)" }).finished;
     }
     pack.classList.add("shaking");
     await wait(1100);
@@ -143,7 +168,7 @@
         { transform: "translate(0, 0) scale(.2) rotate(0deg)", opacity: 0, easing: "cubic-bezier(.1,.8,.3,1)" },
         { transform: `translate(${x}px, ${y}px) scale(.8) rotate(${spin}deg)`, opacity: 1, offset: 0.45, easing: "cubic-bezier(.5,0,.3,1)" },
         { transform: stackSpot(k), opacity: 1 },
-      ], { duration: reduced ? 1 : 1300, delay: reduced ? 0 : k * 40, fill: "forwards" });
+      ], { duration: reduced ? 1 : pace(1300), delay: reduced ? 0 : pace(k * 40), fill: "forwards" });
     });
     await Promise.all(flights.map((flight) => flight.finished));
     cardEls.forEach((el, k) => {
@@ -162,6 +187,8 @@
     const card = pack[k];
     const el = cardEls[k];
     const fx = effects(card);
+    rare = card.grade >= SLOW_GRADE;
+    setPace();
     el.style.zIndex = "50";
     el.style.transform = "translate(0, -1rem) scale(1.06)";
     await wait(300);
@@ -181,7 +208,7 @@
     const where = packs.length > 1 ? `Pack ${packIndex + 1} of ${packs.length} · ` : "";
     setStatus(`${where}Card ${k + 1} of ${pack.length}: ${card.name} (${card.rarity})`);
     busy = false;
-    advance = setTimeout(next, CARD_PAUSE_MS);
+    advance = setTimeout(next, pace(CARD_PAUSE_MS));
   }
 
   function flourish(card, fx) {
@@ -212,7 +239,7 @@
   }
 
   function flash(peak) {
-    flashEl.animate([{ opacity: 0 }, { opacity: peak, offset: 0.15 }, { opacity: 0 }], { duration: 650, easing: "ease-out" });
+    flashEl.animate([{ opacity: 0 }, { opacity: peak, offset: 0.15 }, { opacity: 0 }], { duration: pace(650), easing: "ease-out" });
   }
 
   function ring(color) {
@@ -258,7 +285,7 @@
     thumb.dataset.grade = card.grade;
     thumb.innerHTML = `<a href="${esc(card.url)}" data-card-popup="${esc(card.popup)}" title="${esc(card.name)} (${esc(card.rarity)})">${face(card, true)}</a>`;
     tray.append(withFallbacks(thumb));
-    el.animate([{ opacity: 1 }, { transform: "translate(0, 45vh) scale(.2)", opacity: 0 }], { duration: 350, easing: "ease-in", fill: "forwards" })
+    el.animate([{ opacity: 1 }, { transform: "translate(0, 45vh) scale(.2)", opacity: 0 }], { duration: pace(350), easing: "ease-in", fill: "forwards" })
       .finished.then(() => el.remove());
   }
 
