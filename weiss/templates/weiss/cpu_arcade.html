@@ -21,6 +21,15 @@
             <form method="post" action="{% url 'weiss:arcade_entry_remove' entry.pk %}" class="inline-form">{% csrf_token %}<button type="submit" class="link-button">Remove</button></form></li>
         {% endfor %}
       </ul>
+      {% if scenario.fillers %}
+        <form method="post" action="{% url 'weiss:arcade_order' scenario.pk %}" class="cpu-form arcade-order">
+          {% csrf_token %}
+          <span class="small">Filler order in narrative challenges <span class="muted">(arcade runs shuffle them)</span>:</span>
+          {% for entry in scenario.fillers %}<label class="small">{{ entry.cpu.name }} <input type="number" name="position-{{ entry.pk }}" value="{{ forloop.counter }}" min="1" max="99"></label>{% endfor %}
+          <button type="submit" class="button-small secondary">Save order</button>
+        </form>
+      {% endif %}
+      <p class="muted small">A <strong>branch</strong> is only fought when a scene picks it (“fight …” in its script), for stories that split.</p>
       <form method="post" action="{% url 'weiss:arcade_entry_add' scenario.pk %}" class="cpu-form">
         {% csrf_token %}
         <label class="small">CPU <select name="cpu">{% for profile in profiles %}<option value="{{ profile.pk }}">{{ profile.name }}</option>{% endfor %}</select></label>

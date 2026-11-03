@@ -333,10 +333,12 @@ def arcade_entry_add(request, pk):
         messages.error(request, "That isn't a place in an arcade list.")
     elif scenario.entries.filter(cpu=profile).exists():
         messages.error(request, f"{profile.name} is already in {scenario.name}.")
-    elif role != ArcadeEntry.Role.FILLER and scenario.entries.filter(role=role).exists():
+    elif role in (ArcadeEntry.Role.OPENER, ArcadeEntry.Role.ANCHOR) and scenario.entries.filter(role=role).exists():
         messages.error(request, f"{scenario.name} already has an {role}. Remove that one first.")
     else:
-        ArcadeEntry.objects.create(scenario=scenario, cpu=profile, role=role)
+        # A filler goes after those there are, in a narrative challenge's order.
+        last = scenario.entries.filter(role=role).order_by("-position").values_list("position", flat=True).first()
+        ArcadeEntry.objects.create(scenario=scenario, cpu=profile, role=role, position=(last or 0) + 1)
     return redirect("weiss:cpu_home")
 
 
@@ -344,6 +346,20 @@ def arcade_entry_add(request, pk):
 @require_POST
 def arcade_entry_remove(request, pk):
     get_object_or_404(ArcadeEntry, pk=pk).delete()
+    return redirect("weiss:cpu_home")
+
+
+@staff_required
+@require_POST
+def arcade_order(request, pk):
+    """The order a narrative challenge fights an arcade list's fillers in (an arcade run shuffles them)."""
+    scenario = get_object_or_404(ArcadeScenario, pk=pk)
+    for entry in scenario.entries.filter(role=ArcadeEntry.Role.FILLER):
+        value = request.POST.get(f"position-{entry.pk}", "")
+        if value.isdigit():
+            entry.position = min(int(value), 99)
+            entry.save(update_fields=["position"])
+    messages.success(request, f"Saved {scenario.name}'s order.")
     return redirect("weiss:cpu_home")
 
 

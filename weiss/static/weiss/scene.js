@@ -7,6 +7,7 @@
    onEnd(state) when the scene ends; state is { line, flags: [...], choices: [{ line, prompt, text }], buffs }.
    buffs are those the scene gave (weiss.buffs), [{ step, option, buff, name }]: step is where in scene.steps,
    and option which of its options (null for a plain "give"), for the server to check them against the scene.
+   fights are the fights it picked ("fight"), [{ step, option, who, name }], the same way: the last one counts.
    Stage directions (entering, moving, animating) play while the script carries on, one after another for
    each actor; dialogue waits for a click (or Space / Enter / →), and a choice for an option (or its number). */
 (() => {
@@ -94,6 +95,7 @@
       this.flags = new Set();
       this.choices = [];
       this.buffs = [];
+      this.fights = [];
       this.stage.querySelectorAll(".vn-reward").forEach((card) => card.remove());
       this.line = 0;
       this.typing = null;
@@ -105,7 +107,7 @@
     }
 
     state() {
-      return { line: this.line, flags: [...this.flags], choices: [...this.choices], buffs: [...this.buffs] };
+      return { line: this.line, flags: [...this.flags], choices: [...this.choices], buffs: [...this.buffs], fights: [...this.fights] };
     }
 
     async run(token) {
@@ -146,6 +148,7 @@
         case "choice": return this.choose(step, at);
         case "offer": return this.choose(step, at);
         case "give": return this.reward(step, at);
+        case "fight": this.fight(at, null, step.who); return null;
         case "wait": return sleep(step.seconds * 1000);
         case "goto": this.index = this.scene.labels[step.label]; return null;
         case "if":
@@ -244,6 +247,13 @@
       });
     }
 
+    // Who the run fights next: settled by the server once the scene's done.
+    fight(at, option, who) {
+      const cast = this.scene.cast[who];
+      this.fights.push({ step: at, option, who, name: cast ? cast.name : who });
+      if (this.options.onFight) this.options.onFight(who, cast ? cast.name : who);
+    }
+
     gain(at, option, buff, name) {
       if (this.buffs.some((given) => given.step === at)) return; // once per step, as the server counts them
       this.buffs.push({ step: at, option, buff, name });
@@ -274,6 +284,7 @@
           this.choices.push({ line: step.line, prompt: step.prompt, text: offer ? option.name : option.text });
           if (offer) this.gain(at, i, option.buff, option.name);
           else if (option.give) this.gain(at, i, option.give, option.give_name || option.give);
+          if (!offer && option.fight) this.fight(at, i, option.fight);
           if (option.set) this.flags.add(option.set);
           if (option.unset) this.flags.delete(option.unset);
           if (option.goto) this.index = this.scene.labels[option.goto];

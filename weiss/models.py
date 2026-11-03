@@ -266,9 +266,14 @@ class ArcadeScenario(models.Model):
 
     @property
     def ordered_entries(self):
-        """Opener, fillers, anchor: the order they're fought in, though the fillers shuffle."""
+        """Opener, fillers (in their set order), anchor, then the branches: the order they're fought in, though an
+        arcade run shuffles the fillers, and a branch is only fought when a scene picks it."""
         order = ArcadeEntry.Role.values
-        return sorted(self.entries.all(), key=lambda entry: (order.index(entry.role), entry.cpu.name))
+        return sorted(self.entries.all(), key=lambda entry: (order.index(entry.role), entry.position, entry.cpu.name))
+
+    @property
+    def fillers(self):
+        return [entry for entry in self.ordered_entries if entry.role == ArcadeEntry.Role.FILLER]
 
 
 class ArcadeEntry(models.Model):
@@ -276,10 +281,12 @@ class ArcadeEntry(models.Model):
         OPENER = "opener", "Opener"
         FILLER = "filler", "Filler"
         ANCHOR = "anchor", "Anchor"
+        BRANCH = "branch", "Branch"  # fought only when a scene picks it (weiss.scenes, "fight")
 
     scenario = models.ForeignKey(ArcadeScenario, on_delete=models.CASCADE, related_name="entries")
     cpu = models.ForeignKey(CpuProfile, on_delete=models.CASCADE, related_name="arcade_entries")
     role = models.CharField(max_length=10, choices=Role.choices)
+    position = models.PositiveSmallIntegerField(default=0, help_text="Where a filler comes in a narrative challenge's set order (arcade runs shuffle them)")
     scene_before = models.ForeignKey(Scene, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", help_text="Played before this fight")
     scene_after = models.ForeignKey(Scene, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", help_text="Played after winning it")
 

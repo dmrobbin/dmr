@@ -52,6 +52,8 @@ REFERENCE = [
     ("choice What do you say?", "Asks the player. The options follow, one a line; each can go to a label, or carry on below.", "choice "),
     ("- Fight her -> fight", "An option, under a choice. “-> label” is optional; after it, “(set brave)” sets a flag and “(give lucky_pack)” a buff (both: “(set brave, give lucky_pack)”).", "- "),
     ("give lucky_pack", "In a challenge, gives the player a buff (or “give random”). It's theirs at the end of the scene, to use before the next fight.", "give "),
+    ("fight anis", "Makes Anis the next fight in the run (the CPU must be in its arcade list, often as a branch). In a scene "
+     "before a fight that hasn't started, it's the fight about to start. On an option: “(fight anis)”.", "fight "),
     ("offer 3: Take a gift", "In a challenge, the player picks one of 3 random buffs (or of the ones named: “offer lucky_pack, climax_pack”).", "offer 3: "),
     ("set brave / unset brave", "Remembers (or forgets) something for later.", "set "),
     ("if brave goto boast", "Goes to a label if a flag is set (“if not brave …” for the opposite).", "if  goto "),
@@ -74,8 +76,9 @@ BACKGROUND = re.compile(r"background\s+(?P<name>\S+)", re.I)
 SCREEN = re.compile(r"screen\s+(?P<effect>\S+)", re.I)
 CHOICE = re.compile(r"choice(?:\s*:?\s*(?P<prompt>.*))?", re.I)
 OPTION = re.compile(rf"-\s*(?P<text>.+?)\s*(?:->\s*(?P<label>{NAME}))?\s*(?:\((?P<acts>[^()]*)\))?", re.I)
-OPTION_ACT = re.compile(rf"(?P<verb>set|unset|give)\s+(?P<what>{NAME})", re.I)
+OPTION_ACT = re.compile(rf"(?P<verb>set|unset|give|fight)\s+(?P<what>{NAME})", re.I)
 GIVE = re.compile(rf"give\s+(?P<buff>{NAME})", re.I)
+FIGHT = re.compile(rf"fight\s+(?P<who>{NAME})", re.I)
 OFFER = re.compile(r"offer\s+(?P<what>[^:]+?)\s*(?::\s*(?P<prompt>.*))?", re.I)
 SAY = re.compile(rf"(?P<who>{NAME})\s*(?:\(\s*(?P<expression>\w+)\s*\))?\s*:\s*(?P<text>.*\S)")
 DIRECTION = re.compile(rf"(?P<who>{NAME})\s+(?P<verb>[a-z]+)(?:\s+(?P<rest>.*))?", re.I)
@@ -139,9 +142,11 @@ def compile_scene(script, find=find_cpu):
                 for act in filter(None, (part.strip() for part in (match["acts"] or "").split(","))):
                     found = OPTION_ACT.fullmatch(act)
                     if not found:
-                        problem = "After an option, write “(set flag)”, “(unset flag)” or “(give buff)”, with commas between."
+                        problem = "After an option, write “(set flag)”, “(unset flag)”, “(give buff)” or “(fight cpu)”, with commas between."
                     elif found["verb"].lower() == "give" and found["what"].lower() not in (*buffs.BUFFS, buffs.RANDOM):
                         problem = buff_problem(found["what"])
+                    elif found["verb"].lower() == "fight" and found["what"].lower() not in cast:
+                        problem = fight_problem(found["what"])
                     else:
                         option[found["verb"].lower()] = found["what"].lower()
                 if option["goto"]:
@@ -177,6 +182,10 @@ def compile_scene(script, find=find_cpu):
             jumps.append((number, step["label"]))
         elif match := SET.fullmatch(line):
             step.update({"do": match["verb"].lower(), "flag": match["flag"].lower()})
+        elif match := FIGHT.fullmatch(line):
+            if match["who"].lower() not in cast:
+                problem = fight_problem(match["who"])
+            step.update({"do": "fight", "who": match["who"].lower()})
         elif match := GIVE.fullmatch(line):
             if match["buff"].lower() not in (*buffs.BUFFS, buffs.RANDOM):
                 problem = buff_problem(match["buff"])
@@ -231,6 +240,10 @@ def compile_scene(script, find=find_cpu):
     if not steps and not errors:
         errors.append((1, "Nothing happens in this scene yet."))
     return {"cast": cast, "labels": labels, "steps": steps}, sorted(errors)
+
+
+def fight_problem(name):
+    return f"Only a CPU in the cast can be fought: add “cast {name.lower()} as …” at the top."
 
 
 def buff_problem(name):
@@ -307,6 +320,27 @@ def scene_payload(scene, title="", key="", viewer=None):
         images = {expression: profile.screen_url(expression) for expression in EXPRESSIONS}
         cast[name] = {"name": profile.name, "cpu": profile.pk, "images": {k: v for k, v in images.items() if v}, "avatar": profile.avatar}
     return {"key": key, "title": title, "cast": cast, "labels": scene["labels"], "steps": scene["steps"]}
+
+
+def chosen_fight(payload, picks):
+    """The CPU profile id a played scene picked to fight next, from what the page reports: [[step, option or None]],
+    the last that's a fight, checked against the scene (as buffs.given does); or None."""
+    chosen = None
+    for pick in picks if isinstance(picks, list) else []:
+        try:
+            at, option = pick
+            step = payload["steps"][int(at)]
+        except (TypeError, ValueError, IndexError, KeyError):
+            continue
+        who = None
+        if step["do"] == "fight" and option is None:
+            who = step.get("who")
+        elif step["do"] == "choice" and isinstance(option, int) and 0 <= option < len(step["options"]):
+            who = step["options"][option].get("fight")
+        cpu = payload["cast"].get(who, {}).get("cpu") if who else None
+        if cpu:
+            chosen = cpu
+    return chosen
 
 
 def playable(found, with_buffs=False, rng=random, viewer=None):

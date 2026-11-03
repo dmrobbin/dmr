@@ -1592,6 +1592,7 @@ li:nth-child(3n + 2) .rfx-sheen::after { animation-delay: -4.6s; }
 .qty-button { width: 1.8rem; height: 1.8rem; font: inherit; font-weight: 700; color: var(--on-accent); background: var(--accent); border: none; border-radius: .4rem; cursor: pointer; }
 .qty-button:hover { background: var(--accent-hover); }
 .qty-button:disabled { opacity: .35; cursor: default; background: var(--accent); }
+.arcade-order input[type="number"] { width: 3.5rem; margin-left: .3rem; }
 .arcade-scene-form, .narrative-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); gap: .6rem 1rem; align-items: end; margin: .5rem 0 1rem; }
 .arcade-scene-form label, .narrative-form label { display: flex; flex-direction: column; gap: .25rem; }
 .narrative-form .narrative-wide { grid-column: 1 / -1; }

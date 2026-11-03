@@ -5,7 +5,7 @@ from unittest import mock
 from django.test import TestCase
 from django.urls import reverse
 
-from . import arcade, challenge, play
+from . import arcade, challenge, play, scenes
 from .models import ArcadeEntry, ArcadeRun, ArcadeScenario, CardList, ChallengeRun, GameRoom, NarrativeChallenge, Scene
 from .test_arcade import Base, player
 from .test_packs import make_set
@@ -109,6 +109,116 @@ class ArcadeSceneTests(ArcadeSetup):
         entry.refresh_from_db()
         self.assertEqual((self.scenario.intro_scene, self.scenario.outro_scene, entry.scene_before, entry.scene_after), (None, self.after, self.before, None))
         self.assertContains(self.client.get(reverse("weiss:cpu_home")), "Before the first fight")
+
+
+class FightOrderTests(ArcadeSetup):
+    """A narrative challenge's set order, branches, and scenes that pick the next fight."""
+
+    def setUp(self):
+        super().setUp()
+        self.second, self.branch_a, self.branch_b = self.cpu("Neon"), self.cpu("Helm"), self.cpu("Drake")
+        ArcadeEntry.objects.filter(cpu=self.filler).update(position=2)
+        ArcadeEntry.objects.create(scenario=self.scenario, cpu=self.second, role="filler", position=1)
+        ArcadeEntry.objects.create(scenario=self.scenario, cpu=self.branch_a, role="branch", position=1)
+        ArcadeEntry.objects.create(scenario=self.scenario, cpu=self.branch_b, role="branch", position=2)
+
+    def test_a_set_order_or_shuffled_and_no_branches(self):
+        scenario = ArcadeScenario.objects.prefetch_related("entries").get()
+        fixed = [self.opener.pk, self.second.pk, self.filler.pk, self.anchor.pk]
+        self.assertEqual(arcade.fight_order(scenario, fixed=True), fixed)
+        orders = {tuple(arcade.fight_order(scenario, random.Random(seed))) for seed in range(20)}
+        self.assertEqual(len(orders), 2)  # the two fillers either way round
+        self.assertTrue(all(self.branch_a.pk not in order for order in orders))
+        names = [fighter["cpu"].name for fighter in arcade.lineup(scenario, self.alice)]
+        self.assertEqual(names, ["Rapi", "Neon", "Anis", "Last"])  # a branch shows once it's been met
+
+    def test_the_script_lines(self):
+        script = "cast rapi as Rapi\ncast helm as Helm\nfight helm\nchoice Who?\n- Her (fight helm)\n- Nobody"
+        scene, errors = scenes.compile_scene(script)
+        self.assertEqual(errors, [])
+        self.assertEqual(scene["steps"][0], {"line": 3, "do": "fight", "who": "helm"})
+        self.assertEqual(scene["steps"][1]["options"][0]["fight"], "helm")
+        errors = dict(scenes.compile_scene("cast rapi as Rapi\nfight drake\nchoice x\n- y (fight drake)")[1])
+        self.assertIn("Only a CPU in the cast", errors[2])
+        self.assertIn("Only a CPU in the cast", errors[4])
+
+    def test_what_the_page_says_was_picked_is_checked(self):
+        compiled = scenes.compile_scene("cast helm as Helm\ncast drake as Drake\nfight helm\nchoice Who?\n- Drake (fight drake)\n- Nobody")[0]
+        payload = scenes.scene_payload(compiled)
+        self.assertEqual(scenes.chosen_fight(payload, [[0, None], [1, 0]]), self.branch_b.pk)  # the last one counts
+        self.assertEqual(scenes.chosen_fight(payload, [[0, None], [1, 1]]), self.branch_a.pk)  # "Nobody" fights nobody
+        self.assertIsNone(scenes.chosen_fight(payload, [[1, 9], [5, None], "x"]))
+
+    def start(self, script, where="after"):
+        scene = Scene.objects.create(name="Fork", script=script)
+        ArcadeEntry.objects.filter(cpu=self.opener).update(**{f"scene_{where}": scene})
+        self.client.post(reverse("weiss:arcade_start"), {"scenario": self.scenario.pk, "deck": self.deck.pk})
+        room = self.room()
+        self.url = reverse("weiss:play_action", args=[room.pk])
+        return room
+
+    def finish_scene(self, fights):
+        room = self.room()
+        return self.post(self.url, {"type": "scene_done", "key": room.state["scenes"][0]["key"], "fights": fights}).json()
+
+    def test_a_scene_after_a_win_picks_the_next_fight(self):
+        self.start("cast helm as Helm\nchoice Where to?\n- The tower (fight helm)\n- Onwards")
+        self.end_fight("me")
+        self.finish_scene([[0, 0]])
+        run = self.room().arcade_run
+        self.assertEqual(run.order[1], self.branch_a.pk)
+        self.assertEqual(len(run.order), 4)  # in place of whoever was next, not as well
+        self.post(self.url, {"type": "arcade_continue"})
+        self.assertEqual(self.room().cpu_profile, self.branch_a)
+
+    def test_picking_one_due_later_swaps_them(self):
+        self.start("cast last as Last\nfight last")
+        run = self.room().arcade_run
+        next_up = run.order[1]
+        self.end_fight("me")
+        self.finish_scene([[0, None]])
+        run.refresh_from_db()
+        self.assertEqual((run.order[1], run.order[3]), (self.anchor.pk, next_up))
+
+    def test_a_scene_before_a_fight_changes_who_it_is_against(self):
+        self.start("cast helm as Helm\nfight helm", where="before")
+        self.assertEqual(self.room().cpu_profile, self.opener)
+        data = self.finish_scene([[0, None]])
+        room = self.room()
+        self.assertEqual(room.cpu_profile, self.branch_a)  # straight in the seat
+        self.assertEqual(room.arcade_run.order[0], self.branch_a.pk)
+        self.assertEqual(data["cpu"]["name"], "Helm")
+
+    def test_only_a_cpu_in_the_list_can_be_picked(self):
+        outsider = self.cpu("Outsider")
+        self.start(f"cast them as #{outsider.pk}\nfight them")
+        self.end_fight("me")
+        before = list(self.room().arcade_run.order)
+        self.finish_scene([[0, None]])
+        self.assertEqual(self.room().arcade_run.order, before)
+
+    def test_a_narrative_challenge_fights_in_the_set_order(self):
+        self.client.force_login(self.staff)
+        narrative = NarrativeChallenge.objects.create(name="Story", scenario=self.scenario, sets=[7])
+        make_set(expansion_id=7, name="Vol.7", C=12, U=6, CC=2, R=4)
+        self.client.post(reverse("weiss:arcade_challenge_start"), {"kind": "narrative", "narrative": narrative.pk})
+        run = challenge.current(self.staff)
+        challenge.open_packs(run, 7, 2)
+        challenge.save_deck(run, {pk: 1 for pk in run.pool})
+        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        run.refresh_from_db()
+        self.assertEqual(run.arcade_run.order, [self.opener.pk, self.second.pk, self.filler.pk, self.anchor.pk])
+
+    def test_staff_set_the_order_and_add_branches(self):
+        self.client.force_login(self.staff)
+        neon = ArcadeEntry.objects.get(cpu=self.second)
+        anis = ArcadeEntry.objects.get(cpu=self.filler)
+        self.client.post(reverse("weiss:arcade_order", args=[self.scenario.pk]), {f"position-{neon.pk}": 5, f"position-{anis.pk}": 1})
+        scenario = ArcadeScenario.objects.prefetch_related("entries").get()
+        self.assertEqual(arcade.fight_order(scenario, fixed=True)[1:3], [self.filler.pk, self.second.pk])
+        self.client.post(reverse("weiss:arcade_entry_add", args=[self.scenario.pk]), {"cpu": self.cpu("Third branch").pk, "role": "branch"})
+        self.assertEqual(ArcadeEntry.objects.filter(role="branch").count(), 3)  # as many branches as a story needs
+        self.assertContains(self.client.get(reverse("weiss:cpu_home")), "Filler order in narrative challenges")
 
 
 class ChallengeTests(ArcadeSetup):

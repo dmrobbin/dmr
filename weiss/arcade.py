@@ -41,12 +41,14 @@ def ready_scenarios():
     return [scenario for scenario in all_scenarios() if not scenario_problem(scenario)]
 
 
-def fight_order(scenario, rng=random):
-    """The CPUs of a new run, as profile ids."""
+def fight_order(scenario, rng=random, fixed=False):
+    """The CPUs of a new run, as profile ids: the fillers shuffled, or (fixed, for a narrative challenge) in their
+    set order. Branches aren't in it: a scene puts one in (see play.choose_fight)."""
     by_role = {role: [] for role in ArcadeEntry.Role.values}
-    for entry in scenario.entries.all():
+    for entry in sorted(scenario.entries.all(), key=lambda entry: (entry.position, entry.pk)):
         by_role[entry.role].append(entry.cpu_id)
-    rng.shuffle(by_role[ArcadeEntry.Role.FILLER])
+    if not fixed:
+        rng.shuffle(by_role[ArcadeEntry.Role.FILLER])
     return by_role[ArcadeEntry.Role.OPENER] + by_role[ArcadeEntry.Role.FILLER] + by_role[ArcadeEntry.Role.ANCHOR]
 
 
@@ -70,18 +72,21 @@ def lineup(scenario, user):
     "met"}. The opener is always shown; the rest only once this player has played them in a run."""
     met = {cpu_id for run in ArcadeRun.objects.filter(user=user, scenario=scenario) for cpu_id in run.fought}
     return [{"cpu": entry.cpu, "role": entry.role, "role_label": entry.get_role_display(),
-             "met": entry.role == ArcadeEntry.Role.OPENER or entry.cpu_id in met} for entry in scenario.ordered_entries]
+             "met": entry.role == ArcadeEntry.Role.OPENER or entry.cpu_id in met}
+            for entry in scenario.ordered_entries if entry.role != ArcadeEntry.Role.BRANCH or entry.cpu_id in met]
 
 
 def entry_of(run, cpu_id):
     return ArcadeEntry.objects.filter(scenario_id=run.scenario_id, cpu_id=cpu_id).select_related("scene_before", "scene_after").first() if run.scenario_id else None
 
 
-def scenes_before(run, cpu):
-    """Scene payloads to play before fighting this CPU: the scenario's opening one first, if this is the first fight."""
+def scenes_before(run, cpu, opening=True):
+    """Scene payloads to play before fighting this CPU: the scenario's opening one first, if this is the first
+    fight (and `opening`: not when a scene has just swapped the CPU, as the opening's been seen)."""
     scenario = run.scenario
     entry = entry_of(run, cpu.pk)
-    return scenes.playable([scenario.intro_scene if scenario and run.position == 0 else None, entry and entry.scene_before],
+    first = scenario and run.position == 0 and opening
+    return scenes.playable([scenario.intro_scene if first else None, entry and entry.scene_before],
                            with_buffs=challenge.of(run) is not None, viewer=run.user)
 
 

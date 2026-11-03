@@ -23,6 +23,7 @@
       <dl class="scene-debug-state">
         <dt>Script line</dt><dd data-debug-line>–</dd>
         <dt>Flags</dt><dd data-debug-flags>none</dd>
+        <dt>Next fight</dt><dd data-debug-fight>as the run has it</dd>
       </dl>
       <h2>Choices made</h2>
       <ol class="small" data-debug-choices></ol>
@@ -53,6 +54,7 @@
           item.textContent = `Line ${choice.line}: ${choice.text}`;
           list.appendChild(item);
         }
+        $("[data-debug-fight]").textContent = state.fights.length ? state.fights[state.fights.length - 1].name : "as the run has it";
         const given = $("[data-debug-buffs]");
         given.innerHTML = "";
         for (const buff of state.buffs) {
@@ -66,6 +68,7 @@
         onStep: (step, state) => show(state),
         onChoice: () => show(player.state()),
         onBuff: () => show(player.state()),
+        onFight: () => show(player.state()),
         onEnd: (state) => {
           show(state);
           $("[data-debug-end-line]").textContent = `at line ${state.line}`;

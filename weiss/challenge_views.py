@@ -15,7 +15,7 @@ from core.access import weiss_access_required
 from . import arcade, buffs, challenge, packs
 from .lists import DECK_GROUPS, DECK_SIZE
 from .models import ArcadeRun, ArcadeScenario, Card, ChallengeRun, GameRoom, NarrativeChallenge
-from .play import deal, seat_cpu
+from .play import deal, not_begun, seat_cpu
 
 
 def challenge_access(view):
@@ -32,13 +32,6 @@ def narratives():
     """The narrative challenges players can start: those whose arcade list is ready and that have sets."""
     ready = {scenario.pk for scenario in arcade.ready_scenarios()}
     return [n for n in NarrativeChallenge.objects.select_related("scenario") if n.scenario_id in ready and n.sets]
-
-
-def not_begun(room):
-    """Whether a fight is still to start: on the CPU's screen, or not yet past the player's first mulligan."""
-    state = room.state
-    return bool(state.get("cpu_intro") or (state.get("phase") == "mulligan" and state.get("game_number", 1) == 1
-                                           and str(room.host_id) not in state.get("mulligan_done", [])))
 
 
 def run_room(run):
@@ -233,8 +226,8 @@ def challenge_fight(request):
         return redirect("weiss:arcade_challenge")
     with transaction.atomic():
         if not run.arcade_run or run.arcade_run.status != ArcadeRun.Status.ACTIVE:
-            run.arcade_run = ArcadeRun.objects.create(user=request.user, scenario=scenario, scenario_name=scenario.name,
-                                                      deck_name=run.deck.name, order=arcade.fight_order(scenario))
+            run.arcade_run = ArcadeRun.objects.create(user=request.user, scenario=scenario, scenario_name=scenario.name, deck_name=run.deck.name,
+                                                      order=arcade.fight_order(scenario, fixed=run.kind == ChallengeRun.Kind.NARRATIVE))
             run.save(update_fields=["arcade_run"])
         profile = arcade.current_cpu(run.arcade_run)
         if not profile:

@@ -303,8 +303,9 @@
     // With the buffs it gave, if any: in a challenge they're the player's now (the server checks them against the scene).
     const done = () => {
       overlay.remove();
-      const buffs = player ? player.state().buffs.map((given) => [given.step, given.option]) : [];
-      act({ type: "scene_done", key: scene.key, buffs });
+      const picked = player ? player.state() : { buffs: [], fights: [] };
+      act({ type: "scene_done", key: scene.key, buffs: picked.buffs.map((given) => [given.step, given.option]),
+            fights: picked.fights.map((chosen) => [chosen.step, chosen.option]) });
     };
     overlay.querySelector(".scene-skip").addEventListener("click", done, { once: true });
     setTimeout(() => {

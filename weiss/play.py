@@ -22,7 +22,7 @@ from django.views.decorators.http import require_POST
 from core import s3
 from core.access import has_weiss_access, weiss_access_required
 
-from . import arcade, buffs, challenge, cpu, game, lists, packs, scoring
+from . import arcade, buffs, challenge, cpu, game, lists, packs, scenes, scoring
 from .models import ArcadeRun, ArcadeScenario, Card, CardList, ChallengeRun, CpuProfile, GameRecord, GameRoom, PlayerProfile, cpu_user
 
 log = logging.getLogger(__name__)
@@ -190,6 +190,35 @@ def seat_cpu(room, profile, scenes=()):
     deal(room, intro=not challenge.narrative(room.arcade_run))
     if scenes:
         room.state["scenes"] = list(scenes)
+
+
+def not_begun(room):
+    """Whether a fight is still to start: on the CPU's screen, or not yet past the player's first mulligan."""
+    state = room.state
+    return bool(state.get("cpu_intro") or (state.get("phase") == "mulligan" and state.get("game_number", 1) == 1
+                                           and str(room.host_id) not in state.get("mulligan_done", [])))
+
+
+def choose_fight(room, cpu_id):
+    """A scene picked who to fight next (scenes.chosen_fight): the next fight of the run that hasn't begun becomes
+    that CPU's, if it's in the run's arcade list and ready. A fight about to start changes there and then, the new
+    CPU in the seat; otherwise it's the one after. If that CPU was due later in the run, the two swap places."""
+    run = room.arcade_run
+    cpu = CpuProfile.objects.filter(pk=cpu_id).first()
+    if not run or run.status != ArcadeRun.Status.ACTIVE or not arcade.can_fight(cpu) or not arcade.entry_of(run, cpu.pk):
+        return
+    over = room.state.get("game_over")
+    now = not over and not_begun(room)
+    at = run.position if now or over else run.position + 1  # after a win the run has already moved on
+    if at >= len(run.order):
+        return
+    later = run.order.index(cpu.pk, at + 1) if cpu.pk in run.order[at + 1:] else None
+    if later is not None:
+        run.order[later] = run.order[at]
+    run.order[at] = cpu.pk
+    run.save(update_fields=["order"])
+    if now and cpu.pk != room.cpu_profile_id:
+        seat_cpu(room, cpu, arcade.scenes_before(run, cpu, opening=False))
 
 
 @weiss_access_required
@@ -459,6 +488,9 @@ def room_action(request, pk):
             scene = room.state["scenes"].pop(0)
             if not room.state["scenes"]:
                 room.state.pop("scenes")
+            fight = scenes.chosen_fight(scene, action.get("fights"))
+            if fight:
+                choose_fight(room, fight)
             room.version += 1
             room.save()
             # A challenge's scene can give buffs: they're the player's now, to claim on the challenge's page before
