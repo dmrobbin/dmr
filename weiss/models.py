@@ -370,6 +370,7 @@ class ChallengeRun(models.Model):
     class Kind(models.TextChoices):
         FREE = "free", "Free challenge"
         NARRATIVE = "narrative", "Narrative challenge"
+        INFINITE = "infinite", "Infinite challenge"  # every CPU, one after another, for as long as the player wins
 
     class Status(models.TextChoices):
         ACTIVE = "active", "In progress"

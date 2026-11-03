@@ -221,6 +221,120 @@ class FightOrderTests(ArcadeSetup):
         self.assertContains(self.client.get(reverse("weiss:cpu_home")), "Filler order in narrative challenges")
 
 
+class HeaderTests(ArcadeSetup):
+    def test_the_profile_is_the_players_avatar_at_the_far_right(self):
+        page = self.client.get(reverse("weiss:arcade")).content.decode()
+        self.assertIn('class="nav-profile', page)
+        self.assertIn(">Profile</a>", page)  # no picture chosen: the word
+        self.assertGreater(page.index("nav-profile"), page.index("Log out"))  # after everything else
+        from .models import PlayerProfile
+        PlayerProfile.objects.create(user=self.alice, avatar_card=self.card)
+        page = self.client.get(reverse("weiss:arcade")).content.decode()
+        self.assertIn("avatar-nav", page)
+        self.assertIn(f"/cards/{self.card.pk}/image/", page)
+
+    def test_the_infinite_challenge_button(self):
+        self.client.force_login(self.alice)
+        self.assertNotIn("nav-infinite", self.client.get(reverse("weiss:arcade")).content.decode())  # staff only, for now
+        self.client.force_login(self.staff)
+        page = self.client.get(reverse("weiss:arcade")).content.decode()
+        self.assertIn("∞ Infinite challenge", page)
+        self.assertRedirects(self.client.post(reverse("weiss:arcade_challenge_start"), {"kind": "infinite"}), reverse("weiss:arcade_challenge"))
+        self.assertEqual(challenge.current(self.staff).kind, "infinite")
+        page = self.client.get(reverse("weiss:play_rooms")).content.decode()
+        self.assertIn("∞ Your challenge", page)  # one's under way: the button goes to it
+
+
+class InfiniteChallengeTests(ArcadeSetup):
+    def setUp(self):
+        super().setUp()
+        make_set(expansion_id=7, name="Vol.7", C=12, U=6, CC=2, R=4)
+        self.client.force_login(self.staff)
+        self.client.post(reverse("weiss:arcade_challenge_start"), {"kind": "infinite"})
+        self.run = challenge.current(self.staff)
+        challenge.open_packs(self.run, 7, 2)
+        challenge.save_deck(self.run, {pk: 1 for pk in self.run.pool})
+
+    def test_starting_one(self):
+        self.assertEqual((self.run.kind, self.run.name, self.run.scenario, self.run.sets), ("infinite", "Infinite challenge", None, []))
+        self.assertEqual(self.run.packs + 2, challenge.START_PACKS)
+        self.assertContains(self.client.get(reverse("weiss:arcade_challenge")), "Infinite challenge")
+
+    def test_it_fights_every_cpu_for_as_long_as_it_wins(self):
+        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        room = self.room()
+        run = room.arcade_run
+        self.assertEqual((run.scenario, run.scenario_name, len(run.order)), (None, "Infinite challenge", 1))
+        self.assertIn(room.cpu_profile, [self.opener, self.filler, self.anchor])
+        data = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()
+        self.assertEqual((data["arcade"]["fight"], data["arcade"]["total"]), (1, None))
+        for fight in range(1, 5):
+            with mock.patch("weiss.buffs.roll", return_value=["climax_pack"]):
+                self.end_fight("me")
+            run.refresh_from_db()
+            self.assertEqual((run.position, len(run.order), run.status), (fight, fight + 1, ArcadeRun.Status.ACTIVE))
+            self.assertNotEqual(run.order[-1], run.order[-2])  # not the same one twice running
+            self.post(reverse("weiss:play_action", args=[self.room().pk]), {"type": "arcade_continue"})
+        self.run.refresh_from_db()
+        self.assertEqual([r["buff"] for r in self.run.rewards], ["climax_pack"] * 4)  # a random reward each time
+        self.assertEqual(self.run.status, "active")
+
+    def test_a_reward_that_needs_nothing_more_happens_at_once(self):
+        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        packs = self.run.packs
+        with mock.patch("weiss.buffs.roll", return_value=["extra_packs"]):
+            self.end_fight("me")
+        self.run.refresh_from_db()
+        self.assertEqual((self.run.packs, self.run.rewards), (packs + 2, []))
+
+    def test_a_loss_ends_it_and_the_deck_can_be_kept(self):
+        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        self.end_fight("cpu")
+        self.run.refresh_from_db()
+        self.assertEqual(self.run.status, "lost")
+        self.assertContains(self.client.get(reverse("weiss:arcade_challenge")), "Keep your deck?")
+
+    def test_the_cpus_get_harder(self):
+        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        run = self.room().arcade_run
+        models = []
+        for position in range(9):
+            run.position = position
+            models.append(challenge.infinite_style(run, self.opener))
+        self.assertEqual([m for m, _ in models[:3]], ["easy", "easy", "standard"])
+        self.assertTrue(all(m in ("focused", "strategic") for m, _ in models[3:6]))
+        self.assertTrue(all(m == "hard" for m, _ in models[6:]))
+        self.assertTrue(all(1 <= a <= 5 for _, a in models[6:]))
+        self.assertEqual(models[0][1], self.opener.aggression)  # before hard, the CPU's own
+        self.assertEqual(challenge.infinite_style(run, self.opener), models[-1])  # settled for the fight
+
+    def test_the_cpu_plays_by_the_challenges_model_not_its_own(self):
+        type(self.opener).objects.update(model="hard")
+        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        room = self.room()
+        room.state.pop("cpu_intro", None)
+        room.save()
+        with mock.patch.object(play.cpu, "next_action", return_value=None) as chooser:
+            play.cpu_step(GameRoom.objects.get(pk=room.pk), wait=False)
+        self.assertEqual(chooser.call_args.kwargs["model"], "easy")
+
+    def test_the_cpus_own_lines_are_kept(self):
+        type(self.opener).objects.update(intro_text="Hello!", player_win_text="Ugh.", player_lose_text="Ha!")
+        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        room = self.room()
+        self.assertTrue(room.state["cpu_intro"])  # its usual screen before the fight
+        data = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()
+        self.assertEqual((data["cpu"]["intro"], data["cpu"]["win"], data["cpu"]["lose"]), ("Hello!", "Ugh.", "Ha!"))
+
+    def test_no_scenes(self):
+        scene = Scene.objects.create(name="Hi", script="cast a as Rapi\na: Hi.")
+        ArcadeEntry.objects.update(scene_before=scene, scene_after=scene)
+        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        self.assertNotIn("scenes", self.room().state)
+        room = self.end_fight("me")
+        self.assertNotIn("scenes", room.state)
+
+
 class ChallengeTests(ArcadeSetup):
     def setUp(self):
         super().setUp()
@@ -328,10 +442,10 @@ class ChallengeTests(ArcadeSetup):
         self.assertRedirects(self.client.post(reverse("weiss:arcade_challenge_fight")), reverse("weiss:play_room", args=[room.pk]))  # the same room
         data = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()
         left = challenge.START_PACKS - 10  # ready_to_fight opened 10
-        self.assertEqual(data["arcade"]["challenge"], {"packs": left, "won": 3, "lives": 0, "going": True, "rewards": 0})
+        self.assertEqual(data["arcade"]["challenge"], {"packs": left, "won": "3 packs", "lives": 0, "going": True, "rewards": 0})
         self.end_fight("me")
         run.refresh_from_db()
-        self.assertEqual((run.packs, run.status), (left + challenge.WIN_PACKS, "active"))
+        self.assertEqual((run.packs, run.status, run.rewards), (left + challenge.WIN_PACKS, "active", []))
         url = reverse("weiss:play_action", args=[room.pk])
         self.assertEqual(self.post(url, {"type": "arcade_edit_deck"}).status_code, 400)  # packs and the deck are on the challenge's page
         self.assertEqual(self.post(url, {"type": "challenge_leave"}).json()["redirect"], reverse("weiss:arcade_challenge"))
@@ -339,6 +453,25 @@ class ChallengeTests(ArcadeSetup):
         # Back from changing the deck: the next fight is the next CPU.
         self.client.post(reverse("weiss:arcade_challenge_fight"))
         self.assertEqual(self.room().cpu_profile_id, run.arcade_run.order[1])
+
+    def test_a_narrative_win_brings_two_packs_and_a_color_pack(self):
+        narrative = NarrativeChallenge.objects.create(name="Story", scenario=self.scenario, sets=[7])
+        self.client.post(reverse("weiss:arcade_challenge_start"), {"kind": "narrative", "narrative": narrative.pk})
+        run = challenge.current(self.staff)
+        self.open(run.packs)
+        run.refresh_from_db()
+        self.build(run)
+        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        room = self.room()
+        data = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()
+        self.assertEqual(data["arcade"]["challenge"]["won"], "2 packs and a color pack")
+        self.end_fight("me")
+        run.refresh_from_db()
+        self.assertEqual(run.packs, challenge.NARRATIVE_WIN_PACKS)
+        self.assertEqual([(r["buff"], r["source"]) for r in run.rewards], [("color_pack", "Victory")])
+        page = self.client.get(reverse("weiss:arcade_challenge"))
+        self.assertContains(page, "Rewards to claim")
+        self.assertContains(page, "Color pack")
 
     def test_a_loss_ends_it(self):
         run = self.ready_to_fight()

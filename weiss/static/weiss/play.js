@@ -1311,7 +1311,9 @@
   </svg>`;
   let gameOverEl = null;
 
-  const fightLabel = () => `${esc(arcade.scenario)} · fight ${arcade.fight} of ${arcade.total}`;
+  // "fight 2 of 5", or just "fight 2" in a run with no end (an infinite challenge's).
+  const fightOf = () => `fight ${arcade.fight}${arcade.total ? ` of ${arcade.total}` : ""}`;
+  const fightLabel = () => `${esc(arcade.scenario)} · ${fightOf()}`;
 
   // A CPU's image, or else its picture, for the screens either side of a match.
   const cpuImage = (screen) => (cpuInfo.images || {})[screen] || cpuInfo.image;
@@ -1392,9 +1394,9 @@
           <h2 class="game-over-word">${over.won ? "Victory" : "Defeat"}</h2>
           <p class="game-over-reason">${reason}</p>
           ${over.score ? scoreLines(over.score) : ""}
-          ${arcade && arcade.challenge && over.won ? `<p class="game-over-arcade">+${arcade.challenge.won} packs · ${arcade.challenge.packs} to open</p>` : ""}
+          ${arcade && arcade.challenge && over.won ? `<p class="game-over-arcade">Won: ${esc(arcade.challenge.won)} · ${arcade.challenge.packs} packs to open</p>` : ""}
           ${arcade && arcade.challenge && !over.won ? `<p class="game-over-arcade">${arcade.challenge.going ? `A second chance: you can fight again${arcade.challenge.lives ? ` (${arcade.challenge.lives} more left)` : ""}.` : "The challenge is over."}</p>` : ""}
-          ${arcade ? `<p class="game-over-arcade">${arcade.cleared ? `🏆 ${esc(arcade.scenario)} cleared!` : over.won ? `Up next: fight ${arcade.fight} of ${arcade.total}` : `${esc(arcade.scenario)}: fight ${arcade.fight} of ${arcade.total}`}${arcade.score ? ` · run score ${arcade.score}` : ""}</p>` : ""}
+          ${arcade ? `<p class="game-over-arcade">${arcade.cleared ? `🏆 ${esc(arcade.scenario)} cleared!` : over.won ? `Up next: ${fightOf()}` : `${esc(arcade.scenario)}: ${fightOf()}`}${arcade.score ? ` · run score ${arcade.score}` : ""}</p>` : ""}
           <p class="game-over-status" data-game-over-status></p>
           <div class="game-over-buttons" data-game-over-buttons></div></div>`;
       root.appendChild(gameOverEl);

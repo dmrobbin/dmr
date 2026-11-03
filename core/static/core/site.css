@@ -292,6 +292,18 @@ select option { color: var(--text); background: var(--surface); }
 }
 .dash-tabs a:hover { color: var(--text); }
 .dash-tabs a.current { color: var(--accent); background: var(--accent-soft); }
+/* The dashboard's header is as wide as its pages, with room for its tabs, the challenge button and the profile. */
+.container.dashboard-header { max-width: 80rem; gap: 1rem; }
+.dashboard-header .logout a, .dashboard-header .logout button { white-space: nowrap; }
+/* The header's infinite challenge button, and the profile at its far right: the player's avatar, or the word. */
+.nav-infinite { margin: 0 .5rem 0 auto; }
+.nav-infinite button, a.nav-infinite { display: inline-block; padding: .35rem .8rem; font: inherit; font-size: .85rem; font-weight: 600; color: var(--accent);
+  text-decoration: none; background: var(--accent-soft); border: 1px solid rgb(212 175 55 / .45); border-radius: .5rem; cursor: pointer; white-space: nowrap; }
+.nav-infinite button:hover, a.nav-infinite:hover { color: var(--accent-hover); border-color: var(--accent); }
+.logout a.nav-profile { display: inline-flex; align-items: center; color: var(--muted); font-weight: 500; }
+.logout a.nav-profile:hover, .logout a.nav-profile.current { color: var(--accent); }
+.avatar-nav { width: 2.1rem; height: 2.1rem; font-size: 1rem; }
+.nav-profile.current .avatar-nav, .nav-profile:hover .avatar-nav { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 
 /* Weiss Schwarz cards */
 .set-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
@@ -1263,7 +1275,6 @@ body.pk-locked { overflow: hidden; }
 .pk-thumb .pk-face { height: 3.2rem; width: auto; }
 .pk-status { min-height: 1.4em; margin: 0; font-size: .9rem; color: var(--muted); text-align: center; }
 .pk-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; }
-.pk-next { font-size: 1rem; padding: .5rem 1.4rem; }
 @keyframes pk-pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
 
 .pk-pack { position: absolute; left: 50%; top: 50%; translate: -50% -50%; }

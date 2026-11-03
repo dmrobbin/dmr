@@ -1,5 +1,6 @@
 /* Booster pack opening. Clicking the pack shakes it as the screen dims, then it bursts and its cards are revealed one
-   at a time, the rarer the grander; further packs follow on, and the end shows every card pulled.
+   at a time, the rarer the grander, each shown for CARD_PAUSE_MS before the next; further packs follow on by
+   themselves, and the end shows every card pulled. "Skip to the end" goes straight there.
    The page gives {set, grades: [name per grade], packs: [[card, ...], ...]}, each pack in reveal order. */
 (() => {
   const source = document.getElementById("pack-opening");
@@ -28,7 +29,9 @@
   const effects = (card) => EFFECTS[Math.min(card.grade, EFFECTS.length - 1)];
   const colors = (card) => COLORS[Math.min(card.grade, COLORS.length - 1)];
 
-  let overlay, stage, banner, flashEl, tray, statusEl, nextButton;
+  const CARD_PAUSE_MS = 2000; // each card stays up this long, once revealed, before the next
+  let overlay, stage, banner, flashEl, tray, statusEl;
+  let advance = null; // the timer for what comes next
   let packIndex = -1;
   let cardIndex = -1;
   let cardEls = [];
@@ -69,7 +72,6 @@
         <ol class="pk-tray" aria-label="This pack so far"></ol>
         <p class="pk-status" aria-live="polite"></p>
         <div class="pk-controls">
-          <button type="button" class="button-small pk-next" disabled>Next card</button>
           <button type="button" class="button-small secondary pk-skip">Skip to the end</button>
         </div>
       </div>`;
@@ -80,13 +82,8 @@
     flashEl = overlay.querySelector(".pk-flash");
     tray = overlay.querySelector(".pk-tray");
     statusEl = overlay.querySelector(".pk-status");
-    nextButton = overlay.querySelector(".pk-next");
-    nextButton.addEventListener("click", next);
     overlay.querySelector(".pk-skip").addEventListener("click", finish);
-    overlay.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") finish();
-      else if (event.key === "ArrowRight") next();
-    });
+    overlay.addEventListener("keydown", (event) => { if (event.key === "Escape") finish(); });
     overlay.querySelector(".pk-skip").focus();
     void overlay.offsetWidth;
     overlay.classList.add("pk-open");  // the screen dims
@@ -94,8 +91,6 @@
 
   async function openPack(i) {
     busy = true;
-    nextButton.disabled = true;
-    nextButton.textContent = "Next card";
     packIndex = i;
     cardIndex = -1;
     tray.innerHTML = "";
@@ -160,7 +155,6 @@
 
   async function reveal(k) {
     busy = true;
-    nextButton.disabled = true;
     clearEffects();
     if (cardIndex >= 0) toTray(cardIndex);
     cardIndex = k;
@@ -186,12 +180,8 @@
 
     const where = packs.length > 1 ? `Pack ${packIndex + 1} of ${packs.length} · ` : "";
     setStatus(`${where}Card ${k + 1} of ${pack.length}: ${card.name} (${card.rarity})`);
-    if (k < pack.length - 1) nextButton.textContent = "Next card";
-    else if (packIndex < packs.length - 1) nextButton.textContent = `Open pack ${packIndex + 2}`;
-    else nextButton.textContent = "See all cards";
     busy = false;
-    nextButton.disabled = false;
-    nextButton.focus();
+    advance = setTimeout(next, CARD_PAUSE_MS);
   }
 
   function flourish(card, fx) {
@@ -274,13 +264,17 @@
 
   async function next() {
     if (busy || finished) return;
+    // A card being read (its details open from the strip) holds the opening up until it's closed.
+    if (document.querySelector("[data-card-popup-dialog][open]")) {
+      advance = setTimeout(next, 500);
+      return;
+    }
     if (cardIndex < packs[packIndex].length - 1) {
       await reveal(cardIndex + 1);
       return;
     }
     if (packIndex < packs.length - 1) {
       busy = true;
-      nextButton.disabled = true;
       clearEffects();
       toTray(cardIndex);
       await wait(600);
@@ -293,6 +287,7 @@
   function finish() {
     if (finished) return;
     finished = true;
+    clearTimeout(advance);
     if (overlay) {
       overlay.classList.add("pk-closing");
       setTimeout(() => overlay.remove(), 400);

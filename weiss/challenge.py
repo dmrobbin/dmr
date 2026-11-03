@@ -2,27 +2,36 @@
 
 A challenge starts with START_PACKS packs (NARRATIVE_START_PACKS for a narrative one). Opening them adds their cards to the challenge's pool, and its
 deck can hold only what's in the pool (sealed: nothing else, so a deck can be short of 50 or of climaxes
-until more packs come). Each win in its arcade run brings WIN_PACKS more; a loss ends the challenge. In a
+until more packs come). Each win in its arcade run brings more (see win_reward); a loss ends the challenge. In a
 free challenge the player picks any set for each pack, an arbitrary arcade list to fight; a narrative one
-(NarrativeChallenge, set up by staff) fixes the list, and the sets its packs come from.
+(NarrativeChallenge, set up by staff) fixes the list, and the sets its packs come from. An infinite one has no
+list: every CPU there is, drawn one at a time, harder as it goes (INFINITE_MODELS), for as long as the player wins,
+each win bringing a random reward and no scenes.
 
 Stopping partway keeps the run where it is: the next fight starts with the CPU it stopped at. Resetting
 starts again from nothing, deck and all. At the end, cleared or lost, the player keeps the deck (it joins
 their lists) or discards it; until then it's kept out of their lists (CardList.challenge).
 """
 import random
+import secrets
 
 from django.db import transaction
 from django.utils import timezone
 
 from . import packs
 from .lists import DECK_SIZE
-from .models import ArcadeRun, Card, CardList, CardListEntry, ChallengeRun, GameRoom
+from .models import ArcadeRun, Card, CardList, CardListEntry, ChallengeRun, CpuProfile, GameRoom
 
 START_PACKS = 20  # packs to open at the start of a free challenge
 NARRATIVE_START_PACKS = 20  # ...and of a narrative one
-WIN_PACKS = 3
+WIN_PACKS = 3  # what a win in a free challenge brings
+NARRATIVE_WIN_PACKS = 2  # ...and in a narrative one, with these rewards to claim besides (weiss.buffs)
+NARRATIVE_WIN_REWARDS = ("color_pack",)
 STAFF_ONLY = True  # being tried out, as booster packs are
+INFINITE_NAME = "Infinite challenge"
+# How an infinite challenge's CPUs play, whatever their own model: (fights, the model or the models to pick from),
+# in turn, then hard, from an aggression picked at random, for the rest.
+INFINITE_MODELS = ((2, ("easy",)), (1, ("standard",)), (3, ("focused", "strategic")))
 
 
 def current(user):
@@ -33,6 +42,63 @@ def current(user):
 def start_packs(kind):
     """How many packs a challenge of this kind starts with."""
     return NARRATIVE_START_PACKS if kind == ChallengeRun.Kind.NARRATIVE else START_PACKS
+
+
+def win_reward(kind):
+    """(packs, rewards) that a win brings a challenge of this kind; "random" is any buff (weiss.buffs)."""
+    if kind == ChallengeRun.Kind.NARRATIVE:
+        return NARRATIVE_WIN_PACKS, NARRATIVE_WIN_REWARDS
+    if kind == ChallengeRun.Kind.INFINITE:
+        return 0, ("random",)
+    return WIN_PACKS, ()
+
+
+def win_reward_text(kind):
+    """What a win brings, for the player: "3 packs", "2 packs and a color pack"."""
+    from .buffs import BUFFS  # weiss.buffs uses this module
+    if kind == ChallengeRun.Kind.INFINITE:
+        return "a random reward"
+    count, rewards = win_reward(kind)
+    parts = [f"{count} pack{'s' if count != 1 else ''}"] + [f"a {BUFFS[buff].name.lower()}" for buff in rewards]
+    return " and ".join([", ".join(parts[:-1]), parts[-1]] if len(parts) > 1 else parts)
+
+
+def infinite(arcade_run):
+    """Whether this arcade run is an infinite challenge's."""
+    return bool(arcade_run and ChallengeRun.objects.filter(arcade_run=arcade_run, kind=ChallengeRun.Kind.INFINITE).exists())
+
+
+def opponents():
+    """The CPUs an infinite challenge draws from: every one players can fight."""
+    return list(CpuProfile.objects.filter(finalized=True, deck__entries__isnull=False).distinct())
+
+
+def next_opponent(order, rng=random):
+    """A CPU for an infinite challenge's next fight, at random, not the one just fought if there's another; or None."""
+    found = opponents()
+    others = [cpu for cpu in found if not order or cpu.pk != order[-1]] or found
+    return rng.choice(others).pk if others else None
+
+
+def extend(arcade_run):
+    """An infinite challenge's run just won a fight: one more opponent at the end, so it never runs out."""
+    if infinite(arcade_run):
+        nxt = next_opponent(arcade_run.order)
+        if nxt:
+            arcade_run.order.append(nxt)
+
+
+def infinite_style(arcade_run, profile):
+    """(model, aggression) a CPU plays an infinite challenge's fight with, by how many fights there have been (see
+    INFINITE_MODELS). Random choices are settled by the run and fight, so a fight keeps them, reloads and all."""
+    rng = random.Random(f"{arcade_run.pk}:{arcade_run.position}")
+    fight = arcade_run.position
+    for count, models in INFINITE_MODELS:
+        if fight < count:
+            return rng.choice(models), profile.aggression
+        fight -= count
+    from .cpu import MAX_AGGRESSION, MIN_AGGRESSION  # weiss.cpu needs nothing from here; this keeps it that way
+    return "hard", rng.randint(MIN_AGGRESSION, MAX_AGGRESSION)
 
 
 def of(arcade_run):
@@ -53,7 +119,7 @@ def deck_name(name):
 
 def start(user, kind, scenario, narrative=None):
     """A new challenge: an empty deck and its packs to open (see start_packs)."""
-    name = narrative.name if narrative else scenario.name
+    name = narrative.name if narrative else scenario.name if scenario else INFINITE_NAME
     with transaction.atomic():
         deck = CardList.objects.create(user=user, name=deck_name(name), challenge=True)
         return ChallengeRun.objects.create(user=user, kind=kind, narrative=narrative, scenario=scenario, name=name, deck=deck,
@@ -116,7 +182,16 @@ def fight_finished(arcade_run, won, cleared):
     if not run:
         return
     if won:
-        run.packs += WIN_PACKS
+        from .buffs import EXTRA_PACKS, roll  # weiss.buffs uses this module
+        count, rewards = win_reward(run.kind)
+        run.packs += count
+        for buff in (roll(1)[0] if buff == "random" else buff for buff in rewards):
+            if buff == "extra_packs":  # those needing nothing more happen now, as buffs.grant does them
+                run.packs += EXTRA_PACKS
+            elif buff == "second_chance":
+                run.lives += 1
+            else:
+                run.rewards = [*run.rewards, {"key": secrets.token_hex(6), "buff": buff, "source": "Victory"}]
         if cleared:
             run.status = ChallengeRun.Status.WON
     elif run.lives:  # a second chance: the fight's there to try again
@@ -125,7 +200,7 @@ def fight_finished(arcade_run, won, cleared):
         run.status = ChallengeRun.Status.LOST
         arcade_run.status, arcade_run.finished = ArcadeRun.Status.ABANDONED, timezone.now()
         arcade_run.save(update_fields=["status", "finished"])
-    run.save(update_fields=["packs", "status", "lives"])
+    run.save(update_fields=["packs", "rewards", "status", "lives"])
 
 
 def stop_fighting(run):

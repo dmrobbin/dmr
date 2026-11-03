@@ -8,7 +8,7 @@
 
   {% if not run %}
     <p class="muted small">Build a deck from scratch: open {{ start_packs }} packs{% if narrative_packs != start_packs %} ({{ narrative_packs }} in a narrative challenge){% endif %}, make a deck from only the cards you pull, and fight through an arcade list with it.
-      Each win brings {{ win_packs }} more packs to improve your deck; one loss ends the challenge. At the end, keep the deck or let it go.</p>
+      Each win brings {{ win_reward }}{% if narrative_win_reward != win_reward %} ({{ narrative_win_reward }} in a narrative challenge){% endif %} to improve your deck; one loss ends the challenge. At the end, keep the deck or let it go.</p>
     <div class="challenge-choices">
       <section class="challenge-choice">
         <h2>Free challenge</h2>
@@ -39,6 +39,18 @@
           </form>
         {% empty %}<p class="empty">No narrative challenges yet.</p>{% endfor %}
       </section>
+      <section class="challenge-choice">
+        <h2>Infinite challenge</h2>
+        <p class="muted small">Every CPU, one after another, for as long as you keep winning: easy at first, harder and harder after.
+          Each win brings a random reward. Packs from any set, and no story.</p>
+        {% if cpu_count %}
+          <form method="post" action="{% url 'weiss:arcade_challenge_start' %}">
+            {% csrf_token %}
+            <input type="hidden" name="kind" value="infinite">
+            <button type="submit" class="button-small">Start</button>
+          </form>
+        {% else %}<p class="empty">No CPUs to fight yet.</p>{% endif %}
+      </section>
     </div>
 
   {% else %}
@@ -55,7 +67,7 @@
         <div><dt>Packs to open</dt><dd>{{ run.packs }}</dd></div>
         <div><dt>Cards pulled</dt><dd>{{ pulled }}</dd></div>
         <div><dt>Deck</dt><dd>{{ deck_total }} / {{ deck_size }}</dd></div>
-        <div><dt>Fights won</dt><dd>{% if arcade_run %}{{ arcade_run.position }} of {{ arcade_run.total }}{% else %}0 of {{ lineup|length }}{% endif %}</dd></div>
+        <div><dt>Fights won</dt><dd>{% if run.kind == "infinite" %}{{ arcade_run.position|default:0 }}{% elif arcade_run %}{{ arcade_run.position }} of {{ arcade_run.total }}{% else %}0 of {{ lineup|length }}{% endif %}</dd></div>
       </dl>
       {% if lineup %}
         <ol class="arcade-lineup">
@@ -90,7 +102,7 @@
               </form>
               {% if not sets %}<p class="small panel-error">None of this challenge's sets have packs right now.</p>{% endif %}
             {% else %}
-              <p class="muted small">No packs left. Win your next fight for {{ win_packs }} more.</p>
+              <p class="muted small">No packs left. Win your next fight for {{ win_reward }}.</p>
             {% endif %}
             {% if run.last_opening %}<p class="small"><a href="{% url 'weiss:arcade_challenge_opened' %}">See the last packs opened again</a></p>{% endif %}
           </section>

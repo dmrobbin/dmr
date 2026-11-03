@@ -44,12 +44,14 @@ def challenge_home(request):
     if not run:
         return render(request, "weiss/challenge.html", {"scenarios": arcade.ready_scenarios(), "narratives": narratives(),
                                                         "start_packs": challenge.START_PACKS, "narrative_packs": challenge.NARRATIVE_START_PACKS,
-                                                        "win_packs": challenge.WIN_PACKS})
+                                                        "win_reward": challenge.win_reward_text(ChallengeRun.Kind.FREE),
+                                                        "narrative_win_reward": challenge.win_reward_text(ChallengeRun.Kind.NARRATIVE),
+                                                        "cpu_count": len(challenge.opponents())})
     deck_total = sum(run.deck.entries.values_list("quantity", flat=True)) if run.deck else 0
     names = {entry["id"]: entry["name"] for entry in packs.pack_sets()}
     return render(request, "weiss/challenge.html", {
         "run": run, "sets": challenge.allowed_sets(run), "deck_total": deck_total, "deck_size": DECK_SIZE, **reward_context(run),
-        "pulled": sum(run.pool.values()), "arcade_run": run.arcade_run, "room": run_room(run), "win_packs": challenge.WIN_PACKS,
+        "pulled": sum(run.pool.values()), "arcade_run": run.arcade_run, "room": run_room(run), "win_reward": challenge.win_reward_text(run.kind),
         "lineup": arcade.lineup(run.scenario, request.user) if run.scenario else [],
         "set_names": [names.get(pk, f"Set {pk}") for pk in run.sets],
     })
@@ -119,6 +121,11 @@ def challenge_start(request):
             messages.error(request, "That challenge isn't available right now.")
             return redirect("weiss:arcade_challenge")
         challenge.start(request.user, ChallengeRun.Kind.NARRATIVE, narrative.scenario, narrative)
+    elif request.POST.get("kind") == ChallengeRun.Kind.INFINITE:
+        if not challenge.opponents():
+            messages.error(request, "There are no CPUs to fight yet.")
+            return redirect("weiss:arcade_challenge")
+        challenge.start(request.user, ChallengeRun.Kind.INFINITE, None)
     else:
         scenario = next((s for s in arcade.ready_scenarios() if str(s.pk) == request.POST.get("scenario")), None)
         if not scenario:
@@ -221,16 +228,25 @@ def challenge_fight(request):
     if GameRoom.objects.filter(host=request.user).count() >= GameRoom.MAX_OPEN_ROOMS:
         messages.error(request, f"You already host {GameRoom.MAX_OPEN_ROOMS} rooms; delete an old one first.")
         return redirect("weiss:arcade_challenge")
+    endless = run.kind == ChallengeRun.Kind.INFINITE
     scenario = run.scenario and ArcadeScenario.objects.prefetch_related("entries__cpu").filter(pk=run.scenario_id).first()
-    if not scenario or arcade.scenario_problem(scenario):
+    if not endless and (not scenario or arcade.scenario_problem(scenario)):
         messages.error(request, "This challenge's arcade list isn't available right now.")
         return redirect("weiss:arcade_challenge")
     with transaction.atomic():
         if not run.arcade_run or run.arcade_run.status != ArcadeRun.Status.ACTIVE:
-            run.arcade_run = ArcadeRun.objects.create(user=request.user, scenario=scenario, scenario_name=scenario.name, deck_name=run.deck.name,
-                                                      order=arcade.fight_order(scenario, fixed=run.kind == ChallengeRun.Kind.NARRATIVE))
+            # An infinite challenge's run has no list: its opponents are drawn as it goes (challenge.extend).
+            order = [pk for pk in [challenge.next_opponent([])] if pk] if endless else \
+                arcade.fight_order(scenario, fixed=run.kind == ChallengeRun.Kind.NARRATIVE)
+            run.arcade_run = ArcadeRun.objects.create(user=request.user, scenario=scenario, scenario_name=scenario.name if scenario else run.name,
+                                                      deck_name=run.deck.name, order=order)
             run.save(update_fields=["arcade_run"])
         profile = arcade.current_cpu(run.arcade_run)
+        if not profile and endless and challenge.opponents():
+            # The CPU it was due to fight can't be fought any more: another in its place.
+            run.arcade_run.order[run.arcade_run.position:] = [challenge.next_opponent(run.arcade_run.order[:run.arcade_run.position])]
+            run.arcade_run.save(update_fields=["order"])
+            profile = arcade.current_cpu(run.arcade_run)
         if not profile:
             messages.error(request, "This challenge's arcade list has no one left to fight.")
             return redirect("weiss:arcade_challenge")

@@ -80,11 +80,13 @@ def cpu_payload(room):
         payload["cpu"] = {"name": room.cpu_name, "image": "", "images": {}, "picture": None, "intro": "", "win": "", "lose": ""}
     run = room.arcade_run
     if run:
-        payload["arcade"] = {"scenario": run.scenario_name, "fight": min(run.position + 1, run.total), "total": run.total,
+        endless = challenge.infinite(run)
+        payload["arcade"] = {"scenario": run.scenario_name, "fight": run.position + 1 if endless else min(run.position + 1, run.total),
+                             "total": None if endless else run.total,
                              "cleared": run.status == ArcadeRun.Status.CLEARED, "score": run.score}
-        trial = ChallengeRun.objects.filter(arcade_run=run).only("packs", "lives", "status", "rewards").first()
+        trial = ChallengeRun.objects.filter(arcade_run=run).only("kind", "packs", "lives", "status", "rewards").first()
         if trial:
-            payload["arcade"]["challenge"] = {"packs": trial.packs, "won": challenge.WIN_PACKS, "lives": trial.lives,
+            payload["arcade"]["challenge"] = {"packs": trial.packs, "won": challenge.win_reward_text(trial.kind), "lives": trial.lives,
                                               "going": trial.status == ChallengeRun.Status.ACTIVE, "rewards": len(trial.rewards)}
     return payload
 
@@ -604,6 +606,8 @@ def cpu_step(room, wait=True):
         lookups = card_lookups(room.state)
         aggression = room.cpu_profile.aggression if room.cpu_profile else cpu.MIN_AGGRESSION
         model = room.cpu_profile.model if room.cpu_profile else "standard"
+        if room.cpu_profile and challenge.infinite(room.arcade_run):  # harder as it goes, whatever the CPU
+            model, aggression = challenge.infinite_style(room.arcade_run, room.cpu_profile)
         action = cpu.next_action(room.state, room.guest_id, lookups["info"], aggression, model=model)
         if not action:
             return room

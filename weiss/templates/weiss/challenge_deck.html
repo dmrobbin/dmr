@@ -32,6 +32,7 @@
         </label>
         <button type="button" class="button-small secondary" data-deck-clear>Empty the deck</button>
         <button type="submit" class="button-small">Save deck</button>
+        <a class="button-small secondary" href="{% url 'weiss:arcade_challenge' %}">Back to the challenge</a>
       </div>
       <ul class="pool-grid">
         {% for item in cards %}{% with card=item.card %}
