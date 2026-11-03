@@ -1,0 +1,55 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}{{ scene.name }} · scene{% endblock %}
+
+{% block head %}<script src="{% static 'weiss/scene_editor.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:cpu_home' %}">&larr; CPU creation</a></p>
+  <form method="post" class="scene-editor" data-scene-editor data-check-url="{% url 'weiss:cpu_scene_check' scene.pk %}">
+    {% csrf_token %}
+    <div class="scene-editor-main">
+      <div class="scene-editor-head">
+        <label class="scene-name">Scene <input type="text" name="name" value="{{ scene.name }}" maxlength="100" required></label>
+        <div class="scene-editor-actions">
+          <button type="submit" class="button-small secondary">Save</button>
+          <button type="submit" class="button-small" name="then" value="play">Save &amp; play</button>
+        </div>
+      </div>
+      <textarea name="script" class="scene-script" spellcheck="false" maxlength="{{ max_script }}" aria-label="Script" data-scene-script>{{ scene.script }}</textarea>
+      <div class="scene-problems" aria-live="polite" data-scene-problems>
+        {% if errors %}
+          <p class="small panel-error">{{ errors|length }} mistake{{ errors|length|pluralize }} to fix before it can be played:</p>
+          <ul>{% for line, message in errors %}<li><button type="button" class="link-button" data-line="{{ line }}">Line {{ line }}</button> {{ message }}</li>{% endfor %}</ul>
+        {% else %}
+          <p class="small muted">No mistakes.</p>
+        {% endif %}
+      </div>
+      <div class="scene-editor-foot">
+        {% if not errors %}<a class="small" href="{% url 'weiss:cpu_scene_play' scene.pk %}">Play the saved version</a>{% endif %}
+        <span class="muted small" data-scene-labels>{% if labels %}Labels: {{ labels|join:", " }}{% endif %}</span>
+      </div>
+    </div>
+    <aside class="scene-reference" aria-label="What a script can say">
+      <h2>Reference</h2>
+      <p class="muted small">Click anything to put it in the script where the cursor is.</p>
+      <h3>CPUs</h3>
+      <ul class="scene-chips">
+        {% for profile in profiles %}<li><button type="button" class="scene-chip" data-insert="cast {{ profile.cast_name }} as {{ profile.name }}&#10;" title="Cast {{ profile.name }}">{{ profile.name }}</button></li>
+        {% empty %}<li class="muted small">No CPU profiles yet.</li>{% endfor %}
+      </ul>
+      <h3>Animations</h3>
+      <ul class="scene-chips">{% for animation in animations %}<li><button type="button" class="scene-chip" data-insert="{{ animation }}">{{ animation }}</button></li>{% endfor %}</ul>
+      <h3>Lines</h3>
+      <dl class="scene-commands">
+        {% for example, meaning, insert in reference %}
+          <dt><button type="button" class="link-button scene-example" data-insert="{{ insert }}">{{ example }}</button></dt>
+          <dd class="muted small">{{ meaning }}</dd>
+        {% endfor %}
+      </dl>
+    </aside>
+  </form>
+  <form method="post" action="{% url 'weiss:cpu_scene_delete' scene.pk %}" onsubmit="return confirm('Delete {{ scene.name|escapejs }}?')">{% csrf_token %}
+    <button type="submit" class="button-small danger">Delete scene</button></form>
+{% endblock %}

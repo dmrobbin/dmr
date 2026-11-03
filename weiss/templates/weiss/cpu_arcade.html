@@ -27,6 +27,20 @@
         <label class="small">As <select name="role">{% for value, label in arcade_roles %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label>
         <button type="submit" class="button-small secondary"{% if not profiles %} disabled{% endif %}>Add</button>
       </form>
+      <h3 class="small">Scenes</h3>
+      {% if scenes %}
+        <form method="post" action="{% url 'weiss:arcade_scenes' scenario.pk %}" class="arcade-scene-form">
+          {% csrf_token %}
+          <label class="small">Before the first fight {% include "weiss/scene_select.html" with field="intro" chosen=scenario.intro_scene_id %}</label>
+          {% for entry in scenario.ordered_entries %}
+            <label class="small">Before {{ entry.cpu.name }} {% include "weiss/scene_select.html" with field="before" entry=entry.pk chosen=entry.scene_before_id %}</label>
+            <label class="small">After beating {{ entry.cpu.name }} {% include "weiss/scene_select.html" with field="after" entry=entry.pk chosen=entry.scene_after_id %}</label>
+          {% endfor %}
+          <label class="small">Once cleared {% include "weiss/scene_select.html" with field="outro" chosen=scenario.outro_scene_id %}</label>
+          <button type="submit" class="button-small secondary">Save scenes</button>
+        </form>
+        <p class="muted small">A scene with mistakes in its script is skipped in runs.</p>
+      {% else %}<p class="muted small">Write a scene below to play it in this list's runs.</p>{% endif %}
       <form method="post" action="{% url 'weiss:arcade_delete' scenario.pk %}" onsubmit="return confirm('Delete {{ scenario.name|escapejs }}? Decks keep their markers.')">{% csrf_token %}
         <button type="submit" class="button-small danger">Delete list</button></form>
       </div>

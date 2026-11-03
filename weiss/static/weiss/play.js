@@ -62,6 +62,9 @@
   let avatars = {}; // {player name: picture}, for those who have one
   let cpuInfo = null; // the CPU in a game against one: its images and what it says
   let arcade = null; // where an arcade run has got to
+  let sceneData = null; // a scene the run plays before the board goes on (weiss.scenes), until the server hears it's done
+  let sceneViewer = ""; // the player's name, for {player} in a scene
+  let sceneShown = null; // the key of the scene being played, so a poll doesn't start it again
   let intro = false; // the CPU's screen is up, and the match waits for it
   const cards = {}; // card pk -> details; entries are never replaced so image URLs stay stable
   let modal = null; // {title, owner: "me"|"opponent", zone} or {title, revealed: [...]}
@@ -127,8 +130,11 @@
     cpuInfo = data.cpu || null;
     arcade = data.arcade || null;
     intro = Boolean(data.intro);
+    sceneData = data.scene || null;
+    sceneViewer = data.player_name || sceneViewer;
     if (data.revealed) modal = { title: data.revealed.title, revealed: data.revealed.cards };
     render();
+    showScene();
     animateOpponent(before);
     if (wasInPlay && animations) celebrate(wasInPlay);
     announce();
@@ -280,6 +286,28 @@
       }
     }
     setTimeout(() => burst.remove(), 1800);
+  }
+
+  // A scene the run plays: over the whole board, then the server is told it's done and the run goes on. After a
+  // win it waits a moment, so the victory is seen first.
+  function showScene() {
+    if (!sceneData || sceneData.key === sceneShown || !window.ScenePlayer) return;
+    const scene = sceneData;
+    sceneShown = scene.key;
+    const overlay = document.createElement("div");
+    overlay.className = "scene-overlay";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-label", scene.title || "Scene");
+    overlay.innerHTML = `<div class="scene-overlay-stage"></div><button type="button" class="scene-skip">Skip scene</button>`;
+    const done = () => {
+      overlay.remove();
+      act({ type: "scene_done", key: scene.key });
+    };
+    overlay.querySelector(".scene-skip").addEventListener("click", done, { once: true });
+    setTimeout(() => {
+      document.body.appendChild(overlay);
+      new ScenePlayer(overlay.querySelector(".scene-overlay-stage"), scene, { playerName: sceneViewer, onEnd: () => setTimeout(done, 600) }).start();
+    }, board && board.game_over ? 1600 : 0);
   }
 
   // A climax just played, in the middle of the screen, coming in with a randomly picked effect and
@@ -1316,6 +1344,11 @@
       return `<button type="button" data-act='{"type":"rematch"}'${over.rematch ? " disabled" : ""}>Rematch</button>
       <button type="button" class="game-over-end" data-act='{"type":"end_match"}'>End match</button>`;
     }
+    if (arcade.challenge) {
+      if (arcade.cleared || !over.won) return `<button type="button" data-act='{"type":"challenge_leave"}'>See how it ended</button>`;
+      return `<button type="button" data-act='{"type":"arcade_continue"}'>Next fight</button>
+        <button type="button" class="game-over-end" data-act='{"type":"challenge_leave"}' title="Open your ${arcade.challenge.won} new packs and change your deck, then come back for the next fight">Packs &amp; deck</button>`;
+    }
     if (arcade.cleared) return `<button type="button" data-act='{"type":"arcade_quit"}'>Finish</button>`;
     return `<button type="button" data-act='{"type":"${over.won ? "arcade_continue" : "arcade_retry"}"}'>${over.won ? "Continue" : "Retry"}</button>
       <button type="button" class="game-over-end" data-act='{"type":"arcade_edit_deck"}' title="Change your deck, then come back for the next fight">Edit deck</button>
@@ -1352,6 +1385,8 @@
           <h2 class="game-over-word">${over.won ? "Victory" : "Defeat"}</h2>
           <p class="game-over-reason">${reason}</p>
           ${over.score ? scoreLines(over.score) : ""}
+          ${arcade && arcade.challenge && over.won ? `<p class="game-over-arcade">+${arcade.challenge.won} packs · ${arcade.challenge.packs} to open</p>` : ""}
+          ${arcade && arcade.challenge && !over.won ? `<p class="game-over-arcade">The challenge is over.</p>` : ""}
           ${arcade ? `<p class="game-over-arcade">${arcade.cleared ? `🏆 ${esc(arcade.scenario)} cleared!` : over.won ? `Up next: fight ${arcade.fight} of ${arcade.total}` : `${esc(arcade.scenario)}: fight ${arcade.fight} of ${arcade.total}`}${arcade.score ? ` · run score ${arcade.score}` : ""}</p>` : ""}
           <p class="game-over-status" data-game-over-status></p>
           <div class="game-over-buttons" data-game-over-buttons></div></div>`;

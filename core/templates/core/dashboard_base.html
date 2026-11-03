@@ -15,12 +15,12 @@
       {% with section=request.resolver_match.namespace %}
       <nav class="dash-tabs" aria-label="Dashboard sections">
         {% if user.is_staff %}<a href="{% url 'dashboard' %}"{% if section != "weiss" %} class="current" aria-current="page"{% endif %}>Job leads</a>{% endif %}
-        {% with playing=request.resolver_match.url_name|slice:":5" listing=request.resolver_match.url_name|slice:":4" cpu_tab=request.resolver_match.url_name|slice:":4" %}
-        <a href="{% url 'weiss:sets' %}"{% if section == "weiss" and playing != "play_" and listing != "list" and listing != "prof" and cpu_tab != "cpu_" and request.resolver_match.url_name != "arcade" and request.resolver_match.url_name != "arcade_scores" %} class="current" aria-current="page"{% endif %}>Weiss cards</a>
+        {% with playing=request.resolver_match.url_name|slice:":5" listing=request.resolver_match.url_name|slice:":4" cpu_tab=request.resolver_match.url_name|slice:":4" arcading=request.resolver_match.url_name|slice:":6" %}
+        <a href="{% url 'weiss:sets' %}"{% if section == "weiss" and playing != "play_" and listing != "list" and listing != "prof" and cpu_tab != "cpu_" and arcading != "arcade" %} class="current" aria-current="page"{% endif %}>Weiss cards</a>
         <a href="{% url 'weiss:lists' %}"{% if section == "weiss" and listing == "list" %} class="current" aria-current="page"{% endif %}>My lists</a>
         <a href="{% url 'weiss:profile' %}"{% if section == "weiss" and listing == "prof" %} class="current" aria-current="page"{% endif %}>Profile</a>
         <a href="{% url 'weiss:play_rooms' %}"{% if playing == "play_" %} class="current" aria-current="page"{% endif %}>Play</a>
-        <a href="{% url 'weiss:arcade' %}"{% if section == "weiss" and request.resolver_match.url_name == "arcade" or section == "weiss" and request.resolver_match.url_name == "arcade_scores" %} class="current" aria-current="page"{% endif %}>Arcade</a>
+        <a href="{% url 'weiss:arcade' %}"{% if section == "weiss" and arcading == "arcade" %} class="current" aria-current="page"{% endif %}>Arcade</a>
         {% if user.is_staff %}<a href="{% url 'weiss:cpu_home' %}"{% if cpu_tab == "cpu_" %} class="current" aria-current="page"{% endif %}>CPU creation</a>{% endif %}
         {% endwith %}
       </nav>

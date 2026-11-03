@@ -1,0 +1,73 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}{{ scene.name }} · test{% endblock %}
+
+{% block head %}<script src="{% static 'weiss/scene.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:cpu_scene_edit' scene.pk %}">&larr; Back to the script</a></p>
+  <h1>{{ scene.name }}</h1>
+  <div class="scene-test">
+    <div class="scene-test-stage" data-scene-root></div>
+    <aside class="scene-debug" aria-label="Where the scene has got to">
+      <form class="scene-debug-start" data-scene-start>
+        <label class="small">Start from
+          <select name="from">
+            <option value="">the top</option>
+            {% for label in labels %}<option value="{{ label }}"{% if label == start %} selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </label>
+        <button type="submit" class="button-small secondary">Restart</button>
+      </form>
+      <dl class="scene-debug-state">
+        <dt>Script line</dt><dd data-debug-line>–</dd>
+        <dt>Flags</dt><dd data-debug-flags>none</dd>
+      </dl>
+      <h2>Choices made</h2>
+      <ol class="small" data-debug-choices></ol>
+      <p class="small muted">Click the stage, or press Space, to go on. Number keys pick options.</p>
+      <div class="scene-debug-end" data-debug-end hidden>
+        <p><strong>The end</strong> <span class="muted small" data-debug-end-line></span></p>
+        <button type="button" class="button-small" data-debug-again>Play again</button>
+      </div>
+    </aside>
+  </div>
+  {{ payload|json_script:"scene-payload" }}
+  <script>
+    // The test page around the player: where it's got to, the choices made, and starting again from any label.
+    window.addEventListener("DOMContentLoaded", () => {
+      const scene = JSON.parse(document.getElementById("scene-payload").textContent);
+      const $ = (selector) => document.querySelector(selector);
+      const startForm = $("[data-scene-start]");
+      const show = (state) => {
+        $("[data-debug-line]").textContent = state.line || "–";
+        $("[data-debug-flags]").textContent = state.flags.length ? state.flags.join(", ") : "none";
+        const list = $("[data-debug-choices]");
+        list.innerHTML = "";
+        for (const choice of state.choices) {
+          const item = document.createElement("li");
+          item.textContent = `Line ${choice.line}: ${choice.text}`;
+          list.appendChild(item);
+        }
+      };
+      const player = new ScenePlayer($("[data-scene-root]"), scene, {
+        playerName: "{{ player_name|escapejs }}",
+        onStep: (step, state) => show(state),
+        onChoice: () => show(player.state()),
+        onEnd: (state) => {
+          show(state);
+          $("[data-debug-end-line]").textContent = `at line ${state.line}`;
+          $("[data-debug-end]").hidden = false;
+        },
+      });
+      const begin = () => {
+        $("[data-debug-end]").hidden = true;
+        player.start(startForm.elements.from.value);
+      };
+      startForm.addEventListener("submit", (event) => { event.preventDefault(); begin(); });
+      $("[data-debug-again]").addEventListener("click", begin);
+      begin();
+    });
+  </script>
+{% endblock %}

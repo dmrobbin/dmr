@@ -110,7 +110,7 @@ def profile(request):
         record.view_for(user)
     return render(request, "weiss/profile.html", {
         "avatar": owner.avatar if owner else None,
-        "lists": CardList.objects.filter(user=user, reserved_for_cpu=False).annotate(total=Sum("entries__quantity")).prefetch_related("arcade_clears"),
+        "lists": CardList.objects.players(user).annotate(total=Sum("entries__quantity")).prefetch_related("arcade_clears"),
         "runs": ArcadeRun.objects.filter(user=user)[:RECORDS_PER_PAGE],
         "records": records, "page": page, "played": tally["played"], "won": tally["won"], "lost": tally["played"] - tally["won"],
     })

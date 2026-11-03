@@ -1,0 +1,21 @@
+<section class="cpu-section">
+  <h2>Narrative challenges</h2>
+  <p class="muted small">A story for challenge mode: players draft a deck from packs of these sets only, then fight through the arcade list, with its scenes.</p>
+  {% for narrative in narratives %}
+    <details class="cpu-row" data-collapse="narrative-{{ narrative.pk }}">
+      <summary class="cpu-row-head">
+        <strong>{{ narrative.name }}</strong>
+        <span class="muted small">{% if narrative.scenario %}{{ narrative.scenario.name }}{% else %}No arcade list{% endif %} · {{ narrative.sets|length }} set{{ narrative.sets|length|pluralize }}</span>
+      </summary>
+      <div class="cpu-row-body">
+        {% include "weiss/narrative_fields.html" with action=narrative.pk name=narrative.name description=narrative.description scenario_id=narrative.scenario_id chosen=narrative.sets button="Save" %}
+        <form method="post" action="{% url 'weiss:cpu_narrative_delete' narrative.pk %}" onsubmit="return confirm('Delete {{ narrative.name|escapejs }}? Challenges under way carry on.')">{% csrf_token %}
+          <button type="submit" class="button-small danger">Delete challenge</button></form>
+      </div>
+    </details>
+  {% empty %}
+    <p class="empty">No narrative challenges yet.</p>
+  {% endfor %}
+  <h3>New narrative challenge</h3>
+  {% include "weiss/narrative_fields.html" with action=None name="" description="" scenario_id=None chosen=None button="Create challenge" %}
+</section>

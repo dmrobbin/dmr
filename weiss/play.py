@@ -22,8 +22,8 @@ from django.views.decorators.http import require_POST
 from core import s3
 from core.access import has_weiss_access, weiss_access_required
 
-from . import arcade, cpu, game, lists, packs, scoring
-from .models import ArcadeRun, ArcadeScenario, Card, CardList, CpuProfile, GameRecord, GameRoom, PlayerProfile, cpu_user
+from . import arcade, challenge, cpu, game, lists, packs, scoring
+from .models import ArcadeRun, ArcadeScenario, Card, CardList, ChallengeRun, CpuProfile, GameRecord, GameRoom, PlayerProfile, cpu_user
 
 log = logging.getLogger(__name__)
 
@@ -80,6 +80,9 @@ def cpu_payload(room):
     if run:
         payload["arcade"] = {"scenario": run.scenario_name, "fight": min(run.position + 1, run.total), "total": run.total,
                              "cleared": run.status == ArcadeRun.Status.CLEARED, "score": run.score}
+        trial = ChallengeRun.objects.filter(arcade_run=run).only("packs").first()
+        if trial:
+            payload["arcade"]["challenge"] = {"packs": trial.packs, "won": challenge.WIN_PACKS}
     return payload
 
 
@@ -88,8 +91,9 @@ def board_payload(room, user, extra=None):
     pks = game.visible_cards(board)
     if extra and "revealed" in extra:
         pks.update(c["card"] for c in extra["revealed"]["cards"])
+    scene = {"scene": room.state["scenes"][0], "player_name": user.username} if room.state.get("scenes") else {}
     return {"version": room.version, "status": room.status, "board": board, "cards": card_info(pks),
-            "avatars": room_avatars(room), **cpu_payload(room), **(extra or {})}
+            "avatars": room_avatars(room), **cpu_payload(room), **scene, **(extra or {})}
 
 
 ARCADE_EDITING = "arcade_editing"  # session: the room of a run whose player has gone to change their deck
@@ -115,7 +119,7 @@ def room_list(request):
     return render(request, "weiss/play_list.html", {
         "rooms": rooms,
         "cpus": CpuProfile.objects.filter(finalized=True, deck__isnull=False),
-        "decks": CardList.objects.filter(user=request.user, reserved_for_cpu=False),
+        "decks": CardList.objects.players(request.user),
     })
 
 
@@ -135,7 +139,7 @@ def arcade_home(request):
         scenario.my_best = best.get(scenario.pk, 0)
     return render(request, "weiss/arcade.html", {
         "scenarios": scenarios,
-        "decks": CardList.objects.filter(user=request.user, reserved_for_cpu=False),
+        "decks": CardList.objects.players(request.user),
     })
 
 
@@ -164,7 +168,7 @@ def room_vs_cpu(request):
         messages.error(request, f"You already host {GameRoom.MAX_OPEN_ROOMS} rooms; delete an old one first.")
         return redirect("weiss:play_rooms")
     profile = get_object_or_404(CpuProfile, pk=request.POST.get("cpu"), finalized=True, deck__isnull=False)
-    deck = get_object_or_404(CardList, pk=request.POST.get("deck"), user=request.user, reserved_for_cpu=False)
+    deck = get_object_or_404(CardList.objects.players(request.user), pk=request.POST.get("deck"))
     if not deck.entries.exists():
         messages.error(request, f"“{deck.name}” is empty; add some cards first.")
         return redirect("weiss:play_rooms")
@@ -174,11 +178,14 @@ def room_vs_cpu(request):
     return redirect("weiss:play_room", pk=room.pk)
 
 
-def seat_cpu(room, profile):
-    """This CPU in the other seat, and a new match against it, starting on its screen."""
+def seat_cpu(room, profile, scenes=()):
+    """This CPU in the other seat, and a new match against it, starting on its screen, after any scenes
+    (payloads from weiss.scenes) the board has to play first."""
     room.guest, room.guest_deck, room.cpu_name, room.cpu_profile = cpu_user(), profile.deck, profile.name, profile
     room.state = {}
     deal(room, intro=True)
+    if scenes:
+        room.state["scenes"] = list(scenes)
 
 
 @weiss_access_required
@@ -189,7 +196,7 @@ def arcade_start(request):
         messages.error(request, f"You already host {GameRoom.MAX_OPEN_ROOMS} rooms; delete an old one first.")
         return redirect("weiss:arcade")
     scenario = get_object_or_404(ArcadeScenario.objects.prefetch_related("entries__cpu"), pk=request.POST.get("scenario"))
-    deck = get_object_or_404(CardList, pk=request.POST.get("deck"), user=request.user, reserved_for_cpu=False)
+    deck = get_object_or_404(CardList.objects.players(request.user), pk=request.POST.get("deck"))
     if arcade.scenario_problem(scenario):
         messages.error(request, f"{scenario.name} isn't available right now.")
         return redirect("weiss:arcade")
@@ -199,7 +206,8 @@ def arcade_start(request):
     with transaction.atomic():
         run = ArcadeRun.objects.create(user=request.user, scenario=scenario, scenario_name=scenario.name, deck_name=deck.name, order=arcade.fight_order(scenario))
         room = GameRoom(host=request.user, host_deck=deck, arcade_run=run, status=GameRoom.Status.PLAYING)
-        seat_cpu(room, arcade.current_cpu(run))
+        profile = arcade.current_cpu(run)
+        seat_cpu(room, profile, arcade.scenes_before(run, profile))
         room.save()
     return redirect("weiss:play_room", pk=room.pk)
 
@@ -213,14 +221,18 @@ def arcade_quit(request, pk):
         return HttpResponseForbidden()
     with transaction.atomic():
         room = GameRoom.objects.select_for_update().get(pk=room.pk)
-        leave_run(room)
-    return redirect("weiss:profile")
+        paused = leave_run(room)
+    return redirect("weiss:arcade_challenge" if paused else "weiss:profile")
 
 
 def leave_run(room):
-    if room.arcade_run:
+    """Leave a run's room. A challenge's run only stops for now, to go on from this fight later: returns
+    whether that's what happened."""
+    paused = bool(room.arcade_run and ChallengeRun.objects.filter(arcade_run=room.arcade_run, finished__isnull=True).exists())
+    if room.arcade_run and not paused:
         arcade.end_run(room.arcade_run)
     room.delete()
+    return paused
 
 
 def arcade_action(request, room, action):
@@ -229,15 +241,16 @@ def arcade_action(request, room, action):
     run = room.arcade_run
     if not run:
         return JsonResponse({"error": "This isn't an arcade run.", **board_payload(room, request.user)}, status=400)
-    if kind == "arcade_quit":
-        leave_run(room)
-        return JsonResponse({"redirect": reverse("weiss:profile")})
+    if kind in ("arcade_quit", "challenge_leave"):
+        # A challenge's player goes back to its page: to open packs and change the deck, or to see how it ended.
+        paused = leave_run(room)
+        return JsonResponse({"redirect": reverse("weiss:arcade_challenge" if paused else "weiss:profile")})
     over = room.state.get("game_over")
     won = over and over["winner"] == str(room.host_id)
     if kind == "arcade_edit_deck":
         # Between fights: off to change the deck, with the side panel adding to it and a way back here.
         # The next fight deals the deck as it is then.
-        if not over or run.status != ArcadeRun.Status.ACTIVE or not room.host_deck:
+        if not over or run.status != ArcadeRun.Status.ACTIVE or not room.host_deck or room.host_deck.challenge:
             return JsonResponse({"error": "That isn't possible right now.", **board_payload(room, request.user)}, status=400)
         request.session[ARCADE_EDITING] = room.pk
         request.session[lists.SESSION_KEY] = room.host_deck_id
@@ -249,7 +262,7 @@ def arcade_action(request, room, action):
         messages.error(request, f"Your {run.scenario_name} run had to stop: its deck or CPU is no longer available.")
         leave_run(room)
         return JsonResponse({"redirect": reverse("weiss:play_rooms")})
-    seat_cpu(room, profile)
+    seat_cpu(room, profile, arcade.scenes_before(run, profile))
     room.version += 1
     room.save()
     return JsonResponse(board_payload(room, request.user))
@@ -299,7 +312,7 @@ def room_detail(request, pk):
         "opponent_name": room.guest_name if seat == "host" else room.host.username,
         "invite_url": request.build_absolute_uri(reverse("weiss:play_join", args=[room.invite_token])),
         "my_deck": room.host_deck if seat == "host" else room.guest_deck,
-        "decks": CardList.objects.filter(user=request.user, reserved_for_cpu=False),
+        "decks": CardList.objects.players(request.user),
     })
 
 
@@ -311,7 +324,7 @@ def room_deck(request, pk):
         return HttpResponseForbidden()
     if room.arcade_run_id:
         return not_for_a_run(request, room)
-    deck = get_object_or_404(CardList, pk=request.POST.get("deck"), user=request.user, reserved_for_cpu=False)
+    deck = get_object_or_404(CardList.objects.players(request.user), pk=request.POST.get("deck"))
     if not deck.entries.exists():
         messages.error(request, f"“{deck.name}” is empty; add some cards first.")
         return redirect("weiss:play_room", pk=room.pk)
@@ -433,6 +446,17 @@ def room_action(request, pk):
         if room.status != GameRoom.Status.PLAYING:
             return JsonResponse({"error": "The game hasn't started."}, status=409)
         kind = action.get("type")
+        if room.state.get("scenes"):
+            # A scene is being played: nothing else happens until it's over, and then the next one, if any.
+            if kind != "scene_done":
+                return JsonResponse({"error": "A scene is playing.", **board_payload(room, request.user)}, status=409)
+            if action.get("key") == room.state["scenes"][0].get("key"):
+                room.state["scenes"].pop(0)
+                if not room.state["scenes"]:
+                    room.state.pop("scenes")
+                room.version += 1
+                room.save()
+            return JsonResponse(board_payload(room, request.user))
         if room.state.get("cpu_intro"):
             if kind != "intro_done":
                 return JsonResponse({"error": "The match hasn't started yet.", **board_payload(room, request.user)}, status=409)
@@ -440,7 +464,7 @@ def room_action(request, pk):
             room.version += 1
             room.save()
             return JsonResponse(board_payload(room, request.user))
-        if kind in ("arcade_continue", "arcade_retry", "arcade_quit", "arcade_edit_deck"):
+        if kind in ("arcade_continue", "arcade_retry", "arcade_quit", "arcade_edit_deck", "challenge_leave"):
             return arcade_action(request, room, action)
         if room.arcade_run_id and kind in ("rematch", "end_match"):
             return JsonResponse({"error": "An arcade run goes on with Continue or Retry.", **board_payload(room, request.user)}, status=400)
@@ -528,7 +552,7 @@ def cpu_step(room, wait=True):
         return room
     with transaction.atomic():
         room = GameRoom.objects.select_for_update().select_related("host", "guest", "cpu_profile").get(pk=room.pk)
-        if room.status != GameRoom.Status.PLAYING or room.state.get("cpu_intro"):
+        if room.status != GameRoom.Status.PLAYING or room.state.get("cpu_intro") or room.state.get("scenes"):
             return room
         if wait and timezone.now() - room.updated < timedelta(seconds=cpu.wait_seconds(room.state)):
             return room  # the other poll got in first

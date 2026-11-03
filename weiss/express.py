@@ -787,7 +787,7 @@ def replace_cards(pool, anchors, copies, required, removing, mode, rng=random, k
 # --- Pages ----------------------------------------------------------------------------------------------
 
 def own_list(request, pk):
-    return get_object_or_404(CardList, pk=pk, user=request.user)
+    return get_object_or_404(CardList, pk=pk, user=request.user, challenge=False)
 
 
 def series_choices(for_cpu=False):

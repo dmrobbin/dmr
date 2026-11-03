@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import cpu_views, express, lists, pack_views, play, profiles, views
+from . import challenge_views, cpu_views, express, lists, pack_views, play, profiles, scene_views, views
 
 app_name = "weiss"
 
@@ -21,6 +21,15 @@ urlpatterns = [
     path("play/packs/open/", pack_views.pack_open, name="play_packs_open"),
     path("arcade/", play.arcade_home, name="arcade"),
     path("arcade/scores/", play.arcade_scores, name="arcade_scores"),
+    path("arcade/challenge/", challenge_views.challenge_home, name="arcade_challenge"),
+    path("arcade/challenge/start/", challenge_views.challenge_start, name="arcade_challenge_start"),
+    path("arcade/challenge/open/", challenge_views.challenge_open, name="arcade_challenge_open"),
+    path("arcade/challenge/opened/", challenge_views.challenge_opened, name="arcade_challenge_opened"),
+    path("arcade/challenge/deck/", challenge_views.challenge_deck, name="arcade_challenge_deck"),
+    path("arcade/challenge/fight/", challenge_views.challenge_fight, name="arcade_challenge_fight"),
+    path("arcade/challenge/reset/", challenge_views.challenge_reset, name="arcade_challenge_reset"),
+    path("arcade/challenge/end/", challenge_views.challenge_end, name="arcade_challenge_end"),
+    path("arcade/challenge/close/", challenge_views.challenge_close, name="arcade_challenge_close"),
     path("play/arcade/", play.arcade_start, name="arcade_start"),
     path("play/<int:pk>/arcade-quit/", play.arcade_quit, name="arcade_quit"),
     path("cpu/profiles/<int:pk>/image/", play.cpu_image, name="cpu_image"),
@@ -34,7 +43,16 @@ urlpatterns = [
     path("cpu/arcade/<int:pk>/delete/", cpu_views.arcade_delete, name="arcade_delete"),
     path("cpu/arcade/<int:pk>/entries/", cpu_views.arcade_entry_add, name="arcade_entry_add"),
     path("cpu/arcade/entries/<int:pk>/remove/", cpu_views.arcade_entry_remove, name="arcade_entry_remove"),
+    path("cpu/arcade/<int:pk>/scenes/", cpu_views.arcade_scenes, name="arcade_scenes"),
+    path("cpu/challenges/new/", cpu_views.narrative_create, name="cpu_narrative_create"),
+    path("cpu/challenges/<int:pk>/", cpu_views.narrative_update, name="cpu_narrative_update"),
+    path("cpu/challenges/<int:pk>/delete/", cpu_views.narrative_delete, name="cpu_narrative_delete"),
     path("cpu/", cpu_views.cpu_home, name="cpu_home"),
+    path("cpu/scenes/new/", scene_views.scene_create, name="cpu_scene_create"),
+    path("cpu/scenes/<int:pk>/", scene_views.scene_edit, name="cpu_scene_edit"),
+    path("cpu/scenes/<int:pk>/check/", scene_views.scene_check, name="cpu_scene_check"),
+    path("cpu/scenes/<int:pk>/play/", scene_views.scene_play, name="cpu_scene_play"),
+    path("cpu/scenes/<int:pk>/delete/", scene_views.scene_delete, name="cpu_scene_delete"),
     path("cpu/unplayable/", cpu_views.cpu_excluded, name="cpu_excluded"),
     path("cpu/unplayable.txt", cpu_views.cpu_excluded_export, name="cpu_excluded_export"),
     path("cpu/decks/new/", cpu_views.cpu_deck_create, name="cpu_deck_create"),

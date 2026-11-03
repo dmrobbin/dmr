@@ -74,8 +74,16 @@ class CardPrice(models.Model):
         return f"{self.card.serial_number}: {self.market_price or '—'} ({self.get_source_display()})"
 
 
+class CardListQuerySet(models.QuerySet):
+    def players(self, user):
+        """A player's own lists, to see and play with: not those reserved for CPUs, nor a challenge's deck."""
+        return self.filter(user=user, reserved_for_cpu=False, challenge=False)
+
+
 class CardList(models.Model):
     """A user's named list of cards (a deck, a want list, ...), with any number of copies per card."""
+
+    objects = CardListQuerySet.as_manager()
 
     MAX_LISTS_PER_USER = 100
     MAX_CARDS = 100  # total copies across the whole list
@@ -91,6 +99,7 @@ class CardList(models.Model):
     cpu_wins = models.PositiveIntegerField(default=0, help_text="Games this list has won against CPUs; shown as robots")
     express = models.JSONField(default=dict, blank=True, help_text="How express building made this deck: series, anchors, required names")
     reserved_for_cpu = models.BooleanField(default=False, help_text="Made in the CPU creation tab; kept out of players' lists and deck choices")
+    challenge = models.BooleanField(default=False, help_text="A challenge run's deck, built from its packs: kept out of the player's lists until they save it")
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -223,10 +232,29 @@ class CpuProfile(Avatar):
         return reverse("weiss:cpu_image", args=[self.pk]) + f"?screen={screen}&v=" + image.key.rsplit("/", 1)[-1]
 
 
+class Scene(models.Model):
+    """A visual novel style scene: pre-written dialogue between CPUs, with staging and choices. Written as a
+    script by staff; see weiss.scenes for what a script can say."""
+
+    name = models.CharField(max_length=100, unique=True)
+    script = models.TextField(blank=True)
+    created_by = models.ForeignKey("auth.User", null=True, on_delete=models.SET_NULL, related_name="+")
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class ArcadeScenario(models.Model):
     """A list of CPUs to fight through in arcade mode."""
 
     name = models.CharField(max_length=100, unique=True)
+    intro_scene = models.ForeignKey(Scene, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", help_text="Played before the first fight")
+    outro_scene = models.ForeignKey(Scene, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", help_text="Played once the anchor's beaten")
     created_by = models.ForeignKey("auth.User", null=True, on_delete=models.SET_NULL, related_name="+")
     created = models.DateTimeField(auto_now_add=True)
 
@@ -252,6 +280,8 @@ class ArcadeEntry(models.Model):
     scenario = models.ForeignKey(ArcadeScenario, on_delete=models.CASCADE, related_name="entries")
     cpu = models.ForeignKey(CpuProfile, on_delete=models.CASCADE, related_name="arcade_entries")
     role = models.CharField(max_length=10, choices=Role.choices)
+    scene_before = models.ForeignKey(Scene, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", help_text="Played before this fight")
+    scene_after = models.ForeignKey(Scene, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", help_text="Played after winning it")
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["scenario", "cpu"], name="one_entry_per_cpu_per_scenario")]
@@ -307,6 +337,59 @@ class ArcadeClear(models.Model):
 
     def __str__(self):
         return f"{self.deck}: {self.name} x{self.count}"
+
+
+class NarrativeChallenge(models.Model):
+    """A challenge staff have set up: an arcade list to fight through (with its scenes), drafting only from these sets."""
+
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    scenario = models.ForeignKey(ArcadeScenario, null=True, on_delete=models.SET_NULL, related_name="challenges")
+    sets = models.JSONField(default=list, help_text="The expansion ids its packs can come from")
+    created_by = models.ForeignKey("auth.User", null=True, on_delete=models.SET_NULL, related_name="+")
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class ChallengeRun(models.Model):
+    """A player's challenge: packs opened into a pool, a deck built only from it, and an arcade run fought with
+    that deck. A player has one at a time, from starting it until they keep or discard its deck. See weiss.challenge."""
+
+    class Kind(models.TextChoices):
+        FREE = "free", "Free challenge"
+        NARRATIVE = "narrative", "Narrative challenge"
+
+    class Status(models.TextChoices):
+        ACTIVE = "active", "In progress"
+        WON = "won", "Cleared"
+        LOST = "lost", "Lost"
+
+    user = models.ForeignKey("auth.User", on_delete=models.CASCADE, related_name="challenge_runs")
+    kind = models.CharField(max_length=10, choices=Kind.choices)
+    narrative = models.ForeignKey(NarrativeChallenge, null=True, blank=True, on_delete=models.SET_NULL, related_name="runs")
+    scenario = models.ForeignKey(ArcadeScenario, null=True, on_delete=models.SET_NULL, related_name="+")
+    name = models.CharField(max_length=100, help_text="The challenge's name, kept if it's deleted")
+    sets = models.JSONField(default=list, blank=True, help_text="The expansion ids its packs can come from, as they were when it started; empty for any")
+    deck = models.ForeignKey(CardList, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    pool = models.JSONField(default=dict, help_text="{card id: copies} pulled from its packs")
+    packs = models.PositiveSmallIntegerField(default=0, help_text="Packs to open")
+    opened = models.PositiveSmallIntegerField(default=0, help_text="Packs opened so far")
+    last_opening = models.JSONField(default=dict, blank=True, help_text="The latest packs opened, to show them being revealed")
+    arcade_run = models.ForeignKey(ArcadeRun, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIVE)
+    started = models.DateTimeField(auto_now_add=True)
+    finished = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-started", "-pk"]
+
+    def __str__(self):
+        return f"{self.user}: {self.name} ({self.status})"
 
 
 CPU_USERNAME = "cpu-player"

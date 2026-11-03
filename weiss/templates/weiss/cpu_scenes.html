@@ -1,0 +1,23 @@
+<section class="cpu-section">
+  <h2>Scenes</h2>
+  <p class="muted small">Visual novel style scenes: CPUs on a stage, talking, moving and animating, with choices for the player that branch the dialogue. Write one as a short script, then play it to test.</p>
+  <form method="post" action="{% url 'weiss:cpu_scene_create' %}" class="panel-row cpu-form">
+    {% csrf_token %}
+    <input type="text" name="name" maxlength="100" placeholder="e.g. Rapi's welcome" aria-label="Scene name" required>
+    <button type="submit" class="button-small">Create scene</button>
+  </form>
+  {% if scenes %}
+    <ul class="cpu-list">
+      {% for scene in scenes %}
+        <li>
+          <a href="{% url 'weiss:cpu_scene_edit' scene.pk %}">{{ scene.name }}</a>
+          {% if scene.errors %}<span class="small panel-error">{{ scene.errors }} mistake{{ scene.errors|pluralize }}</span>
+          {% else %}<a class="small" href="{% url 'weiss:cpu_scene_play' scene.pk %}">Play</a>{% endif %}
+          <span class="muted small">updated {{ scene.updated|timesince }} ago</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty">No scenes yet.</p>
+  {% endif %}
+</section>

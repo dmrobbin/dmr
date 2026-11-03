@@ -94,7 +94,7 @@ def sorted_entries(card_list):
 
 def panel_context(request):
     """Everything the side panel and the per-card +/- controls need."""
-    lists = list(CardList.objects.filter(user=request.user, reserved_for_cpu=False).annotate(total=Sum("entries__quantity")))
+    lists = list(CardList.objects.players(request.user).annotate(total=Sum("entries__quantity")))
     active = editing_list(request)
     entries = []
     if active:
@@ -218,7 +218,7 @@ def attach_covers(lists):
 
 @weiss_access_required
 def list_index(request):
-    lists = CardList.objects.filter(user=request.user, reserved_for_cpu=False).annotate(total=Sum("entries__quantity")).prefetch_related("arcade_clears")
+    lists = CardList.objects.players(request.user).annotate(total=Sum("entries__quantity")).prefetch_related("arcade_clears")
     return render(request, "weiss/list_index.html", {"lists": attach_covers(lists)})
 
 
@@ -226,7 +226,7 @@ def list_index(request):
 @require_POST
 def list_cover(request, pk):
     """Pick the card pictured for this list (one of its own cards); an empty `card` goes back to the default."""
-    card_list = get_object_or_404(CardList, pk=pk, user=request.user)
+    card_list = get_object_or_404(CardList, pk=pk, user=request.user, challenge=False)
     card_pk = request.POST.get("card", "")
     if card_pk:
         entry = get_object_or_404(CardListEntry, card_list=card_list, card_id=card_pk)
@@ -243,7 +243,7 @@ def list_create(request):
     name = request.POST.get("name", "").strip()[:100]
     if not name:
         return respond(request, reverse("weiss:lists"), error="Give the list a name.")
-    if CardList.objects.filter(user=request.user, reserved_for_cpu=False).count() >= CardList.MAX_LISTS_PER_USER:
+    if CardList.objects.players(request.user).count() >= CardList.MAX_LISTS_PER_USER:
         return respond(request, reverse("weiss:lists"),
                        error=f"You already have {CardList.MAX_LISTS_PER_USER} lists; delete one first.")
     card_list = CardList.objects.create(user=request.user, name=name)
@@ -263,7 +263,7 @@ def list_express_skip(request):
 @weiss_access_required
 @require_POST
 def list_edit(request, pk):
-    card_list = get_object_or_404(CardList, pk=pk, user=request.user)
+    card_list = get_object_or_404(CardList, pk=pk, user=request.user, challenge=False)
     request.session[SESSION_KEY] = card_list.pk
     return respond(request, reverse("weiss:sets"))
 
@@ -279,7 +279,7 @@ def list_stop_editing(request):
 @require_POST
 def list_change(request, pk):
     """Change how many copies of a card a list has: delta=1 adds one, delta=-1 removes one."""
-    card_list = get_object_or_404(CardList, pk=pk, user=request.user)
+    card_list = get_object_or_404(CardList, pk=pk, user=request.user, challenge=False)
     card = get_object_or_404(Card, pk=request.POST.get("card"))
     try:
         delta = int(request.POST.get("delta", "1"))
@@ -300,7 +300,7 @@ def list_change(request, pk):
 
 @weiss_access_required
 def list_detail(request, pk):
-    card_list = get_object_or_404(CardList, pk=pk, user=request.user)
+    card_list = get_object_or_404(CardList, pk=pk, user=request.user, challenge=False)
     entries = sorted_entries(card_list)
     with_image_urls([e.card for e in entries])
     value, unpriced = price_entries(entries)
@@ -319,7 +319,7 @@ def list_detail(request, pk):
 @require_POST
 def list_deck(request, pk):
     """Mark a list as a deck (is_deck=on) or as a plain list."""
-    card_list = get_object_or_404(CardList, pk=pk, user=request.user)
+    card_list = get_object_or_404(CardList, pk=pk, user=request.user, challenge=False)
     card_list.is_deck = request.POST.get("is_deck") == "on"
     card_list.save(update_fields=["is_deck", "updated"])
     return respond(request, reverse("weiss:list", args=[card_list.pk]))
@@ -328,7 +328,7 @@ def list_deck(request, pk):
 @weiss_access_required
 @require_POST
 def list_rename(request, pk):
-    card_list = get_object_or_404(CardList, pk=pk, user=request.user)
+    card_list = get_object_or_404(CardList, pk=pk, user=request.user, challenge=False)
     name = request.POST.get("name", "").strip()[:100]
     if name:
         card_list.name = name
@@ -339,7 +339,7 @@ def list_rename(request, pk):
 @weiss_access_required
 @require_POST
 def list_delete(request, pk):
-    card_list = get_object_or_404(CardList, pk=pk, user=request.user)
+    card_list = get_object_or_404(CardList, pk=pk, user=request.user, challenge=False)
     if request.session.get(SESSION_KEY) == card_list.pk:
         request.session.pop(SESSION_KEY)
     messages.success(request, f"Deleted “{card_list.name}”.")

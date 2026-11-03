@@ -1,0 +1,133 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Challenge{% endblock %}
+
+{% block content %}
+  <h1>Arcade Mode</h1>
+  {% include "weiss/arcade_tabs.html" with current="challenge" %}
+
+  {% if not run %}
+    <p class="muted small">Build a deck from scratch: open {{ start_packs }} packs, make a deck from only the cards you pull, and fight through an arcade list with it.
+      Each win brings {{ win_packs }} more packs to improve your deck; one loss ends the challenge. At the end, keep the deck or let it go.</p>
+    <div class="challenge-choices">
+      <section class="challenge-choice">
+        <h2>Free challenge</h2>
+        <p class="muted small">Open each pack from any set you like.</p>
+        {% if scenarios %}
+          <form method="post" action="{% url 'weiss:arcade_challenge_start' %}" class="cpu-form">
+            {% csrf_token %}
+            <input type="hidden" name="kind" value="free">
+            <label class="small">Arcade list
+              <select name="scenario">{% for scenario in scenarios %}<option value="{{ scenario.pk }}">{{ scenario.name }}</option>{% endfor %}</select>
+            </label>
+            <button type="submit" class="button-small">Start</button>
+          </form>
+        {% else %}<p class="empty">No arcade lists are available yet.</p>{% endif %}
+      </section>
+      <section class="challenge-choice">
+        <h2>Narrative challenges</h2>
+        <p class="muted small">A story to play through, with packs from the sets it's set in.</p>
+        {% for narrative in narratives %}
+          <form method="post" action="{% url 'weiss:arcade_challenge_start' %}" class="challenge-narrative">
+            {% csrf_token %}
+            <input type="hidden" name="kind" value="narrative">
+            <input type="hidden" name="narrative" value="{{ narrative.pk }}">
+            <h3>{{ narrative.name }}</h3>
+            {% if narrative.description %}<p class="small">{{ narrative.description|linebreaksbr }}</p>{% endif %}
+            <p class="muted small">{{ narrative.scenario.name }} · packs from {{ narrative.sets|length }} set{{ narrative.sets|length|pluralize }}</p>
+            <button type="submit" class="button-small">Start</button>
+          </form>
+        {% empty %}<p class="empty">No narrative challenges yet.</p>{% endfor %}
+      </section>
+    </div>
+
+  {% else %}
+    <section class="challenge-run">
+      <div class="challenge-head">
+        <div>
+          <h2>{{ run.name }} <span class="deck-tag">{{ run.get_kind_display }}</span></h2>
+          {% if run.narrative.description and run.kind == "narrative" %}<p class="small">{{ run.narrative.description|linebreaksbr }}</p>{% endif %}
+          <p class="muted small">{% if set_names %}Packs from {{ set_names|join:", " }}{% else %}Packs from any set{% endif %}</p>
+        </div>
+        {% if run.status != "active" %}<p class="challenge-result {{ run.status }}">{% if run.status == "won" %}🏆 Cleared!{% else %}Defeated{% endif %}</p>{% endif %}
+      </div>
+      <dl class="challenge-stats">
+        <div><dt>Packs to open</dt><dd>{{ run.packs }}</dd></div>
+        <div><dt>Cards pulled</dt><dd>{{ pulled }}</dd></div>
+        <div><dt>Deck</dt><dd>{{ deck_total }} / {{ deck_size }}</dd></div>
+        <div><dt>Fights won</dt><dd>{% if arcade_run %}{{ arcade_run.position }} of {{ arcade_run.total }}{% else %}0 of {{ lineup|length }}{% endif %}</dd></div>
+      </dl>
+      {% if lineup %}
+        <ol class="arcade-lineup">
+          {% for fighter in lineup %}
+            <li class="arcade-fighter{% if not fighter.met %} unknown{% endif %}">
+              {% if fighter.met %}
+                {% if fighter.cpu.image_url %}<img src="{{ fighter.cpu.image_url }}" alt="" loading="lazy">
+                {% else %}{% include "weiss/avatar.html" with avatar=fighter.cpu.avatar name=fighter.cpu.name size="avatar-fill" %}{% endif %}
+                <span class="small">{{ fighter.cpu.name }}</span>
+              {% else %}<span class="arcade-mystery" aria-hidden="true">?</span><span class="small muted">Not met yet</span>{% endif %}
+            </li>
+          {% endfor %}
+        </ol>
+      {% endif %}
+
+      {% if run.status == "active" %}
+        <div class="challenge-steps">
+          <section>
+            <h3>1. Open packs</h3>
+            {% if run.packs %}
+              <form method="post" action="{% url 'weiss:arcade_challenge_open' %}" class="cpu-form">
+                {% csrf_token %}
+                <label class="small">Set
+                  <select name="set" required>{% for set in sets %}<option value="{{ set.id }}">{{ set.name }}</option>{% endfor %}</select>
+                </label>
+                <label class="small">Packs
+                  <input type="number" name="count" value="{{ run.packs }}" min="1" max="{{ run.packs }}" required>
+                </label>
+                <button type="submit" class="button-small"{% if not sets %} disabled{% endif %}>Open</button>
+              </form>
+              {% if not sets %}<p class="small panel-error">None of this challenge's sets have packs right now.</p>{% endif %}
+            {% else %}
+              <p class="muted small">No packs left. Win your next fight for {{ win_packs }} more.</p>
+            {% endif %}
+            {% if run.last_opening %}<p class="small"><a href="{% url 'weiss:arcade_challenge_opened' %}">See the last packs opened again</a></p>{% endif %}
+          </section>
+          <section>
+            <h3>2. Build your deck</h3>
+            <p class="muted small">Only cards you've pulled can go in. It doesn't have to be a full {{ deck_size }} cards to fight with.</p>
+            <a class="button-small{% if not pulled %} secondary{% endif %}" href="{% url 'weiss:arcade_challenge_deck' %}">Build deck</a>
+          </section>
+          <section>
+            <h3>3. Fight</h3>
+            <form method="post" action="{% url 'weiss:arcade_challenge_fight' %}">
+              {% csrf_token %}
+              <button type="submit" class="button-small"{% if not deck_total %} disabled{% endif %}>{% if room %}Back to the fight{% elif arcade_run and arcade_run.position %}Next fight{% else %}Start the run{% endif %}</button>
+            </form>
+            {% if not deck_total %}<p class="muted small">Your deck needs cards first.</p>{% endif %}
+          </section>
+        </div>
+        <div class="challenge-danger">
+          <form method="post" action="{% url 'weiss:arcade_challenge_reset' %}" onsubmit="return confirm('Start {{ run.name|escapejs }} again from nothing? Your deck and pulled cards will be gone.')">
+            {% csrf_token %}<button type="submit" class="button-small secondary">Reset challenge</button></form>
+          <form method="post" action="{% url 'weiss:arcade_challenge_end' %}" onsubmit="return confirm('End this challenge here? You can still keep the deck.')">
+            {% csrf_token %}<button type="submit" class="button-small danger">End challenge</button></form>
+        </div>
+      {% else %}
+        <section class="challenge-keep">
+          <h3>Keep your deck?</h3>
+          <p class="muted small">Keep it and it joins your lists, to play with anywhere. Otherwise it's deleted.</p>
+          <form method="post" action="{% url 'weiss:arcade_challenge_close' %}" class="cpu-form">
+            {% csrf_token %}
+            <input type="hidden" name="keep" value="on">
+            <label class="small">Name <input type="text" name="name" value="{{ run.deck.name }}" maxlength="100" required></label>
+            <button type="submit" class="button-small">Keep deck</button>
+          </form>
+          <form method="post" action="{% url 'weiss:arcade_challenge_close' %}" onsubmit="return confirm('Delete the challenge deck?')">
+            {% csrf_token %}<button type="submit" class="button-small secondary">Discard it</button></form>
+          <form method="post" action="{% url 'weiss:arcade_challenge_reset' %}" onsubmit="return confirm('Discard this deck and start {{ run.name|escapejs }} again?')">
+            {% csrf_token %}<button type="submit" class="link-button">Or try {{ run.name }} again from the start</button></form>
+        </section>
+      {% endif %}
+    </section>
+  {% endif %}
+{% endblock %}

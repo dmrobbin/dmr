@@ -1,6 +1,7 @@
 """Opening booster packs, under the Play tab. Staff only while it's being tried out; nothing opened is kept."""
 from django.http import Http404
 from django.shortcuts import render
+from django.urls import reverse
 
 from . import packs
 from .cpu_views import staff_required
@@ -32,4 +33,7 @@ def pack_open(request):
     return render(request, "weiss/pack_open.html", {
         "set_id": expansion_id, "set_name": name, "count": count, "pack_size": packs.PACK_SIZE,
         "opening": {"set": name, "grades": packs.GRADE_NAMES, "packs": [[pull.as_dict() for pull in pack] for pack in opened]},
+        "back_url": reverse("weiss:play_packs"), "back_label": "Booster packs",
+        "actions": [(f"Open {count} more", f"{reverse('weiss:play_packs_open')}?set={expansion_id}&count={count}", True),
+                    ("Choose another set", reverse("weiss:play_packs"), False)],
     })

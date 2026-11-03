@@ -17,10 +17,10 @@ from django.views.decorators.http import require_POST
 from core import s3
 from core.access import weiss_access_required
 
-from . import abilities, arcade, cpu
+from . import abilities, arcade, cpu, packs, scenes
 from .lists import EXPRESS_PROMPT, SESSION_KEY, deck_checks, sorted_entries
 from .card_images import image_type
-from .models import ArcadeEntry, ArcadeScenario, Card, CardList, CpuImage, CpuProfile
+from .models import ArcadeEntry, ArcadeScenario, Card, CardList, CpuImage, CpuProfile, NarrativeChallenge, Scene
 from .profiles import avatar_picker
 
 
@@ -111,7 +111,8 @@ def cpu_home(request):
     for scenario in scenarios:
         scenario.problem = arcade.scenario_problem(scenario)
     return render(request, "weiss/cpu_home.html", {
-        "decks": decks, "profiles": profiles, "models": cpu.MODELS.items(),
+        "decks": decks, "profiles": profiles, "models": cpu.MODELS.items(), "scenes": scenes.scene_list(),
+        "narratives": NarrativeChallenge.objects.select_related("scenario"), "pack_sets": packs.pack_sets(),
         "scenarios": scenarios, "arcade_roles": ArcadeEntry.Role.choices,
         "aggressions": range(cpu.MIN_AGGRESSION, cpu.MAX_AGGRESSION + 1),
     })
@@ -343,6 +344,74 @@ def arcade_entry_add(request, pk):
 @require_POST
 def arcade_entry_remove(request, pk):
     get_object_or_404(ArcadeEntry, pk=pk).delete()
+    return redirect("weiss:cpu_home")
+
+
+@staff_required
+@require_POST
+def arcade_scenes(request, pk):
+    """Which scenes an arcade list plays: at its start and its clear, and before and after each CPU's fight."""
+    scenario = get_object_or_404(ArcadeScenario, pk=pk)
+    found = Scene.objects.in_bulk()
+    pick = lambda field: found.get(int(request.POST[field])) if request.POST.get(field, "").isdigit() else None
+    scenario.intro_scene, scenario.outro_scene = pick("intro"), pick("outro")
+    scenario.save(update_fields=["intro_scene", "outro_scene"])
+    for entry in scenario.entries.all():
+        entry.scene_before, entry.scene_after = pick(f"before-{entry.pk}"), pick(f"after-{entry.pk}")
+        entry.save(update_fields=["scene_before", "scene_after"])
+    messages.success(request, f"Saved {scenario.name}'s scenes.")
+    return redirect("weiss:cpu_home")
+
+
+def narrative_fields(request):
+    """(name, description, scenario, sets) from a narrative challenge's form, or raise ValueError saying what's wrong."""
+    name = request.POST.get("name", "").strip()[:100]
+    if not name:
+        raise ValueError("Give the challenge a name.")
+    scenario = ArcadeScenario.objects.filter(pk=request.POST.get("scenario") or 0).first()
+    if not scenario:
+        raise ValueError("Choose the arcade list it fights through.")
+    sets = sorted({int(pk) for pk in request.POST.getlist("sets") if pk.isdigit()})
+    if not sets:
+        raise ValueError("Choose at least one set for its packs.")
+    return name, request.POST.get("description", "").strip()[:2000], scenario, sets
+
+
+@staff_required
+@require_POST
+def narrative_create(request):
+    try:
+        name, description, scenario, sets = narrative_fields(request)
+        if NarrativeChallenge.objects.filter(name=name).exists():
+            raise ValueError(f"There's already a challenge called {name}.")
+    except ValueError as error:
+        messages.error(request, str(error))
+        return redirect("weiss:cpu_home")
+    NarrativeChallenge.objects.create(name=name, description=description, scenario=scenario, sets=sets, created_by=request.user)
+    return redirect("weiss:cpu_home")
+
+
+@staff_required
+@require_POST
+def narrative_update(request, pk):
+    narrative = get_object_or_404(NarrativeChallenge, pk=pk)
+    try:
+        name, description, scenario, sets = narrative_fields(request)
+        if NarrativeChallenge.objects.filter(name=name).exclude(pk=pk).exists():
+            raise ValueError(f"There's already a challenge called {name}.")
+    except ValueError as error:
+        messages.error(request, str(error))
+        return redirect("weiss:cpu_home")
+    narrative.name, narrative.description, narrative.scenario, narrative.sets = name, description, scenario, sets
+    narrative.save()  # challenges under way keep the sets they started with
+    messages.success(request, f"Saved {name}.")
+    return redirect("weiss:cpu_home")
+
+
+@staff_required
+@require_POST
+def narrative_delete(request, pk):
+    get_object_or_404(NarrativeChallenge, pk=pk).delete()  # challenges under way carry on
     return redirect("weiss:cpu_home")
 
 

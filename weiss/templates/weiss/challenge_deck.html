@@ -1,0 +1,57 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}{{ run.name }} deck{% endblock %}
+
+{% block head %}<script src="{% static 'weiss/challenge_deck.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:arcade_challenge' %}">&larr; {{ run.name }} challenge</a></p>
+  <h1>Build your deck</h1>
+  <p class="muted small">Only the cards you've pulled can go in, as many copies as you pulled. Click a card's picture to read it.</p>
+  {% if not cards %}
+    <p class="empty">You haven't pulled any cards yet. <a href="{% url 'weiss:arcade_challenge' %}">Open some packs first.</a></p>
+  {% else %}
+    <form method="post" class="challenge-deck" data-challenge-deck data-deck-size="{{ deck_size }}" data-climaxes="{{ climax_target }}">
+      {% csrf_token %}
+      <input type="hidden" name="deck" data-deck-field>
+      <div class="challenge-deck-bar">
+        <div class="challenge-deck-summary" aria-live="polite">
+          <strong data-deck-total></strong>
+          <span class="small" data-deck-groups></span>
+          <span class="small panel-error" data-deck-warnings></span>
+        </div>
+        <label class="small">Show
+          <select data-deck-filter>
+            <option value="all">every card</option>
+            <option value="deck">in the deck</option>
+            <option value="out">not in the deck</option>
+            <option value="0">level 0</option><option value="1">level 1</option><option value="2">level 2</option><option value="3">level 3</option>
+            <option value="climax">climaxes</option>
+          </select>
+        </label>
+        <button type="button" class="button-small secondary" data-deck-clear>Empty the deck</button>
+        <button type="submit" class="button-small">Save deck</button>
+      </div>
+      <ul class="pool-grid">
+        {% for item in cards %}{% with card=item.card %}
+          <li class="pool-card" data-card="{{ card.pk }}" data-name="{{ card.name }}" data-pulled="{{ item.pulled }}" data-in-deck="{{ item.in_deck }}"
+              data-level="{% if card.card_type|lower == 'climax' %}climax{% else %}{{ card.level|default_if_none:'' }}{% endif %}">
+            <a href="{% url 'weiss:card' card.pk %}" data-card-popup="{% url 'weiss:card_popup' card.pk %}" class="pool-picture">{% include "weiss/card_art.html" with alt=card.name lazy=True %}</a>
+            <span class="pool-name small">{{ card.name }}</span>
+            <span class="pool-controls">
+              <button type="button" class="qty-button" data-delta="-1" aria-label="One fewer {{ card.name }}">−</button>
+              <span class="pool-count"><strong data-count>{{ item.in_deck }}</strong><span class="muted"> / {{ item.pulled }}</span></span>
+              <button type="button" class="qty-button" data-delta="1" aria-label="One more {{ card.name }}">+</button>
+            </span>
+          </li>
+        {% endwith %}{% endfor %}
+      </ul>
+    </form>
+  {% endif %}
+  <dialog class="card-popup" data-card-popup-dialog aria-label="Card details">
+    <form method="dialog"><button class="card-popup-close" aria-label="Close">×</button></form>
+    <div data-card-popup-body></div>
+  </dialog>
+  <script src="{% static 'weiss/lists.js' %}" defer></script>
+{% endblock %}

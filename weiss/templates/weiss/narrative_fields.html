@@ -1,0 +1,18 @@
+{# A narrative challenge's form: a new one (action None) or one to save. Expects name, description, scenario_id, chosen (set ids) and button. #}
+<form method="post" action="{% if action %}{% url 'weiss:cpu_narrative_update' action %}{% else %}{% url 'weiss:cpu_narrative_create' %}{% endif %}" class="narrative-form">
+  {% csrf_token %}
+  <label class="small">Name <input type="text" name="name" value="{{ name }}" maxlength="100" required></label>
+  <label class="small">Arcade list
+    <select name="scenario" required>
+      <option value="">Choose one</option>
+      {% for scenario in scenarios %}<option value="{{ scenario.pk }}"{% if scenario.pk == scenario_id %} selected{% endif %}>{{ scenario.name }}{% if scenario.problem %} (not ready){% endif %}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="small narrative-wide">Story <textarea name="description" rows="2" maxlength="2000" placeholder="What players read before they start">{{ description }}</textarea></label>
+  <label class="small narrative-wide">Sets its packs come from <span class="muted">(Ctrl-click for more than one)</span>
+    <select name="sets" multiple size="6" required>
+      {% for set in pack_sets %}<option value="{{ set.id }}"{% if set.id in chosen %} selected{% endif %}>{{ set.name }}</option>{% endfor %}
+    </select>
+  </label>
+  <button type="submit" class="button-small{% if action %} secondary{% endif %}">{{ button }}</button>
+</form>

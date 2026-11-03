@@ -2,12 +2,17 @@
 
 A run keeps its order when it starts, and plays out in one room: each fight deals that room again with
 the next CPU in its seat. Beating the anchor clears the scenario, which goes on the deck as a marker.
+
+A scenario can have scenes: one before the first fight and one once it's cleared, and for each CPU one
+before its fight and one after beating it. The room queues them (state["scenes"]) and the board plays them.
+A challenge's run (weiss.challenge) is an arcade run too, with its own rules on winning and losing.
 """
 import random
 
 from django.db.models import F
 from django.utils import timezone
 
+from . import challenge, scenes
 from .models import ArcadeClear, ArcadeEntry, ArcadeRun, ArcadeScenario, CpuProfile
 
 
@@ -68,8 +73,26 @@ def lineup(scenario, user):
              "met": entry.role == ArcadeEntry.Role.OPENER or entry.cpu_id in met} for entry in scenario.ordered_entries]
 
 
+def entry_of(run, cpu_id):
+    return ArcadeEntry.objects.filter(scenario_id=run.scenario_id, cpu_id=cpu_id).select_related("scene_before", "scene_after").first() if run.scenario_id else None
+
+
+def scenes_before(run, cpu):
+    """Scene payloads to play before fighting this CPU: the scenario's opening one first, if this is the first fight."""
+    scenario = run.scenario
+    entry = entry_of(run, cpu.pk)
+    return scenes.playable([scenario.intro_scene if scenario and run.position == 0 else None, entry and entry.scene_before])
+
+
+def scenes_after(run, cpu_id, cleared):
+    """Scene payloads to play after beating this CPU, and the scenario's closing one if that cleared it."""
+    entry = entry_of(run, cpu_id)
+    return scenes.playable([entry and entry.scene_after, run.scenario.outro_scene if cleared and run.scenario else None])
+
+
 def game_finished(room, over, score=None):
-    """A fight has ended: count it, add a win's score to the run, and clear the scenario if that was the anchor."""
+    """A fight has ended: count it, add a win's score to the run, and clear the scenario if that was the anchor.
+    A win queues the scenes that follow it; a challenge's run also hears how it went."""
     run = room.arcade_run
     if not run or run.status != ArcadeRun.Status.ACTIVE:
         return
@@ -79,12 +102,17 @@ def game_finished(room, over, score=None):
     if over["winner"] != str(room.host_id):
         run.losses += 1
         run.save(update_fields=["losses"])
+        challenge.fight_finished(run, won=False, cleared=False)
         return
     if score is not None:
         run.scores.append({"cpu": room.cpu_profile_id, "name": room.cpu_name, "score": score})
         run.score += score
     run.position += 1
-    if run.position < len(run.order):
+    cleared = run.position >= len(run.order)
+    if queued := scenes_after(run, room.cpu_profile_id, cleared):
+        room.state["scenes"] = queued
+    challenge.fight_finished(run, won=True, cleared=cleared)
+    if not cleared:
         run.save(update_fields=["position", "scores", "score"])
         return
     run.status, run.finished = ArcadeRun.Status.CLEARED, timezone.now()
