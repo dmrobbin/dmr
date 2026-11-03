@@ -1,6 +1,7 @@
 import copy
 import json
 import random
+from collections import Counter
 from unittest import mock
 
 from django.contrib.auth.models import Group, User
@@ -362,8 +363,8 @@ class FairPlayTests(TestCase):
         self.assertEqual(results[0], results[1])
 
 
-def bot_game(state, info, players=("1", "2"), limit=4000, rng=None):
-    """Both seats played by CPUs until the game ends. Returns the number of actions."""
+def bot_game(state, info, players=("1", "2"), limit=4000, rng=None, models=None):
+    """Both seats played by CPUs (of these models, by seat; standard otherwise) until the game ends. Returns the number of actions."""
     rng = rng or random.Random(1)
     kwargs = dict(shuffle=rng.shuffle, info=info, name=lambda pk: info(pk).get("name", "?"),
                   is_climax=lambda pk: (info(pk).get("card_type") or "").lower() == "climax",
@@ -373,7 +374,7 @@ def bot_game(state, info, players=("1", "2"), limit=4000, rng=None):
             return count
         moved = False
         for player in players:
-            action = cpu.next_action(state, player, info, 1, rng)
+            action = cpu.next_action(state, player, info, 1, rng, model=(models or {}).get(player, "standard"))
             if action:
                 game.apply(state, player, action, **kwargs)
                 moved = True
@@ -5238,6 +5239,104 @@ class StrategicModelTests(TestCase):
         t.seat(t.me, "B1", t.card(1001, text=self.SALVAGE))
         t.stock(1)
         self.assertNotEqual(self.next(t)["type"], "activate")
+
+
+class EasyModelTests(TestCase):
+    MAY = "【AUTO】 When this card is placed on the stage from your hand, you may draw 1 card."
+
+    def next(self, t, seed=1):
+        t.refresh()
+        return cpu.next_action(t.state, "2", t.info, 1, random.Random(seed), model="easy")
+
+    def test_it_encores_cards_that_arent_worth_it(self):
+        t = Table()
+        t.card(1001, level=0, power=500)
+        t.state["phase"] = "encore"
+        weak = t.seat(t.me, "C1", 1001, pos="reverse")
+        t.stock(3)
+        self.assertEqual(self.next(t), {"type": "encore", "uid": weak["uid"]})
+        self.assertEqual(t.next(), {"type": "move", "uid": weak["uid"], "to": "waiting"})  # standard lets it go
+
+    def test_it_mostly_turns_down_what_it_may_do(self):
+        accepted = Counter()
+        for seed in range(40):
+            t = Table()
+            card = t.hand(t.card(1001, text=self.MAY))[0]
+            t.apply(2, {"type": "move", "uid": card["uid"], "to": "C1"})
+            accepted[self.next(t, seed)["accept"]] += 1  # turning the trigger down is saying no to "you may"
+        self.assertGreater(accepted[False], accepted[True] * 2)
+        self.assertGreater(accepted[True], 0)  # though not always
+
+    def test_what_it_must_do_it_does(self):
+        t = Table()
+        card = t.hand(t.card(1001, text="【AUTO】 When this card is placed on the stage from your hand, draw 1 card."))[0]
+        t.apply(2, {"type": "move", "uid": card["uid"], "to": "C1"})
+        self.assertTrue(all(self.next(t, seed)["accept"] for seed in range(20)))
+
+    def test_a_may_in_the_middle_mostly_gets_a_no(self):
+        t = Table()
+        t.state["resolving"] = {"player": "2", "prompt": {"kind": "choice", "for": "may", "step": {"cost": []},
+                                                          "options": [{"value": "yes"}, {"value": "no"}]}}
+        answers = Counter(self.next(t, seed)["value"] for seed in range(40))
+        self.assertGreater(answers["no"], answers["yes"] * 2)
+
+    def test_it_keeps_its_opening_hand(self):
+        t = Table()
+        t.state["phase"] = "mulligan"
+        t.card(1001, level=3)
+        t.hand(1001, 1001)
+        self.assertEqual(self.next(t), {"type": "mulligan", "uids": []})
+
+    def test_it_attacks_into_stronger_characters(self):
+        kinds = Counter()
+        for seed in range(40):
+            t = Table()
+            t.state["phase"] = "attack"
+            t.seat(t.me, "C1", t.card(1001, power=1000))
+            t.seat(t.them, "C3", t.card(1002, power=9000))  # facing C1
+            kinds[self.next(t, seed)["kind"]] += 1
+        self.assertGreater(kinds["front"], kinds["side"])  # a standard CPU would side attack every time
+
+    def test_it_ignores_its_combos(self):
+        t = Table()
+        t.card(1001, power=3000, text='【AUTO】 【CXCOMBO】 When "Big" is placed on your climax area, this card gets +3000 power.')
+        t.card(1002, card_type="Climax", name="Big")
+        t.card(1003, power=6000)
+        combo, _, strong = t.hand(1001, 1002, 1003)
+        self.assertEqual(t.next()["uid"], combo["uid"])  # standard plays its combo first
+        t.refresh()
+        minds = [cls(t.state, "2", t.info, cpu.Temper(), random.Random(1)) for cls in (cpu.Mind, cpu.Easy)]
+        self.assertEqual([mind.combo_live(combo) for mind in minds], [True, False])
+
+    def test_two_easy_cpus_play_whole_games_by_the_rules(self):
+        cards = {}
+        for pk in range(1, 61):
+            cards[pk] = {"name": f"C{pk}", "card_type": "Climax" if pk % 7 == 0 else "Character", "level": pk % 4, "cost": pk % 3, "power": 1000 + pk * 100, "soul": 1,
+                         "color": "", "traits": "", "trigger": "soul" if pk % 5 == 0 else "",
+                         "text": "【CONT】 All of your characters get +1000 power and +1 soul." if pk % 7 == 0 else self.MAY if pk % 4 == 1 else ""}
+        info = lambda pk: cards.get(pk, {})
+        for seed in range(4):
+            rng = random.Random(seed)
+            state = game.new_game([(1, "a", list(range(1, 51))), (2, "b", list(range(11, 61)))], shuffle=rng.shuffle, rps=True)
+            bot_game(state, info, rng=rng, models={"1": "easy", "2": "easy"})
+            self.assertIn("game_over", state)
+
+    def test_it_loses_to_a_standard_cpu_more_often_than_not(self):
+        cards = {}
+        for pk in range(1, 61):
+            cards[pk] = {"name": f"C{pk}", "card_type": "Climax" if pk % 7 == 0 else "Character", "level": pk % 4, "cost": pk % 3,
+                         "power": 2000 + (pk * 37) % 7000, "soul": 1, "color": "", "traits": "", "trigger": "soul" if pk % 5 == 0 else "",
+                         "text": "【CONT】 All of your characters get +1000 power and +1 soul." if pk % 7 == 0 else ""}
+        info = lambda pk: cards.get(pk, {})
+        wins = Counter()
+        for seed in range(16):
+            rng = random.Random(seed)
+            deck = list(range(1, 51))
+            easy = "1" if seed % 2 else "2"  # each seat, as often
+            state = game.new_game([(1, "a", deck), (2, "b", deck)], shuffle=rng.shuffle, rps=True)
+            bot_game(state, info, rng=rng, models={easy: "easy"})
+            wins["easy" if state["game_over"]["winner"] == easy else "standard"] += 1
+        self.assertGreater(wins["standard"], wins["easy"])
 
 
 class ModelChoiceTests(TestCase):

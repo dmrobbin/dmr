@@ -299,6 +299,35 @@ class ChallengeTests(ArcadeSetup):
         self.client.post(reverse("weiss:cpu_narrative_delete", args=[narrative.pk]))
         self.assertFalse(NarrativeChallenge.objects.exists())
 
+    def test_a_narrative_challenge_leaves_the_cpus_own_lines_to_its_scenes(self):
+        type(self.opener).objects.filter(pk=self.opener.pk).update(intro_text="Hello!", player_win_text="Ugh.", player_lose_text="Ha!")
+        narrative = NarrativeChallenge.objects.create(name="Story", scenario=self.scenario, sets=[7])
+        self.client.post(reverse("weiss:arcade_challenge_start"), {"kind": "narrative", "narrative": narrative.pk})
+        run = challenge.current(self.staff)
+        self.open(10)
+        run.refresh_from_db()
+        self.build(run)
+        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        room = self.room()
+        self.assertNotIn("cpu_intro", room.state)  # straight to the game
+        data = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()
+        self.assertEqual((data["cpu"]["intro"], data["cpu"]["win"], data["cpu"]["lose"]), ("", "", ""))
+        self.assertNotIn("intro", data)
+        # A fight not yet begun is still dealt again with the deck as it is now.
+        card = next(iter(run.pool))
+        challenge.save_deck(run, {card: 1})
+        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        me = self.room().state["players"][str(self.staff.pk)]
+        self.assertEqual(sum(len(zone) for zone in me["zones"].values() if isinstance(zone, list)), 1)
+
+    def test_a_free_challenge_keeps_them(self):
+        type(self.opener).objects.filter(pk=self.opener.pk).update(intro_text="Hello!")
+        self.ready_to_fight()
+        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        room = self.room()
+        self.assertTrue(room.state["cpu_intro"])
+        self.assertEqual(self.client.get(reverse("weiss:play_state", args=[room.pk])).json()["cpu"]["intro"], "Hello!")
+
     def test_the_arcade_tab_stays_current(self):
         page = self.client.get(reverse("weiss:arcade_challenge"))
         self.assertContains(page, f'<a href="{reverse("weiss:arcade")}" class="current" aria-current="page">Arcade</a>', html=False)

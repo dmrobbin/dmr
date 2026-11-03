@@ -82,14 +82,14 @@ def scenes_before(run, cpu):
     scenario = run.scenario
     entry = entry_of(run, cpu.pk)
     return scenes.playable([scenario.intro_scene if scenario and run.position == 0 else None, entry and entry.scene_before],
-                           with_buffs=challenge.of(run) is not None)
+                           with_buffs=challenge.of(run) is not None, viewer=run.user)
 
 
 def scenes_after(run, cpu_id, cleared):
     """Scene payloads to play after beating this CPU, and the scenario's closing one if that cleared it."""
     entry = entry_of(run, cpu_id)
     return scenes.playable([entry and entry.scene_after, run.scenario.outro_scene if cleared and run.scenario else None],
-                           with_buffs=challenge.of(run) is not None)
+                           with_buffs=challenge.of(run) is not None, viewer=run.user)
 
 
 def game_finished(room, over, score=None):

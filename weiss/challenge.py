@@ -34,6 +34,13 @@ def of(arcade_run):
     return ChallengeRun.objects.filter(arcade_run=arcade_run, status=ChallengeRun.Status.ACTIVE).first() if arcade_run else None
 
 
+def narrative(arcade_run):
+    """Whether this arcade run is a narrative challenge's: its scenes do the talking, so the CPUs' own intro and
+    end-of-fight lines are left out."""
+    run = of(arcade_run)
+    return bool(run and run.kind == ChallengeRun.Kind.NARRATIVE)
+
+
 def deck_name(name):
     return f"{name} challenge"[:100]
 

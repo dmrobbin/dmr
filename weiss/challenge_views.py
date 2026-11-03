@@ -34,6 +34,13 @@ def narratives():
     return [n for n in NarrativeChallenge.objects.select_related("scenario") if n.scenario_id in ready and n.sets]
 
 
+def not_begun(room):
+    """Whether a fight is still to start: on the CPU's screen, or not yet past the player's first mulligan."""
+    state = room.state
+    return bool(state.get("cpu_intro") or (state.get("phase") == "mulligan" and state.get("game_number", 1) == 1
+                                           and str(room.host_id) not in state.get("mulligan_done", [])))
+
+
 def run_room(run):
     return GameRoom.objects.filter(arcade_run_id=run.arcade_run_id, host=run.user).first() if run.arcade_run_id else None
 
@@ -199,11 +206,11 @@ def challenge_fight(request):
         with transaction.atomic():
             room = GameRoom.objects.select_for_update().select_related("arcade_run").get(pk=room.pk)
             over = room.state.get("game_over")
-            if not over and room.state.get("cpu_intro"):
+            if not over and not_begun(room):
                 # Set up but not begun (say, a scene before it gave buffs): dealt again, with the deck as it is now.
                 queued = room.state.get("scenes")
                 room.state = {}
-                deal(room, intro=True)
+                deal(room, intro=not challenge.narrative(room.arcade_run))
                 if queued:
                     room.state["scenes"] = queued
                 room.version += 1

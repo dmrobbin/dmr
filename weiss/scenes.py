@@ -21,10 +21,11 @@ import re
 import secrets
 
 from . import buffs
-from .models import CpuProfile, Scene
+from .models import CpuProfile, PlayerProfile, Scene
 
 MAX_SCRIPT = 50_000
 NARRATOR = "narrator"
+PLAYER = "player"  # whoever's playing: always in the cast, with their name and avatar
 POSITIONS = ("far-left", "left", "center", "right", "far-right")
 ENTRANCES = ("fade", "slide", "rise", "drop", "zoom", "pop")  # exits are the same, played backwards
 ACTIONS = ("shake", "tremble", "bounce", "jump", "nod", "spin", "flip", "pulse", "flash", "sway", "glow", "wobble")
@@ -40,6 +41,8 @@ REFERENCE = [
     ("rapi: Hello, {player}!", "They speak. {player} is the player's name. A click goes on to the next line.", ": "),
     ("rapi (win): Ugh…", f"Speaks with another picture: {', '.join(EXPRESSIONS)}.", " (win): "),
     ("narrator: Night falls.", "Words from nobody in particular.", "narrator: "),
+    ("player: I'm ready.", "Whoever's playing speaks: their name, and their avatar beside the words. No cast line needed; "
+     "they can take the stage too (“player enters left”), as their avatar.", "player: "),
     ("rapi shows lose", "Changes their picture without speaking.", " shows "),
     ("rapi moves right", "Walks them to another place.", " moves "),
     ("rapi turns around", "Mirrors their picture, to face the other way; again to turn back.", " turns around"),
@@ -153,7 +156,7 @@ def compile_scene(script, find=find_cpu):
             name = match["id"].lower()
             if steps:
                 problem = "Cast everyone at the top, before anything happens."
-            elif name == NARRATOR or name in cast:
+            elif name in (NARRATOR, PLAYER) or name in cast:
                 problem = f"“{name}” is already taken."
             else:
                 profile, problem = find(match["who"])
@@ -201,17 +204,19 @@ def compile_scene(script, find=find_cpu):
             choice = step
         elif match := SAY.fullmatch(line):
             who = match["who"].lower()
-            if who != NARRATOR and who not in cast:
+            if who not in (NARRATOR, PLAYER) and who not in cast:
                 problem = f"Nobody's cast as “{who}”: add “cast {who} as …” at the top."
+            elif match["expression"] and who == PLAYER:
+                problem = "The player has just the one picture: their avatar."
             elif match["expression"] and match["expression"].lower() not in EXPRESSIONS:
                 problem = f"Pictures are {', '.join(EXPRESSIONS)}."
             step.update({"do": "say", "who": None if who == NARRATOR else who, "text": match["text"]})
             if match["expression"]:
                 step["expression"] = match["expression"].lower()
-        elif (match := DIRECTION.fullmatch(line)) and match["who"].lower() in cast:
+        elif (match := DIRECTION.fullmatch(line)) and match["who"].lower() in (*cast, PLAYER):
             step["who"] = match["who"].lower()
             problem = direction(step, match["verb"], (match["rest"] or "").strip())
-        elif match and match["who"].lower() not in cast and verb_of(match["verb"], DIRECTION_VERBS):
+        elif match and match["who"].lower() not in (*cast, PLAYER) and verb_of(match["verb"], DIRECTION_VERBS):
             problem = f"Nobody's cast as “{match['who'].lower()}”: add “cast {match['who'].lower()} as …” at the top."
         else:
             problem = "I don't understand this line. The reference lists what a line can say."
@@ -251,6 +256,8 @@ def direction(step, verb, rest):
             return f"Places are {', '.join(POSITIONS)}."
         step.update({"do": "move", "at": at})
     elif verb == "show":
+        if step["who"] == PLAYER:
+            return "The player has just the one picture: their avatar."
         if rest.lower() not in EXPRESSIONS:
             return f"Pictures are {', '.join(EXPRESSIONS)}."
         step.update({"do": "show", "expression": rest.lower()})
@@ -274,7 +281,7 @@ def direction(step, verb, rest):
 def cast_name(profile):
     """A short name to cast a CPU as: the first word of its name, or cpu12 if that won't do."""
     word = re.sub(r"[^a-z0-9_]", "", (profile.name.split() or [""])[0].lower())[:16]
-    return word if re.fullmatch(NAME, word) and word != NARRATOR else f"cpu{profile.pk}"
+    return word if re.fullmatch(NAME, word) and word not in (NARRATOR, PLAYER) else f"cpu{profile.pk}"
 
 
 def scene_list():
@@ -285,26 +292,34 @@ def scene_list():
     return found
 
 
-def scene_payload(scene, title="", key=""):
+def player_cast(viewer):
+    """The player, for the cast: the name and avatar of whoever's watching (`viewer`, a user), or "You"."""
+    profile = PlayerProfile.objects.filter(user=viewer).first() if viewer and viewer.pk else None
+    return {"name": viewer.username if viewer else "You", "player": True, "images": {}, "avatar": profile.avatar if profile else None}
+
+
+def scene_payload(scene, title="", key="", viewer=None):
     """What ScenePlayer needs, as JSON: the steps and labels, and for each of the cast their name, pictures and
-    avatar. `key` tells one showing apart from another, for a page playing scenes one after another."""
-    cast = {}
+    avatar, the player (`viewer`) among them. `key` tells one showing apart from another, for a page playing
+    scenes one after another."""
+    cast = {PLAYER: player_cast(viewer)}
     for name, profile in scene["cast"].items():
         images = {expression: profile.screen_url(expression) for expression in EXPRESSIONS}
         cast[name] = {"name": profile.name, "cpu": profile.pk, "images": {k: v for k, v in images.items() if v}, "avatar": profile.avatar}
     return {"key": key, "title": title, "cast": cast, "labels": scene["labels"], "steps": scene["steps"]}
 
 
-def playable(found, with_buffs=False, rng=random):
+def playable(found, with_buffs=False, rng=random, viewer=None):
     """Payloads for these Scene objects (None skipped), leaving out any whose script has mistakes: a run goes
     on without a scene rather than stopping for one being written. with_buffs: a challenge's, whose buffs
-    count (see buffs.resolve)."""
+    count (see buffs.resolve). viewer: the player, who can be in the scene."""
     payloads = []
     for scene in found:
         if scene:
             compiled, errors = compile_scene(scene.script)
             if not errors:
-                payloads.append(buffs.resolve(scene_payload(compiled, scene.name, f"{scene.pk}-{secrets.token_hex(4)}"), with_buffs, rng))
+                payload = scene_payload(compiled, scene.name, f"{scene.pk}-{secrets.token_hex(4)}", viewer)
+                payloads.append(buffs.resolve(payload, with_buffs, rng))
     return payloads
 
 

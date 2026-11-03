@@ -28,6 +28,12 @@ The other models play as standard does, apart from:
   room, it first uses what puts cards in there, such as brainstorm.
 - "hard" (Hard) plays as strategic does, and gets more aggressive the closer its opponent is to defeat: from
   its own aggression with the opponent at level 0 and an empty clock, up to the most there is at level 3, 6 clock.
+- "easy" (Easy) plays as standard does, carelessly, though always by the rules: it encores whatever it can pay
+  for, however little the card's worth; mostly turns down "you may" abilities and back row abilities, and backups;
+  keeps its opening hand; mostly puts any character it can play in any empty place, rather than building its
+  front line; clocks, levels up with and takes trigger rewards of any card, not the right one; plays any climax,
+  not its combos'; and attacks left to right, often into characters stronger than its own. Against standard,
+  with the same decks, it wins about one game in five.
 """
 import copy
 import random
@@ -37,7 +43,8 @@ from types import SimpleNamespace
 
 from . import abilities, game
 
-MODELS = {"standard": "Standard", "focused": "Focused", "strategic": "Strategic", "hard": "Hard mode"}
+MODELS = {"easy": "Easy", "standard": "Standard", "focused": "Focused", "strategic": "Strategic", "hard": "Hard mode"}
+EASY_SLIP = .75  # how often an easy CPU passes up a chance: an optional ability, a backup, a losing attack held back
 MIN_AGGRESSION = 1
 MAX_AGGRESSION = 5
 ENCORE_MIN_LEVEL = 2
@@ -714,4 +721,101 @@ class Hard(Strategic):
     """Strategic, with its aggression set by how close the opponent is to defeat (see hard_aggression)."""
 
 
-MINDS = {"standard": Mind, "focused": Focused, "strategic": Strategic, "hard": Hard}
+class Easy(Mind):
+    """Standard, played carelessly: every move is one the rules allow, just not a good one (see the module's notes)."""
+
+    def slip(self):
+        """Whether it passes up a chance this time."""
+        return self.rng.random() < EASY_SLIP
+
+    def mulligan(self):
+        if self.me in self.state.get("mulligan_done", []):
+            return None
+        return {"type": "mulligan", "uids": []}  # keeps whatever it's dealt
+
+    def level_up(self):
+        first = self.zones["clock"][:game.LEVEL_UP_AT]
+        return {"type": "level_up", "uid": self.rng.choice(first)["uid"]}
+
+    def worth_encore(self, card):
+        """Whatever it can pay for, however little the card's worth and whatever the stock was for."""
+        return len(self.zones["stock"]) >= game.ENCORE_COST and not game.has_status(self.state, card["uid"], "no_encore")
+
+    def counter(self, attack):
+        return {"type": "no_counter"} if self.slip() else super().counter(attack)
+
+    def clock(self):
+        action = super().clock()
+        if action["type"] == "clock_draw":
+            action["uid"] = self.rng.choice(self.zones["hand"])["uid"]  # not its least useful card: any of them
+        return action
+
+    def combo_live(self, card):
+        return False  # it doesn't plan around its climax combos
+
+    def main(self):
+        """Mostly, a character that's to go on the stage goes to any empty place, not the one that does the most."""
+        action = super().main()
+        stage = self.side["stage"]
+        playing = action and action.get("type") == "move" and action.get("to") in game.STAGE_SLOTS \
+            and any(c["uid"] == action["uid"] for c in self.zones["hand"])
+        if playing and self.slip():
+            empty = [slot for slot in game.STAGE_SLOTS if not stage[slot]]
+            playable = [c for c in self.zones["hand"] if self.kind(c) == "character" and self.can_play(c)]
+            if empty and playable:
+                return {"type": "move", "uid": self.rng.choice(playable)["uid"], "to": self.rng.choice(empty)}
+        return action
+
+    def play_climax(self):
+        if self.zones["climax"]:
+            return None
+        climaxes = [c for c in self.zones["hand"] if self.kind(c) == "climax" and self.can_play(c)]
+        return {"type": "move", "uid": self.rng.choice(climaxes)["uid"], "to": "climax"} if climaxes else None
+
+    def declare(self):
+        """Left to right, not biggest first, and often into characters stronger than its own."""
+        if not game.can_attack(self.state, self.me):
+            return None
+        for slot, facing in game.OPPOSITE.items():
+            card = self.side["stage"][slot]
+            if not card or card["pos"] != "stand":
+                continue
+            bans = game.attack_bans(self.state, self.me, card, self.env)
+            if "all" in bans:
+                continue
+            enemy = self.their_side["stage"][facing]
+            if not enemy:
+                return {"type": "attack", "uid": card["uid"], "kind": "direct"}
+            beats = self.stat(card, "power") >= self.stat(enemy, "power")
+            if "front" not in bans and (beats or self.slip() or "side" in bans):
+                return {"type": "attack", "uid": card["uid"], "kind": "front"}
+            if "side" not in bans:
+                return {"type": "attack", "uid": card["uid"], "kind": "side"}
+        return None
+
+    def trigger_choice(self, prompt):
+        action = super().trigger_choice(prompt)
+        options = [c for c in self.zones["waiting"] if c["uid"] in prompt.get("options", [])]
+        if action.get("uid") and options:
+            action["uid"] = self.rng.choice(options)["uid"]
+        return action
+
+    def hand_ability(self):
+        return None if self.slip() else super().hand_ability()
+
+    def trigger_ability(self):
+        """One that starts "you may" is its to turn down, when it triggers, and it mostly does."""
+        action = super().trigger_ability()
+        entry = next(e for e in self.state["ability_queue"] if e["id"] == action["id"])
+        if (entry["ability"].get("steps") or [{}])[0].get("do") == "may" and self.slip():
+            action["accept"] = False
+        return action
+
+    def answer(self, res):
+        """"You may" mostly gets a no: it seldom bothers with what it doesn't have to do."""
+        if res["prompt"].get("for") == "may" and self.slip():
+            return {"type": "ability_answer", "value": "no"}
+        return super().answer(res)
+
+
+MINDS = {"standard": Mind, "focused": Focused, "strategic": Strategic, "hard": Hard, "easy": Easy}

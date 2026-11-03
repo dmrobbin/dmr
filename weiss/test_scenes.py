@@ -138,6 +138,30 @@ class CompileTests(TestCase):
         self.assertEqual(payload["cast"]["anis"]["images"], {})  # no pictures: the player shows its avatar or a letter
         self.assertEqual(payload["cast"]["anis"]["name"], "Anis")
 
+    def test_the_player_is_always_in_the_cast(self):
+        scene, errors = scenes.compile_scene("cast rapi as Rapi\nplayer enters left with slide\nplayer: I'm here.\nplayer bounces\nrapi: Good.")
+        self.assertEqual(errors, [])
+        self.assertEqual(scene["steps"][0], {"line": 2, "do": "enter", "who": "player", "at": "left", "how": "slide"})
+        self.assertEqual(scene["steps"][1], {"line": 3, "do": "say", "who": "player", "text": "I'm here."})
+        errors = dict(scenes.compile_scene("cast player as Rapi\nplayer (win): Hm.\nplayer shows lose\nrapi: x")[1])
+        self.assertIn("already taken", errors[1])
+        self.assertIn("one picture", errors[2])
+        self.assertIn("one picture", errors[3])
+
+    def test_the_player_in_the_payload_is_whoever_is_watching(self):
+        from django.contrib.auth.models import User
+        from .models import Card, PlayerProfile
+        viewer = User.objects.create_user("daryl", password="x")
+        card = Card.objects.create(serial_number="T/1", name="Rapi", expansion="E", expansion_id=1)
+        PlayerProfile.objects.create(user=viewer, avatar_card=card)
+        scene, _ = scenes.compile_scene("player: Hi.")
+        player = scenes.scene_payload(scene, viewer=viewer)["cast"]["player"]
+        self.assertEqual((player["name"], player["player"], player["images"]), ("daryl", True, {}))
+        self.assertIn(f"/cards/{card.pk}/image/", player["avatar"]["image"])
+        nobody = scenes.scene_payload(scene)["cast"]["player"]
+        self.assertEqual((nobody["name"], nobody["avatar"]), ("You", None))
+        self.assertEqual(scenes.cast_name(CpuProfile(pk=4, name="Player One")), "cpu4")
+
     def test_cast_names(self):
         self.assertEqual(scenes.cast_name(self.rapi), "rapi")
         self.assertEqual(scenes.cast_name(CpuProfile(pk=7, name="“Glass Slippers” Cinderella")), "glass")

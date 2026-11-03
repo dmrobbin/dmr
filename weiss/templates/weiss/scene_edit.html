@@ -17,7 +17,10 @@
           <button type="submit" class="button-small" name="then" value="play">Save &amp; play</button>
         </div>
       </div>
-      <textarea name="script" class="scene-script" spellcheck="false" maxlength="{{ max_script }}" aria-label="Script" data-scene-script>{{ scene.script }}</textarea>
+      <div class="scene-script-wrap">
+        <div class="scene-gutter" aria-hidden="true" data-scene-gutter></div>
+        <textarea name="script" class="scene-script" spellcheck="false" wrap="off" maxlength="{{ max_script }}" aria-label="Script" data-scene-script>{{ scene.script }}</textarea>
+      </div>
       <div class="scene-problems" aria-live="polite" data-scene-problems>
         {% if errors %}
           <p class="small panel-error">{{ errors|length }} mistake{{ errors|length|pluralize }} to fix before it can be played:</p>

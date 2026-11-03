@@ -114,6 +114,7 @@
 {% endblock %}
 
 {% block weiss_scripts %}
+  {% load static %}<script src="{% static 'weiss/set_picker.js' %}" defer></script>
   <script>
     // Saving a form reloads the page, so which boxes are open is remembered in this browser.
     (() => {

@@ -71,9 +71,11 @@ def cpu_payload(room):
         payload["intro"] = True
     profile = room.cpu_profile
     if profile:
+        # In a narrative challenge the scenes say what the CPUs have to say, so their own lines are left out.
+        said = not challenge.narrative(room.arcade_run)
         payload["cpu"] = {"name": profile.name, "image": profile.image_url, "images": {screen: profile.screen_url(screen) for screen in ("intro", "win", "lose")},
-                          "picture": profile.avatar, "intro": profile.intro_text,
-                          "win": profile.player_win_text, "lose": profile.player_lose_text}
+                          "picture": profile.avatar, "intro": profile.intro_text if said else "",
+                          "win": profile.player_win_text if said else "", "lose": profile.player_lose_text if said else ""}
     else:  # it was deleted during the game
         payload["cpu"] = {"name": room.cpu_name, "image": "", "images": {}, "picture": None, "intro": "", "win": "", "lose": ""}
     run = room.arcade_run
@@ -181,10 +183,11 @@ def room_vs_cpu(request):
 
 def seat_cpu(room, profile, scenes=()):
     """This CPU in the other seat, and a new match against it, starting on its screen, after any scenes
-    (payloads from weiss.scenes) the board has to play first."""
+    (payloads from weiss.scenes) the board has to play first. A narrative challenge's fights skip the CPU's
+    screen: its scenes have introduced them."""
     room.guest, room.guest_deck, room.cpu_name, room.cpu_profile = cpu_user(), profile.deck, profile.name, profile
     room.state = {}
-    deal(room, intro=True)
+    deal(room, intro=not challenge.narrative(room.arcade_run))
     if scenes:
         room.state["scenes"] = list(scenes)
 

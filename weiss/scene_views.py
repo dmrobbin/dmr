@@ -74,7 +74,7 @@ def scene_play(request, pk):
     start = request.GET.get("from", "").lower()
     return render(request, "weiss/scene_play.html", {
         # Buffs show as a challenge's player would see them; nothing is given from here.
-        "scene": scene, "payload": buffs.resolve(scenes.scene_payload(compiled, scene.name), True), "labels": sorted(compiled["labels"]),
+        "scene": scene, "payload": buffs.resolve(scenes.scene_payload(compiled, scene.name, viewer=request.user), True), "labels": sorted(compiled["labels"]),
         "start": start if start in compiled["labels"] else "", "player_name": request.user.username,
     })
 

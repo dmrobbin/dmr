@@ -9,10 +9,17 @@
     </select>
   </label>
   <label class="small narrative-wide">Story <textarea name="description" rows="2" maxlength="2000" placeholder="What players read before they start">{{ description }}</textarea></label>
-  <label class="small narrative-wide">Sets its packs come from <span class="muted">(Ctrl-click for more than one)</span>
-    <select name="sets" multiple size="6" required>
-      {% for set in pack_sets %}<option value="{{ set.id }}"{% if set.id in chosen %} selected{% endif %}>{{ set.name }}</option>{% endfor %}
-    </select>
-  </label>
+  {# A searchable checklist of sets, the chosen ones shown above it (set_picker.js); without script, just the checklist. #}
+  <fieldset class="set-picker narrative-wide" data-set-picker>
+    <legend class="small">Sets its packs come from</legend>
+    <ul class="set-picker-chosen" data-set-chosen aria-label="Chosen sets"></ul>
+    <input type="search" class="set-picker-search" placeholder="Search {{ pack_sets|length }} sets…" aria-label="Search sets" data-set-search>
+    <ul class="set-picker-list" data-set-list>
+      {% for set in pack_sets %}
+        <li data-name="{{ set.name }}"><label class="small"><input type="checkbox" name="sets" value="{{ set.id }}"{% if set.id in chosen %} checked{% endif %}> {{ set.name }} <span class="muted">· {{ set.cards }} cards</span></label></li>
+      {% endfor %}
+    </ul>
+    <p class="muted small" data-set-none hidden>No sets match.</p>
+  </fieldset>
   <button type="submit" class="button-small{% if action %} secondary{% endif %}">{{ button }}</button>
 </form>

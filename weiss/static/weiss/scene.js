@@ -59,7 +59,7 @@
           <div class="vn-actors"></div>
           <div class="vn-veil"></div>
           <div class="vn-flash"></div>
-          <div class="vn-box" hidden aria-live="polite"><div class="vn-name"></div><p class="vn-text"></p><span class="vn-next" aria-hidden="true">&#9660;</span></div>
+          <div class="vn-box" hidden aria-live="polite"><span class="vn-speaker" hidden></span><div class="vn-name"></div><p class="vn-text"></p><span class="vn-next" aria-hidden="true">&#9660;</span></div>
           <div class="vn-choices" hidden><p class="vn-prompt"></p><div class="vn-options"></div></div>
         </div>`;
       this.stage = root.querySelector(".vn-stage");
@@ -69,6 +69,7 @@
       this.flashEl = root.querySelector(".vn-flash");
       this.box = root.querySelector(".vn-box");
       this.nameEl = root.querySelector(".vn-name");
+      this.speakerEl = root.querySelector(".vn-speaker");
       this.textEl = root.querySelector(".vn-text");
       this.choicesEl = root.querySelector(".vn-choices");
       // Pictures load before they're needed.
@@ -180,6 +181,12 @@
       this.box.classList.toggle("vn-narration", !cast);
       this.nameEl.textContent = cast ? cast.name : "";
       this.nameEl.hidden = !cast;
+      this.nameEl.classList.toggle("vn-name-player", Boolean(cast && cast.player));
+      // Someone speaking from off the stage (the player, usually) shows their avatar beside their words.
+      const offstage = cast && !this.actors[step.who];
+      this.speakerEl.hidden = !offstage;
+      this.box.classList.toggle("vn-has-speaker", Boolean(offstage));
+      if (offstage) this.speakerEl.innerHTML = this.avatar(cast);
       const text = this.fill(step.text);
       return new Promise((resolve) => {
         this.textEl.textContent = "";
@@ -311,8 +318,13 @@
     face(cast, expression) {
       const url = cast.images[expression] || cast.images.main;
       if (url) return `<img class="vn-picture" src="${esc(url)}" alt="${esc(cast.name)}" draggable="false">`;
+      return this.avatar(cast, "vn-avatar");
+    }
+
+    // Their avatar, a circle cut from a card, or the first letter of their name if they haven't one.
+    avatar(cast, extraClass = "") {
       const avatar = cast.avatar;
-      return `<span class="vn-avatar avatar" role="img" aria-label="${esc(cast.name)}">${avatar
+      return `<span class="${extraClass} avatar" role="img" aria-label="${esc(cast.name)}">${avatar
         ? `<img src="${esc(avatar.image)}" alt="" draggable="false" style="width:${avatar.width}%;left:${avatar.left}%;top:${avatar.top}%">`
         : `<span class="avatar-letter">${esc(cast.name.slice(0, 1).toUpperCase())}</span>`}</span>`;
     }
