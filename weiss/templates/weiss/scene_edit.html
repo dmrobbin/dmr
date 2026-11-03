@@ -41,6 +41,8 @@
       </ul>
       <h3>Animations</h3>
       <ul class="scene-chips">{% for animation in animations %}<li><button type="button" class="scene-chip" data-insert="{{ animation }}">{{ animation }}</button></li>{% endfor %}</ul>
+      <h3>Buffs (in challenges)</h3>
+      <ul class="scene-chips">{% for buff in buffs %}<li><button type="button" class="scene-chip" data-insert="give {{ buff.id }}" title="{{ buff.name }}: {{ buff.description }}">{{ buff.id }}</button></li>{% endfor %}</ul>
       <h3>Lines</h3>
       <dl class="scene-commands">
         {% for example, meaning, insert in reference %}

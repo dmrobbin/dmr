@@ -26,6 +26,9 @@
       </dl>
       <h2>Choices made</h2>
       <ol class="small" data-debug-choices></ol>
+      <h2>Buffs given</h2>
+      <ul class="small" data-debug-buffs></ul>
+      <p class="muted small">In a challenge these would be the player's at the end of the scene; testing gives nothing.</p>
       <p class="small muted">Click the stage, or press Space, to go on. Number keys pick options.</p>
       <div class="scene-debug-end" data-debug-end hidden>
         <p><strong>The end</strong> <span class="muted small" data-debug-end-line></span></p>
@@ -50,11 +53,19 @@
           item.textContent = `Line ${choice.line}: ${choice.text}`;
           list.appendChild(item);
         }
+        const given = $("[data-debug-buffs]");
+        given.innerHTML = "";
+        for (const buff of state.buffs) {
+          const item = document.createElement("li");
+          item.textContent = buff.name;
+          given.appendChild(item);
+        }
       };
       const player = new ScenePlayer($("[data-scene-root]"), scene, {
         playerName: "{{ player_name|escapejs }}",
         onStep: (step, state) => show(state),
         onChoice: () => show(player.state()),
+        onBuff: () => show(player.state()),
         onEnd: (state) => {
           show(state);
           $("[data-debug-end-line]").textContent = `at line ${state.line}`;

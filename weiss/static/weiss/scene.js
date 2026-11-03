@@ -4,7 +4,9 @@
      player.start();            // from the top, or player.start("label")
 
    onStep(step, state) is called as each step begins, onChoice(step, option) when the player picks, and
-   onEnd(state) when the scene ends; state is { line, flags: [...], choices: [{ line, prompt, text }] }.
+   onEnd(state) when the scene ends; state is { line, flags: [...], choices: [{ line, prompt, text }], buffs }.
+   buffs are those the scene gave (weiss.buffs), [{ step, option, buff, name }]: step is where in scene.steps,
+   and option which of its options (null for a plain "give"), for the server to check them against the scene.
    Stage directions (entering, moving, animating) play while the script carries on, one after another for
    each actor; dialogue waits for a click (or Space / Enter / →), and a choice for an option (or its number). */
 (() => {
@@ -90,6 +92,8 @@
       this.actorsEl.innerHTML = "";
       this.flags = new Set();
       this.choices = [];
+      this.buffs = [];
+      this.stage.querySelectorAll(".vn-reward").forEach((card) => card.remove());
       this.line = 0;
       this.typing = null;
       this.waiting = null;
@@ -100,7 +104,7 @@
     }
 
     state() {
-      return { line: this.line, flags: [...this.flags], choices: [...this.choices] };
+      return { line: this.line, flags: [...this.flags], choices: [...this.choices], buffs: [...this.buffs] };
     }
 
     async run(token) {
@@ -112,10 +116,11 @@
           this.finish();
           return;
         }
+        const at = this.index;
         this.index += 1;
         this.line = step.line;
         if (this.options.onStep) this.options.onStep(step, this.state());
-        const waits = this.perform(step);
+        const waits = this.perform(step, at);
         if (waits) {
           idle = 0;
           await waits;
@@ -132,12 +137,14 @@
       if (this.options.onEnd) this.options.onEnd(this.state());
     }
 
-    // Does a step. Returns a promise if the scene should wait for it, else nothing.
-    perform(step) {
+    // Does a step (steps[at]). Returns a promise if the scene should wait for it, else nothing.
+    perform(step, at) {
       const actor = step.who ? this.actors[step.who] : null;
       switch (step.do) {
         case "say": return this.say(step);
-        case "choice": return this.choose(step);
+        case "choice": return this.choose(step, at);
+        case "offer": return this.choose(step, at);
+        case "give": return this.reward(step, at);
         case "wait": return sleep(step.seconds * 1000);
         case "goto": this.index = this.scene.labels[step.label]; return null;
         case "if":
@@ -214,24 +221,52 @@
       }
     }
 
-    choose(step) {
+    // A buff, given: shown until a click, and counted.
+    reward(step, at) {
+      this.gain(at, null, step.buff, step.name);
+      this.box.hidden = true;
+      const card = document.createElement("div");
+      card.className = "vn-reward";
+      card.innerHTML = `<p class="vn-reward-kicker">Reward</p><p class="vn-reward-name">${esc(step.name)}</p><p class="vn-reward-text">${esc(step.text)}</p>`;
+      this.stage.appendChild(card);
+      return new Promise((resolve) => {
+        this.waiting = () => {
+          card.remove();
+          resolve();
+        };
+      });
+    }
+
+    gain(at, option, buff, name) {
+      if (this.buffs.some((given) => given.step === at)) return; // once per step, as the server counts them
+      this.buffs.push({ step: at, option, buff, name });
+      if (this.options.onBuff) this.options.onBuff(buff, name);
+    }
+
+    // A choice, or an offer of buffs: an offer's options are the buffs, with what each does.
+    choose(step, at) {
+      const offer = step.do === "offer";
       this.box.hidden = true;
       this.choicesEl.hidden = false;
       const prompt = this.choicesEl.querySelector(".vn-prompt");
       prompt.textContent = this.fill(step.prompt);
       prompt.hidden = !step.prompt;
       const options = this.choicesEl.querySelector(".vn-options");
-      options.innerHTML = step.options.map((option, i) =>
-        `<button type="button" class="vn-option" data-i="${i}"><span class="vn-key">${i + 1}</span>${esc(this.fill(option.text))}</button>`).join("");
+      options.innerHTML = step.options.map((option, i) => offer
+        ? `<button type="button" class="vn-option vn-buff" data-i="${i}"><span class="vn-key">${i + 1}</span><span><strong>${esc(option.name)}</strong><span class="vn-buff-text">${esc(option.text)}</span></span></button>`
+        : `<button type="button" class="vn-option" data-i="${i}"><span class="vn-key">${i + 1}</span>${esc(this.fill(option.text))}</button>`).join("");
       options.querySelector(".vn-option").focus({ preventScroll: true });
       return new Promise((resolve) => {
         options.onclick = (event) => {
           const button = event.target.closest(".vn-option");
           if (!button) return;
-          const option = step.options[Number(button.dataset.i)];
+          const i = Number(button.dataset.i);
+          const option = step.options[i];
           options.onclick = null;
           this.choicesEl.hidden = true;
-          this.choices.push({ line: step.line, prompt: step.prompt, text: option.text });
+          this.choices.push({ line: step.line, prompt: step.prompt, text: offer ? option.name : option.text });
+          if (offer) this.gain(at, i, option.buff, option.name);
+          else if (option.give) this.gain(at, i, option.give, option.give_name || option.give);
           if (option.set) this.flags.add(option.set);
           if (option.unset) this.flags.delete(option.unset);
           if (option.goto) this.index = this.scene.labels[option.goto];

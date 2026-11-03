@@ -12,10 +12,10 @@ from django.views.decorators.http import require_POST
 
 from core.access import weiss_access_required
 
-from . import arcade, challenge, packs
+from . import arcade, buffs, challenge, packs
 from .lists import DECK_GROUPS, DECK_SIZE
-from .models import ArcadeRun, ArcadeScenario, ChallengeRun, GameRoom, NarrativeChallenge
-from .play import seat_cpu
+from .models import ArcadeRun, ArcadeScenario, Card, ChallengeRun, GameRoom, NarrativeChallenge
+from .play import deal, seat_cpu
 
 
 def challenge_access(view):
@@ -47,11 +47,63 @@ def challenge_home(request):
     deck_total = sum(run.deck.entries.values_list("quantity", flat=True)) if run.deck else 0
     names = {entry["id"]: entry["name"] for entry in packs.pack_sets()}
     return render(request, "weiss/challenge.html", {
-        "run": run, "sets": challenge.allowed_sets(run), "deck_total": deck_total, "deck_size": DECK_SIZE,
+        "run": run, "sets": challenge.allowed_sets(run), "deck_total": deck_total, "deck_size": DECK_SIZE, **reward_context(run),
         "pulled": sum(run.pool.values()), "arcade_run": run.arcade_run, "room": run_room(run), "win_packs": challenge.WIN_PACKS,
         "lineup": arcade.lineup(run.scenario, request.user) if run.scenario else [],
         "set_names": [names.get(pk, f"Set {pk}") for pk in run.sets],
     })
+
+
+def reward_context(run):
+    """The rewards waiting to be claimed, and what each kind of claim chooses from."""
+    rewards = [{**reward, "buff": buffs.BUFFS[reward["buff"]]} for reward in run.rewards if reward["buff"] in buffs.BUFFS]
+    kinds = {reward["buff"].claim for reward in rewards}
+    context = {"rewards": rewards, "levels": buffs.LEVELS, "colors": buffs.COLORS, "trade_in": buffs.TRADE_IN}
+    if kinds & {"exchange", "trade_in"}:
+        context["pool"] = [(card, pulled) for card, pulled, _ in challenge.pool_cards(run)]
+    if "deck_card" in kinds and run.deck:
+        context["deck_cards"] = [entry.card for entry in run.deck.entries.select_related("card").order_by("card__level", "card__name")]
+    if "climax" in kinds:
+        context["climaxes"] = buffs.climax_choices(run)
+    if "pack" in kinds:
+        context["all_sets"] = packs.pack_sets()
+    return context
+
+
+@challenge_access
+@require_POST
+def challenge_claim(request):
+    """Claim a reward with what the player chose. A pack is then shown being opened."""
+    run = challenge.current(request.user)
+    if not run:
+        return redirect("weiss:arcade_challenge")
+    try:
+        with transaction.atomic():
+            run = ChallengeRun.objects.select_for_update().get(pk=run.pk)
+            opened = buffs.claim(run, request.POST.get("key", ""), request.POST)
+    except ValueError as error:
+        messages.error(request, str(error))
+        return redirect("weiss:arcade_challenge")
+    if opened:
+        return redirect("weiss:arcade_challenge_opened")
+    messages.success(request, "Claimed. Your pool's changed: have a look at your deck.")
+    return redirect("weiss:arcade_challenge")
+
+
+@challenge_access
+def challenge_exchange(request):
+    """An exchange's second step: what the chosen card can be swapped for."""
+    run = challenge.current(request.user)
+    reward = run and buffs.reward_of(run, request.GET.get("key", ""))
+    card = Card.objects.filter(pk=buffs.number(request.GET, "give")).first()
+    if not reward or not card or str(card.pk) not in run.pool:
+        messages.error(request, "Choose a card from your pool to swap.")
+        return redirect("weiss:arcade_challenge")
+    choices = buffs.exchange_choices(card)
+    for choice in [card, *choices]:
+        choice.image_src = reverse("weiss:card_image", args=[choice.pk])
+    return render(request, "weiss/challenge_exchange.html", {"run": run, "reward": reward, "card": card, "choices": choices,
+                                                             "rarity": packs.rarity_of(card)})
 
 
 @challenge_access
@@ -139,12 +191,32 @@ def challenge_fight(request):
     run = challenge.current(request.user)
     if not run or run.status != ChallengeRun.Status.ACTIVE:
         return redirect("weiss:arcade_challenge")
-    room = run_room(run)
-    if room:
-        return redirect("weiss:play_room", pk=room.pk)
     if not run.deck or not run.deck.entries.exists():
         messages.error(request, "Your deck is empty: open some packs and build it first.")
         return redirect("weiss:arcade_challenge")
+    room = run_room(run)
+    if room:
+        with transaction.atomic():
+            room = GameRoom.objects.select_for_update().select_related("arcade_run").get(pk=room.pk)
+            over = room.state.get("game_over")
+            if not over and room.state.get("cpu_intro"):
+                # Set up but not begun (say, a scene before it gave buffs): dealt again, with the deck as it is now.
+                queued = room.state.get("scenes")
+                room.state = {}
+                deal(room, intro=True)
+                if queued:
+                    room.state["scenes"] = queued
+                room.version += 1
+                room.save()
+            elif over and not room.state.get("scenes") and room.arcade_run and room.arcade_run.status == ArcadeRun.Status.ACTIVE:
+                # Between fights: on to the next one, or the same one again after a second chance.
+                won = over["winner"] == str(room.host_id)
+                profile = arcade.current_cpu(room.arcade_run)
+                if profile:
+                    seat_cpu(room, profile, arcade.scenes_before(room.arcade_run, profile) if won else ())
+                    room.version += 1
+                    room.save()
+        return redirect("weiss:play_room", pk=room.pk)
     if GameRoom.objects.filter(host=request.user).count() >= GameRoom.MAX_OPEN_ROOMS:
         messages.error(request, f"You already host {GameRoom.MAX_OPEN_ROOMS} rooms; delete an old one first.")
         return redirect("weiss:arcade_challenge")

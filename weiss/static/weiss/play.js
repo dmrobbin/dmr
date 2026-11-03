@@ -299,14 +299,18 @@
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-label", scene.title || "Scene");
     overlay.innerHTML = `<div class="scene-overlay-stage"></div><button type="button" class="scene-skip">Skip scene</button>`;
+    let player = null;
+    // With the buffs it gave, if any: in a challenge they're the player's now (the server checks them against the scene).
     const done = () => {
       overlay.remove();
-      act({ type: "scene_done", key: scene.key });
+      const buffs = player ? player.state().buffs.map((given) => [given.step, given.option]) : [];
+      act({ type: "scene_done", key: scene.key, buffs });
     };
     overlay.querySelector(".scene-skip").addEventListener("click", done, { once: true });
     setTimeout(() => {
       document.body.appendChild(overlay);
-      new ScenePlayer(overlay.querySelector(".scene-overlay-stage"), scene, { playerName: sceneViewer, onEnd: () => setTimeout(done, 600) }).start();
+      player = new ScenePlayer(overlay.querySelector(".scene-overlay-stage"), scene, { playerName: sceneViewer, onEnd: () => setTimeout(done, 600) });
+      player.start();
     }, board && board.game_over ? 1600 : 0);
   }
 
@@ -1345,9 +1349,11 @@
       <button type="button" class="game-over-end" data-act='{"type":"end_match"}'>End match</button>`;
     }
     if (arcade.challenge) {
-      if (arcade.cleared || !over.won) return `<button type="button" data-act='{"type":"challenge_leave"}'>See how it ended</button>`;
-      return `<button type="button" data-act='{"type":"arcade_continue"}'>Next fight</button>
-        <button type="button" class="game-over-end" data-act='{"type":"challenge_leave"}' title="Open your ${arcade.challenge.won} new packs and change your deck, then come back for the next fight">Packs &amp; deck</button>`;
+      const trial = arcade.challenge;
+      if (!trial.going) return `<button type="button" data-act='{"type":"challenge_leave"}'>See how it ended</button>`;
+      const deck = `<button type="button" class="game-over-end" data-act='{"type":"challenge_leave"}' title="Open packs, claim rewards and change your deck, then come back for the fight">${trial.rewards ? "Rewards, packs &amp; deck" : "Packs &amp; deck"}</button>`;
+      if (!over.won) return `<button type="button" data-act='{"type":"arcade_retry"}'>Fight again</button>${deck}`; // a second chance
+      return `<button type="button" data-act='{"type":"arcade_continue"}'>Next fight</button>${deck}`;
     }
     if (arcade.cleared) return `<button type="button" data-act='{"type":"arcade_quit"}'>Finish</button>`;
     return `<button type="button" data-act='{"type":"${over.won ? "arcade_continue" : "arcade_retry"}"}'>${over.won ? "Continue" : "Retry"}</button>
@@ -1386,7 +1392,7 @@
           <p class="game-over-reason">${reason}</p>
           ${over.score ? scoreLines(over.score) : ""}
           ${arcade && arcade.challenge && over.won ? `<p class="game-over-arcade">+${arcade.challenge.won} packs · ${arcade.challenge.packs} to open</p>` : ""}
-          ${arcade && arcade.challenge && !over.won ? `<p class="game-over-arcade">The challenge is over.</p>` : ""}
+          ${arcade && arcade.challenge && !over.won ? `<p class="game-over-arcade">${arcade.challenge.going ? `A second chance: you can fight again${arcade.challenge.lives ? ` (${arcade.challenge.lives} more left)` : ""}.` : "The challenge is over."}</p>` : ""}
           ${arcade ? `<p class="game-over-arcade">${arcade.cleared ? `🏆 ${esc(arcade.scenario)} cleared!` : over.won ? `Up next: fight ${arcade.fight} of ${arcade.total}` : `${esc(arcade.scenario)}: fight ${arcade.fight} of ${arcade.total}`}${arcade.score ? ` · run score ${arcade.score}` : ""}</p>` : ""}
           <p class="game-over-status" data-game-over-status></p>
           <div class="game-over-buttons" data-game-over-buttons></div></div>`;

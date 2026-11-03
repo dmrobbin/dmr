@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from . import scenes
+from . import buffs, scenes
 from .cpu_views import staff_required
 from .models import CpuProfile, Scene
 
@@ -50,7 +50,7 @@ def scene_edit(request, pk):
     return render(request, "weiss/scene_edit.html", {
         "scene": scene, "errors": errors, "labels": sorted(compiled["labels"]), "reference": scenes.REFERENCE,
         "profiles": profiles, "max_script": scenes.MAX_SCRIPT,
-        "animations": scenes.ACTIONS,
+        "animations": scenes.ACTIONS, "buffs": buffs.BUFFS.values(),
     })
 
 
@@ -73,7 +73,8 @@ def scene_play(request, pk):
         return redirect("weiss:cpu_scene_edit", pk=scene.pk)
     start = request.GET.get("from", "").lower()
     return render(request, "weiss/scene_play.html", {
-        "scene": scene, "payload": scenes.scene_payload(compiled, scene.name), "labels": sorted(compiled["labels"]),
+        # Buffs show as a challenge's player would see them; nothing is given from here.
+        "scene": scene, "payload": buffs.resolve(scenes.scene_payload(compiled, scene.name), True), "labels": sorted(compiled["labels"]),
         "start": start if start in compiled["labels"] else "", "player_name": request.user.username,
     })
 

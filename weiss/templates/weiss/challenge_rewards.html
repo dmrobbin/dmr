@@ -1,0 +1,51 @@
+{# Buffs from scenes, waiting to be claimed (challenge_views.reward_context). #}
+<section class="challenge-rewards">
+  <h3>Rewards to claim</h3>
+  <p class="muted small">From the story so far. Claim them, then look at your deck before the next fight.</p>
+  <ul class="reward-list">
+    {% for reward in rewards %}
+      <li class="reward">
+        <p class="reward-name">✦ {{ reward.buff.name }}{% if reward.source %} <span class="muted small">from “{{ reward.source }}”</span>{% endif %}</p>
+        <p class="small">{{ reward.buff.description }}</p>
+        {% with kind=reward.buff.claim %}
+        <form method="{% if kind == 'exchange' %}get{% else %}post{% endif %}" action="{% if kind == 'exchange' %}{% url 'weiss:arcade_challenge_exchange' %}{% else %}{% url 'weiss:arcade_challenge_claim' %}{% endif %}" class="cpu-form reward-form">
+          {% if kind != "exchange" %}{% csrf_token %}{% endif %}
+          <input type="hidden" name="key" value="{{ reward.key }}">
+          {% if kind == "pack" %}
+            <label class="small">Set
+              <select name="set" required>
+                {% if reward.buff.pack == "wild" %}{% for set in all_sets %}<option value="{{ set.id }}">{{ set.name }}</option>{% endfor %}
+                {% else %}{% for set in sets %}<option value="{{ set.id }}">{{ set.name }}</option>{% endfor %}{% endif %}
+              </select>
+            </label>
+            {% if reward.buff.pack == "level" %}<label class="small">Level <select name="level">{% for level in levels %}<option value="{{ level }}">{{ level }}</option>{% endfor %}</select></label>{% endif %}
+            {% if reward.buff.pack == "color" %}<label class="small">Color <select name="color">{% for color in colors %}<option>{{ color }}</option>{% endfor %}</select></label>{% endif %}
+            <button type="submit" class="button-small">Open it</button>
+          {% elif kind == "deck_card" %}
+            {% if deck_cards %}
+              <label class="small">Card <select name="card">{% for card in deck_cards %}<option value="{{ card.pk }}">{{ card.name }}</option>{% endfor %}</select></label>
+              <button type="submit" class="button-small">Add the copies</button>
+            {% else %}<span class="muted small">Put some cards in your deck first.</span>{% endif %}
+          {% elif kind == "exchange" %}
+            <label class="small">Swap away <select name="give">{% for card, pulled in pool %}<option value="{{ card.pk }}">{{ card.name }} ({{ card.rarity }})</option>{% endfor %}</select></label>
+            <button type="submit" class="button-small">See what for</button>
+          {% elif kind == "climax" %}
+            <label class="small">Climax <select name="card">{% for card in climaxes %}<option value="{{ card.pk }}">{{ card.name }} · {{ card.expansion }}</option>{% endfor %}</select></label>
+            <button type="submit" class="button-small"{% if not climaxes %} disabled{% endif %}>Add them</button>
+          {% elif kind == "trade_in" %}
+            <details class="reward-trade">
+              <summary class="small">Choose {{ trade_in }} cards to give up</summary>
+              <ul class="reward-trade-list">
+                {% for card, pulled in pool %}
+                  <li><label class="small"><input type="number" name="trade-{{ card.pk }}" min="0" max="{{ pulled }}" value="0"> {{ card.name }} <span class="muted">({{ pulled }} pulled)</span></label></li>
+                {% endfor %}
+              </ul>
+              <button type="submit" class="button-small">Trade them in</button>
+            </details>
+          {% endif %}
+        </form>
+        {% endwith %}
+      </li>
+    {% endfor %}
+  </ul>
+</section>

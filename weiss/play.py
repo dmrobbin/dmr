@@ -22,7 +22,7 @@ from django.views.decorators.http import require_POST
 from core import s3
 from core.access import has_weiss_access, weiss_access_required
 
-from . import arcade, challenge, cpu, game, lists, packs, scoring
+from . import arcade, buffs, challenge, cpu, game, lists, packs, scoring
 from .models import ArcadeRun, ArcadeScenario, Card, CardList, ChallengeRun, CpuProfile, GameRecord, GameRoom, PlayerProfile, cpu_user
 
 log = logging.getLogger(__name__)
@@ -80,9 +80,10 @@ def cpu_payload(room):
     if run:
         payload["arcade"] = {"scenario": run.scenario_name, "fight": min(run.position + 1, run.total), "total": run.total,
                              "cleared": run.status == ArcadeRun.Status.CLEARED, "score": run.score}
-        trial = ChallengeRun.objects.filter(arcade_run=run).only("packs").first()
+        trial = ChallengeRun.objects.filter(arcade_run=run).only("packs", "lives", "status", "rewards").first()
         if trial:
-            payload["arcade"]["challenge"] = {"packs": trial.packs, "won": challenge.WIN_PACKS}
+            payload["arcade"]["challenge"] = {"packs": trial.packs, "won": challenge.WIN_PACKS, "lives": trial.lives,
+                                              "going": trial.status == ChallengeRun.Status.ACTIVE, "rewards": len(trial.rewards)}
     return payload
 
 
@@ -262,7 +263,7 @@ def arcade_action(request, room, action):
         messages.error(request, f"Your {run.scenario_name} run had to stop: its deck or CPU is no longer available.")
         leave_run(room)
         return JsonResponse({"redirect": reverse("weiss:play_rooms")})
-    seat_cpu(room, profile, arcade.scenes_before(run, profile))
+    seat_cpu(room, profile, arcade.scenes_before(run, profile) if won else ())  # a retry doesn't play its scenes again
     room.version += 1
     room.save()
     return JsonResponse(board_payload(room, request.user))
@@ -450,12 +451,21 @@ def room_action(request, pk):
             # A scene is being played: nothing else happens until it's over, and then the next one, if any.
             if kind != "scene_done":
                 return JsonResponse({"error": "A scene is playing.", **board_payload(room, request.user)}, status=409)
-            if action.get("key") == room.state["scenes"][0].get("key"):
-                room.state["scenes"].pop(0)
-                if not room.state["scenes"]:
-                    room.state.pop("scenes")
-                room.version += 1
-                room.save()
+            if action.get("key") != room.state["scenes"][0].get("key"):
+                return JsonResponse(board_payload(room, request.user))
+            scene = room.state["scenes"].pop(0)
+            if not room.state["scenes"]:
+                room.state.pop("scenes")
+            room.version += 1
+            room.save()
+            # A challenge's scene can give buffs: they're the player's now, to claim on the challenge's page before
+            # the next fight. What the page says was given is checked against the scene.
+            trial = challenge.of(room.arcade_run)
+            given = buffs.given(scene, action.get("buffs")) if trial else []
+            if given:
+                buffs.grant(trial, given, scene.get("title", ""))
+                messages.success(request, "From “{}”: {}.".format(scene.get("title", "the scene"), ", ".join(buffs.BUFFS[b].name for b in given)))
+                return JsonResponse({"redirect": reverse("weiss:arcade_challenge")})
             return JsonResponse(board_payload(room, request.user))
         if room.state.get("cpu_intro"):
             if kind != "intro_done":

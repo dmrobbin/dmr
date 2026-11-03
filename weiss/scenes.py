@@ -16,9 +16,11 @@ number, so a scene with mistakes can still be saved and worked on, but not playe
 The player only needs the steps and the cast, so anything that shows a scene (the staff test page now, something
 for players later) builds it with `scene_payload` and hands it to ScenePlayer.
 """
+import random
 import re
 import secrets
 
+from . import buffs
 from .models import CpuProfile, Scene
 
 MAX_SCRIPT = 50_000
@@ -45,7 +47,9 @@ REFERENCE = [
     ("rapi bounces", f"An animation: {', '.join(ACTIONS)}.", " bounces"),
     ("rapi exits right with fade", "Takes them off stage, optionally to one side and by any of the ways in.", " exits with fade"),
     ("choice What do you say?", "Asks the player. The options follow, one a line; each can go to a label, or carry on below.", "choice "),
-    ("- Fight her -> fight", "An option, under a choice. “-> label” is optional; “(set brave)” after it sets a flag.", "- "),
+    ("- Fight her -> fight", "An option, under a choice. “-> label” is optional; after it, “(set brave)” sets a flag and “(give lucky_pack)” a buff (both: “(set brave, give lucky_pack)”).", "- "),
+    ("give lucky_pack", "In a challenge, gives the player a buff (or “give random”). It's theirs at the end of the scene, to use before the next fight.", "give "),
+    ("offer 3: Take a gift", "In a challenge, the player picks one of 3 random buffs (or of the ones named: “offer lucky_pack, climax_pack”).", "offer 3: "),
     ("set brave / unset brave", "Remembers (or forgets) something for later.", "set "),
     ("if brave goto boast", "Goes to a label if a flag is set (“if not brave …” for the opposite).", "if  goto "),
     ("goto fight", "Goes to a label.", "goto "),
@@ -66,7 +70,10 @@ WAIT = re.compile(r"wait\s+(?P<seconds>\d+(?:\.\d+)?)\s*s?", re.I)
 BACKGROUND = re.compile(r"background\s+(?P<name>\S+)", re.I)
 SCREEN = re.compile(r"screen\s+(?P<effect>\S+)", re.I)
 CHOICE = re.compile(r"choice(?:\s*:?\s*(?P<prompt>.*))?", re.I)
-OPTION = re.compile(rf"-\s*(?P<text>.+?)\s*(?:->\s*(?P<label>{NAME}))?\s*(?:\(\s*(?P<verb>set|unset)\s+(?P<flag>{NAME})\s*\))?", re.I)
+OPTION = re.compile(rf"-\s*(?P<text>.+?)\s*(?:->\s*(?P<label>{NAME}))?\s*(?:\((?P<acts>[^()]*)\))?", re.I)
+OPTION_ACT = re.compile(rf"(?P<verb>set|unset|give)\s+(?P<what>{NAME})", re.I)
+GIVE = re.compile(rf"give\s+(?P<buff>{NAME})", re.I)
+OFFER = re.compile(r"offer\s+(?P<what>[^:]+?)\s*(?::\s*(?P<prompt>.*))?", re.I)
 SAY = re.compile(rf"(?P<who>{NAME})\s*(?:\(\s*(?P<expression>\w+)\s*\))?\s*:\s*(?P<text>.*\S)")
 DIRECTION = re.compile(rf"(?P<who>{NAME})\s+(?P<verb>[a-z]+)(?:\s+(?P<rest>.*))?", re.I)
 ENTER = re.compile(rf"(?:(?:at|to)\s+)?(?P<at>[\w-]+)?\s*(?:with\s+(?P<how>\w+))?", re.I)
@@ -126,8 +133,14 @@ def compile_scene(script, find=find_cpu):
                 problem = "Write an option as “- what the player says -> label”."
             else:
                 option = {"text": match["text"], "goto": match["label"]}
-                if match["flag"]:
-                    option["set" if match["verb"].lower() == "set" else "unset"] = match["flag"].lower()
+                for act in filter(None, (part.strip() for part in (match["acts"] or "").split(","))):
+                    found = OPTION_ACT.fullmatch(act)
+                    if not found:
+                        problem = "After an option, write “(set flag)”, “(unset flag)” or “(give buff)”, with commas between."
+                    elif found["verb"].lower() == "give" and found["what"].lower() not in (*buffs.BUFFS, buffs.RANDOM):
+                        problem = buff_problem(found["what"])
+                    else:
+                        option[found["verb"].lower()] = found["what"].lower()
                 if option["goto"]:
                     jumps.append((number, option["goto"]))
                 choice["options"].append(option)
@@ -161,6 +174,18 @@ def compile_scene(script, find=find_cpu):
             jumps.append((number, step["label"]))
         elif match := SET.fullmatch(line):
             step.update({"do": match["verb"].lower(), "flag": match["flag"].lower()})
+        elif match := GIVE.fullmatch(line):
+            if match["buff"].lower() not in (*buffs.BUFFS, buffs.RANDOM):
+                problem = buff_problem(match["buff"])
+            step.update({"do": "give", "buff": match["buff"].lower()})
+        elif match := OFFER.fullmatch(line):
+            what = match["what"].strip().lower()
+            step.update({"do": "offer", "prompt": (match["prompt"] or "").strip()})
+            if count := re.fullmatch(r"(\d+)(?:\s+(?:buffs?|rewards?))?", what):
+                step["count"] = min(max(int(count[1]), 1), len(buffs.BUFFS))
+            else:
+                step["choices"] = [name.strip() for name in what.split(",")]
+                problem = next((buff_problem(name) for name in step["choices"] if name not in buffs.BUFFS), None)
         elif match := WAIT.fullmatch(line):
             step.update({"do": "wait", "seconds": min(float(match["seconds"]), 30)})
         elif match := BACKGROUND.fullmatch(line):
@@ -201,6 +226,10 @@ def compile_scene(script, find=find_cpu):
     if not steps and not errors:
         errors.append((1, "Nothing happens in this scene yet."))
     return {"cast": cast, "labels": labels, "steps": steps}, sorted(errors)
+
+
+def buff_problem(name):
+    return f"There's no buff called “{name}”. Buffs are {', '.join(buffs.BUFFS)}, or random."
 
 
 def direction(step, verb, rest):
@@ -266,15 +295,16 @@ def scene_payload(scene, title="", key=""):
     return {"key": key, "title": title, "cast": cast, "labels": scene["labels"], "steps": scene["steps"]}
 
 
-def playable(found):
+def playable(found, with_buffs=False, rng=random):
     """Payloads for these Scene objects (None skipped), leaving out any whose script has mistakes: a run goes
-    on without a scene rather than stopping for one being written."""
+    on without a scene rather than stopping for one being written. with_buffs: a challenge's, whose buffs
+    count (see buffs.resolve)."""
     payloads = []
     for scene in found:
         if scene:
             compiled, errors = compile_scene(scene.script)
             if not errors:
-                payloads.append(scene_payload(compiled, scene.name, f"{scene.pk}-{secrets.token_hex(4)}"))
+                payloads.append(buffs.resolve(scene_payload(compiled, scene.name, f"{scene.pk}-{secrets.token_hex(4)}"), with_buffs, rng))
     return payloads
 
 

@@ -1,0 +1,36 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Exchange{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:arcade_challenge' %}">&larr; {{ run.name }} challenge</a></p>
+  <h1>Exchange</h1>
+  <div class="exchange-from">
+    <a href="{% url 'weiss:card' card.pk %}" data-card-popup="{% url 'weiss:card_popup' card.pk %}" class="exchange-card">{% include "weiss/card_art.html" with alt=card.name lazy=True %}</a>
+    <p>Swap one <strong>{{ card.name }}</strong> from your pool for another {{ rarity }} from {{ card.expansion }}. Click a card's picture to read it.</p>
+  </div>
+  {% if choices %}
+    <form method="post" action="{% url 'weiss:arcade_challenge_claim' %}">
+      {% csrf_token %}
+      <input type="hidden" name="key" value="{{ reward.key }}">
+      <input type="hidden" name="give" value="{{ card.pk }}">
+      <ul class="pool-grid">
+        {% for choice in choices %}
+          <li class="pool-card in-deck">
+            <a href="{% url 'weiss:card' choice.pk %}" data-card-popup="{% url 'weiss:card_popup' choice.pk %}">{% include "weiss/card_art.html" with card=choice alt=choice.name lazy=True %}</a>
+            <span class="pool-name small">{{ choice.name }}</span>
+            <button type="submit" class="button-small" name="take" value="{{ choice.pk }}">Take this</button>
+          </li>
+        {% endfor %}
+      </ul>
+    </form>
+  {% else %}
+    <p class="empty">There's nothing else of that rarity in its set. <a href="{% url 'weiss:arcade_challenge' %}">Choose another card.</a></p>
+  {% endif %}
+  <dialog class="card-popup" data-card-popup-dialog aria-label="Card details">
+    <form method="dialog"><button class="card-popup-close" aria-label="Close">×</button></form>
+    <div data-card-popup-body></div>
+  </dialog>
+  <script src="{% static 'weiss/lists.js' %}" defer></script>
+{% endblock %}

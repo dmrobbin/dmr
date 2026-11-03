@@ -212,7 +212,7 @@ class ChallengeTests(ArcadeSetup):
         self.assertEqual((room.host_deck, room.cpu_profile), (run.deck, self.opener))
         self.assertRedirects(self.client.post(reverse("weiss:arcade_challenge_fight")), reverse("weiss:play_room", args=[room.pk]))  # the same room
         data = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()
-        self.assertEqual(data["arcade"]["challenge"], {"packs": 0, "won": 3})
+        self.assertEqual(data["arcade"]["challenge"], {"packs": 0, "won": 3, "lives": 0, "going": True, "rewards": 0})
         self.end_fight("me")
         run.refresh_from_db()
         self.assertEqual((run.packs, run.status), (3, "active"))

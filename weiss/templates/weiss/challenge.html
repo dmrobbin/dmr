@@ -72,6 +72,8 @@
       {% endif %}
 
       {% if run.status == "active" %}
+        {% if run.lives %}<p class="small"><span class="deck-tag">Second chance ×{{ run.lives }}</span> A loss lets you fight again instead of ending the challenge.</p>{% endif %}
+        {% if rewards %}{% include "weiss/challenge_rewards.html" %}{% endif %}
         <div class="challenge-steps">
           <section>
             <h3>1. Open packs</h3>

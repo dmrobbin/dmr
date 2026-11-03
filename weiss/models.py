@@ -380,6 +380,8 @@ class ChallengeRun(models.Model):
     packs = models.PositiveSmallIntegerField(default=0, help_text="Packs to open")
     opened = models.PositiveSmallIntegerField(default=0, help_text="Packs opened so far")
     last_opening = models.JSONField(default=dict, blank=True, help_text="The latest packs opened, to show them being revealed")
+    rewards = models.JSONField(default=list, blank=True, help_text="Buffs from scenes waiting to be claimed: [{key, buff, source}] (see weiss.buffs)")
+    lives = models.PositiveSmallIntegerField(default=0, help_text="Losses it can take without ending: second chances")
     arcade_run = models.ForeignKey(ArcadeRun, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIVE)
     started = models.DateTimeField(auto_now_add=True)

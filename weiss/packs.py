@@ -55,7 +55,17 @@ PACK = (
     Slot("Foil", 1, ({"SR": 70, "RRR": 13, "SP": 6, "SR⁑": 3, "SR⁂": 3, "SSP": 1.5, "SEC": 1, OTHER: 1}, {"RR": 1}, {"R": 1})),
 )
 PACK_SIZE = sum(slot.count for slot in PACK)
-NAMED = {rarity for slot in PACK for table in slot.odds for rarity in table if rarity != OTHER}
+# A luckier pack (a challenge's reward): the commons give way to uncommons and an extra rare, and two foils.
+BOOSTED_PACK = (
+    Slot("Uncommon", 3, ({"U": 1}, {"C": 1})),
+    Slot("Climax", 1, ({"CR": 1}, {"CC": 1}, {"C": 1})),
+    PACK[3], Slot("Rare", 1, ({"RR": 2, "R": 1}, {"R": 1}, {"U": 1})),
+    Slot("Foil", 2, PACK[4].odds),
+)
+NAMED = {rarity for slot in PACK + BOOSTED_PACK for table in slot.odds for rarity in table if rarity != OTHER}
+# When none of a slot's tables fit the cards there are (a pack of only some of a set's cards, say), how
+# likely each grade of rarity is: mostly the plain ones, as in any pack.
+FALLBACK_WEIGHTS = {0: 100, 1: 20, 2: 8, 3: 4, 4: 1, 5: .3}
 
 
 def normalize(rarity):
@@ -116,7 +126,8 @@ class Pool:
                 found += [(rarity, table[OTHER]) for rarity in self.by_rarity if rarity not in NAMED]
             if found:
                 return found
-        return [(rarity, 1) for rarity in self.by_rarity]  # a set none of the tables fit: anything it has
+        # None of the tables fit (a set of its own rarities, or a pack of only some cards): anything there is, plain ones most.
+        return [(rarity, FALLBACK_WEIGHTS.get(grade_of(rarity), 1)) for rarity in self.by_rarity]
 
     def draw(self, slot, rng=random):
         rarities, weights = zip(*self.odds(slot))
@@ -124,14 +135,19 @@ class Pool:
         return Pull(rng.choice(self.by_rarity[rarity]), rarity, grade_of(rarity), slot.name)
 
 
-def open_pack(pool, rng=random):
+def open_pack(pool, rng=random, layout=PACK):
     """One pack's pulls, in the order they're revealed: the best last."""
-    pulls = [pool.draw(slot, rng) for slot in PACK for _ in range(slot.count)]
+    pulls = [pool.draw(slot, rng) for slot in layout for _ in range(slot.count)]
     return sorted(pulls, key=lambda pull: pull.grade)
 
 
-def open_packs(pool, count, rng=random):
-    return [open_pack(pool, rng) for _ in range(count)]
+def open_packs(pool, count, rng=random, layout=PACK):
+    return [open_pack(pool, rng, layout) for _ in range(count)]
+
+
+def opening(pool, opened):
+    """What the pack opening page shows for these opened packs (see pack_open.html)."""
+    return {"set": pool.set_name, "grades": GRADE_NAMES, "packs": [[pull.as_dict() for pull in pack] for pack in opened]}
 
 
 def pack_sets():

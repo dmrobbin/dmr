@@ -29,6 +29,11 @@ def current(user):
     return ChallengeRun.objects.filter(user=user, finished__isnull=True).select_related("deck", "arcade_run", "scenario", "narrative").first()
 
 
+def of(arcade_run):
+    """The challenge in progress that this arcade run is fought for, if it's one."""
+    return ChallengeRun.objects.filter(arcade_run=arcade_run, status=ChallengeRun.Status.ACTIVE).first() if arcade_run else None
+
+
 def deck_name(name):
     return f"{name} challenge"[:100]
 
@@ -94,18 +99,20 @@ def save_deck(run, copies):
 
 def fight_finished(arcade_run, won, cleared):
     """A fight in a challenge's run has ended (see arcade.game_finished): a win brings packs; a loss ends it."""
-    run = ChallengeRun.objects.filter(arcade_run=arcade_run, status=ChallengeRun.Status.ACTIVE).first()
+    run = of(arcade_run)
     if not run:
         return
     if won:
         run.packs += WIN_PACKS
         if cleared:
             run.status = ChallengeRun.Status.WON
+    elif run.lives:  # a second chance: the fight's there to try again
+        run.lives -= 1
     else:
         run.status = ChallengeRun.Status.LOST
         arcade_run.status, arcade_run.finished = ArcadeRun.Status.ABANDONED, timezone.now()
         arcade_run.save(update_fields=["status", "finished"])
-    run.save(update_fields=["packs", "status"])
+    run.save(update_fields=["packs", "status", "lives"])
 
 
 def stop_fighting(run):
@@ -131,7 +138,7 @@ def reset(run):
         if run.deck:
             run.deck.delete()
         run.deck = CardList.objects.create(user=run.user, name=deck_name(run.name), challenge=True)
-        run.pool, run.packs, run.opened, run.last_opening = {}, START_PACKS, 0, {}
+        run.pool, run.packs, run.opened, run.last_opening, run.rewards, run.lives = {}, START_PACKS, 0, {}, [], 0
         run.arcade_run, run.status, run.started = None, ChallengeRun.Status.ACTIVE, timezone.now()
         run.save()
 
