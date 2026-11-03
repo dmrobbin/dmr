@@ -39,6 +39,7 @@ INFINITE_MODELS = ((2, ("easy",)), (1, ("standard",)), (3, ("focused", "strategi
 INFINITE_TIERS = ("Easy", "Standard", "Tough")  # what the path calls each of those, and "Hard" after
 PATH_WIDTHS = (2, 3)  # how many CPUs a floor of the path offers, at random (fewer if there aren't that many)
 PATH_AHEAD = 3  # floors of the path laid out past the one being fought
+COLUMNS = 3  # the path's width: left, middle and right; each space leads only to those beside it (see links)
 EVENT = "event"  # a space on the path that plays an event scene instead of a fight
 EVENT_CHANCE = .4  # that a floor (after the first) has an event among its spaces, if there are event scenes
 
@@ -84,34 +85,56 @@ def opponents():
     return list(CpuProfile.objects.filter(finalized=True, deck__entries__isnull=False).distinct())
 
 
-def lanes(count):
-    """Where across the path a floor's nodes sit, from 0 to 1."""
-    return [(i + .5) / count for i in range(count)]
+def column_x(column):
+    """Where across the path a column sits, from 0 to 1."""
+    return (column + .5) / COLUMNS
 
 
-def links(count, ahead):
-    """Which of the next floor's nodes (`ahead` of them) each of a floor's nodes (`count`) leads to: the nearest
-    two, and any as near as the second, so there's always a choice when the next floor has one."""
-    there = lanes(ahead)
+def links(here, ahead):
+    """Which spaces of the next floor (`ahead`, by column) each space of a floor (`here`) leads to: only those beside
+    it, straight up or one column over. So going left puts the right out of reach until a space in the middle has
+    been through. A space with none beside it (a CPU taken off the path) leads to the nearest instead; an empty
+    column leads nowhere."""
+    filled = [c for c, node in enumerate(ahead) if node is not None]
     led = []
-    for x in lanes(count):
-        reach = sorted(abs(x - y) for y in there)[min(1, ahead - 1)]
-        led.append([j for j, y in enumerate(there) if abs(x - y) <= reach + 1e-9])
+    for c, node in enumerate(here):
+        near = [j for j in filled if abs(j - c) <= 1] if node is not None else []
+        if node is not None and not near and filled:
+            nearest = min(abs(j - c) for j in filled)
+            near = [j for j in filled if abs(j - c) == nearest]
+        led.append(near)
     return led
 
 
 def new_floor(before, found, rng, events=False):
-    """A floor's CPUs, all different, and none from the floor before it if there are enough others; and with
-    `events`, sometimes an event in place of one of them (see EVENT_CHANCE)."""
-    width = min(rng.choice(PATH_WIDTHS), len(found))
+    """A floor: COLUMNS columns, two or three of them filled (an empty one is a gap in the path), with CPUs all
+    different and none from the floor before it if there are enough others; and with `events`, sometimes an event
+    in place of one of them (see EVENT_CHANCE). A floor of one is in the middle, where every column can reach it."""
+    width = min(rng.choice(PATH_WIDTHS), len(found), COLUMNS)
     fresh = [pk for pk in found if pk not in before]
-    floor = rng.sample(fresh, min(width, len(fresh)))
-    floor += rng.sample([pk for pk in found if pk not in floor], width - len(floor))
+    nodes = rng.sample(fresh, min(width, len(fresh)))
+    nodes += rng.sample([pk for pk in found if pk not in nodes], width - len(nodes))
     if events and rng.random() < EVENT_CHANCE:
-        floor.insert(rng.randrange(len(floor) + 1), EVENT)
-        if len(floor) > max(PATH_WIDTHS):
-            floor.remove(next(pk for pk in floor if pk != EVENT))
+        nodes.insert(rng.randrange(len(nodes) + 1), EVENT)
+        if len(nodes) > min(max(PATH_WIDTHS), COLUMNS):
+            nodes.remove(next(pk for pk in nodes if pk != EVENT))
+    floor = [None] * COLUMNS
+    for column, node in zip([COLUMNS // 2] if len(nodes) == 1 else sorted(rng.sample(range(COLUMNS), len(nodes))), nodes):
+        floor[column] = node
     return floor
+
+
+def on_grid(floors, picks):
+    """Floors laid before the path had columns (a list of just the nodes) put into them, picks and all: one in the
+    middle, two at the sides, three across."""
+    for f, floor in enumerate(floors):
+        if len(floor) != COLUMNS:
+            columns = {1: [COLUMNS // 2], 2: [0, COLUMNS - 1]}.get(len(floor), list(range(len(floor))))
+            floors[f] = [None] * COLUMNS
+            for column, node in zip(columns, floor):
+                floors[f][column] = node
+            if f < len(picks) and picks[f] < len(columns):
+                picks[f] = columns[picks[f]]
 
 
 def floor_at(run):
@@ -129,17 +152,18 @@ def event_scenes():
 
 
 def path_of(run, rng=random):
-    """An infinite challenge's path, {"floors": [[CPU id or EVENT, ...], ...], "picks": [the node taken on each
-    floor], "done": floors been through}, laid out PATH_AHEAD floors past the one it's on, plus anything else kept
-    with it (the next fight's modifiers, an event under way). CPUs that can't be fought any more are taken off the
-    floors still to come (one picked for a fight is let go too), and events if there are no event scenes; a floor
-    left empty is laid again. Saved if it changed."""
+    """An infinite challenge's path, {"floors": [[CPU id, EVENT or None for each column], ...], "picks": [the column
+    taken on each floor], "done": floors been through}, laid out PATH_AHEAD floors past the one it's on, plus anything
+    else kept with it (the next fight's modifiers, an event under way). CPUs that can't be fought any more are taken
+    off the floors still to come (one picked for a fight is let go too), and events if there are no event scenes; a
+    floor left empty is laid again. Saved if it changed."""
     path = {**(run.path or {}), "floors": [list(f) for f in (run.path or {}).get("floors", [])], "picks": list((run.path or {}).get("picks", []))}
     floors, picks = path["floors"], path["picks"]
     at = path["done"] = floor_at(run)
     if not floors and at:  # begun before there were paths: the fights so far, one CPU to a floor
         floors[:] = [[pk] for pk in run.arcade_run.order[:at]]
         picks[:] = [0] * at
+    on_grid(floors, picks)
     events = bool(event_scenes())
     found = [cpu.pk for cpu in opponents()]
     found_or_event = found + ([EVENT] if events else [])
@@ -148,11 +172,8 @@ def path_of(run, rng=random):
     if len(picks) > at and floors[at][picks[at]] not in found_here:
         del picks[at:]
     for f in range(at, len(floors)):
-        kept = [pk for pk in floors[f] if pk in (found_here if f == at else found_or_event)]
-        if f < len(picks):
-            picks[f] = kept.index(floors[f][picks[f]])
-        floors[f] = kept
-    first_empty = next((f for f in range(at, len(floors)) if not floors[f]), len(floors))
+        floors[f] = [pk if pk in (found_here if f == at else found_or_event) else None for pk in floors[f]]
+    first_empty = next((f for f in range(at, len(floors)) if not any(pk is not None for pk in floors[f])), len(floors))
     del floors[first_empty:]
     while found and len(floors) < at + 1 + PATH_AHEAD:
         floors.append(new_floor(floors[-1] if floors else [], found, rng, events=events and len(floors) > 0))
@@ -170,8 +191,8 @@ def choices(path, at):
     if at < len(picks):
         return [picks[at]]
     if at == 0:
-        return list(range(len(floors[0])))
-    return links(len(floors[at - 1]), len(floors[at]))[picks[at - 1]]
+        return [c for c, node in enumerate(floors[0]) if node is not None]
+    return links(floors[at - 1], floors[at])[picks[at - 1]]
 
 
 def pick(run, node):

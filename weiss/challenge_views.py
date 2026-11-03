@@ -72,19 +72,19 @@ def path_view(run):
     path = challenge.path_of(run)
     floors, picks = path["floors"], path["picks"]
     at = challenge.floor_at(run)
-    cpus = CpuProfile.objects.in_bulk({pk for floor in floors for pk in floor if pk != challenge.EVENT} | set(challenge.defeated(run)))
+    cpus = CpuProfile.objects.in_bulk({pk for floor in floors for pk in floor if pk not in (None, challenge.EVENT)} | set(challenge.defeated(run)))
     defeated = [cpus.get(pk) for pk in challenge.defeated(run)]
     first, last = max(0, at - PATH_BEHIND), min(len(floors), at + 1 + challenge.PATH_AHEAD)
     shown = range(first, last)
     open_now = set(challenge.choices(path, at))
     reach = {at: open_now}  # the nodes of each floor ahead that can be got to from here
     for f in range(at + 1, last):
-        led = challenge.links(len(floors[f - 1]), len(floors[f]))
+        led = challenge.links(floors[f - 1], floors[f])
         reach[f] = {j for i in reach[f - 1] for j in led[i]}
 
     def place(f, i):
         rows = len(shown)
-        return round(challenge.lanes(len(floors[f]))[i] * 100, 2), round((rows - (f - first) - .5) / rows * 100, 2)
+        return round(challenge.column_x(i) * 100, 2), round((rows - (f - first) - .5) / rows * 100, 2)
 
     def state(f, i):
         if f < at:
@@ -97,11 +97,13 @@ def path_view(run):
     for f in shown:
         nodes = []
         for i, pk in enumerate(floors[f]):
+            if pk is None:  # a gap in the path
+                continue
             x, y = place(f, i)
             nodes.append({"cpu": cpus.get(pk), "event": pk == challenge.EVENT, "node": i, "x": x, "y": y, "state": state(f, i)})
         view_floors.append({"number": f + 1, "tier": challenge.tier(f), "current": f == at, "nodes": nodes})
         if f + 1 < last:
-            for i, led in enumerate(challenge.links(len(floors[f]), len(floors[f + 1]))):
+            for i, led in enumerate(challenge.links(floors[f], floors[f + 1])):
                 for j in led:
                     (x1, y1), (x2, y2) = place(f, i), place(f + 1, j)
                     taken = f + 1 < len(picks) and picks[f] == i and picks[f + 1] == j

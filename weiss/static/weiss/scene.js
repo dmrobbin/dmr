@@ -56,7 +56,7 @@
       root.classList.add("vn");
       root.innerHTML = `
         <div class="vn-stage" tabindex="0" aria-label="${esc(scene.title || "Scene")}">
-          <div class="vn-backdrop"><div class="vn-bg" data-bg="default"></div></div>
+          <div class="vn-backdrop"></div>
           <div class="vn-actors"></div>
           <div class="vn-veil"></div>
           <div class="vn-flash"></div>
@@ -311,6 +311,7 @@
       const layer = document.createElement("div");
       layer.className = "vn-bg";
       layer.dataset.bg = name;
+      if (window.SceneBackdrops) layer.innerHTML = window.SceneBackdrops.draw(name); // the drawn scene (backdrops.js), over a plain gradient
       this.backdrop.appendChild(layer);
       layer.animate([{ opacity: 0 }, { opacity: 1 }], { duration: reduced || !old ? 1 : 900 }).finished
         .then(() => { while (this.backdrop.children.length > 1) this.backdrop.firstElementChild.remove(); }, () => {});

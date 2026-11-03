@@ -1494,6 +1494,25 @@ li:nth-child(3n + 2) .rfx-sheen::after { animation-delay: -4.6s; }
 .vn-bg[data-bg="ocean"] { background: linear-gradient(#86c5e8, #3f86b5 58%, #1d5d86 58.5%, #0d2f4a); }
 .vn-bg[data-bg="forest"] { background: radial-gradient(ellipse at 50% 0%, rgb(220 240 180 / .35), transparent 55%), linear-gradient(#1f3a26, #12261a 70%, #0b170f); }
 .vn-bg[data-bg="void"] { background: #000; }
+/* The drawn scenes over those (weiss/backdrops.js), and the little that moves in them. */
+.vn-bg-art { display: block; width: 100%; height: 100%; }
+.vn-bg-art .vn-twinkle { animation: vn-twinkle 3.6s ease-in-out infinite alternate; }
+.vn-bg-art .vn-rain { animation: vn-rain .7s linear infinite; }
+.vn-bg-art .vn-fall { animation: vn-fall 9s linear infinite; transform-box: fill-box; transform-origin: center; }
+.vn-bg-art .vn-rise { animation: vn-rise 8s linear infinite; }
+@keyframes vn-twinkle { from { opacity: .15; } to { opacity: 1; } }
+@keyframes vn-rain { from { transform: translateY(0); } to { transform: translateY(900px); } }
+@keyframes vn-fall { from { transform: translate(0, -40px) rotate(0deg); } to { transform: translate(var(--dx, 0), 940px) rotate(320deg); } }
+@keyframes vn-rise { from { transform: translate(0, 940px); opacity: 0; } 15% { opacity: 1; } to { transform: translate(var(--dx, 0), 300px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .vn-bg-art * { animation: none !important; } }
+/* The scene editor's backgrounds to choose from (weiss/scene_edit.html). */
+.scene-backdrops { display: grid; grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr)); gap: .45rem; margin: 0 0 1rem; padding: 0; list-style: none; }
+.scene-backdrop { display: flex; flex-direction: column; gap: .2rem; width: 100%; padding: .25rem; font: inherit; font-size: .72rem; color: var(--text); text-align: left; cursor: pointer;
+  background: var(--bg); border: 1px solid var(--border); border-radius: .45rem; }
+.scene-backdrop:hover, .scene-backdrop:focus-visible { border-color: var(--accent); outline: none; }
+.scene-backdrop-art { display: block; aspect-ratio: 16 / 9; overflow: hidden; border-radius: .3rem; }
+.scene-backdrop-art .vn-bg-art * { animation: none !important; }
+.scene-backdrop code { color: var(--muted); }
 
 .vn-actors { position: absolute; inset: 0; z-index: 2; }
 .vn-actor { position: absolute; bottom: 0; height: 82%; translate: -50% 0; display: flex; align-items: flex-end; justify-content: center; transition: left .7s ease-in-out, filter .4s ease; }

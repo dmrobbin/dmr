@@ -3,7 +3,7 @@
 
 {% block title %}{{ scene.name }} · scene{% endblock %}
 
-{% block head %}<script src="{% static 'weiss/scene_editor.js' %}" defer></script>{% endblock %}
+{% block head %}<script src="{% static 'weiss/backdrops.js' %}" defer></script><script src="{% static 'weiss/scene_editor.js' %}" defer></script>{% endblock %}
 
 {% block content %}
   <p class="back"><a href="{% url 'weiss:cpu_home' %}">&larr; CPU creation</a></p>
@@ -41,6 +41,11 @@
       <ul class="scene-chips">
         {% for profile in profiles %}<li><button type="button" class="scene-chip" data-insert="cast {{ profile.cast_name }} as {{ profile.name }}&#10;" title="Cast {{ profile.name }}">{{ profile.name }}</button></li>
         {% empty %}<li class="muted small">No CPU profiles yet.</li>{% endfor %}
+      </ul>
+      <h3>Backgrounds</h3>
+      <ul class="scene-backdrops">
+        {% for name in backgrounds %}<li><button type="button" class="scene-backdrop" data-insert="background {{ name }}" title="background {{ name }}">
+          <span class="scene-backdrop-art" data-backdrop="{{ name }}"></span><code>{{ name }}</code></button></li>{% endfor %}
       </ul>
       <h3>Animations</h3>
       <ul class="scene-chips">{% for animation in animations %}<li><button type="button" class="scene-chip" data-insert="{{ animation }}">{{ animation }}</button></li>{% endfor %}</ul>

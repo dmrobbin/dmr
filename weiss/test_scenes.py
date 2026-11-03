@@ -1,3 +1,6 @@
+import re
+from pathlib import Path
+
 from django.contrib.auth.models import Group, User
 from django.test import TestCase
 from django.urls import reverse
@@ -169,6 +172,16 @@ class CompileTests(TestCase):
 
     def test_the_starter_script_compiles(self):
         self.assertEqual(scenes.compile_scene(scenes.starter_script([self.rapi]))[1], [])
+
+
+class BackgroundTests(TestCase):
+    def test_every_background_is_drawn(self):
+        art = (Path(__file__).parent / "static" / "weiss" / "backdrops.js").read_text(encoding="utf-8")
+        drawn = re.findall(r"^    (\w+): \{ label:", art, re.M)
+        self.assertEqual(sorted(drawn), sorted(scenes.BACKGROUNDS))
+
+    def test_the_new_ones_can_be_used(self):
+        self.assertEqual(scenes.compile_scene("background sakura\nbackground lab\nnarrator: Hi.")[1], [])
 
 
 class ScenePageTests(TestCase):

@@ -30,7 +30,9 @@ POSITIONS = ("far-left", "left", "center", "right", "far-right")
 ENTRANCES = ("fade", "slide", "rise", "drop", "zoom", "pop")  # exits are the same, played backwards
 ACTIONS = ("shake", "tremble", "bounce", "jump", "nod", "spin", "flip", "pulse", "flash", "sway", "glow", "wobble")
 SCREEN_EFFECTS = ("shake", "flash", "black", "clear")
-BACKGROUNDS = ("default", "dusk", "night", "dawn", "crimson", "ocean", "forest", "void")
+BACKGROUNDS = ("default", "dusk", "night", "dawn", "crimson", "ocean", "forest", "void",  # drawn in static/weiss/backdrops.js
+               "city", "rooftop", "rain", "sakura", "shrine", "snow", "beach", "space", "ruins", "castle",
+               "classroom", "cafe", "library", "arena", "cave", "desert", "lab")
 EXPRESSIONS = tuple(CpuProfile.SCREENS)  # a CPU's pictures: main, intro, win (the player won) and lose (the player lost)
 
 # What a script can say, for the editing page: (what to write, what it does, what to insert when clicked).

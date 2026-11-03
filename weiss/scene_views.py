@@ -51,7 +51,7 @@ def scene_edit(request, pk):
     return render(request, "weiss/scene_edit.html", {
         "scene": scene, "errors": errors, "labels": sorted(compiled["labels"]), "reference": scenes.REFERENCE,
         "profiles": profiles, "max_script": scenes.MAX_SCRIPT,
-        "animations": scenes.ACTIONS, "buffs": buffs.BUFFS.values(),
+        "animations": scenes.ACTIONS, "buffs": buffs.BUFFS.values(), "backgrounds": scenes.BACKGROUNDS,
     })
 
 

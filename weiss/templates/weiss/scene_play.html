@@ -3,7 +3,7 @@
 
 {% block title %}{{ scene.name }} · test{% endblock %}
 
-{% block head %}<script src="{% static 'weiss/scene.js' %}" defer></script>{% endblock %}
+{% block head %}<script src="{% static 'weiss/backdrops.js' %}" defer></script><script src="{% static 'weiss/scene.js' %}" defer></script>{% endblock %}
 
 {% block content %}
   <p class="back"><a href="{% url 'weiss:cpu_scene_edit' scene.pk %}">&larr; Back to the script</a></p>

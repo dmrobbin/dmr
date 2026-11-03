@@ -162,7 +162,7 @@ class EventTests(ArcadeSetup):
         self.assertNotIn(challenge.EVENT, path["floors"][0])  # never the first floor
         for floor in path["floors"][1:]:
             self.assertEqual(floor.count(challenge.EVENT), 1)
-            self.assertLessEqual(len(floor), max(challenge.PATH_WIDTHS))
+            self.assertLessEqual(len([pk for pk in floor if pk is not None]), max(challenge.PATH_WIDTHS))
         page = self.client.get(reverse("weiss:arcade_challenge")).content.decode()
         self.assertIn('<span class="spire-name">Event</span>', page)
 
@@ -170,7 +170,7 @@ class EventTests(ArcadeSetup):
         scene = self.event_scene()
         self.lay([self.opener, self.filler], [challenge.EVENT, self.anchor])
         scene.delete()
-        self.assertEqual(challenge.path_of(self.run)["floors"][1], [self.anchor.pk])
+        self.assertEqual(challenge.path_of(self.run)["floors"][1], [None, None, self.anchor.pk])  # an older path, put on the grid
 
     def test_an_event_plays_its_scene_and_gives_what_was_chosen(self):
         self.event_scene()
@@ -190,7 +190,7 @@ class EventTests(ArcadeSetup):
         path = self.state()
         self.assertEqual((challenge.floor_at(self.run), path.get("event")), (1, None))  # up a floor
         self.assertEqual(challenge.defeated(self.run), [])  # an event isn't a win
-        self.assertEqual(challenge.choices(path, 1), challenge.links(2, 2)[0])
+        self.assertEqual(challenge.choices(path, 1), [0])  # from the left: the left; the right's out of reach
         self.assertEqual(path["seen"], [Scene.objects.get(name="Deal").pk])
 
     def test_walking_away_gives_nothing(self):

@@ -13,6 +13,11 @@
   let timer = null;
   let dirty = false;
 
+  // The backgrounds to choose from, each drawn small (backdrops.js), still.
+  if (window.SceneBackdrops) {
+    for (const art of form.querySelectorAll("[data-backdrop]")) art.innerHTML = window.SceneBackdrops.draw(art.dataset.backdrop);
+  }
+
   // The line numbers beside the script: as many as it has lines, those with mistakes marked (from the list of them).
   function numberLines() {
     const count = script.value.split("\n").length;
