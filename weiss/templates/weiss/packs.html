@@ -12,7 +12,7 @@
       <div class="pack-picker-art">{% include "weiss/pack_art.html" with set_name="Choose a set" %}</div>
       <form method="get" action="{% url 'weiss:play_packs_open' %}" class="pack-form">
         <label class="small">Set
-          <select name="set" required>
+          <select name="set" required data-searchable="sets">
             {% for set in sets %}<option value="{{ set.id }}">{{ set.name }} ({{ set.cards }} cards)</option>{% endfor %}
           </select>
         </label>

@@ -13,7 +13,7 @@
           <input type="hidden" name="key" value="{{ reward.key }}">
           {% if kind == "pack" %}
             <label class="small">Set
-              <select name="set" required>
+              <select name="set" required data-searchable="sets">
                 {% if reward.buff.pack == "wild" %}{% for set in all_sets %}<option value="{{ set.id }}">{{ set.name }}</option>{% endfor %}
                 {% else %}{% for set in sets %}<option value="{{ set.id }}">{{ set.name }}</option>{% endfor %}{% endif %}
               </select>

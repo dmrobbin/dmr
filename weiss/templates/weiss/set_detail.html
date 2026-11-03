@@ -14,7 +14,7 @@
     <label>Card text <input type="search" name="text" value="{{ filters.text }}" placeholder="e.g. draw 1 card"></label>
     {% if series_page %}
       <label>Set
-        <select name="set" onchange="this.form.submit()">
+        <select name="set" onchange="this.form.submit()" data-searchable="sets">
           <option value="">Any</option>
           {% for expansion_id, expansion in sets %}<option value="{{ expansion_id }}"{% if filters.set == expansion_id|stringformat:"d" %} selected{% endif %}>{{ expansion }}</option>{% endfor %}
         </select>

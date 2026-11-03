@@ -1584,7 +1584,8 @@ li:nth-child(3n + 2) .rfx-sheen::after { animation-delay: -4.6s; }
 .challenge-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 1rem; margin: 1rem 0; }
 .challenge-steps section { padding: .8rem 1rem; border: 1px solid var(--border); border-radius: .6rem; }
 .challenge-steps h3 { margin: 0 0 .4rem; font-size: 1rem; }
-.challenge-steps input[type="number"] { width: 4.5rem; }
+.challenge-steps input[type="number"] { width: 4.5rem; padding: .4rem .5rem; font: inherit; font-size: .9rem; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: .5rem; }
+.challenge-steps input[type="number"]:focus { outline: none; border-color: var(--accent); }
 .challenge-danger, .challenge-keep { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; }
 .challenge-danger { padding-top: 1rem; border-top: 1px solid var(--border); }
 .challenge-keep h3, .challenge-keep p { flex-basis: 100%; margin: 0; }
@@ -1608,6 +1609,13 @@ li:nth-child(3n + 2) .rfx-sheen::after { animation-delay: -4.6s; }
 .arcade-scene-form label, .narrative-form label { display: flex; flex-direction: column; gap: .25rem; }
 .narrative-form .narrative-wide { grid-column: 1 / -1; }
 .narrative-form input[type="text"], .narrative-form textarea { padding: .4rem .6rem; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: .5rem; }
+/* A menu with a search box before it (weiss/searchable_select.js): the box narrows the menu's options. */
+.searchable { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .35rem .5rem; max-width: 100%; }
+.searchable select { max-width: min(100%, 26rem); }
+.searchable-search { width: 12rem; max-width: 100%; padding: .4rem .6rem; font: inherit; font-size: .9rem; color: var(--text);
+  background: var(--bg); border: 1px solid var(--border); border-radius: .5rem; }
+.searchable-search:focus { outline: none; border-color: var(--accent); }
+.searchable-count:empty { display: none; }
 .set-picker { min-width: 0; margin: 0; padding: 0; border: none; display: flex; flex-direction: column; gap: .4rem; }
 .set-picker legend { padding: 0; margin-bottom: .25rem; }
 .set-picker-chosen { display: flex; flex-wrap: wrap; gap: .35rem; margin: 0; padding: 0; list-style: none; }

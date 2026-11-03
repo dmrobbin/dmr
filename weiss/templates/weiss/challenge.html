@@ -93,7 +93,7 @@
               <form method="post" action="{% url 'weiss:arcade_challenge_open' %}" class="cpu-form">
                 {% csrf_token %}
                 <label class="small">Set
-                  <select name="set" required>{% for set in sets %}<option value="{{ set.id }}">{{ set.name }}</option>{% endfor %}</select>
+                  <select name="set" required data-searchable="sets">{% for set in sets %}<option value="{{ set.id }}">{{ set.name }}</option>{% endfor %}</select>
                 </label>
                 <label class="small">Packs
                   <input type="number" name="count" value="{{ run.packs }}" min="1" max="{{ run.packs }}" required>

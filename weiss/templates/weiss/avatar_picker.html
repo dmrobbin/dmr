@@ -9,7 +9,7 @@
   <div class="avatar-picker" data-avatar-picker data-search-url="{% url 'weiss:avatar_search' %}" data-name="{{ name }}">
     <section>
       <label class="small" for="avatar-series">Series</label>
-      <select id="avatar-series" data-series>
+      <select id="avatar-series" data-series data-searchable="series">
         <option value="">All series</option>
         {% for code, title in series %}<option value="{{ code }}">{{ title }}</option>{% endfor %}
       </select>
