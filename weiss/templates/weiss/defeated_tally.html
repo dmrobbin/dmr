@@ -1,0 +1,9 @@
+{# The CPUs an infinite challenge has beaten, each by its picture, and how many. #}
+<div class="defeated-tally" aria-label="{{ defeated|length }} CPU{{ defeated|length|pluralize }} defeated">
+  <span class="defeated-count" aria-hidden="true"><strong>{{ defeated|length }}</strong> defeated</span>
+  {% if defeated %}
+    <ol class="defeated-faces">
+      {% for cpu in defeated %}<li>{% include "weiss/avatar.html" with avatar=cpu.avatar name=cpu.name|default:"?" size="" %}</li>{% endfor %}
+    </ol>
+  {% endif %}
+</div>

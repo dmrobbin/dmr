@@ -75,19 +75,25 @@ def cpu_payload(room):
         said = not challenge.narrative(room.arcade_run)
         payload["cpu"] = {"name": profile.name, "image": profile.image_url, "images": {screen: profile.screen_url(screen) for screen in ("intro", "win", "lose")},
                           "picture": profile.avatar, "intro": profile.intro_text if said else "",
-                          "win": profile.player_win_text if said else "", "lose": profile.player_lose_text if said else ""}
+                          "win": profile.player_win_text if said else "", "lose": profile.player_lose_text if said else "",
+                          "combo": profile.combo_text if said else ""}
     else:  # it was deleted during the game
-        payload["cpu"] = {"name": room.cpu_name, "image": "", "images": {}, "picture": None, "intro": "", "win": "", "lose": ""}
+        payload["cpu"] = {"name": room.cpu_name, "image": "", "images": {}, "picture": None, "intro": "", "win": "", "lose": "", "combo": ""}
     run = room.arcade_run
     if run:
         endless = challenge.infinite(run)
         payload["arcade"] = {"scenario": run.scenario_name, "fight": run.position + 1 if endless else min(run.position + 1, run.total),
                              "total": None if endless else run.total,
                              "cleared": run.status == ArcadeRun.Status.CLEARED, "score": run.score}
-        trial = ChallengeRun.objects.filter(arcade_run=run).only("kind", "packs", "lives", "status", "rewards").first()
+        trial = ChallengeRun.objects.filter(arcade_run=run).only("kind", "packs", "lives", "status", "rewards", "path", "arcade_run").first()
         if trial:
             payload["arcade"]["challenge"] = {"packs": trial.packs, "won": challenge.win_reward_text(trial.kind), "lives": trial.lives,
                                               "going": trial.status == ChallengeRun.Status.ACTIVE, "rewards": len(trial.rewards)}
+        if trial and endless:  # the CPUs beaten so far, for the board's tally
+            beaten = challenge.defeated(trial)
+            cpus = CpuProfile.objects.in_bulk(beaten)
+            payload["arcade"]["defeated"] = [{"name": cpus[pk].name, "picture": cpus[pk].avatar} if pk in cpus else {"name": "?", "picture": None}
+                                             for pk in beaten]
     return payload
 
 
@@ -292,7 +298,8 @@ def arcade_action(request, room, action):
         request.session[ARCADE_EDITING] = room.pk
         request.session[lists.SESSION_KEY] = room.host_deck_id
         return JsonResponse({"redirect": reverse("weiss:list", args=[room.host_deck_id])})
-    if not over or run.status != ArcadeRun.Status.ACTIVE or (kind == "arcade_continue") != bool(won):
+    if not over or run.status != ArcadeRun.Status.ACTIVE or (kind == "arcade_continue") != bool(won) \
+            or (kind == "arcade_continue" and challenge.infinite(run)):  # its next fight is chosen on its path
         return JsonResponse({"error": "That isn't possible right now.", **board_payload(room, request.user)}, status=400)
     profile = arcade.current_cpu(run)
     if not profile or not room.host_deck or not room.host_deck.entries.exists() or not profile.deck.entries.exists():
@@ -398,6 +405,18 @@ def deal(room, intro=False):
     ], **series)
     if intro:
         room.state["cpu_intro"] = True
+    if room.cpu_profile_id and room.cpu_profile and room.cpu_profile.combo_text and not challenge.narrative(room.arcade_run):
+        room.state["cut_ins"] = {str(room.guest_id): anchor_cards(room.guest_deck)}
+
+
+def anchor_cards(deck):
+    """The cards of an express-built deck that are its anchors (any printing of them), whose CX combos get the CPU's
+    cut-in; or [] for a deck without, where any CX combo does (see game.cut_in)."""
+    anchors = (deck.express or {}).get("anchors") if deck else None
+    if not anchors:
+        return []
+    names = set(Card.objects.filter(pk__in=anchors).values_list("name", flat=True))
+    return list(deck.entries.filter(card__name__in=names).values_list("card_id", flat=True))
 
 
 @weiss_access_required

@@ -114,9 +114,8 @@ def game_finished(room, over, score=None):
     if score is not None:
         run.scores.append({"cpu": room.cpu_profile_id, "name": room.cpu_name, "score": score})
         run.score += score
-    challenge.extend(run)  # an infinite challenge's: another opponent, so a win never clears it
     run.position += 1
-    cleared = run.position >= len(run.order)
+    cleared = run.position >= len(run.order) and not challenge.infinite(run)  # whose next is chosen on its path
     if queued := scenes_after(run, room.cpu_profile_id, cleared):
         room.state["scenes"] = queued
     if prize := challenge.fight_finished(run, won=True, cleared=cleared):

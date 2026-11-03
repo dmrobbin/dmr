@@ -27,6 +27,7 @@ State is plain JSON, stored on the GameRoom:
      "match_wins": {user id: n},  # games each player has won in this series of rematches
      "ability_queue": [...], "resolving": {...},  # card abilities to trigger, and the one running (see Abilities)
      "ability_show": {...},  # an ability just resolved: both pages show it, and play waits (see show_ability)
+     "cut_ins": {user id: [anchor card pk, ...]}, "combo_show": {...}, "combo_turns": {user id: turn number},  # a CX combo's cut-in (see cut_in)
      "needs_color": {user id: {uid: color}},  # hand cards the color rule is holding back
      "hand_mods": {user id: {uid: {"level", "cost"}}},  # hand cards an ability has lowered, and what they count as now
      "buffs": [...], "stats": {uid: {"power", "soul"}}, "granted": {uid: [text]},  # what's boosting characters
@@ -882,7 +883,7 @@ def check_game_over(state):
             state["game_over"] = {"winner": winner, "loser": player, "reason": reason, "rematch": []}
             wins = state.setdefault("match_wins", {})
             wins[winner] = wins.get(winner, 0) + 1
-            for key in ("ability_queue", "resolving", "ability_show", "attack", "auto_next", "pending_end", "pending_damage", "pending_refresh",
+            for key in ("ability_queue", "resolving", "ability_show", "combo_show", "attack", "auto_next", "pending_end", "pending_damage", "pending_refresh",
                         "pending_climax", "pending_discard", "reveal", "rules_request"):
                 state.pop(key, None)
             add_log(state, player, (f"reached level {LOSING_LEVEL}" if reason == "level" else "can't refresh their deck")
@@ -984,7 +985,7 @@ def apply_action(state, player, action, env):
             add_log(state, player, "asked for a rematch")
         return {}
     if over and kind != "chat":
-        if action.get("auto") or kind == "ability_show_done":
+        if action.get("auto") or kind in ("ability_show_done", "combo_show_done"):
             return {}  # a page's timer that hadn't heard yet
         raise GameError("The game is over.")
 
@@ -1367,6 +1368,7 @@ def apply_action(state, player, action, env):
         state.pop("ability_queue", None)
         state.pop("resolving", None)
         state.pop("ability_show", None)
+        state.pop("combo_show", None)
         if request["on"] and state.get("phase") == "attack":
             state["attack"] = {"step": "declare"}
         add_log(state, player, f"agreed: turn rules are now {'on' if request['on'] else 'off'}")
@@ -1501,6 +1503,11 @@ def apply_action(state, player, action, env):
             state.pop("ability_show")
         return {}
 
+    if kind == "combo_show_done":  # as ability_show_done, for a CX combo's cut-in
+        if (state.get("combo_show") or {}).get("id") == action.get("id"):
+            state.pop("combo_show")
+        return {}
+
     if kind == "activate":
         activate(state, player, action, env)
         return {}
@@ -1535,7 +1542,7 @@ BOARD_ERRORS = (GameError, KeyError, IndexError, TypeError, ValueError, Attribut
 
 
 def abilities_busy(state):
-    return bool(state.get("ability_queue") or state.get("resolving") or state.get("ability_show"))
+    return bool(state.get("ability_queue") or state.get("resolving") or state.get("ability_show") or state.get("combo_show"))
 
 
 def details_of(card, env):
@@ -2011,7 +2018,10 @@ def x_value(spec, state, player, target, ctx, env, stats=None):
     elif kind == "declared":
         value = (ctx or {}).get("declared", 0) + spec.get("plus", 0)
     elif kind == "opp_chars":
-        value = len(stage_cards(state["players"][other_player(state, player)]))
+        filter_ = spec.get("filter")
+        value = sum(not filter_ or (fits(filter_, c, env) and not (filter_.get("stand") and c["pos"] != "stand")
+                                    and not (filter_.get("rest") and c["pos"] != "rest"))
+                    for c in stage_cards(state["players"][other_player(state, player)]))
     elif kind == "my_chars":
         source_uid = (ctx or {}).get("source_uid")
         zone = spec.get("stage_zone")
@@ -2563,8 +2573,25 @@ def start_resolving(state, entry, env):
     if ability.get("manual_cost"):
         steps.insert(0, {"do": "manual", "text": "Pay this ability's cost by hand."})
     tally(state, entry["player"], "abilities")
+    if entry.get("accepted", True):
+        cut_in(state, entry)
     state["resolving"] = {"player": entry["player"], "uid": entry["uid"], "card": entry["card"], "text": ability["text"],
                           "steps": steps, "ctx": entry.get("ctx", {}), "prompt": None, "event": entry.get("event", False)}
+
+
+def cut_in(state, entry):
+    """A player with a cut-in (a CPU with something to say: state["cut_ins"], with its deck's anchor cards, or none
+    if any CX combo will do) starts a CX combo, their first this turn: both pages show it, and the ability waits
+    until a page sends "combo_show_done", so it's seen before anything the ability does."""
+    player = entry["player"]
+    anchors = state.get("cut_ins", {}).get(player)
+    if anchors is None or (anchors and entry["card"] not in anchors) or not abilities.combo_lines(entry["ability"]["text"]):
+        return
+    turns = state.setdefault("combo_turns", {})
+    if turns.get(player) == state.get("turn_number"):
+        return
+    turns[player] = state.get("turn_number")
+    state["combo_show"] = {"id": new_uid(), "player": player, "uid": entry["uid"], "card": entry["card"]}
 
 
 def activate_steps(entry):
@@ -2593,7 +2620,7 @@ def run_abilities(state, env):
         fire(state, env, pending.pop("event"), **pending)
     for _ in range(STEP_LIMIT):
         res = state.get("resolving")
-        if not res or res.get("prompt") or state.get("ability_show"):
+        if not res or res.get("prompt") or state.get("ability_show") or state.get("combo_show"):
             return
         if any(damage_in_progress(state, p) or must_level_up(state, p) for p in state["players"]):
             return
@@ -4058,6 +4085,9 @@ def view(state, player):
         # Games won in this series, for the first player and then the second, on both players' screens.
         "match_wins": [{"name": state["players"][p]["name"], "wins": state.get("match_wins", {}).get(p, 0)} for p in state["order"]],
         "ability": ability_view(state, player),
+        # A CX combo's cut-in, for both pages to show before the ability goes on: {"id", "card", "mine"}.
+        "combo_show": ({"id": state["combo_show"]["id"], "card": state["combo_show"]["card"], "mine": state["combo_show"]["player"] == player}
+                       if state.get("combo_show") else None),
         # An ability that just resolved, for both pages to show: {"id", "card", "targets": [card, ...], "mine"}.
         "ability_show": ({"id": state["ability_show"]["id"], "card": state["ability_show"]["card"], "targets": state["ability_show"]["targets"],
                           "check": state["ability_show"].get("check"), "label": state["ability_show"].get("label"), "mine": state["ability_show"]["player"] == player} if state.get("ability_show") else None),

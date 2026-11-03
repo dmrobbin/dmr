@@ -5,8 +5,9 @@ deck can hold only what's in the pool (sealed: nothing else, so a deck can be sh
 until more packs come). Each win in its arcade run brings more (see win_reward); a loss ends the challenge. In a
 free challenge the player picks any set for each pack, an arbitrary arcade list to fight; a narrative one
 (NarrativeChallenge, set up by staff) fixes the list, and the sets its packs come from. An infinite one has no
-list: every CPU there is, drawn one at a time, harder as it goes (INFINITE_MODELS), for as long as the player wins,
-each win bringing a random reward and no scenes.
+list: a path of every CPU there is, floor after floor of two or three to choose from, laid ahead of the player as far
+as PATH_AHEAD (see path_of), harder as it goes (INFINITE_MODELS), for as long as the player wins, each win bringing
+a random reward and no scenes.
 
 Stopping partway keeps the run where it is: the next fight starts with the CPU it stopped at. Resetting
 starts again from nothing, deck and all. At the end, cleared or lost, the player keeps the deck (it joins
@@ -34,6 +35,9 @@ INFINITE_PRIZES = ("climax_pack", "color_pack", "lucky_pack")  # which the Victo
 # How an infinite challenge's CPUs play, whatever their own model: (fights, the model or the models to pick from),
 # in turn, then hard, from an aggression picked at random, for the rest.
 INFINITE_MODELS = ((2, ("easy",)), (1, ("standard",)), (3, ("focused", "strategic")))
+INFINITE_TIERS = ("Easy", "Standard", "Tough")  # what the path calls each of those, and "Hard" after
+PATH_WIDTHS = (2, 3)  # how many CPUs a floor of the path offers, at random (fewer if there aren't that many)
+PATH_AHEAD = 3  # floors of the path laid out past the one being fought
 
 
 def current(user):
@@ -77,19 +81,105 @@ def opponents():
     return list(CpuProfile.objects.filter(finalized=True, deck__entries__isnull=False).distinct())
 
 
-def next_opponent(order, rng=random):
-    """A CPU for an infinite challenge's next fight, at random, not the one just fought if there's another; or None."""
-    found = opponents()
-    others = [cpu for cpu in found if not order or cpu.pk != order[-1]] or found
-    return rng.choice(others).pk if others else None
+def lanes(count):
+    """Where across the path a floor's nodes sit, from 0 to 1."""
+    return [(i + .5) / count for i in range(count)]
 
 
-def extend(arcade_run):
-    """An infinite challenge's run just won a fight: one more opponent at the end, so it never runs out."""
-    if infinite(arcade_run):
-        nxt = next_opponent(arcade_run.order)
-        if nxt:
-            arcade_run.order.append(nxt)
+def links(count, ahead):
+    """Which of the next floor's nodes (`ahead` of them) each of a floor's nodes (`count`) leads to: the nearest
+    two, and any as near as the second, so there's always a choice when the next floor has one."""
+    there = lanes(ahead)
+    led = []
+    for x in lanes(count):
+        reach = sorted(abs(x - y) for y in there)[min(1, ahead - 1)]
+        led.append([j for j, y in enumerate(there) if abs(x - y) <= reach + 1e-9])
+    return led
+
+
+def new_floor(before, found, rng):
+    """A floor's CPUs, all different, and none from the floor before it if there are enough others."""
+    width = min(rng.choice(PATH_WIDTHS), len(found))
+    fresh = [pk for pk in found if pk not in before]
+    floor = rng.sample(fresh, min(width, len(fresh)))
+    return floor + rng.sample([pk for pk in found if pk not in floor], width - len(floor))
+
+
+def floor_at(run):
+    """The floor of the path an infinite challenge is on: the fights it has won."""
+    return run.arcade_run.position if run.arcade_run_id else 0
+
+
+def path_of(run, rng=random):
+    """An infinite challenge's path, {"floors": [[CPU id, ...], ...], "picks": [the node fought on each floor]},
+    laid out PATH_AHEAD floors past the one it's on. CPUs that can't be fought any more are taken off the floors
+    still to come (one picked for a fight is let go too), a floor left empty laid again. Saved if it changed."""
+    path = {"floors": [list(f) for f in (run.path or {}).get("floors", [])], "picks": list((run.path or {}).get("picks", []))}
+    floors, picks = path["floors"], path["picks"]
+    at = floor_at(run)
+    if not floors and at:  # begun before there were paths: the fights so far, one CPU to a floor
+        floors[:] = [[pk] for pk in run.arcade_run.order[:at]]
+        picks[:] = [0] * at
+    found = [cpu.pk for cpu in opponents()]
+    del picks[at + 1:]
+    if len(picks) > at and floors[at][picks[at]] not in found:
+        del picks[at:]
+    for f in range(at, len(floors)):
+        kept = [pk for pk in floors[f] if pk in found]
+        if f < len(picks):
+            picks[f] = kept.index(floors[f][picks[f]])
+        floors[f] = kept
+    first_empty = next((f for f in range(at, len(floors)) if not floors[f]), len(floors))
+    del floors[first_empty:]
+    while found and len(floors) < at + 1 + PATH_AHEAD:
+        floors.append(new_floor(floors[-1] if floors else [], found, rng))
+    if path != run.path:
+        run.path = path
+        run.save(update_fields=["path"])
+    return path
+
+
+def choices(path, at):
+    """The nodes of floor `at` that can be fought: the one picked, if it has been; else those the last pick leads to."""
+    picks, floors = path["picks"], path["floors"]
+    if at >= len(floors):
+        return []
+    if at < len(picks):
+        return [picks[at]]
+    if at == 0:
+        return list(range(len(floors[0])))
+    return links(len(floors[at - 1]), len(floors[at]))[picks[at - 1]]
+
+
+def pick(run, node):
+    """Choose who an infinite challenge fights next: a node of the floor it's on that the path leads to. Returns
+    that CPU's id, or None if it can't be chosen. A choice made stands until the fight's won (or the CPU's gone)."""
+    path = path_of(run)
+    at = floor_at(run)
+    if at < len(path["picks"]):
+        node = path["picks"][at]
+    elif node not in choices(path, at):
+        return None
+    else:
+        path["picks"].append(node)
+        run.path = path
+        run.save(update_fields=["path"])
+    return path["floors"][at][node]
+
+
+def tier(fight):
+    """What the path calls how hard its fight number `fight` (from 0) is (see INFINITE_MODELS)."""
+    for (count, _), name in zip(INFINITE_MODELS, INFINITE_TIERS):
+        if fight < count:
+            return name
+        fight -= count
+    return "Hard"
+
+
+def defeated(run):
+    """The CPUs an infinite challenge has beaten, in order, as ids."""
+    path = run.path or {}
+    return [path["floors"][f][node] for f, node in enumerate(path.get("picks", [])[:floor_at(run)])]
 
 
 def infinite_style(arcade_run, profile):
@@ -247,7 +337,7 @@ def reset(run):
         if run.deck:
             run.deck.delete()
         run.deck = CardList.objects.create(user=run.user, name=deck_name(run.name), challenge=True)
-        run.pool, run.packs, run.opened, run.last_opening, run.rewards, run.lives = {}, start_packs(run.kind), 0, {}, [], 0
+        run.pool, run.packs, run.opened, run.last_opening, run.rewards, run.lives, run.path = {}, start_packs(run.kind), 0, {}, [], 0, {}
         run.arcade_run, run.status, run.started = None, ChallengeRun.Status.ACTIVE, timezone.now()
         run.save()
 

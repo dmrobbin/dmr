@@ -54,7 +54,7 @@ MIN_FRONT_LINE = 2  # a focused CPU saving stock still pays for characters up to
 FILL_MIN_DECK = 8  # a strategic CPU won't mill a deck this small, since refreshing costs damage
 HAND_EFFECT = re.compile(r"\bdraw\b|into your hand|to your hand", re.I)
 CHOICE_DESTINATIONS = ["hand", "stock", "deck", "deck_bottom", "waiting"]  # best first, for "where does it go?"
-WAITS = {"ability_show": 2, "pending_climax": 2, "pending_damage": 2, "auto_next": .9}  # seconds to let these show; otherwise STEP_WAIT
+WAITS = {"ability_show": 2, "combo_show": 1.6, "pending_climax": 2, "pending_damage": 2, "auto_next": .9}  # seconds to let these show; otherwise STEP_WAIT
 STEP_WAIT = .8
 
 
@@ -228,6 +228,9 @@ class Mind:
         if state.get("ability_show"):
             shown = state["ability_show"]
             return {"type": "ability_show_done", "id": shown["id"]} if shown["player"] == self.me else None
+        if state.get("combo_show"):  # its cut-in, seen: on with the combo
+            shown = state["combo_show"]
+            return {"type": "combo_show_done", "id": shown["id"]} if shown["player"] == self.me else None
         res = state.get("resolving")
         if res:
             prompt = res.get("prompt")

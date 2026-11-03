@@ -144,6 +144,71 @@ class FrontLineTests(TestCase):
         self.assertEqual(t.next(), {"type": "move", "uid": cards[1]["uid"], "to": "climax"})
 
 
+class ComboCutInTests(TestCase):
+    """A CPU with something to say (cut_ins, from play.deal) shows it before its first CX combo of a turn."""
+    COMBO = '【AUTO】 【CXCOMBO】 When "BIG" is placed on your climax area, draw 1 card.'
+
+    def setUp(self):
+        self.t = Table()
+        self.t.state["phase"] = "climax"
+        self.anchor = self.t.seat(self.t.me, "C1", self.t.card(1002, text=self.COMBO))
+        self.t.card(1003, card_type="Climax", name="BIG", power=None, level=None)
+
+    def combo(self):
+        """Play the climax, and let the CPU take it from there until it draws or stops for the cut-in."""
+        t = self.t
+        climax = t.hand(1003)[0]
+        t.apply(2, {"type": "move", "uid": climax["uid"], "to": "climax"})
+        action = t.next()
+        self.assertEqual(action["type"], "ability_trigger")
+        t.apply(2, action)
+
+    def test_the_combo_waits_for_its_cut_in(self):
+        t = self.t
+        t.state["cut_ins"] = {"2": []}
+        self.combo()
+        shown = t.state["combo_show"]
+        self.assertEqual((shown["player"], shown["card"]), ("2", 1002))
+        self.assertEqual(len(t.me["zones"]["hand"]), 0)  # nothing drawn yet
+        view = game.view(t.state, 1)
+        self.assertEqual((view["combo_show"]["card"], view["combo_show"]["mine"]), (1002, False))
+        self.assertGreaterEqual(cpu.wait_seconds(t.state), cpu.WAITS["combo_show"])  # long enough to be seen
+        action = t.next()
+        self.assertEqual(action, {"type": "combo_show_done", "id": shown["id"]})
+        t.apply(2, action)
+        self.assertNotIn("combo_show", t.state)
+        self.assertEqual(len(t.me["zones"]["hand"]), 1)  # then the combo goes on
+
+    def test_only_the_first_combo_of_a_turn(self):
+        t = self.t
+        t.state["cut_ins"] = {"2": []}
+        entry = {"player": "2", "uid": self.anchor["uid"], "card": 1002, "ability": {"text": self.COMBO}}
+        game.cut_in(t.state, entry)
+        t.state.pop("combo_show")
+        game.cut_in(t.state, entry)
+        self.assertNotIn("combo_show", t.state)
+        t.state["turn_number"] += 2  # its next turn
+        game.cut_in(t.state, entry)
+        self.assertIn("combo_show", t.state)
+
+    def test_not_for_other_abilities_cards_or_players(self):
+        t = self.t
+        entry = {"player": "2", "uid": self.anchor["uid"], "card": 1002, "ability": {"text": self.COMBO}}
+        game.cut_in(t.state, entry)  # no cut-in for this player
+        t.state["cut_ins"] = {"2": [555]}
+        game.cut_in(t.state, entry)  # not one of its anchors
+        game.cut_in(t.state, {**entry, "card": 555, "ability": {"text": "【AUTO】 When this card attacks, draw 1 card."}})  # not a combo
+        game.cut_in(t.state, {**entry, "player": "1", "card": 555})  # not the CPU
+        self.assertNotIn("combo_show", t.state)
+        game.cut_in(t.state, {**entry, "card": 555})
+        self.assertIn("combo_show", t.state)
+
+    def test_none_without_a_line(self):
+        self.combo()
+        self.assertNotIn("combo_show", self.t.state)
+        self.assertEqual(len(self.t.me["zones"]["hand"]), 1)
+
+
 class AttackTests(TestCase):
     def attacking(self, mine, theirs, level=1, aggression=1):
         t = Table()
@@ -1477,6 +1542,13 @@ class CountedPowerTests(TestCase):
         t = self.table("【CONT】 This card gets +1000 power for each character in your opponent's back stage.")
         t.seat(t.them, "B1", t.card(901))
         self.assertEqual(self.power(t), 2000)
+
+    def test_for_each_of_their_rested_characters(self):
+        t = self.table("【CONT】 This card gets +500 power for each of your opponent's 【REST】 characters.")
+        t.seat(t.them, "C1", t.card(901))
+        rested = t.seat(t.them, "C2", t.card(902))
+        rested["pos"] = "rest"
+        self.assertEqual(self.power(t), 1500)  # the standing one doesn't count
 
     def test_only_on_your_turn(self):
         t = self.table("【CONT】 During your turn, this card gets +500 power for each of your other 《Hero》 characters.")

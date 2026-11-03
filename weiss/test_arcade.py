@@ -205,9 +205,39 @@ class CpuImageTests(Base):
 
     def test_texts_are_saved_from_the_form(self):
         self.client.post(reverse("weiss:cpu_profile_update", args=[self.profile.pk]), {
-            "name": "Bot", "model": "standard", "aggression": 1, "deck": self.profile.deck_id, "intro_text": "Hi", "player_win_text": "Ow", "player_lose_text": "Ha"})
+            "name": "Bot", "model": "standard", "aggression": 1, "deck": self.profile.deck_id, "intro_text": "Hi", "player_win_text": "Ow", "player_lose_text": "Ha",
+            "combo_text": "Now!"})
         self.profile.refresh_from_db()
-        self.assertEqual((self.profile.intro_text, self.profile.player_win_text, self.profile.player_lose_text), ("Hi", "Ow", "Ha"))
+        self.assertEqual((self.profile.intro_text, self.profile.player_win_text, self.profile.player_lose_text, self.profile.combo_text),
+                         ("Hi", "Ow", "Ha", "Now!"))
+        self.assertContains(self.client.get(reverse("weiss:cpu_home")), "Now!")
+
+
+class ComboCutInTests(Base):
+    def challenge(self, **fields):
+        profile = self.cpu("Bot", **fields)
+        self.client.force_login(self.alice)
+        self.client.post(reverse("weiss:play_vs_cpu"), {"cpu": profile.pk, "deck": self.deck.pk})
+        return GameRoom.objects.get(host=self.alice), profile
+
+    def test_a_cpu_with_a_combo_line_gets_a_cut_in(self):
+        room, _ = self.challenge(combo_text="Feel my power!")
+        self.assertEqual(room.state["cut_ins"], {str(room.guest_id): []})  # not express-built: any CX combo
+        data = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()
+        self.assertEqual(data["cpu"]["combo"], "Feel my power!")
+
+    def test_none_without_one(self):
+        room, _ = self.challenge()
+        self.assertNotIn("cut_ins", room.state)
+
+    def test_an_express_deck_cuts_in_for_its_anchors_only(self):
+        other = Card.objects.create(serial_number="T/2", name="Anis", expansion="E", expansion_id=1, card_type="Character", level=0)
+        reprint = Card.objects.create(serial_number="T/2R", name="Anis", expansion="E", expansion_id=1, card_type="Character", level=0)
+        room, profile = self.challenge(combo_text="Now!")
+        CardListEntry.objects.create(card_list=profile.deck, card=reprint, quantity=2)
+        profile.deck.express = {"series": "T", "anchors": [other.pk], "required": []}
+        profile.deck.save()
+        self.assertEqual(play.anchor_cards(profile.deck), [reprint.pk])  # the anchor, in whichever printing the deck has
 
 
 class IntroAndEndScreenTests(Base):

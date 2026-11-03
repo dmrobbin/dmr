@@ -74,7 +74,7 @@
         </div>
         <form method="post" action="{% url 'weiss:cpu_profile_update' profile.pk %}" class="cpu-form">
           {% csrf_token %}
-          {% include "weiss/cpu_fields.html" with name=profile.name model=profile.model aggression=profile.aggression deck_id=profile.deck_id intro_text=profile.intro_text player_win_text=profile.player_win_text player_lose_text=profile.player_lose_text %}
+          {% include "weiss/cpu_fields.html" with name=profile.name model=profile.model aggression=profile.aggression deck_id=profile.deck_id intro_text=profile.intro_text player_win_text=profile.player_win_text player_lose_text=profile.player_lose_text combo_text=profile.combo_text %}
           <button type="submit" class="button-small secondary">Save</button>
         </form>
         <div class="cpu-form">
@@ -103,7 +103,7 @@
     <h3>New profile</h3>
     <form method="post" action="{% url 'weiss:cpu_profile_create' %}" class="cpu-form">
       {% csrf_token %}
-      {% include "weiss/cpu_fields.html" with name="" model="standard" aggression=1 deck_id=None intro_text="" player_win_text="" player_lose_text="" %}
+      {% include "weiss/cpu_fields.html" with name="" model="standard" aggression=1 deck_id=None intro_text="" player_win_text="" player_lose_text="" combo_text="" %}
       <button type="submit" class="button-small">Create profile</button>
     </form>
   </section>

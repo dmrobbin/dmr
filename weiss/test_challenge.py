@@ -260,47 +260,145 @@ class InfiniteChallengeTests(ArcadeSetup):
         self.assertEqual(self.run.packs + 2, challenge.START_PACKS)
         self.assertContains(self.client.get(reverse("weiss:arcade_challenge")), "Infinite challenge")
 
+    def fight(self, node=0):
+        return self.client.post(reverse("weiss:arcade_challenge_fight"), {"node": node})
+
+    def path(self):
+        self.run.refresh_from_db()
+        return challenge.path_of(self.run)
+
+    def win_and_leave(self):
+        room = self.end_fight("me")
+        self.post(reverse("weiss:play_action", args=[room.pk]), {"type": "challenge_leave"})
+
     def test_it_fights_every_cpu_for_as_long_as_it_wins(self):
-        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        self.fight()
         room = self.room()
         run = room.arcade_run
-        self.assertEqual((run.scenario, run.scenario_name, len(run.order)), (None, "Infinite challenge", 1))
+        self.assertEqual((run.scenario, run.scenario_name, run.order), (None, "Infinite challenge", [self.path()["floors"][0][0]]))
         self.assertIn(room.cpu_profile, [self.opener, self.filler, self.anchor])
         data = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()
-        self.assertEqual((data["arcade"]["fight"], data["arcade"]["total"]), (1, None))
+        self.assertEqual((data["arcade"]["fight"], data["arcade"]["total"], data["arcade"]["defeated"]), (1, None, []))
         packs = self.run.packs
         for fight in range(1, 5):
-            self.end_fight("me")
+            self.win_and_leave()
             run.refresh_from_db()
-            self.assertEqual((run.position, len(run.order), run.status), (fight, fight + 1, ArcadeRun.Status.ACTIVE))
-            self.assertNotEqual(run.order[-1], run.order[-2])  # not the same one twice running
-            self.post(reverse("weiss:play_action", args=[self.room().pk]), {"type": "arcade_continue"})
+            self.assertEqual((run.position, len(run.order), run.status), (fight, fight, ArcadeRun.Status.ACTIVE))
+            path = self.path()
+            node = challenge.choices(path, fight)[-1]
+            self.fight(node)
+            run.refresh_from_db()
+            self.assertEqual(run.order[-1], path["floors"][fight][node])  # the one chosen
+            self.assertEqual(self.room().cpu_profile_id, path["floors"][fight][node])
         self.run.refresh_from_db()
         self.assertEqual(self.run.packs, packs + 4 * challenge.INFINITE_WIN_PACKS)  # a pack each win
         self.assertEqual(len(self.run.rewards), 4)  # and a prize to claim
         self.assertTrue(all(r["buff"] in challenge.INFINITE_PRIZES for r in self.run.rewards))
         self.assertEqual(self.run.status, "active")
+        self.assertEqual(challenge.defeated(self.run), run.order[:4])
+
+    def test_the_path_is_laid_out_ahead(self):
+        path = self.path()
+        self.assertEqual(len(path["floors"]), 1 + challenge.PATH_AHEAD)
+        for floor in path["floors"]:
+            self.assertIn(len(floor), (2, 3))
+            self.assertEqual(len(set(floor)), len(floor))  # all different
+        self.assertEqual(challenge.choices(path, 0), list(range(len(path["floors"][0]))))  # any to start
+        self.fight(1)
+        self.win_and_leave()
+        path = self.path()
+        self.assertEqual(len(path["floors"]), 2 + challenge.PATH_AHEAD)  # one more floor, as it goes up
+        self.assertEqual(challenge.choices(path, 1), challenge.links(len(path["floors"][0]), len(path["floors"][1]))[1])
+
+    def test_each_cpu_leads_to_two_or_three(self):
+        for count in (1, 2, 3):
+            for ahead in (2, 3):
+                led = challenge.links(count, ahead)
+                self.assertTrue(all(len(nodes) >= 2 for nodes in led))
+                self.assertEqual({j for nodes in led for j in nodes}, set(range(ahead)))  # every one can be got to
+        self.assertEqual(challenge.links(2, 3), [[0, 1], [1, 2]])
+        self.assertEqual(challenge.links(3, 3), [[0, 1], [0, 1, 2], [1, 2]])
+
+    def test_only_a_cpu_the_path_leads_to_can_be_chosen(self):
+        self.run.path = {"floors": [[self.opener.pk, self.filler.pk], [self.opener.pk, self.filler.pk, self.anchor.pk]], "picks": [0]}
+        self.run.save()
+        self.fight(0)
+        self.win_and_leave()
+        response = self.fight(2)  # the first on the left leads to the first two on the next floor, not the third
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(GameRoom.objects.filter(host=self.staff).exists())
+        self.fight(1)
+        self.assertEqual(self.room().cpu_profile, self.filler)
+
+    def test_a_choice_stands_until_the_fight_is_won(self):
+        self.fight(1)
+        chosen = self.room().cpu_profile_id
+        self.post(reverse("weiss:play_action", args=[self.room().pk]), {"type": "challenge_leave"})
+        self.fight(0)  # changing their mind: no
+        self.assertEqual(self.room().cpu_profile_id, chosen)
+
+    def test_a_cpu_gone_from_the_path_is_replaced(self):
+        path = self.path()
+        gone = path["floors"][1][0]
+        type(self.opener).objects.filter(pk=gone).update(finalized=False)
+        path = self.path()
+        self.assertTrue(all(gone not in floor for floor in path["floors"]))
+        self.assertTrue(all(floor for floor in path["floors"]))
+
+    def test_the_page_shows_the_path_and_who_is_beaten(self):
+        page = self.client.get(reverse("weiss:arcade_challenge")).content.decode()
+        self.assertIn("The path", page)
+        self.assertIn("<strong>0</strong> defeated", page)
+        self.assertEqual(page.count('name="node"'), len(self.path()["floors"][0]))  # one to fight on each node of the first floor
+        self.fight(0)
+        beaten = self.room().cpu_profile
+        self.win_and_leave()
+        page = self.client.get(reverse("weiss:arcade_challenge")).content.decode()
+        self.assertIn("<strong>1</strong> defeated", page)
+        self.assertIn(f'aria-label="{beaten.name}"', page)
+        self.fight(challenge.choices(self.path(), 1)[0])
+        data = self.client.get(reverse("weiss:play_state", args=[self.room().pk])).json()
+        self.assertEqual([cpu["name"] for cpu in data["arcade"]["defeated"]], [beaten.name])
+        for fight in (2, 3):  # further up, the floors behind go on being shown
+            self.win_and_leave()
+            self.assertContains(self.client.get(reverse("weiss:arcade_challenge")), f"<strong>{fight}</strong> defeated")
+            self.fight(challenge.choices(self.path(), fight)[0])
+
+    def test_a_win_goes_back_to_the_path(self):
+        self.fight()
+        room = self.end_fight("me")
+        response = self.post(reverse("weiss:play_action", args=[room.pk]), {"type": "arcade_continue"})
+        self.assertEqual(response.status_code, 400)  # the next one's chosen on the path
+
+    def test_resetting_lays_a_new_path(self):
+        self.fight()
+        self.win_and_leave()
+        self.run.refresh_from_db()
+        challenge.reset(self.run)
+        self.run.refresh_from_db()
+        self.assertEqual(self.run.path, {})
 
     def test_the_victory_screen_draws_the_prize_won(self):
-        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        self.fight()
         room = self.end_fight("me")
         self.run.refresh_from_db()
         won = self.run.rewards[-1]["buff"]
         prize = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()["prize"]
         self.assertEqual([item["name"] for item in prize["reel"]], ["Climax pack", "Color pack", "Lucky pack"])
         self.assertEqual((prize["reel"][prize["won"]]["buff"], prize["packs"]), (won, 1))  # what it lands on is what's given
-        self.post(reverse("weiss:play_action", args=[room.pk]), {"type": "arcade_continue"})
-        self.assertNotIn("prize", self.client.get(reverse("weiss:play_state", args=[room.pk])).json())  # gone with the next fight
+        self.post(reverse("weiss:play_action", args=[room.pk]), {"type": "challenge_leave"})
+        self.fight(challenge.choices(self.path(), 1)[0])
+        self.assertNotIn("prize", self.client.get(reverse("weiss:play_state", args=[self.room().pk])).json())  # gone with the next fight
 
     def test_a_loss_ends_it_and_the_deck_can_be_kept(self):
-        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        self.fight()
         self.end_fight("cpu")
         self.run.refresh_from_db()
         self.assertEqual(self.run.status, "lost")
         self.assertContains(self.client.get(reverse("weiss:arcade_challenge")), "Keep your deck?")
 
     def test_the_cpus_get_harder(self):
-        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        self.fight()
         run = self.room().arcade_run
         models = []
         for position in range(9):
@@ -315,7 +413,7 @@ class InfiniteChallengeTests(ArcadeSetup):
 
     def test_the_cpu_plays_by_the_challenges_model_not_its_own(self):
         type(self.opener).objects.update(model="hard")
-        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        self.fight()
         room = self.room()
         room.state.pop("cpu_intro", None)
         room.save()
@@ -325,7 +423,7 @@ class InfiniteChallengeTests(ArcadeSetup):
 
     def test_the_cpus_own_lines_are_kept(self):
         type(self.opener).objects.update(intro_text="Hello!", player_win_text="Ugh.", player_lose_text="Ha!")
-        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        self.fight()
         room = self.room()
         self.assertTrue(room.state["cpu_intro"])  # its usual screen before the fight
         data = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()
@@ -334,7 +432,7 @@ class InfiniteChallengeTests(ArcadeSetup):
     def test_no_scenes(self):
         scene = Scene.objects.create(name="Hi", script="cast a as Rapi\na: Hi.")
         ArcadeEntry.objects.update(scene_before=scene, scene_after=scene)
-        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        self.fight()
         self.assertNotIn("scenes", self.room().state)
         room = self.end_fight("me")
         self.assertNotIn("scenes", room.state)

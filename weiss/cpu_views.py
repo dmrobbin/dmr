@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 MAX_TEXT = 1000
 IMAGES_PER_PAGE = 60
-TEXT_FIELDS = ("intro_text", "player_win_text", "player_lose_text")
+TEXT_FIELDS = ("intro_text", "player_win_text", "player_lose_text", "combo_text")
 
 
 def staff_required(view):

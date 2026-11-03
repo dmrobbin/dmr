@@ -76,6 +76,8 @@
   let climaxTimer = null; // pending move to the attack phase after we play a climax
   let autoTimer = null; // pending move to the next phase after one ended itself (board.auto_next)
   let showTimer = null; // pending end of an ability being shown (board.ability_show)
+  let comboTimer = null; // ...and of a CX combo's cut-in (board.combo_show)
+  const COMBO_SHOW_MS = 1600; // the cut-in's time on screen: a second, then it fades (as cpu.WAITS has it)
   let rpsTimer = null; // pending end of rock, paper, scissors' result
   const mulliganPicks = new Set(); // hand cards picked to mulligan away
   const discardPicks = new Set(); // hand cards picked for the end phase's discard
@@ -136,6 +138,7 @@
     sceneViewer = data.player_name || sceneViewer;
     if (data.revealed) modal = { title: data.revealed.title, revealed: data.revealed.cards };
     render();
+    renderDefeated();
     showScene();
     animateOpponent(before);
     if (wasInPlay && animations) celebrate(wasInPlay);
@@ -175,6 +178,14 @@
         if (board.ability_show && board.ability_show.id === id) act({ type: "ability_show_done", id });
       }, delay);
     }
+    // A CX combo's cut-in: the CPU moves on once it's been seen; this page does too, a little later, in case.
+    if (board.combo_show && !comboTimer) {
+      const { id } = board.combo_show;
+      comboTimer = setTimeout(() => {
+        comboTimer = null;
+        if (board.combo_show && board.combo_show.id === id) act({ type: "combo_show_done", id });
+      }, COMBO_SHOW_MS + SHOW_FALLBACK_MS);
+    }
     // Rock, paper, scissors has a winner: let both players see it, then on to the mulligan.
     if (board.rps && board.rps.won !== null && !rpsTimer) {
       rpsTimer = setTimeout(() => {
@@ -198,10 +209,34 @@
   let seen = null;
 
   let shownAbility = null; // the id of the last ability shown
+  let shownCombo = null; // ...and of the last CX combo cut-in
+
+  // A CPU's CX combo: its picture and its line (its "CXCOMBO" text) cut in over the board, for a second, then fade.
+  // Shown with animations off too, as it's what the CPU says; only the movement goes.
+  function showCutIn() {
+    if (!cpuInfo || !cpuInfo.combo) return;
+    const picture = cpuInfo.picture;
+    const face = picture
+      ? `<span class="avatar combo-cutin-face" aria-hidden="true"><img src="${esc(picture.image)}" alt="" style="width:${picture.width}%;left:${picture.left}%;top:${picture.top}%"></span>`
+      : cpuInfo.image ? `<img class="combo-cutin-face" src="${esc(cpuInfo.image)}" alt="">`
+        : `<span class="avatar combo-cutin-face" aria-hidden="true"><span class="avatar-letter">${esc(cpuInfo.name.slice(0, 1).toUpperCase())}</span></span>`;
+    const el = document.createElement("div");
+    el.className = `combo-cutin${animations ? "" : " still"}`;
+    el.setAttribute("role", "status");
+    el.innerHTML = `${face}<div class="combo-cutin-words"><span class="combo-cutin-name">${esc(cpuInfo.name)} <b>CX COMBO</b></span>
+      <p class="combo-cutin-line">${esc(cpuInfo.combo)}</p></div>`;
+    root.appendChild(el);
+    setTimeout(() => el.remove(), COMBO_SHOW_MS);
+  }
 
   function announce() {
     const now = {};
     const show = animations && seen;
+    const combo = board.combo_show;
+    if (combo && combo.id !== shownCombo) {
+      shownCombo = combo.id;
+      if (seen) showCutIn();
+    }
     const ability = board.ability_show;
     if (ability && ability.id !== shownAbility) {
       shownAbility = ability.id;
@@ -288,6 +323,29 @@
       }
     }
     setTimeout(() => burst.remove(), 1800);
+  }
+
+  // --- An infinite challenge's CPUs beaten so far: their pictures, top left, as on its page (defeated_tally.html) --
+
+  let defeatedEl = null;
+  let defeatedKey = "";
+  function renderDefeated() {
+    const beaten = arcade && arcade.defeated;
+    const key = beaten ? JSON.stringify(beaten) : "";
+    if (key === defeatedKey) return;
+    defeatedKey = key;
+    if (defeatedEl) defeatedEl.remove();
+    defeatedEl = null;
+    if (!beaten) return;
+    const face = (cpu) => `<li><span class="avatar" role="img" aria-label="${esc(cpu.name)}" title="${esc(cpu.name)}">${cpu.picture
+      ? `<img src="${esc(cpu.picture.image)}" alt="" draggable="false" style="width:${cpu.picture.width}%;left:${cpu.picture.left}%;top:${cpu.picture.top}%">`
+      : `<span class="avatar-letter" aria-hidden="true">${esc(cpu.name.slice(0, 1).toUpperCase())}</span>`}</span></li>`;
+    defeatedEl = document.createElement("div");
+    defeatedEl.className = "defeated-tally play-defeated";
+    defeatedEl.setAttribute("aria-label", `${beaten.length} CPU${beaten.length === 1 ? "" : "s"} defeated`);
+    defeatedEl.innerHTML = `<span class="defeated-count" aria-hidden="true"><strong>${beaten.length}</strong> defeated</span>
+      ${beaten.length ? `<ol class="defeated-faces">${beaten.map(face).join("")}</ol>` : ""}`;
+    (root.querySelector(".play-chat-side") || root).prepend(defeatedEl);
   }
 
   // --- An infinite challenge's prize: a slot machine on the Victory screen -----------------------------------
@@ -1403,6 +1461,8 @@
       if (!trial.going) return `<button type="button" data-act='{"type":"challenge_leave"}'>See how it ended</button>`;
       const deck = `<button type="button" class="game-over-end" data-act='{"type":"challenge_leave"}' title="Open packs, claim rewards and change your deck, then come back for the fight">${trial.rewards ? "Rewards, packs &amp; deck" : "Packs &amp; deck"}</button>`;
       if (!over.won) return `<button type="button" data-act='{"type":"arcade_retry"}'>Fight again</button>${deck}`; // a second chance
+      // An infinite challenge's next fight is chosen on its path, with the packs and rewards there too.
+      if (arcade.defeated) return `<button type="button" data-act='{"type":"challenge_leave"}' title="Open packs, claim rewards and change your deck, then choose who to fight next">Choose your next fight</button>`;
       return `<button type="button" data-act='{"type":"arcade_continue"}'>Next fight</button>${deck}`;
     }
     if (arcade.cleared) return `<button type="button" data-act='{"type":"arcade_quit"}'>Finish</button>`;

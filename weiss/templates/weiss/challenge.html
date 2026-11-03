@@ -41,8 +41,8 @@
       </section>
       <section class="challenge-choice">
         <h2>Infinite challenge</h2>
-        <p class="muted small">Every CPU, one after another, for as long as you keep winning: easy at first, harder and harder after.
-          Each win brings a random reward. Packs from any set, and no story.</p>
+        <p class="muted small">A path of CPUs that never ends: choose who to fight from two or three at a time, and see where each one leads.
+          Easy at first, harder and harder after, for as long as you keep winning. Each win brings a pack and a prize. Packs from any set, and no story.</p>
         {% if cpu_count %}
           <form method="post" action="{% url 'weiss:arcade_challenge_start' %}">
             {% csrf_token %}
@@ -55,6 +55,7 @@
 
   {% else %}
     <section class="challenge-run">
+      {% if path %}{% include "weiss/defeated_tally.html" with defeated=path.defeated %}{% endif %}
       <div class="challenge-head">
         <div>
           <h2>{{ run.name }} <span class="deck-tag">{{ run.get_kind_display }}</span></h2>
@@ -113,13 +114,18 @@
           </section>
           <section>
             <h3>3. Fight</h3>
-            <form method="post" action="{% url 'weiss:arcade_challenge_fight' %}">
-              {% csrf_token %}
-              <button type="submit" class="button-small"{% if not deck_total %} disabled{% endif %}>{% if room %}Back to the fight{% elif arcade_run and arcade_run.position %}Next fight{% else %}Start the run{% endif %}</button>
-            </form>
+            {% if path %}
+              <p class="muted small"><a href="#spire-title">Choose who to fight on the path</a>{% if path.floors %}, below{% endif %}.</p>
+            {% else %}
+              <form method="post" action="{% url 'weiss:arcade_challenge_fight' %}">
+                {% csrf_token %}
+                <button type="submit" class="button-small"{% if not deck_total %} disabled{% endif %}>{% if room %}Back to the fight{% elif arcade_run and arcade_run.position %}Next fight{% else %}Start the run{% endif %}</button>
+              </form>
+            {% endif %}
             {% if not deck_total %}<p class="muted small">Your deck needs cards first.</p>{% endif %}
           </section>
         </div>
+        {% if path %}{% include "weiss/challenge_path.html" %}{% endif %}
         <div class="challenge-danger">
           <form method="post" action="{% url 'weiss:arcade_challenge_reset' %}" onsubmit="return confirm('Start {{ run.name|escapejs }} again from nothing? Your deck and pulled cards will be gone.')">
             {% csrf_token %}<button type="submit" class="button-small secondary">Reset challenge</button></form>

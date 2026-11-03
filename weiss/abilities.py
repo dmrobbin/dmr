@@ -3350,6 +3350,9 @@ def parse_each(words, quotes):
         return {"of": "opp_stage", "zone": match[1], "times": 1}
     if words == "of your opponent's characters":
         return {"of": "opp_chars", "times": 1}
+    match = re.fullmatch(r"of your opponent's (.+?)", words)  # "of your opponent's 【REST】 characters"
+    if match and (f := parse_filter(match[1], quotes)):
+        return {"of": "opp_chars", "filter": f, "times": 1}
     match = re.fullmatch(r"(.+?) in your (level|memory|waiting room|clock|hand|stock)", words)
     if match and (f := parse_filter(match[1], quotes)):
         return {"of": "zone", "zone": ZONE_WORDS[match[2]], "filter": f, "times": 1}

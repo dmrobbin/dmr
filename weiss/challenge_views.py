@@ -14,7 +14,7 @@ from core.access import weiss_access_required
 
 from . import arcade, buffs, challenge, packs
 from .lists import DECK_GROUPS, DECK_SIZE
-from .models import ArcadeRun, ArcadeScenario, Card, ChallengeRun, GameRoom, NarrativeChallenge
+from .models import ArcadeRun, ArcadeScenario, Card, ChallengeRun, CpuProfile, GameRoom, NarrativeChallenge
 from .play import deal, not_begun, seat_cpu
 
 
@@ -54,7 +54,58 @@ def challenge_home(request):
         "pulled": sum(run.pool.values()), "arcade_run": run.arcade_run, "room": run_room(run), "win_reward": challenge.win_reward_text(run.kind),
         "lineup": arcade.lineup(run.scenario, request.user) if run.scenario else [],
         "set_names": [names.get(pk, f"Set {pk}") for pk in run.sets],
+        "path": path_view(run) if run.kind == ChallengeRun.Kind.INFINITE else None,
     })
+
+
+PATH_BEHIND = 2  # floors of an infinite challenge's path still shown once they're won
+
+
+def path_view(run):
+    """An infinite challenge's path for its page, from the bottom up: {"floors": [{"number", "tier", "current",
+    "nodes": [{"cpu", "node", "x", "y", "state"}]}], "lines": [{"x1", "y1", "x2", "y2", "state"}], "defeated":
+    [CPU, ...]}. Positions are percentages of the map. A node's state is "won", "passed" (not taken), "open" (can
+    be fought now), "picked" (chosen, its fight under way), "closed" (on this floor, out of reach), "reach" (ahead,
+    on the way from here) or "ahead"."""
+    path = challenge.path_of(run)
+    floors, picks = path["floors"], path["picks"]
+    at = challenge.floor_at(run)
+    cpus = CpuProfile.objects.in_bulk({pk for floor in floors for pk in floor} | set(challenge.defeated(run)))
+    defeated = [cpus.get(pk) for pk in challenge.defeated(run)]
+    first, last = max(0, at - PATH_BEHIND), min(len(floors), at + 1 + challenge.PATH_AHEAD)
+    shown = range(first, last)
+    open_now = set(challenge.choices(path, at))
+    reach = {at: open_now}  # the nodes of each floor ahead that can be got to from here
+    for f in range(at + 1, last):
+        led = challenge.links(len(floors[f - 1]), len(floors[f]))
+        reach[f] = {j for i in reach[f - 1] for j in led[i]}
+
+    def place(f, i):
+        rows = len(shown)
+        return round(challenge.lanes(len(floors[f]))[i] * 100, 2), round((rows - (f - first) - .5) / rows * 100, 2)
+
+    def state(f, i):
+        if f < at:
+            return "won" if picks[f] == i else "passed"
+        if f == at:
+            return ("picked" if at < len(picks) else "open") if i in open_now else "closed"
+        return "reach" if i in reach[f] else "ahead"
+
+    view_floors, lines = [], []
+    for f in shown:
+        nodes = []
+        for i, pk in enumerate(floors[f]):
+            x, y = place(f, i)
+            nodes.append({"cpu": cpus.get(pk), "node": i, "x": x, "y": y, "state": state(f, i)})
+        view_floors.append({"number": f + 1, "tier": challenge.tier(f), "current": f == at, "nodes": nodes})
+        if f + 1 < last:
+            for i, led in enumerate(challenge.links(len(floors[f]), len(floors[f + 1]))):
+                for j in led:
+                    (x1, y1), (x2, y2) = place(f, i), place(f + 1, j)
+                    taken = f + 1 < len(picks) and picks[f] == i and picks[f + 1] == j
+                    onward = f + 1 >= at and j in reach[f + 1] and (i in reach[f] if f >= at else picks[f] == i)
+                    lines.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2, "state": "taken" if taken else "onward" if onward else "faint"})
+    return {"floors": view_floors[::-1], "lines": lines, "defeated": defeated, "height": len(shown) * 9}
 
 
 def reward_context(run):
@@ -202,6 +253,19 @@ def challenge_fight(request):
     if not run.deck or not run.deck.entries.exists():
         messages.error(request, "Your deck is empty: open some packs and build it first.")
         return redirect("weiss:arcade_challenge")
+    endless = run.kind == ChallengeRun.Kind.INFINITE
+    if endless:
+        # Who's next is the player's choice, on the path: a CPU it leads to.
+        options = challenge.choices(challenge.path_of(run), challenge.floor_at(run))
+        node = request.POST.get("node", "")
+        chosen = challenge.pick(run, int(node) if node.isdigit() else options[0] if len(options) == 1 else None)
+        if not chosen:
+            messages.error(request, "Choose who to fight next on the path." if options else "There are no CPUs to fight right now.")
+            return redirect("weiss:arcade_challenge")
+        arcade_run = run.arcade_run
+        if arcade_run and arcade_run.status == ArcadeRun.Status.ACTIVE and arcade_run.order[arcade_run.position:] != [chosen]:
+            arcade_run.order[arcade_run.position:] = [chosen]
+            arcade_run.save(update_fields=["order"])
     room = run_room(run)
     if room:
         with transaction.atomic():
@@ -228,25 +292,18 @@ def challenge_fight(request):
     if GameRoom.objects.filter(host=request.user).count() >= GameRoom.MAX_OPEN_ROOMS:
         messages.error(request, f"You already host {GameRoom.MAX_OPEN_ROOMS} rooms; delete an old one first.")
         return redirect("weiss:arcade_challenge")
-    endless = run.kind == ChallengeRun.Kind.INFINITE
     scenario = run.scenario and ArcadeScenario.objects.prefetch_related("entries__cpu").filter(pk=run.scenario_id).first()
     if not endless and (not scenario or arcade.scenario_problem(scenario)):
         messages.error(request, "This challenge's arcade list isn't available right now.")
         return redirect("weiss:arcade_challenge")
     with transaction.atomic():
         if not run.arcade_run or run.arcade_run.status != ArcadeRun.Status.ACTIVE:
-            # An infinite challenge's run has no list: its opponents are drawn as it goes (challenge.extend).
-            order = [pk for pk in [challenge.next_opponent([])] if pk] if endless else \
-                arcade.fight_order(scenario, fixed=run.kind == ChallengeRun.Kind.NARRATIVE)
+            # An infinite challenge's run has no list: its opponents are chosen as it goes, on its path.
+            order = [chosen] if endless else arcade.fight_order(scenario, fixed=run.kind == ChallengeRun.Kind.NARRATIVE)
             run.arcade_run = ArcadeRun.objects.create(user=request.user, scenario=scenario, scenario_name=scenario.name if scenario else run.name,
                                                       deck_name=run.deck.name, order=order)
             run.save(update_fields=["arcade_run"])
         profile = arcade.current_cpu(run.arcade_run)
-        if not profile and endless and challenge.opponents():
-            # The CPU it was due to fight can't be fought any more: another in its place.
-            run.arcade_run.order[run.arcade_run.position:] = [challenge.next_opponent(run.arcade_run.order[:run.arcade_run.position])]
-            run.arcade_run.save(update_fields=["order"])
-            profile = arcade.current_cpu(run.arcade_run)
         if not profile:
             messages.error(request, "This challenge's arcade list has no one left to fight.")
             return redirect("weiss:arcade_challenge")
