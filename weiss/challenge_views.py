@@ -13,7 +13,7 @@ from django.views.decorators.http import require_POST
 from core.access import weiss_access_required
 
 from . import arcade, buffs, challenge, packs
-from .lists import DECK_GROUPS, DECK_SIZE
+from .lists import DECK_GROUPS, DECK_SIZE, unlimited
 from .models import ArcadeRun, ArcadeScenario, Card, ChallengeRun, CpuProfile, GameRoom, NarrativeChallenge
 from .play import deal, not_begun, seat_cpu
 
@@ -243,7 +243,7 @@ def challenge_deck(request):
     for card, pulled, in_deck in challenge.pool_cards(run):
         card.image_src = reverse("weiss:card_image", args=[card.pk])
         rarity = packs.rarity_of(card)
-        cards.append({"card": card, "pulled": pulled, "in_deck": in_deck, "rarity": rarity, "grade": packs.grade_of(rarity)})
+        cards.append({"card": card, "pulled": pulled, "in_deck": in_deck, "rarity": rarity, "grade": packs.grade_of(rarity), "unlimited": unlimited(card)})
     climaxes = next(target for _, target, required, _ in DECK_GROUPS if required)
     # What the filters offer: only what's in the pool (as the set pages do, see views.card_browser).
     pool = [item["card"] for item in cards]

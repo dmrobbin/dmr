@@ -41,7 +41,7 @@ from core.access import weiss_access_required
 
 from . import abilities
 from .card_images import names_in_card
-from .lists import COPY_LIMIT, DECK_GROUPS, DECK_SIZE, EXPRESS_PROMPT, SESSION_KEY, deck_checks, is_climax, sorted_entries
+from .lists import COPY_LIMIT, DECK_GROUPS, copy_limit, DECK_SIZE, EXPRESS_PROMPT, SESSION_KEY, deck_checks, is_climax, sorted_entries
 from .models import Card, CardList, CardListEntry
 from .views import series_code, summarize_sets, with_image_urls
 
@@ -1003,7 +1003,7 @@ def express_pick(request, pk):
             error = f"{lost[0]} is required by your anchors, so one copy stays."
         elif not removing and sum(copies.values()) >= DECK_SIZE:
             error = "The deck is full: tick the copies to take out first."
-        elif by_name[card.name] + adding > COPY_LIMIT:
+        elif copy_limit(card) is not None and by_name[card.name] + adding > COPY_LIMIT:  # unless its text lets a deck have any number
             error = f"That would be more than {COPY_LIMIT} copies of {card.name}."
         else:
             error = ""

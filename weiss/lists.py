@@ -6,6 +6,7 @@ here; the page's script sends them in the background and swaps in the re-rendere
 running count updates without reloading a page full of card images. Without JavaScript the same
 forms work as ordinary posts that redirect back.
 """
+import re
 from collections import Counter
 from decimal import Decimal
 
@@ -44,13 +45,31 @@ def is_climax(card):
     return card.card_type.lower() == "climax"
 
 
+# "【CONT】 You can put any number of cards with the same card name as this card into your deck."
+ANY_NUMBER = re.compile(r"any number of (?:cards with the same (?:card )?name as this card|copies of this card)", re.I)
+
+
+def unlimited(card):
+    """Whether this card's own text lets a deck have any number of it, past COPY_LIMIT."""
+    return bool(ANY_NUMBER.search(card.description or ""))
+
+
+def copy_limit(card):
+    """How many copies of this card's name a deck can have: COPY_LIMIT, or None for no limit."""
+    return None if unlimited(card) else COPY_LIMIT
+
+
 def over_copy_limit(entries):
     """Names with more than COPY_LIMIT copies. The rule is per name, so different printings
-    (rarities, promos) of the same card count together."""
+    (rarities, promos) of the same card count together. A name whose card says any number can go in
+    a deck has no limit."""
     copies = Counter()
+    free = set()
     for entry in entries:
         copies[entry.card.name] += entry.quantity
-    return {name for name, count in copies.items() if count > COPY_LIMIT}
+        if unlimited(entry.card):
+            free.add(entry.card.name)
+    return {name for name, count in copies.items() if count > COPY_LIMIT and name not in free}
 
 
 def deck_checks(entries):

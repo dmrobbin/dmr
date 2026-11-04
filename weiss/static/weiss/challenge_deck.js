@@ -26,9 +26,11 @@
     const total = tiles.reduce((sum, tile) => sum + count(tile), 0);
     const groups = { climax: 0, 0: 0, 1: 0, 2: 0, 3: 0 };
     const byName = {};
+    const free = new Set(); // names whose card says a deck can have any number of them
     for (const tile of tiles) {
       if (tile.dataset.level in groups) groups[tile.dataset.level] += count(tile);
       byName[tile.dataset.name] = (byName[tile.dataset.name] || 0) + count(tile);
+      if ("unlimited" in tile.dataset) free.add(tile.dataset.name);
     }
     form.querySelector("[data-deck-total]").textContent = `${total} / ${size} cards`;
     form.querySelector("[data-deck-groups]").textContent =
@@ -37,7 +39,7 @@
     if (total > size) warnings.push(`More than ${size} cards`);
     else if (total < size) warnings.push(`${size - total} short of a full deck`);
     if (groups.climax !== climaxTarget) warnings.push(`${groups.climax} climaxes, not ${climaxTarget}`);
-    const over = Object.entries(byName).filter(([, n]) => n > COPY_LIMIT).map(([name]) => name);
+    const over = Object.entries(byName).filter(([name, n]) => n > COPY_LIMIT && !free.has(name)).map(([name]) => name);
     if (over.length) warnings.push(`more than ${COPY_LIMIT} of ${over.join(", ")}`);
     form.querySelector("[data-deck-warnings]").textContent = warnings.join(" · ");
     form.querySelector('button[type="submit"]').disabled = total > size;

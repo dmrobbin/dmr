@@ -968,6 +968,13 @@ class ChoosingByHandTests(TestCase):
         self.assertContains(response, "more than 4 copies")
         self.assertEqual(self.copies(), {self.filler.pk: 4, self.kept.pk: 2})
 
+    def test_a_card_that_says_any_number_can_go_past_four(self):
+        unlimited = Card.objects.create(serial_number="OTH/S1-902", name="Swarm", expansion="Test set", expansion_id=1, card_type="Character", level=0, color="Red",
+                                        description="【CONT】 You can put any number of cards with the same card name as this card into your deck.")
+        for _ in range(5):
+            self.client.post(self.pick, {"card": unlimited.pk})
+        self.assertEqual(self.copies()[unlimited.pk], 5)
+
     def test_the_last_copy_of_a_required_card_stays(self):
         response = self.client.post(self.pick, {"card": self.outside.pk, "replace": [self.kept.pk, self.kept.pk]}, follow=True)
         self.assertContains(response, "required by your anchors")

@@ -7,6 +7,7 @@ from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from . import lists
 from .models import Card, CardList, CardListEntry, CardPrice
 from .scraper import expansion_serials, parse_card
 
@@ -738,6 +739,16 @@ class DeckReminderTests(TestCase):
         self.assertContains(page, 'class="qty-controls" data-qty-controls data-card-name="Ai"', count=0)
         CardList.objects.filter(pk=self.deck.pk).update(is_deck=False)  # plain lists have no limit
         self.assertNotContains(self.client.get(reverse("weiss:set", args=[230])), "over-limit")
+
+    def test_a_card_that_says_any_number_has_no_limit(self):
+        Card.objects.filter(name="Aqua").update(description="【CONT】 You can put any number of cards with the same card name as this card into your deck.")
+        self.assertTrue(lists.unlimited(Card.objects.filter(name="Aqua").first()))
+        self.assertNotIn("Aqua", self.checks()["over_limit"])  # 8 copies, and it's allowed
+        self.assertIn("Ruby", self.checks()["over_limit"])  # the rest are as they were
+        # Another printing of that name, without the text, goes by the name: any number too.
+        other = Card.objects.create(serial_number="OSK/S107-E099", name="Aqua", card_type="Character", level=1, expansion="OSHI NO KO", expansion_id=230)
+        CardListEntry.objects.create(card_list=self.deck, card=other, quantity=2)
+        self.assertNotIn("Aqua", self.checks()["over_limit"])
 
     def test_panel_shows_reminders_and_thumbnails_and_json_refreshes_them(self):
         CardList.objects.filter(pk=self.deck.pk).update(is_deck=True)

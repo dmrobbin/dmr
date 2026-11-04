@@ -76,7 +76,7 @@
               data-level="{% if card.card_type|lower == 'climax' %}climax{% else %}{{ card.level|default_if_none:'' }}{% endif %}"
               data-text="{{ card.description }}" data-traits="{{ card.traits }}" data-color="{{ card.color }}" data-cost="{{ card.cost|default_if_none:'' }}"
               data-power="{{ card.power|default_if_none:'' }}" data-type="{{ card.card_type|lower }}" data-rarity="{{ item.rarity }}" data-grade="{{ item.grade }}"
-              data-set="{{ card.expansion_id }}" data-serial="{{ card.serial_number }}">
+              data-set="{{ card.expansion_id }}" data-serial="{{ card.serial_number }}"{% if item.unlimited %} data-unlimited{% endif %}>
             <a href="{% url 'weiss:card' card.pk %}" data-card-popup="{% url 'weiss:card_popup' card.pk %}" class="pool-picture">{% include "weiss/card_art.html" with alt=card.name lazy=True %}</a>
             <span class="pool-name small">{{ card.name }}</span>
             <span class="pool-controls">
