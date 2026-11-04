@@ -106,7 +106,7 @@ def unmask(text, quotes):
 # this module reads. They run on everything but card names (see canonical).
 NUMBER_WORDS = {"one": "1", "two": "2", "three": "3", "four": "4", "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9", "ten": "10",
                 "eleven": "11", "twelve": "12"}
-FULL_WIDTH = str.maketrans({"［": "[", "］": "]", "（": "(", "）": ")", "／": "/", "　": " ", "“": '"', "”": '"', "’": "'", "Ｘ": "X",
+FULL_WIDTH = str.maketrans({"［": "[", "］": "]", "。": ".", "（": "(", "）": ")", "／": "/", "　": " ", "“": '"', "”": '"', "’": "'", "Ｘ": "X",
                             "①": "(1)", "②": "(2)", "③": "(3)", "④": "(4)", "⑤": "(5)", "⑥": "(6)", "⑦": "(7)", "⑧": "(8)",
                             **{chr(0xFF41 + i): chr(97 + i) for i in range(26)}})
 # Misprints that have to be put right before quotes can be told apart.
@@ -730,6 +730,10 @@ def ability_lines(text):
     also come mid-sentence, as in "uses an 【ACT】", and 【ACT】 【COUNTER】 is one ability.)"""
     lines = []
     text = re.sub(r"(【(?:AUTO|ACT)】[^\n【]*\])[ \t]*\n\s*(?=When |At |During )", r"\1 ", (text or "").translate(FULL_WIDTH))  # a cost on a line of its own
+    text = re.sub(r"\(([^()]*)\)", lambda m: "(" + " ".join(m[1].split()) + ")", text)  # a reminder broken over lines is one
+    # "perform the [comeback] effect", with what that is in the card's own reminder: "([comeback]: When this card triggers, ...)"
+    for icon, effect in re.findall(r"\(\[(\w+)\]\s*:\s*When this card triggers, ([^()]+?)\)", text):
+        text = text.replace(f"perform the [{icon}] effect", effect.rstrip("."))
     for raw in re.sub(r"\n\s*(?=\")", " ", text).split("\n"):
         body, quotes = mask(" ".join(raw.split()))
         lines += [unmask(part, quotes) for part in re.split(r"(?<=[.)⟧])\s*(?=【(?:AUTO|ACT|CONT|COUNTER)】)", body) if part]

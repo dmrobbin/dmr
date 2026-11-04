@@ -829,6 +829,10 @@
     const info = card.card ? cards[card.card] : null;
     const classes = ["pcard", `pos-${card.pos}`, extraClass];
     if (card.face_down) classes.push("face-down");
+    // A climax is printed sideways: in the hand's upright frame its picture is turned to show all of it, and it
+    // has no level, cost or power to show.
+    const climax = Boolean(info) && !card.face_down && (info.type || "").toLowerCase() === "climax";
+    if (climax && zone === "hand") classes.push("pcard-turned");
     const mine = owner === "me";
     const grade = info && !card.face_down ? info.grade || 0 : 0; // its rarity's glow and shine (site.css, "Rarity effects")
     const attrs = [
@@ -842,7 +846,7 @@
       : '<span class="pcard-back"></span>';
     const badge = card.pos === "reverse" ? '<span class="pcard-badge">REVERSE</span>'
       : card.face_down && info ? '<span class="pcard-badge">face down</span>' : "";
-    const stats = info && !card.face_down
+    const stats = info && !card.face_down && !climax
       ? statsHtml(info, { live: (board.stats || {})[card.uid], soul: STAGE.includes(zone) && zone.startsWith("C"), lowered: zone === "hand" ? handMod(card) : null })
       : "";
     return `<div class="${classes.join(" ")}" ${attrs} tabindex="0">${face}${stats}${badge}</div>`;
@@ -1737,15 +1741,26 @@
     choice: { title: "Choice trigger", text: "You may put a character with a soul trigger from your waiting room into your hand or your stock.", to: { hand: "→ Hand", stock: "→ Stock" } },
     standby: { title: "Standby trigger", text: "You may put a character of up to your level + 1 from your waiting room onto your stage, rested.", to: { C1: "Center L", C2: "Center M", C3: "Center R", B1: "Back L", B2: "Back R" } },
     treasure: { title: "Treasure trigger", text: "The treasure went to your hand. Put the top card of your deck into your stock?" },
+    draw: { title: "Draw trigger", text: "You may draw a card." },
+    pool: { title: "Pool trigger", text: "You may put the top card of your deck into your stock." },
+    bounce: { title: "Bounce trigger", text: "You may return one of your opponent's characters to their hand." },
   };
+  const YES_NO = { treasure: ["Yes, to my stock", "No"], draw: ["Draw a card", "No"], pool: ["Yes, to my stock", "No"] };
 
   function renderTriggerPrompt() {
     const prompt = board.attack.prompt;
     const trigger = TRIGGERS[prompt.kind];
     const choice = (action, label) => `<button type="button" data-act='${esc(JSON.stringify({ type: "trigger_choice", ...action }))}'>${label}</button>`;
     let body;
-    if (prompt.kind === "treasure") {
-      body = `<div class="trigger-buttons">${choice({ accept: true }, "Yes, to my stock")}${choice({ accept: false }, "No")}</div>`;
+    if (YES_NO[prompt.kind]) {
+      const [yes, no] = YES_NO[prompt.kind];
+      body = `<div class="trigger-buttons">${choice({ accept: true }, yes)}${choice({ accept: false }, no)}</div>`;
+    } else if (prompt.kind === "bounce") {
+      const theirs = Object.values(board.opponent.stage).filter((c) => c && prompt.options.includes(c.uid));
+      body = `<div class="play-modal-cards">${theirs.map((c) => `<div class="trigger-option">${cardHtml(c, "view", "bounce")}
+          <div class="trigger-buttons">${choice({ uid: c.uid }, "→ Their hand")}</div>
+        </div>`).join("")}</div>
+        <div class="trigger-buttons">${choice({}, "Choose nothing")}</div>`;
     } else {
       const options = board.me.zones.waiting.filter((c) => prompt.options.includes(c.uid));
       body = `<div class="play-modal-cards">${options.map((c) => `<div class="trigger-option">${cardHtml(c, "me", "waiting")}

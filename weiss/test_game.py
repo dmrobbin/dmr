@@ -679,6 +679,31 @@ class AttackStepTests(TestCase):
         self.act(1, {"type": "trigger_choice", "accept": True})
         self.assertEqual([c["card"] for c in zones(self.state, 1)["stock"]], [13])
 
+    def test_a_draw_trigger_offers_a_card(self):
+        self.setup_battle(defender=False)
+        self.act(1, {"type": "attack", "uid": self.stage(1, "C2")["uid"], "kind": "direct"}, trigger=lambda pk: "draw" if pk == 14 else "")
+        self.assertEqual(game.view(self.state, 1)["attack"]["prompt"]["kind"], "draw")
+        hand = len(zones(self.state, 1)["hand"])
+        self.act(1, {"type": "trigger_choice", "accept": True})
+        self.assertEqual(len(zones(self.state, 1)["hand"]), hand + 1)
+
+    def test_a_pool_trigger_offers_the_top_card_to_the_stock(self):
+        self.setup_battle(defender=False)
+        self.act(1, {"type": "attack", "uid": self.stage(1, "C2")["uid"], "kind": "direct"}, trigger=lambda pk: "pool" if pk == 14 else "")
+        stock = len(zones(self.state, 1)["stock"])
+        self.act(1, {"type": "trigger_choice", "accept": True})
+        self.assertEqual(len(zones(self.state, 1)["stock"]), stock + 1)  # the checked card, and the top of the deck
+
+    def test_a_bounce_trigger_returns_an_opponents_character(self):
+        self.setup_battle(defender=True)
+        target = self.stage(2, "C2")
+        self.act(1, {"type": "attack", "uid": self.stage(1, "C2")["uid"], "kind": "front"}, trigger=lambda pk: "bounce" if pk == 14 else "")
+        prompt = game.view(self.state, 1)["attack"]["prompt"]
+        self.assertEqual(prompt["kind"], "bounce")
+        self.assertIn(target["uid"], prompt["options"])
+        self.act(1, {"type": "trigger_choice", "uid": target["uid"]})
+        self.assertIn(target["uid"], [c["uid"] for c in zones(self.state, 2)["hand"]])
+
     def test_a_shot_trigger_deals_one_more_when_the_damage_is_cancelled(self):
         self.setup_battle(defender=False)
         climax = {"is_climax": lambda pk: pk == 115}

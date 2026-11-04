@@ -933,6 +933,10 @@ button.button-small.secondary { border: 1px solid var(--border); }
 
 .pcard { position: relative; width: var(--card-w); height: var(--card-h); flex: none; border-radius: .35rem; transition: transform .15s; cursor: pointer; }
 .pcard img { width: 100%; height: 100%; object-fit: cover; border-radius: .35rem; display: block; box-shadow: 0 2px 6px rgb(0 0 0 / .5); }
+/* A climax in the hand: its sideways picture turned a quarter to fill the upright frame whole (play.js cardHtml). */
+.pcard.pcard-turned { border-radius: .35rem; box-shadow: 0 2px 6px rgb(0 0 0 / .5); }
+.pcard.pcard-turned img { position: absolute; left: 50%; top: 50%; width: var(--card-h); height: var(--card-w); max-width: none;
+  transform: translate(-50%, -50%) rotate(-90deg); box-shadow: none; }
 .pcard-back { display: block; width: 100%; height: 100%; border-radius: .35rem; border: 1px solid #3a3326; background: repeating-linear-gradient(45deg, #2a2418, #2a2418 6px, #332b1c 6px, #332b1c 12px); }
 .pcard.face-down img { filter: brightness(.35) sepia(.6); }
 .pcard.pos-rest { transform: rotate(90deg); }

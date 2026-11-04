@@ -505,8 +505,13 @@ class Mind:
         return ordered[0] if ordered else None
 
     def trigger_choice(self, prompt):
-        if prompt["kind"] == "treasure":
+        if prompt["kind"] in ("treasure", "draw", "pool"):
             return {"type": "trigger_choice", "accept": True}
+        if prompt["kind"] == "bounce":  # the opponent's strongest character back to their hand
+            theirs = [c for c in game.stage_cards(self.state["players"][self.them]) if c["uid"] in prompt["options"]]
+            if not theirs:
+                return {"type": "trigger_choice"}
+            return {"type": "trigger_choice", "uid": max(theirs, key=lambda c: self.stat(c, "power"))["uid"]}
         options = [c for c in self.zones["waiting"] if c["uid"] in prompt["options"]]
         if not options:
             return {"type": "trigger_choice"}

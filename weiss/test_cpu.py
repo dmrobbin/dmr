@@ -1432,6 +1432,28 @@ class FateTests(TestCase):
         self.assertEqual(me["pos"], "stand")
 
 
+class ClimaxTextTests(TestCase):
+    """Climaxes, as printed, whose text used to trip the reader."""
+
+    def test_a_full_width_full_stop(self):
+        text = ("【AUTO】 When this card is placed on your climax area from hand, draw a card, choose one of your characters, and that character gets "
+                "+2000 power and +1 soul until end of turn. 。")
+        self.assertEqual(abilities.by_hand_parts(text), [])
+
+    def test_a_reminder_broken_over_lines(self):
+        text = ("【CONT】 All of your characters get +1000 power and +1 soul.\n([choice]\n: When this card triggers, you may choose 1 character with [soul]\n"
+                " in its trigger icon in your waiting room, and return it to your hand or put it into your stock)")
+        self.assertEqual(abilities.by_hand_parts(text), [])
+        self.assertEqual(len(abilities.parse(text)), 1)  # the reminder isn't an ability
+
+    def test_perform_an_icons_effect_as_its_reminder_says(self):
+        text = ("【AUTO】 When this card is placed on your climax area from your hand, perform the [comeback] effect.\n([comeback]: When this card triggers, "
+                "you may choose 1 character with a level equal to or less than your level +1 in your waiting room, and put it in any position of your stage as 【REST】)")
+        self.assertEqual(abilities.by_hand_parts(text), [])
+        steps = abilities.parse(text)[0]["steps"]
+        self.assertEqual(steps[0]["do"], "may")
+
+
 class NoBackupTests(TestCase):
     TEXT = '【CONT】 During this card\'s battle, all players cannot play "Backup" from their hands.'
     BACKUP = "【ACT】 【COUNTER】 Backup 3000, Level 0 [(0) Put this card from your hand into your waiting room]"

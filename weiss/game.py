@@ -74,7 +74,11 @@ PLAY_ZONES = set(STAGE_SLOTS) | {"climax", "resolution"}  # playing a card from 
 ATTACK_STEPS = ["declare", "trigger", "counter", "damage", "battle"]
 ATTACK_KINDS = {"front", "side", "direct"}
 TRIGGER_CHOICES = {"comeback": {"hand"}, "gate": {"hand"}, "choice": {"hand", "stock"},
-                   "standby": set(STAGE_SLOTS), "treasure": set()}  # trigger icon -> where its card may go
+                   "standby": set(STAGE_SLOTS), "treasure": set(), "bounce": {"hand"},
+                   "draw": set(), "pool": set()}  # trigger icon -> where its card may go
+YES_NO_TRIGGERS = {"treasure", "draw", "pool"}  # those that only ask whether
+# Other names a trigger icon goes by (the card data names them after the site's images).
+TRIGGER_ALIASES = {"book": "draw", "bag": "pool", "stock": "pool", "wind": "bounce", "return": "bounce"}
 OPPOSITE = {"C1": "C3", "C2": "C2", "C3": "C1"}  # the opponent's slot facing each center slot
 BACKUP = re.compile(r"【COUNTER】\s*Backup\s*(\d+)(?:,\s*Level\s*(\d+))?(?:\s*\[\((\d+)\))?", re.I)
 MAX_LOG = 100
@@ -577,7 +581,7 @@ def trigger_check(state, env):
             break
         checked = zones["deck"].pop()
         shown.append(checked["card"])
-        found = (env.trigger(checked["card"]) or "").split()
+        found = [TRIGGER_ALIASES.get(icon, icon) for icon in (env.trigger(checked["card"]) or "").split()]
         icons += found
         put(side, checked, "hand" if "treasure" in found else "stock")
         add_log(state, player, f"trigger check: {env.name(checked['card'])}"
@@ -610,11 +614,16 @@ def trigger_prompt(state, player, icons, info):
     comeback: a character from the waiting room to the hand; gate: a climax from the waiting room
     to the hand; choice: a character with a soul trigger from the waiting room to the hand or
     stock; standby: a character of at most level + 1 from the waiting room onto the stage, rested;
-    treasure: whether to put the top card of the deck into the stock."""
+    treasure: whether to put the top card of the deck into the stock; draw: whether to draw a card; pool:
+    whether to put the top card of the deck into the stock; bounce: one of the opponent's characters to
+    return to their hand."""
     zones = state["players"][player]["zones"]
     kind = next((icon for icon in icons if icon in TRIGGER_CHOICES), None)
-    if kind == "treasure":
+    if kind in YES_NO_TRIGGERS:
         return {"kind": kind, "options": []} if zones["deck"] else None
+    if kind == "bounce":
+        options = [c["uid"] for c in stage_cards(state["players"][other_player(state, player)])]
+        return {"kind": kind, "options": options} if options else None
     if not kind:
         return None
     level = len(zones["level"])
@@ -1282,12 +1291,24 @@ def apply_action(state, player, action, env):
             raise GameError("Wait for the trigger check to finish showing.")
         trigger_kind = prompt["kind"]
         uid = action.get("uid")
-        if trigger_kind == "treasure":
+        if trigger_kind in YES_NO_TRIGGERS:
             if action.get("accept") and zones["deck"]:
-                put(side, zones["deck"].pop(), "stock")
-                add_log(state, player, "treasure trigger: put the top card of their deck into their stock")
+                if trigger_kind == "draw":
+                    put(side, zones["deck"].pop(), "hand")
+                    tally(state, player, "drawn")
+                    add_log(state, player, "draw trigger: drew a card")
+                else:
+                    put(side, zones["deck"].pop(), "stock")
+                    add_log(state, player, f"{trigger_kind} trigger: put the top card of their deck into their stock")
             else:
-                add_log(state, player, "treasure trigger: kept their deck as it is")
+                add_log(state, player, f"{trigger_kind} trigger: {'drew nothing' if trigger_kind == 'draw' else 'kept their deck as it is'}")
+        elif uid and trigger_kind == "bounce":
+            if uid not in prompt["options"]:
+                raise GameError("That's not one of this trigger's choices.")
+            opponent = other_player(state, player)
+            bounced = locate(state, uid)[1]
+            move_card(state, env, player, opponent, uid, "hand")
+            add_log(state, player, f"bounce trigger: returned {name(bounced['card'])} to their opponent's hand")
         elif uid:
             to = action.get("to")
             if uid not in prompt["options"] or to not in TRIGGER_CHOICES[trigger_kind]:
