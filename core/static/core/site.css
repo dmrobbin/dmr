@@ -503,6 +503,16 @@ select option { color: var(--text); background: var(--surface); }
 .arcade-tabs a { padding: .4rem .8rem; color: var(--muted); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; }
 .arcade-tabs a:hover { color: var(--text); }
 .arcade-tabs a.current { color: var(--accent); border-bottom-color: var(--accent); }
+/* The infinite challenge's leaderboard (weiss/infinite_scores.html) and a run's deck (infinite_deck.html). */
+.cpu-table.leaderboard td { vertical-align: middle; }
+.cpu-table.leaderboard td.leaderboard-rank { min-width: 0; width: 2.5rem; font-weight: 700; text-align: center; }
+@media (max-width: 40rem) {
+  .leaderboard .leaderboard-wide { display: none; }
+}
+.leaderboard-player { display: inline-flex; align-items: center; gap: .45rem; }
+.leaderboard-score { font-weight: 700; color: var(--accent); }
+.leaderboard-mine td { background: var(--accent-soft); }
+.infinite-deck-group h2 { margin: 1.2rem 0 .5rem; font-size: 1rem; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* The CPU creation tab (weiss/cpu_home.html): its own tabs, lists to search, and a page for each profile. */
 .cpu-tabs { flex-wrap: wrap; }

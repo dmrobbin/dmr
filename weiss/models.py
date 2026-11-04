@@ -392,6 +392,7 @@ class ChallengeRun(models.Model):
     last_opening = models.JSONField(default=dict, blank=True, help_text="The latest packs opened, to show them being revealed")
     rewards = models.JSONField(default=list, blank=True, help_text="Buffs from scenes waiting to be claimed: [{key, buff, source}] (see weiss.buffs)")
     lives = models.PositiveSmallIntegerField(default=0, help_text="Losses it can take without ending: second chances")
+    deck_snapshot = models.JSONField(default=list, blank=True, help_text="The deck as it was at its last win and at the end: [[card id, copies]], for the leaderboard, kept if the deck goes")
     path = models.JSONField(default=dict, blank=True, help_text="An infinite challenge's path: {floors: [[CPU id]], picks: [node chosen on each floor]} (see weiss.challenge)")
     arcade_run =models.ForeignKey(ArcadeRun, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIVE)

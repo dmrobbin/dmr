@@ -1,0 +1,31 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Infinite leaderboard{% endblock %}
+
+{% block content %}
+  <h1>Arcade Mode</h1>
+  {% include "weiss/arcade_tabs.html" with current="infinite" %}
+  <p class="muted small">The best infinite challenge runs: a run scores each CPU it beats, and its total is what counts here. A deck is as it was at the run's last win, or its end.</p>
+  {% if runs %}
+    <div class="cpu-table-wrap">
+      <table class="cpu-table leaderboard">
+        <thead><tr><th scope="col">#</th><th scope="col">Player</th><th scope="col">Score</th><th scope="col">CPUs beaten</th><th scope="col" class="leaderboard-wide">Floor</th><th scope="col" class="leaderboard-wide">Played</th><th scope="col">Deck</th></tr></thead>
+        <tbody>
+          {% for run in runs %}
+            <tr{% if run.user == user %} class="leaderboard-mine"{% endif %}>
+              <td class="leaderboard-rank">{% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}{{ forloop.counter }}{% endif %}</td>
+              <td><span class="leaderboard-player">{% include "weiss/avatar.html" with avatar=run.avatar name=run.user.username size="" %} <strong>{{ run.user.username }}</strong>{% if run.status == "active" %} <span class="deck-tag" title="This run is still going">Going</span>{% endif %}</span></td>
+              <td class="leaderboard-score">{{ run.arcade_run.score }}</td>
+              <td>{{ run.defeated_count }}</td>
+              <td class="leaderboard-wide">{{ run.floor }}</td>
+              <td class="muted small leaderboard-wide">{{ run.started|date:"j M Y" }}</td>
+              <td>{% if run.deck_snapshot %}<a href="{% url 'weiss:arcade_infinite_deck' run.pk %}">View deck</a>{% else %}<span class="muted small">Not kept</span>{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">No scores yet. Beat a CPU in an infinite challenge to set one.</p>
+  {% endif %}
+{% endblock %}

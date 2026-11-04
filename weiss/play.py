@@ -157,6 +157,35 @@ def arcade_home(request):
 
 
 @weiss_access_required
+def infinite_scores(request):
+    """The infinite challenge's leaderboard, for every player: the best runs, who played them, and their decks."""
+    runs = challenge.leaderboard()
+    avatars = {p.user_id: p.avatar for p in PlayerProfile.objects.filter(user_id__in={run.user_id for run in runs}, avatar_card__isnull=False)}
+    for run in runs:
+        run.avatar = avatars.get(run.user_id)
+    return render(request, "weiss/infinite_scores.html", {"runs": runs})
+
+
+@weiss_access_required
+def infinite_deck(request, pk):
+    """The deck a run on the leaderboard was played with, as it was at its last win (or its end)."""
+    run = get_object_or_404(ChallengeRun.objects.select_related("user", "arcade_run"), pk=pk, kind=ChallengeRun.Kind.INFINITE, arcade_run__score__gt=0)
+    found = Card.objects.in_bulk([pk for pk, _ in run.deck_snapshot])
+    entries = [(found[pk], n) for pk, n in run.deck_snapshot if pk in found]
+    entries.sort(key=lambda entry: (entry[0].card_type.lower() != "climax", entry[0].level if entry[0].level is not None else -1, entry[0].name))
+    lists.with_image_urls([card for card, _ in entries])
+    groups = []
+    for card, n in entries:
+        label = "Climax" if card.card_type.lower() == "climax" else f"Level {card.level or 0}"
+        if not groups or groups[-1]["label"] != label:
+            groups.append({"label": label, "cards": [], "count": 0})
+        groups[-1]["cards"].append({"card": card, "copies": n})
+        groups[-1]["count"] += n
+    return render(request, "weiss/infinite_deck.html", {"run": run, "groups": groups, "total": sum(n for _, n in entries),
+                                                        "defeated": len(challenge.defeated(run)), "floor": challenge.floor_at(run) + 1})
+
+
+@weiss_access_required
 def arcade_scores(request):
     """The Arcade tab's high scores: each scenario's best run, and who played it."""
     return render(request, "weiss/arcade_scores.html", {"scenarios": arcade.high_scores(arcade.all_scenarios()),

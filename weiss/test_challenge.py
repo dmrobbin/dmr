@@ -714,3 +714,51 @@ class ChallengeTests(ArcadeSetup):
     def test_the_arcade_tab_stays_current(self):
         page = self.client.get(reverse("weiss:arcade_challenge"))
         self.assertContains(page, f'<a href="{reverse("weiss:arcade")}" class="current" aria-current="page">Arcade</a>', html=False)
+
+
+class InfiniteLeaderboardTests(InfiniteChallengeTests):
+    def win_one(self):
+        self.fight()
+        with mock.patch.object(play.scoring, "win_score", return_value={"total": 1200}):
+            self.win_and_leave()
+        self.run.refresh_from_db()
+
+    def test_a_win_keeps_the_deck_and_puts_the_run_on_the_board(self):
+        self.assertEqual(challenge.leaderboard(), [])  # no score yet
+        self.win_one()
+        deck = sorted([pk, n] for pk, n in self.run.deck.entries.values_list("card_id", "quantity"))
+        self.assertEqual(sorted(self.run.deck_snapshot), deck)
+        self.assertGreater(self.run.arcade_run.score, 0)
+        board = challenge.leaderboard()
+        self.assertEqual([run.pk for run in board], [self.run.pk])
+        self.assertEqual((board[0].defeated_count, board[0].floor), (1, 2))
+        # Changing the deck later doesn't change what the board shows until the next win.
+        self.run.deck.entries.all().delete()
+        self.run.refresh_from_db()
+        self.assertEqual(sorted(self.run.deck_snapshot), deck)
+
+    def test_giving_up_keeps_the_deck_too(self):
+        self.win_one()
+        ChallengeRun.objects.filter(pk=self.run.pk).update(deck_snapshot=[])
+        self.client.post(reverse("weiss:arcade_challenge_end"))
+        self.run.refresh_from_db()
+        self.assertEqual(self.run.status, "lost")
+        self.assertTrue(self.run.deck_snapshot)
+
+    def test_highest_score_first_and_any_player_can_see_it(self):
+        self.win_one()
+        other = ChallengeRun.objects.create(user=self.alice, kind="infinite", name="Infinite challenge", deck_snapshot=[[self.card.pk, 4]],
+                                            arcade_run=ArcadeRun.objects.create(user=self.alice, scenario_name="Infinite challenge", score=self.run.arcade_run.score + 1))
+        self.assertEqual([run.pk for run in challenge.leaderboard()], [other.pk, self.run.pk])
+        self.client.force_login(self.alice)  # not staff
+        page = self.client.get(reverse("weiss:arcade_infinite"))
+        self.assertContains(page, "∞ Leaderboard")
+        self.assertContains(page, reverse("weiss:arcade_infinite_deck", args=[self.run.pk]))
+        self.assertContains(page, "leaderboard-mine")
+        deck = self.client.get(reverse("weiss:arcade_infinite_deck", args=[self.run.pk]))
+        self.assertContains(deck, "staff's deck")
+        self.assertContains(deck, "×1")
+        self.assertContains(self.client.get(reverse("weiss:arcade_infinite_deck", args=[other.pk])), self.card.name)
+
+    def test_a_run_with_no_score_has_no_deck_page(self):
+        self.assertEqual(self.client.get(reverse("weiss:arcade_infinite_deck", args=[self.run.pk])).status_code, 404)

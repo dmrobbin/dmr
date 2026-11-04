@@ -387,8 +387,28 @@ def fight_finished(arcade_run, won, cleared, rng=random):
         run.status = ChallengeRun.Status.LOST
         arcade_run.status, arcade_run.finished = ArcadeRun.Status.ABANDONED, timezone.now()
         arcade_run.save(update_fields=["status", "finished"])
-    run.save(update_fields=["packs", "rewards", "status", "lives", "path"])
+    if won or run.status == ChallengeRun.Status.LOST:
+        snapshot_deck(run)
+    run.save(update_fields=["packs", "rewards", "status", "lives", "path", "deck_snapshot"])
     return prize
+
+
+def snapshot_deck(run):
+    """Keep the deck as it is now with the run (not saved here), for the leaderboard: the deck itself can be
+    discarded at the end, or changed."""
+    if run.deck_id:
+        run.deck_snapshot = [[pk, n] for pk, n in run.deck.entries.order_by("card_id").values_list("card_id", "quantity")]
+
+
+def leaderboard(limit=50):
+    """The best infinite challenges, by their run's score (the wins' scores added up), the earliest first on a tie:
+    those that have won at least once. Each has `defeated` and `floor` worked out."""
+    runs = list(ChallengeRun.objects.filter(kind=ChallengeRun.Kind.INFINITE, arcade_run__score__gt=0)
+                .select_related("user", "arcade_run").order_by("-arcade_run__score", "arcade_run__started", "pk")[:limit])
+    for run in runs:
+        run.defeated_count = len(defeated(run))
+        run.floor = floor_at(run) + 1
+    return runs
 
 
 def prize_shown(prize):
@@ -411,7 +431,8 @@ def give_up(run):
         run.arcade_run.status, run.arcade_run.finished = ArcadeRun.Status.ABANDONED, timezone.now()
         run.arcade_run.save(update_fields=["status", "finished"])
     run.status = ChallengeRun.Status.LOST
-    run.save(update_fields=["status"])
+    snapshot_deck(run)
+    run.save(update_fields=["status", "deck_snapshot"])
 
 
 def reset(run):
