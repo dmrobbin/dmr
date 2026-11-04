@@ -1282,6 +1282,156 @@ class SwordArtOnlineTests(TestCase):
         self.assertEqual((self.me["zones"]["clock"], self.me["zones"]["waiting"][-5:]), ([], clock))
 
 
+class FateTests(TestCase):
+    """Fate cards (FS, FZ, APO, FGO), as printed."""
+
+    setUp, play, fire, prompt, answer, done = (getattr(AutomatedEffectTests, name) for name in ("setUp", "play", "fire", "prompt", "answer", "done"))
+
+    BERSERKER = ("【CONT】 This card cannot side attack.\n【CONT】 This card gets +1000 power for each marker underneath this card.\n"
+                 "【AUTO】 When this card becomes 【REVERSE】 in battle, if you are level 2 or lower, put the top card of your stock underneath this card as a marker, "
+                 "and 【REST】 this card. If you do not, choose three cards in your hand, put them into your waiting room, deal X damage to your opponent, and put "
+                 "this card into your waiting room. X is equal to the number of markers underneath this card. (This damage may be canceled)")
+    ASSASSIN = ('【AUTO】 【CXCOMBO】 [(2) Put a card named ""Before the Throne" Assassin of Red" from your hand into your waiting room] This ability activates up to '
+                'one time per turn. When this card\'s battle opponent becomes 【REVERSE】, if a card named "Conflict of Desires" is in your climax area, you may pay '
+                'the cost. If you do, 【STAND】 this card.')
+
+    def berserker_reversed(self, level):
+        self.t.level(level)
+        self.t.stock(2)
+        card = self.t.seat(self.me, "C1", self.t.card(2000, text=self.BERSERKER, power=1000))
+        self.me["markers"]["C1"] = [game.new_card(1), game.new_card(1)]
+        self.hand = self.t.hand(*[self.t.card(960 + i) for i in range(3)])
+        self.them["zones"]["deck"] = [game.new_card(1) for _ in range(10)]
+        card["pos"] = "reverse"
+        env = game.SimpleNamespace(info=self.t.info, name=lambda pk: "x")
+        game.fire(self.t.state, env, "reverse", uid=card["uid"], by=None, card=2000, owner="2")
+        self.fire()
+        return card
+
+    def test_the_berserker_reads_both_ways(self):
+        self.assertEqual(abilities.by_hand_parts(self.BERSERKER), [])
+        ability = abilities.parse(self.BERSERKER)[2]
+        self.assertEqual(ability["cond"], [])  # the level decides what happens, not whether it does
+        step = ability["steps"][0]
+        self.assertEqual((step["do"], step["cond"][0]["type"]), ("if", "my_level"))
+        damage = next(s for s in step["otherwise"] if s["do"] == "damage")
+        self.assertEqual(damage["x"]["of"], "markers")
+
+    def test_the_berserker_at_level_2_takes_a_marker_and_rests(self):
+        card = self.berserker_reversed(2)
+        self.assertEqual(len(self.me["markers"]["C1"]), 3)
+        self.assertEqual(card["pos"], "rest")
+
+    def test_the_berserker_at_level_3_goes_out_with_a_bang(self):
+        card = self.berserker_reversed(3)
+        self.answer(uids=[c["uid"] for c in self.hand])  # three cards from the hand
+        for _ in range(6):  # the damage, as the pages would see it through
+            shown = self.t.state.get("ability_show")
+            if shown:
+                self.t.apply(2, {"type": "ability_show_done", "id": shown["id"]})
+            elif self.t.state.get("pending_damage"):
+                self.t.apply(2, {"type": "resolve_damage"})
+        self.assertFalse(self.me["zones"]["hand"])
+        self.assertIn(card, self.me["zones"]["waiting"])
+        self.assertIsNone(self.me["stage"]["C1"])
+        self.assertEqual(len(self.them["zones"]["clock"]), 2)  # two markers: 2 damage
+
+    def run_steps(self, text, index=0, ctx=None):
+        """Run one of a card's abilities' steps, as if it had triggered, from a card of ours in C1."""
+        source = self.me["stage"]["C1"] or self.t.seat(self.me, "C1", self.t.card(2001, text=text))
+        ability = abilities.parse(text)[index]
+        self.assertEqual(abilities.by_hand_parts(ability["text"]), [], ability["text"][:80])
+        self.t.state["resolving"] = {"player": "2", "uid": source["uid"], "card": source["card"], "text": ability["text"], "prompt": None,
+                                     "steps": list(ability["steps"]), "ctx": {"source_uid": source["uid"], **(ctx or {})}}
+        self.t.apply(2, {"type": "chat", "text": "."})
+
+    def test_level_2_or_lower_characters_off_their_center_stage(self):
+        low = self.t.seat(self.them, "C1", self.t.card(980, level=2))
+        high = self.t.seat(self.them, "C2", self.t.card(981, level=3))
+        back = self.t.seat(self.them, "B1", self.t.card(982, level=0))
+        self.run_steps("【AUTO】 When this card attacks, put all level 2 or lower characters from your opponent's center stage into their waiting room.")
+        self.assertIn(low, self.them["zones"]["waiting"])
+        self.assertEqual((self.them["stage"]["C2"], self.them["stage"]["B1"]), (high, back))
+
+    def test_nobody_can_encore(self):
+        mine = self.t.seat(self.me, "C2", self.t.card(983))
+        theirs = self.t.seat(self.them, "C2", self.t.card(983))
+        self.run_steps('【AUTO】 At the beginning of all players\' attack phase, if this card is in the center stage, all players cannot use "【AUTO】 Encore" until end of turn.')
+        self.assertTrue(game.has_status(self.t.state, mine["uid"], "no_encore"))
+        self.assertTrue(game.has_status(self.t.state, theirs["uid"], "no_encore"))
+
+    def test_both_waiting_rooms_back_into_the_decks(self):
+        self.me["zones"]["waiting"] = [game.new_card(1) for _ in range(3)]
+        self.them["zones"]["waiting"] = [game.new_card(1) for _ in range(2)]
+        decks = len(self.me["zones"]["deck"]), len(self.them["zones"]["deck"])
+        self.run_steps("【COUNTER】 Each player returns all cards in his or her waiting room into his or her deck. Each player shuffles his or her deck afterwards.")
+        self.assertEqual((self.me["zones"]["waiting"], self.them["zones"]["waiting"]), ([], []))
+        self.assertEqual((len(self.me["zones"]["deck"]), len(self.them["zones"]["deck"])), (decks[0] + 3, decks[1] + 2))
+
+    def test_seven_markers_from_the_top_of_the_deck(self):
+        self.run_steps("【AUTO】 When this card attacks, put seven cards from the top of your deck underneath this card as markers.")
+        self.assertEqual(len(self.me["markers"]["C1"]), 7)
+
+    def test_the_opponent_says_whether_the_top_card_goes_to_the_bottom(self):
+        top, under = game.new_card(990), game.new_card(991)
+        self.me["zones"]["deck"][-2:] = [under, top]
+        self.run_steps("【AUTO】 At the beginning of your opponent's draw phase, reveal the top card of your deck, and your opponent may put the top card of "
+                       "your deck on the bottom of your deck. (If not, return the revealed card to its original place)")
+        while self.prompt() and self.prompt().get("player", "2") == "2" and self.prompt()["kind"] != "choice":
+            self.answer(uids=[])
+        self.answer(player=1, value="yes")
+        self.assertEqual(self.me["zones"]["deck"][0], top)
+
+    def test_either_sides_characters_reversed_in_battle(self):
+        when = abilities.parse("【AUTO】 When another of your or your opponent's character becomes 【REVERSE】 in battle, this card gets +1000 power until end of turn.")[0]["when"]
+        self.assertEqual(len(when), 2)
+
+    def test_a_battle_opponent_no_higher_than_this_card(self):
+        cond = abilities.parse_condition("if the level of this card's battle opponent is equal to or lower than this card's level", [])
+        source = self.t.seat(self.me, "C1", self.t.card(984, level=2))
+        env = game.SimpleNamespace(info=self.t.info, name=lambda pk: "x")
+        facing = self.t.seat(self.them, game.OPPOSITE["C1"], self.t.card(985, level=2))
+        self.assertTrue(game.condition_met(cond, self.t.state, "2", source, {"that": facing["uid"]}, env))
+        self.t.cards[985]["level"] = 3
+        self.assertFalse(game.condition_met(cond, self.t.state, "2", source, {"that": facing["uid"]}, env))
+
+    def test_the_assassin_stands_after_beating_its_opponent(self):
+        t = self.t
+        t.card(970, name="Conflict of Desires", card_type="Climax", level=None, cost=None, power=None)
+        t.me["zones"]["climax"].append(game.new_card(970))
+        t.card(971, name='"Before the Throne" Assassin of Red')
+        fodder = t.hand(971)[0]
+        t.stock(3)
+        me = t.seat(t.me, "C1", t.card(2000, text=self.ASSASSIN, power=9000))
+        t.seat(t.them, game.OPPOSITE["C1"], t.card(972, power=1000))
+        t.them["zones"]["deck"] = [game.new_card(1) for _ in range(20)]
+        t.me["zones"]["deck"] = [game.new_card(1) for _ in range(20)]
+        t.state.update(phase="attack", attack={"step": "declare"})
+        t.refresh()
+        t.apply(2, {"type": "attack", "uid": me["uid"], "kind": "front"})
+        ours = None
+        for _ in range(30):  # the attack, through to the battle: the CPU's own choices made by the CPU
+            ours = next((e for e in t.state.get("ability_queue") or [] if e["uid"] == me["uid"]), None)
+            if ours:
+                break
+            if t.state.get("ability_show"):
+                t.apply(2, {"type": "ability_show_done", "id": t.state["ability_show"]["id"]})
+            elif t.state.get("pending_damage"):
+                t.apply(1, {"type": "resolve_damage"})
+            elif action := t.next():
+                t.apply(2, action)
+            else:
+                t.apply(1, cpu.next_action(t.state, "1", t.info) or {"type": "chat", "text": "."})  # the defender's counter step
+        self.assertTrue(ours, f"never triggered: {t.state.get('attack')} {[l['text'] for l in t.state['log'][-6:]]}")
+        t.apply(2, {"type": "ability_trigger", "id": ours["id"], "accept": True})
+        if self.prompt() and self.prompt()["kind"] == "choice":  # "you may pay the cost"
+            self.answer(value="yes")
+        if self.prompt():  # the named card from the hand
+            self.answer(uids=[fodder["uid"]])
+        self.assertIn(fodder, t.me["zones"]["waiting"])
+        self.assertEqual(me["pos"], "stand")
+
+
 class NoBackupTests(TestCase):
     TEXT = '【CONT】 During this card\'s battle, all players cannot play "Backup" from their hands.'
     BACKUP = "【ACT】 【COUNTER】 Backup 3000, Level 0 [(0) Put this card from your hand into your waiting room]"

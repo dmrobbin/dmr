@@ -1888,6 +1888,9 @@ def condition_met(cond, state, player, source, ctx, env):
         return any(fits(cond["filter"], c, env) for c in stage_cards(other))
     if kind == "facing_level":
         facing = facing_card(state, player, source, ctx)
+        if facing and cond.get("vs_self"):  # "equal to or lower than this card's level", each as it is now
+            level = lambda c: number(details_of(c, env).get("level")) + level_buff(state, c["uid"])
+            return bool(source) and compare(level(facing), level(source), cond["dir"])
         return bool(facing) and compare(number(details_of(facing, env).get(cond.get("stat", "level"))), cond["n"], cond["dir"])
     if kind == "counted":
         return ctx.get("counts", {}).get(cond["key"], 0) >= cond.get("n", 1)
@@ -3233,9 +3236,29 @@ def run_step(step, res, state, env):
                 pending["uids"] = [uid for uid in pending["uids"] if uid not in staying]
     elif do == "top_marker":
         slot = slot_of(side, res["uid"])
-        if slot and zones["deck"]:
+        count = min(step.get("n", 1), len(zones["deck"])) if slot else 0
+        for _ in range(count):
             put(side, zones["deck"].pop(), MARKER + slot, face_down=step.get("face_down"))
-            add_log(state, player, f"put the top card of their deck under {LABELS[slot]} as a marker")
+        if count:
+            add_log(state, player, f"put the top {count if count > 1 else ''} card{'s' if count > 1 else ''} of their deck under {LABELS[slot]} as marker{'s' if count > 1 else ''}".replace("top  ", "top "))
+    elif do == "deck_to_bottom":  # the top card of the deck, put at its bottom
+        if zones["deck"]:
+            zones["deck"].insert(0, zones["deck"].pop())
+            add_log(state, player, "put the top card of their deck at the bottom")
+    elif do == "zone_card":  # one card from the top or bottom of a zone: "your opponent puts the bottom card of their stock into the waiting room"
+        owner = opponent if step.get("owner") == "opp" else player
+        target = state["players"][owner]
+        pile_ = target["zones"][step["zone"]]
+        if pile_:
+            card = pile_.pop(0 if step.get("end") == "bottom" else -1)
+            put(target, card, step["to"])
+            add_log(state, owner, f"put the {step.get('end', 'top')} card of their {LABELS[step['zone']].lower()} into {LABELS[step['to']]}")
+    elif do == "all_to":  # "put all level 2 or lower characters in your opponent's center stage into their waiting room"
+        owner = opponent if step.get("owner") == "opp" else player
+        target = state["players"][owner]
+        for slot, card in list(target["stage"].items()):
+            if card and (slot in OPPOSITE) == (step["zone"] == "center") and fits(step.get("filter"), card, env):
+                move_card(state, env, player, owner, card["uid"], step["to"])
     elif do == "waiting_to_deck":
         owner = opponent if step.get("owner") == "opp" else player
         target = state["players"][owner]
