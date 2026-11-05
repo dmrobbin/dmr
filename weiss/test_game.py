@@ -704,6 +704,16 @@ class AttackStepTests(TestCase):
         self.act(1, {"type": "trigger_choice", "uid": target["uid"]})
         self.assertIn(target["uid"], [c["uid"] for c in zones(self.state, 2)["hand"]])
 
+    def test_a_climax_with_the_return_icon_is_a_bounce_trigger(self):
+        self.setup_battle(defender=True)
+        target = self.stage(2, "C2")
+        climax = {"is_climax": lambda pk: pk == 14, "trigger": lambda pk: "return" if pk == 14 else ""}
+        self.act(1, {"type": "attack", "uid": self.stage(1, "C2")["uid"], "kind": "front"}, **climax)
+        prompt = game.view(self.state, 1)["attack"]["prompt"]
+        self.assertEqual(prompt["kind"], "bounce")
+        self.act(1, {"type": "trigger_choice", "uid": target["uid"]}, **climax)
+        self.assertIn(target["uid"], [c["uid"] for c in zones(self.state, 2)["hand"]])
+
     def test_a_shot_trigger_deals_one_more_when_the_damage_is_cancelled(self):
         self.setup_battle(defender=False)
         climax = {"is_climax": lambda pk: pk == 115}

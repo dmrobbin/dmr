@@ -657,7 +657,8 @@
         fromZone("deck", "hand", action.uids.length);
         break;
       case "trigger_choice": {
-        const el = action.uid && root.querySelector(`.pcard[data-uid="${action.uid}"]`);
+        // A bounce has no `to`: its card goes to the opponent's hand, which isn't one of our zones.
+        const el = action.uid && action.to && root.querySelector(`.pcard[data-uid="${action.uid}"]`);
         if (el) fly(layoutBox(el), action.to, faceOf(el));
         if (action.accept) fromZone("deck", "stock");
         break;
