@@ -5,7 +5,8 @@ from django.urls import reverse
 
 from . import buffs, challenge, play, scenes
 from .event_scenes import STARTERS
-from .models import ChallengeRun, GameRoom, Scene
+from .models import ChallengeRun, ChallengeSettings, GameRoom, Scene
+from .test_arcade import player
 from .test_buffs import ChallengeBuffBase
 from .test_challenge import ArcadeSetup
 from .test_packs import make_set
@@ -147,6 +148,29 @@ class EventTests(ArcadeSetup):
     def state(self):
         self.run.refresh_from_db()
         return self.run.path
+
+    def test_staff_set_how_often_the_path_offers_an_event(self):
+        self.event_scene()
+        self.assertEqual(challenge.event_chance(), challenge.EVENT_CHANCE)  # never set: the default
+        page = self.client.get(reverse("weiss:cpu_home") + "?tab=infinite")
+        self.assertContains(page, f'value="{round(challenge.EVENT_CHANCE * 100)}"')
+        self.assertNotContains(page, "There are no event scenes")
+        self.client.post(reverse("weiss:cpu_infinite_settings"), {"event_percent": "0"})
+        self.assertEqual(challenge.event_chance(), 0)
+        self.assertEqual(ChallengeSettings.current().updated_by, self.staff)
+        self.assertFalse(any(challenge.EVENT in floor for floor in challenge.path_of(self.run)["floors"]))
+        self.client.post(reverse("weiss:cpu_infinite_settings"), {"event_percent": "100"})
+        self.run.path = {}
+        path = challenge.path_of(self.run)
+        self.assertTrue(all(challenge.EVENT in floor for floor in path["floors"][1:]))  # every floor but the first
+        for bad in ("101", "-5", "lots"):
+            self.client.post(reverse("weiss:cpu_infinite_settings"), {"event_percent": bad})
+            self.assertEqual(ChallengeSettings.current().event_percent, 100)
+
+    def test_only_staff_set_it(self):
+        self.client.force_login(player("ann"))
+        self.client.post(reverse("weiss:cpu_infinite_settings"), {"event_percent": "10"})
+        self.assertIsNone(ChallengeSettings.current())
 
     def test_no_events_without_event_scenes(self):
         with mock.patch.object(challenge, "EVENT_CHANCE", 1):

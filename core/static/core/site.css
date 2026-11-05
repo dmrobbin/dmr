@@ -581,6 +581,10 @@ select option { color: var(--text); background: var(--surface); }
 .arcade-mystery { display: grid; place-items: center; font-size: 2.5rem; font-weight: 700; color: var(--muted, #888); border: 2px dashed var(--border); }
 .arcade-fighter .small { overflow-wrap: anywhere; }
 .cpu-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem; margin: .5rem 0; }
+.infinite-chance { display: flex; flex-direction: column; gap: .25rem; }
+.infinite-slider { display: flex; align-items: center; gap: .75rem; }
+.infinite-slider input[type="range"] { width: min(18rem, 60vw); accent-color: var(--accent); }
+.infinite-slider output { min-width: 3.5rem; font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .cpu-form form { margin: 0; }
 .cpu-form label { display: grid; gap: .2rem; }
 .cpu-list { list-style: none; margin: .75rem 0; padding: 0; display: grid; gap: .4rem; }

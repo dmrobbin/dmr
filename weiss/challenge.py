@@ -22,7 +22,7 @@ from django.utils import timezone
 
 from . import packs
 from .lists import DECK_SIZE
-from .models import ArcadeRun, Card, CardList, CardListEntry, ChallengeRun, CpuProfile, GameRoom, Scene
+from .models import ArcadeRun, Card, CardList, CardListEntry, ChallengeRun, ChallengeSettings, CpuProfile, GameRoom, Scene
 
 START_PACKS = 20  # packs to open at the start of a free challenge
 NARRATIVE_START_PACKS = 20  # ...and of a narrative one
@@ -31,7 +31,7 @@ NARRATIVE_WIN_PACKS = 2  # ...and in a narrative one, with these rewards to clai
 NARRATIVE_WIN_REWARDS = ("color_pack",)
 STAFF_ONLY = True  # being tried out, as booster packs are
 INFINITE_NAME = "Infinite challenge"
-INFINITE_WIN_PACKS = 1  # what a win in an infinite challenge brings, with one of these besides, at random: its prize,
+INFINITE_WIN_PACKS = 2  # what a win in an infinite challenge brings, with one of these besides, at random: its prize,
 INFINITE_PRIZES = ("climax_pack", "color_pack", "lucky_pack")  # which the Victory screen's slot machine lands on (play.js)
 # How an infinite challenge's CPUs play, whatever their own model: (fights, the model or the models to pick from),
 # in turn, then hard, from an aggression picked at random, for the rest.
@@ -41,7 +41,7 @@ PATH_WIDTHS = (2, 3)  # how many CPUs a floor of the path offers, at random (few
 PATH_AHEAD = 3  # floors of the path laid out past the one being fought
 COLUMNS = 3  # the path's width: left, middle and right; each space leads only to those beside it (see links)
 EVENT = "event"  # a space on the path that plays an event scene instead of a fight
-EVENT_CHANCE = .4  # that a floor (after the first) has an event among its spaces, if there are event scenes
+EVENT_CHANCE = .6  # that a floor (after the first) has an event among its spaces, if there are event scenes; until staff set it (see event_chance)
 
 
 def current(user):
@@ -106,15 +106,21 @@ def links(here, ahead):
     return led
 
 
-def new_floor(before, found, rng, events=False):
+def event_chance():
+    """The chance that a floor offers an event: what staff set on the CPU tab, or EVENT_CHANCE if they never have."""
+    settings = ChallengeSettings.current()
+    return settings.event_percent / 100 if settings else EVENT_CHANCE
+
+
+def new_floor(before, found, rng, events=False, chance=None):
     """A floor: COLUMNS columns, two or three of them filled (an empty one is a gap in the path), with CPUs all
     different and none from the floor before it if there are enough others; and with `events`, sometimes an event
-    in place of one of them (see EVENT_CHANCE). A floor of one is in the middle, where every column can reach it."""
+    in place of one of them (`chance`, see event_chance). A floor of one is in the middle, where every column can reach it."""
     width = min(rng.choice(PATH_WIDTHS), len(found), COLUMNS)
     fresh = [pk for pk in found if pk not in before]
     nodes = rng.sample(fresh, min(width, len(fresh)))
     nodes += rng.sample([pk for pk in found if pk not in nodes], width - len(nodes))
-    if events and rng.random() < EVENT_CHANCE:
+    if events and rng.random() < (event_chance() if chance is None else chance):
         nodes.insert(rng.randrange(len(nodes) + 1), EVENT)
         if len(nodes) > min(max(PATH_WIDTHS), COLUMNS):
             nodes.remove(next(pk for pk in nodes if pk != EVENT))
@@ -175,8 +181,9 @@ def path_of(run, rng=random):
         floors[f] = [pk if pk in (found_here if f == at else found_or_event) else None for pk in floors[f]]
     first_empty = next((f for f in range(at, len(floors)) if not any(pk is not None for pk in floors[f])), len(floors))
     del floors[first_empty:]
+    chance = event_chance() if events and len(floors) < at + 1 + PATH_AHEAD else 0
     while found and len(floors) < at + 1 + PATH_AHEAD:
-        floors.append(new_floor(floors[-1] if floors else [], found, rng, events=events and len(floors) > 0))
+        floors.append(new_floor(floors[-1] if floors else [], found, rng, events=events and len(floors) > 0, chance=chance))
     if path != run.path:
         run.path = path
         run.save(update_fields=["path"])

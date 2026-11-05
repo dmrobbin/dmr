@@ -1,0 +1,22 @@
+{# The CPU tab's infinite challenge settings: how often its path offers an event among the fights (cpu_views.infinite_settings). #}
+<section class="cpu-section">
+  <h2>Events on the path</h2>
+  <p class="muted small">Each floor of an infinite challenge's path after the first has this chance of offering an event among its fights.
+    Players still choose: a floor with an event has fights beside it. At 0 there are no events; at 100 every floor offers one.</p>
+  <form method="post" action="{% url 'weiss:cpu_infinite_settings' %}" class="cpu-form infinite-form">
+    {% csrf_token %}
+    <label class="infinite-chance">Event chance
+      <span class="infinite-slider">
+        <input type="range" name="event_percent" min="0" max="100" step="5" value="{{ event_percent }}"
+               oninput="this.nextElementSibling.value = this.value + '%'" aria-describedby="infinite-chance-note">
+        <output>{{ event_percent }}%</output>
+      </span>
+    </label>
+    <button type="submit" class="button-small">Save</button>
+  </form>
+  <p class="muted small" id="infinite-chance-note">
+    {% if infinite %}Set {{ infinite.updated|date:"j M Y, H:i" }}{% if infinite.updated_by %} by {{ infinite.updated_by.username }}{% endif %}.{% else %}Not set yet: {{ default_percent }}%, the default.{% endif %}
+    A change applies to floors laid out from now on, including in runs under way; the {{ path_ahead }} floors a run already shows ahead stay as they are.
+  </p>
+  {% if not event_scenes %}<p class="empty">There are no event scenes, so the path has no events whatever this is. Mark scenes as infinite events on the Scenes tab.</p>{% endif %}
+</section>

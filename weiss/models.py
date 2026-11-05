@@ -365,6 +365,21 @@ class NarrativeChallenge(models.Model):
         return self.name
 
 
+class ChallengeSettings(models.Model):
+    """How the infinite challenge is tuned, set by staff on the CPU tab. There's only ever one row (see current)."""
+
+    event_percent = models.PositiveSmallIntegerField(default=60, help_text="The chance, 0 to 100, that a floor of the path (after the first) offers an event")
+    updated = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey("auth.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+
+    @classmethod
+    def current(cls):
+        return cls.objects.filter(pk=1).first()
+
+    def __str__(self):
+        return "Infinite challenge settings"
+
+
 class ChallengeRun(models.Model):
     """A player's challenge: packs opened into a pool, a deck built only from it, and an arcade run fought with
     that deck. A player has one at a time, from starting it until they keep or discard its deck. See weiss.challenge."""

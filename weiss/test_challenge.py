@@ -408,7 +408,7 @@ class InfiniteChallengeTests(ArcadeSetup):
         won = self.run.rewards[-1]["buff"]
         prize = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()["prize"]
         self.assertEqual([item["name"] for item in prize["reel"]], ["Climax pack", "Color pack", "Lucky pack"])
-        self.assertEqual((prize["reel"][prize["won"]]["buff"], prize["packs"]), (won, 1))  # what it lands on is what's given
+        self.assertEqual((prize["reel"][prize["won"]]["buff"], prize["packs"]), (won, challenge.INFINITE_WIN_PACKS))  # what it lands on is what's given
         self.post(reverse("weiss:play_action", args=[room.pk]), {"type": "challenge_leave"})
         self.fight(challenge.choices(self.path(), 1)[0])
         self.assertNotIn("prize", self.client.get(reverse("weiss:play_state", args=[self.room().pk])).json())  # gone with the next fight

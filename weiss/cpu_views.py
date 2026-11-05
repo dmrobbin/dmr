@@ -17,11 +17,11 @@ from django.views.decorators.http import require_POST
 from core import s3
 from core.access import weiss_access_required
 
-from . import abilities, arcade, cpu, packs, scenes
+from . import abilities, arcade, challenge, cpu, packs, scenes
 from .lists import EXPRESS_PROMPT, SESSION_KEY, deck_checks, sorted_entries
 from .card_images import image_type
 from .event_scenes import STARTERS
-from .models import ArcadeEntry, ArcadeScenario, Card, CardList, CpuImage, CpuProfile, NarrativeChallenge, Scene
+from .models import ArcadeEntry, ArcadeScenario, Card, CardList, ChallengeSettings, CpuImage, CpuProfile, NarrativeChallenge, Scene
 from .profiles import avatar_picker
 
 
@@ -103,7 +103,7 @@ def read_profile_form(request):
 
 # The tab's own tabs: one at a time, each worked out only when it's open (?tab=...).
 TABS = {"profiles": "Profiles", "scenes": "Scenes", "decks": "Decks", "arcade": "Arcade lists", "challenges": "Narrative challenges",
-        "unplayable": "Unplayable cards"}
+        "infinite": "Infinite challenge", "unplayable": "Unplayable cards"}
 
 
 def back_to(tab):
@@ -180,6 +180,10 @@ def cpu_home(request):
         for scenario in scenarios:
             scenario.problem = arcade.scenario_problem(scenario)
         context.update(narratives=NarrativeChallenge.objects.select_related("scenario"), scenarios=scenarios, pack_sets=packs.pack_sets())
+    elif tab == "infinite":
+        context.update(infinite=ChallengeSettings.current(), event_percent=round(challenge.event_chance() * 100),
+                       default_percent=round(challenge.EVENT_CHANCE * 100), event_scenes=len(challenge.event_scenes()),
+                       path_ahead=challenge.PATH_AHEAD)
     return render(request, "weiss/cpu_home.html", context)
 
 
@@ -468,6 +472,22 @@ def narrative_fields(request):
     if not sets:
         raise ValueError("Choose at least one set for its packs.")
     return name, request.POST.get("description", "").strip()[:2000], scenario, sets
+
+
+@staff_required
+@require_POST
+def infinite_settings(request):
+    """How often the infinite challenge's path offers an event: from 0 (never) to 100 (on every floor after the first)."""
+    try:
+        percent = int(request.POST.get("event_percent", ""))
+    except ValueError:
+        percent = -1
+    if not 0 <= percent <= 100:
+        messages.error(request, "The event chance goes from 0 to 100.")
+        return back_to("infinite")
+    ChallengeSettings.objects.update_or_create(pk=1, defaults={"event_percent": percent, "updated_by": request.user})
+    messages.success(request, f"Saved: {percent}% of floors offer an event, from the next floors laid out.")
+    return back_to("infinite")
 
 
 @staff_required

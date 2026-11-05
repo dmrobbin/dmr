@@ -51,6 +51,7 @@ urlpatterns = [
     path("cpu/arcade/entries/<int:pk>/remove/", cpu_views.arcade_entry_remove, name="arcade_entry_remove"),
     path("cpu/arcade/<int:pk>/scenes/", cpu_views.arcade_scenes, name="arcade_scenes"),
     path("cpu/arcade/<int:pk>/order/", cpu_views.arcade_order, name="arcade_order"),
+    path("cpu/infinite/", cpu_views.infinite_settings, name="cpu_infinite_settings"),
     path("cpu/challenges/new/", cpu_views.narrative_create, name="cpu_narrative_create"),
     path("cpu/challenges/<int:pk>/", cpu_views.narrative_update, name="cpu_narrative_update"),
     path("cpu/challenges/<int:pk>/delete/", cpu_views.narrative_delete, name="cpu_narrative_delete"),
