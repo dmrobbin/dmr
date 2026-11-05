@@ -1,4 +1,4 @@
-966 cards a CPU can't play
+838 cards a CPU can't play
 
 "Aim to Shine" Chika Takami (LSS/WE27-E26)
 【AUTO】 [Put this card face down underneath a card named ""From Zero to One!" Riko Sakurauchi" in the middle position of your center stage as a marker] During your climax phase, when your other card named ""From Zero to One!" Riko Sakurauchi" becomes 【REST】, you may pay the cost. If you do, 【STAND】 that character.
@@ -50,20 +50,6 @@ Needs doing by hand:
 Needs doing by hand:
   - if this card is on the middle position of your center stage, move this card to an open position of your center stage
 
-"Convert" Agil (SAO/S80-E091)
-【AUTO】 When this card is placed on the stage from your hand, this card gets +1500 power until end of turn.
-【AUTO】 When this card is put into your memory from the stage, put this card into your stock.
-Needs doing by hand:
-  - 【AUTO】 When this card is put into your memory from the stage, put this card into your stock.
-
-"Crying Warmonger" Berserker of Red (APO/S53-E048)
-【CONT】 This card cannot side attack.
-【CONT】 This card gets +1000 power for each marker underneath this card.
-【AUTO】 When this card becomes 【REVERSE】 in battle, if you are level 2 or lower, put the top card of your stock underneath this card as a marker, and 【REST】 this card. If you do not, choose three cards in your hand, put them into your waiting room, deal X damage to your opponent, and put this card into your waiting room. X is equal to the number of markers underneath this card. (This damage may be canceled)
-Needs doing by hand:
-  - If you do not, choose 3 cards in your hand, put them into your waiting room, deal X damage to your opponent, and put this card into your waiting room.
-  - X is equal to the number of markers underneath this card.
-
 "Demon Lord" Ramiris (TSK/S70-E014)
 【AUTO】 [(1)] When this card is placed on the stage from your hand, you may pay the cost. If you do, choose 1 cost 0 or lower 《Demon Continent》 character in your waiting room, put it on any position of your stage, and put that character into your memory at the end of turn.
 Needs doing by hand:
@@ -99,9 +85,7 @@ Needs doing by hand:
 【AUTO】 [(2) Put 1 card from your hand into your waiting room & Put 2 《Devil King Army》 characters from your waiting room face up in any order underneath this card as markers]
 When this card becomes 【REVERSE】 in battle, you may pay the cost. If you do, choose 1 ""Synthesis With the Mage Killer" Sylvia" in your waiting room, put it on the position that this card is on as 【REST】, and put this card and all markers underneath this card face up in any order underneath that ""Synthesis With the Mage Killer" Sylvia" as markers.
 Needs doing by hand:
-  - 【AUTO】 [(2) Put 1 card from your hand into your waiting room & Put 2 《Devil King Army》 characters from your waiting room face up in any order underneath this card as markers]
-  - When this card becomes 【REVERSE】, you may pay the cost
-  - If you do, choose 1 ""Synthesis With the Mage Killer" Sylvia" in your waiting room, put it on the position that this card is on as 【REST】, and put this card and all markers underneath this card face up in any order underneath the ""Synthesis With the Mage Killer" Sylvia" as markers.
+  - put it on the position that this card is on as 【REST】, put this card and all markers underneath this card face up in any order underneath the ""Synthesis With the Mage Killer" Sylvia" as markers
 
 "Enjoy It as Though It’s Our Last" Kaname (MDE/SE45-E43)
 【CONT】 If your level is 3 or higher, this card gets the following ability. "【ACT】 [Put this card into your waiting room] Choose 1 of your opponent's characters, 【STAND】 and move it to another open position of your opponent's stage, or choose 1 of your opponent's other characters, and exchange them as 【STAND】."
@@ -136,8 +120,8 @@ Needs doing by hand:
 【AUTO】 [Put 1 card from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, put the top card of your clock into your stock.
 【AUTO】【CXCOMBO】[(3) Put 1 "Linked Palms" from your climax area into your waiting room & In your center stage, 【REST】 1 ""Greatest Mage" Yunyun" and this card] At the beginning of your attack phase, you may pay the cost. If you do, your opponent chooses 1 climax in your opponent's waiting room, returns all cards except that card from your opponent's waiting room to his or her deck and shuffles it, you put all characters facing the characters put to 【REST】 by this ability's cost into your opponent's clock, and deal 3 damage to your opponent 2 times. (Damage may be canceled)
 Needs doing by hand:
-  - 【AUTO】【CXCOMBO】 [(3) Put 1 "Linked Palms" from your climax area into your waiting room & In your center stage, 【REST】 1 ""Greatest Mage" Yunyun" and this card] At the beginning of your attack phase, you may pay the cost. If you do, your opponent chooses 1 climax in your opponent's waiting room, returns all cards except that card from your opponent's waiting room to their deck and shuffles it, you put all characters facing the characters put to 【REST】 by this ability's cost into your opponent's clock, and deal 3 damage 2 times to your opponent. (Damage may be canceled)
-  - your opponent chooses 1 climax in your opponent's waiting room, returns all cards except that card from your opponent's waiting room to their deck and shuffles it, you put all characters facing the characters put to 【REST】 by this ability's cost into your opponent's clock, deal 3 damage 2 times to your opponent
+  - 【AUTO】【CXCOMBO】 [(3) Put 1 "Linked Palms" from your climax area into your waiting room & In your center stage, 【REST】 1 ""Greatest Mage" Yunyun" and this card] At the beginning of your attack phase, you may pay the cost. If you do, your opponent chooses 1 climax in their waiting room, returns all cards except that card from your opponent's waiting room to their deck and shuffles it, you put all characters facing the characters put to 【REST】 by this ability's cost into your opponent's clock, and deal 3 damage 2 times to your opponent. (Damage may be canceled)
+  - returns all cards except that card from your opponent's waiting room to their deck and shuffles it, you put all characters facing the characters put to 【REST】 by this ability's cost into your opponent's clock, deal 3 damage 2 times to your opponent
 
 "Furious Fist" Aqua (KS/W55-E085)
 【AUTO】 When this card is placed on the stage from your hand, draw up to two cards, choose a card in your hand, and put it into your waiting room.
@@ -186,12 +170,6 @@ Needs doing by hand:
 Needs doing by hand:
   - perform the following effects 1 time in any order
   - If you do not pay the cost, choose 1 of the following effects, and perform it "You may put the top card of your clock into your waiting room." "Deal 1 damage to your opponent."
-
-"In the Sunlight" Sylphiette (MTI/S83-E043)
-【CONT】 Assist All of your 《Six-Sided World》 characters in front of this card get +X power. X is equal to that character's level ×500.
-【AUTO】 When your character's trigger check reveals a climax with [treasure] in its trigger icon, you may draw 1 card. If you do, choose 1 card in your hand, and put it in your waiting room.
-Needs doing by hand:
-  - put it in your waiting room
 
 "Infinity Robe" Erza (FT/EN-S02-007)
 【CONT】 If the number of other 《Magic》 characters you have is three or more, this card gets +1000 power.
@@ -267,13 +245,6 @@ Needs doing by hand:
   - 【AUTO】 [(1) Put 2 cards from your hand into your waiting room & Put your other character in battle into your waiting room & 【REST】 this card] 1/TURN@ When your other character with "Mari(鞠莉)" in its card name becomes 【REVERSE】, if this card is 【STAND】 in your center stage, you may pay the cost. If you do, choose up to 1 ""Mijuku DREAMER" Mari Ohara" in your hand, and put it on the stage position that character was on.
   - put it on the stage position that character was on
 
-"Mijuku DREAMER" Riko Sakurauchi (LSS/WE27-E25)
-【AUTO】 When this card is placed on the stage from your hand, this card gets +X power until end of turn. X is equal to 500 multiplied by the number of 《Music》 characters you have.
-【AUTO】 [【REST】 one of your 【STAND】 characters] When this card is placed on the stage from your hand, you may pay the cost. If you do, your opponent chooses a climax in your opponent's waiting room, returns all cards in your opponent's waiting room except that card into your opponent's deck, and shuffles his or her deck.
-【ACT】 [Put a card from your hand into your waiting room] Choose one of your 《Music》 characters, and that character gets +2500 power until end of turn.
-Needs doing by hand:
-  - your opponent chooses a climax in your opponent's waiting room, returns all cards from their waiting room except that card to their deck, shuffles their deck
-
 "Musclebrained Crusader" Darkness (KS/W76-E002)
 【CONT】 This card gets +500 power for each of your other 《Adventurer》 or 《Magic》 characters.
 【AUTO】 When this card is placed on the stage from your hand or by "Fusion", look at up to 3 cards from the top of your deck, choose up to 1 card from among them, put it into your hand, and put the rest into your waiting room.
@@ -292,12 +263,6 @@ Needs doing by hand:
 【AUTO】 【CXCOMBO】 When this card attacks, if "AXIA -Love & Hate-" is in your climax area, choose up to 1 cost 0 or lower character in your waiting room, put it in an open position of your center stage, and you cannot perform 4 or more attacks until end of turn.
 Needs doing by hand:
   - put it in an open position of your center stage, you cannot perform 4 or more attacks until end of turn
-
-"My Dear Sister" Ruby Kurosawa (LSS/WE27-E09)
-【CONT】 All of your other 《Music》 characters get +500 power.
-【AUTO】 This ability activates up to one time per turn. When you play a card named "Thinking For the Other", choose one of your characters, and that character gets +1 soul until end of turn.
-Needs doing by hand:
-  - 【AUTO】 1/TURN@ When you play a "Thinking For the Other", choose 1 of your characters, and that character gets +1 soul until end of turn.
 
 "My Own Kind of Good" Himari Uehara (BD/W63-E039)
 【AUTO】 When this card is placed on the stage from your hand, reveal the top card of your deck. If that card is a 《Music》 character, put it into your hand, choose 1 card in your hand, and put it into your waiting room. (Otherwise, return it to its original place)
@@ -448,17 +413,6 @@ Needs doing by hand:
 Needs doing by hand:
   - until end of turn, that characters gets +2000 power and the following ability "【AUTO】 When this card's battle opponent becomes 【REVERSE】, you may choose 1 character in your waiting room, and return it to your hand."
 
-"The Relentless Knight" Fanatio Synthesis Two (SAO/S65-E045)
-【AUTO】 At the beginning of your climax phase, if this card is on the center stage, all characters on the center stage get -1000 power until end of turn.
-Needs doing by hand:
-  - all characters on the center stage get -1000 power until end of turn
-
-"The Sage of the Library" Cardinal (SAO/S65-E031)
-【AUTO】 When this card is placed on the stage from your hand, you may choose and perform 1 of the following effects. "Choose 1 card in your hand, and put it in your waiting room. If you do, put the top card of your clock into your stock." "Draw up to 2 cards, choose 1 card in your hand, and put it into your waiting room." "This card gets +4500 power and the following ability until the end of your opponent's next turn. "【CONT】 During this card's battle, all players cannot play "Backup" from  hand.""
-Needs doing by hand:
-  - put it in your waiting room
-  - If you do, put the top card of your clock into your stock.
-
 "Thorough Maintenance" Futaba Isurugi (RSL/S69-E021)
 0
 Needs doing by hand:
@@ -508,13 +462,6 @@ Needs doing by hand:
 Needs doing by hand:
   - 【AUTO】 【CXCOMBO】 Memory [Put this card from face up to face down] If this card is in your memory, at the end of the attack of your ""Path of the Blue Rose" Yukina Minato" or ""Rebellious Spirit" Ran Mitake", you may pay the cost. If you do, declare your deck or your waiting room. Search the zone you declared for up to 1 "Our Future Destination" or "Staying True to Us", choose 1 "Our Future Destination" or "Staying True to Us" in your climax area, and if those cards have different card names, exchange them. If you declared your deck, shuffle your deck.
 
-"Violet-Haired Suave Man" Eldrie Synthesis Thirty-One (SAO/S65-E043)
-【CONT】 If there is a marker underneath this card, this card gets +4000 power and the following ability. "【AUTO】 [Put 1 《Fluctlight》 character from your hand into your waiting room] At the beginning of your climax phase, if there is no opponent character facing this card, you may pay the cost. If you do, choose 1 of your opponent's characters, and move it to the stage position facing this card."
-【AUTO】 When this card is placed on the stage from your hand, you may choose 1 "An Unexpected Welcome, Alice" in your waiting room, and put it face up underneath this card as a marker.
-Needs doing by hand:
-  - if there is no opponent character facing this card, you may pay the cost
-  - If you do, choose 1 of your opponent's characters, and move it to the stage position facing this card.
-
 "When the Flower Blooms" Hikari Kagura (RSL/S56-E037)
 【AUTO】 [(1)] When this card is placed on the stage from your hand, you may pay the cost. If you do, choose 1 ""Passion and Shine" Karen Aijo" in your waiting room, and put it on any position of your stage.
 【AUTO】 【CXCOMBO】 [(1) Put 1 character from the middle position of your center stage with "Karen(華恋)" in its card name into your waiting room] At the beginning of your encore step, if "The Stage Continues Nonetheless" is in your climax area, and this card is on your center stage, you may pay the cost. If you do, 【REST】 this card, move it to the open middle position of your center stage, deal 1 damage to your opponent, and this card gets +2000 power and "【CONT】 Great Performance" until the end of your opponent's next turn. (Damage may be canceled)
@@ -532,12 +479,6 @@ Needs doing by hand:
 【ACT】 [(1) Put the top card of your deck into your clock, and 【REST】 this card] Choose 1 level 1 or lower character in your waiting room, and return it to your hand.
 Needs doing by hand:
   - 【ACT】 [(1) Put the top card of your deck into your clock, and 【REST】 this card] Choose 1 level 1 or lower character in your waiting room, and return it to your hand.
-
-"Your Eminence, Prime Senator" Chudelkin (SAO/S65-E062)
-【AUTO】 When this card is placed on the stage from your hand, you may put the top card of your opponent's stock into his or her waiting room. If you do, choose 1 card in your opponent's waiting room, and put it into his or her stock.
-【AUTO】【ACT】 [Put this card into your waiting room] Choose 1 of your characters with "Administrator(アドミニストレータ)" or "Quinella(クィネラ)" in its card name, and 【STAND】 it.
-Needs doing by hand:
-  - 【AUTO】【ACT】 [Put this card into your waiting room] Choose 1 of your characters with "Administrator(アドミニストレータ)" or "Quinella(クィネラ)" in its card name, and 【STAND】 it.
 
 "〈Haniel〉" Natsumi (DAL/W99-E027)
 【AUTO】 When this card is placed on the stage from your hand, you may put the top card of your clock into your waiting room.
@@ -633,17 +574,6 @@ Needs doing by hand:
 Needs doing by hand:
   - Choose in your waiting room, 1 character with the same card name as a character in your stage or your opponent's stage, return it to your hand
 
-2nd Generation Vocalist, Yui (AB/W31-TE07)
-【AUTO】 ［Put the top card of your deck into your clock］ When this card attacks, if a card named "Operation Tornado feat. Yui" is in your climax area, you may pay the cost. If you do, until end of turn this card gets +4000 power and your opponent cannot use "【AUTO】 Encore". （Your opponent cannot use the "【AUTO】 Encore [(3)]" rule either.)
-Needs doing by hand:
-  - until end of turn this card gets +4000 power and your opponent cannot use "【AUTO】 Encore"
-
-2nd Kazahaya-class Transport Ship, Hayasui Kai (KC/S42-E067)
-【CONT】 All of your other 《Fleet Girl》 characters get +1000 power.
-【AUTO】 This ability activates up to one time per turn. When you play a card named "Offshore Supply", choose one of your characters, and that character gets +2000 power until end of turn.
-Needs doing by hand:
-  - 【AUTO】 1/TURN@ When you play a "Offshore Supply", choose 1 of your characters, and that character gets +2000 power until end of turn.
-
 2nd Shoho-class Light Aircraft Carrier, Zuiho (KC/S25-E134)
 【AUTO】[(2) Put the top card of your deck into your clock] When you use this card's "Backup", your may pay the cost. If you do, choose one of your opponent's characters with level higher than your opponent's level, and put it on the bottom of your opponent's deck.
 【ACT】【COUNTER】Backup 2500, Level 2 [(1) Put this card from your hand into your waiting room] (Choose one of your characters that is being frontal attacked, and that character gets +2500 power until end of turn.)
@@ -656,13 +586,6 @@ Needs doing by hand:
 【ACT】 [【REST】 this card] Choose one of your characters, and that character gets +3000 power until end of turn.
 Needs doing by hand:
   - choose 1 of your characters with "Aircraft" in its trait, that character gets the following ability until end of turn "【AUTO】 [(1)] 1/TURN@ When damage dealt by this card is canceled, you may pay the cost. If you do, deal 1 damage to your opponent."
-
-3 Rules, Rimuru (TSK/S82-E016)
-【CONT】 Assist All of your characters in front of this card get +500 power.
-【ACT】 [【REST】 this card] If you do not have a marker underneath this card, choose 1 《Demon Continent》 character in your waiting room, and put it face up underneath this card as a marker.
-【ACT】 [(1) 【REST】 this card] Return 1 marker from underneath this card to your hand.
-Needs doing by hand:
-  - Return 1 marker from underneath this card to your hand
 
 3rd Hatsuharu-class Destroyer, Wakaba (KC/S25-E065)
 【AUTO】At the beginning of your climax phase, if you have other 【REST】characters, 【REST】this card.
@@ -696,13 +619,6 @@ Needs doing by hand:
 【AUTO】Bond／"1st Furutaka-class Heavy Cruiser, Furutaka" [(1)] (When this card is played and placed on stage, you may pay the cost. If you do, choose a card named "1st Furutaka-class Heavy Cruiser, Furutaka" in your waiting room, and return it to your hand.)
 Needs doing by hand:
   - chose a 《Fleet Girl》 character in your waiting room, return it to your hand
-
-5th Shiratsuyu-class Destroyer, Harusame Kai (KC/S42-E093)
-【CONT】 This card gets +1000 power for each marker underneath this card.
-【AUTO】 This ability activates up to one time per turn. When you play a card named "Drum Can(Transport Use)", you may put the top card of your deck underneath this card as a marker.
-【AUTO】 When this card's battle opponent becomes 【REVERSE】, you may put the top card of your deck underneath this card as a marker.
-Needs doing by hand:
-  - 【AUTO】 1/TURN@ When you play a "Drum Can(Transport Use)", you may put the top card of your deck underneath this card as a marker.
 
 7th Kagero-class Destroyer, Hatsukaze (KC/S25-E006)
 【CONT】All of your other 《Fleet Girl》 characters get +500 power.
@@ -798,11 +714,6 @@ A Winter Moment, Hibiki (KC/S31-E045)
 Needs doing by hand:
   - choose 1 of your other characters in the center stage, put it into your waiting room
 
-ACUTE (PD/S22-E098b)
-【AUTO】 When this card is placed on your climax area from hand, draw a card, choose one of your characters, and that character gets +2000 power and +1 soul until end of turn. 。
-Needs doing by hand:
-  - 。
-
 Aang & Katara: Expressing Affection (ATLA/WX04-011)
 【CONT】 If your level is 2 or higher, this card gets the following ability. "【ACT】 [Put this card into your waiting room] Choose up to 1 "Katara & Aang: Reciprocated Feelings" in your hand, and put it in the stage position that this card was in."
 【AUTO】 【CXCOMBO】 [Put 1 "Struck Down" from your climax area into your waiting room] At the beginning of your encore step, if you have another 《World of Avatar》 character, you may pay the cost. If you do, choose this card and up to 1 of your other characters, and return them to your hand.
@@ -835,17 +746,6 @@ Accumulating Memories, Mai Sakurajima (SBY/W114-E047)
 Needs doing by hand:
   - 【AUTO】 At the end of this card's attack or when this card becomes 【REVERSE】, if your memory has 1 or less cards, you may put this card into your memory.
 
-Acrobatic Silky (DDD/S118-E027)
-【AUTO】 When this card is placed on the stage from your hand, choose up to 2 "Acrobatic Pretty Girl, Aira" in your waiting room, and put them at the bottom of your deck in any order.【ACT】 Fusion [Put 1 "Pretty Girl Has Arrived, Aira" from your stage face up underneath this card as a marker] Search your deck for up to 1 "Acrobatic Pretty Girl, Aira", put it in the stage position that this card is in, put this card and all markers underneath this card face up underneath that "Acrobatic Pretty Girl, Aira" in any order as a marker, and shuffle your deck.
-Needs doing by hand:
-  - put this card and all markers underneath this card face up underneath that "Acrobatic Pretty Girl, Aira" in any order as a marker, shuffle your deck
-
-Adding On Memories (BTR/W107-E100R)
-【AUTO】 When this card is placed on your climax area from your hand, perform the [comeback] effect.
-([comeback]: When this card triggers, you may choose 1 character with a level equal to or less than your level +1 in your waiting room, and put it in any position of your stage as 【REST】)
-Needs doing by hand:
-  - perform the [comeback] effect
-
 Admiral Graf Spee (AZL/S102-E080)
 【CONT】 If this card is in your center stage, all of your 《KAN-SEN》  characters get +1500 power.
 【AUTO】 【CXCOMBO】 [(1) Choose 1 "Until the End This Time" in your climax area and put it into your waiting room] When this card is placed on the stage by the effect of "Until the End This Time", you may pay the cost. If you do, 【STAND】 this card, and all of your characters get +500 power and the following ability until the end of turn. "【AUTO】 When this card's battle opponent becomes 【REVERSE】, you may put that character on the top of your opponent's deck."
@@ -858,12 +758,6 @@ Admiration for Sharks, Sachi (GRI/S72-E070)
 Needs doing by hand:
   - 【AUTO】 [(1) Reveal 1 "Admiration for Sharks, Sachi" in your hand & Put it face down underneath this card as a marker] When this card becomes 【REVERSE】, you may pay the cost. If you do, 【REST】 this card.
 
-Adventure with Everyone, Silica (SAO/S47-E109)
-【AUTO】 When this card is placed on the stage from your hand, look at the top card of your deck, and put it on the top of your deck or into your waiting room.
-【AUTO】 When this card attacks, if the number of other characters you have is one or less, you may put the top card of your deck into your waiting room. If that card is a level 0 or lower character, put that character on any postion of your back stage.
-Needs doing by hand:
-  - put that character on any postion of your back stage
-
 After Negotiation (SHS/W98-E081)
 【COUNTER】 Put up to 2 cards from the top of your clock into your waiting room. At the end of the next turn, put the top 2 cards of your deck into your clock.
 Needs doing by hand:
@@ -874,12 +768,6 @@ If you do not have a character with "Nana(なな)" in its card name, this card c
 Choose a character in your waiting room with level lower than or equal to your level with "Maya(真矢)" or "Claudine(クロディーヌ)" in its card name, and put it on any position of your stage.
 Needs doing by hand:
   - Choose 1 character with level equal to or lower than your level with "Maya(真矢)" or "Claudine(クロディーヌ)" in its card name in your waiting room, put it in any position of your stage
-
-Agitator of the Opposition, Vassago (SAO/S80-E061)
-【AUTO】 At the beginning of your attack phase, choose 1 of your 《Dark Territory》 characters, and that character gets +X power until end of turn. X is equal to the number of characters with the same card name as that card ×500.
-【ACT】 Brainstorm [(1) 【REST】 2 of your characters] Flip over 4 cards from the top of your deck, and put them into your waiting room. For each climax revealed among those cards, choose up to 2 "Swarm of Red Copper, Dark Knights" in your waiting room, and return them to your hand.
-Needs doing by hand:
-  - choose 1 of your 《Dark Territory》 characters, that character gets +X power until end of turn. X is equal to the number of characters with the same card name as that card ×500.
 
 Aide to The Lion King, Agravain (FGO/S87-E003)
 【AUTO】 When your card is put underneath this card as a marker, put all markers underneath this card into your waiting room. 
@@ -949,14 +837,6 @@ Anchorage (AZL/S119-E111)
 Needs doing by hand:
   - puts that character into your waiting room, puts the rest into your hand, shuffles your deck
 
-Apprentice Mage, Waver (FZ/S17-E038)
-【AUTO】［(2)] When this card is placed on stage from your hand, you may pay the cost. If you do, seach your deck for up to one card named "令呪", reveal it to your opponent, and put it into your hand. Shuffle your deck afterwards.
-
-【AUTO】 Bond／"Imposing and Majestic, Rider" [Put the top card of your deck into your clock] （When this card is played and placed on stage, you may pay the cost. If you do, choose a card named "Imposing and Majestic, Rider" in your waiting room, and return it to your hand.)
-Needs doing by hand:
-  - seach your deck for up to 1 "令呪", reveal it to your opponent, put it into your hand
-  - Shuffle your deck.
-
 Aqua (KS/W49-E073)
 【CONT】 During this card's battle, your opponent cannot play "Backup" from hand.
 【AUTO】 [(1)] When this card is placed on the stage from your hand, you may pay the cost. If you do, your opponent chooses two climax in your opponent's waiting room, returns all cards in your opponent's waiting room except those cards into your opponent's deck, and your opponent shuffles his or her deck.
@@ -976,48 +856,18 @@ Arataka Reigen (MOB/SX02-001)
 Needs doing by hand:
   - you may pay the cost. If you do, choose 1 of your other "MOB: Gratitude Towards His Master", and deal X damage to your opponent. X is equal to the number of markers underneath the character chosen by this card's effect.
 
-Archery Club Captain, Mitsuzuri (FS/S34-E018)
-【CONT】 If there is a marker underneath this card, this card gets +3500 power.
-
-【ACT】 [Put a card from your hand into your waiting room & Put this card into your memory] At the beginning of your next draw phase, choose a card named "Archery Club Captain, Ayako" in your memory, put it on any position of your stage, and put the top card of your deck underneath that character as a marker.
+Arisa Ichigaya (BD/W47-E082)
+【CONT】  All of your other 《Music》 characters get +1500 power.
+【AUTO】  [【REST】  one of your 【STAND】  characters] When this card is placed on the stage from your hand, you may pay the cost. If you do, your opponent chooses a climax in your opponent's waiting room, return all cards in your opponent's waiting room except those cards into your opponent's deck, and your opponent shuffles his or her deck.
+【AUTO】  【CXCOMBO】  [(1) Put a card named "Heart Pounding Star" from your climax area into your waiting room] At the beginning of your encore step, you may pay the cost. If you do, choose up to two of your 《Music》 characters, and those characters get the following ability until the end of your opponent's next turn. "【AUTO】  When this card is frontal attacked, look at the top card of your deck, and put it on the top of your deck or into your waiting room."
 Needs doing by hand:
-  - put the top card of your deck underneath that character as a marker
-
-Arrow of All His Strength, Arash (FGO/S87-E058)
-【AUTO】 When this card attacks, if the character facing this card is level 3 or higher, this card gets +6000 power until end of turn.
-【AUTO】 【CXCOMBO】 [(3) Put this card into your waiting room] At the end of this card's attack, if "Stella" is in your climax area, you may pay the cost. If you do, put all level 2 or lower characters from your opponent's center stage into their waiting room.
-Needs doing by hand:
-  - put all level 2 or lower characters from your opponent's center stage into their waiting room
+  - return all cards from their waiting room except that card to their deck, your opponent shuffles their deck
 
 Astounding Speed, Guido (PXR/S94-E063)
 【CONT】 Assist All of your 《PIXAR》 characters in front of this card get +1000 power.
  【AUTO】 When this card is placed on the stage from your hand, return up to 4 cards from the bottom of your stock to your hand, choose the same number of cards in your hand, and put them at the bottom of your stock in any order.
 Needs doing by hand:
   - return up to 4 cards from the bottom of your stock to your hand, choose the same the number of cards in your hand, put them at the bottom of your stock in any order
-
-Asuna Lays on the Sofa (SAO/S47-E005)
-【AUTO】 When this card is placed on the stage from your hand, reveal the top card of your deck. If the revealed card is a not an 《Avatar》 character, put it into your clock. (If it is, return the revealed card to its original place)
-Needs doing by hand:
-  - If that card is a not an 《Avatar》 character, put it into your clock.
-
-Asuna's Domestic Side (SAO/S26-E009)
-【CONT】 Assist All of your characters in front of this card get +X power. X is equal to 500 multiplied by the number of characters you have with "Assist". 
-
-【AUTO】 [(1)] When this card is placed on stage from your hand, you may pay the cost. If you do, choose a card in your opponent's waiting room, and return that card to your opponent's deck. Shuffle your opponent's deck afterwards.
-Needs doing by hand:
-  - return that card to your opponent's deck
-  - your opponent shuffles their deck.
-
-Asuna's Love, Kirito (SAO/S51-E080)
-【CONT】 Assist All of your level 0 or lower characters in front of this card get +1000 power.
-【AUTO】 【CXCombo】 [(2)] At the beginning of your attack phase, if you do not have a climax in your climax area, you may pay the cost. If you do, search your deck for up to one card named "Perpetuation of the Promise", put it into your climax area, and shuffle your deck.
-Needs doing by hand:
-  - put it into your climax area, shuffle your deck
-
-Asuna's Quiet Time (SAO/S47-E010)
-【AUTO】 [Put a card from your hand into your waiting room] When a card named "On Top of the 《World Tree》" is placed on your climax area, you may pay the cost. If you do, search your deck for a card named "Beacon of Hope, Asuna" and up to one 《Avatar》 or 《Net》 character, reveal them to your opponent, put them into your hand, and shuffle your deck.
-Needs doing by hand:
-  - search your deck for a "Beacon of Hope, Asuna" and up to 1 《Avatar》 or 《Net》 character, reveal them to your opponent, put them into your hand, shuffle your deck
 
 At the Secret Place, Kosaki (NK/W30-E091)
 【CONT】 During your opponent's turn, if the number of characters your opponent has is three or less, this card gets +2000 power.
@@ -1082,17 +932,10 @@ Your opponent cannot play event cards from their hand until the end of their nex
 Needs doing by hand:
   - Your opponent cannot play event from their hand until the end of their next turn
 
-Battle Ready, Hitagi Senjyogahara (BM/S15-E061)
-【ACT】［(1)］ Until end of turn, this card gets +1000 power and the following ability." 【AUTO】 When this card's battle opponent becomes 【REVERSE】, you may put that character on top of your opponent's deck."
+Battle Ready, Hitagi Senjyogahara (BM/S15-TE03)
+【ACT】［(1)］ Until end of turn, this card gets +1000 power and the following ability. "【AUTO】When this card's battle opponent becomes [REVERSE], you may put that character on top of your opponent's deck."
 Needs doing by hand:
-  - this card gets +1000 power and the following ability until end of turn."""""
-  - put that character on the top of your opponent's deck."""""
-
-Battle in the Ruined Church, Kirei (FS/S77-E089)
-【CONT】 This card gets +1000 power for each of your other 《Master》 or 《Servant》 characters.
-【AUTO】 [(1) Put 1 card from your hand into your waiting room] When your "Purifying Light, Kirei" is put into your waiting room from the stage, if this card is in your waiting room, you may pay the cost. If you do, put this card on any stage position as 【REST】.
-Needs doing by hand:
-  - put this card on any stage position as 【REST】
+  - 【AUTO】When this card's battle opponent becomes [REVERSE], you may put that character on the top of your opponent's deck.
 
 Beautiful Bond, Lucy (FT/EN-S02-034)
 【CONT】 This card gets +500 power for each of your other 《Key》 characters.
@@ -1169,12 +1012,6 @@ Needs doing by hand:
   - "Search your deck for up to 1 《UMAMUSUME》 character, reveal it to your opponent, put it into your hand, shuffle your deck, choose 1 character in the middle position of your center stage, and that character gets -1 soul until end of turn.
   - "【AUTO】 Inspire When your other character is placed on the stage from your hand, if there are no markers underneath that character, you may choose this card and up to 1 marker underneath this card, and put them face up underneath that card in any order as markers.
   - If you do, put the rest of the markers into your waiting room.
-
-Body into Sword, Eugeo (SAO/S65-E075)
-【AUTO】 When this card is put on the stage from your hand, reveal the top card of your deck. If that card is a 《Fluctlight》 character, this card gets +2000 power until end of turn. (Return the revealed card to its original place)
-【AUTO】 When this card is placed into your waiting room from the stage, you may reveal up to 3 cards from the top of your deck. If you reveal 1 or more cards, choose up to 1 《Fluctlight》 character from among them, put it into your hand, put the rest into your waiting room, choose 1 card in your hand, and put it into your waiting room.
-Needs doing by hand:
-  - 【AUTO】 When this card is put on the stage from your hand, reveal the top card of your deck. If that card is a 《Fluctlight》 character, this card gets +2000 power until end of turn. (Return the revealed card to its original place)
 
 Bond of new generations (IMC/W41-E071)
 You may put the top three cards of your deck into your waiting room. Choose up to one yellow character, up to one red character, and up to one blue character in your waiting room, and return them to your hand. Put this card into your clock.
@@ -1340,23 +1177,12 @@ Needs doing by hand:
   - Choose 1 of your opponent's characters with the highest power
   - That character cannot 【STAND】 during your opponent's next stand phase.
 
-Chika Having Faraway Thoughts (KGL/S79-E015)
-【AUTO】 When this card becomes 【REVERSE】, if the level of this card's battle opponent is higher than your opponent's level, you may put that character into your opponent's stock. If you do, your opponent puts the bottom card of their stock into their waiting room.
-Needs doing by hand:
-  - your opponent puts the bottom card of their stock into their waiting room
-
 Child Detection Agency (PXR/S94-TE30)
 Choose 1 of the following effects, and perform it.
  "Choose up to 5 of your opponent's characters, put them into their memory, and your opponent puts those characters from their memory in separate positions of their stage."
  "Choose 1 character in your waiting room, and return it to your hand."
 Needs doing by hand:
   - your opponent puts those characters from their memory in separate positions of their stage
-
-Choice to Fight, Kirito (SAO/SE23-29)
-【AUTO】 When this card is placed on the stage from your hand, this cards gets +X power until end of turn. X is equal to 500 multiplied by the number of 《Avatar》 or 《Net》 characters you have.
-Needs doing by hand:
-  - this cards gets +X power until end of turn
-  - X is equal to the number of 《Avatar》 or 《Net》 characters you have ×500.
 
 Chosen Future, Sousuke & Kaname (Ffp/W120-E040)
 【AUTO】 When this card is placed on the stage from your hand, choose up to 1 character with level equal to or lower than your level in your hand, put it in any position of your stage, and this card gets +2000 power until end of turn.
@@ -1405,7 +1231,7 @@ Needs doing by hand:
 Coincidental Meeting With the Future (TSK/S82-E095)
 Choose 2 cards in your level, return them to your hand, choose 2 cards in your hand or waiting room, and put them into your level in any order.
 Needs doing by hand:
-  - choose 2 cards in your hand or waiting room, put them into your level in any order
+  - put them into your level in any order
 
 Cold Reading, Sora (NGL/S58-E007)
 【AUTO】 When this card is placed on the stage from your hand, look at up to 2 cards from the top of your opponent's deck, and put them on the top of his or her deck in the original order.
@@ -1512,11 +1338,6 @@ Curious Haruhi (SY/W08-E104)
 Needs doing by hand:
   - if the character facing this card has no traits, you may return this card to your hand
 
-Cute Mischief, Silica (SAO/S20-E059)
-【AUTO】 At the beginning of your climax phase, reveal the top card of your deck. If the revealed card is a climax, choose another of your characters, and put it into your waiting room. （The revealed cards are returned to their original place.)
-Needs doing by hand:
-  - choose another of your characters, put it into your waiting room
-
 Cute Sense of Rivalry, Kuroyukihime (AW/S18-PE05)
 【AUTO】[(1)] This card gets +2000 power until end of turn.
 Needs doing by hand:
@@ -1589,26 +1410,10 @@ Delightful Words, Albedo (OVL/S99-E031)
 Needs doing by hand:
   - all players perform the following action "If your memory has 5 or more cards, choose 4 cards in your memory, and put all cards except those cards in your memory into your waiting room."
 
-Demolition (FZ/S17-E026)
-【COUNTER】 Each player returns all cards in his or her waiting room into his or her deck. Each player shuffles his or her deck afterwards. Choose a card in your hand, and put it into your waiting room. If you do, choose one of your characters, and that character gets +2000 power until end of turn.
-Needs doing by hand:
-  - Each player returns all cards in their waiting room into their deck
-  - Each player shuffles their deck.
-  - Choose 1 card in your hand, and put it into your waiting room.
-  - If you do, choose 1 of your characters, and that character gets +2000 power until end of turn.
-
 Demon King's Love (Fdl/W65-E099)
 【COUNTER】 Choose 1 trait of a character on your opponent's stage, and all of your opponent's characters lose that trait until end of turn.
 Needs doing by hand:
   - all characters in your opponent's stage lose that trait until end of turn
-
-Demon of 《Dual-wielding》, Kirito (SAO/S26-E062)
-【AUTO】 When this card is placed on stage from your hand or by a "Change" effect, you may put the top card of your clock into your waiting room.
-
-【AUTO】 [(3) Put two cards from your hand into your waiting room] This ability activates up to once per turn. When this card attacks, if your level is 3 or higher and the number of cards in your clock is six, you may pay the cost. If you do, 【STAND】 this card.
-Needs doing by hand:
-  - if your level is 3 or higher and the number of cards in your clock is 6, you may pay the cost
-  - If you do, 【STAND】 this card.
 
 Demonic Embrace, Lucoa (KMD/W96-E083)
 【AUTO】 When this card is placed on the stage from your hand or by the 【AUTO】 effect of "Talent for Magic, Shouta Magatsuchi", you may put the top card of your clock into your waiting room.
@@ -1679,13 +1484,6 @@ Needs doing by hand:
   - choose 1 card in your opponent's marker area, put it into their waiting room
   - If you do, this card gets +2000 power until end of turn.
 
-Distortion of Daily Life, Sakura (FS/S64-E029)
-【AUTO】 [Put 1 climax from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, choose 1 《Master》 or 《Servant》 character in your waiting room, and return it to your hand.
-【AUTO】 When this card becomes 【REVERSE】, if this card's battle oppponent is cost 0 or lower, you may put the top card of your opponent's clock into his or her waiting room. If you do, put that character into your opponent's clock.
-Needs doing by hand:
-  - if this card's battle oppponent is cost 0 or lower, you may put the top card of your opponent's clock into their waiting room
-  - If you do, put that character into your opponent's clock.
-
 Double Peace Sign, Anna (MKI/W126-E010)
 【AUTO】 When this card is placed on the stage from your hand, choose 1 of the following effects, and perform it. "Your opponent returns all cards from their stock to their deck, shuffles their deck, and puts the same number of cards from the top of their deck into their stock." "Draw up to 3 cards, choose an equal number of cards in your hand, and put them into your waiting room."
 【AUTO】 [(1)] When this card attacks, you may pay the cost. If you do, during that attack, perform a trigger check 2 times on the trigger step.
@@ -1729,17 +1527,6 @@ Drifting Cloud, Seiun Sky (UMA/W106-E027)
  in its trigger icon, choose 1 of your other 《UMAMUSUME》 characters, and that character gets +1 soul until end of turn.
 Needs doing by hand:
   - in its trigger icon, choose 1 of your other 《UMAMUSUME》 characters, that character gets +1 soul until end of turn
-
-During Morning Practice, Mitsuzuri (FS/S34-E023)
-【AUTO】 At the beginning of your opponent's draw phase, reveal the top card of your deck, and your opponent may put the top card of your deck on the bottom of your deck. (If not, return the revealed card to its original place)
-Needs doing by hand:
-  - your opponent may put the top card of your deck at the bottom of your deck
-
-During the Peaceful Days, Amane (GRI/S72-E035)
-【CONT】 All of your other 《Grisaia》 characters get +500 power.
-【ACT】 【CXCOMBO】 [(3)] Choose 1 "Clinging Wish" in your waiting room, and put it into your climax area.
-Needs doing by hand:
-  - put it into your climax area
 
 Earnest Emotions, Izumi (SHS/W98-E007)
 【AUTO】 At the beginning of your climax phase, choose up to 2 《Game》 characters in your waiting room, and put them at the bottom of your clock in any order. At the end of the turn, put X cards from the bottom of your clock into your waiting room. X is equal to the number of cards put into your clock by this effect.
@@ -1810,22 +1597,11 @@ End of Her Escape, Yotsuba Nakano (5HY/W101-E039)
 Needs doing by hand:
   - 【AUTO】 1/TURN@ When your other "What She Yearned For, Yotsuba Nakano" is placed on the stage from your hand or from your memory, you may choose 1 《Quintuplets》 character in your waiting room, and put it into your stock.
 
-Endless Occult and Youth (DDD/S118-E075)
-If you do not have a 《Human》 or 《Strange》 character, this card cannot be played from your hand.Choose 1 character in your level, return it to your hand, choose 1 card in your hand or waiting room, and put it into your level.
-Needs doing by hand:
-  - choose 1 card in your hand or waiting room, put it into your level
-
 Energetic Daily Life, Kaede Azusagawa (SBY/W136-E004)
 【AUTO】 [Put 1 climax with 【CxCombo】 in its trigger icon from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, choose 1 climax with 【CxCombo】 in its trigger icon in your waiting room, and return it to your hand.
 Needs doing by hand:
   - 【AUTO】 [Put 1 climax with 【CXCOMBO】 in its trigger icon from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, choose 1 climax with 【CXCOMBO】 in its trigger icon in your waiting room, and return it to your hand.
   - choose 1 climax with 【CXCOMBO】 in its trigger icon in your waiting room, return it to your hand
-
-Entrusted Shield (APO/S53-E096)
-【COUNTER】 Choose a character in battle, and that character gets the following ability until end of turn. "【CONT】 This card cannot deal damage to a player."
-Choose one of your own characters, and that character gets +1500 power until end of turn.
-Needs doing by hand:
-  - Choose 1 of your own characters, that character gets +1500 power until end of turn
 
 Envy Cat Walk (PD/S29-E021)
 All of your 《Music》 characters in the center stage get the following ability until the end of turn. "【AUTO】 When this card is put into your waiting room from the stage, you may return this card to its previous stage position as 【REST】"
@@ -1872,12 +1648,6 @@ Everyone's "Girlfriend", Chizuru (KNK/W86-E051)
 Needs doing by hand:
   - gets the following ability until the end of your opponent's next turn "【AUTO】 When this card is frontal attacked, you may return this card to your hand."
 
-Execution of Duty, Souei (TSK/S70-E084)
-【CONT】 This card gets +2000 power for each of your other "Execution of Duty, Souei" on your center stage.
-【AUTO】 [(1) Put 2 cards from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, search your deck for up to 2 "Execution of Duty, Souei", put them on separate positions on your stage, and shuffle your deck.
-Needs doing by hand:
-  - put them on separate positions on your stage, shuffle your deck
-
 Expedition to the Lower Levels, Finn (DDM/S88-E010)
 【AUTO】 At the beginning of your climax phase, you may choose 2 《Familia》 or 《Guild》 or 《Hostess of Fertility》 characters in your waiting room, and put them at the bottom of your clock in any order. If you put 2 cards into your clock, at the end of the turn, put the bottom 2 cards of your clock into your waiting room.
 【ACT】 Brainstorm [(1) 【REST】 this card] Flip over 4 cards from the top of your deck, and put them into your waiting room. For each climax revealed among those cards, choose up to 1 《Familia》 or 《Guild》 or 《Hostess of Fertility》 character in your waiting room, and return it to your hand.
@@ -1902,12 +1672,6 @@ Faced Reality, Uzuki Hirokawa (SBY/W136-E005)
 Needs doing by hand:
   - 【AUTO】 [【REST】 this card] When a climax with 【CXCOMBO】 in its trigger icon is placed on your climax area, you may pay the cost. If you do, choose up to 2 of your characters, and those characters get +1000 power and the following ability until end of turn. "【AUTO】 When this card attacks, during that attack, perform a trigger check 2 times on the trigger step. If performed 2 times, put the top card of your stock into your waiting room."
 
-Fading Highlight (SHS/W56-E076)
-You may choose 1 card in your clock, and put it into your level. If you do, choose up to 3 characters in your waiting room, return them to your hand, choose up to 1 climax in your waiting room, return it to your hand, choose up to 3 《Game》 characters in your waiting room, and put them into your stock in any order.
-Needs doing by hand:
-  - put it into your level
-  - If you do, choose up to 3 characters in your waiting room, return them to your hand, choose up to 1 climax in your waiting room, return it to your hand, choose up to 3 《Game》 characters in your waiting room, and put them into your stock in any order.
-
 Fairy Law (FT/EN-S02-024)
 If the number of cards in your memory is two or less, this card cannot be played from your hand. Choose up to three of your opponent's level 2 or lower characters on the center stage, and put them into your opponent's stock.
 Needs doing by hand:
@@ -1924,12 +1688,6 @@ Fallen Angel of Love. Flonne (DG/EN-S03-TE03)
 【AUTO】 [Put this card into your waiting room] When a card named "Netherworld Wrapped in Love" is placed on your climax area, you may pay the cost. If you do, choose a card named "“Pinch Revival” Pure Flonne" in your waiting room, and put it on this card's previous stage position.
 Needs doing by hand:
   - put it on this card's previous stage position
-
-Familiar, Pina (SAO/S20-E054)
-【CONT】 All of your other characters with "Silica(シリカ)" in its card name get +500 power.
-【AUTO】［Put this card into your waiting room］ When another of your characters with "Silica(シリカ)" in its card name is put into the waiting room from the stage, if this card is on the back stage, you may pay the cost. If you do, return that character to its previous stage postition as 【REST】.
-Needs doing by hand:
-  - return that character to its previous stage postition as 【REST】
 
 Family Full of Secrets, Loid & Anya & Yor (SPY/S106-E030)
 【CONT】 If your waiting room has 2 or less climax, this card gets -1 level while in your hand.
@@ -1960,12 +1718,6 @@ Fervent Excuse, Ainz (OVL/S99-E040)
 【AUTO】 When this card attacks, choose 1 of your 《Grotesque Race》 or 《Nazarick》 characters, and that character gets +1500 power until end of turn.
 Needs doing by hand:
   - this character's soul does not decrease by side attacking until end of turn
-
-Fighting with Minions, Alice (SAO/S65-E017)
-【CONT】 During your turn, if you have another character with "Kirito(キリト)" in its card name, this card gets +3000 power.
-【AUTO】 When this card attacks, you may put the top card of your deck into your waiting room. If you do, for each [soul] trigger icon on that card, this card gets +1 soul until end of turn.
-Needs doing by hand:
-  - for each [soul] trigger icon on that card, this card gets +1 soul until end of turn
 
 Final Duty, Chisato (LRC/W105-PE02)
 "【CONT】 You cannot receive 4 or more damage by the 【AUTO】 effects of your opponent's characters. 
@@ -2019,13 +1771,6 @@ Look at your memory and marker areas, choose up to 1 card from among them, and r
 Needs doing by hand:
   - Look at your memory and marker areas, choose up to 1 card from among them, return it to your hand
 
-First Hassan-i Sabbah "Old Man of the Mountain" (FGO/S87-E060)
-【CONT】 If you have 1 or less characters in your back stage, this card cannot attack.
-【AUTO】 When this card is placed on the stage from your hand, choose 1 character in your opponent's center stage, and that character gets -4500 power until end of turn.
-【AUTO】 At the beginning of all players' attack phase, if this card is in the center stage, all players cannot use "【AUTO】 Encore" until end of turn. （The "【AUTO】 Encore [(3)]" rule cannot be used either）
-Needs doing by hand:
-  - all players cannot use "【AUTO】 Encore" until end of turn
-
 First Taste, Makima (CSM/S96-E054)
 【AUTO】 [(1) Put 1 《Devil Hunter》 or 《Devil》 character from your waiting room at the bottom your clock] When this card is placed on the stage from your hand, you may pay the cost. If you do, search your deck for up to 1 level 1 or lower character, reveal it to your opponent, put it into your hand, and shuffle your deck.
 【AUTO】 【CLOCK】 Alarm If this card is the top card of your clock, at the beginning of your climax phase, choose 1 of your 《Devil Hunter》 or 《Devil》 characters, and that character gets the following ability until end of turn. "【AUTO】 When this card attacks, look at up to 2 cards from the top of your deck, and put them on the top of your deck in any order."
@@ -2066,13 +1811,6 @@ For Her Desires, Nui (KLK/SP03-E09)
 【AUTO】 [(4) Put 3 cards from your hand into your waiting room & Put this card underneath your character in battle face down as a marker] When your other character in battle with marker and "Ragyo(羅暁)" in its card name becomes 【REVERSE】, you may pay the cost. If you do, 【STAND】 that character.
 Needs doing by hand:
   - 【AUTO】 [(4) Put 3 cards from your hand into your waiting room & Put this card underneath your character in battle face down as a marker] When your other character in battle with marker and "Ragyo(羅暁)" in its card name becomes 【REVERSE】, you may pay the cost. If you do, 【STAND】 that character.
-
-For Victory, Rin (FS/S34-E051)
-【CONT】 Experience If there is a card named "For Victory, Rin" and "Dual-wielding Bowman, Archer" in your level, this card gets -1 level while in your hand.
-
-【AUTO】 When this card is placed on the stage from your hand, you may choose a 《Master》 or 《Servant》 character in your waiting room, and return it to your hand.
-Needs doing by hand:
-  - If there is a "For Victory, Rin" and "Dual-wielding Bowman, Archer" in your level, this card gets -1 level while in your hand.
 
 For an Ideal World, Majima (LRC/WE47-E29)
 【AUTO】 [Put 1 "My Definition of Justice, Majima" from your waiting room at the bottom of your clock] When this card is placed on the stage from your hand, you may pay the cost. If you do, choose 1 character in your waiting room, and return it to your hand.
@@ -2126,12 +1864,6 @@ Foreclosure Task Force, Nonomi (BAV/W129-E074)
 【AUTO】 【CXCOMBO】 Experience [(1)] At the end of this card's attack, if "Irreplaceable Daily Life" is in your climax area, and the total level of the cards in your level is 3 or higher, you may pay the cost. If you do, reveal up to 4 cards from the top of your deck, choose up to 1 《Kivotos》 character from among them, put it into your hand, choose up to X 《Kivotos》 characters from among them, put them into your stock in any order, and put the rest into your waiting room. X is equal to 2 if your stock has 2 or less cards, and X is equal to 1 if your stock has 3 or more cards.
 Needs doing by hand:
   - you may pay the cost. If you do, reveal up to 4 cards from the top of your deck, choose up to 1 《Kivotos》 character from among them, put it into your hand, choose up to X 《Kivotos》 characters from among them, put them into your stock in any order, and put the rest into your waiting room. X is equal to 2 if your stock has 2 or less cards, and X is equal to 1 if your stock has 3 or more cards.
-
-Foreclosure Task Force, Shiroko (BAV/W129-E075)
-【AUTO】 When this card is placed on the stage from your hand or your level, you may put the top card of your clock into your waiting room.
-【AUTO】 【CXCOMBO】 When "A Snapshot of Youth" is placed on your climax area, if this card is in your center stage, and you have another 《Kivotos》 character, choose 1 of the following effects, and perform it. "Choose 1 《Foreclosure Task Force》 character in your level and 1 character in your stage, and exchange them." "This card gets the following ability until end of turn. "【AUTO】 [(1) Put 1 climax from your climax area into your waiting room] When this card attacks, you may pay the cost. If you do, deal 2 damage to your opponent."" (Damage may be canceled)
-Needs doing by hand:
-  - Choose 1 《Foreclosure Task Force》 character in your level and 1 character in your stage, exchange them
 
 Fractured Maleficent (MRd/S111-E097)
 Choose 1 《Mirrorverse》 character in your waiting room with the same card name as a 《Mirrorverse》 character in your stage or your opponent's stage, and return it to your hand.
@@ -2196,13 +1928,6 @@ Full Throttle! Yu (KGL/S79-E016)
 Needs doing by hand:
   - if a climax is put into their waiting room by that effect, choose 1 of your characters, that character gets +2000 power until end of turn
 
-Full of Vigor, Yui (SAO/S51-E079)
-【AUTO】 When this card is placed on the stage from your hand, this card gets +X power until end of turn. X is equal to 500 multiplied by the number of 《Avatar》 or 《Net》 characters you have.
-【AUTO】 [Put two cards from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost, If you do, put all of your opponent's stock into your opponent's waiting room, and your opponent puts the same number of cards from the top of his or her deck into the stock.
-【AUTO】 During your opponent's turn, when the damage you received is not canceled, if this card is in your center stage, look at the top card of your deck, and put it on the top of your deck or into your waiting room.
-Needs doing by hand:
-  - If you do, your opponent puts all of their stock into their waiting room, puts the same number of cards from the top of their deck into their stock
-
 Fullmetal Lady, Sylvia (SPY/S106-E091)
 【AUTO】 [Put 1 climax with [gate] in its trigger icon from your hand into your waiting room]  When this card is placed on your stage from your hand or put into your waiting room from your stage, you may pay the cost. If you do, look at up to 5 cards from the top of your deck, choose up to 1 《Berlint》 character from among them, reveal it to your opponent, put it into your hand, and put the rest into your waiting room.
 【AUTO】 [Put the top card of your stock into your waiting room OR Put the top card of your deck into your clock]  When this card attacks, you may pay the cost. If you do, during that attack, perform a trigger check 2 times on the trigger step.
@@ -2237,30 +1962,6 @@ Gathered Again, Eriri (SHS/W98-E006)
 【AUTO】 【CXCOMBO】 When this card attacks, if "Never-Changing" is in your climax area, and you have 2 or more other 《Game》 characters, reveal the top 3 cards of your deck, your opponent chooses 1 event or character from among them, puts it into your hand, you choose up to 1 card except the card put into your hand among the revealed cards, put it on the top of your deck, and put the rest into your waiting room.
 Needs doing by hand:
   - you choose up to 1 card except the card put into your hand among the revealed cards, put it on the top of your deck, put the rest into your waiting room
-
-Genius Engineer, Higa (SAO/S80-E022)
-【AUTO】 [Put the top card of your deck into your clock] When this card is placed on the stage from your hand, you may pay the cost. If you do, choose 1 cost 0 or lower character with "Kirito(キリト)" or "Kazuto(和人)" in its card name in your waiting room, and put it on any position of your stage.
-Needs doing by hand:
-  - choose 1 cost 0 or lower character with "Kirito(キリト)" or "Kazuto(和人)" in its card name in your waiting room, put it in any position of your stage
-
-Gigue. (UMA/W106-E037)
-【CONT】 All of your characters get +1000 power and +1 soul.
-
-([choice]
-
-
-
-
-
-: When this card triggers, you may choose 1 character with [soul]
-
-
-
-
-
- in its trigger icon in your waiting room, and return it to your hand or put it into your stock)
-Needs doing by hand:
-  - in its trigger icon in your waiting room, return it to your hand or put it into your stock)
 
 Gilded Shrine to Glory, Kitasan Black (UMA/W106-E099)
 【CONT】 If you have 2 or more other 《UMAMUSUME》 characters, this card gets +1000 power and the following ability. "【AUTO】 [(1)] When this card attacks, you may pay the cost. If you do, during that attack, perform a trigger check 2 times on the trigger step."
@@ -2315,13 +2016,6 @@ Glitter*Green, Rii Uzawa (BD/W47-E003)
 【AUTO】  This ability activates up to one time per turn. When a climax is put on your level area, this card gets +2500 power until end of turn.
 Needs doing by hand:
   - 【AUTO】 1/TURN@ When a climax is put on your level area, this card gets +2500 power until end of turn.
-
-Golden Monarch, Archer (FZ/S17-E061)
-【CONT】 If a red climax is in your climax area, this card gets the following ability." 【AUTO】 When this card becomes 【REVERSE】, if this card's battle opponent is cost 1 or less, you may 【REVERSE】 that character."
-
-【AUTO】 Encore ［Put a character from your hand into your waiting room］ （When this card is put into your waiting room from the stage, you may pay the cost. If you do, return this card to its previous stage position as 【REST】.)
-Needs doing by hand:
-  - 【REVERSE】 that character."""""
 
 Good-Natured, Kaoru Kamiya (RKN/S115-E024)
 【ACT】 [(1) Put 1 《Meiji Romantic Story》 character from your hand into your waiting room & 【REST】 this card] Look at up to 3 cards from the top of your deck, choose up to 1 card from among them, put it into your hand, and put the rest into your waiting room.
@@ -2381,11 +2075,6 @@ Guiding People, Kaoru Kamiya (RKN/S115-E029)
 【AUTO】 【CXCOMBO】 [Put 1 character with "Yahiko(弥彦)" in its card name into your waiting room] When "What One's Sword Bears" is placed on your climax area, you may pay the cost. If you do, choose 1 "Helps the Weak and Fights the Strong, Yahiko Myojin" in your waiting room, put it on an open position of your stage, and that character gets +3000 power until end of turn.
 Needs doing by hand:
   - 【AUTO】 【CXCOMBO】 [Put 1 character with "Yahiko(弥彦)" in its card name into your waiting room] When "What One's Sword Bears" is placed on your climax area, you may pay the cost. If you do, choose 1 "Helps the Weak and Fights the Strong, Yahiko Myojin" in your waiting room, move it to an open position of your stage, and that character gets +3000 power until end of turn.
-
-Guild Commander, Heathcliff (SAO/S20-E013)
-【AUTO】 When this card attacks, if a card named "Duel in the Arena" is in your climax area, choose one of your opponent's cost 1 or less characters, return it to your opponent's hand, and this card cannot 【REVERSE】 until end of turn.
-Needs doing by hand:
-  - this card cannot 【REVERSE】 until end of turn
 
 Guild Master, Maple (BFR/S78-E007)
 【AUTO】 【CXCOMBO】 When "Maple Tree" is placed on your climax area, if this card is in your center stage, you may choose 1 level X or lower 《Game》 character in your waiting room, and return it to your hand. X is equal to the number of "Maple Tree" in your waiting room.
@@ -2493,12 +2182,6 @@ He Who Slays Goblins, Goblin Slayer (GBS/S63-TE03)
 Needs doing by hand:
   - both characters get the following abilities until end of turn "【CONT】 This card cannot become 【REVERSE】 by 【AUTO】 effects of your opponent's characters." "【AUTO】 When this card's battle opponent becomes 【REVERSE】, you may choose 1 character in your waiting room, and return it to your hand."
 
-Healing Magic (SAO/S20-E042)
-Look at up to two cards from the top of your opponent's deck, choose up to one card from among them, and put it on the bottom of your opponent's deck. Put the rest of the cards on top of your opponent's deck in any order. Choose one of your characters, and that character gets +3000 power until end of turn.
-Needs doing by hand:
-  - Put the rest of the cards on the top of your opponent's deck in any order
-  - Choose 1 of your characters, and that character gets +3000 power until end of turn.
-
 Heart's Secret, Denji (CSM/S96-TE16)
 【AUTO】 When this card is placed on the stage from your hand, draw 1 card, choose 1 card in your hand, and put it into your waiting room.
 【ACT】 [Put this card into your waiting room] Choose 1 "Devil Hunting Devils, Chainsaw Man" in your waiting room, put it in the stage position that your "Chainsaw Devil, Pochita" is in, and put that "Chainsaw Devil, Pochita" face up underneath that "Devil Hunting Devils, Chainsaw Man" as a marker.
@@ -2509,12 +2192,6 @@ Hekiyou Academy Student Council Vice President, Ken (Fsi/W65-E061)
 【AUTO】 [Put 1 climax from your hand into your waiting room] When this card is placed into the waiting room from the stage, you may pay the cost. If you do, choose 1 《Fantasia Bunko》 or 《Student Council》 character in your waiting room, and return it to your hand.
 Needs doing by hand:
   - 【AUTO】 [Put 1 climax from your hand into your waiting room] When this card is placed into the waiting room from the stage, you may pay the cost. If you do, choose 1 《Fantasia Bunko》 or 《Student Council》 character in your waiting room, and return it to your hand.
-
-Her Hometown's Skies, Alice (SAO/S80-E014)
-【AUTO】 [Put 2 cards from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, all characters in your opponent's center stage get -X power until end of turn, you return all cards from your waiting room to your deck, and shuffle your deck. X is equal to the number of climax in your waiting room ×500.
-Needs doing by hand:
-  - you return all cards from your waiting room to your deck, shuffle your deck
-  - X is equal to the number of climax in your waiting room ×500.
 
 Heroes of Justice Game, Karen Araragi & Tsukihi Araragi (NM/S24-E082)
 【AUTO】 If the number of 《Sports》 or 《Japanese Clothes》 characters you have is two or more, this card gets +1500 power.
@@ -2533,7 +2210,7 @@ Needs doing by hand:
 High School Girl from Jindai High, Kaname (Ffp/W65-E023)
 【AUTO】 [(1) Put the top card of your deck into your clock] When this card is put into the waiting room from your stage, you may pay the cost. If you do, search your deck for up to 1 cost 0 or lower 《Fantasia Bunko》 or 《Whispered》 character equal to or lower than your level, put it on any postion of your stage as 【REST】, and shuffle your deck.
 Needs doing by hand:
-  - search your deck for up to 1 cost 0 or lower 《Fantasia Bunko》 or 《Whispered》 character equal to or lower than your level, put it on any postion of your stage as 【REST】, shuffle your deck
+  - search your deck for up to 1 cost 0 or lower 《Fantasia Bunko》 or 《Whispered》 character equal to or lower than your level, put it in any position of your stage as 【REST】, shuffle your deck
 
 Hindenburg (AZL/S119-E075)
 【CONT】 The character facing this card gets -1 soul.
@@ -2561,13 +2238,6 @@ Needs doing by hand:
   - search your deck for up to X 《Fleet Girl》 characters, reveal it to your opponent, put it into your hand, shuffle your deck
   - X is equal to the number of "Hishi Mochi" in your memory.
 
-Holy Grail War Entry, Saber (FS/S34-TE16)
-【ACT】 [【REST】 two of your characters] Choose one of your 《Master》 or 《Servant》 characters, and that character gets +1500 power until end of turn.
-
-【ACT】 Brainstorm [(1)] Reveal one card from the top of your deck, and put it into your waiting room. Choose one of your characters, and that character gets +X soul until end of turn. X is equal to the level of the card put into your waiting room with this effect. (Climax are regarded as level 0)
-Needs doing by hand:
-  - Reveal 1 card from the top of your deck, and put it into your waiting room. Choose 1 of your characters, and that character gets +X soul until end of turn. X is equal to the level of the card put into your waiting room with this effect.
-
 Honor Student with High Morals, Miko (KGL/S95-E037)
 【AUTO】 [(1) Put 1 of your other 【STAND】 "Honor Student with High Morals, Miko" into your waiting room] At the beginning of your attack phase, you may pay the cost. If you do, choose up to 1 "Mid-Speech, Miko" in your waiting room, and put it in any position of your stage.
 【ACT】 Brainstorm [(1) 【REST】 this card] Flip over 4 cards from the top of your deck, and put them into your waiting room. For each climax revealed among those cards, choose up to 1 character in your waiting room, and return it to your hand.
@@ -2590,15 +2260,6 @@ Hospital Staff, Fiona (SPY/S106-E082)
 【AUTO】 Change At the beginning of your opponent's encore step, if this card is 【REST】, you may choose 1 marker underneath this card or 1 "〈Nightfall〉, Fiona Frost" in your waiting room, and put it in the stage position that this card is on as 【REST】. If you do, put this card face up underneath that character as a marker.
 Needs doing by hand:
   - 【AUTO】 At the end of this card's battle opponent's attack, look at up to 3 cards from the top of your deck, and put them on the top of your deck in any order.
-
-How About Something Sweet? Asuna (SAO/S65-E007)
-【AUTO】 [(1) Put 1 card from your hand into your waiting room]
-When this card is placed on the stage from your hand, you may pay the cost. If you do, search your deck for up to 1 《Avatar》 or 《Net》 character, reveal it to your opponent, put it into your hand, and shuffle your deck.
-【AUTO】 When this card attacks, look at the top card of your deck, and put it on the top of your deck or into your waiting room.
-Needs doing by hand:
-  - 【AUTO】 [(1) Put 1 card from your hand into your waiting room]
-  - When this card is placed on the stage from your hand, you may pay the cost
-  - If you do, search your deck for up to 1 《Avatar》 or 《Net》 character, reveal it to your opponent, put it into your hand, and shuffle your deck.
 
 How Delicate~ Power (CSM/S96-E067)
 【AUTO】 When this card attacks, you may choose 1 of your other characters, and put it in your stock.
@@ -2720,7 +2381,7 @@ In the Sunlight Forest, Sinon (SAO/S47-E083)
 【CONT】 During your opponent's turn, your other character in the middle position of the center stage gets +1000 power.
 【ACT】 Brainstorm [(1)] Reveal four cards from the top of your deck, and put them into your waiting room. Search you deck for up to X 《Avatar》 or 《Net》 characters, reveal them to your opponent, put them into your hand, and shuffle your deck. Choose X cards from your hand, and put them into your waiting room. X is equal to the number of climax revealed among those cards.
 Needs doing by hand:
-  - Search you deck for up to X 《Avatar》 or 《Net》 characters, reveal them to your opponent, put them into your hand, shuffle your deck
+  - Search your deck for up to X 《Avatar》 or 《Net》 characters, reveal them to your opponent, put them into your hand, shuffle your deck
   - Choose X cards from your hand, and put them into your waiting room.
   - X is equal to the number of climax revealed among those cards.
 
@@ -2746,11 +2407,6 @@ Needs doing by hand:
   - If there are 2 or 3 cards among those cards, your opponent chooses 1 card from among them, and puts it into their waiting room.
   - If there are 4 or more cards among those cards, your opponent chooses 2 cards from among them, and puts them into their waiting room.
   - Put all of the cards put into the memory by these effects face up, put them in separate positions of their respective player's stages
-
-Information Integration Thought Entity's Interface, Nagato (SY/W08-E087)
-【AUTO】 When this card attacks, if a card named "About Me. I'll Tell You" is in your climax area, choose up to two of your other characters, and put them into your memory. At the beginning of your next draw phase, put those characters from your memory on to separate positions of your stage, and those characters get +1500 power until end of turn.
-Needs doing by hand:
-  - put those characters from your memory on to separate positions of your stage, those characters get +1500 power until end of turn
 
 Ingraham (AZL/S102-E115)
 【CONT】 This card gets +500 power for each of your other 《KAN-SEN》 characters.
@@ -2809,13 +2465,6 @@ Intermediation via Phone, Rio Futaba (SBY/W77-E028)
 【AUTO】 When this card becomes 【REVERSE】 in battle, you cannot use "【AUTO】 Encore" until end of turn. (You cannot use the "【AUTO】 Encore [(3)]" rule either)
 Needs doing by hand:
   - choose 1 of your 《Adolescence》 characters in your waiting room, return it to your hand
-
-Internal Conflict, Yuuki (SAO/S100-E038)
-【AUTO】 When this card becomes 【REVERSE】, if the cost of this card's battle opponent is 0 or lower, you may put the top card of your opponent's clock into their waiting room. If you do, put that character into your opponent's clock.
-【ACT】 [(1) Put this card into your waiting room] Choose 1  《Anniversary》 character in your waiting room, and return it to your hand.
-Needs doing by hand:
-  - if the cost of this card's battle opponent is 0 or lower, you may put the top card of your opponent's clock into their waiting room
-  - If you do, put that character into your opponent's clock.
 
 Intimate Sisters, Nino Nakano (5HY/W83-E075)
 【CONT】 Assist All of your characters in front of this card get +2000 power.
@@ -2949,12 +2598,6 @@ Needs doing by hand:
   - flip over 5 cards from the top of your deck and put them into your waiting room
   - For each climax revealed among those cards, draw up to 1 card.
 
-Kendo Boot Camp, Suguha (SAO/S51-E023)
-【CONT】 All of your other characters get the following ability. "【CONT】 This card cannot side attack."
-【AUTO】 [(1) Put a card from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, search your deck for up to one 《Avatar》 or 《Net》 character, reveal it to your opponent, put it into your hand, and shuflle your deck.
-Needs doing by hand:
-  - shuflle your deck
-
 Kid's Meal, Mikey (TRV/S92-E008)
 【AUTO】 When this card is placed on the stage from your hand, you may choose 1 《Revenge》 character in your waiting room, and put it face down underneath this card as a marker.
 【AUTO】 [Put all markers underneath this card at the bottom of your deck in any order] When this card attacks, you may pay the cost. If you do, deal 1 damage X times to your opponent. X is equal to the number of markers put at the bottom of your deck for the cost of this ability. (Damage may be canceled)
@@ -2971,33 +2614,11 @@ Needs doing by hand:
   - place the top card of your deck into the waiting room
   - place the top card of your deck into the waiting room
 
-King of All Creation, Archer (FZ/S17-E057)
-【AUTO】 When this card is placed on stage from your hand, you may put the top card of your clock into your waiting room.
-
-【AUTO】［(1) Put a card named "Sword of Rupture, Ea" from your hand into your waiting room］ At the beginning of your opponent's attack phase, if this card is on the center stage, you may pay the cost. If you do, choose one of your opponent's climax in the climax area, put it into your opponent's waiting room, and this card gets +5500 power until end of turn.
-Needs doing by hand:
-  - choose 1 of your opponent's climax in the climax area, put it into your opponent's waiting room, this card gets +5500 power until end of turn
-
-King of Grandeur, Rider (FZ/S17-E040)
-【AUTO】 When this card attacks, each player puts the top card of his or her deck into the waiting room. If the level of the card put into your waiting room with this effect is higher than the level of the card put into your opponent's waiting room with this effect, you may put the top card of your deck into your stock. (Climax are regarded as level 0)
-Needs doing by hand:
-  - each player puts the top card of their deck into the waiting room
-  - If the level of the card put into your waiting room with this effect is higher than the level of the card put into your opponent's waiting room with this effect, you may put the top card of your deck into your stock.
-
 King of Mars (AT/WX02-094)
 【AUTO】 [Put this card into your waiting room] When your other character is put into your waiting room from the stage, if this card is in your back stage, you may pay the cost. If you do, put that character on the stage position it was on as 【REST】.
 【ACT】 [(1)] Choose 1 character on your opponent's center stage, and that character gets -1000 power until end of turn.
 Needs doing by hand:
   - put that character on the stage position it was on as 【REST】
-
-King of Military Rule, Rider (FZ/S17-E032)
-【CONT】 This card gets +500 power for each of your opponent's 【REST】 characters.
-
-【AUTO】［(1)］ During the turn that this card is placed on stage from your hand, when this card's battle opponent becomes 【REVERSE】, you may pay the cost. If you do, put that character into your opponent's clock.
-
-【AUTO】［(2)］ At the beginning of your encore step, you may pay the cost. If you do, choose another of your characters and this card, and put them into your memory. At the beginning of your next draw phase, put those characters from your memory on to separate positions of your stage.
-Needs doing by hand:
-  - put those characters from your memory on to separate positions of your stage
 
 Kino's Journey (Gkb/WS02-E146)
 Put the top 4 cards of your deck into your waiting room, choose up to 1 level X or lower 《Dengeki Bunko》 character in your waiting room, and return it to your hand. X is equal to the total number of [soul] in the trigger icons of those cards. Put this card into your memory.
@@ -3011,34 +2632,6 @@ Kinu (AZL/S102-E064)
 Needs doing by hand:
   - put 2 cards from the top of your deck into your waiting room, this card gets +X power until end of turn. X is equal to the number of 《KAN-SEN》 character ×1000.
 
-Kirito Discovers a Unique Skill (SAO/S20-E082)
-【CONT】 This card gets +1 level and +1500 power for each marker underneath this card.
-【AUTO】 When this card's battle opponent becomes 【REVERSE】, you may put the top card of your deck underneath this card as a marker.
-【AUTO】［Put all markers from underneath this card into your waiting room］ When another of your characters attack, if the number of markers underneath this card is five or more, you may pay the cost. If you do, 【STAND】 this card, and this card gets +6000 power until end of turn.
-Needs doing by hand:
-  - 【AUTO】 [Put all markers from underneath this card into your waiting room] When another of your characters attack, if the number of markers underneath this card is 5 or more, you may pay the cost. If you do, 【STAND】 this card, and this card gets +6000 power until end of turn.
-
-Kirito Takes on 《ALO》 (SAO/S26-E064)
-【AUTO】 [(1)] When your other character attack, you may pay the cost. If you do, until end of turn, that character gets the following ability. "【AUTO】 When this card's battle opponent becomes 【REVERSE】, you may put that character on the bottom of your opponent's deck."
-Needs doing by hand:
-  - 【AUTO】 [(1)] When your other character attack, you may pay the cost. If you do, that character gets the following ability until end of turn. "【AUTO】 When this card's battle opponent becomes 【REVERSE】, you may put that character at the bottom of your opponent's deck."
-
-Kiritsugu - Belief in Justice (FZ/S17-E003)
-【AUTO】 When this card is placed on stage from your hand, choose one of your characters, and that character gets +4000 power and +1 soul until end of turn. 
-
-【AUTO】 When damage from this card is canceled during its attack, if a card named "Origin Shot" is in your climax area, you may choose one of your opponent's level 3 or lower characters on the center stage, and put it into your opponent's stock.
-Needs doing by hand:
-  - 【AUTO】 When damage from this card is canceled during its attack, if "Origin Shot" is in your climax area, you may choose 1 level 3 or lower characters in your opponent's center stage, and put it into their stock.
-
-Kiritsugu - Style of Heresy (FZ/S17-E004)
-【AUTO】［(2)] When this card is placed on stage from your hand, you may pay the cost. If you do, seach your deck for up to one card named ""Riding" Skill, Saber", reveal it to your opponent, and put it into your hand. Shuffle your deck afterwards.
-
-【AUTO】 When this card becomes 【REVERSE】, if this card's battle opponent is level 0 or lower, you may put that character into your opponent's stock. If you do, your opponent puts the bottom card of his or her stock into the waiting room.
-Needs doing by hand:
-  - seach your deck for up to 1 ""Riding" Skill, Saber", reveal it to your opponent, put it into your hand
-  - Shuffle your deck.
-  - your opponent puts the bottom card of their stock into the waiting room
-
 Kitakaze (AZL/S102-E052)
 【CONT】 Experience If the total level of the cards in your level is 2 or higher, this card gets +1000 power.
 【AUTO】 When your climax with [treasure] in its trigger icon is placed on your climax area, this card gets +500 power and the following ability until end of turn. "【AUTO】 When this card attacks, reveal the top card of your deck. If that card's level is 1 or higher, put it into your stock." (Otherwise, return it to its original place. Climax are regarded as level 0)
@@ -3050,11 +2643,6 @@ Search your deck for up to one card named "Kagamine Len"Thorned Rose"" and up to
 Needs doing by hand:
   - Search your deck for up to 1 "Kagamine Len"Thorned Rose"""""" and up to 1 "Kagamine Rin"Sunflower"""" and up to 1 "Hatsune Miku"Moonlight Butterfly"""", reveal them to your opponent, put them into your hand, choose 1 card in your hand, put it into your waiting room
   - Shuffle your deck.
-
-Knight of Madness, Berserker (FZ/S17-E056)
-【AUTO】［Put this card into your waiting room］ When a card named "Identity of the Fallen Knight" is placed on your climax area, you may pay the cost. If you do, choose one of your level 2 or lower 《Servant》 characters in your waiting room, and put it on the stage position that this card was on.
-Needs doing by hand:
-  - choose 1 of your level 2 or lower 《Servant》 characters in your waiting room, put it in the stage position that this card was in
 
 Kosaki Onodera (NK/W30-TE16R)
 【AUTO】 When this card is placed on stage from your hand, reveal the top card of your deck. If that card is a climax, 【AUTO】  this card. (The revealed card is returned to its original place)
@@ -3108,18 +2696,6 @@ Ky: Solemn Blade (GGST/BSF2024-01)
 Needs doing by hand:
   - that character gets the following ability until end of turn ""【CONT】 The character facing this card gets +1 soul."""""""
 
-La Black Luna (APO/S53-E095)
-If you do not have a character with "Rider of Black(黒のライダー)" in its card name, you cannot play this card from your hand.
-You may choose a card in your hand, and put it into your waiting room. If you do, all of your opponent's characters get -1500 power until end of turn.
-Needs doing by hand:
-  - you cannot play this card from your hand
-
-Lady, Illya (FS/S34-E083)
-【AUTO】 When this card attacks, if a card named "Illya's Magic, Storch Ritter" is in your climax area and the number of your other 《Master》 or 《Servant》 characters is three or more, you may draw up to two cards. If you do, choose a card in your hand, and put it into your waiting room.
-Needs doing by hand:
-  - if "Illya's Magic, Storch Ritter" is in your climax area and the number of your other 《Master》 or 《Servant》 characters is 3 or more, you may draw up to 2 cards
-  - If you do, choose 1 card in your hand, and put it into your waiting room.
-
 Laharl & Etna (DG/EN-S03-E056)
 【AUTO】 If the number of climax in your waiting room is four or more, this card gets +2000 power.
 Needs doing by hand:
@@ -3138,33 +2714,12 @@ Needs doing by hand:
   - reveal it
   - If you do, choose in your waiting room, up to 1 character with the same color as the revealed card, and up to 1 climax with the same color as the revealed card, and return them to your hand.
 
-Last Shot, Sinon (SAO/S47-E076)
-【AUTO】 When this card is placed on the stage from your hand or by a "Change" effect, you may put the top card of your clock into your waiting room.
-【AUTO】 [(2) Put a card from your hand into your waiting room] When this card attacks, if a card named "Phantom Bullet" is in your climax area, you may pay the cost. If you do, deal four damage to your opponent. When this damage is canceled, this card gets +3500 power until the end of your opponent's next turn. (This damage may be canceled)
-【AUTO】 When this card becomes 【REVERSE】 in battle, put this card into your memory.
-Needs doing by hand:
-  - When this damage is canceled, this card gets +3500 power until the end of your opponent's next turn
-
-Late Self-introduction (SAO/S47-E097)
-If you do not have a character with "Kirito(キリト)" in its card name, this card cannot be played from your hand.
-Choose one of your characters, and until end of turn, that character gets +2000 power and the following ability. "【AUTO】 When this card's battle opponent becomes 【REVERSE】, you may draw a card. Put this card into your stock.
-Needs doing by hand:
-  - "【AUTO】 When this card's battle opponent becomes 【REVERSE】, you may draw 1 card
-  - Put this card into your stock.
-
 Leader of the Toys, Woody Pride (PXR/S94-E006)
 【CONT】 All of your opponent's characters get "【AUTO】 Encore [(2)]".
  【CONT】 This card gets +1000 power for each marker underneath this card.
  【AUTO】 When this card is placed on the stage from your hand, you may choose 1 character with [soul] in its trigger icon in your waiting room, and put it face up underneath your "The Toy Story Gang, Jessie" or this card as a marker.
 Needs doing by hand:
   - put it face up underneath your "The Toy Story Gang, Jessie" or this card as a marker
-
-Leafa's Pure Wish (SAO/S20-E027)
-【CONT】 If the number of cards in your deck is five or less, this card gets -1 level in your hand.
-【CONT】 All of your other 《Avatar》 or 《Net》 characters get +1500 power.
-【ACT】[(1) Put an 《Avatar》 or 《Net》 character from your hand into your waiting room］ Until end of your opponent's next turn, this card gets +3000 power and the following ability."【CONT】 This card cannot be chosen by your opponent's effects."
-Needs doing by hand:
-  - Until end of your opponent's next turn, this card gets +3000 power and the following ability "【CONT】 This card cannot be chosen by your opponent's effects."
 
 Leotard Junna & Mahiru (RSL/S56-E078)
 【AUTO】 [(2)] At the beginning of your opponent's attack phase, you may pay the cost. If you do, choose 1 of your 《Revue》 characters and this card, exchange them as 【STAND】, and that 《Revue》 character gets +1 level and +1000 power until end of turn.
@@ -3274,11 +2829,6 @@ Lofty Ambitions, Yahiko Myojin (RKN/S115-E026)
 Needs doing by hand:
   - put it at the top or at the bottom of their deck
 
-Lord El-Melloi II (APO/S53-E013)
-【AUTO】 [(1) Put a card from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, your opponent chooses a climax in your opponent's waiting room, returns all cards in your opponent's waiting room except that card into your opponent's deck, and shuffles his or her deck.
-Needs doing by hand:
-  - your opponent chooses a climax in your opponent's waiting room, returns all cards from their waiting room except that card to their deck, shuffles their deck
-
 Lost, Sakuta Azusagawa (SBY/W64-E039)
 【CONT】 All of your other 《Adolescence》 characters get +500 power.
 【ACT】 [【REST】 this card] Choose 1 character with "Shoko (翔子)" in its card name, and that character gets +1500 power until end of turn.
@@ -3334,13 +2884,6 @@ Magical Police Marika (NK/WE22-E21)
 【AUTO】 When this card becomes 【REVERSE】, if this card's battle opponent is level 0 or lower, you may 【REVERSE】 that character.
 Needs doing by hand:
   - choose a 《Police》 character in your waiting room, return it to your hand
-
-Make Me Fall For You, Shido (DAL/W99-E021)
-【CONT】 If there are 8 or more markers underneath this card, this card gets +17000 power.
-【AUTO】 When this card is placed on the stage from your hand, put the top card of your deck into your waiting room. If that card is a 《Date》 or 《Celestial Spirit》 character, and your waiting room has 1 character with "Tohka(十香)" in its card name, 1 other character with "Kotori(琴里)" in its card name, 1 other character with "Origami(折紙)" in its card name, 1 other character with "Yoshino(四糸乃)" in its card name, 1 other character with "Kaguya(耶倶矢)" in its card name, 1 other character with "Yuzuru(夕弦)" in its card name, 1 other character with "Miku(美九)" in its card name and 1 other character with "Natsumi(七罪)" in its card name, you may put the top 8 cards of your deck face up underneath this card as markers.
-【AUTO】 At the end of your opponent's turn, put all markers underneath this card into your waiting room.
-Needs doing by hand:
-  - put the top 8 cards of your deck face up underneath this card as markers
 
 Man-God (MTI/S83-E018)
 If you do not have a 《Six-Sided World》 character, this card cannot be played from your hand. Perform the following effects 1 time each in any order. "Choose 1 of your opponent's characters, 【STAND】 it, and move it to another open position of their stage, or choose another of your opponent's characters, and exchange them as 【STAND】." "Your opponent puts all of their stock into their waiting room, and puts the same number of cards from the top of their deck into their stock." "Your opponent chooses 1 climax in their waiting room, returns all cards except that card from their waiting room to their deck, and shuffles their deck."
@@ -3451,13 +2994,6 @@ Put this card into your stock.
 Needs doing by hand:
   - Choose 1 of your chracters, that character gets +1000 power and the following ability until end of turn "【AUTO】 When this card's battle opponent becomes 【REVERSE】, you may put the top card of your deck into your stock."
 
-Memories That Were Fun, Yuuki (SAO/S47-E037)
-【AUTO】 When this card is placed on the stage from your hand, reveal the top card of your deck. If that card is an 《Avatar》 or 《Net》 character, this card gets the following ability until end of turn. "【AUTO】 When this card's battle opponent becomes 【REVERSE】, you may put that character into your opponent's clock." (The revealed card is returned to its original place)
-【AUTO】 When this card attacks, each player puts the top card of his or her deck into the waiting room. If the level of the card put into your waiting room with this effect is higher than the level of the card put into your opponent's waiting room with this effect, you may put the top card of your deck into your stock. (Climax are regarded as level 0)
-Needs doing by hand:
-  - each player puts the top card of their deck into the waiting room
-  - If the level of the card put into your waiting room with this effect is higher than the level of the card put into your opponent's waiting room with this effect, you may put the top card of your deck into your stock.
-
 Memories of That Day (LL/W24-E047)
 Look at the top card of your opponent's deck, and put it on the top or the bottom of your opponent's deck. Put this card into your stock.
 Needs doing by hand:
@@ -3474,7 +3010,7 @@ Memory Crystal (SAO/S65-E066)
 Choose 1 《Fluctlight》 character in your waiting room, return it to your hand, choose 1 face up card in your opponent's memory, and put that card face down. At the end of of your opponent's next turn, put that card face up.
 Needs doing by hand:
   - put that card face down
-  - At the end of of your opponent's next turn, put that card face up.
+  - At the end of your opponent's next turn, put that card face up.
 
 Merlin: Wielder of Aldan (SDS/SX05-064)
 【CONT】 If your waiting room has 2 or less climax, this card gets -1 level while in your hand.
@@ -3508,11 +3044,6 @@ Miho Kohinata (IMC/W41-E053)
 【AUTO】 [【REST】 one of your other 【STAND】 《Music》 characters and this card] When this card is placed on the stage from your hand, you may pay the cost. If you do, put the top card of your deck into your stock.【【STAND】と 《Music》の間にスペースが空きすぎ】
 Needs doing by hand:
   - put the top card of your deck into your stock.【【STAND】 と 《Music》の間にスペースが空きすぎ】
-
-Mikuru Asahina (SY/W08-E029)
-【AUTO】 [(2)] At the beginning of your encore step, you may pay the cost. If you do, choose one of your characters and this card, and put them into your memory. At the beginning of your next draw phase, put those characters from your memory on to separate positions of your stage, and those characters get +1000 power until end of turn.
-Needs doing by hand:
-  - put those characters from your memory on to separate positions of your stage, those characters get +1000 power until end of turn
 
 Mikuru Beam (SY/W08-E045)
 If you do not have a 《Time》 character, this card cannot be played from your hand.
@@ -3555,13 +3086,6 @@ Mismatched Pair (IMC/W41-E108)
 【COUNTER】 If the number of red characters and blue characters you have is two or more for each color, choose one of your opponent's characters, and 【REST】 it.
 Needs doing by hand:
   - If the number of red characters and blue characters you have is 2 or more for each color, choose 1 of your opponent's characters, and 【REST】 it.
-
-Mitsurugi (KS/W49-E020)
-【CONT】 If there is a marker underneath this card, this card gets +3000 power.
-【AUTO】 When this card is placed on the stage from your hand, you may choose a card named "“Quest Clear” Aqua" in your waiting room, and put it face down underneath this card as a marker.
-【AUTO】 When this card's battle oppponent becomes 【REVERSE】, choose one of your other 《Adventurer》 or 《Goddess》 characters, 【REST】 it, and move it to an open position of your back stage.
-Needs doing by hand:
-  - 【AUTO】 When this card's battle oppponent becomes 【REVERSE】, choose 1 of your other 《Adventurer》 or 《Goddess》 characters, 【REST】 it, and move it to an open position of your back stage.
 
 Mjölnir (MAR/S89-E025)
 If you have a "Living Legend, Captain America" or a character with "Thor(ソー)" in its card name, choose 1 of the following effects, and perform it.
@@ -3651,12 +3175,6 @@ Mysterious Girl, Tohka (Fdl/W65-TE16)
 Needs doing by hand:
   - that charcacter gets +1000 power until end of turn
 
-Mysterious Girl, Yui (SAO/S20-E076)
-【ACT】[(1)］ Draw a card, choose a card in your hand, and put it into your waiting room.
-【ACT】［【REST】 this card and another of your characters］Choose one of your characters, and that character gets +1000 power until end of your opponent's next turn.
-Needs doing by hand:
-  - 【ACT】 [【REST】 this card and another of your characters]Choose 1 of your characters, and that character gets +1000 power until the end of your opponent's next turn.
-
 NEET Detective, Alice (Gkm/WS02-E088)
 【AUTO】 At the beginning of your main phase, look at the top card of your deck, and look at all of your stock. (Return the cards you saw to their original places)
 【ACT】 Brainstorm [(1) 【REST】 this card] Flip over 4 cards from the top of your deck, and put them into your waiting room. For each climax revealed among those cards, search your deck for up to 1 《Dengeki Bunko》 character, reveal it to your opponent, put it into your hand, and shuffle your deck.
@@ -3720,27 +3238,6 @@ No Fixed Occupation, Miyuki's Father (KGL/S95-E053)
 Needs doing by hand:
   - 【AUTO】 [(1) When this card attacks, you may pay the cost. If you do, during that attack, perform a trigger check 2 times on the trigger step.
 
-No Other Friend, Futaba & Kaoruko (RSL/S56-E007)
-【AUTO】 When this card attacks, choose 1 of your other《Revue》 characters, and that character gets +1000 power until end of turn.
-【AUTO】 When this card becomes 【REVERSE】, if this card's battle oppponent is level 0 or lower, you may put that character into your opponent's stock. If you do, put the bottom card of your opponent's stock into his or her waiting room.
-Needs doing by hand:
-  - if this card's battle oppponent is level 0 or lower, you may put that character into your opponent's stock
-  - If you do, put the bottom card of your opponent's stock into their waiting room.
-
-Noble Phantasm Unleashed (FS/S34-E048)
-If the number of green characters you have is two or less, this card cannot be played from your hand.
-
-Put all of your opponent's stock into your opponent's waiting room, and your opponent puts the same number of cards from the top of his or her deck into the stock.
-Needs doing by hand:
-  - Put all of your opponent's stock into your opponent's waiting room, puts the same number of cards from the top of their deck into their stock
-
-Noble Stance, Archer (FZ/S17-E058)
-【CONT】 If the number of cards in your stock is three or more, this card gets the following ability." 【AUTO】 When this card becomes 【REVERSE】, if this card's battle opponent is level 0 or lower, you may 【REVERSE】 that character."
-
-【AUTO】 Bond／"Kirei Kotomine" [Put the top card of your deck into your clock] （When this card is played and placed on stage, you may pay the cost. If you do, choose a card named "Kirei Kotomine" in your waiting room, and return it to your hand.)
-Needs doing by hand:
-  - 【REVERSE】 that character."""""
-
 Noble Will, Claudine Saijo (RSL/S56-E068)
 【AUTO】 When this card is placed on the stage from your hand or by the 【AUTO】 effect of "Brave Readiness, Maya Tendo", look at up to 3 cards from the top of your deck, choose up to 1 card from among them, put it into your hand, and put the rest into your waiting room.
 【AUTO】 【CXCOMBO】 [(3) Put 1 card from your hand into your waiting room] This ability activates up to 1 time per turn. At the end of this card's attack, if "The Show Must Go On" is in your climax area, you may pay the cost. If you do, choose 1 "Brave Readiness, Maya Tendo" in the middle position of your center stage, and 【STAND】 it.
@@ -3758,25 +3255,6 @@ Non-Stop Drinking (BTR/W107-E063)
 Put this card into your stock.
 Needs doing by hand:
   - repeat this action as many times as you wish
-
-Number One in Their Hearts (UMA/W106-E036)
-【CONT】 All of your characters get +1000 power and +1 soul.
-
-([choice]
-
-
-
-
-
-: When this card triggers, you may choose 1 character with [soul]
-
-
-
-
-
- in its trigger icon in your waiting room, and return it to your hand or put it into your stock)
-Needs doing by hand:
-  - in its trigger icon in your waiting room, return it to your hand or put it into your stock)
 
 Nyan-ta (LH/SE20-E26)
 【AUTO】 When another of your 《Weapon》 or 《Magic》 character attacks, this card gets +1000 power until end of turn. 
@@ -3844,12 +3322,6 @@ Opening Speech, Aura (OVL/S99-E044)
 Needs doing by hand:
   - 【AUTO】 [(1) 【REST】 this 【STAND】 character] When your other "Terrain Manipulation, Mare"'s battle opponent becomes 【REVERSE】, you may pay the cost. If you do, choose 1 character in your waiting room, and return it to your hand.
 
-Ordinal Number 1 (SAO/S51-E096)
-If you do not have any 《Avatar》 or 《Net》 characters, this card cannot be played from your hand.
-Put the top card of your deck into your waiting room, choose one of your opponent's level X or lower characters, and put it on the bottom of his or her deck. X is equal to that card's level. (Climax are regarded as level 0)
-Needs doing by hand:
-  - If you do not have any 《Avatar》 or 《Net》 characters, this card cannot be played from your hand.
-
 Oshizu (TL/W37-E097)
 【AUTO】 When this card attacks, if a card named "Bound Happening" is in your climax area, look at up to two cards from the top of your deck, choose up to one card from among them, put it into your hand, put the rest into your waiting room, and your opponent reveals his or her hand. If there is a climax among those cards, put the top card of your stock into your waiting room.
 Needs doing by hand:
@@ -3888,18 +3360,6 @@ Our Lyrics, Riina (IMC/W41-E095)
 【CONT】 If the number of red characters and blue characters you have is two or more for each color, this card gets -1 level while in your hand.
 Needs doing by hand:
   - If the number of red characters and blue characters you have is 2 or more for each color, this card gets -1 level while in your hand.
-
-Out of Place Rascal, Mataro (KLK/S27-E014)
-【ACT】 [(2)] Choose one of your opponent's characters, until end of turn that character gets -500 power, and this card gets +3000 power.
-Needs doing by hand:
-  - until end of turn that character gets -500 power, this card gets +3000 power
-
-Overcoming Fear, Asuna (SAO/S51-E003)
-【AUTO】 When this card is placed on the stage from your hand, you may put the top card of your clock into your waiting room.
-【AUTO】 【CXCombo】 [Put two cards from your hand into your waiting room] When this card attacks, if a card named "《Mother's Rosario》" is in your climax area, you may pay the cost. If you do, put the top eleven cards of your deck into your waiting room, deal X damage to your opponent, and this card gets +3000 power until end of turn. X is equal to the number of [soul] trigger icons revealed among those cards. (This damage may be canceled)
-Needs doing by hand:
-  - put the top eleven cards of your deck into your waiting room, deal X damage to your opponent, this card gets +3000 power until end of turn
-  - X is equal to the number of [soul] trigger icons revealed among those cards.
 
 Overflowing Charisma, Diablo (TSK/S101-E016)
 【CONT】 All of your other 《Demon Continent》 characters get +500 power.
@@ -3965,11 +3425,6 @@ Period I Want to Protect, Nana Daiba (RSL/S56-E002)
 【AUTO】 [(1)] When this card is placed on the stage from your hand, you may pay the cost. If you do, choose 1 character in your opponent's waiting room, and put it on an open position of your opponent's stage.
 Needs doing by hand:
   - put it on an open position of your opponent's stage
-
-Petit Aqua (KS/W49-E104)
-【AUTO】 When this card becomes 【REVERSE】 in battle, your opponent may draw two cards. If your opponent does, your opponent chooses two cards in your opponent's hand, and puts them into his or her waiting room.
-Needs doing by hand:
-  - puts them into their waiting room
 
 Petite and Beautiful Vampire, Shalltear (OVL/S99-E053)
 【CONT】 During your turn, this card gets +2000 power.
@@ -4056,28 +3511,11 @@ Needs doing by hand:
   - If you do not have "School Swimsuits, Perfect Pool Weather! Kanna", this card cannot be played from your hand.
   - otherwise deal 1 damage to your opponent, put up to 1 card from the top of your clock into your waiting room
 
-Preparing for Battle, Shirou (FS/S77-E011)
-【ACT】 [(1) Put 1 event from your hand into your waiting room] Choose 1 character in your waiting room, and return it to your hand.
-【ACT】 [【REST】 2 of your characters] If there are no markers underneath this card, choose 1 "Jeweled Sword Zelretch" in your waiting room, and put it face up underneath this card as a marker.
-【ACT】 [【REST】 2 of your characters] Return 1 marker from underneath this card to your hand.
-Needs doing by hand:
-  - Return 1 marker from underneath this card to your hand
-
 President of the Universe, Kurimu (Fsi/W65-PE01)
 【AUTO】 When this card is placed on the stage from your hand, all players reveal the top card of their deck. If your card revealed by this effect has level equal to or higher than your opponent's card revealed by this effect, this card gets +4500 power until end of turn. (Climax are regarded as level 0. Return the revealed card to its original place)
 Needs doing by hand:
   - all players reveal the top card of their deck
   - If your card revealed by this effect has level equal to or higher than your opponent's card revealed by this effect, this card gets +4500 power until end of turn.
-
-Pretty Girl Has Arrived, Aira (DDD/S118-E030)
-【AUTO】 When this card is placed on your stage from your waiting room, choose up to 2 characters with "Acrobatic Silky(アクロバティックさらさら)" in their card names in your waiting room, return them to your deck, and shuffle your deck.【ACT】 [Put 1 card from your hand into your waiting room & Put this card into your waiting room] Choose 1 《Human》 or 《Strange》 character in your waiting room, and return it to your hand.
-Needs doing by hand:
-  - 【AUTO】 When this card is placed on your stage from your waiting room, choose up to 2 characters with "Acrobatic Silky(アクロバティックさらさら)" in their card names in your waiting room, return them to your deck, and shuffle your deck.
-
-Pretty Girl's Gaze, Aira (DDD/S118-E028)
-【AUTO】 When this card is placed on the stage from your hand, you may choose 1 "Pretty Girl's Gaze, Aira" in your level and 1 character in your stage, and exchange them. (The character is placed on your stage as 【STAND】)【AUTO】 [Put 1 "Pretty Girl Wrapped in Kindness, Aira" from your hand into your waiting room] When this card attacks, you may pay the cost. If you do, look at up to 2 cards from the top of your opponent's deck, choose up to 1 card from among them, put it at the bottom of their deck, and put the rest on the top of their deck in any order.
-Needs doing by hand:
-  - choose 1 "Pretty Girl's Gaze, Aira" in your level and 1 character in your stage, exchange them
 
 Previous Life's Trauma (MTI/S83-TE11)
 If you do not have a 《Six-Sided World》 character, this card cannot be played from your hand.
@@ -4196,11 +3634,6 @@ Proving She's Not Wrong, Nina (GCR/SE48-E42)
 Needs doing by hand:
   - 【AUTO】 [Put all cards in your hand and stock into your waiting room] At the beginning of your encore step, you may pay the cost. For every 5 cards put into your waiting room by this ability's cost, deal 2 damage to your opponent.
   - For every 5 cards put into your waiting room by this ability's cost, deal 2 damage to your opponent
-
-Psycho Killer, Ryunosuke (FZ/S17-E095)
-【AUTO】 When another of your or your opponent's character becomes 【REVERSE】 in battle, this card gets +1000 power until end of turn.
-Needs doing by hand:
-  - 【AUTO】 When your other or your opponent's character becomes 【REVERSE】, this card gets +1000 power until end of turn.
 
 Pulling an All-Nighter to Game (SHS/W56-E052)
 【REST】 2 of your 《Game》 characters, and those characters cannot 【STAND】 during your next stand phase. If you 【REST】 2 characters, search your deck for up to 1 《Game》 character, reveal it to your opponent, put it into your hand, shuffle your deck, choose up to 1 《Game》 character in your waiting room, put it into your stock, and put this card at the bottom of your deck.
@@ -4349,13 +3782,6 @@ Needs doing by hand:
   - put it at the bottom of your clock
   - If you do, search your deck for up to 2 characters with "Kurumi(狂三)" in their card names, reveal them to your opponent, put them into your hand, and shuffle your deck.
 
-Reliable Reinforcement, Sinon (SAO/S51-E076)
-【CONT】 This card gets +500 power for each of your other 《Avatar》 or 《Net》 characters.
-【AUTO】 【CXCombo】 When this card attacks, if a card named "Dependable Marksmanship" is in your climax area, reveal thte top card of your deck. If that card is an 《Avatar》 or 《Net》 character, put it into your hand. (If it is not, return the revealed card to its original place)
-Needs doing by hand:
-  - reveal thte top card of your deck
-  - If that card is an 《Avatar》 or 《Net》 character, put it into your hand.
-
 Reminder, Herthaka (KGL/S79-E081)
 【CONT】 All of your other 《Shuchiin》 characters get +500 power.
 【AUTO】 When your opponent's character is placed on their stage by the [standby] effect revealed during your opponent's character's trigger check, if you have another 《Shuchiin》 character, you may put the top card of your deck into your stock.
@@ -4386,12 +3812,6 @@ Reunion, Hikari Kagura (RSL/S98-E085)
 【AUTO】 【CXCOMBO】 [(3) Put 1 card from your hand into your waiting room & Put 1 "Reunion, Karen Aijo" from your stage into your waiting room] When this card attacks, if "I Am Reborn" is in your climax area, and you have 2 or more other 《Revue》 characters, you may pay the cost. If you do, choose 1 "Next Stage and Next Role, Karen Aijo" in your waiting room, and put it in the position that the character put into the waiting room by this ability's cost was in.
 Needs doing by hand:
   - put it in the position that the character put into the waiting room by this ability's cost was in
-
-Rho Aias (FS/S77-E013)
-【COUNTER】 If you do not have a 《Master》 or 《Servant》 character, this card cannot be played from your hand.
-Put the top 4 cards of your deck into your waiting room, choose 1 of your characters, and that character gets +X power until end of turn. X is equal to the total number of [soul] icons in the trigger icons of the cards put into your waiting room by this effect ×2000.
-Needs doing by hand:
-  - Put the top 4 cards of your deck into your waiting room, choose 1 of your characters, and that character gets +X power until end of turn. X is equal to the total number of [soul] icons in the trigger icons of the cards put into your waiting room by this effect ×2000.
 
 Ritsu: Guilty Conscience (MOB/SX02-075)
 【AUTO】 Experience When this card attacks, if the total level of the cards in your level is 2 or higher, choose 1 of your characters, and that character gets +2000 power until end of turn.
@@ -4430,7 +3850,6 @@ Ruler of Death, Ainz (OVL/S62-TE17)
 【AUTO】 【CXCOMBO】 [(2) Put 1 "The Curtain Closes" in your climax area and 2 cards from your hand into your waiting room] When this card attacks, you may pay the cost. If you do, put all level 3 or lower characters in your opponent's center stage into his or her waiting room.
 Needs doing by hand:
   - 【AUTO】 【CXCOMBO】 [(2) Put 1 "The Curtain Closes" in your climax area and 2 cards from your hand into your waiting room] When this card attacks, you may pay the cost. If you do, put all level 3 or lower characters in your opponent's center stage into their waiting room.
-  - put all level 3 or lower characters in your opponent's center stage into their waiting room
 
 Rumored Player in Blue, Sally (BFR/S78-E038)
 【CONT】 Experience If the total level of the cards in your level is 6 or higher, this card gets +1500 power.
@@ -4442,12 +3861,6 @@ SD Elizabeth (SDS/SX03-102)
 【AUTO】 When this card is placed on the stage from your hand, choose 1 cost 1 or higher character in your opponent's waiting room, and put it on an open position of your opponent's back stage.
 Needs doing by hand:
   - put it on an open position of your opponent's back stage
-
-SD Gilgamesh (FGO/S75-E102)
-【AUTO】 When you use this card's "Backup", put 3 cards from the top of your opponent's deck into their waiting room. 
-【ACT】 【COUNTER】 Backup 3000, Level 2 [(1) Put this card from your hand into your waiting room] (Choose 1 of your characters that is being frontal attacked, and that character gets +3000 power until end of turn)
-Needs doing by hand:
-  - put 3 cards from the top of your opponent's deck into their waiting room
 
 SD Giovanna & Goldlewis (GGST/SX06-104)
 【AUTO】 This ability activates up to 1 time per turn. When this card becomes 【REST】 from 【STAND】, choose 1 of your characters, and that character gets +500 power until end of turn.
@@ -4470,23 +3883,6 @@ SOS Brigade's Mascot, Mikuru (SY/W08-E039)
 【AUTO】 When another of your 《SOS Brigade》 characters is placed on the stage from your hand or memory, until end of turn, that character gets +1000 power and 《Tea》.
 Needs doing by hand:
   - 【AUTO】 When your other 《SOS Brigade》 characters is placed on the stage from your hand or memory, that character gets +1000 power and 《Tea》 until end of turn.
-
-SYSTEM ALERT (SAO/S100-E098)
-【COUNTER】 Choose up to 2 of your 《Anniversary》 or 《Integrity Knight》 or 《Noble》 characters, and those characters get the following abilities until end of turn. "【CONT】 The character facing this card gets -2 soul." "【AUTO】 When this card is put into your waiting room from the stage, you may return this card to its previous stage postion as 【REST】." Put this card into your clock.
-Needs doing by hand:
-  - return this card to its previous stage postion as 【REST】
-
-Sacred Ball!? (DDD/S118-E017)
-If all of your characters are 《Human》 or 《Strange》, choose up to 1 character in your clock, return it to your hand, choose 1 of your characters, and that character gets the following ability until end of turn. "【AUTO】 [(1)] When this card attacks, you may pay the cost. If you do, during that attack, perform a trigger check 2 times on the trigger step."Put this card into your clock.
-Needs doing by hand:
-  - that character gets the following ability until end of turn "【AUTO】 [(1)] When this card attacks, you may pay the cost. If you do, during that attack, perform a trigger check 2 times on the trigger step."Put this card into your clock
-
-Sadistic Artist, Caster (FZ/S17-E088)
-【AUTO】[Put another character on your stage into your waiting room] When this card attacks, if you have a blue climax in your climax area, you may pay the cost. If you do, this card gets +2000 power until end of your opponent's next turn.
-Needs doing by hand:
-  - 【AUTO】 [Put another character on your stage into your waiting room] When this card attacks, if you have a blue climax in your climax area, you may pay the cost. If you do, this card gets +2000 power until the end of your opponent's next turn.
-  - if you have a blue climax in your climax area, you may pay the cost
-  - If you do, this card gets +2000 power until the end of your opponent's next turn.
 
 Saki Tenjoin (TL/W37-E042)
 【CONT】 All of your other cards named "Rin Kujo" get +500 power and the following ability. "【CONT】 This card cannot become 【REVERSE】 from your opponent character's 【AUTO】 effects."
@@ -4585,18 +3981,6 @@ If your level is 2, choose 1 of your 《Grotesque Race》 or 《Nazarick》 char
 Needs doing by hand:
   - 【COUNTER】 If you do not have "Dedicated Love for the Lord, Albedo", this card cannot be played from your hand.
 
-Serpoian Form Serpo-Grammetry, Serpoian (DDD/S118-TE06)
-【CONT】 Assist All of your characters in front of this card get +X power. X is equal to that character's level ×500.
-【AUTO】 When this card is placed on the stage from your hand, choose 1 level 3 or lower character in your opponent's back stage. That character cannot @STAND during your opponent's next stand phase.
-Needs doing by hand:
-  - That character cannot @STAND during your opponent's next stand phase
-
-Shadow that Engulfs Heroic Spirits (FS/S64-E078)
-【COUNTER】 Choose 1 of your characters, and that character gets +1 level until end of turn.
-Choose 1 of your characters, and that character gets the following ability until end of turn. "【AUTO】 When this card becomes 【REVERSE】, if the level of this card's battle opponent is equal to or lower than this card's level, you may 【REVERSE】 that character."
-Needs doing by hand:
-  - if the level of this card's battle opponent is equal to or lower than this card's level, you may 【REVERSE】 that character
-
 Shady Plan, Koto (MKI/W126-E058)
 【CONT】 During your turn, if you have 2 or more other 《Adolescence》 characters, this card gets +4000 power.
 【AUTO】 [Put 1 card from your hand into your waiting room] During the turn that this card is placed on the stage from your hand, when a climax with [comeback] in its trigger icon is placed on your climax area, if you have another 《Adolescence》 character, you may pay the cost. If you do, choose up to 1 climax with [comeback] in its trigger icon in your waiting room, return it to your hand, and this card gets the following ability until the end of your opponent's next turn."【AUTO】 [(1) Put this card into your waiting room] When your other character is frontal attacked, you may pay the cost. If you do, return that character to your hand."
@@ -4607,7 +3991,6 @@ Shame, Natsumi (DAL/W99-E028)
 【AUTO】 At the beginning of your climax phase, if there are 3 or more markers underneath this card, put all markers from underneath this card into your waiting room, and you may put the top card of your deck into your stock.
 【ACT】 Brainstorm [(1) 【REST】 this card] Flip over 4 cards from the top of your deck, and put them into your waiting room. For each climax revealed among those cards, perform the following action. "Look at up to 3 cards from the top of your deck, choose up to 1 card from among them, put it into your hand, choose up to 1 card among the remaining cards, put it face up underneath this card as a marker, and put the rest into your waiting room."
 Needs doing by hand:
-  - put all markers from underneath this card into your waiting room, you may put the top card of your deck into your stock
   - choose up to 1 card among the remaining cards, put it face up underneath this card as a marker, put the rest into your waiting room
 
 Shameful, Chika (KGL/S79-E004)
@@ -4707,13 +4090,6 @@ Sisters Taking a Bath, Haru (NK/WE22-E31)
 Needs doing by hand:
   - {小と咲の間のスペースを消してください}
 
-Skilled 《Sylph》, Leafa (SAO/S26-E021)
-【CONT】 All of your other 《Avatar》 or 《Net》 characters get +1000 power.
-
-【AUTO】 [(1) 【REST】 this card] When another of your characters becomes 【REVERSE】 in battle, if this card is 【STAND】, you may pay the cost. If you do, until end of turn that character gets the following ability. "【AUTO】 Encore [Put a character from your hand into your waiting room]".
-Needs doing by hand:
-  - until end of turn that character gets the following ability "【AUTO】 Encore [Put 1 character from your hand into your waiting room]"
-
 Sleep Spell, Witch (GBS/S63-E044)
 【AUTO】 When this card is placed on the stage from your hand, put the top 2 cards of your deck into your waiting room. If there is a climax among them, choose 1 level 3 or lower character in your opponent's back stage. That character cannot 【STAND】 during your opponent's next stand phase.
 【AUTO】 When damage dealt by this card is canceled, you may put this card into your stock.
@@ -4733,13 +4109,6 @@ Smirk, Anya (SPY/S106-E101)
 【AUTO】 [(2)] When this card is put into your waiting room from the stage, you may pay the cost. If you do, choose 1 《Berlint》 character in your waiting room, and return it to your hand.
 Needs doing by hand:
   - look at the bottom card of your opponent's deck
-
-Snowy Night, Chisato & Takina (LRC/WE47-E50)
-【CONT】 Experience If "Snowy Night, Chisato & Takina" is in your level, this card gets -1 level while in your hand.
-【AUTO】 When this card is placed on the stage from your hand, you may choose 1 "Snowy Night, Chisato & Takina" in your level and 1 character in your stage, and exchange them. (The character is placed on your stage as 【STAND】)
-【AUTO】 【CXCOMBO】 [(1) Put 1 card from your hand into your waiting room] When this card attacks, if "Exploring the Stars" is in your climax area, and you have another 《LycoReco》 or 《Weapon》 character, you may pay the cost. If you do, deal 2 damage to your opponent, and this card gets +2000 power until end of turn. (Damage may be canceled)
-Needs doing by hand:
-  - choose 1 "Snowy Night, Chisato & Takina" in your level and 1 character in your stage, exchange them
 
 Solar Dragon (SFN/S108-E041)
 【CONT】 This card gets +1500 power for each other 《Adventurer》 or 《Magic》 character in your back stage.
@@ -4763,17 +4132,6 @@ Son of the Previous Overlord, Laharl (DG/EN-S03-TE09)
 Needs doing by hand:
   - choose 1 card in you hand, put it into your waiting room
 
-Song Battle for the Galaxy (MDE/SE45-E56)
-All players return all cards from their waiting rooms to their decks, and shuffle their decks
-Choose 1 of your characters, and that character gets the following ability until end of turn. "【AUTO】 When this card becomes 【REVERSE】, if the level of this card's battle opponent is equal to or lower than this card's level, you may 【REVERSE】 that character."
-Needs doing by hand:
-  - if the level of this card's battle opponent is equal to or lower than this card's level, you may 【REVERSE】 that character
-
-Sonomi Daidouji (CCS/WX01-016)
-【AUTO】 [(1) Put 1 card from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, your opponent chooses 1 climax in your opponent's waiting room, returns all cards in your opponent's waiting room except that card into your opponent's deck, and shuffles his or her deck.
-Needs doing by hand:
-  - your opponent chooses 1 climax in your opponent's waiting room, returns all cards from their waiting room except that card to their deck, shuffles their deck
-
 Soon-to-be Sage, Mikami Satoru (TSK/S70-TE02)
 【AUTO】 [(1) Put this card into your memory] When this card becomes 【REVERSE】 in battle, you may pay the cost. If you do, choose 1 "Reincarnated From Another World, Rimuru" in your waiting room, put it on the position that this card was on as 【REST】, and that character gets 《Stab Resistance》, 《Physical Attack Resistance》, 《Pain Nullification》, 《Thermal Fluctuation  Resistance》, 《Electric Current Resistance》, 《Paralysis Resistance》, 《Predator》 and 《Great Sage》 until end of turn.
 Needs doing by hand:
@@ -4790,12 +4148,6 @@ Sorcerer Supreme, Doctor Strange (MAR/S89-E038)
 【AUTO】 When this card is placed on the stage from your hand, if you have 2 or more other 《MARVEL》 characters, reveal the top 8 cards of your deck, and shuffle your deck. If there are 8 or more climax among those cards, you win the game. (Return the revealed card to its original place)
 Needs doing by hand:
   - you win the game
-
-Sore Loser, Alice (SAO/S65-E011)
-【AUTO】 When this card is placed on the stage from your hand, reveal the top card of your deck. If that card is a 《Fluctlight》 character, put it into your hand, choose 1 card in your hand, and put it in your waiting room. (Otherwise, return it to its original place)
-【AUTO】 When the damage dealt by this card is canceled, you may put this card into your stock.
-Needs doing by hand:
-  - put it in your waiting room
 
 Sound of a Loser, Denji (CSM/S96-E065)
 【CONT】 The damage this card deals is resolved from the bottom of the deck.
@@ -4825,12 +4177,6 @@ Needs doing by hand:
   - Search your deck for up to X 《Death》 characters, reveal them to your opponent, put them into your hand and shuffle your deck
   - Choose X cards in your hand, and put them into your waiting room.
   - X is equal to the number of climax revealed among those cards.
-
-Spellbook of Fake Authority (FS/S64-E051)
-Search your deck for up to 2 "Mysterious Knight, Rider", put them on separate positions on your stage, and shuffle your deck. Put this card into your memory.
-Needs doing by hand:
-  - put them on separate positions on your stage, shuffle your deck
-  - Put this card into your memory.
 
 Spinning Wheel of Fate, Nui (KLK/S27-E022)
 【CONT】 If all of your characters are 《Clothes》, this card gets +2000 power.
@@ -4865,12 +4211,6 @@ Star-Lord (MAR/S89-E019)
 Needs doing by hand:
   - return the remaining cards to their deck, your opponent shuffles their deck
 
-Sterben 《Death Gun》 (SAO/S47-E062)
-【AUTO】 When this card attacks, if all of your opponent's characters are 《Target》, you may deal one damage to your opponent. (This damage may be canceled)
-【AUTO】 When this card attacks, if a card named "Fateful Estoc Wielder" is in your climax area, until the end of your opponent's next turn, this card gets +2500 power and the following ability. "【AUTO】 When this card's battle opponent becomes 【REVERSE】, you may put that character on the top of your opponent's deck."
-Needs doing by hand:
-  - if all characters in your opponent's stage are 《Target》, you may deal 1 damage to your opponent
-
 Stopped Battle, Hajime Saito (RKN/S115-E090)
 【AUTO】 [(1) Put 1 card from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, choose 1 of your opponent's characters, and return it to their hand or move it to another open position of their stage.
 Needs doing by hand:
@@ -4881,11 +4221,6 @@ Straightforward Emotions, Megumi (SHS/W98-E038)
 【AUTO】 When this card is placed on the stage from your hand, put up to 1 card from the top of your deck into your stock, and perform the following action. "You may choose 1 of your opponent's level 1 or higher characters. If you do, your opponent chooses 1 level X or lower character in their waiting room, and exchanges them. X is equal to the level of the character you chose -1."
 Needs doing by hand:
   - If you have 2 or more cards in your memory, and all of the cards in your memory have "Megumi(恵)" in their card names, this card gets -1 level while in your hand.
-
-Strange Entity, Turbo Granny (DDD/S118-E006)
-【AUTO】 [(2)] When this card is placed on the stage from your hand, you may pay the cost. If you do, return all cards from your waiting room to your deck, and shuffle your deck.【ACT】 Fusion [Put 1 "Things More Important Than Clothes, Okarun" from your stage face up underneath this card as a marker] Search your deck for up to 1 "Full Throttle Strike, Okarun", put it in the stage position that this card is in, put this card and all markers underneath this card face up underneath that "Full Throttle Strike, Okarun" in any order as a marker, and shuffle your deck.
-Needs doing by hand:
-  - put this card and all markers underneath this card face up underneath that "Full Throttle Strike, Okarun" in any order as a marker, shuffle your deck
 
 Strange Incidents, Mai Sakurajima (SBY/W77-E050)
 【AUTO】 Memory At the beginning of your climax phase, if there are 3 or more cards in your memory, choose 1 of your characters, and that character gets +500 power until the end of your opponent's next turn,
@@ -4927,13 +4262,6 @@ Student Council President, Eli (LL/W24-E026)
 Needs doing by hand:
   - this card gets +2500 power and your opponent cannot play event from your hand until the end of your opponent's next turn
 
-Study Mode, Sakura (FS/S64-E043)
-【CONT】 All of your other 《Master》 or 《Servant》 characters get +500 power.
-【ACT】 [【REST】 this card] Choose 1 of your characters, and that character gets the following ability until end of turn. "【AUTO】 When this card's battle opponent becomes 【REVERSE】, you may put the top card of your opponent's clock into his or her waiting room. If you do, put that character into your opponent's clock.
-Needs doing by hand:
-  - "【AUTO】 When this card's battle opponent becomes 【REVERSE】, you may put the top card of your opponent's clock into their waiting room
-  - If you do, put that character into your opponent's clock.
-
 Successor, Rimuru (TSK/S70-E002)
 【AUTO】 When this card is placed on the stage from your hand or by the 【ACT】 effect of "Inherited Wishes, Rimuru", look at up to 3 cards from the top of your deck, choose up to 1 card from among them, put it into your hand, and put the rest into your waiting room.
 【AUTO】 【CXCOMBO】 [(2)] When this card attacks, if "Meguru Mono" is in your climax area, you may pay the cost. If you do, deal 2 damage to your opponent. (Damage may be canceled)
@@ -4948,13 +4276,6 @@ Needs doing by hand:
   - declare either your deck or your waiting room, search your declared zone for up to 1 "Unforeseen Incident, Denji", reveal it to your opponent, put it into your hand
   - If you declared your deck, shuffle your deck.
 
-Suguha Changes Clothes (SAO/S26-E026)
-【AUTO】 When this card attacks, choose one of your other characters, and that character gets +X power until end of turn. X is equal to 500 multiplied by the number of 《Avatar》 and 《Net》 characters you have.
-
-【AUTO】 Encore [Put a character from your hand into your waiting room] (When this card is put into your waiting room from the stage, you may pay the cost. If you do, return this card to its previous stage position as 【REST】.)
-Needs doing by hand:
-  - choose 1 of your other characters, that character gets +X power until end of turn. X is equal to the number of 《Avatar》 and 《Net》 characters you have ×500.
-
 Super Dimension Witch, Reina (MDE/SE45-E25)
 【ACT】 [(1) 【REST】 this card] If your deck has 6 or more cards, put all cards except the bottom 5 cards of your deck from your deck into your waiting room, and if you have 4 or more climax with different card names in your waiting room, this card gets the following ability until end of turn. "【AUTO】 At the beginning of your encore step, return all cards from your waiting room to your deck, and shuffle your deck." If you have 3 or less climax with different card names in your waiting room, put this card into your clock.
 【ACT】 Brainstorm [(1) 【REST】 this card] Flip over 4 cards from the top of your deck, and put them into your waiting room. For each climax revealed among those cards, choose up to 1 《Music》 or 《Pilot》 character in your waiting room, and return it to your hand.
@@ -4967,12 +4288,6 @@ Suspicious Gaze, Chiyuri (AW/S18-E044)
 Needs doing by hand:
   - Return all cards in your opponent's waiting room to their deck
   - your opponent shuffles their deck.
-
-Sweet Princess, Marika (NK/W30-E061)
-【AUTO】 When another of your 《Key》 characters attack, this card gets +1000 power until end of turn.
-【AUTO】 Encore [Put the top card of your deck into your clock] （When this card is put into your waiting room from the stage, you may pay the cost. If you do, return this card to its previous stage position as 【REST】)
-Needs doing by hand:
-  - 【AUTO】 When another of your 《Key》 characters attack, this card gets +1000 power until end of turn.
 
 Swimsuit Haruhi & Nagato (SY/W08-E083)
 【AUTO】 When this card is placed on the stage from your hand or by a "Change" effect, choose one of your other charcters, and that character gets the following ability until end of turn. "【AUTO】 When this card is put into your waiting room from the stage, you may return this card to its previous stage position as 【REST】."
@@ -5018,12 +4333,6 @@ Taken Captive, Kaoru Kamiya (RKN/S115-E052)
 【AUTO】 [(1) Put the top card of your deck into your clock] When this card is frontal attacked, you may pay the cost. If you do, you may choose 1 "Protecting Without Killing, Kenshin Himura" in your hand, and exchange it with this card as the defending character.
 Needs doing by hand:
   - exchange it with this card
-
-Taking Care Together, Shizu (TSK/S70-E054)
-【AUTO】 When this card is placed on stage from your hand, choose 1 of your 《Demon Continent》 characters, and that character gets +X power until end of turn. X is equal to the number of 《Demon Continent》 characters you have ×500.
-【AUTO】 【CXCOMBO】 [(1)] When this card's battle opponent becomes 【REVERSE】, if "Awoken Impulse" is in your climax area, you may pay the cost, If you do, choose 1 card in your opponent's waiting room, and put it into his or her memory.
-Needs doing by hand:
-  - If you do, choose 1 card in your opponent's waiting room, put it into their memory
 
 Taking Pride in Lyrics, Nico (LL/EN-W01-062)
 【AUTO】 [(2)] When you use this card's "Backup", you may pay the cost. If you do, choose one of your opponent's characters with level higher than your opponent's level, put it into your opponent's waiting room, your opponent will choose up to one level 0 or lower character from your opponent's waiting room, and put it on the stage position that character was on.
@@ -5084,12 +4393,6 @@ Needs doing by hand:
   - With You a Bit"""" is in your climax area, you have 3 or more other 《Grotesque Race》 or 《Nazarick》 characters, choose up to 1 《Grotesque Race》 or 《Nazarick》 character in your waiting room, return it to your hand, during that attack, perform a trigger check 2 times on the trigger step
   - If performed 2 times, put the top card of your stock into your waiting room.
 
-The Lich (AT/WX02-078)
-【AUTO】 When this card attacks, reveal the top card of your deck. If that card is an 《Ooo》 character or "Unlocking the Enchiridion", put it into your hand. (Otherwise, return it to its original place)
-【AUTO】 【CXCOMBO】 [(2) Put 2 cards from your hand into your waiting room & Put 1 "Ultimate Evil" from your climax area into your waiting room] When this card attacks, you may pay the cost. If you do, put all level 3 or lower characters in your opponent's center stage into his or her waiting room.
-Needs doing by hand:
-  - put all level 3 or lower characters in your opponent's center stage into their waiting room
-
 The Lich: Possessing Snail (AT/WX02-092)
 【AUTO】 [Put 1 card from your hand into your waiting room] When your "Princess Bubblegum: Possessed" is put into your waiting room from the stage, if this card is in your waiting room, you may pay the cost. If you do, put this card on any position of your stage as 【REST】.
 【ACT】 [(2) Put 1 "Billy the Hero" on your stage and this card into your memory] Choose 1 "The Lich: Possessing Billy" in your waiting room, and put it on the stage position that this card was on.
@@ -5120,19 +4423,6 @@ The One, Chitoge (NK/W30-E002)
 【AUTO】 When this card attacks, if a card named "Diary" is in your climax area, until end of turn, this card gets +3000 power and the following ability. "【AUTO】 This ability activates up to one time per turn. When damage dealt by this card is is canceled, you may deal one damage to your opponent." (This damage may be canceled)
 Needs doing by hand:
   - 【AUTO】 1/TURN@ When damage dealt by this card is is canceled, you may deal 1 damage to your opponent.
-
-The Power of Divine Authority, Kirito (SAO/S100-E077)
-【AUTO】 When this card is placed on the stage from your hand, you may put the top card of your clock into your waiting room.
-【AUTO】 【CXCOMBO】 Memory When this card attacks, if "Night-Sky Blade" is in your climax area, you have another 《Anniversary》 character, and "Alicization" is in your memory, put the top card of your deck into your waiting room, and deal X damage to your opponent. X is equal to the cost of that card +1. (Climax are regarded as 0 cost. Damage may be canceled)
-Needs doing by hand:
-  - put the top card of your deck into your waiting room, deal X damage to your opponent. X is equal to the cost of that card +1.
-
-The Seven Shadows, Eta (EIS/SX07-079)
-【CONT】 Your other character in the middle position of your center stage gets +1000 power.
-【ACT】 [【REST】 this card] If there is no marker underneath this card, choose 1 《Eminence in Shadow》 character in your waiting room, and put it face up underneath this card as a marker.
-【ACT】 [(1) 【REST】 this card] Return 1 marker from underneath this card to your hand.
-Needs doing by hand:
-  - Return 1 marker from underneath this card to your hand
 
 The Seven Shadows, Zeta (EIS/SX07-084)
 【CONT】 This card cannot side attack.
@@ -5212,7 +4502,6 @@ Time to Part, Ana (FGO/S75-E039)
 【AUTO】 When this card is placed on the stage from your hand, if your opponent's center stage has 1 or less characters, choose 1 character on their center stage, and that character gets -3000 power until end of turn. 
 【AUTO】 [Put 1 climax from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, choose 1 of your opponent's characters, put it into their memory, and at the beginning of the encore step, your opponent places that character from their memory on any position of the stage.
 Needs doing by hand:
-  - choose 1 character on their center stage, that character gets -3000 power until end of turn
   - your opponent places that character from their memory in any position of the stage
 
 To Become Stronger, Yahiko Myojin (RKN/S115-E005)
@@ -5232,13 +4521,6 @@ Choose up to 4 of your opponent's characters, and put them into their memory. Yo
 Needs doing by hand:
   - You shuffle those characters face down, put them face down in separate open positions of your opponent's stage
   - Put those characters face up.
-
-To the Cave in the North, Eugeo (SAO/S65-E088)
-【CONT】 During your opponent's turn, all of your other 《Fluctlight》 characters get +500 power.
-【ACT】 Brainstorm [(1)] Flip over 4 cards from the top of your deck, and put them into your waiting room. Draw up to X cards, choose X cards in your hand, and put them into your waiting room. X is equal to the number of climax revealed among those cards ×2.
-Needs doing by hand:
-  - choose X cards in your hand, put them into your waiting room
-  - X is equal to the number of climax revealed among those cards ×2.
 
 To the Highest Stage, Chitoge (NK/W30-PE04)
 【AUTO】 If the number of other 《Key》 or 《Weapon》 characters you have is three or more, this card gets the following ability. "【AUTO】 Encore [Put a character from your hand into your waiting room]"
@@ -5345,13 +4627,6 @@ Tremendous Power, Yue (ARI/S103-E002)
 Needs doing by hand:
   - 【AUTO】 1/TURN@ When damage dealt by this card or the character facing this card is canceled, you may deal 2 damage to your opponent.
 
-Trigger Off, Shirou (FS/S77-E002)
-【AUTO】 When this card is placed on the stage from your hand, you may choose 1 card in your waiting room, and put it face up underneath this card as a marker.
-【AUTO】 [(1)] At the beginning of your attack phase, if there is no climax in your climax area, you may pay the cost. If you do, choose 1 climax marker underneath this card, and put it on your climax area.
-【AUTO】 When this card attacks, if you have 4 or more other 《Master》 or 《Servant》 characters, choose 1 of your characters, and that character gets +2 soul until end of turn.
-Needs doing by hand:
-  - choose 1 climax marker underneath this card, put it on your climax area
-
 True Bonds, Goblin Slayer (GBS/S63-E031)
 【AUTO】 When this card becomes 【REVERSE】 in battle, you may reveal up to 3 cards from the top of your deck. If you revealed 1 or more cards, choose up to 1 《Order》 character from among them, put it into your hand, put the rest into your waiting room, and put 1 card from your hand into your waiting room.
 【AUTO】 【CLOCK】 Alarm If this card is the top card of your clock, at the beginning of your climax phase, look at up to 2 cards from the top of your deck, and put them on the top of your deck in the original order.
@@ -5377,21 +4652,10 @@ Tsu-class Light Cruiser (KC/SE28-E10)
 Needs doing by hand:
   - 【AUTO】 1/TURN@ When an opponent's character with "Aircraft Carrier(空母)" or "Aircraft Carrying(空母)" in its trait is placed on the stage from their hand, choose 1 of your opponent's characters, and that character gets -1 soul until end of turn.
 
-Tsubasa Hanekawa Knows Everything (BM/S15-E091)
-【ACT】[【REST】 two of your characters] Until end of your opponent's next turn, this card gets +1000 power.
-Needs doing by hand:
-  - Until end of your opponent's next turn, this card gets +1000 power
-
 Tsubasa Kira (LL/EN-W01-035)
 【CONT】 If the number of "Tsubasa Kira" in your waiting room is two or more, this card gets -1 level while in your hand. 【AUTO】 When this card attacks, if a card named "Shocking Party" is in your climax area and other cards named "Erena Todo" and "Anju Yuki" are in your center stage, until end of turn, all of your center stage characters get +1500 power and the following ability. "【AUTO】 This ability activates up to one time per turn. When damage dealt by this card is canceled, you may deal one damage to your opponent." (This damage may be canceled)
 Needs doing by hand:
   - if "Shocking Party" is in your climax area and other "Erena Todo" and "Anju Yuki" are in your center stage, all of your center stage characters get +1500 power and the following ability until end of turn "【AUTO】 1/TURN@ When damage dealt by this card is canceled, you may deal 1 damage to your opponent."
-
-Turbo Granny (DDD/S118-TE07)
-【AUTO】 When this card is placed on the stage from your hand, choose up to 2 "Cursed Power, Okarun" in your waiting room, and put them at the bottom of your deck in any order. 
-【ACT】 Fusion [Put 1 "You're Being a Pest, Okarun" from your stage face up underneath this card as a marker] Search your deck for up to 1 "Cursed Power, Okarun", put it in the stage position that this card is in, put this card and all markers underneath this card face up underneath that "Cursed Power, Okarun" as a marker in any order, and shuffle your deck.
-Needs doing by hand:
-  - put this card and all markers underneath this card face up underneath that "Cursed Power, Okarun" as a marker in any order, shuffle your deck
 
 Tutor of the Quintuplets, Futaro Uesugi (5HY/W90-E003)
 【CONT】 This card cannot be chosen by your opponent's effects.
@@ -5412,14 +4676,6 @@ Two-Face: Coxswained by the Coin (BNJ/SX01-015)
 Needs doing by hand:
   - perform the following 2 effects in order
   - "Your opponent declares "Heads" or "Tails"." "Put the top card of your deck into your waiting room, if that card is level 1 or higher and your opponent declared "Heads", or that card is level 0 or lower and your opponent declared "Tails", choose up to 1 《Villain》 character in your waiting room, and return it to your hand."
-
-Type 3 Submergence Transport Vehicle, Maruyu-Kai (KC/S31-E020)
-【CONT】 You can put any number of cards with the same card name as this card into your deck. 
-
-【AUTO】 Experience When this card is placed on the stage from your hand, draw up to X cards, choose X cards in your hand, and put them into your waiting room. X is equal to the number of "Type 3 Submergence Transport Vehicle, Maruyu-Kai" in your level.
-Needs doing by hand:
-  - choose X cards in your hand, put them into your waiting room
-  - X is equal to the number of "Type 3 Submergence Transport Vehicle, Maruyu-Kai" in your level.
 
 Ultimate Android, Vision (MAR/S89-E039)
 【AUTO】 When this card attacks, this card gets +X power until end of turn. X is equal to the number of other 《MARVEL》 characters you have ×1000.
@@ -5653,11 +4909,6 @@ Needs doing by hand:
   - Put this card at the bottom of your stock
   - Look at up to 3 cards from the top of your deck, choose up to 1 card from among them, put it into your hand, and put the rest into your waiting room.
 
-Waver "MacKenzie" (FZ/S17-E048)
-【AUTO】 When one of your characters attacks, choose another of your 《Servant》 characters, and that character gets +1000 power until end of turn.
-Needs doing by hand:
-  - 【AUTO】 When 1 of your characters attacks, choose 1 of your other 《Servant》 characters, and that character gets +1000 power until end of turn.
-
 Way Back on a Rainy Day (SY/W08-E021)
 【COUNTER】 If the number of characters in your center stage is three or more, this card cannot be played from your hand. All of your characters get +2500 power until end of turn.
 Needs doing by hand:
@@ -5880,11 +5131,6 @@ Needs doing by hand:
 Needs doing by hand:
   - 【AUTO】 [Put the top card of your stock into your waiting room OR Put the top card of your deck into your clock] When this card attacks, you may pay the cost. If you do, during that attack, perform a trigger check 2 times on the trigger step.
 
-“A Short Rest” Illya (FS/S36-E087)
-【AUTO】 When this card becomes 【REVERSE】 in battle, your opponent may draw two cards. If your opponent does, your opponent chooses two cards from his or her hand, and puts them into his or her waiting room.
-Needs doing by hand:
-  - your opponent chooses 2 cards from their hand, puts them into their waiting room
-
 “Angel Nurse” Kotori Minami (LL/EN-W02-E098)
 【CONT】 All of your other 《Music》 characters get +500 power.
 【AUTO】 [【REST】 one of your other 【STAND】 characters and this card] When another card named ""Happy Maker!" Kotori Minami" is placed on the stage from your hand, if this card is 【STAND】, you may pay the cost. If you do, choose up to two 《Music》 characters in your waiting room, and put them into your stock.
@@ -5915,13 +5161,6 @@ Needs doing by hand:
 Needs doing by hand:
   - If those cards are all 《Music》 characters, choose 1 character in your waiting room, and return it to your hand.
 
-“Caladbolg Ⅱ” Archer (FS/S36-E054)
-【AUTO】 This ability activates up to one time per turn. When you play a card named "“Caladbolg II”", choose one of your characters, and that character gets +2000 power until end of turn.
-
-【AUTO】 When this card becomes 【REVERSE】, if this card's battle opponent is level 0 or lower, you may 【REVERSE】 that character.
-Needs doing by hand:
-  - 【AUTO】 1/TURN@ When you play a ""Caladbolg II"", choose 1 of your characters, and that character gets +2000 power until end of turn.
-
 “Cat Notification Tone” Yui (TL/W37-E049)
 【AUTO】 When this card is placed on the stage from your hand, this card gets +1500 power until end of turn.
 【AUTO】 When this card attacks, if a card named "Alluring Voice" is in your climax area, until end of turn, this card gets +X power, and your opponent cannot play "Backup" from hand. X is equal to 500 multiplied by the number of  other 《Animal》 or 《Plant》 characters you have.
@@ -5934,12 +5173,6 @@ Needs doing by hand:
 【ACT】 【COUNTER】 Backup 2500, Level 2 [(1) Put this card from your hand into your waiting room] (Choose one of your characters that is being frontal attacked, and that character gets +2500 power until end of turn)
 Needs doing by hand:
   - if your opponent's character in battle is level 3 or higher, choose 1 of your characters in battle, that character gets +1000 power until end of turn
-
-“Deadly Strike” Lancer (FS/S36-E036)
-【AUTO】 [Put a 《Weapon》 character from your hand into waiting room & 【REST】 one of your other 【STAND】 green characters] When this card attacks, if a card named "“Gae Bolg”" is in you climax area, you may pay the cost. If you do, choose one of your opponent's characters, and that character gets -3000 power until end of turn.
-Needs doing by hand:
-  - if a ""Gae Bolg"" is in you climax area, you may pay the cost
-  - If you do, choose 1 of your opponent's characters, and that character gets -3000 power until end of turn.
 
 “Decide What They Were Worth on My Own” Chris (KS/W49-E009)
 【AUTO】 When this card is placed on the stage from your hand, your opponent chooses the number 0 or 1 or 2. Put the top card of your deck into your waiting room, and if that card is a card of a level that matches the number that your opponent chose, draw up to X cards. X is equal to the number that your opponent chose +1. (Climax are regarded as level 0)
@@ -5959,13 +5192,6 @@ Needs doing by hand:
 【ACT】 (2) 【REST】 two of your characters] Look at up to two cards from the top of your deck, choose up to one card from among them, put it into your hand, and put the rest into your waiting room.
 Needs doing by hand:
   - 【REST】 2 of your characters] Look at up to 2 cards from the top of your deck, choose up to 1 card from among them, put it into your hand, put the rest into your waiting room
-
-“Festival Girl” Nozomi Tojo (LL/EN-W02-E025)
-【CONT】 Assist All of your characters in front of this card get +X power. X is equal to 500 multiplied by the number of characters you have with "Assist".
-【CONT】  If you would pay the "Change" cost for one of your characters, you may put a marker from underneath this card into your waiting room instead of a card from your stock.
-【AUTO】 When this card is placed on the stage from your hand, you may put the top two cards of your deck underneath this card as markers.
-Needs doing by hand:
-  - put the top 2 cards of your deck underneath this card as markers
 
 “Finale” Noir (NIK/S117-E032)
 【AUTO】 When this card is placed on the stage from your hand, all of your characters get +1 soul until end of turn.
@@ -5997,13 +5223,6 @@ Needs doing by hand:
   - If there is a climax among those cards, choose 1 level 3 or lower character facing this card, and put it into their clock.
   - X is equal to the number of markers underneath this card.
 
-“Gate of Babylon” Gilgamesh (FS/S36-E008)
-【AUTO】 When this card's battle opponent becomes 【REVERSE】, if a card named "“Gate of Babylon”" is in your climax area, put the top two cards of your deck into your waiting room. For each [soul] trigger icon revealed among those cards, perform the following action. "Deal one damage to your opponent." (This damage may be canceled)
-
-【ACT】 [Put a 《Weapon》 character from your hand into your waiting room] This card gets +4000 power until end of turn.
-Needs doing by hand:
-  - For each [soul] trigger icon revealed among those cards, perform the following action "Deal 1 damage to your opponent."
-
 “Gathering Ideas” Chris (KS/W49-E027)
 【CONT】 Experience If a card named "“Steal Successful…?” Chris" is in your level, this card gets -1 level while in your hand.
 【AUTO】 When this card is placed on the stage from your hand, if the number of other 《Adventurer》 characters your have is four or more, you may choose an 《Adventurer》 character in your waiting room, and put it into your stock.
@@ -6023,17 +5242,6 @@ Needs doing by hand:
 【AUTO】 【CXCOMBO】 [(2) Put 1 《Adventurer》 or 《Magic》 character from your hand into your waiting room] This ability activates up to 1 time per turn. When this card's battle opponent becomes 【REVERSE】, if "Cursed Crystal Prison!" is in your climax area, you may pay the cost. If you do, 【STAND】 this card, and your opponent cannot use 【ACT】 of characters on their stage until the end of your opponent's next turn.
 Needs doing by hand:
   - your opponent cannot use 【ACT】 of characters on their stage until the end of your opponent's next turn
-
-“Idealism's Despair” Archer (FS/S36-E049)
-【CONT】 All of your other 《Weapon》 or 《Jewel》 characters get +1000 power.
-
-【AUTO】 [【REST】 one of your 【STAND】 characters] When a card named "“Rho Aias”" is placed on your climax area, you may pay the cost. If you do, put seven cards from the top of your deck underneath this card as markers.
-
-【AUTO】 At the beginning of your opponent's draw phase, put all markers from underneath this card into your waiting room. If there is a climax among those cards, this card gets the following ability until end of turn. "【CONT】 You cannot take damage from your opponent character's 【AUTO】 effects."
-Needs doing by hand:
-  - put 7 cards from the top of your deck underneath this card as markers
-  - put all markers from underneath this card into your waiting room
-  - If there is a climax among those cards, this card gets the following ability until end of turn "【CONT】 You cannot take damage from your opponent character's 【AUTO】 effects."
 
 “Illuminated Warrior” Rapunzel (MRd/S111-E002)
 【CONT】 If your waiting room has 2 or less, or 6 or more climax, this card gets -1 level while in your hand.
@@ -6145,8 +5353,7 @@ Needs doing by hand:
 Needs doing by hand:
   - put X cards from the top of your deck underneath this card as a marker, this card gets +1500 power until end of turn
   - X is equal to the number of 《Weapon》 or 《Jewel》 characters you have.
-  - put all markers from underneath this card into your waiting room
-  - For each [soul] trigger icon among those cards, the character facing this card gets -1 soul until end of turn.
+  - For each [soul] trigger icon among those cards, the character facing this card gets -1 soul until end of turn
 
 “Singing by the Shore” Maki Nishikino (LL/W36-TE16)
 【AUTO】 Encore [Put a character from your hand into your waiting room] (When this card is put into your waiting room from the stage, you may pay the cost. If you do, return this card to its previous stage position as 【STAND】)
@@ -6196,11 +5403,6 @@ Needs doing by hand:
 Needs doing by hand:
   - that character and this card get -1 soul until end of turn
 
-“Sunny Day Song” Rin Hoshizora (LL/EN-W02-E151)
-【AUTO】 When this card is placed on the stage from your hand, your opponent may draw two cards. If your opponent does, your opponent chooses two cards in your opponent's hand, and puts them into his or her waiting room.
-Needs doing by hand:
-  - puts them into their waiting room
-
 “Sweet Smile” Axis Church Devotee (KS/W75-E090)
 【AUTO】 When this card attacks, choose 1 character in your opponent's center stage that is not an 《Axis Church Devotee》, and that character gets -1000 power until end of turn.
 Needs doing by hand:
@@ -6212,15 +5414,6 @@ Needs doing by hand:
 【AUTO】 When this card is placed on the stage from your hand, reveal the top card of your deck. If that card is level 1 or lower, put it into your stock. (Climax are regarded as level 0. Otherwise, return the revealed card to its original place)
 Needs doing by hand:
   - 【CONT】 If you do not have a yellow card, a red card and a blue card in your level, this card cannot be played from your hand.
-
-“Top Servant” Saber (FS/S36-E013)
-【CONT】 If the number of other 《Master》 or 《Servant》 characters you have is three or more, this card gets +1500 power, and this card cannot become 【REVERSE】 from your opponent character's 【AUTO】 effects.
-
-【AUTO】 When this card attacks, if a card named "“Excalibur”" is in your climax area, you may put a card from the top of your deck underneath this card as a marker.
-
-【AUTO】 At the beginning of your climax phase, if there is a marker underneath this card, you may choose one of your opponent's level 1 or lower characters, and put it into his or her stock. If you do, put a card from the bottom of your opponent's stock into his or her waiting room, and at the beginning of your encore step, put this card into your memory.
-Needs doing by hand:
-  - put 1 card from the top of your deck underneath this card as a marker
 
 “Unlimited Blade Works” Shirou (FS/S36-E003R)
 【AUTO】 When this card is placed on the stage from your hand or by a "Change" effect, draw up to one card, and this card gets +2000 power until end of turn.
@@ -6251,8 +5444,6 @@ Needs doing by hand:
   - put the top card of your deck face down into your memory
   - If you have 4 or more face down cards in your memory, put all cards from your memory into your waiting room.
   - If you put 5 or more cards into your waiting room, deal 2 damage to your opponent.
-  - you cannot play this card from your hand
-  - Put this card into your memory.
 
 〈Nightfall〉, Fiona Frost (SPY/S106-E079)
 【CONT】 During your turn, this card gets +3000 power.
@@ -6268,14 +5459,6 @@ Needs doing by hand:
 Needs doing by hand:
   - 【AUTO】 During your turn, when this card is put into your waiting room from the stage with a marker underneath it, if you have another 《Fantasia Bunko》 or 《Date》 character, you may return this card to its previous stage position as 【REST】.
 
-《An Incarnate of the Radius》 (SAO/S51-E035)
-【AUTO】 When this card is placed on the stage from your hand, draw up to two cards, choose a card in your hand, and put it into your waiting room.
-【AUTO】 【CXCombo】 [(2) Put four cards from your hand into your waiting room & Put a card named "White Holy Tree" from your climax area face down underneath this card as a marker] At the beginning of your encore step, if this card is in your center stage, you may pay the cost. If you do, put all the cards in your clock into your waiting room.
-【AUTO】 【CXCombo】 [(6) Put three cards from your hand into your waiting room & Put a marker from underneath this card into your waiting room] At the beginning of your opponent's encore step, you may pay the cost. If you do, perform the following action two times. "Deal three damage to your opponent." (This damage may be canceled)
-Needs doing by hand:
-  - 【AUTO】 【CXCOMBO】 [(2) Put 4 cards from your hand into your waiting room & Put 1 "White Holy Tree" from your climax area face down underneath this card as a marker] At the beginning of your encore step, if this card is in your center stage, you may pay the cost. If you do, put all the cards in your clock into your waiting room.
-  - put all the cards in your clock into your waiting room
-
 《Aquamatic》 Aqua Current (AW/S43-E085)
 【AUTO】 When this card is placed on the stage from your hand, look at the top card of your deck, and put it on the top or the bottom of your deck.
 【AUTO】 When a climax is put on your opponent's climax area, you may put this card into your stock.
@@ -6287,20 +5470,6 @@ Needs doing by hand:
 Needs doing by hand:
   - if this card in your center stage, search your deck for up to 1 "Real Strength, Kuroyukihime", reveal it to your opponent, put it into your hand
   - Shuffle your deck.
-
-《Cait Sith》 Archer, Sinon (SAO/SE26-E34)
-【CONT】 During your opponent's turn, all of your other characters get +1500 power.
-
-【AUTO】 [Put a card from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, look at up to four cards from the top of your deck, choose up to one 《Avatar》 or 《Net》 character from among them, reveal it to your opponent, put it into our hand, and put the rest into your waiting room.
-Needs doing by hand:
-  - put it into our hand, put the rest into your waiting room
-
-《Demonic Sword Gram》 (SAO/S26-E058)
-Choose one of your characters, and that character gets +3000 power until end of turn.
-
-Until end of turn, your opponent cannot play event cards and "Backup" from hand.
-Needs doing by hand:
-  - Until end of turn, your opponent cannot play event and "Backup" from your hand
 
 《Healer》Lime Bell (AW/S18-E032)
 【AUTO】 [(1)] When this card attacks, if a card named "Citron Call" is in your climax area, you may pay the cost. If you do, 【REST】 all of your 【REVERSE】 《Avatar》 or 《Net》 characters.
@@ -6314,26 +5483,11 @@ Needs doing by hand:
   - This card can be played from your hand without fulfilling color requirements
   - Look at up to 4 cards from the top of your deck, choose up to 1 《Familia》 or 《Guild》 or 《Hostess of Fertility》 character from among them, reveal it to your opponent, put it into your hand, and put the rest into your waiting room.
 
-《Navigation Pixie》, Yui (SAO/S26-E071)
-【AUTO】 When this card is placed on stage from your hand, draw up to two cards, choose a card in your hand, and put it into your waiting room.
-
-【AUTO】 [(1)] When a card named "Reunion with Yui" is placed on your climax area, if the number of other 《Avatar》 or 《Net》 characters in your center stage is two or more, and this card is in your center stage, you may pay the cost. If you do, choose one of your opponent's level 3 or lower characters on the center stage, and put it on the bottom of your opponent's deck.
-Needs doing by hand:
-  - if the number of other 《Avatar》 or 《Net》 characters in your center stage is 2 or more, this card is in your center stage, you may pay the cost
-  - If you do, choose 1 level 3 or lower characters in your opponent's center stage, and put it at the bottom of their deck.
-
 《Release Recollection》 Eugeo (SAO/S80-E078)
 【AUTO】 [Put 1 card from your hand into your waiting room] When your character's trigger check reveals a climax with [gate] in its trigger icon, you may pay the cost. If you do, look at up to 2 cards from the top of your deck, choose up to 1 card from among them, put it into your hand, and put the rest into your waiting room.
 【ACT】 [(2) Put 1 《Fluctlight》 character from your hand into your waiting room & 【REST】 this card] Choose 1 character in your waiting room, return it to your hand, choose 1 character with the same card name as the character you returned to your hand in your waiting room, and return it to your hand.
 Needs doing by hand:
   - choose 1 character with the same card name as the character you returned to your hand in your waiting room, return it to your hand
-
-《Sword Skill Lore》 Yuuki (SAO/S47-E032)
-【CONT】 All of your other 《Avatar》 or 《Net》 characters get +500 power. 
-【AUTO】 [(4) Put a card from your hand into your waiting room & Put this card into your memory] When another of your "Vestige of an Elder Sister, Asuna" attacks, you may pay the cost. If you do, put eleven cards from the top of your deck into your waiting room, and deal X damage to your opponent. X is equal to the number of 【TRIGGER】 trigger icons revealed among those cards. (This damage may be canceled)
-Needs doing by hand:
-  - put eleven cards from the top of your deck into your waiting room, deal X damage to your opponent
-  - X is equal to the number of 【TRIGGER】 trigger icons revealed among those cards.
 
 【RIVAL】 Claudine Saijo (RSL/S98-E051)
 【AUTO】 【CXCOMBO】 When "A Beautiful Conclusion" is placed on your climax area, if this card is in your center stage, and you have another 《Revue》 character, choose 1 of the following effects and perform it. " Choose 1 "The Devil's Sweet Talk, Claudine Saijo" in your waiting room, and return it to your hand." "Search your deck for up to 1 "The Devil's Sweet Talk, Claudine Saijo", reveal it to your opponent, put it into your hand, and shuffle your deck."

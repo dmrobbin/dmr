@@ -532,7 +532,14 @@ class Mind:
     def trigger_ability(self):
         """Take every ability it can actually carry out. One that needs doing by hand can't be."""
         entry = next(e for e in self.state["ability_queue"] if e["player"] == self.me)
-        return {"type": "ability_trigger", "id": entry["id"], "accept": not self.by_hand_only(entry["ability"])}
+        return {"type": "ability_trigger", "id": entry["id"], "accept": not self.by_hand_only(entry["ability"]) and not self.wasted(entry["ability"])}
+
+    def wasted(self, ability):
+        """Whether paying its whole hand and stock would come to fewer cards than the effect needs."""
+        if not any(part["part"] == "hand_stock_all" for part in ability.get("cost") or []):
+            return False
+        needed = next((c["n"] for s in abilities.walk_steps(ability["steps"]) if s["do"] == "if" for c in s["cond"] if c["type"] == "counted"), 0)
+        return len(self.zones["hand"]) + len(self.zones["stock"]) + sum(part["part"] == "pick" for part in ability["cost"]) < needed
 
     def answer(self, res):
         prompt = res["prompt"]
@@ -550,6 +557,16 @@ class Mind:
             empty = [s for s in options if not self.side["stage"][s]]
             center = [s for s in empty if s in game.OPPOSITE]
             return {"type": "ability_answer", "value": (center or empty or options)[0]}
+        if purpose == "declare" and str(prompt.get("key")).startswith("rps_"):
+            return {"type": "ability_answer", "value": self.rng.choice(options)}  # rock, paper or scissors: no telling
+        if purpose == "declare" and prompt.get("key") == "said" or purpose == "declare" and prompt.get("cards"):
+            # Calling the truth of what's declared, or declaring about a card only it has seen: either way, a bluff.
+            if prompt.get("cards"):
+                level = game.number((self.info(prompt["cards"][0]["card"]) or {}).get("level"))
+                truth = level if level in options else None
+                lies = [o for o in options if o != truth]
+                return {"type": "ability_answer", "value": truth if truth is not None and (not lies or self.rng.random() < .5) else self.rng.choice(lies)}
+            return {"type": "ability_answer", "value": self.rng.choice(options)}
         if purpose == "options":
             steps = prompt["step"]["options"]
             usable = [i for i in options if not steps[i]["steps"] or steps[i]["steps"][0]["do"] != "manual"]

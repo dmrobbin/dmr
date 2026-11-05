@@ -2008,6 +2008,20 @@ class NewerMechanicsTests(TestCase):
         steps = abilities.parse("Choose 1 of your opponent's characters, and that character gets +2 level until end of turn.")[0]["steps"]
         self.assertEqual(steps[1]["level"], 2)
 
+    def test_a_level_buff_raises_the_level_everything_sees(self):
+        t = Table()
+        t.card(1, level=2)
+        t.card(2, text="【CONT】 Assist All of your level 3 or higher characters in front of this card get +2000 power.")
+        raised = t.seat(t.me, "C1", 1)
+        t.seat(t.me, "B1", 2)
+        step = abilities.parse("【ACT】 [【REST】 this card] Choose another character, and that character gets +1 level until the end of your opponent's next turn.")[0]["steps"][1]
+        game.add_buff(t.state, raised["uid"], step, 0, 0)
+        t.refresh()
+        self.assertEqual(t.state["stats"][raised["uid"]]["level"], 3)  # shown on the board
+        self.assertEqual(t.state["stats"][raised["uid"]]["power"], 1000 + 2000)  # the assist sees level 3
+        game.put(t.me, raised, "hand")
+        self.assertEqual(game.details_of(raised, t)["level"], 2)  # off the stage, it's as printed again
+
     def test_power_from_the_total_level_milled(self):
         t, card = self.play("【AUTO】 When this card is placed on the stage from your hand, put the top 2 cards of your deck into your waiting room, and this card gets +X power until end of turn. X is equal to the total level of the cards put into your waiting room by this effect ×1000.")
         t.card(810, level=2)
@@ -6395,3 +6409,339 @@ class PagesTests(TestCase):
         room.refresh_from_db()
         self.assertTrue(room.vs_cpu)
         self.assertIsNotNone(play.cpu_step(room, wait=False))
+
+
+class KonosubaTests(PersonaTests):
+    # The Konosuba cards a CPU could not play, as printed (cpu-unplayable-cards.txt).
+    CARDS = (
+        '【AUTO】 When this card is placed on the stage from your hand, choose a character on your opponent\'s center stage, and that character gets +3000 power until end of turn.\n【AUTO】 [Put a card from your hand into your waiting room[ When a card named ""Chomp Chomp" Megumin" is put into your waiting room from the stage, if this card is in your waiting room, you may pay the cost. If you do, put this card on any position of your stage as 【REST】.',  # "Coming with Gifts" Yunyun (KS/W55-E068)
+        "【CONT】 During the attack phase, you cannot return characters from your waiting room to your hand by your cards' effects.\n【AUTO】 At the beginning of your opponent's attack phase, if this card is on the middle position of your center stage, move this card to an open position of your center stage.",  # "Composed Retreat" Sylvia (KS/W76-E091)
+        '【AUTO】 When this card is placed on the stage from your hand, choose one of your other characters with "Megumin(めぐみん)" in its card name and this card. Choose one of the characters among them with the highest power, that character gets +1 soul until end of turn, choose one of the characters among them with the lowest power, and that character gets -1 soul until end of turn.',  # "Developmental Challenge" Yunyun (KS/W55-E059)
+        '【CONT】 Your other character in the middle position of the center stage gets +1000 power.\n【AUTO】 This ability activates up to three times per turn. When your other character is placed on the stage from your waiting room, that character gets +500 and "【AUTO】 Encore [Put a character from your hand into your waiting room]" until end of turn.',  # "Double Peace Sign" Aqua (KS/W55-PE02)
+        '【CONT】 If you have 4 or more  《Devil King Army》 characters or characters with "Kazuma(カズマ)" in its card name, this card gets -1 level while in your hand.\n【AUTO】 When this card is placed on the stage from your hand, you may put the top card of your clock into your waiting room.\n【AUTO】 [(2) Put 1 card from your hand into your waiting room & Put 2 《Devil King Army》 characters from your waiting room face up in any order underneath this card as markers]\nWhen this card becomes 【REVERSE】 in battle, you may pay the cost. If you do, choose 1 ""Synthesis With the Mage Killer" Sylvia" in your waiting room, put it on the position that this card is on as 【REST】, and put this card and all markers underneath this card face up in any order underneath that ""Synthesis With the Mage Killer" Sylvia" as markers.',  # "Droopy Temptation" Sylvia (KS/W76-E087)
+        "【AUTO】 When this card is placed on the stage from your hand, you may state your own name. If you do, your opponent may state his or her own name. If he or she does, all players put the top card of their decks into their stock. (Please take care to avoid disrupting your surroundings)\n【AUTO】 At the beginning of your opponent's attack phase, you may move this card to an open position of your center stage.",  # "Expert Self-Introduction" Crimson Demon (KS/W76-E047a)
+        '【AUTO】 When this card is placed on the stage from your hand, choose up to 2 ""Musclebrained Crusader" Darkness" in your waiting room, and put them at the bottom of your deck in any order.\n【ACT】 Fusion [Put 1 ""A Break in the Forest" Darkness" from your stage face up underneath this card as a marker] Search your deck for up to 1 ""Musclebrained Crusader" Darkness", put it on the position that this card was on, put this card and all markers underneath this card face up underneath that  ""Musclebrained Crusader" Darkness" in any order as markers, and shuffle your deck.',  # "Fierce Battle" Vanir (KS/W76-E008)
+        '【AUTO】 [Put 1 card from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, put the top card of your clock into your stock.\n【AUTO】【CXCOMBO】[(3) Put 1 "Linked Palms" from your climax area into your waiting room & In your center stage, 【REST】 1 ""Greatest Mage" Yunyun" and this card] At the beginning of your attack phase, you may pay the cost. If you do, your opponent chooses 1 climax in your opponent\'s waiting room, returns all cards except that card from your opponent\'s waiting room to his or her deck and shuffles it, you put all characters facing the characters put to 【REST】 by this ability\'s cost into your opponent\'s clock, and deal 3 damage to your opponent 2 times. (Damage may be canceled)',  # "Foremost Mage" Megumin (KS/W76-E033)
+        '【AUTO】 When this card is placed on the stage from your hand, draw up to two cards, choose a card in your hand, and put it into your waiting room.\n【AUTO】 At the beginning of your climax phase, choose up to three cards named ""Swarmed on the Street" Axis Church Devotee" in your waiting room, and put them face up in any order underneath this card as markers.\n【AUTO】 【CXCOMBO】 When this card attacks, if a card named "Goddess\' Fury" is in your climax area, your opponent puts X cards from the top of your opponent\'s deck into his or her waiting room. If there is a climax revealed among those cards, choose a level 3 or lower character facing this card, and put it into your opponent\'s clock. X is equal to the number of markers underneath this card.\n【AUTO】 At the end of turn, put all markers underneath this card into your waiting room.',  # "Furious Fist" Aqua (KS/W55-E085)
+        '【CONT】 This card gets +500 power for each of your other 《Adventurer》 or 《Magic》 characters.\n【AUTO】 When this card is placed on the stage from your hand or by "Fusion", look at up to 3 cards from the top of your deck, choose up to 1 card from among them, put it into your hand, and put the rest into your waiting room.\n【AUTO】 【CXCOMBO】 When this card attacks, if "M-My Defensive Strength?" is in your climax area and you have 4 or more other 《Adventurer》 or 《Magic》 characters, this card gets the following ability until the end of your opponent\'s next turn. "【AUTO】 This ability activates up to 1 time per turn. When damage dealt by this card or the character facing this card is canceled, you may deal 1 damage to your opponent." (Damage may be canceled)',  # "Musclebrained Crusader" Darkness (KS/W76-E002)
+        '【CONT】 This card gets +1000 power for each marker underneath this card.\n【AUTO】 When this card is placed on the stage from your hand, look at up to 2 cards from the top of your deck, choose up to 2 《Devil King Army》 characters or characters with "Kazuma(カズマ)" in its card name or "Devil King Army Invades!"  from among them, reveal them to your opponent, put them face up underneath this card as markers in any order, and put the rest into your waiting room.\n【AUTO】 【CXCOMBO】 [(1) Put 1 "Because Something Is!" from your climax area into your waiting room] When this card\'s battle opponent becomes 【REVERSE】, you may pay the cost. If you do, search your deck for up to 2 《Devil King Army》 characters or characters with "Kazuma(カズマ)" in its card name, reveal them to your opponent, put them into your hand, and shuffle your deck.',  # "Result of Synthesis and Modification" Sylvia (KS/W76-E080)
+        '【AUTO】 Experience When this card is placed on the stage from your hand, if the total level of the cards in your level is two or higher, play "Rock-Paper-Scissors" with your opponent until you lose, and if you won four or more times, you may deal four damage to your opponent. (This damage may be canceled)',  # "Rock-Paper-Scissors Master" Kazuma (KS/W55-E016)
+        '【AUTO】 【CXCOMBO】 [Reveal a character in your hand, and put it into your stock] When this card attacks, you may pay the cost. If you do, choose a card named "Unparalled Deleterious Desire" in your climax area, and return it to your hand.',  # "Second Generation" Vanir (KS/W55-E026)
+        '【AUTO】 When you use this card\'s "Backup", choose 1 of your characters with "Sylvia(シルビア)" in its card name. You may choose 1 ""Sought-After Paradise" Kazuma" in your waiting room, and put it face up underneath that chosen character on the stage as a marker.\n【ACT】 【COUNTER】 Backup 1500, Level 1 [(1) Put this card from your hand into your waiting room] (Choose 1 of your characters that is being frontal attacked, and that character gets +1500 power until end of turn)',  # "Sought-After Paradise" Kazuma (KS/W76-E015)
+        '【AUTO】 At the beginning of your climax phase, choose 1 of your 《Devil King Army》\u3000characters or characters with "Kazuma(カズマ)" in its card name, and that character gets +500 power until end of turn.\n【ACT】 [(1) Put this card face up underneath your character with "Sylvia(シルビア)" in its card name as a marker] Look at up to 4 cards from the top of your deck, choose up to 1 level 1 or higher card from among them, reveal it to your opponent, put it into your hand, and put the rest into your waiting room. (Climax are regarded as level 0)',  # "Straightforward Confession" Kazuma (KS/W76-E013)
+        '【AUTO】 When you use this card\'s "Backup", perform the following action. "You may choose 1 card in your hand, and put it into your waiting room. If you do, look at the top card of your deck, and put it on the top of your deck or into your waiting room." You may perform this action as many times as you like.\n【ACT】 【COUNTER】 Backup 2500, Level 2 [(1) Put this card from your hand into your waiting room] (Choose 1 of your characters that is being frontal attacked, and that character gets +2500 power until end of turn)',  # "Supportive Magic" Aqua (KS/W76-E086)
+        "【AUTO】 When this card attacks, choose a character on your opponent's center stage that is not 《Axis Church Devotee》, and that character gets -1000 power until end of turn.",  # "Sweet Smile" Axis Church Devotee (KS/W55-E092)
+        '【CONT】 This card gets +500 power for each of your other 《Adventurer》 or 《Goddess》 characters.\n【AUTO】 When this card is placed on the stage from your hand, you may put the top card of your clock into your waiting room.\n【AUTO】 【CXCOMBO】 [(1)] When this card attacks, if "Protection of a Goddess" is in your climax area, you may pay the cost. If you do, put 2 cards from the bottom of your opponent\'s deck into his or her waiting room. If there is no climax among those cards, deal 1 damage to your opponent 2 times. (Damage may be canceled)',  # "To the Crimson Demon Village!" Aqua (KS/W76-E077)
+        '【AUTO】 【CXCOMBO】 When this card is placed on the stage from your hand, choose up to 1 "An Explosion A Day" in your waiting room, return it to your hand, and this card gets +1000 power until end of turn.\n【AUTO】 【CXCOMBO】 [Put all cards in your hand and stock into your waiting room & Put 1 "An Explosion A Day" from your climax area into your waiting room] At the beginning of your attack phase, if this card is 【STAND】 on your center stage, you may pay the cost. If 8 or more cards were put into your waiting room by this ability\'s cost, put all of your opponent\'s level 3 or lower characters into his or her waiting room, your opponent puts all cards in their deck into his or her waiting room, deal X damage to your opponent, and 【REST】 this card. X is equal to the number of ""Today\'s Explosion Magic" Megumin" in your level. (Damage may be canceled)',  # "Today's Explosion Magic" Megumin (KS/W76-E056)
+        '【CONT】 During this card\'s battle, your opponent cannot play "Backup" from hand.\n【AUTO】 [(1)] When this card is placed on the stage from your hand, you may pay the cost. If you do, your opponent chooses two climax in your opponent\'s waiting room, returns all cards in your opponent\'s waiting room except those cards into your opponent\'s deck, and your opponent shuffles his or her deck.\n【AUTO】 【CXCOMBO】 [Put a card from your hand into your waiting room] When a card named "Resurrection" is placed on your climax area, if this card is in your center stage, you may pay the cost. If you do, choose an 《Adventurer》 or 《Goddess》 character in your clock, and put it on any position of your stage.',  # Aqua (KS/W49-E073)
+        'Draw up to two cards, choose a card in your hand, put it into your waiting room, choose up to three cards named ""Swarmed on the Street" Axis Church Devotee" in your waiting room, and put it face up in any order underneath one of your cards named ""Furious Fist" Aqua" as markers.',  # Axis Church Creed (KS/W55-E097)
+        "Choose one of your opponent's characters with the highest power. That character cannot 【STAND】 during your opponent's next stand phase.",  # Chicken Race (KS/W55-E035)
+        "Return all of your opponent's level 3 or lower characters to your opponent's deck, and your opponent shuffles his or her deck. Put this card into your clock.",  # Destroyer Alert! (KS/W49-E066)
+        'If you have a character with "Kazuma(カズマ)" in its card name, put this card into your memory.\n【AUTO】 Memory [(2) Put all "Forbidden Weapon" in your memory into your waiting room] At the end of your opponent\'s turn, if this card is in your memory, you may pay the cost. If you do, choose up to 2 cards in your opponent\'s waiting room, put them on the top of his or her deck in any order, and deal 5 damage to your opponent. When you pay the cost for this ability, you may choose 1 ""Receiving Guests" Komekko" in your hand, and put it into your waiting room instead of 2 cards from your stock. (Damage may be canceled)',  # Forbidden Weapon (KS/W76-E070)
+        "If your level is 2 or lower and your opponent's level is 1 or lower, you may choose three cards in your hand, and put them into your waiting room. If you do, put this card into your level, and you get one more turn.",  # Freeze (KS/W49-E028)
+        'Choose in your waiting room, up to 1 character with "Megumin(めぐみん)" in its card name and up to 1 character with "Yunyun(ゆんゆん)" in its card name, return them to your hand, choose a card in your hand, and put it into your waiting room.\nAll players reveal their hand.',  # Friendship Crystal (KS/W55-E074)
+        'Your opponent looks at the top card of his or her deck, and declares the number 0 or 1 or 2 or 3. (Return the seen card to its original place)\nDeclare "True" or "False".\nYour opponent reveals the top card of his or her deck. If that card\'s level is the number your opponent declared, and you declared "True", draw up to two cards. If that card\'s level is not the number your opponent declared, and you declared "False", draw up to two cards. (Climax are regarded as level 0. The revealed card is returned to its original place)',  # Lie-Detecting Device (KS/W55-E034)
+        '【CONT】 All of your other characters get the following ability. "【CONT】 This card cannot side attack."\n【ACT】 [【REST】 two of your characters] If there are no markers underneath this card, choose a card named "Destroyer Alert!" in your waiting room, and put it face down underneath this card as a marker.\n【ACT】 [【REST】 two of your characters] Return a marker from underneath this card to your hand.',  # Professor (KS/W49-E053)
+        "【COUNTER】 Put all of your opponent's stock into your opponent's waiting room, and at the end of the turn, your opponent puts the same number of cards from the top of his or her deck into the stock.",  # Seizure of Private Property (KS/W55-E096)
+        'Put this card into your memory.\n【AUTO】 Memory [Put this card into your waiting room] When the damage you received is not canceled, if this card is in your memory, and the damage is three or more, you may pay the cost. If you do, search your deck for up to two 《Worries》 characters, reveal them to your opponent, put them into your hand, choose a card in your hand, put it into your stock, and shuffle your deck.',  # Tremble With Pleasure (KS/W49-E029)
+        'If you do not have a character with "Kazuma(カズマ)" in its card name, this card cannot be played from your hand. Choose 1 of the following effects and perform it.\n"Choose 1 character in your waiting room, and return it to your hand."\n"Choose 1 character on your opponent\'s center stage, and return it to his or her hand."\n"If there are 5 or more cards in your opponent\'s memory, your opponent puts all characters in your opponent\'s memory into his or her waiting room."',  # Up Up Down Down Left Right Left Right! There you go! (KS/W76-E024)
+        '【AUTO】 When this card is placed on the stage from your hand, your opponent chooses the number 0 or 1 or 2. Put the top card of your deck into your waiting room, and if that card is a card of a level that matches the number that your opponent chose, draw up to X cards. X is equal to the number that your opponent chose +1. (Climax are regarded as level 0)',  # “Decide What They Were Worth on My Own” Chris (KS/W49-E009)
+        '【AUTO】 When this card is placed on the stage from your hand, draw up to 2 cards, choose 1 card in your hand, and put it into your waiting room.',  # “Furious Fist” Aqua (KS/W75-E084)
+        '【CONT】 Experience If a card named "“Steal Successful…?” Chris" is in your level, this card gets -1 level while in your hand.\n【AUTO】 When this card is placed on the stage from your hand, if the number of other 《Adventurer》 characters your have is four or more, you may choose an 《Adventurer》 character in your waiting room, and put it into your stock.',  # “Gathering Ideas” Chris (KS/W49-E027)
+        '【AUTO】 When this card is placed on the stage from your hand, reveal the top card of your deck. If that card is an 《Adventurer》 or 《Magic》 character, you may deal 1 damage to your opponent. (Damage may be canceled. Return the revealed card to its original place)',  # “Ice Witch” Wiz (KS/W75-E046)
+        "【CONT】 If the number of climax in your waiting room is two or less, this card gets -1 level while in your hand.\n【AUTO】 When this card is placed on the stage from your hand, you may put the top card of your clock into your waiting room.\n【AUTO】 When this card is placed on the stage from your hand, your opponent may choose a cost 0 or lower character in your opponent's waiting room, and put it on any position of his or her stage.",  # “Lich” Wiz (KS/W49-E036)
+        '【AUTO】 When this card is placed on the stage from your hand, if the number of cards in your hand is less than your opponent\'s hand, you may put the top card of your deck into your stock.\n【AUTO】 【CXCOMBO】 When this card attacks, if a card named "Shaming By the Devil King\'s Army…?" is in your climax area, and the number of other 《Adventurer》 characters you have is two or more, look at up to three cards from the top of your deck, choose up to one card from among them, put it into your hand, and put the rest into your waiting room.',  # “Please Use Me As A Shield!!” Darkness (KS/W49-E015)
+        '【CONT】 All of your other cards named "“Crimson Demon” Megumin" get the following ability. "【AUTO】 At the beginning of your encore step, you may put the top card of your opponent\'s deck into your opponent\'s waiting room. If you do, choose a card in your opponent\'s waiting room, and put it on the top of his or her deck."\n【CONT】 All of your other 《Adventurer》 or 《Goddess》 characters get +500 power and "【AUTO】 Encore [Put a character from your hand into your waiting room]."',  # “Providing Magic” Aqua (KS/W49-E085)
+        '【AUTO】 When this card is placed on the stage from your hand, this card gets +1500 power until end of turn.\n【AUTO】 【CXCOMBO】 When this card attacks, if a card named "Thief Skill" is in your climax area, put the top card of your deck into your waiting room. If that card is a level 0 or lower character, your opponent puts up to one card from the top of your opponent\'s deck into his or her stock. If it is not, put the top two cards of your deck into your stock.',  # “Skill Lecture” Chris (KS/W49-E008)
+        "【AUTO】 At the beginning of your encore step, if this card is in your center stage, your opponent reveals the top card of your opponent's deck. If that card is a level 3 or higher character, your opponent may put that character on any position of his or her stage. (If it is not, return the revealed card to its original place)",  # “Spell Casting” Megumin (KS/W49-E059)
+        "【AUTO】 When this card attacks, choose 1 character in your opponent's center stage that is not an 《Axis Church Devotee》, and that character gets -1000 power until end of turn.",  # “Sweet Smile” Axis Church Devotee (KS/W75-E090)
+    )
+
+    def test_they_are_all_read(self):
+        for text in self.CARDS:
+            self.assertEqual(abilities.by_hand_parts(text), [], text[:60])
+
+    def card_text(self, words):
+        return next(text for text in self.CARDS if words in text)
+
+    def event(self, t, text, pk=2000):
+        t.card(pk, text=text, card_type="Event")
+        card = game.new_card(pk)
+        t.me["zones"]["resolution"].append(card)
+        self.run_ability(t, card, text, index=next(i for i, a in enumerate(abilities.parse(text)) if a["kind"] == "event"))
+        return card
+
+    def lie_table(self, level):
+        t = Table()
+        t.card(950, level=level)
+        t.them["zones"]["deck"].append(game.new_card(950))
+        return t
+
+    def test_the_lie_detector_shows_only_them_the_card_and_draws_for_a_true_call(self):
+        lie = self.card_text("Declare \"True\" or \"False\"")
+        t = self.lie_table(2)
+        hand = len(t.me["zones"]["hand"])
+        self.event(t, lie)
+        prompt = self.prompt(t)
+        self.assertEqual((prompt["player"], prompt["cards"][0]["card"]), ("1", 950))  # they see their top card
+        self.assertIsNone(game.view(t.state, 2)["ability"]["prompt"])  # and we don't
+        self.answer(t, player=1, value=2)
+        self.answer(t, value="True")
+        self.answer(t, value=2)  # how many to draw, up to 2
+        self.assertEqual(len(t.me["zones"]["hand"]), hand + 2)
+
+    def test_the_lie_detector_draws_for_catching_a_lie_and_not_for_a_wrong_call(self):
+        lie = self.card_text("Declare \"True\" or \"False\"")
+        t = self.lie_table(2)
+        hand = len(t.me["zones"]["hand"])
+        self.event(t, lie)
+        self.answer(t, player=1, value=0)
+        self.answer(t, value="False")
+        self.answer(t, value=2)
+        self.assertEqual(len(t.me["zones"]["hand"]), hand + 2)
+        t = self.lie_table(2)
+        self.event(t, lie)
+        self.answer(t, player=1, value=0)
+        self.answer(t, value="True")
+        self.assertIsNone(t.state.get("resolving"))  # a lie, called true: nothing
+
+    def test_the_cpu_bluffs_about_what_it_saw(self):
+        t = self.lie_table(2)
+        self.event(t, self.card_text("Declare \"True\" or \"False\""))
+        said = {cpu.Mind(t.state, "1", t.info, cpu.Temper(1), random.Random(n)).answer(t.state["resolving"])["value"] for n in range(20)}
+        self.assertIn(2, said)  # the truth, sometimes
+        self.assertGreater(len(said), 1)  # and sometimes not
+
+    def kazuma_table(self):
+        text = self.card_text("Rock-Paper-Scissors")
+        t = Table()
+        t.card(2000, text=text)
+        kazuma = t.seat(t.me, "C2", 2000)
+        self.run_ability(t, kazuma, text)
+        return t
+
+    def rps(self, t, *rounds):
+        for mine, theirs in rounds:
+            self.assertEqual(self.prompt(t)["player"], "2")
+            self.answer(t, value=mine)
+            self.assertEqual(self.prompt(t)["player"], "1")
+            self.answer(t, player=1, value=theirs)
+
+    def test_rock_paper_scissors_until_a_loss_counts_the_wins(self):
+        t = self.kazuma_table()
+        self.rps(t, ("rock", "scissors"), ("paper", "paper"), ("paper", "rock"), ("scissors", "paper"), ("rock", "scissors"), ("rock", "paper"))
+        before = len(t.them["zones"]["deck"])
+        self.answer(t, value="yes")  # 4 wins (the tie didn't count): the damage
+        self.assertEqual(before - len(t.them["zones"]["deck"]), 4)
+
+    def test_three_wins_are_not_enough(self):
+        t = self.kazuma_table()
+        self.rps(t, ("rock", "scissors"), ("rock", "scissors"), ("rock", "scissors"), ("scissors", "rock"))
+        self.assertIsNone(t.state.get("resolving"))
+        self.assertIn("rock-paper-scissors: scissors against rock — a loss", [entry["text"] for entry in t.state["log"]])
+
+    def test_both_stock_a_card_only_if_the_opponent_says_their_name_too(self):
+        text = self.card_text("state your own name")
+        for theirs, stocked in (("yes", 1), ("no", 0)):
+            t = Table()
+            t.card(2000, text=text)
+            demon = t.seat(t.me, "C2", 2000)
+            self.run_ability(t, demon, text)  # taking it is saying our name
+            self.assertEqual(self.prompt(t)["player"], "1")
+            self.answer(t, player=1, value=theirs)
+            self.assertEqual((len(t.me["zones"]["stock"]), len(t.them["zones"]["stock"])), (stocked, stocked))
+
+    def test_the_highest_and_lowest_of_the_two_chosen(self):
+        text = self.card_text("with the highest power, that character gets +1 soul")
+        t = Table()
+        t.card(2000, text=text, power=1000)
+        t.card(2001, name="Megumin", power=5000)
+        yunyun = t.seat(t.me, "C1", 2000)
+        megumin = t.seat(t.me, "C2", 2001)
+        self.run_ability(t, yunyun, text)
+        self.answer(t, uids=[megumin["uid"]])
+        t.refresh()
+        self.assertEqual((t.state["stats"][megumin["uid"]]["soul"], t.state["stats"][yunyun["uid"]]["soul"]), (2, 0))
+
+    def test_only_the_strongest_can_be_chosen(self):
+        t = Table()
+        t.card(801, power=3000)
+        t.card(802, power=7000)
+        t.seat(t.them, "C1", 801)
+        strong = [t.seat(t.them, "C2", 802), t.seat(t.them, "C3", 802)]
+        self.event(t, self.card_text("with the highest power. That character cannot"))
+        self.assertEqual(sorted(self.prompt(t)["options"]), sorted(c["uid"] for c in strong))
+
+    def test_a_devotee_cant_be_chosen(self):
+        text = self.card_text("that is not 《Axis Church Devotee》")
+        t = Table()
+        t.card(2000, text=text)
+        t.card(801, traits="Axis Church Devotee")
+        t.card(802, traits="Adventurer")
+        smile = t.seat(t.me, "C1", 2000)
+        t.seat(t.them, "C1", 801)
+        t.seat(t.them, "C2", 802)
+        self.run_ability(t, smile, text)
+        self.assertEqual([card["card"] for card in self.prompt(t)["cards"] if card["uid"] in self.prompt(t)["options"]], [802])
+
+    def test_yunyun_comes_back_from_the_waiting_room(self):
+        ability = abilities.parse(self.card_text("Chomp Chomp"))[1]
+        self.assertEqual((ability["where"], ability["when"][0]["on"]), ("waiting", "leave_other"))
+        self.assertEqual(ability["steps"][0]["then"], [{"do": "self_it"}, {"do": "place", "rest": True}])
+
+    def explosion_table(self, hand, pay=True):
+        text = self.card_text("An Explosion A Day\" from your climax area")
+        t = Table()
+        t.card(2000, text=text, name='"Today\'s Explosion Magic" Megumin', level=3)
+        t.card(2100, name="An Explosion A Day", card_type="Climax")
+        t.card(801, level=3)
+        t.card(802, level=4)
+        megumin = t.seat(t.me, "C2", 2000)
+        t.me["zones"]["climax"] = [game.new_card(2100)]
+        t.me["zones"]["level"] = [game.new_card(2000), game.new_card(2000)]
+        t.hand(*[900] * hand)
+        t.stock(3)
+        t.seat(t.them, "C1", 801)
+        big = t.seat(t.them, "B1", 802)
+        if pay:
+            self.run_ability(t, megumin, text, index=1)
+        return t, megumin, big
+
+    def test_the_explosion_with_8_cards_paid(self):
+        t, megumin, big = self.explosion_table(hand=4)  # 4, 3 stock and the climax
+        self.answer(t, uids=[t.me["zones"]["climax"][0]["uid"]])
+        self.assertEqual((t.me["zones"]["hand"], t.me["zones"]["stock"], t.me["zones"]["climax"]), ([], [], []))
+        self.assertEqual(game.stage_cards(t.them), [big])  # the level 4 one stays
+        log = [entry["text"] for entry in t.state["log"]]
+        self.assertIn("put all 25 cards from their deck into waiting room", log)
+        self.assertTrue(any(line.startswith("took 2 damage") for line in log))  # X: 2 of it in the level
+        self.assertEqual(megumin["pos"], "rest")
+
+    def test_the_explosion_fizzles_with_7_and_the_cpu_wont_pay_for_that(self):
+        t, megumin, big = self.explosion_table(hand=3)
+        self.answer(t, uids=[t.me["zones"]["climax"][0]["uid"]])
+        self.assertEqual(len(game.stage_cards(t.them)), 2)
+        self.assertEqual(megumin["pos"], "stand")
+        for hand, wasted in ((3, True), (4, False)):
+            t, megumin, big = self.explosion_table(hand=hand, pay=False)
+            ability = abilities.parse(self.card_text("An Explosion A Day\" from your climax area"))[1]
+            mind = cpu.Mind(t.state, "2", t.info, cpu.Temper(1), random.Random(1))
+            self.assertEqual(mind.wasted(ability), wasted)
+
+    def test_the_mage_clocks_what_faces_the_two_rested_for_it(self):
+        text = self.card_text("Linked Palms")
+        t = Table()
+        t.card(2000, text=text)
+        t.card(2001, name='"Greatest Mage" Yunyun')
+        t.card(2100, name="Linked Palms", card_type="Climax")
+        t.card(801)
+        mage = t.seat(t.me, "C1", 2000)
+        yunyun = t.seat(t.me, "C3", 2001)
+        t.me["zones"]["climax"] = [game.new_card(2100)]
+        t.stock(3)
+        facing = [t.seat(t.them, "C3", 801), t.seat(t.them, "C1", 801)]
+        spared = t.seat(t.them, "C2", 801)
+        kept = game.new_card(2100)
+        t.them["zones"]["waiting"] = [kept, game.new_card(801)]
+        self.run_ability(t, mage, text, index=1)
+        self.answer(t, uids=[t.me["zones"]["climax"][0]["uid"]])
+        self.answer(t, uids=[yunyun["uid"]])
+        self.assertEqual((mage["pos"], yunyun["pos"]), ("rest", "rest"))
+        if self.prompt(t)["player"] == "1":  # the climax they keep, when there's a choice
+            self.answer(t, player=1, uids=[kept["uid"]])
+        self.assertEqual(t.them["zones"]["waiting"], [kept])
+        clock = [c["uid"] for c in t.them["zones"]["clock"]]
+        self.assertTrue(all(c["uid"] in clock for c in facing))
+        self.assertIs(t.them["stage"]["C2"], spared)
+
+    def test_the_forbidden_weapon_can_be_paid_with_komekko(self):
+        text = self.card_text("Forbidden Weapon\" in your memory")
+        index, ability = next((i, a) for i, a in enumerate(abilities.parse(text)) if a["kind"] == "auto")
+        either, all_of = ability["cost"]
+        self.assertEqual(either["labels"], ["Pay 2 stock", 'Put 1 ""Receiving Guests" Komekko" from your hand into your waiting room'])
+        self.assertEqual((all_of["part"], all_of["zone"]), ("zone_all", "memory"))
+        t = Table()
+        t.card(2000, text=text, name="Forbidden Weapon", card_type="Event")
+        t.card(2001, name='"Receiving Guests" Komekko')
+        weapon, other = game.new_card(2000), game.new_card(2000)
+        t.me["zones"]["memory"] = [weapon, other, game.new_card(900)]
+        komekko = t.hand(2001)[0]
+        self.run_ability(t, weapon, text, index=index)
+        self.answer(t, uids=[komekko["uid"]])  # with no stock to pay, Komekko it is
+        self.assertEqual([c["card"] for c in t.me["zones"]["memory"]], [900])  # both weapons gone
+        self.assertIn(komekko, t.me["zones"]["waiting"])
+
+    def test_only_characters_leave_their_memory(self):
+        text = self.card_text("in your opponent's memory, your opponent puts all characters")
+        t = Table()
+        t.card(2001, name="Kazuma")
+        t.seat(t.me, "C2", 2001)
+        t.card(803, card_type="Event")
+        t.them["zones"]["memory"] = [game.new_card(801) for _ in range(4)] + [game.new_card(803)]
+        self.event(t, text)
+        self.answer(t, value=2)
+        self.assertEqual([c["card"] for c in t.them["zones"]["memory"]], [803])
+        self.assertEqual(len(t.them["zones"]["waiting"]), 4)
+
+    def test_destroyer_alert_sends_the_lower_ones_back_and_goes_to_the_clock(self):
+        t = Table()
+        t.card(801, level=3)
+        t.card(802, level=4)
+        t.seat(t.them, "C1", 801)
+        big = t.seat(t.them, "C2", 802)
+        card = self.event(t, self.card_text("Return all of your opponent's level 3"))
+        self.assertEqual(game.stage_cards(t.them), [big])
+        self.assertIn(card, t.me["zones"]["clock"])
+
+    def test_devotees_go_under_the_aqua_chosen_after_them(self):
+        t = Table()
+        t.card(2001, name='"Furious Fist" Aqua')
+        t.card(2002, name='"Swarmed on the Street" Axis Church Devotee')
+        t.seat(t.me, "C2", 2001)
+        devotees = [game.new_card(2002) for _ in range(3)]
+        t.me["zones"]["waiting"] = list(devotees)
+        self.event(t, self.card_text("underneath one of your cards named"))
+        self.answer(t, value=2)
+        self.answer(t, uids=[t.me["zones"]["hand"][0]["uid"]])
+        self.answer(t, uids=[c["uid"] for c in devotees])
+        self.answer(t, uids=[t.me["stage"]["C2"]["uid"]])
+        self.assertEqual(t.me["markers"]["C2"], devotees)
+
+    def test_kazuma_goes_under_the_sylvia_chosen_before_him(self):
+        text = self.card_text("underneath that chosen character")
+        t = Table()
+        t.card(2000, text=text, name='"Sought-After Paradise" Kazuma')
+        t.card(2003, name="Sylvia")
+        sylvia = t.seat(t.me, "C1", 2003)
+        kazuma = game.new_card(2000)
+        t.me["zones"]["waiting"] = [kazuma]
+        self.run_ability(t, kazuma, text)
+        self.answer(t, uids=[sylvia["uid"]])
+        self.answer(t, value="yes")
+        self.answer(t, uids=[kazuma["uid"]])  # this card itself, in the waiting room after its Backup
+        self.assertEqual(t.me["markers"]["C1"], [kazuma])
+        self.assertIs(t.me["stage"]["C1"], sylvia)
+
+    def test_damage_cancelled_from_the_character_facing_it_triggers_it(self):
+        granted = abilities.parse(self.card_text("M-My Defensive Strength?"))[2]["steps"][0]["grant"][0]
+        self.assertEqual(abilities.parse(granted)[0]["when"], [{"on": "cancel"}, {"on": "cancel_facing"}])
+        card, when = {"uid": "d"}, {"on": "cancel_facing"}
+        self.assertEqual(game.when_matches(when, "cancel", {"uid": "attacker", "facing": "d", "amount": 2}, "2", card, None), {"damage_amount": 2})
+        self.assertIsNone(game.when_matches(when, "cancel", {"uid": "attacker", "facing": "other"}, "2", card, None))
+
+    def test_their_hand_has_to_be_bigger(self):
+        text = self.card_text("less than your opponent's hand")
+        t = Table()
+        t.card(2000, text=text)
+        darkness = t.seat(t.me, "C1", 2000)
+        cond = abilities.parse(text)[0]["cond"]
+        env = game.SimpleNamespace(info=t.info)
+        t.hand(900)
+        t.them["zones"]["hand"] = [game.new_card(900)]
+        self.assertFalse(all(game.condition_met(c, t.state, "2", darkness, {}, env) for c in cond))
+        t.them["zones"]["hand"].append(game.new_card(900))
+        self.assertTrue(all(game.condition_met(c, t.state, "2", darkness, {}, env) for c in cond))
+
+    def test_the_opponent_says_how_many_go_to_their_stock(self):
+        steps = abilities.parse(self.card_text('"Thief Skill"'))[1]["steps"]
+        self.assertIn({"do": "top", "n": 1, "owner": "opp", "to": "stock", "upto": True, "chooser": "opp"}, list(abilities.walk_steps(steps)))

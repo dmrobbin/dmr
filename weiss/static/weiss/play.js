@@ -864,8 +864,13 @@
   function statsHtml(info, { live = null, soul = false, lowered = null } = {}) {
     const has = (value) => value !== null && value !== undefined && value !== "";
     // In the hand, an ability can lower what a card counts as: that shows, glowing, in place of what's printed.
+    // On the stage, an effect can raise a character's level for a while: that shows, glowing, the same way.
     const corner = [["level", "Level"], ["cost", "Cost"]].map(([stat, label]) => {
       if (!has(info[stat])) return "";
+      if (stat === "level" && live && has(live.level) && live.level !== info.level) {
+        const glow = live.level > info.level ? " boosted" : " lowered";
+        return `<span class="stat stat-level${glow}" title="Level ${live.level} (printed ${info.level})">${esc(live.level)}</span>`;
+      }
       const now = lowered ? lowered[stat] : info[stat];
       const changed = now !== info[stat];
       return `<span class="stat stat-${stat}${changed ? " boosted" : ""}" title="${label}${changed ? ` ${now} while in your hand (printed ${info[stat]})` : ""}">${esc(now)}</span>`;
