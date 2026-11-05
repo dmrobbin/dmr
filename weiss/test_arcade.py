@@ -413,6 +413,14 @@ class ArcadeRunTests(Base):
             play.play_action(room, room.host_id, {"type": "x"}, lookups={"info": None})
         return GameRoom.objects.get(pk=room.pk)
 
+    def test_the_lists_go_from_fewest_fights_to_most_and_say_how_many(self):
+        short = ArcadeScenario.objects.create(name="Zed")
+        for cpu, role in ((self.cpu("Z1"), "opener"), (self.cpu("Z2"), "anchor"), (self.cpu("Z3"), "branch")):
+            ArcadeEntry.objects.create(scenario=short, cpu=cpu, role=role)
+        page = self.client.get(reverse("weiss:arcade"))
+        self.assertEqual([(s.name, s.fights) for s in page.context["scenarios"]], [("Zed", 2), ("Ark", 4)])  # a branch replaces a fight
+        self.assertContains(page, '<p class="arcade-fights" aria-label="2 fights"><b>2</b><span>fights</span></p>', html=True)
+
     def test_opener_first_anchor_last_fillers_between_in_random_order(self):
         seen = set()
         for seed in range(30):
@@ -627,7 +635,7 @@ class ArcadeRunTests(Base):
         self.assertContains(page, "<strong>bob</strong>", html=True)
         self.assertContains(page, "F1: 500")
         self.assertContains(page, f'href="{reverse("weiss:arcade")}" class="current"')  # still the Arcade tab
-        self.assertContains(self.client.get(reverse("weiss:arcade")), "your best score 500")
+        self.assertContains(self.client.get(reverse("weiss:arcade")), "Your best score 500")
 
     def met(self):
         lineup = self.client.get(reverse("weiss:arcade")).context["scenarios"][0].lineup

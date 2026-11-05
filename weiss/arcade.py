@@ -41,6 +41,11 @@ def ready_scenarios():
     return [scenario for scenario in all_scenarios() if not scenario_problem(scenario)]
 
 
+def fight_count(scenario):
+    """How many fights a run of this scenario is: a branch takes another's place rather than adding one."""
+    return sum(entry.role != ArcadeEntry.Role.BRANCH for entry in scenario.entries.all())
+
+
 def fight_order(scenario, rng=random, fixed=False):
     """The CPUs of a new run, as profile ids: the fillers shuffled, or (fixed, for a narrative challenge) in their
     set order. Branches aren't in it: a scene puts one in (see play.choose_fight)."""

@@ -569,6 +569,12 @@ select option { color: var(--text); background: var(--surface); }
 .arcade-scenarios { list-style: none; margin: 1rem 0; padding: 0; display: grid; gap: 1.25rem; }
 .arcade-scenario { border: 1px solid var(--border); border-radius: .75rem; background: var(--surface); padding: 1rem; }
 .arcade-scenario h2 { margin: 0 0 .25rem; }
+.arcade-scenario-head { display: flex; align-items: center; gap: 1rem; }
+/* How many fights a run is: what makes one arcade list harder than another, so it leads. */
+.arcade-fights { flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 4.5rem; height: 4.5rem; margin: 0;
+  border-radius: .75rem; background: var(--accent); color: var(--on-accent); line-height: 1; }
+.arcade-fights b { font-size: 2rem; font-weight: 800; }
+.arcade-fights span { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; margin-top: .2rem; }
 .arcade-lineup { list-style: none; margin: .75rem 0 1rem; padding: 0; display: flex; flex-wrap: wrap; gap: .75rem; }
 .arcade-fighter { width: 6rem; display: flex; flex-direction: column; align-items: center; gap: .2rem; text-align: center; }
 .arcade-fighter > img, .arcade-fighter > .avatar, .arcade-mystery { width: 6rem; height: 6rem; border-radius: .5rem; object-fit: cover; }

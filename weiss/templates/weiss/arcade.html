@@ -13,8 +13,13 @@
     <ul class="arcade-scenarios">
       {% for scenario in scenarios %}
         <li class="arcade-scenario">
-          <h2>{{ scenario.name }}</h2>
-          <p class="muted small">{{ scenario.lineup|length }} fight{{ scenario.lineup|length|pluralize }}{% if scenario.clears %} · cleared {{ scenario.clears }} time{{ scenario.clears|pluralize }}{% endif %}{% if scenario.my_best %} · your best score {{ scenario.my_best }}{% endif %}</p>
+          <div class="arcade-scenario-head">
+            <p class="arcade-fights" aria-label="{{ scenario.fights }} fight{{ scenario.fights|pluralize }}"><b>{{ scenario.fights }}</b><span>fight{{ scenario.fights|pluralize }}</span></p>
+            <div>
+              <h2>{{ scenario.name }}</h2>
+              {% if scenario.clears or scenario.my_best %}<p class="muted small">{% if scenario.clears %}Cleared {{ scenario.clears }} time{{ scenario.clears|pluralize }}{% endif %}{% if scenario.clears and scenario.my_best %} · {% endif %}{% if scenario.my_best %}Your best score {{ scenario.my_best }}{% endif %}</p>{% endif %}
+            </div>
+          </div>
           <ol class="arcade-lineup">
             {% for fighter in scenario.lineup %}
               <li class="arcade-fighter{% if not fighter.met %} unknown{% endif %}">

@@ -150,6 +150,8 @@ def arcade_home(request):
         scenario.lineup = arcade.lineup(scenario, request.user)
         scenario.clears = clears.get(scenario.pk, 0)
         scenario.my_best = best.get(scenario.pk, 0)
+        scenario.fights = arcade.fight_count(scenario)
+    scenarios.sort(key=lambda scenario: (scenario.fights, scenario.name.casefold()))  # the shortest, and easiest, first
     return render(request, "weiss/arcade.html", {
         "scenarios": scenarios,
         "decks": CardList.objects.players(request.user),
