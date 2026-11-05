@@ -57,7 +57,13 @@ def challenge_home(request):
         "path": path_view(run) if run.kind == ChallengeRun.Kind.INFINITE else None,
         "mods": [buffs.BUFFS[buff_id] for buff_id in buffs.fight_mods(run)],
         "event_due": bool((run.path or {}).get("event")),
+        "last_set": last_set(run),
     })
+
+
+def last_set(run):
+    """The set an infinite challenge last opened packs from, picked already in its set choices until another is."""
+    return run.last_opening.get("set_id") if run.kind == ChallengeRun.Kind.INFINITE and run.last_opening else None
 
 
 PATH_BEHIND = 2  # floors of an infinite challenge's path still shown once they're won
