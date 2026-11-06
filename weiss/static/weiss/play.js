@@ -1601,14 +1601,14 @@
       const need = prompt.min === prompt.max ? `${prompt.max}` : `${prompt.min}–${prompt.max}`;
       const ready = count >= prompt.min && count <= prompt.max;
       const ordered = prompt.for === "order";
-      body = `<p class="small"><b>${esc(prompt.title)}</b> (${count} of ${need} chosen)</p>
+      body = `<p class="small"><b>${esc(prompt.title)}</b>${prompt.for === "look" ? "" : ` (${count} of ${need} chosen)`}</p>
         <div class="play-modal-cards">${prompt.cards.map((c) => {
           const can = options.has(c.uid);
           const picked = abilityPicks.indexOf(c.uid);
           return `<div class="trigger-option"><div class="level-pick${picked >= 0 ? " picked" : ""}${can ? "" : " unpickable"}"${can ? ` role="button" tabindex="0" aria-pressed="${picked >= 0}" data-ability-pick="${esc(c.uid)}"` : ""}>
             ${cardHtml(c, "view", "ability")}${ordered && picked >= 0 ? `<span class="ability-order">${picked + 1}</span>` : ""}</div>${label(c)}</div>`;
         }).join("")}</div>
-        <div class="trigger-buttons"><button type="button" data-ability-submit${ready ? "" : " disabled"}>${count || prompt.min ? "Confirm" : "Choose none"}</button>${stopButton}</div>`;
+        <div class="trigger-buttons"><button type="button" data-ability-submit${ready ? "" : " disabled"}>${prompt.for === "look" ? "OK" : count || prompt.min ? "Confirm" : "Choose none"}</button>${stopButton}</div>`;
     } else {
       const shown = prompt.cards || [];
       body = `<p class="small"><b>${abilityText(prompt.title)}</b></p>

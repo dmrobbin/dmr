@@ -149,27 +149,61 @@ class EventTests(ArcadeSetup):
         self.run.refresh_from_db()
         return self.run.path
 
+    def save_settings(self, **changes):
+        """The infinite settings form as it is, with these changes, posted."""
+        form = {"event_percent": "60", "start_packs": "20", **{f"loadout_{buff}": "0" for buff in challenge.LOADOUT_BUFFS},
+                **{f"tier_{i}": str(count) for i, (count, _) in enumerate(challenge.INFINITE_MODELS)}}
+        return self.client.post(reverse("weiss:cpu_infinite_settings"), {**form, **{k: str(v) for k, v in changes.items()}})
+
+    def test_staff_set_what_a_challenge_starts_with(self):
+        page = self.client.get(reverse("weiss:cpu_home") + "?tab=infinite")
+        self.assertContains(page, f'name="start_packs" min="0" max="60" value="{challenge.INFINITE_START_PACKS}"')
+        self.save_settings(start_packs=8, loadout_climax_pack=2, loadout_color_pack=1)
+        self.assertEqual(ChallengeSettings.current().loadout, {"climax_pack": 2, "color_pack": 1})
+        challenge.reset(self.run)
+        self.run.refresh_from_db()
+        self.assertEqual(self.run.packs, 8)
+        self.assertEqual(sorted(r["buff"] for r in self.run.rewards), ["climax_pack", "climax_pack", "color_pack"])
+        self.assertEqual({r["source"] for r in self.run.rewards}, {"Starting loadout"})
+        free = challenge.start(player("bo"), ChallengeRun.Kind.FREE, None)  # only the infinite challenge's
+        self.assertEqual((free.packs, free.rewards), (challenge.START_PACKS, []))
+
+    def test_a_challenge_must_start_with_something(self):
+        self.save_settings(start_packs=0)
+        self.assertIsNone(ChallengeSettings.current())
+        self.save_settings(start_packs=0, loadout_lucky_pack=3)
+        self.assertEqual(challenge.start_packs(ChallengeRun.Kind.INFINITE), 0)
+        for bad in ({"start_packs": 61}, {"loadout_wild_pack": -1}, {"tier_0": "x"}, {"tier_2": 31}):
+            self.save_settings(**bad)
+            self.assertEqual(ChallengeSettings.current().loadout, {"lucky_pack": 3})
+
+    def test_staff_set_the_difficulty_curve(self):
+        self.assertEqual([challenge.tier(f) for f in range(7)], ["Easy"] * 2 + ["Standard"] + ["Tough"] * 3 + ["Hard"])
+        self.save_settings(tier_0=1, tier_1=0, tier_2=2)
+        self.assertEqual([challenge.tier(f) for f in range(4)], ["Easy", "Tough", "Tough", "Hard"])
+        self.assertContains(self.client.get(reverse("weiss:cpu_home") + "?tab=infinite"), "Hard from floor 4")
+
     def test_staff_set_how_often_the_path_offers_an_event(self):
         self.event_scene()
         self.assertEqual(challenge.event_chance(), challenge.EVENT_CHANCE)  # never set: the default
         page = self.client.get(reverse("weiss:cpu_home") + "?tab=infinite")
         self.assertContains(page, f'value="{round(challenge.EVENT_CHANCE * 100)}"')
         self.assertNotContains(page, "There are no event scenes")
-        self.client.post(reverse("weiss:cpu_infinite_settings"), {"event_percent": "0"})
+        self.save_settings(event_percent="0")
         self.assertEqual(challenge.event_chance(), 0)
         self.assertEqual(ChallengeSettings.current().updated_by, self.staff)
         self.assertFalse(any(challenge.EVENT in floor for floor in challenge.path_of(self.run)["floors"]))
-        self.client.post(reverse("weiss:cpu_infinite_settings"), {"event_percent": "100"})
+        self.save_settings(event_percent="100")
         self.run.path = {}
         path = challenge.path_of(self.run)
         self.assertTrue(all(challenge.EVENT in floor for floor in path["floors"][1:]))  # every floor but the first
         for bad in ("101", "-5", "lots"):
-            self.client.post(reverse("weiss:cpu_infinite_settings"), {"event_percent": bad})
+            self.save_settings(event_percent=bad)
             self.assertEqual(ChallengeSettings.current().event_percent, 100)
 
     def test_only_staff_set_it(self):
         self.client.force_login(player("ann"))
-        self.client.post(reverse("weiss:cpu_infinite_settings"), {"event_percent": "10"})
+        self.save_settings(event_percent="10")
         self.assertIsNone(ChallengeSettings.current())
 
     def test_no_events_without_event_scenes(self):

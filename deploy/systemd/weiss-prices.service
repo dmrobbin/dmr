@@ -1,0 +1,19 @@
+# Update TCGplayer prices (from TCGCSV, which updates daily) for every saved Weiss Schwarz set.
+# New sets aren't fetched automatically; run go_time.sh fetch_new_sets by hand when one comes out.
+# Started by weiss-prices.timer; installed by .platform/hooks/postdeploy/02_weiss_prices_timer.sh.
+[Unit]
+Description=Update Weiss Schwarz card prices
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Leading "-": a failed run is logged but still counts as finished, so the timer keeps going.
+ExecStart=-/bin/bash /var/app/current/go_time.sh fetch_prices --all
+StandardOutput=append:/var/log/weiss-prices.log
+StandardError=append:/var/log/weiss-prices.log
+# Every set's prices can take a while; don't let systemd's default 90s timeout kill it.
+TimeoutStartSec=8h
+# Background job: give the web server priority for CPU and disk.
+Nice=10
+IOSchedulingClass=idle

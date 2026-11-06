@@ -3085,6 +3085,11 @@ def run_step(step, res, state, env):
                 ctx.setdefault("moved", []).append(uid)
         ctx.pop("pool", None)
         ctx["among"] = []
+    elif do == "show_looked":  # the cards looked at, for the looker's eyes only; they stay where they are
+        cards = among_them(state, {"among": ctx.get("among", []), "moved": ctx.get("moved", [])})
+        if cards:
+            owner = ctx.get("among_owner", player)
+            ask_cards(res, cards, owner, 0, 0, f"Top of {'your' if owner == player else 'your opponent' + chr(39) + 's'} deck: they stay in this order", purpose="look")
     elif do == "order_top":
         owner = ctx.get("among_owner", player)
         cards = [c for c in among_them(state, {"among": ctx.get("among", []), "moved": ctx.get("moved", [])})]
@@ -3920,6 +3925,8 @@ def answer_ability(state, player, action, env):
             raise GameError(f"Those come to more than {prompt['max_power']} power together.")
         res["prompt"] = None
         purpose = prompt.get("for")
+        if purpose == "look":
+            return
         if purpose == "order":
             owner = prompt["owner"]
             side = state["players"][owner]

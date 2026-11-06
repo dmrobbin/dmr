@@ -1,0 +1,13 @@
+# Run weiss-prices.service once a day, at midnight UTC (give or take half an hour).
+[Unit]
+Description=Update Weiss Schwarz card prices once a day
+
+[Timer]
+OnCalendar=*-*-* 00:00:00 UTC
+RandomizedDelaySec=30min
+# If the instance was down at midnight, run once when it comes back.
+Persistent=true
+Unit=weiss-prices.service
+
+[Install]
+WantedBy=timers.target

@@ -370,6 +370,9 @@ class ChallengeSettings(models.Model):
     """How the infinite challenge is tuned, set by staff on the CPU tab. There's only ever one row (see current)."""
 
     event_percent = models.PositiveSmallIntegerField(default=60, help_text="The chance, 0 to 100, that a floor of the path (after the first) offers an event")
+    start_packs = models.PositiveSmallIntegerField(default=20, help_text="Packs an infinite challenge starts with")
+    loadout = models.JSONField(default=dict, blank=True, help_text="Specialty packs it starts with besides, to claim: {buff id: how many} (see challenge.LOADOUT_BUFFS)")
+    tier_floors = models.JSONField(default=list, blank=True, help_text="How many floors each tier before Hard lasts: [Easy, Standard, Tough]; empty for the defaults")
     updated = models.DateTimeField(auto_now=True)
     updated_by = models.ForeignKey("auth.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
 

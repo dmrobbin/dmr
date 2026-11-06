@@ -1673,6 +1673,46 @@ class RunTogetherAbilitiesTests(TestCase):
         self.assertIn(middle["uid"], [c["uid"] for c in t.me["zones"]["hand"]])
 
 
+class OpponentsDeckAndClockTests(TestCase):
+    def test_looking_at_the_top_of_their_deck_shows_it_and_leaves_it_be(self):
+        t = Table()
+        [card] = t.hand(t.card(2000, text="【AUTO】 When this card is placed on the stage from your hand, look at up to 2 cards from the top of your "
+                                          "opponent's deck, and put them on the top of their deck in the original order."))
+        before = [c["uid"] for c in t.them["zones"]["deck"]]
+        t.apply(2, {"type": "move", "uid": card["uid"], "to": "C2"})
+        t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+        t.apply(2, {"type": "ability_answer", "value": 2})
+        prompt = t.state["resolving"]["prompt"]
+        self.assertEqual((prompt["for"], [c["uid"] for c in prompt["cards"]]), ("look", before[:-3:-1]))  # the top two, top first
+        t.apply(2, {"type": "ability_answer", "uids": []})
+        self.assertFalse(t.state.get("resolving"))
+        self.assertEqual([c["uid"] for c in t.them["zones"]["deck"]], before)
+
+    def swap(self, clock):
+        t = Table()
+        t.level(1)
+        t.me["zones"]["clock"] += [game.new_card(901) for _ in range(clock)]
+        attacker = t.seat(t.me, "C2", t.card(2100, level=2, power=9000))
+        t.seat(t.them, "C2", t.card(2000, power=1000, text="【AUTO】 When this card becomes 【REVERSE】, if the level of this card's battle opponent is higher "
+                                    "than your opponent's level, you may put the top card of your opponent's clock into their waiting room. If you do, put "
+                                    "that character into your opponent's clock."))
+        t.state.update(phase="attack", attack={"step": "declare"})
+        t.refresh()
+        t.apply(2, {"type": "attack", "uid": attacker["uid"], "kind": "front"})
+        t.apply(1, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+        return t, attacker
+
+    def test_their_clocks_top_card_makes_way_for_the_battle_opponent(self):
+        t, attacker = self.swap(clock=2)
+        self.assertEqual([c["uid"] for c in t.me["zones"]["clock"]][-1], attacker["uid"])
+        self.assertEqual(len(t.me["zones"]["waiting"]), 1)
+
+    def test_with_nothing_in_their_clock_it_isnt_done(self):
+        t, attacker = self.swap(clock=0)
+        self.assertEqual(t.me["zones"]["clock"], [])
+        self.assertEqual(t.me["stage"]["C2"]["uid"], attacker["uid"])
+
+
 class TriggerCheckShowTests(TestCase):
     def attack(self, text="", trigger=""):
         t = Table()

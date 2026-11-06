@@ -44,6 +44,7 @@ def challenge_home(request):
     if not run:
         return render(request, "weiss/challenge.html", {"scenarios": arcade.ready_scenarios(), "narratives": narratives(),
                                                         "start_packs": challenge.START_PACKS, "narrative_packs": challenge.NARRATIVE_START_PACKS,
+                                                        "infinite_packs": challenge.infinite_start_packs(), "infinite_extras": len(challenge.loadout()),
                                                         "win_reward": challenge.win_reward_text(ChallengeRun.Kind.FREE),
                                                         "narrative_win_reward": challenge.win_reward_text(ChallengeRun.Kind.NARRATIVE),
                                                         "cpu_count": len(challenge.opponents())})

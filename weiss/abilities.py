@@ -2041,9 +2041,9 @@ def clause_steps(clause, quotes, cost):
     if got is not None:
         return got
 
-    # Nothing to do: the cards never left.
+    # The cards never left: only the looker sees them.
     if re.fullmatch(r"put them on the top of (?:your|their) deck in the original order", text):
-        return []
+        return [{"do": "show_looked"}]
     if text == "put them at the bottom of your deck in any order":
         return [{"do": "rest", "to": "deck_bottom"}]
 
@@ -3154,7 +3154,10 @@ def parse_effect(text, cost=None, masked=None):
             may = last_may(steps)
             if not plain.startswith("If you"):  # what the opponent did: their own "may", inside any of yours
                 may = next((s for s in reversed(list(walk_steps(steps))) if s["do"] == "may" and s.get("chooser") == "opp"), may)
-            if may:
+            if may and not may.get("cost") and may["then"] and may["then"][-1]["do"] == "clock_card":
+                # "you may put the top card of your opponent's clock into ...": an empty clock means it wasn't done
+                may["then"].append({"do": "if", "cond": [{"type": "did_it"}], "then": parse_clauses(clauses(match[1]), quotes, cost)})
+            elif may:
                 may["then"] += parse_clauses(clauses(match[1]), quotes, cost)
             elif any(s["do"] in ("choose", "search", "choose_battle", "choose_facing", "stock_to_marker") for s in steps):
                 # What came before depended on a choice, which may have found nothing.

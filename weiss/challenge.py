@@ -42,6 +42,8 @@ PATH_AHEAD = 3  # floors of the path laid out past the one being fought
 COLUMNS = 3  # the path's width: left, middle and right; each space leads only to those beside it (see links)
 EVENT = "event"  # a space on the path that plays an event scene instead of a fight
 EVENT_CHANCE = .6  # that a floor (after the first) has an event among its spaces, if there are event scenes; until staff set it (see event_chance)
+INFINITE_START_PACKS = 20  # what an infinite challenge starts with, until staff set it (see infinite_start_packs)
+LOADOUT_BUFFS = ("climax_pack", "level_pack", "color_pack", "lucky_pack", "wild_pack", "climax_pick")  # what staff can start it with besides
 
 
 def current(user):
@@ -51,7 +53,29 @@ def current(user):
 
 def start_packs(kind):
     """How many packs a challenge of this kind starts with."""
+    if kind == ChallengeRun.Kind.INFINITE:
+        return infinite_start_packs()
     return NARRATIVE_START_PACKS if kind == ChallengeRun.Kind.NARRATIVE else START_PACKS
+
+
+def infinite_start_packs():
+    """What staff set on the CPU tab, or INFINITE_START_PACKS if they never have."""
+    settings = ChallengeSettings.current()
+    return settings.start_packs if settings else INFINITE_START_PACKS
+
+
+def loadout():
+    """The specialty packs an infinite challenge starts with, to claim: [buff id, ...] (see LOADOUT_BUFFS)."""
+    settings = ChallengeSettings.current()
+    chosen = settings.loadout if settings else {}
+    return [buff for buff in LOADOUT_BUFFS for _ in range(int(chosen.get(buff, 0)))]
+
+
+def infinite_models():
+    """INFINITE_MODELS with the floors each tier lasts as staff set them on the CPU tab."""
+    settings = ChallengeSettings.current()
+    floors = settings.tier_floors if settings and len(settings.tier_floors) == len(INFINITE_MODELS) else None
+    return tuple((floors[i] if floors else count, models) for i, (count, models) in enumerate(INFINITE_MODELS))
 
 
 def win_reward(kind):
@@ -221,7 +245,7 @@ def pick(run, node):
 
 def tier(fight):
     """What the path calls how hard its floor number `fight` (from 0) is (see INFINITE_MODELS)."""
-    for (count, _), name in zip(INFINITE_MODELS, INFINITE_TIERS):
+    for (count, _), name in zip(infinite_models(), INFINITE_TIERS):
         if fight < count:
             return name
         fight -= count
@@ -279,7 +303,7 @@ def infinite_style(arcade_run, profile):
     if run and "blood_pact" in (run.path or {}).get("next", []):
         return "hard", MAX_AGGRESSION
     rng = random.Random(f"{arcade_run.pk}:{fight}")
-    for count, models in INFINITE_MODELS:
+    for count, models in infinite_models():
         if fight < count:
             return rng.choice(models), profile.aggression
         fight -= count
@@ -303,12 +327,21 @@ def deck_name(name):
 
 
 def start(user, kind, scenario, narrative=None):
-    """A new challenge: an empty deck and its packs to open (see start_packs)."""
+    """A new challenge: an empty deck and its packs to open (see start_packs), and an infinite one's loadout."""
     name = narrative.name if narrative else scenario.name if scenario else INFINITE_NAME
     with transaction.atomic():
         deck = CardList.objects.create(user=user, name=deck_name(name), challenge=True)
-        return ChallengeRun.objects.create(user=user, kind=kind, narrative=narrative, scenario=scenario, name=name, deck=deck,
-                                           sets=list(narrative.sets) if narrative else [], packs=start_packs(kind))
+        run = ChallengeRun.objects.create(user=user, kind=kind, narrative=narrative, scenario=scenario, name=name, deck=deck,
+                                          sets=list(narrative.sets) if narrative else [], packs=start_packs(kind))
+        give_loadout(run)
+        return run
+
+
+def give_loadout(run):
+    """An infinite challenge's specialty packs to start with, waiting on its page to be claimed."""
+    if run.kind == ChallengeRun.Kind.INFINITE and (buffs := loadout()):
+        from .buffs import grant  # weiss.buffs uses this module
+        grant(run, buffs, "Starting loadout")
 
 
 def allowed_sets(run):
@@ -457,6 +490,7 @@ def reset(run):
         run.pool, run.packs, run.opened, run.last_opening, run.rewards, run.lives, run.path = {}, start_packs(run.kind), 0, {}, [], 0, {}
         run.arcade_run, run.status, run.started = None, ChallengeRun.Status.ACTIVE, timezone.now()
         run.save()
+        give_loadout(run)
 
 
 def close(run, keep, name=""):

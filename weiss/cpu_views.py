@@ -31,6 +31,9 @@ MAX_IMAGE_BYTES = 5 * 1024 * 1024
 MAX_TEXT = 1000
 IMAGES_PER_PAGE = 60
 TEXT_FIELDS = ("intro_text", "player_win_text", "player_lose_text", "combo_text")
+MAX_START_PACKS = 60  # the most an infinite challenge can be set to start with
+MAX_LOADOUT = 10  # ...of each specialty pack
+MAX_TIER_FLOORS = 30  # floors a tier of CPU can be set to last
 
 
 def staff_required(view):
@@ -181,9 +184,19 @@ def cpu_home(request):
             scenario.problem = arcade.scenario_problem(scenario)
         context.update(narratives=NarrativeChallenge.objects.select_related("scenario"), scenarios=scenarios, pack_sets=packs.pack_sets())
     elif tab == "infinite":
-        context.update(infinite=ChallengeSettings.current(), event_percent=round(challenge.event_chance() * 100),
+        from .buffs import BUFFS
+        settings = ChallengeSettings.current()
+        chosen = settings.loadout if settings else {}
+        models = challenge.infinite_models()
+        context.update(infinite=settings, event_percent=round(challenge.event_chance() * 100),
                        default_percent=round(challenge.EVENT_CHANCE * 100), event_scenes=len(challenge.event_scenes()),
-                       path_ahead=challenge.PATH_AHEAD)
+                       path_ahead=challenge.PATH_AHEAD, start_packs=challenge.infinite_start_packs(), max_start_packs=MAX_START_PACKS,
+                       loadout=[{"id": buff, "name": BUFFS[buff].name, "description": BUFFS[buff].description, "count": chosen.get(buff, 0)}
+                                for buff in challenge.LOADOUT_BUFFS], max_loadout=MAX_LOADOUT, max_tier_floors=MAX_TIER_FLOORS,
+                       tiers=[{"index": i, "name": name, "floors": count, "models": " or ".join(m.title() for m in tier_models),
+                               "default": challenge.INFINITE_MODELS[i][0]}
+                              for i, (name, (count, tier_models)) in enumerate(zip(challenge.INFINITE_TIERS, models))],
+                       hard_from=sum(count for count, _ in models) + 1)
     return render(request, "weiss/cpu_home.html", context)
 
 
@@ -477,16 +490,34 @@ def narrative_fields(request):
 @staff_required
 @require_POST
 def infinite_settings(request):
-    """How often the infinite challenge's path offers an event: from 0 (never) to 100 (on every floor after the first)."""
+    """How the infinite challenge is tuned: how often its path offers an event (0, never, to 100, on every floor after
+    the first), the packs it starts with and the specialty packs besides, and how many floors each tier of CPU lasts."""
+    def whole(key, low, high, what):
+        try:
+            value = int(request.POST.get(key, ""))
+        except ValueError:
+            value = None
+        if value is None or not low <= value <= high:
+            raise ValueError(f"{what} goes from {low} to {high}.")
+        return value
+
+    from .buffs import BUFFS
     try:
-        percent = int(request.POST.get("event_percent", ""))
-    except ValueError:
-        percent = -1
-    if not 0 <= percent <= 100:
-        messages.error(request, "The event chance goes from 0 to 100.")
+        fields = {
+            "event_percent": whole("event_percent", 0, 100, "The event chance"),
+            "start_packs": whole("start_packs", 0, MAX_START_PACKS, "Starting packs"),
+            "loadout": {buff: n for buff in challenge.LOADOUT_BUFFS if (n := whole(f"loadout_{buff}", 0, MAX_LOADOUT, BUFFS[buff].name))},
+            "tier_floors": [whole(f"tier_{i}", 0, MAX_TIER_FLOORS, f"{name} floors") for i, name in enumerate(challenge.INFINITE_TIERS)],
+        }
+    except ValueError as error:
+        messages.error(request, str(error))
         return back_to("infinite")
-    ChallengeSettings.objects.update_or_create(pk=1, defaults={"event_percent": percent, "updated_by": request.user})
-    messages.success(request, f"Saved: {percent}% of floors offer an event, from the next floors laid out.")
+    if not fields["start_packs"] and not fields["loadout"]:
+        messages.error(request, "A challenge needs something to build a deck from: some packs or some specialty packs.")
+        return back_to("infinite")
+    ChallengeSettings.objects.update_or_create(pk=1, defaults={**fields, "updated_by": request.user})
+    messages.success(request, "Saved: new challenges start with these packs, and runs under way use the new event chance and tiers "
+                              "from the next floors laid out.")
     return back_to("infinite")
 
 

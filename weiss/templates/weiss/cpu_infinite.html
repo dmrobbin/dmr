@@ -1,10 +1,11 @@
-{# The CPU tab's infinite challenge settings: how often its path offers an event among the fights (cpu_views.infinite_settings). #}
-<section class="cpu-section">
-  <h2>Events on the path</h2>
-  <p class="muted small">Each floor of an infinite challenge's path after the first has this chance of offering an event among its fights.
-    Players still choose: a floor with an event has fights beside it. At 0 there are no events; at 100 every floor offers one.</p>
-  <form method="post" action="{% url 'weiss:cpu_infinite_settings' %}" class="cpu-form infinite-form">
-    {% csrf_token %}
+{# The CPU tab's infinite challenge settings (cpu_views.infinite_settings): how often its path offers an event among the fights,
+   what a challenge starts with, and how fast its CPUs get harder. One form, saved together. #}
+<form method="post" action="{% url 'weiss:cpu_infinite_settings' %}" class="cpu-form infinite-form">
+  {% csrf_token %}
+  <section class="cpu-section">
+    <h2>Events on the path</h2>
+    <p class="muted small">Each floor of an infinite challenge's path after the first has this chance of offering an event (a scene) among its fights.
+      Players still choose: a floor with an event has fights beside it. At 0 there are no events; at 100 every floor offers one.</p>
     <label class="infinite-chance">Event chance
       <span class="infinite-slider">
         <input type="range" name="event_percent" min="0" max="100" step="5" value="{{ event_percent }}"
@@ -12,11 +13,45 @@
         <output>{{ event_percent }}%</output>
       </span>
     </label>
-    <button type="submit" class="button-small">Save</button>
-  </form>
-  <p class="muted small" id="infinite-chance-note">
-    {% if infinite %}Set {{ infinite.updated|date:"j M Y, H:i" }}{% if infinite.updated_by %} by {{ infinite.updated_by.username }}{% endif %}.{% else %}Not set yet: {{ default_percent }}%, the default.{% endif %}
-    A change applies to floors laid out from now on, including in runs under way; the {{ path_ahead }} floors a run already shows ahead stay as they are.
+    <p class="muted small" id="infinite-chance-note">Default {{ default_percent }}%. A change applies to floors laid out from now on, including in runs under way;
+      the {{ path_ahead }} floors a run already shows ahead stay as they are.</p>
+    {% if not event_scenes %}<p class="empty">There are no event scenes, so the path has no events whatever this is. Mark scenes as infinite events on the Scenes tab.</p>{% endif %}
+  </section>
+
+  <section class="cpu-section">
+    <h2>Starting loadout</h2>
+    <p class="muted small">What a new infinite challenge (or one reset) starts with: packs from any set, and specialty packs besides, waiting on the
+      challenge's page to be claimed (the player picks the set, and the level or color where there's one to pick). Runs already started keep what they had.</p>
+    <label class="infinite-number">Starting packs
+      <input type="number" name="start_packs" min="0" max="{{ max_start_packs }}" value="{{ start_packs }}" required>
+    </label>
+    <div class="infinite-loadout">
+      {% for buff in loadout %}
+        <label class="infinite-number" title="{{ buff.description }}">{{ buff.name }}
+          <input type="number" name="loadout_{{ buff.id }}" min="0" max="{{ max_loadout }}" value="{{ buff.count }}" required>
+          <span class="muted small">{{ buff.description }}</span>
+        </label>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="cpu-section">
+    <h2>CPU difficulty curve</h2>
+    <p class="muted small">How many floors of the path each tier of CPU lasts, in turn; after the last, every CPU plays Hard, with its aggression picked at random.
+      A tier set to 0 is skipped. Floors are counted from the first, events included.</p>
+    <div class="infinite-loadout">
+      {% for tier in tiers %}
+        <label class="infinite-number">{{ tier.name }} floors
+          <input type="number" name="tier_{{ tier.index }}" min="0" max="{{ max_tier_floors }}" value="{{ tier.floors }}" required>
+          <span class="muted small">Plays {{ tier.models }}. Default {{ tier.default }}.</span>
+        </label>
+      {% endfor %}
+    </div>
+    <p class="muted small">As saved: Hard from floor {{ hard_from }}. A change applies to fights from now on, including in runs under way.</p>
+  </section>
+
+  <p><button type="submit" class="button-small">Save infinite challenge settings</button></p>
+  <p class="muted small">
+    {% if infinite %}Last saved {{ infinite.updated|date:"j M Y, H:i" }}{% if infinite.updated_by %} by {{ infinite.updated_by.username }}{% endif %}.{% else %}Not set yet: these are the defaults.{% endif %}
   </p>
-  {% if not event_scenes %}<p class="empty">There are no event scenes, so the path has no events whatever this is. Mark scenes as infinite events on the Scenes tab.</p>{% endif %}
-</section>
+</form>

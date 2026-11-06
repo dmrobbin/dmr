@@ -585,6 +585,9 @@ select option { color: var(--text); background: var(--surface); }
 .infinite-slider { display: flex; align-items: center; gap: .75rem; }
 .infinite-slider input[type="range"] { width: min(18rem, 60vw); accent-color: var(--accent); }
 .infinite-slider output { min-width: 3.5rem; font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.infinite-number { display: flex; flex-direction: column; gap: .25rem; max-width: 22rem; }
+.infinite-number input[type="number"] { width: 6rem; }
+.infinite-loadout { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 1rem; margin-top: 1rem; }
 .cpu-form form { margin: 0; }
 .cpu-form label { display: grid; gap: .2rem; }
 .cpu-list { list-style: none; margin: .75rem 0; padding: 0; display: grid; gap: .4rem; }
