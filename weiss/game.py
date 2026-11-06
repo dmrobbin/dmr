@@ -572,6 +572,7 @@ def trigger_check(state, env):
     attack = state["attack"]
     attack.pop("checking", None)
     icons = []
+    kinds = []  # each checked card's trigger with a choice in it, resolved one after another
     shown = []
     checks = attack.pop("checks", 1)
     for _ in range(checks):
@@ -583,6 +584,7 @@ def trigger_check(state, env):
         shown.append(checked["card"])
         found = [TRIGGER_ALIASES.get(icon, icon) for icon in (env.trigger(checked["card"]) or "").split()]
         icons += found
+        kinds += [icon for icon in found if icon in TRIGGER_CHOICES][:1]
         put(side, checked, "hand" if "treasure" in found else "stock")
         add_log(state, player, f"trigger check: {env.name(checked['card'])}"
                 + (f" [{' '.join(found)}]" if found else " (no trigger)")
@@ -601,11 +603,22 @@ def trigger_check(state, env):
     attack["soul_extra"] += icons.count("soul")
     attack["shot"] = "shot" in icons
     update_attack_soul(state, compute_stats(state, env)[0], env)
-    prompt = trigger_prompt(state, player, icons, env.info)
-    if prompt:
-        attack["prompt"] = prompt  # the attacker chooses (see the trigger_choice action)
-    else:
-        after_trigger(state, env.info, env)
+    attack["trigger_queue"] = kinds
+    next_trigger(state, player, env)
+
+
+def next_trigger(state, player, env):
+    """Put the next checked card's trigger choice to the attacker (see the trigger_choice action), skipping
+    those with nothing to choose; with none left, the trigger step is done."""
+    attack = state["attack"]
+    queue = attack.get("trigger_queue", [])
+    while queue:
+        prompt = trigger_prompt(state, player, [queue.pop(0)], env.info)
+        if prompt:
+            attack["prompt"] = prompt
+            return
+    attack.pop("trigger_queue", None)
+    after_trigger(state, env.info, env)
 
 
 def trigger_prompt(state, player, icons, info):
@@ -1331,7 +1344,7 @@ def apply_action(state, player, action, env):
         else:
             add_log(state, player, f"{trigger_kind} trigger: chose nothing")
         attack.pop("prompt")
-        after_trigger(state, info, env)
+        next_trigger(state, player, env)
         return {}
 
     if kind in ("counter", "no_counter"):

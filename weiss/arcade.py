@@ -120,25 +120,27 @@ def game_finished(room, over, score=None):
         run.scores.append({"cpu": room.cpu_profile_id, "name": room.cpu_name, "score": score})
         run.score += score
     run.position += 1
+    if room.host_deck_id:  # as it was for this win, for the high scores
+        run.deck_snapshot = challenge.deck_snapshot(room.host_deck)
     cleared = run.position >= len(run.order) and not challenge.infinite(run)  # whose next is chosen on its path
     if queued := scenes_after(run, room.cpu_profile_id, cleared):
         room.state["scenes"] = queued
     if prize := challenge.fight_finished(run, won=True, cleared=cleared):
         room.state["prize"] = challenge.prize_shown(prize)  # the Victory screen draws it, slot machine and all
     if not cleared:
-        run.save(update_fields=["position", "scores", "score", "order"])
+        run.save(update_fields=["position", "scores", "score", "order", "deck_snapshot"])
         return
     run.status, run.finished = ArcadeRun.Status.CLEARED, timezone.now()
-    run.save(update_fields=["position", "status", "finished", "scores", "score"])
+    run.save(update_fields=["position", "status", "finished", "scores", "score", "deck_snapshot"])
     if room.host_deck_id and run.scenario_id:
         clear, _ = ArcadeClear.objects.get_or_create(deck_id=room.host_deck_id, scenario_id=run.scenario_id, defaults={"name": run.scenario_name})
         ArcadeClear.objects.filter(pk=clear.pk).update(count=F("count") + 1, name=run.scenario_name)
 
 
-def high_scores(scenarios):
-    """Each scenario with its best run (the earliest, on a tie) as `best`, or None if no run has scored."""
+def high_scores(scenarios, limit=10):
+    """Each scenario with its leaderboard as `leaders`: its best runs that have scored, the earliest first on a tie."""
     for scenario in scenarios:
-        scenario.best = ArcadeRun.objects.filter(scenario=scenario, score__gt=0).select_related("user").order_by("-score", "started", "pk").first()
+        scenario.leaders = list(ArcadeRun.objects.filter(scenario=scenario, score__gt=0).select_related("user").order_by("-score", "started", "pk")[:limit])
     return scenarios
 
 

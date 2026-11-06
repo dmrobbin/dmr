@@ -6,7 +6,8 @@
   <h1>Arcade Mode</h1>
   {% include "weiss/arcade_tabs.html" with current="scores" %}
   <p class="muted small">A run scores each CPU it beats; its total is what counts here. Only wins score:
-    {% for label, weight in weights %}{{ label }} {{ weight }} each{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
+    {% for label, weight in weights %}{{ label }} {{ weight }} each{% if not forloop.last %}, {% endif %}{% endfor %}.
+    A deck is as it was at the run's last win.</p>
   {% if not scenarios %}
     <p class="empty">No arcade lists yet.</p>
   {% else %}
@@ -14,13 +15,24 @@
       {% for scenario in scenarios %}
         <li class="arcade-scenario">
           <h2>{{ scenario.name }}</h2>
-          {% if scenario.best %}
-            <p class="arcade-best">{{ scenario.best.score }}</p>
-            <p class="small">by <strong>{{ scenario.best.user.username }}</strong>
-              <span class="muted">· {{ scenario.best.deck_name|default:"a deleted deck" }} · {% if scenario.best.status == "cleared" %}cleared{% else %}{{ scenario.best.position }} of {{ scenario.best.total }} beaten{% endif %} · {{ scenario.best.started|date:"j M Y" }}</span></p>
-            <ol class="arcade-best-fights small muted">
-              {% for fight in scenario.best.scores %}<li>{{ fight.name }}: {{ fight.score }}</li>{% endfor %}
-            </ol>
+          {% if scenario.leaders %}
+            <div class="cpu-table-wrap">
+              <table class="cpu-table leaderboard">
+                <thead><tr><th scope="col">#</th><th scope="col">Player</th><th scope="col">Score</th><th scope="col">Beaten</th><th scope="col" class="leaderboard-wide">Played</th><th scope="col">Deck</th></tr></thead>
+                <tbody>
+                  {% for run in scenario.leaders %}
+                    <tr{% if run.user == user %} class="leaderboard-mine"{% endif %}>
+                      <td class="leaderboard-rank">{% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}{{ forloop.counter }}{% endif %}</td>
+                      <td><span class="leaderboard-player">{% include "weiss/avatar.html" with avatar=run.avatar name=run.user.username size="" %} <strong>{{ run.user.username }}</strong>{% if run.status == "active" %} <span class="deck-tag" title="This run is still going">Going</span>{% endif %}</span></td>
+                      <td class="leaderboard-score" title="{% for fight in run.scores %}{{ fight.name }}: {{ fight.score }}{% if not forloop.last %}&#10;{% endif %}{% endfor %}">{{ run.score }}</td>
+                      <td>{% if run.status == "cleared" %}Cleared{% else %}{{ run.position }} of {{ run.total }}{% endif %}</td>
+                      <td class="muted small leaderboard-wide">{{ run.started|date:"j M Y" }}</td>
+                      <td>{% if run.deck_snapshot %}<a href="{% url 'weiss:arcade_deck' run.pk %}">{{ run.deck_name|default:"View deck" }}</a>{% else %}<span class="muted small">{{ run.deck_name|default:"Not kept" }}</span>{% endif %}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
           {% else %}
             <p class="muted small">No scores yet. Beat a CPU in a run to set one.</p>
           {% endif %}

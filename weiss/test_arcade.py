@@ -9,7 +9,7 @@ from django.urls import reverse
 
 from core.access import WEISS_GROUP
 
-from . import arcade, lists, play
+from . import arcade, challenge, lists, play
 from .models import ArcadeClear, ArcadeEntry, ArcadeRun, ArcadeScenario, Card, CardList, CardListEntry, CpuImage, CpuProfile, GameRecord, GameRoom
 
 PNG = b"\x89PNG\r\n\x1a\n" + b"\0" * 32
@@ -623,7 +623,7 @@ class ArcadeRunTests(Base):
         self.assertEqual(board["board"]["game_over"]["score"]["total"], 100)
         self.assertEqual(board["arcade"]["score"], 458)
 
-    def test_high_scores_show_each_scenarios_best_run_and_who_played_it(self):
+    def test_high_scores_show_each_scenarios_leaderboard_and_who_played_it(self):
         page = self.client.get(reverse("weiss:arcade_scores"))
         self.assertContains(page, "No scores yet")
         bob = player("bob")
@@ -631,11 +631,24 @@ class ArcadeRunTests(Base):
         ArcadeRun.objects.create(user=bob, scenario=self.scenario, scenario_name="Ark", score=900, status="cleared",
                                  scores=[{"cpu": 1, "name": "Open", "score": 400}, {"cpu": 2, "name": "F1", "score": 500}])
         page = self.client.get(reverse("weiss:arcade_scores"))
-        self.assertEqual(page.context["scenarios"][0].best.user, bob)
+        self.assertEqual([run.user for run in page.context["scenarios"][0].leaders], [bob, self.alice])
         self.assertContains(page, "<strong>bob</strong>", html=True)
         self.assertContains(page, "F1: 500")
         self.assertContains(page, f'href="{reverse("weiss:arcade")}" class="current"')  # still the Arcade tab
         self.assertContains(self.client.get(reverse("weiss:arcade")), "Your best score 500")
+
+    def test_a_win_keeps_the_deck_for_the_high_scores(self):
+        self.start()
+        self.end_fight("me", {"knocked": 1})
+        run = ArcadeRun.objects.get()
+        self.assertEqual(run.deck_snapshot, challenge.deck_snapshot(self.deck))
+        page = self.client.get(reverse("weiss:arcade_scores"))
+        self.assertContains(page, reverse("weiss:arcade_deck", args=[run.pk]))
+        deck = self.client.get(reverse("weiss:arcade_deck", args=[run.pk]))
+        self.assertEqual(deck.context["total"], sum(n for _, n in run.deck_snapshot))
+        self.assertContains(deck, "Arcade high scores")
+        unscored = ArcadeRun.objects.create(user=self.alice, scenario=self.scenario, scenario_name="Ark")
+        self.assertEqual(self.client.get(reverse("weiss:arcade_deck", args=[unscored.pk])).status_code, 404)
 
     def met(self):
         lineup = self.client.get(reverse("weiss:arcade")).context["scenarios"][0].lineup

@@ -1707,6 +1707,28 @@ class TriggerCheckShowTests(TestCase):
         t.apply(2, {"type": "ability_show_done", "id": t.state["ability_show"]["id"]})
         t.apply(2, {"type": "trigger_choice"})
 
+    def test_two_checks_resolve_each_climaxs_trigger(self):
+        t = Table()
+        for pk, trigger in ((600, "comeback"), (601, "draw")):
+            t.card(pk, trigger=trigger, card_type="Climax", power=None, level=None)
+        t.me["zones"]["deck"][-1]["card"], t.me["zones"]["deck"][-2]["card"] = 600, 601
+        me = t.seat(t.me, "C2", t.card(2000, text="【AUTO】 When this card attacks, during that attack, perform a trigger check 2 times on the trigger step."))
+        back = game.new_card(t.card(2001))
+        t.me["zones"]["waiting"].append(back)
+        t.state.update(phase="attack", attack={"step": "declare"})
+        t.refresh()
+        t.apply(2, {"type": "attack", "uid": me["uid"], "kind": "direct"})
+        t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+        if t.state.get("ability_show"):
+            t.apply(2, {"type": "ability_show_done", "id": t.state["ability_show"]["id"]})
+        self.assertEqual(t.state["attack"]["prompt"]["kind"], "comeback")
+        t.apply(2, {"type": "trigger_choice", "uid": back["uid"], "to": "hand"})
+        self.assertEqual(t.state["attack"]["prompt"]["kind"], "draw")  # the second climax's trigger, next
+        hand = len(t.me["zones"]["hand"])
+        t.apply(2, {"type": "trigger_choice", "accept": True})
+        self.assertEqual(len(t.me["zones"]["hand"]), hand + 1)
+        self.assertNotIn("prompt", t.state["attack"])
+
     def test_abilities_the_check_triggers_wait_too(self):
         t = Table()
         t.card(600, card_type="Climax", power=None, level=None)

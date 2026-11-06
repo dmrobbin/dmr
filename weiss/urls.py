@@ -21,6 +21,7 @@ urlpatterns = [
     path("play/packs/open/", pack_views.pack_open, name="play_packs_open"),
     path("arcade/", play.arcade_home, name="arcade"),
     path("arcade/scores/", play.arcade_scores, name="arcade_scores"),
+    path("arcade/scores/<int:pk>/deck/", play.arcade_deck, name="arcade_deck"),
     path("arcade/infinite/", play.infinite_scores, name="arcade_infinite"),
     path("arcade/infinite/<int:pk>/deck/", play.infinite_deck, name="arcade_infinite_deck"),
     path("arcade/challenge/", challenge_views.challenge_home, name="arcade_challenge"),

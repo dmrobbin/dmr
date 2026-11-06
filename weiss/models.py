@@ -317,6 +317,7 @@ class ArcadeRun(models.Model):
     score = models.PositiveIntegerField(default=0, db_index=True, help_text="The run's total: its wins' scores added up")
     scores = models.JSONField(default=list, help_text="Each win's score, in order: [{cpu, name, score}]")
     losses = models.PositiveSmallIntegerField(default=0)
+    deck_snapshot = models.JSONField(default=list, blank=True, help_text="The deck as it was at its last win: [[card id, copies]], for the high scores, kept if the deck goes")
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIVE)
     started = models.DateTimeField(auto_now_add=True)
     finished = models.DateTimeField(null=True, blank=True)

@@ -404,7 +404,12 @@ def snapshot_deck(run):
     """Keep the deck as it is now with the run (not saved here), for the leaderboard: the deck itself can be
     discarded at the end, or changed."""
     if run.deck_id:
-        run.deck_snapshot = [[pk, n] for pk, n in run.deck.entries.order_by("card_id").values_list("card_id", "quantity")]
+        run.deck_snapshot = deck_snapshot(run.deck)
+
+
+def deck_snapshot(deck):
+    """A deck's cards as [[card id, copies]], to keep after the deck itself is changed or goes."""
+    return [[pk, n] for pk, n in deck.entries.order_by("card_id").values_list("card_id", "quantity")]
 
 
 def leaderboard(limit=50):

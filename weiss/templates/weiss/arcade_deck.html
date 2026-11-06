@@ -1,0 +1,12 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}{{ run.user.username }}'s deck · {{ run.scenario_name }}{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:arcade_scores' %}">&larr; Arcade high scores</a></p>
+  <h1>{{ run.user.username }}'s deck{% if run.deck_name %}: {{ run.deck_name }}{% endif %}</h1>
+  <p class="muted small">{{ run.scenario_name }} · score <strong>{{ run.score }}</strong> ·
+    {% if run.status == "cleared" %}cleared{% else %}{{ run.position }} of {{ run.total }} beaten{% endif %} · {{ total }} cards ·
+    {% if run.status == "active" %}still going, {% endif %}as at its last win · {{ run.started|date:"j M Y" }}. Click a card to read it.</p>
+  {% include "weiss/snapshot_deck.html" %}
+{% endblock %}
