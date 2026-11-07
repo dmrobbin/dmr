@@ -150,6 +150,16 @@ class Mind:
     def my_level(self):
         return len(self.zones["level"])
 
+    def would_lose(self, cards):
+        """Whether this many more cards in its clock would take it to the losing level."""
+        return len(self.zones["clock"]) + cards >= (game.LOSING_LEVEL - self.my_level()) * game.LEVEL_UP_AT
+
+    def fatal(self, ability, owner="me"):
+        """Whether doing this (an ability, or the "you may" part of one) could lose it the game by itself.
+        owner is how the ability names the CPU: "opp" when it's deciding for the other player's ability."""
+        cards = self_clock(ability, owner)
+        return cards > 0 and self.would_lose(cards)
+
     def play_level(self, card):
         return game.play_level(self.state, self.me, card, self.info)
 
@@ -347,10 +357,11 @@ class Mind:
     # The turn -------------------------------------------------------------------------------------------
 
     def clock(self):
-        """Clock and draw every turn, unless that's what would lose the game."""
+        """Clock and draw every turn, unless that's what would lose the game: the card clocked, and the
+        refresh damage if drawing runs the deck out."""
         hand = self.zones["hand"]
-        fatal = self.my_level() >= game.LOSING_LEVEL - 1 and len(self.zones["clock"]) + 1 >= game.LEVEL_UP_AT
-        if hand and not fatal:
+        refresh = len(self.zones["deck"]) < game.CLOCK_DRAW and bool(self.zones["waiting"])
+        if hand and not self.would_lose(1 + refresh):
             return {"type": "clock_draw", "uid": self.lowest_value(hand, 1)[0]["uid"]}
         return {"type": "phase", "phase": "main"}
 
@@ -437,7 +448,7 @@ class Mind:
         for card in self.zones["hand"]:
             if self.kind(card) == "event" and self.can_play(card):
                 for ability in abilities.parse(self.details(card).get("text")):
-                    if ability["kind"] == "event" and HAND_EFFECT.search(ability["text"]) and not self.by_hand_only(ability):
+                    if ability["kind"] == "event" and HAND_EFFECT.search(ability["text"]) and not self.by_hand_only(ability)                             and not self.fatal(ability):
                         return {"type": "move", "uid": card["uid"], "to": "resolution"}
         return None
 
@@ -453,7 +464,7 @@ class Mind:
                 ability = game.abilities_of(self.state, card, self.env)[row["index"]]
                 parts = {part["part"] for part in ability.get("cost", [])}
                 if (not self.by_hand_only(ability) and ability["kind"] == "act" and self.can_spend(stock_cost(ability))
-                        and "pick" not in parts and ("self_rest" in parts or ability.get("once"))):
+                        and not self.fatal(ability) and "pick" not in parts and ("self_rest" in parts or ability.get("once"))):
                     yield {"type": "activate", "uid": card["uid"], "index": row["index"]}, ability
 
     def can_spend(self, stock):
@@ -532,7 +543,10 @@ class Mind:
     def trigger_ability(self):
         """Take every ability it can actually carry out. One that needs doing by hand can't be."""
         entry = next(e for e in self.state["ability_queue"] if e["player"] == self.me)
-        return {"type": "ability_trigger", "id": entry["id"], "accept": not self.by_hand_only(entry["ability"]) and not self.wasted(entry["ability"])}
+        ability = entry["ability"]
+        # A cost is its to pay or not; a "you may" part that would lose it the game, it turns down when asked (see answer).
+        losing = bool(ability.get("cost")) and self.fatal({"cost": ability["cost"]})
+        return {"type": "ability_trigger", "id": entry["id"], "accept": not self.by_hand_only(ability) and not self.wasted(ability) and not losing}
 
     def wasted(self, ability):
         """Whether paying its whole hand and stock would come to fewer cards than the effect needs."""
@@ -551,6 +565,8 @@ class Mind:
         purpose = prompt["for"]
         if purpose == "may" and (not self.can_spend(stock_cost(prompt["step"])) or prompt["step"].get("again")):
             return {"type": "ability_answer", "value": "no"}  # an action it may repeat, it does once
+        if purpose == "may" and self.fatal(prompt["step"], "opp" if prompt["step"].get("chooser") == "opp" else "me"):
+            return {"type": "ability_answer", "value": "no"}  # not if it puts enough into its own clock to lose
         if purpose == "dest":
             return {"type": "ability_answer", "value": min(options, key=CHOICE_DESTINATIONS.index)}
         if purpose == "place":
@@ -600,6 +616,27 @@ class Mind:
 
 def stock_cost(ability):
     return sum(part.get("n", 0) for part in ability.get("cost", []) if part["part"] == "stock")
+
+
+def self_clock(ability, owner="me"):
+    """How many cards an ability (or a "you may" step: its cost and "then") puts into the clock of the
+    player it calls owner: its costs, the top of the deck or stock into the clock, itself into the clock,
+    and damage to them (counted as if it isn't canceled)."""
+    def paid(cost):
+        return sum(owner == "me" and (part["part"] in ("deck_to_clock", "stock_to_clock") or part["part"] == "self_to" and part.get("to") == "clock")
+                   for part in cost or [])
+
+    count = paid(ability.get("cost"))
+    for step in all_steps(ability.get("steps", []) + ability.get("then", [])):
+        do = step["do"]
+        count += paid(step.get("cost")) if do == "may" else 0
+        if do == "top" and step.get("to") == "clock" and step.get("owner", "me") == owner:
+            count += step["n"] if isinstance(step.get("n"), int) else 1
+        elif do == "damage" and ("me" if step.get("self") else "opp") == owner:
+            count += step["n"] if isinstance(step.get("n"), int) else 1
+        elif owner == "me" and (do == "stock_to_clock" or do == "self_to" and step.get("to") == "clock"):
+            count += 1
+    return count
 
 
 def all_steps(steps):

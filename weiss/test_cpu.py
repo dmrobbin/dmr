@@ -364,6 +364,61 @@ class HandTests(TestCase):
         t.hand(t.card(1001))
         self.assertEqual(t.next(), {"type": "phase", "phase": "main"})
 
+    def test_every_model_holds_back_from_the_losing_clock(self):
+        for model in cpu.MODELS:
+            t = Table()
+            t.state["phase"] = "clock"
+            t.level(3)
+            t.me["zones"]["clock"] += [game.new_card(900) for _ in range(6)]
+            t.hand(t.card(1001))
+            t.refresh()
+            self.assertEqual(cpu.next_action(t.state, "2", t.info, 1, random.Random(1), model), {"type": "phase", "phase": "main"}, model)
+
+    def test_nor_when_the_refresh_it_would_cause_is_the_losing_damage(self):
+        t = Table()
+        t.state["phase"] = "clock"
+        t.level(3)
+        t.me["zones"]["clock"] += [game.new_card(900) for _ in range(5)]
+        t.me["zones"]["waiting"] += [game.new_card(900) for _ in range(10)]
+        t.hand(t.card(1001))
+        t.me["zones"]["deck"] = t.me["zones"]["deck"][:1]  # drawing 2 decks it out
+        self.assertEqual(t.next(), {"type": "phase", "phase": "main"})
+        t.me["zones"]["deck"] += [game.new_card(900)]  # enough to draw: clocking leaves it on 6
+        self.assertEqual(t.next()["type"], "clock_draw")
+
+    def test_not_a_back_row_ability_whose_cost_would_lose_the_game(self):
+        t = Table()
+        for slot in game.OPPOSITE:
+            t.seat(t.me, slot, t.card(1000, power=9000))
+        card = t.seat(t.me, "B1", t.card(1001, text="【ACT】 [Put the top card of your deck into your clock & 【REST】 this card] Draw 1 card."))
+        t.level(3)
+        t.me["zones"]["clock"] += [game.new_card(900) for _ in range(6)]
+        self.assertEqual(t.next(), {"type": "phase", "phase": "climax"})
+        t.me["zones"]["clock"].pop()
+        self.assertEqual(t.next(), {"type": "activate", "uid": card["uid"], "index": 0})
+
+    def test_turns_down_a_you_may_that_would_lose_the_game(self):
+        t = Table()
+        t.level(3)
+        t.me["zones"]["clock"] += [game.new_card(900) for _ in range(6)]
+        may = {"do": "may", "cost": [], "text": "you may deal 1 damage to yourself",
+               "then": [{"do": "damage", "n": 1, "self": True}, {"do": "draw", "n": 2, "upto": False}]}
+        t.state["resolving"] = {"player": "2", "uid": "u", "card": 1001, "text": "t", "steps": [], "ctx": {},
+                                "prompt": {"kind": "choice", "for": "may", "step": may, "options": [{"value": "yes"}, {"value": "no"}]}}
+        self.assertEqual(t.next(), {"type": "ability_answer", "value": "no"})
+        t.me["zones"]["clock"].pop()
+        self.assertEqual(t.next(), {"type": "ability_answer", "value": "yes"})
+
+    def test_turns_down_an_auto_whose_cost_would_lose_the_game(self):
+        t = Table()
+        t.level(3)
+        t.me["zones"]["clock"] += [game.new_card(900) for _ in range(6)]
+        ability = abilities.parse("【AUTO】 [(1) Put the top card of your deck into your clock] When this card attacks, draw 1 card.")[0]
+        t.state["ability_queue"] = [{"id": "x", "player": "2", "uid": "u", "card": 1001, "ability": ability, "ctx": {}}]
+        self.assertFalse(t.next()["accept"])
+        t.me["zones"]["clock"].pop()
+        self.assertTrue(t.next()["accept"])
+
     def test_uses_a_back_row_ability_that_draws(self):
         t = Table()
         for slot in game.OPPOSITE:
