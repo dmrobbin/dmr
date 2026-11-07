@@ -234,13 +234,13 @@ class HeaderTests(ArcadeSetup):
         self.assertIn(f"/cards/{self.card.pk}/image/", page)
 
     def test_the_infinite_challenge_button(self):
-        self.client.force_login(self.alice)
-        self.assertNotIn("nav-infinite", self.client.get(reverse("weiss:arcade")).content.decode())  # staff only, for now
-        self.client.force_login(self.staff)
+        self.client.force_login(self.alice)  # every player's, not only staff
         page = self.client.get(reverse("weiss:arcade")).content.decode()
         self.assertIn("∞ Infinite challenge", page)
+        self.assertIn(f'<a class="nav-infinite" href="{reverse("weiss:arcade_challenge")}" title="Choose a challenge to start">', page)  # the menu, not a new run
+        self.assertIsNone(challenge.current(self.alice))
         self.assertRedirects(self.client.post(reverse("weiss:arcade_challenge_start"), {"kind": "infinite"}), reverse("weiss:arcade_challenge"))
-        self.assertEqual(challenge.current(self.staff).kind, "infinite")
+        self.assertEqual(challenge.current(self.alice).kind, "infinite")
         page = self.client.get(reverse("weiss:play_rooms")).content.decode()
         self.assertIn("∞ Your challenge", page)  # one's under way: the button goes to it
 
@@ -484,12 +484,23 @@ class ChallengeTests(ArcadeSetup):
         self.client.post(reverse("weiss:arcade_challenge_deck"), {"deck": json.dumps(copies)})
         return copies
 
-    def test_staff_only_for_now(self):
+    def test_only_the_infinite_challenges_are_open_to_everyone_for_now(self):
         self.client.force_login(self.alice)
-        self.assertEqual(self.client.get(reverse("weiss:arcade_challenge")).status_code, 403)
-        self.assertNotContains(self.client.get(reverse("weiss:arcade")), "Challenge</a>")
-        self.client.force_login(self.staff)
         self.assertContains(self.client.get(reverse("weiss:arcade")), "Challenge</a>")
+        page = self.client.get(reverse("weiss:arcade_challenge"))
+        self.assertContains(page, "Infinite challenge")
+        self.assertContains(page, "Co-op challenge")
+        for kind in ("Free challenge", "Narrative challenges"):
+            self.assertNotContains(page, kind)
+        for kind in ("free", "narrative"):
+            self.assertEqual(self.client.post(reverse("weiss:arcade_challenge_start"), {"kind": kind, "scenario": self.scenario.pk}).status_code, 403)
+        self.assertIsNone(challenge.current(self.alice))
+        self.client.post(reverse("weiss:arcade_challenge_start"), {"kind": "infinite"})
+        self.assertEqual(challenge.current(self.alice).kind, ChallengeRun.Kind.INFINITE)
+        self.client.force_login(self.staff)
+        page = self.client.get(reverse("weiss:arcade_challenge"))
+        for kind in ("Free challenge", "Narrative challenges", "Co-op challenge"):
+            self.assertContains(page, kind)
 
     def test_starting_gives_its_packs_and_a_deck_kept_out_of_the_lists(self):
         run = self.start()

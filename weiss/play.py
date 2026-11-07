@@ -22,7 +22,7 @@ from django.views.decorators.http import require_POST
 from core import s3
 from core.access import has_weiss_access, weiss_access_required
 
-from . import arcade, buffs, challenge, cpu, game, lists, packs, scenes, scoring
+from . import arcade, buffs, challenge, coop, cpu, game, lists, packs, scenes, scoring
 from .models import ArcadeRun, ArcadeScenario, Card, CardList, ChallengeRun, CpuProfile, GameRecord, GameRoom, PlayerProfile, cpu_user
 
 log = logging.getLogger(__name__)
@@ -85,10 +85,14 @@ def cpu_payload(room):
         payload["arcade"] = {"scenario": run.scenario_name, "fight": run.position + 1 if endless else min(run.position + 1, run.total),
                              "total": None if endless else run.total,
                              "cleared": run.status == ArcadeRun.Status.CLEARED, "score": run.score}
-        trial = ChallengeRun.objects.filter(arcade_run=run).only("kind", "packs", "lives", "status", "rewards", "path", "arcade_run").first()
+        trial = ChallengeRun.objects.filter(arcade_run=run).only("kind", "packs", "lives", "status", "rewards", "path", "arcade_run", "coop", "user").first()
+        coop.load(trial)
         if trial:
             payload["arcade"]["challenge"] = {"packs": trial.packs, "won": challenge.win_reward_text(trial.kind), "lives": trial.lives,
                                               "going": trial.status == ChallengeRun.Status.ACTIVE, "rewards": len(trial.rewards)}
+        if trial and trial.coop_id:  # the pair's lost games, which a loss here adds to
+            pair = trial.coop
+            payload["arcade"]["coop"] = {"losses": pair.losses, "limit": pair.loss_limit, "partner": getattr(pair.partner_of(trial.user), "username", "")}
         if trial and endless:  # the CPUs beaten so far, for the board's tally
             beaten = challenge.defeated(trial)
             cpus = CpuProfile.objects.in_bulk(beaten)
@@ -175,6 +179,32 @@ def infinite_deck(request, pk):
     groups, total = snapshot_groups(run.deck_snapshot)
     return render(request, "weiss/infinite_deck.html", {"run": run, "groups": groups, "total": total,
                                                         "defeated": len(challenge.defeated(run)), "floor": challenge.floor_at(run) + 1})
+
+
+@weiss_access_required
+def coop_scores(request):
+    """The co-op challenge's leaderboard, for every player: the best pairs, both their scores added up, and their decks."""
+    pairs = coop.leaderboard()
+    users = {run.user_id for pair in pairs for run in pair.halves}
+    avatars = {p.user_id: p.avatar for p in PlayerProfile.objects.filter(user_id__in=users, avatar_card__isnull=False)}
+    for pair in pairs:
+        for run in pair.halves:
+            run.avatar = avatars.get(run.user_id)
+        pair.mine = request.user.pk in (pair.host_id, pair.guest_id)
+    return render(request, "weiss/coop_scores.html", {"pairs": pairs})
+
+
+@weiss_access_required
+def coop_deck(request, pk):
+    """Both decks a pair on the co-op leaderboard played with, as they were at each player's last win (or the end)."""
+    pair = next((pair for pair in coop.leaderboard(limit=None) if pair.pk == pk), None)
+    if not pair:
+        raise Http404("That co-op challenge isn't on the leaderboard")
+    decks = []
+    for run in pair.halves:
+        groups, total = snapshot_groups(run.deck_snapshot)
+        decks.append({"run": run, "groups": groups, "total": total, "score": run.arcade_run.score if run.arcade_run else 0})
+    return render(request, "weiss/coop_deck.html", {"pair": pair, "decks": decks})
 
 
 def snapshot_groups(snapshot):
@@ -349,7 +379,7 @@ def arcade_action(request, room, action):
         request.session[lists.SESSION_KEY] = room.host_deck_id
         return JsonResponse({"redirect": reverse("weiss:list", args=[room.host_deck_id])})
     if not over or run.status != ArcadeRun.Status.ACTIVE or (kind == "arcade_continue") != bool(won) \
-            or (kind == "arcade_continue" and challenge.infinite(run)):  # its next fight is chosen on its path
+            or (kind == "arcade_continue" and challenge.infinite(run))             or (kind == "arcade_retry" and ChallengeRun.objects.filter(arcade_run=run, coop__isnull=False).exists()):  # its next fight is chosen on its path
         return JsonResponse({"error": "That isn't possible right now.", **board_payload(room, request.user)}, status=400)
     profile = arcade.current_cpu(run)
     if not profile or not room.host_deck or not room.host_deck.entries.exists() or not profile.deck.entries.exists():

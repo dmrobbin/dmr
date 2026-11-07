@@ -1868,3 +1868,41 @@ button.spire-node-face:disabled { cursor: not-allowed; }
   .rfx-sheen::after, [data-grade="5"]::before, .rb-rays { animation: none !important; }
   .rfx-sheen::after { opacity: 0; }
 }
+
+/* Co-op challenge: the pair and their lost games (weiss/coop_panel.html) */
+.coop-panel { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1.5rem; margin: .75rem 0; padding: .6rem .85rem; background: var(--accent-soft); border: 1px solid var(--border); border-radius: .6rem; }
+.coop-panel p { margin: 0; }
+.coop-pair { display: flex; align-items: center; gap: .5rem; }
+.coop-invite { display: flex; gap: .5rem; flex: 1 1 18rem; }
+.coop-invite input { flex: 1; min-width: 0; }
+.coop-losses { display: flex; align-items: center; gap: .3rem; }
+.coop-loss { width: .7rem; height: .7rem; border-radius: 50%; border: 2px solid #e07a76; }
+.coop-loss.lost { background: #e07a76; }
+.spire-votes { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: .15rem; white-space: nowrap; }
+.coop-pair p { margin: 0; }
+.coop-decided { flex-basis: 100%; }
+.vn-option.voted { border-color: var(--accent); background: rgb(40 34 18 / .95); }
+.vn-option:disabled:not(.voted) { opacity: .55; cursor: default; }
+.leaderboard-pair { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .9rem; }
+.coop-deck-owner { margin-top: 2rem; }
+/* Co-op: a card the partner's deck has every copy of, and how many they have (challenge_deck.html) */
+.pool-card.taken img { opacity: .25; filter: grayscale(1); }
+.pool-card.taken .pool-name { color: var(--muted); }
+.pool-theirs { color: var(--muted); line-height: 1.25; }
+.pool-theirs strong { color: var(--accent); }
+/* A challenge's deck builder: the pool, with this player's deck on the right and in co-op the partner's on the left (challenge_deck.html). */
+.container.dashboard:has(.deck-builder) { max-width: 110rem; }
+.deck-builder { display: grid; grid-template-columns: minmax(0, 1fr) 22rem; gap: 1.5rem; align-items: start; }
+.deck-builder.with-partner { grid-template-columns: 18rem minmax(0, 1fr) 22rem; }
+.deck-side h2 { margin-top: 0; }
+.deck-side .panel-entries .qty-controls .qty { min-width: 1.8rem; }
+.partner-side .panel-entries li { grid-template-columns: 1.6rem 2.4rem minmax(0, 1fr) auto; }
+@media (max-width: 80rem) {
+  .deck-builder.with-partner { grid-template-columns: minmax(0, 1fr) 20rem; }
+  .deck-builder.with-partner .partner-side { grid-column: 1 / -1; order: 2; position: static; max-height: none; }
+}
+@media (max-width: 60rem) {
+  .deck-builder, .deck-builder.with-partner { grid-template-columns: minmax(0, 1fr); }
+  .deck-builder .deck-side { position: static; max-height: none; }
+  .deck-builder .deck-side:not(.partner-side) { order: -1; }  /* your deck first, above the pool */
+}

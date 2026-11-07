@@ -11,6 +11,9 @@ bringing a random reward and no scenes. Some spaces on the path are events inste
 the ones staff have chosen (Scene.infinite_event), whose choices mostly give pacts (weiss.buffs), something for
 something.
 
+A co-op challenge (weiss.coop) is an infinite one for two: each player has their own run here, with the pool and
+path shared between them, so what changes those goes through coop.shared.
+
 Stopping partway keeps the run where it is: the next fight starts with the CPU it stopped at. Resetting
 starts again from nothing, deck and all. At the end, cleared or lost, the player keeps the deck (it joins
 their lists) or discards it; until then it's kept out of their lists (CardList.challenge).
@@ -20,7 +23,7 @@ import random
 from django.db import transaction
 from django.utils import timezone
 
-from . import packs
+from . import coop, packs
 from .lists import DECK_SIZE
 from .models import ArcadeRun, Card, CardList, CardListEntry, ChallengeRun, ChallengeSettings, CpuProfile, GameRoom, Scene
 
@@ -29,7 +32,8 @@ NARRATIVE_START_PACKS = 20  # ...and of a narrative one
 WIN_PACKS = 3  # what a win in a free challenge brings
 NARRATIVE_WIN_PACKS = 2  # ...and in a narrative one, with these rewards to claim besides (weiss.buffs)
 NARRATIVE_WIN_REWARDS = ("color_pack",)
-STAFF_ONLY = True  # being tried out, as booster packs are
+COOP = "coop"  # what starting a co-op challenge (weiss.coop) asks for: an infinite one, for two
+STAFF_ONLY_KINDS = (ChallengeRun.Kind.FREE, ChallengeRun.Kind.NARRATIVE)  # still being tried out: only staff start these
 INFINITE_NAME = "Infinite challenge"
 INFINITE_WIN_PACKS = 2  # what a win in an infinite challenge brings, with one of these besides, at random: its prize,
 INFINITE_PRIZES = ("climax_pack", "color_pack", "lucky_pack")  # which the Victory screen's slot machine lands on (play.js)
@@ -46,9 +50,15 @@ INFINITE_START_PACKS = 20  # what an infinite challenge starts with, until staff
 LOADOUT_BUFFS = ("climax_pack", "level_pack", "color_pack", "lucky_pack", "wild_pack", "climax_pick")  # what staff can start it with besides
 
 
+def can_start(user, kind):
+    """Whether this player can start (or join) a challenge of this kind: the infinite challenge, solo or co-op, is everyone's."""
+    return user.is_staff or kind not in STAFF_ONLY_KINDS
+
+
 def current(user):
     """This player's challenge, from starting it until they've kept or discarded its deck; or None."""
-    return ChallengeRun.objects.filter(user=user, finished__isnull=True).select_related("deck", "arcade_run", "scenario", "narrative").first()
+    run = ChallengeRun.objects.filter(user=user, finished__isnull=True).select_related("deck", "arcade_run", "scenario", "narrative", "coop").first()
+    return coop.load(run)  # a co-op challenge's pool and path are the pair's
 
 
 def start_packs(kind):
@@ -168,7 +178,10 @@ def on_grid(floors, picks):
 
 
 def floor_at(run):
-    """The floor of the path an infinite challenge is on: the spaces it's been through, fights won and events."""
+    """The floor of the path an infinite challenge is on: the spaces it's been through, fights won and events. In
+    co-op, this player's: one who's finished the floor is on the next while their partner plays it out."""
+    if run.coop_id:
+        return coop.floor_of(run.path, run.user_id)
     path = run.path or {}
     if "done" in path:
         return path["done"]
@@ -181,6 +194,7 @@ def event_scenes():
     return [scene for scene in Scene.objects.filter(infinite_event=True) if not compile_scene(scene.script)[1]]
 
 
+@coop.sharing
 def path_of(run, rng=random):
     """An infinite challenge's path, {"floors": [[CPU id, EVENT or None for each column], ...], "picks": [the column
     taken on each floor], "done": floors been through}, laid out PATH_AHEAD floors past the one it's on, plus anything
@@ -189,7 +203,9 @@ def path_of(run, rng=random):
     floor left empty is laid again. Saved if it changed."""
     path = {**(run.path or {}), "floors": [list(f) for f in (run.path or {}).get("floors", [])], "picks": list((run.path or {}).get("picks", []))}
     floors, picks = path["floors"], path["picks"]
-    at = path["done"] = floor_at(run)
+    # In co-op the pair is on the floor both are on, and the path is laid ahead of whichever of them is further on.
+    at = path["done"] = coop.pair_floor(run) if run.coop_id else floor_at(run)
+    furthest = coop.furthest_floor(run) if run.coop_id else at
     if not floors and at:  # begun before there were paths: the fights so far, one CPU to a floor
         floors[:] = [[pk] for pk in run.arcade_run.order[:at]]
         picks[:] = [0] * at
@@ -199,14 +215,14 @@ def path_of(run, rng=random):
     found_or_event = found + ([EVENT] if events else [])
     found_here = found_or_event if not path.get("event") else found_or_event + [EVENT]  # an event under way stays
     del picks[at + 1:]
-    if len(picks) > at and floors[at][picks[at]] not in found_here:
+    if len(picks) > at and floors[at][picks[at]] not in found_here and furthest == at:  # not once a co-op player's been through it
         del picks[at:]
     for f in range(at, len(floors)):
         floors[f] = [pk if pk in (found_here if f == at else found_or_event) else None for pk in floors[f]]
     first_empty = next((f for f in range(at, len(floors)) if not any(pk is not None for pk in floors[f])), len(floors))
     del floors[first_empty:]
-    chance = event_chance() if events and len(floors) < at + 1 + PATH_AHEAD else 0
-    while found and len(floors) < at + 1 + PATH_AHEAD:
+    chance = event_chance() if events and len(floors) < furthest + 1 + PATH_AHEAD else 0
+    while found and len(floors) < furthest + 1 + PATH_AHEAD:
         floors.append(new_floor(floors[-1] if floors else [], found, rng, events=events and len(floors) > 0, chance=chance))
     if path != run.path:
         run.path = path
@@ -226,15 +242,20 @@ def choices(path, at):
     return links(floors[at - 1], floors[at])[picks[at - 1]]
 
 
-def pick(run, node):
+@coop.sharing
+def pick(run, node, rng=random):
     """Choose where an infinite challenge goes next: a node of the floor it's on that the path leads to. Returns
     that CPU's id (or EVENT), or None if it can't be chosen. A choice made stands until the fight's won or the
-    event's over (or the CPU's gone)."""
+    event's over (or the CPU's gone). In co-op this is a vote, and it's None until both players have voted (see
+    coop.vote)."""
     path = path_of(run)
     at = floor_at(run)
     if at < len(path["picks"]):
         node = path["picks"][at]
     elif node not in choices(path, at):
+        return None
+    elif run.coop_id and (node := coop.vote(run, path, f"floor:{at}", node, rng)) is None:
+        run.path = path
         return None
     else:
         path["picks"].append(node)
@@ -259,6 +280,7 @@ def defeated(run):
     return [pk for pk in taken if pk != EVENT]
 
 
+@coop.sharing
 def start_event(run, rng=random):
     """The event space just picked: a random event scene, one this challenge hasn't had if there's one left, settled
     now (buffs and all, see buffs.resolve) and kept with the path until it's over (see end_event). Returns its
@@ -280,17 +302,27 @@ def start_event(run, rng=random):
     return payload
 
 
+@coop.sharing
 def end_event(run, picks, rng=random):
     """The event scene's been played: what its choices gave (from the page: see buffs.given) goes on the challenge,
-    and the path moves on a floor. Returns what happened, for the player (see buffs.grant)."""
+    and the path moves on a floor. Returns what happened, for the player (see buffs.grant). In co-op, it goes on
+    both players' challenges, and both move on."""
     from .buffs import given, grant  # weiss.buffs uses this module
     path = path_of(run)
     payload = path.pop("event", None)
     if not payload:
         return []
+    source = f"Event: {payload.get('title', '')}"
+    if run.coop_id:
+        # The pair played it together: what its choices gave (as they decided them) goes to both, and both move on.
+        buffs = given(payload, coop.agreed(path, payload, picks))
+        run.path = path
+        coop.finish_floor(run, coop.players(run.coop))
+        coop.for_partner(run, lambda other: grant(other, buffs, source, rng))
+        return grant(run, buffs, source, rng)
     path["done"] += 1
     run.path = path
-    return grant(run, given(payload, picks), f"Event: {payload.get('title', '')}", rng)
+    return grant(run, given(payload, picks), source, rng)
 
 
 def infinite_style(arcade_run, profile):
@@ -312,7 +344,8 @@ def infinite_style(arcade_run, profile):
 
 def of(arcade_run):
     """The challenge in progress that this arcade run is fought for, if it's one."""
-    return ChallengeRun.objects.filter(arcade_run=arcade_run, status=ChallengeRun.Status.ACTIVE).first() if arcade_run else None
+    run = ChallengeRun.objects.filter(arcade_run=arcade_run, status=ChallengeRun.Status.ACTIVE).select_related("coop").first() if arcade_run else None
+    return coop.load(run)
 
 
 def narrative(arcade_run):
@@ -350,6 +383,7 @@ def allowed_sets(run):
     return [entry for entry in sets if entry["id"] in run.sets] if run.sets else sets
 
 
+@coop.sharing
 def open_packs(run, expansion_id, count, rng=random):
     """Open some of the challenge's packs into its pool. Returns what the pack opening page shows, or raises
     ValueError saying why it can't."""
@@ -373,18 +407,34 @@ def open_packs(run, expansion_id, count, rng=random):
 
 
 def pool_cards(run):
-    """[(card, copies pulled, copies in the deck)], in the order a deck lists them."""
+    """[(card, copies pulled, copies in the deck)], in the order a deck lists them. In co-op, copies pulled are the
+    pool's less those in the partner's deck."""
     in_deck = dict(run.deck.entries.values_list("card_id", "quantity")) if run.deck else {}
+    pool = coop.available(run)  # in co-op, the copies the partner's deck has aren't this player's to use
+    cards = Card.objects.filter(pk__in=[int(pk) for pk in pool]).order_by("level", "card_type", "serial_number")
+    return [(card, pool[str(card.pk)], in_deck.get(card.pk, 0)) for card in cards]
+
+
+def deck_pool(run):
+    """The pool for building the deck: [(card, copies this player can use, copies in their deck, copies in the
+    partner's deck)], in the order a deck lists them. In co-op every card the pair has pulled is here, those the
+    partner's deck has all of too, so both players always see the whole pool; solo, the partner's copies are 0."""
+    in_deck = dict(run.deck.entries.values_list("card_id", "quantity")) if run.deck else {}
+    theirs = coop.partner_copies(run)
     cards = Card.objects.filter(pk__in=[int(pk) for pk in run.pool]).order_by("level", "card_type", "serial_number")
-    return [(card, run.pool[str(card.pk)], in_deck.get(card.pk, 0)) for card in cards]
+    return [(card, run.pool[str(card.pk)] - theirs.get(card.pk, 0), in_deck.get(card.pk, 0), theirs.get(card.pk, 0)) for card in cards]
 
 
+@coop.sharing
 def save_deck(run, copies):
-    """Make the deck exactly these {card id: copies}. Returns what's wrong with them (nothing is saved then), or None."""
+    """Make the deck exactly these {card id: copies}. Returns what's wrong with them (nothing is saved then), or None.
+    In co-op, it can't have the copies the partner's deck has (both are checked under the same lock, see coop.shared)."""
     copies = {int(pk): int(n) for pk, n in copies.items() if int(n) > 0}
+    pool = coop.available(run)
     for pk, n in copies.items():
-        if n > run.pool.get(str(pk), 0):
-            return "A deck can only have the cards you've pulled from your packs."
+        if n > pool.get(str(pk), 0):
+            return ("Your partner's deck has those copies: they'll have to take them out first." if n <= run.pool.get(str(pk), 0)
+                    else "A deck can only have the cards you've pulled from your packs.")
     if sum(copies.values()) > DECK_SIZE:
         return f"A deck has at most {DECK_SIZE} cards."
     with transaction.atomic():
@@ -400,6 +450,8 @@ def fight_finished(arcade_run, won, cleared, rng=random):
     run = of(arcade_run)
     if not run:
         return None
+    if run.coop_id:
+        return coop_fight_finished(run, won, rng)
     prize = None
     if won:
         from .buffs import AMBUSH_PACKS, fight_mods, grant, roll  # weiss.buffs uses this module
@@ -433,6 +485,28 @@ def fight_finished(arcade_run, won, cleared, rng=random):
     return prize
 
 
+def coop_fight_finished(run, won, rng=random):
+    """fight_finished, for one player of a co-op challenge: win or lose, they're done with this floor (see
+    coop.finish_floor). A win brings them packs and a prize, as in solo; a loss uses up one of their second chances,
+    or else counts towards the pair's limit (see coop.lost_game)."""
+    from .buffs import AMBUSH_PACKS, fight_mods, grant  # weiss.buffs uses this module
+    prize = None
+    with coop.shared(run):
+        if won:
+            count, _ = win_reward(run.kind)
+            run.packs += count + (AMBUSH_PACKS if "ambush" in fight_mods(run) else 0)
+            prize = rng.choice(INFINITE_PRIZES)
+            grant(run, [prize], "Victory", rng)
+        coop.finish_floor(run)
+        if not won and run.lives:
+            run.lives -= 1
+        elif not won and coop.lost_game(run):
+            return None  # that was the last loss: it's over for both (see coop.end)
+        snapshot_deck(run)
+        run.save(update_fields=["packs", "rewards", "lives", "path", "deck_snapshot"])
+    return prize
+
+
 def snapshot_deck(run):
     """Keep the deck as it is now with the run (not saved here), for the leaderboard: the deck itself can be
     discarded at the end, or changed."""
@@ -448,7 +522,7 @@ def deck_snapshot(deck):
 def leaderboard(limit=50):
     """The best infinite challenges, by their run's score (the wins' scores added up), the earliest first on a tie:
     those that have won at least once. Each has `defeated` and `floor` worked out."""
-    runs = list(ChallengeRun.objects.filter(kind=ChallengeRun.Kind.INFINITE, arcade_run__score__gt=0)
+    runs = list(ChallengeRun.objects.filter(kind=ChallengeRun.Kind.INFINITE, coop__isnull=True, arcade_run__score__gt=0)
                 .select_related("user", "arcade_run").order_by("-arcade_run__score", "arcade_run__started", "pk")[:limit])
     for run in runs:
         run.defeated_count = len(defeated(run))
@@ -469,9 +543,11 @@ def stop_fighting(run):
         GameRoom.objects.filter(arcade_run_id=run.arcade_run_id).delete()
 
 
-def give_up(run):
-    """End an active challenge as lost, so the player can keep or discard its deck."""
-    stop_fighting(run)
+def give_up(run, keep_room=False):
+    """End an active challenge as lost, so the player can keep or discard its deck. (`keep_room`: its fight is left
+    to finish, as a co-op partner's is when the other's loss ends the challenge.)"""
+    if not keep_room:
+        stop_fighting(run)
     if run.arcade_run and run.arcade_run.status == ArcadeRun.Status.ACTIVE:
         run.arcade_run.status, run.arcade_run.finished = ArcadeRun.Status.ABANDONED, timezone.now()
         run.arcade_run.save(update_fields=["status", "finished"])

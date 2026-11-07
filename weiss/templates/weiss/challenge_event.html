@@ -14,7 +14,8 @@
       {% csrf_token %}
       <input type="hidden" name="key" value="{{ payload.key }}">
       <input type="hidden" name="buffs" value="[]">
-      <button type="submit" class="link-button" data-event-skip title="Leave without taking anything">Walk away</button>
+      {% if coop %}<span class="muted small">You're both here: every choice is a vote. When you disagree, a coin flip decides.</span>
+      {% else %}<button type="submit" class="link-button" data-event-skip title="Leave without taking anything">Walk away</button>{% endif %}
     </form>
   </div>
   {{ payload|json_script:"scene-payload" }}
@@ -30,10 +31,46 @@
         form.submit();
       };
       form.addEventListener("submit", (event) => { event.preventDefault(); finish(null); });
-      const player = new ScenePlayer(document.querySelector("[data-scene-root]"), scene, {
+      const root = document.querySelector("[data-scene-root]");
+      const options = {
         playerName: "{{ player_name|escapejs }}",
         onEnd: (state) => setTimeout(() => finish(state), 600),
+      };
+      {% if coop %}
+      // A co-op challenge's event: a choice is a vote, and the scene waits for {{ partner|escapejs }}'s before going on.
+      const voteUrl = "{% url 'weiss:arcade_coop_event_vote' %}";
+      const csrf = form.elements.csrfmiddlewaretoken.value;
+      const note = (text) => {
+        const prompt = root.querySelector(".vn-prompt");
+        prompt.hidden = false;
+        prompt.textContent = text;
+      };
+      const settle = (data, resolve) => {
+        if (data.over) return location.assign("{% url 'weiss:arcade_challenge' %}");  // the event ended on the other page
+        if (data.decided === null || data.decided === undefined) return false;
+        if (data.flip) {
+          const flip = document.createElement("div");
+          flip.className = "vn-reward";
+          flip.innerHTML = `<p class="vn-reward-kicker">Coin flip</p><p class="vn-reward-name">You chose differently</p><p class="vn-reward-text">The coin decided.</p>`;
+          root.querySelector(".vn-stage").appendChild(flip);
+          setTimeout(() => flip.remove(), 1800);
+        }
+        resolve(data.decided);
+        return true;
+      };
+      options.decide = (step, at, visit, i) => new Promise((resolve) => {
+        note("Waiting for {{ partner|escapejs }} to choose…");
+        const body = new URLSearchParams({ key: scene.key, step: at, visit, option: i });
+        fetch(voteUrl, { method: "POST", headers: { "X-CSRFToken": csrf }, body }).then((r) => r.json()).then((data) => {
+          if (settle(data, resolve)) return;
+          const poll = setInterval(() => {
+            fetch(`${voteUrl}?${new URLSearchParams({ key: scene.key, step: at, visit })}`).then((r) => r.json())
+              .then((data) => { if (settle(data, resolve)) clearInterval(poll); }).catch(() => {});
+          }, 1500);
+        });
       });
+      {% endif %}
+      const player = new ScenePlayer(root, scene, options);
       player.start();
     });
   </script>

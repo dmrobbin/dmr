@@ -1460,6 +1460,8 @@
       const trial = arcade.challenge;
       if (!trial.going) return `<button type="button" data-act='{"type":"challenge_leave"}'>See how it ended</button>`;
       const deck = `<button type="button" class="game-over-end" data-act='{"type":"challenge_leave"}' title="Open packs, claim rewards and change your deck, then come back for the fight">${trial.rewards ? "Rewards, packs &amp; deck" : "Packs &amp; deck"}</button>`;
+      // In co-op the path goes on, win or lose: back to it, to vote on the next floor with your partner.
+      if (arcade.coop) return `<button type="button" data-act='{"type":"challenge_leave"}' title="Open packs, claim rewards and change your deck, and vote on where to go next">Back to the path</button>`;
       if (!over.won) return `<button type="button" data-act='{"type":"arcade_retry"}'>Fight again</button>${deck}`; // a second chance
       // An infinite challenge's next fight is chosen on its path, with the packs and rewards there too.
       if (arcade.defeated) return `<button type="button" data-act='{"type":"challenge_leave"}' title="Open packs, claim rewards and change your deck, then choose who to fight next">Choose your next fight</button>`;
@@ -1502,7 +1504,8 @@
           <p class="game-over-reason">${reason}</p>
           ${over.score ? scoreLines(over.score) : ""}
           ${arcade && arcade.challenge && over.won ? `<p class="game-over-arcade">${prize ? "" : `Won: ${esc(arcade.challenge.won)} · `}${arcade.challenge.packs} packs to open</p>` : ""}
-          ${arcade && arcade.challenge && !over.won ? `<p class="game-over-arcade">${arcade.challenge.going ? `A second chance: you can fight again${arcade.challenge.lives ? ` (${arcade.challenge.lives} more left)` : ""}.` : "The challenge is over."}</p>` : ""}
+          ${arcade && arcade.challenge && !over.won && !arcade.coop ? `<p class="game-over-arcade">${arcade.challenge.going ? `A second chance: you can fight again${arcade.challenge.lives ? ` (${arcade.challenge.lives} more left)` : ""}.` : "The challenge is over."}</p>` : ""}
+          ${arcade && arcade.coop && !over.won ? `<p class="game-over-arcade">${arcade.challenge && arcade.challenge.going ? `Lost games: ${arcade.coop.losses} of ${arcade.coop.limit}, yours and ${esc(arcade.coop.partner)}'s together.` : `That was the last loss: the co-op challenge is over.`}</p>` : ""}
           ${arcade ? `<p class="game-over-arcade">${arcade.cleared ? `🏆 ${esc(arcade.scenario)} cleared!` : over.won ? `Up next: ${fightOf()}` : `${esc(arcade.scenario)}: ${fightOf()}`}${arcade.score ? ` · run score ${arcade.score}` : ""}</p>` : ""}
           ${over.won && prize ? prizeSlotHtml(prize) : ""}
           <p class="game-over-status" data-game-over-status></p>

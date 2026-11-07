@@ -50,6 +50,27 @@
     <p class="muted small">As saved: Hard from floor {{ hard_from }}. A change applies to fights from now on, including in runs under way.</p>
   </section>
 
+  <section class="cpu-section">
+    <h2>Co-op</h2>
+    <p class="muted small">Two players' infinite challenge, played together: each opens their own packs into a pool they share, and fights
+      their own CPU on every floor. Every lost game, either player's, counts towards the loss limit, and reaching it ends the challenge.
+      The tiers and event chance above apply to co-op too. Changes apply to co-op challenges started from now on.</p>
+    <label class="infinite-number">Loss limit
+      <input type="number" name="coop_loss_limit" min="1" max="{{ max_coop_losses }}" value="{{ coop_losses }}" required>
+      <span class="muted small">Lost games, both players' together, that end the challenge.</span>
+    </label>
+    <label class="infinite-number">Starting packs, each
+      <input type="number" name="coop_start_packs" min="0" max="{{ max_start_packs }}" value="{{ coop_start_packs }}" required>
+    </label>
+    <div class="infinite-loadout">
+      {% for buff in coop_loadout %}
+        <label class="infinite-number">{{ buff.name }}, each
+          <input type="number" name="coop_loadout_{{ buff.id }}" min="0" max="{{ max_loadout }}" value="{{ buff.count }}" required>
+        </label>
+      {% endfor %}
+    </div>
+  </section>
+
   <p><button type="submit" class="button-small">Save infinite challenge settings</button></p>
   <p class="muted small">
     {% if infinite %}Last saved {{ infinite.updated|date:"j M Y, H:i" }}{% if infinite.updated_by %} by {{ infinite.updated_by.username }}{% endif %}.{% else %}Not set yet: these are the defaults.{% endif %}

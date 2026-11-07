@@ -1,0 +1,26 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Co-op invite{% endblock %}
+
+{% block content %}
+  <h1>Arcade Mode</h1>
+  {% include "weiss/arcade_tabs.html" with current="challenge" %}
+  <section class="challenge-run">
+    <h2>{{ pair.host.username }}'s co-op challenge</h2>
+    {% if mine %}
+      <p class="small">This is your co-op challenge. <a href="{% url 'weiss:arcade_challenge' %}">Back to it</a>.</p>
+    {% elif pair.status != "waiting" %}
+      <p class="empty">{% if pair.status == "active" %}Someone has joined this co-op challenge already.{% else %}This co-op challenge is over.{% endif %}</p>
+    {% else %}
+      <p class="small">{{ pair.host.username }} wants you as their partner in an infinite challenge. You each open your own packs into a pool you share,
+        build your own deck from it, and fight your own CPU on every floor. You vote on the path and on events together.
+        Every lost game, yours or theirs, counts: {{ pair.loss_limit }} and it's over.</p>
+      <p class="muted small">You start with {{ packs }} pack{{ packs|pluralize }}{% if extras %} and {{ extras }} specialty pack{{ extras|pluralize }}{% endif %}.</p>
+      {% if busy %}
+        <p class="small panel-error">You have a challenge of your own under way. Finish or end it on the <a href="{% url 'weiss:arcade_challenge' %}">Challenge</a> tab first, then come back to this link.</p>
+      {% else %}
+        <form method="post">{% csrf_token %}<button type="submit" class="button-small">Join as {{ pair.host.username }}'s partner</button></form>
+      {% endif %}
+    {% endif %}
+  </section>
+{% endblock %}

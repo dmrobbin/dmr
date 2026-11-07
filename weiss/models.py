@@ -373,6 +373,9 @@ class ChallengeSettings(models.Model):
     start_packs = models.PositiveSmallIntegerField(default=20, help_text="Packs an infinite challenge starts with")
     loadout = models.JSONField(default=dict, blank=True, help_text="Specialty packs it starts with besides, to claim: {buff id: how many} (see challenge.LOADOUT_BUFFS)")
     tier_floors = models.JSONField(default=list, blank=True, help_text="How many floors each tier before Hard lasts: [Easy, Standard, Tough]; empty for the defaults")
+    coop_loss_limit = models.PositiveSmallIntegerField(default=3, help_text="Lost games a co-op challenge can take, both players' together, before it ends")
+    coop_start_packs = models.PositiveSmallIntegerField(default=20, help_text="Packs each player of a co-op challenge starts with")
+    coop_loadout = models.JSONField(default=dict, blank=True, help_text="Specialty packs each player of a co-op challenge starts with besides: {buff id: how many}")
     updated = models.DateTimeField(auto_now=True)
     updated_by = models.ForeignKey("auth.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
 
@@ -382,6 +385,43 @@ class ChallengeSettings(models.Model):
 
     def __str__(self):
         return "Infinite challenge settings"
+
+
+def new_coop_token():
+    return secrets.token_urlsafe(24)
+
+
+class CoopRun(models.Model):
+    """Two players' infinite challenge, played together (see weiss.coop). Each has their own ChallengeRun, with its
+    own packs, rewards, deck and fights; this holds what they share: the pool their packs open into, the path, the
+    votes on where it goes and the lost games, theirs together, that end it at loss_limit."""
+
+    class Status(models.TextChoices):
+        WAITING = "waiting", "Waiting for a partner"
+        ACTIVE = "active", "In progress"
+        LOST = "lost", "Lost"
+
+    host = models.ForeignKey("auth.User", on_delete=models.CASCADE, related_name="coop_hosted")
+    guest = models.ForeignKey("auth.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="coop_joined")
+    invite_token = models.CharField(max_length=64, unique=True, default=new_coop_token, editable=False)
+    pool = models.JSONField(default=dict, help_text="{card id: copies} pulled from both players' packs")
+    path = models.JSONField(default=dict, blank=True, help_text="The path, as a ChallengeRun's (see weiss.challenge), shared; with each "
+                            "player's progress and their votes (see weiss.coop)")
+    losses = models.PositiveSmallIntegerField(default=0, help_text="Lost games so far, both players' together")
+    loss_limit = models.PositiveSmallIntegerField(default=3, help_text="Lost games that end it, as staff had it set when it started")
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.WAITING)
+    version = models.PositiveIntegerField(default=0, help_text="Goes up on every change, so both players' pages can poll cheaply")
+    started = models.DateTimeField(auto_now_add=True)
+    finished = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-started", "-pk"]
+
+    def __str__(self):
+        return f"{self.host} and {self.guest or '(open seat)'} ({self.status})"
+
+    def partner_of(self, user):
+        return self.guest if user.pk == self.host_id else self.host
 
 
 class ChallengeRun(models.Model):
@@ -414,6 +454,8 @@ class ChallengeRun(models.Model):
     deck_snapshot = models.JSONField(default=list, blank=True, help_text="The deck as it was at its last win and at the end: [[card id, copies]], for the leaderboard, kept if the deck goes")
     path = models.JSONField(default=dict, blank=True, help_text="An infinite challenge's path: {floors: [[CPU id]], picks: [node chosen on each floor]} (see weiss.challenge)")
     arcade_run =models.ForeignKey(ArcadeRun, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    coop = models.ForeignKey(CoopRun, null=True, blank=True, on_delete=models.SET_NULL, related_name="runs",
+                             help_text="The co-op challenge this is one player's half of: its pool and path are shared there")
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIVE)
     started = models.DateTimeField(auto_now_add=True)
     finished = models.DateTimeField(null=True, blank=True)

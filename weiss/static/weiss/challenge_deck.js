@@ -1,48 +1,96 @@
-// A challenge's deck builder: − / + change the deck on the page (never past what was pulled), the bar keeps
-// count of the deck as it is, and saving posts the whole deck as {card id: copies}. The filters above it (name, text,
-// trait, colors, level, cost, type, rarity, set, in the deck or not) and the sort work on the page, so nothing unsaved
-// is lost to a reload.
+// A challenge's deck builder: − / + change the deck on the page (never past what was pulled, or in co-op, past what
+// the partner's deck leaves: a card they have every copy of is greyed out), and the deck is listed on the right as
+// the card lists' side panel lists one, with the same checks. Solo, saving posts the whole deck as {card id: copies}.
+// In co-op (data-live) each change is saved as it's made, the partner's deck is listed on the left, and the page
+// polls for the partner's changes, so both players always see the whole pool and both decks. The filters above it
+// (name, text, trait, colors, level, cost, type, rarity, set, in the deck or not) and the sort work on the page, so
+// nothing unsaved is lost to a reload.
 (() => {
   const form = document.querySelector("[data-challenge-deck]");
   if (!form) return;
   const tiles = [...form.querySelectorAll(".pool-card")];
+  const byCard = new Map(tiles.map((tile) => [tile.dataset.card, tile]));
   const size = Number(form.dataset.deckSize);
   const climaxTarget = Number(form.dataset.climaxes);
+  const groups = JSON.parse(document.getElementById("deck-groups").textContent);
+  const live = "live" in form.dataset;
   const COPY_LIMIT = 4;
+  const POLL_MS = 3000;
   let dirty = false;
 
+  const esc = (text) => String(text ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
   const count = (tile) => Number(tile.dataset.inDeck);
+  const theirs = (tile) => Number(tile.dataset.theirs || 0);
 
   function set(tile, n) {
     n = Math.max(0, Math.min(n, Number(tile.dataset.pulled)));
     tile.dataset.inDeck = n;
     tile.querySelector("[data-count]").textContent = n;
     tile.classList.toggle("in-deck", n > 0);
+    tile.classList.toggle("taken", Number(tile.dataset.pulled) === 0); // a co-op partner's deck has every copy
     tile.querySelector('[data-delta="-1"]').disabled = n === 0;
     tile.querySelector('[data-delta="1"]').disabled = n >= Number(tile.dataset.pulled);
   }
 
+  // A deck's cards listed as the card lists' side panel lists them: level, picture, name and number, and copies.
+  function entry(tile, copies, controls) {
+    const d = tile.dataset;
+    const level = d.level === "climax" ? `<span class="panel-level climax" title="Climax">CX</span>`
+      : `<span class="panel-level" title="${d.level === "" ? "No level" : `Level ${esc(d.level)}`}">${d.level === "" ? "–" : esc(d.level)}</span>`;
+    const picture = tile.querySelector(".pool-picture");
+    const img = tile.querySelector("img");
+    const name = `<a href="${esc(picture.getAttribute("href"))}" data-card-popup="${esc(picture.dataset.cardPopup)}" class="panel-entry-name">${esc(d.name)}</a>`;
+    const qty = controls
+      ? `<span class="qty-controls"><button type="button" data-side-delta="-1" data-card="${esc(d.card)}" aria-label="One fewer ${esc(d.name)}">−</button><span class="qty">${copies}</span>`
+        + `<button type="button" data-side-delta="1" data-card="${esc(d.card)}" aria-label="One more ${esc(d.name)}"${copies >= Number(d.pulled) ? " disabled" : ""}>+</button></span>`
+      : `<span class="qty-controls"><span class="qty">×${copies}</span></span>`;
+    return `<li>${level}<a href="${esc(picture.getAttribute("href"))}" data-card-popup="${esc(picture.dataset.cardPopup)}" class="panel-thumb" tabindex="-1" aria-hidden="true">`
+      + `${img ? `<img src="${esc(img.getAttribute("src"))}" alt="" loading="lazy">` : ""}</a>${name}<span class="muted small">${esc(d.serial)}</span>${qty}</li>`;
+  }
+
+  // In the order the page came in: level, then type, then number.
+  const listed = (copiesOf) => tiles.filter((tile) => copiesOf(tile) > 0);
+
   function summarize() {
-    const total = tiles.reduce((sum, tile) => sum + count(tile), 0);
-    const groups = { climax: 0, 0: 0, 1: 0, 2: 0, 3: 0 };
+    const mine = listed(count);
+    const total = mine.reduce((sum, tile) => sum + count(tile), 0);
     const byName = {};
     const free = new Set(); // names whose card says a deck can have any number of them
-    for (const tile of tiles) {
-      if (tile.dataset.level in groups) groups[tile.dataset.level] += count(tile);
+    for (const tile of mine) {
       byName[tile.dataset.name] = (byName[tile.dataset.name] || 0) + count(tile);
       if ("unlimited" in tile.dataset) free.add(tile.dataset.name);
     }
+    const over = Object.entries(byName).filter(([name, n]) => n > COPY_LIMIT && !free.has(name)).map(([name]) => name);
+    const climaxes = mine.filter((tile) => tile.dataset.level === "climax").reduce((sum, tile) => sum + count(tile), 0);
     form.querySelector("[data-deck-total]").textContent = `${total} / ${size} cards`;
-    form.querySelector("[data-deck-groups]").textContent =
-      `Climaxes ${groups.climax} / ${climaxTarget} · Level 0: ${groups[0]} · 1: ${groups[1]} · 2: ${groups[2]} · 3: ${groups[3]}`;
     const warnings = [];
     if (total > size) warnings.push(`More than ${size} cards`);
     else if (total < size) warnings.push(`${size - total} short of a full deck`);
-    if (groups.climax !== climaxTarget) warnings.push(`${groups.climax} climaxes, not ${climaxTarget}`);
-    const over = Object.entries(byName).filter(([name, n]) => n > COPY_LIMIT && !free.has(name)).map(([name]) => name);
+    if (climaxes !== climaxTarget) warnings.push(`${climaxes} climaxes, not ${climaxTarget}`);
     if (over.length) warnings.push(`more than ${COPY_LIMIT} of ${over.join(", ")}`);
     form.querySelector("[data-deck-warnings]").textContent = warnings.join(" · ");
-    form.querySelector('button[type="submit"]').disabled = total > size;
+    const save = form.querySelector('button[type="submit"]');
+    if (save) save.disabled = total > size;
+
+    // The deck on the right, with the card lists' checks: rules go red when broken, the level spread amber when off.
+    const sideTotal = document.querySelector("[data-side-total]");
+    sideTotal.textContent = total;
+    sideTotal.parentElement.className = `deck-total${total > size ? " bad" : total === size ? " good" : ""}`;
+    document.querySelector("[data-side-groups]").innerHTML = groups.map((group) => {
+      const n = mine.filter((tile) => group.levels.includes(tile.dataset.level)).reduce((sum, tile) => sum + count(tile), 0);
+      const state = n === group.target ? "good" : group.required ? "bad" : "suggest";
+      return `<li class="${state}"><span>${esc(group.label)}${group.required ? "" : ' <span class="deck-hint">suggested</span>'}</span><span><strong>${n}</strong> / ${group.target}</span></li>`;
+    }).join("") + `<li class="${over.length ? "bad" : "good"}"><span>Max ${COPY_LIMIT} of a card</span><span><strong>${over.length ? `${over.length} over` : "OK"}</strong></span></li>`;
+    document.querySelector("[data-side-entries]").innerHTML = mine.map((tile) => entry(tile, count(tile), true)).join("");
+    document.querySelector("[data-side-empty]").hidden = mine.length > 0;
+
+    const partner = document.querySelector("[data-partner-entries]");
+    if (partner) {
+      const theirDeck = listed(theirs);
+      partner.innerHTML = theirDeck.map((tile) => entry(tile, theirs(tile), false)).join("");
+      document.querySelector("[data-partner-total]").textContent = theirDeck.reduce((sum, tile) => sum + theirs(tile), 0);
+      document.querySelector("[data-partner-empty]").hidden = theirDeck.length > 0;
+    }
   }
 
   const filters = document.querySelector("[data-pool-filters]");
@@ -63,7 +111,7 @@
       const ok = has(d.name, words("name")) && has(d.text, words("text")) && has(d.traits, words("trait"))
         && (!colors.length || colors.includes(d.color)) && (!level || d.level === level) && (!cost || d.cost === cost)
         && (!type || d.type === type) && (!rarity || d.rarity === rarity) && (!set || d.set === set)
-        && (!show || (show === "deck") === (count(tile) > 0));
+        && (!show || (show === "theirs" ? theirs(tile) > 0 : show === "free" ? count(tile) < Number(d.pulled) : (show === "deck") === (count(tile) > 0)));
       tile.hidden = !ok;
       if (ok) visible += 1;
     }
@@ -88,21 +136,87 @@
     grid.append(...order);
   }
 
+  const deckNow = () => {
+    const deck = {};
+    for (const tile of tiles) if (count(tile)) deck[tile.dataset.card] = count(tile);
+    return deck;
+  };
+
+  // Co-op: the server's word on both decks and the pool. A card the page doesn't have yet (packs just opened) needs
+  // the page again, which loses nothing, as every change is saved already.
+  function catchUp(state) {
+    const pool = state.pool || {};
+    if (Object.keys(pool).some((pk) => !byCard.has(String(pk)))) {
+      if (!pending && !saving) location.reload();
+      return;
+    }
+    for (const tile of tiles) {
+      const pk = tile.dataset.card;
+      const total = Number(pool[pk] || 0);
+      const partner = Number((state.theirs || {})[pk] || 0);
+      tile.dataset.theirs = partner;
+      tile.dataset.pulled = Math.max(0, total - partner);
+      const info = tile.querySelector(".pool-theirs");
+      if (info) info.innerHTML = `${partner ? `<strong>${partner}</strong> in ${esc(form.dataset.partner || "your partner")}'s deck · ` : ""}${total} in the pool`;
+      if (!pending && !saving) set(tile, Number((state.mine || {})[pk] || 0));
+      else set(tile, count(tile));
+      tile.querySelector(".pool-count .muted").textContent = ` / ${tile.dataset.pulled}`;
+    }
+    summarize();
+    filter();
+  }
+
+  let pending = null;
+  let saving = false;
+  const savedNote = document.querySelector("[data-deck-saved]");
+
+  // Co-op: save a moment after the last change, so a run of clicks is one save.
+  function saveSoon() {
+    clearTimeout(pending);
+    if (savedNote) savedNote.textContent = "Saving…";
+    pending = setTimeout(() => {
+      pending = null;
+      saving = true;
+      const body = new FormData(form);
+      body.set("deck", JSON.stringify(deckNow()));
+      fetch(form.action || location.href, { method: "POST", body, headers: { Accept: "application/json" } })
+        .then((r) => r.json())
+        .then((state) => {
+          saving = false;
+          if (savedNote) {
+            savedNote.textContent = state.error || "Saved.";
+            savedNote.classList.toggle("panel-error", Boolean(state.error));
+          }
+          catchUp(state); // refused (their partner took the copies first)? Back to what's saved.
+        })
+        .catch(() => {
+          saving = false;
+          if (savedNote) savedNote.textContent = "Couldn't save: check your connection.";
+        });
+    }, 400);
+  }
+
+  function change(tile, n) {
+    set(tile, n);
+    summarize();
+    if (live) saveSoon();
+    else dirty = true;
+  }
+
   tiles.forEach((tile) => set(tile, count(tile)));
   summarize();
-  form.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-delta]");
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-delta], [data-side-delta]");
     if (button) {
-      const tile = button.closest(".pool-card");
-      set(tile, count(tile) + Number(button.dataset.delta));
-      dirty = true;
-      summarize();
+      const tile = button.dataset.sideDelta ? byCard.get(button.dataset.card) : button.closest(".pool-card");
+      if (tile) change(tile, count(tile) + Number(button.dataset.delta || button.dataset.sideDelta));
     }
     if (event.target.closest("[data-deck-clear]")) {
       tiles.forEach((tile) => set(tile, 0));
-      dirty = true;
       summarize();
       filter();
+      if (live) saveSoon();
+      else dirty = true;
     }
   });
   filters.addEventListener("input", filter);
@@ -110,11 +224,22 @@
   filters.addEventListener("submit", (event) => event.preventDefault());
   filters.addEventListener("reset", () => setTimeout(() => { sort(); filter(); })); // once the fields have been reset
   filter();
-  form.addEventListener("submit", () => {
-    const deck = {};
-    for (const tile of tiles) if (count(tile)) deck[tile.dataset.card] = count(tile);
-    form.querySelector("[data-deck-field]").value = JSON.stringify(deck);
+  form.addEventListener("submit", (event) => {
+    if (live) {
+      event.preventDefault();
+      return;
+    }
+    form.querySelector("[data-deck-field]").value = JSON.stringify(deckNow());
     dirty = false;
   });
-  window.addEventListener("beforeunload", (event) => { if (dirty) event.preventDefault(); });
+  window.addEventListener("beforeunload", (event) => { if (dirty || pending || saving) event.preventDefault(); });
+
+  if (live) {
+    setInterval(() => {
+      if (document.hidden || pending || saving) return;
+      fetch(form.dataset.stateUrl, { headers: { Accept: "application/json" } }).then((r) => (r.ok ? r.json() : null)).then((state) => {
+        if (state && !pending && !saving) catchUp(state);
+      }).catch(() => {});
+    }, POLL_MS);
+  }
 })();

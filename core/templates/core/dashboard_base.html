@@ -24,13 +24,10 @@
         {% if user.is_staff %}<a href="{% url 'weiss:cpu_home' %}"{% if cpu_tab == "cpu_" %} class="current" aria-current="page"{% endif %}>CPU creation</a>{% endif %}
         {% endwith %}
       </nav>
-      {# An infinite challenge in one click; with a challenge under way, the way back to it (weiss.context_processors). #}
+      {# The challenge menu, to start one; with a challenge under way, the way back to it (weiss.context_processors). #}
       {% if challenge_open %}
         {% if infinite_start %}
-          <form class="nav-infinite" method="post" action="{% url 'weiss:arcade_challenge_start' %}">
-            {% csrf_token %}<input type="hidden" name="kind" value="infinite">
-            <button type="submit" title="Start an infinite challenge: every CPU, for as long as you keep winning">∞ Infinite challenge</button>
-          </form>
+          <a class="nav-infinite" href="{% url 'weiss:arcade_challenge' %}" title="Choose a challenge to start">∞ Infinite challenge</a>
         {% else %}
           <a class="nav-infinite" href="{% url 'weiss:arcade_challenge' %}" title="Back to your challenge">∞ Your challenge</a>
         {% endif %}

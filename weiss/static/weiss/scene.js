@@ -4,7 +4,10 @@
      player.start();            // from the top, or player.start("label")
 
    onStep(step, state) is called as each step begins, onChoice(step, option) when the player picks, and
-   onEnd(state) when the scene ends; state is { line, flags: [...], choices: [{ line, prompt, text }], buffs }.
+   onEnd(state) when the scene ends. With decide(step, at, visit, i), a choice is a vote: the option clicked (i) is
+   sent, and the scene waits on the promise it returns for the option decided (a co-op challenge's event, where both
+   players vote; visit counts how often that choice has come up, so one that comes round again is a new vote).
+   state is { line, flags: [...], choices: [{ line, prompt, text }], buffs }.
    buffs are those the scene gave (weiss.buffs), [{ step, option, buff, name }]: step is where in scene.steps,
    and option which of its options (null for a plain "give"), for the server to check them against the scene.
    fights are the fights it picked ("fight"), [{ step, option, who, name }], the same way: the last one counts.
@@ -96,6 +99,7 @@
       this.choices = [];
       this.buffs = [];
       this.fights = [];
+      this.visits = {};
       this.stage.querySelectorAll(".vn-reward").forEach((card) => card.remove());
       this.line = 0;
       this.typing = null;
@@ -276,13 +280,10 @@
           ? `<button type="button" class="vn-option vn-buff" data-i="${i}"><span class="vn-key">${i + 1}</span><span>${esc(this.fill(option.text))}<span class="vn-buff-text"><strong>${esc(option.give_name)}:</strong> ${esc(option.give_text)}</span></span></button>`
           : `<button type="button" class="vn-option" data-i="${i}"><span class="vn-key">${i + 1}</span>${esc(this.fill(option.text))}</button>`).join("");
       options.querySelector(".vn-option").focus({ preventScroll: true });
+      const visit = this.visits[at] = (this.visits[at] || 0) + 1;
       return new Promise((resolve) => {
-        options.onclick = (event) => {
-          const button = event.target.closest(".vn-option");
-          if (!button) return;
-          const i = Number(button.dataset.i);
+        const chosen = (i) => {
           const option = step.options[i];
-          options.onclick = null;
           this.choicesEl.hidden = true;
           this.choices.push({ line: step.line, prompt: step.prompt, text: offer ? option.name : option.text });
           if (offer) this.gain(at, i, option.buff, option.name);
@@ -294,6 +295,16 @@
           if (this.options.onChoice) this.options.onChoice(step, option);
           this.stage.focus({ preventScroll: true });
           resolve();
+        };
+        options.onclick = (event) => {
+          const button = event.target.closest(".vn-option");
+          if (!button) return;
+          const i = Number(button.dataset.i);
+          options.onclick = null;
+          if (!this.options.decide) return chosen(i);
+          button.classList.add("voted");
+          options.querySelectorAll(".vn-option").forEach((other) => { other.disabled = true; });
+          this.options.decide(step, at, visit, i).then(chosen);
         };
       });
     }

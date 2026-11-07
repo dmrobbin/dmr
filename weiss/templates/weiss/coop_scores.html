@@ -1,0 +1,32 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Co-op leaderboard{% endblock %}
+
+{% block content %}
+  <h1>Arcade Mode</h1>
+  {% include "weiss/arcade_tabs.html" with current="coop" %}
+  <p class="muted small">The best co-op challenges: two players on one path, each scoring every CPU they beat. A pair's score is both of theirs added up.
+    Their decks are as they were at each player's last win, or the end.</p>
+  {% if pairs %}
+    <div class="cpu-table-wrap">
+      <table class="cpu-table leaderboard">
+        <thead><tr><th scope="col">#</th><th scope="col">Players</th><th scope="col">Score</th><th scope="col">Wins</th><th scope="col" class="leaderboard-wide">Floor</th><th scope="col" class="leaderboard-wide">Played</th><th scope="col">Decks</th></tr></thead>
+        <tbody>
+          {% for pair in pairs %}
+            <tr{% if pair.mine %} class="leaderboard-mine"{% endif %}>
+              <td class="leaderboard-rank">{% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}{{ forloop.counter }}{% endif %}</td>
+              <td><span class="leaderboard-pair">{% for run in pair.halves %}<span class="leaderboard-player">{% include "weiss/avatar.html" with avatar=run.avatar name=run.user.username size="" %} <strong>{{ run.user.username }}</strong></span>{% endfor %}{% if pair.status == "active" %} <span class="deck-tag" title="This co-op challenge is still going">Going</span>{% endif %}</span></td>
+              <td class="leaderboard-score">{{ pair.score }}</td>
+              <td>{{ pair.wins }}</td>
+              <td class="leaderboard-wide">{{ pair.floor }}</td>
+              <td class="muted small leaderboard-wide">{{ pair.started|date:"j M Y" }}</td>
+              <td><a href="{% url 'weiss:arcade_coop_deck' pair.pk %}">View decks</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">No scores yet. Beat a CPU in a co-op challenge to set one.</p>
+  {% endif %}
+{% endblock %}

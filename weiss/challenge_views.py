@@ -1,31 +1,27 @@
 """Challenge mode's pages, on the Arcade tab: starting a challenge, opening its packs, building its deck from
 them, fighting its run, and keeping or discarding the deck at the end. See weiss.challenge."""
 import json
-from functools import wraps
+import random
 
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from core.access import weiss_access_required
 
-from . import arcade, buffs, challenge, packs
+from . import arcade, buffs, challenge, coop, packs
 from .lists import DECK_GROUPS, DECK_SIZE, unlimited
-from .models import ArcadeRun, ArcadeScenario, Card, ChallengeRun, CpuProfile, GameRoom, NarrativeChallenge
-from .play import deal, not_begun, seat_cpu
+from .models import ArcadeRun, ArcadeScenario, Card, ChallengeRun, CoopRun, CpuProfile, GameRoom, NarrativeChallenge, PlayerProfile
+from .play import deal, not_begun, seat_cpu, snapshot_groups
 
 
 def challenge_access(view):
-    @wraps(view)
-    @weiss_access_required
-    def wrapper(request, *args, **kwargs):
-        if challenge.STAFF_ONLY and not request.user.is_staff:
-            raise PermissionDenied
-        return view(request, *args, **kwargs)
-    return wrapper
+    """Every Weiss player's: what they can start is up to challenge.can_start."""
+    return weiss_access_required(view)
 
 
 def narratives():
@@ -43,8 +39,11 @@ def challenge_home(request):
     run = challenge.current(request.user)
     if not run:
         return render(request, "weiss/challenge.html", {"scenarios": arcade.ready_scenarios(), "narratives": narratives(),
+                                                        "staff_kinds": challenge.can_start(request.user, ChallengeRun.Kind.FREE),
+                                                        "coop_open": challenge.can_start(request.user, challenge.COOP),
                                                         "start_packs": challenge.START_PACKS, "narrative_packs": challenge.NARRATIVE_START_PACKS,
                                                         "infinite_packs": challenge.infinite_start_packs(), "infinite_extras": len(challenge.loadout()),
+                                                        "coop_packs": coop.start_packs(), "coop_extras": len(coop.loadout()), "coop_losses": coop.loss_limit(),
                                                         "win_reward": challenge.win_reward_text(ChallengeRun.Kind.FREE),
                                                         "narrative_win_reward": challenge.win_reward_text(ChallengeRun.Kind.NARRATIVE),
                                                         "cpu_count": len(challenge.opponents())})
@@ -59,7 +58,25 @@ def challenge_home(request):
         "mods": [buffs.BUFFS[buff_id] for buff_id in buffs.fight_mods(run)],
         "event_due": bool((run.path or {}).get("event")),
         "last_set": last_set(run),
+        "coop": coop_context(request, run),
     })
+
+
+def coop_context(request, run):
+    """What a co-op challenge's page shows of the pair: the partner (or the invite link, until there's one) and the
+    lost games so far."""
+    if not run.coop_id:
+        return None
+    pair = run.coop
+    partner = pair.partner_of(request.user)
+    profile = partner and PlayerProfile.objects.filter(user=partner, avatar_card__isnull=False).first()
+    mine = challenge.floor_at(run)
+    theirs = coop.floor_of(run.path, partner.pk) if partner else mine
+    return {"run": pair, "partner": partner, "partner_avatar": profile and profile.avatar, "hosting": pair.host_id == request.user.pk,
+            "limit_range": range(pair.loss_limit), "floor": mine + 1, "partner_floor": theirs + 1, "behind": theirs < mine, "ahead": theirs > mine,
+            "decided": decided_said(run, partner), "status_url": reverse("weiss:arcade_coop_status"),
+            "invite_url": request.build_absolute_uri(reverse("weiss:arcade_coop_join", args=[pair.invite_token]))
+            if pair.status == CoopRun.Status.WAITING else None}
 
 
 def last_set(run):
@@ -100,6 +117,8 @@ def path_view(run):
             return ("picked" if at < len(picks) else "open") if i in open_now else "closed"
         return "reach" if i in reach[f] else "ahead"
 
+    key = f"floor:{at}"  # in co-op, where the pair's votes on this floor are
+    my_vote, their_vote = (coop.vote_of(run, key), coop.partner_vote(run, key)) if run.coop_id else (None, None)
     view_floors, lines = [], []
     for f in shown:
         nodes = []
@@ -107,7 +126,8 @@ def path_view(run):
             if pk is None:  # a gap in the path
                 continue
             x, y = place(f, i)
-            nodes.append({"cpu": cpus.get(pk), "event": pk == challenge.EVENT, "node": i, "x": x, "y": y, "state": state(f, i)})
+            nodes.append({"cpu": cpus.get(pk), "event": pk == challenge.EVENT, "node": i, "x": x, "y": y, "state": state(f, i),
+                          "my_vote": f == at and my_vote == i, "their_vote": f == at and their_vote == i})
         view_floors.append({"number": f + 1, "tier": challenge.tier(f), "current": f == at, "nodes": nodes})
         if f + 1 < last:
             for i, led in enumerate(challenge.links(floors[f], floors[f + 1])):
@@ -116,7 +136,8 @@ def path_view(run):
                     taken = f + 1 < len(picks) and picks[f] == i and picks[f + 1] == j
                     onward = f + 1 >= at and j in reach[f + 1] and (i in reach[f] if f >= at else picks[f] == i)
                     lines.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2, "state": "taken" if taken else "onward" if onward else "faint"})
-    return {"floors": view_floors[::-1], "lines": lines, "defeated": defeated, "height": len(shown) * 9}
+    return {"floors": view_floors[::-1], "lines": lines, "defeated": defeated, "height": len(shown) * 9, "coop": bool(run.coop_id),
+            "voting": bool(run.coop_id) and at >= len(picks)}
 
 
 def reward_context(run):
@@ -161,7 +182,7 @@ def challenge_exchange(request):
     run = challenge.current(request.user)
     reward = run and buffs.reward_of(run, request.GET.get("key", ""))
     card = Card.objects.filter(pk=buffs.number(request.GET, "give")).first()
-    if not reward or not card or str(card.pk) not in run.pool:
+    if not reward or not card or str(card.pk) not in coop.available(run):
         messages.error(request, "Choose a card from your pool to swap.")
         return redirect("weiss:arcade_challenge")
     choices = buffs.exchange_choices(card)
@@ -174,6 +195,9 @@ def challenge_exchange(request):
 @challenge_access
 @require_POST
 def challenge_start(request):
+    kind = request.POST.get("kind", ChallengeRun.Kind.FREE)
+    if not challenge.can_start(request.user, kind):
+        raise PermissionDenied
     if challenge.current(request.user):
         messages.error(request, "Finish your challenge first, or reset it.")
         return redirect("weiss:arcade_challenge")
@@ -183,6 +207,12 @@ def challenge_start(request):
             messages.error(request, "That challenge isn't available right now.")
             return redirect("weiss:arcade_challenge")
         challenge.start(request.user, ChallengeRun.Kind.NARRATIVE, narrative.scenario, narrative)
+    elif request.POST.get("kind") == "coop":
+        if not challenge.opponents():
+            messages.error(request, "There are no CPUs to fight yet.")
+            return redirect("weiss:arcade_challenge")
+        coop.start(request.user)
+        messages.success(request, "Co-op challenge started: send your partner the invite link.")
     elif request.POST.get("kind") == ChallengeRun.Kind.INFINITE:
         if not challenge.opponents():
             messages.error(request, "There are no CPUs to fight yet.")
@@ -231,7 +261,8 @@ def challenge_opened(request):
 
 @challenge_access
 def challenge_deck(request):
-    """Build the deck from the cards pulled. The page edits it in place and posts the whole deck to save it."""
+    """Build the deck from the cards pulled. The page edits it in place and posts the whole deck to save it; in co-op
+    it saves each change as it's made (asking for JSON back: what went wrong, if anything, and the deck state)."""
     run = challenge.current(request.user)
     if not run or not run.deck:
         return redirect("weiss:arcade_challenge")
@@ -241,16 +272,19 @@ def challenge_deck(request):
             problem = challenge.save_deck(run, copies) if isinstance(copies, dict) else "That isn't a deck."
         except (ValueError, TypeError):
             problem = "That isn't a deck."
+        if "application/json" in request.headers.get("Accept", ""):
+            return JsonResponse({"error": problem, **deck_state(request.user)})
         if problem:
             messages.error(request, problem)
         else:
             messages.success(request, "Deck saved.")
         return redirect("weiss:arcade_challenge_deck")
     cards = []
-    for card, pulled, in_deck in challenge.pool_cards(run):
+    for card, pulled, in_deck, theirs in challenge.deck_pool(run):
         card.image_src = reverse("weiss:card_image", args=[card.pk])
         rarity = packs.rarity_of(card)
-        cards.append({"card": card, "pulled": pulled, "in_deck": in_deck, "rarity": rarity, "grade": packs.grade_of(rarity), "unlimited": unlimited(card)})
+        cards.append({"card": card, "pulled": pulled, "in_deck": in_deck, "theirs": theirs, "total": pulled + theirs,
+                      "rarity": rarity, "grade": packs.grade_of(rarity), "unlimited": unlimited(card)})
     climaxes = next(target for _, target, required, _ in DECK_GROUPS if required)
     # What the filters offer: only what's in the pool (as the set pages do, see views.card_browser).
     pool = [item["card"] for item in cards]
@@ -262,8 +296,42 @@ def challenge_deck(request):
         "rarities": [rarity for rarity, _ in sorted({(item["rarity"], item["grade"]) for item in cards}, key=lambda pair: (-pair[1], pair[0]))],
         "sets": sorted({(card.expansion_id, card.expansion) for card in pool}, key=lambda pair: pair[1]),
     }
+    partner = run.coop.partner_of(request.user) if run.coop_id else None
+    # Which of the pool's levels (as the page has them, see data-level) count towards each of the deck rules' groups.
+    levels = (["climax"], ["0"], ["1"], ["2", "3"])
+    groups = [{"label": label, "target": target, "required": required, "levels": counted}
+              for (label, target, required, _), counted in zip(DECK_GROUPS, levels)]
     return render(request, "weiss/challenge_deck.html", {"run": run, "cards": cards, "deck_size": DECK_SIZE, "climax_target": climaxes,
-                                                         "options": options})
+                                                         "options": options, "partner": partner, "deck_groups": groups,
+                                                         "state_url": reverse("weiss:arcade_challenge_deck_state") if partner else ""})
+
+
+def deck_state(user):
+    """Both decks and the pool as they are now, for a co-op deck builder to catch up with: {"mine", "theirs", "pool"},
+    each {card id: copies}."""
+    run = challenge.current(user)
+    if not run:
+        return {"mine": {}, "theirs": {}, "pool": {}}
+    rows = challenge.deck_pool(run)
+    return {"mine": {card.pk: mine for card, _, mine, _ in rows if mine}, "theirs": {card.pk: theirs for card, _, _, theirs in rows if theirs},
+            "pool": {card.pk: usable + theirs for card, usable, _, theirs in rows}}
+
+
+@challenge_access
+def challenge_deck_state(request):
+    """A co-op deck builder polls this, to show the partner's changes as they make them (see deck_state)."""
+    return JsonResponse(deck_state(request.user))
+
+
+@challenge_access
+def coop_partner_deck(request):
+    """A co-op partner's deck as it is now, to look at: only they can change it."""
+    run = challenge.current(request.user)
+    partner_run = run and coop.partner_run(run)
+    if not partner_run:
+        return redirect("weiss:arcade_challenge")
+    groups, total = snapshot_groups(challenge.deck_snapshot(partner_run.deck) if partner_run.deck else [])
+    return render(request, "weiss/coop_partner_deck.html", {"run": run, "partner": partner_run.user, "groups": groups, "total": total})
 
 
 @challenge_access
@@ -287,8 +355,14 @@ def challenge_fight(request):
     if heading != challenge.EVENT and (not run.deck or not run.deck.entries.exists()):  # an event needs no deck
         messages.error(request, "Your deck is empty: open some packs and build it first.")
         return redirect("weiss:arcade_challenge")
+    if endless and run.coop_id and run.coop.status == CoopRun.Status.WAITING:
+        messages.error(request, "The path waits for you both: your partner hasn't joined yet.")
+        return redirect("weiss:arcade_challenge")
     if endless:
         chosen = challenge.pick(run, node)
+        if not chosen and run.coop_id and coop.vote_of(run, f"floor:{challenge.floor_at(run)}") is not None:
+            messages.info(request, "Your vote is in. The path goes on once your partner has voted too.")
+            return redirect("weiss:arcade_challenge")
         if not chosen:
             messages.error(request, "Choose who to fight next on the path." if options else "There are no CPUs to fight right now.")
             return redirect("weiss:arcade_challenge")
@@ -355,7 +429,35 @@ def challenge_event(request):
     payload = run and (run.path or {}).get("event")
     if not payload or run.status != ChallengeRun.Status.ACTIVE:
         return redirect("weiss:arcade_challenge")
-    return render(request, "weiss/challenge_event.html", {"run": run, "payload": payload, "player_name": request.user.username})
+    partner = run.coop.partner_of(request.user) if run.coop_id else None
+    return render(request, "weiss/challenge_event.html", {"run": run, "payload": payload, "player_name": request.user.username,
+                                                          "coop": bool(run.coop_id), "partner": partner and partner.username})
+
+
+@challenge_access
+def coop_event_vote(request):
+    """A co-op challenge's event, played by both players: POST a vote on one of its choices (step, visit, option);
+    GET whether a choice (step, visit) is decided. Either way: {"decided": the option, or null}, with "flip" once
+    it's decided whether a coin flip settled it."""
+    run = challenge.current(request.user)
+    if not run or not run.coop_id or not (run.path or {}).get("event") or run.status != ChallengeRun.Status.ACTIVE:
+        return JsonResponse({"error": "There's no event under way.", "over": True}, status=400)
+    data = request.POST if request.method == "POST" else request.GET
+    try:
+        step, visit = int(data.get("step", "")), int(data.get("visit", ""))
+        if data.get("key") != run.path["event"]["key"]:
+            return JsonResponse({"error": "That event is over.", "over": True}, status=400)
+        if request.method == "POST":
+            with transaction.atomic():
+                run = ChallengeRun.objects.select_for_update().get(pk=run.pk)
+                with coop.shared(run):
+                    decided = coop.event_vote(run, step, visit, int(data.get("option", "")), random)
+        else:
+            decided = coop.event_decided(run, step, visit)
+    except ValueError as error:
+        return JsonResponse({"error": str(error) if str(error)[:1].isupper() else "That isn't a choice."}, status=400)
+    last = (run.path or {}).get("decided") or {}
+    return JsonResponse({"decided": decided, "flip": decided is not None and last.get("key") == f"event:{step}:{visit}" and last.get("flip")})
 
 
 @challenge_access
@@ -385,7 +487,9 @@ def challenge_event_done(request):
 @require_POST
 def challenge_reset(request):
     run = challenge.current(request.user)
-    if run:
+    if run and run.coop_id:
+        messages.error(request, "A co-op challenge can't start again: end it, and start a new one together.")
+    elif run:
         challenge.reset(run)
         messages.success(request, f"{run.name} starts again: {challenge.start_packs(run.kind)} new packs, and a new deck.")
     return redirect("weiss:arcade_challenge")
@@ -396,7 +500,13 @@ def challenge_reset(request):
 def challenge_end(request):
     """Give up a challenge in progress; the deck can still be kept."""
     run = challenge.current(request.user)
-    if run and run.status == ChallengeRun.Status.ACTIVE:
+    if run and run.coop_id and run.coop.status == CoopRun.Status.WAITING:
+        coop.cancel(run.coop)  # nobody joined: as if it never was
+    elif run and run.coop_id and run.status == ChallengeRun.Status.ACTIVE:
+        challenge.stop_fighting(run)
+        coop.end(run.coop)  # for both: the partner's game under way is left to finish, but counts for nothing
+        messages.info(request, "The co-op challenge is over, for you both.")
+    elif run and run.status == ChallengeRun.Status.ACTIVE:
         challenge.give_up(run)
     return redirect("weiss:arcade_challenge")
 
@@ -420,4 +530,59 @@ def challenge_close(request):
         messages.success(request, "The deck is in your lists now.")
         return redirect("weiss:lists")
     messages.success(request, "The challenge deck is gone.")
+    return redirect("weiss:arcade_challenge")
+
+
+def decided_said(run, partner):
+    """How the pair's last vote on the path went, for the co-op panel: "Floor 3: you both chose Rapi", or with a coin flip."""
+    decided = (run.path or {}).get("decided")
+    if not decided or not decided["key"].startswith("floor:") or not partner:
+        return None
+    floor = int(decided["key"][6:])
+    floors = (run.path or {}).get("floors", [])
+
+    def named(node):
+        pk = floors[floor][node] if floor < len(floors) and node < len(floors[floor]) else None
+        return "the event" if pk == challenge.EVENT else getattr(CpuProfile.objects.filter(pk=pk).first(), "name", "?")
+    if not decided["flip"]:
+        return f"Fight {floor + 1}: you both chose {named(decided['choice'])}."
+    votes = decided["votes"]
+    return (f"Fight {floor + 1}: you chose {named(votes[str(run.user_id)])}, {partner.username} chose {named(votes[str(partner.pk)])}. "
+            f"The coin flip went to {named(decided['choice'])}.")
+
+
+@challenge_access
+def coop_status(request):
+    """How far a co-op challenge has got, for its pages to poll: they reload when the version changes."""
+    run = challenge.current(request.user)
+    return JsonResponse({"version": run.coop.version if run and run.coop_id else None})
+
+
+@challenge_access
+def coop_join(request, token):
+    """A co-op challenge's invite link: who it's from, and joining it as their partner."""
+    pair = get_object_or_404(CoopRun.objects.select_related("host", "guest"), invite_token=token)
+    if not challenge.can_start(request.user, challenge.COOP):
+        raise PermissionDenied
+    if request.method == "POST":
+        try:
+            coop.join(pair, request.user)
+        except ValueError as error:
+            messages.error(request, str(error))
+            return redirect("weiss:arcade_coop_join", token=token)
+        messages.success(request, f"You've joined {pair.host.username}'s co-op challenge.")
+        return redirect("weiss:arcade_challenge")
+    mine = pair.host_id == request.user.pk or pair.guest_id == request.user.pk
+    return render(request, "weiss/coop_join.html", {"pair": pair, "mine": mine, "busy": not mine and challenge.current(request.user) is not None,
+                                                    "packs": coop.start_packs(), "extras": len(coop.loadout())})
+
+
+@challenge_access
+@require_POST
+def coop_cancel(request):
+    """The host calls off a co-op challenge nobody has joined yet."""
+    pair = coop.waiting_for(request.user)
+    if pair:
+        coop.cancel(pair)
+        messages.success(request, "The co-op challenge is called off.")
     return redirect("weiss:arcade_challenge")

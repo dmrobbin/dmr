@@ -8,10 +8,28 @@
 {% block content %}
   <p class="back"><a href="{% url 'weiss:arcade_challenge' %}">&larr; {{ run.name }} challenge</a></p>
   <h1>Build your deck</h1>
-  <p class="muted small">Only the cards you've pulled can go in, as many copies as you pulled. Click a card's picture to read it.</p>
+  {% if partner %}
+    <p class="muted small">The pool is yours and {{ partner.username }}'s: every card either of you has pulled is here. A copy in one deck can't go in the other,
+      so a card {{ partner.username }}'s deck has every copy of is greyed out until they take some out. <a href="{% url 'weiss:arcade_coop_partner_deck' %}">See {{ partner.username }}'s deck</a>.
+      Click a card's picture to read it.</p>
+  {% else %}
+    <p class="muted small">Only the cards you've pulled can go in, as many copies as you pulled. Click a card's picture to read it.</p>
+  {% endif %}
   {% if not cards %}
     <p class="empty">You haven't pulled any cards yet. <a href="{% url 'weiss:arcade_challenge' %}">Open some packs first.</a></p>
   {% else %}
+  {# The partner's deck on the left (co-op), the pool in the middle, and this player's deck on the right, as the card lists' side panel shows a deck. #}
+  <div class="deck-builder{% if partner %} with-partner{% endif %}">
+    {% if partner %}
+      <aside class="list-panel deck-side partner-side" aria-label="{{ partner.username }}'s deck">
+        <h2>{{ partner.username }}'s deck</h2>
+        <p class="muted small panel-label">Only they can change it. It updates as they build.</p>
+        <p class="deck-total"><strong data-partner-total>0</strong> / {{ deck_size }} cards</p>
+        <ul class="panel-entries" data-partner-entries></ul>
+        <p class="empty small" data-partner-empty>Nothing in it yet.</p>
+      </aside>
+    {% endif %}
+    <div class="deck-builder-pool">
     {# The set pages' filters, on the page: the pool's small, and the deck's changes aren't saved yet (challenge_deck.js). #}
     <form class="lead-filters pool-filters" data-pool-filters role="search" aria-label="Filter your pool">
       <label>Name <input type="search" name="name" placeholder="e.g. Rapi"></label>
@@ -43,7 +61,7 @@
         </label>
       {% endif %}
       <label>Show
-        <select name="show"><option value="">Every card</option><option value="deck">In the deck</option><option value="out">Not in the deck</option></select>
+        <select name="show"><option value="">Every card</option><option value="deck">In the deck</option><option value="out">Not in the deck</option>{% if partner %}<option value="theirs">In {{ partner.username }}'s deck</option><option value="free">Free to use</option>{% endif %}</select>
       </label>
       <label>Sort
         <select name="sort">
@@ -57,22 +75,23 @@
       <button type="reset" class="button-small secondary" data-pool-clear>Clear</button>
     </form>
     <p class="lead-count small" data-pool-count aria-live="polite"></p>
-    <form method="post" class="challenge-deck" data-challenge-deck data-deck-size="{{ deck_size }}" data-climaxes="{{ climax_target }}">
+    <form method="post" class="challenge-deck" data-challenge-deck data-deck-size="{{ deck_size }}" data-climaxes="{{ climax_target }}"
+          {% if partner %}data-live data-state-url="{{ state_url }}" data-partner="{{ partner.username }}"{% endif %}>
       {% csrf_token %}
       <input type="hidden" name="deck" data-deck-field>
       <div class="challenge-deck-bar">
         <div class="challenge-deck-summary" aria-live="polite">
           <strong data-deck-total></strong>
-          <span class="small" data-deck-groups></span>
           <span class="small panel-error" data-deck-warnings></span>
+          {% if partner %}<span class="small muted" data-deck-saved>Each change is saved as you make it.</span>{% endif %}
         </div>
         <button type="button" class="button-small secondary" data-deck-clear>Empty the deck</button>
-        <button type="submit" class="button-small">Save deck</button>
+        {% if not partner %}<button type="submit" class="button-small">Save deck</button>{% endif %}
         <a class="button-small secondary" href="{% url 'weiss:arcade_challenge' %}">Back to the challenge</a>
       </div>
       <ul class="pool-grid">
         {% for item in cards %}{% with card=item.card %}
-          <li class="pool-card" data-card="{{ card.pk }}" data-name="{{ card.name }}" data-pulled="{{ item.pulled }}" data-in-deck="{{ item.in_deck }}"
+          <li class="pool-card" data-card="{{ card.pk }}" data-name="{{ card.name }}" data-pulled="{{ item.pulled }}" data-in-deck="{{ item.in_deck }}" data-theirs="{{ item.theirs }}"
               data-level="{% if card.card_type|lower == 'climax' %}climax{% else %}{{ card.level|default_if_none:'' }}{% endif %}"
               data-text="{{ card.description }}" data-traits="{{ card.traits }}" data-color="{{ card.color }}" data-cost="{{ card.cost|default_if_none:'' }}"
               data-power="{{ card.power|default_if_none:'' }}" data-type="{{ card.card_type|lower }}" data-rarity="{{ item.rarity }}" data-grade="{{ item.grade }}"
@@ -84,10 +103,23 @@
               <span class="pool-count"><strong data-count>{{ item.in_deck }}</strong><span class="muted"> / {{ item.pulled }}</span></span>
               <button type="button" class="qty-button" data-delta="1" aria-label="One more {{ card.name }}">+</button>
             </span>
+            {% if partner %}<span class="pool-theirs small">{% if item.theirs %}<strong>{{ item.theirs }}</strong> in {{ partner.username }}'s deck · {% endif %}{{ item.total }} in the pool</span>{% endif %}
           </li>
         {% endwith %}{% endfor %}
       </ul>
     </form>
+    </div>
+    <aside class="list-panel deck-side" aria-label="Your deck">
+      <h2>Your deck</h2>
+      <div class="deck-checks">
+        <p class="deck-total" aria-live="polite"><strong data-side-total>0</strong> / {{ deck_size }} cards</p>
+        <ul class="deck-groups" data-side-groups></ul>
+      </div>
+      <ul class="panel-entries" data-side-entries></ul>
+      <p class="empty small" data-side-empty>Use the + buttons on cards to add them.</p>
+    </aside>
+  </div>
+  {{ deck_groups|json_script:"deck-groups" }}
   {% endif %}
   <dialog class="card-popup" data-card-popup-dialog aria-label="Card details">
     <form method="dialog"><button class="card-popup-close" aria-label="Close">×</button></form>

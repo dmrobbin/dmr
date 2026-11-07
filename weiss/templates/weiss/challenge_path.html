@@ -3,6 +3,7 @@
   <h3 id="spire-title">The path</h3>
   <p class="muted small">Choose who to fight next. Each space only leads to the ones beside it on the next floor, so a side you leave behind takes going through the middle to get back to: the lit paths show where you can go from here.
     A <strong>?</strong> is an event: no fight, but something happens, mostly a bargain with a price.</p>
+  {% if path.voting %}<p class="small"><strong>You choose together:</strong> vote for where to go next. Once you've both voted it's decided: if you disagree, a coin flip picks one of your two votes.</p>{% endif %}
   <div class="spire-map" style="height: {{ path.height }}rem">
     <svg class="spire-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
       {% for line in path.lines %}<line class="{{ line.state }}" x1="{{ line.x1 }}" y1="{{ line.y1 }}" x2="{{ line.x2 }}" y2="{{ line.y2 }}" vector-effect="non-scaling-stroke"/>{% endfor %}
@@ -11,6 +12,7 @@
       <p class="spire-floor{% if floor.current %} current{% endif %}" style="top: {{ floor.nodes.0.y }}%">Fight {{ floor.number }}<span>{{ floor.tier }}</span></p>
       {% for node in floor.nodes %}
         <div class="spire-node {{ node.state }}" style="left: {{ node.x }}%; top: {{ node.y }}%">
+          {% if node.my_vote or node.their_vote %}<span class="spire-votes">{% if node.my_vote %}<span class="deck-tag">Your vote</span>{% endif %}{% if node.their_vote %}<span class="deck-tag">{{ coop.partner.username }}'s vote</span>{% endif %}</span>{% endif %}
           {% if node.state == "open" or node.state == "picked" %}
             <form method="post" action="{% url 'weiss:arcade_challenge_fight' %}">
               {% csrf_token %}
@@ -19,13 +21,13 @@
                 <button type="submit" class="spire-node-face" title="An event: something happens, mostly a bargain with a price">
                   <span class="avatar spire-portrait spire-event" aria-hidden="true">?</span>
                   <span class="spire-name">Event</span>
-                  <span class="spire-act">{% if event_due %}Back to the event{% else %}Enter{% endif %}</span>
+                  <span class="spire-act">{% if event_due %}Back to the event{% elif path.voting %}Vote{% else %}Enter{% endif %}</span>
                 </button>
               {% else %}
                 <button type="submit" class="spire-node-face"{% if not deck_total %} disabled title="Your deck needs cards first"{% endif %}>
                   {% include "weiss/avatar.html" with avatar=node.cpu.avatar name=node.cpu.name size="spire-portrait" %}
                   <span class="spire-name">{{ node.cpu.name }}</span>
-                  <span class="spire-act">{% if room %}Back to the fight{% else %}Fight{% endif %}</span>
+                  <span class="spire-act">{% if path.voting %}Vote{% elif room %}Back to the fight{% else %}Fight{% endif %}</span>
                 </button>
               {% endif %}
             </form>
@@ -39,7 +41,7 @@
             <span class="spire-node-face">
               {% include "weiss/avatar.html" with avatar=node.cpu.avatar name=node.cpu.name|default:"?" size="spire-portrait" %}
               <span class="spire-name">{{ node.cpu.name|default:"Gone" }}</span>
-              {% if node.state == "won" %}<span class="spire-act">Defeated</span>{% endif %}
+              {% if node.state == "won" %}<span class="spire-act">{% if path.coop %}Done{% else %}Defeated{% endif %}</span>{% endif %}
             </span>
           {% endif %}
         </div>

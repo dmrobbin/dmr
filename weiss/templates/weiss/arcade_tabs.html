@@ -1,7 +1,8 @@
-{# The Arcade tab's own pages. Expects current: "runs", "challenge", "scores" or "infinite". #}
+{# The Arcade tab's own pages. Expects current: "runs", "challenge", "scores", "infinite" or "coop". #}
 <nav class="arcade-tabs" aria-label="Arcade">
   <a href="{% url 'weiss:arcade' %}"{% if current == "runs" %} class="current" aria-current="page"{% endif %}>Runs</a>
   {% if challenge_open %}<a href="{% url 'weiss:arcade_challenge' %}"{% if current == "challenge" %} class="current" aria-current="page"{% endif %}>Challenge</a>{% endif %}
   <a href="{% url 'weiss:arcade_scores' %}"{% if current == "scores" %} class="current" aria-current="page"{% endif %}>High scores</a>
   <a href="{% url 'weiss:arcade_infinite' %}"{% if current == "infinite" %} class="current" aria-current="page"{% endif %}>∞ Leaderboard</a>
+  <a href="{% url 'weiss:arcade_coop_scores' %}"{% if current == "coop" %} class="current" aria-current="page"{% endif %}>∞ Co-op leaderboard</a>
 </nav>

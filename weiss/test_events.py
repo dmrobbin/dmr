@@ -3,7 +3,7 @@ from unittest import mock
 
 from django.urls import reverse
 
-from . import buffs, challenge, play, scenes
+from . import buffs, challenge, coop, play, scenes
 from .event_scenes import STARTERS
 from .models import ChallengeRun, ChallengeSettings, GameRoom, Scene
 from .test_arcade import player
@@ -152,7 +152,8 @@ class EventTests(ArcadeSetup):
     def save_settings(self, **changes):
         """The infinite settings form as it is, with these changes, posted."""
         form = {"event_percent": "60", "start_packs": "20", **{f"loadout_{buff}": "0" for buff in challenge.LOADOUT_BUFFS},
-                **{f"tier_{i}": str(count) for i, (count, _) in enumerate(challenge.INFINITE_MODELS)}}
+                **{f"tier_{i}": str(count) for i, (count, _) in enumerate(challenge.INFINITE_MODELS)},
+                "coop_loss_limit": "3", "coop_start_packs": "20", **{f"coop_loadout_{buff}": "0" for buff in challenge.LOADOUT_BUFFS}}
         return self.client.post(reverse("weiss:cpu_infinite_settings"), {**form, **{k: str(v) for k, v in changes.items()}})
 
     def test_staff_set_what_a_challenge_starts_with(self):
@@ -182,6 +183,16 @@ class EventTests(ArcadeSetup):
         self.save_settings(tier_0=1, tier_1=0, tier_2=2)
         self.assertEqual([challenge.tier(f) for f in range(4)], ["Easy", "Tough", "Tough", "Hard"])
         self.assertContains(self.client.get(reverse("weiss:cpu_home") + "?tab=infinite"), "Hard from floor 4")
+
+    def test_staff_set_the_coop_challenge(self):
+        self.assertEqual((coop.loss_limit(), coop.start_packs(), coop.loadout()), (coop.LOSS_LIMIT, coop.START_PACKS, []))
+        self.assertContains(self.client.get(reverse("weiss:cpu_home") + "?tab=infinite"), f'name="coop_loss_limit" min="1" max="20" value="{coop.LOSS_LIMIT}"')
+        self.save_settings(coop_loss_limit=5, coop_start_packs=10, coop_loadout_level_pack=2)
+        self.assertEqual((coop.loss_limit(), coop.start_packs(), coop.loadout()), (5, 10, ["level_pack", "level_pack"]))
+        self.assertEqual((challenge.infinite_start_packs(), challenge.loadout()), (20, []))  # solo's are apart
+        for bad in ({"coop_loss_limit": 0}, {"coop_loss_limit": 21}, {"coop_loadout_wild_pack": 11}, {"coop_start_packs": 0, "coop_loadout_level_pack": 0}):
+            self.save_settings(**bad)
+            self.assertEqual(coop.loss_limit(), 5)
 
     def test_staff_set_how_often_the_path_offers_an_event(self):
         self.event_scene()

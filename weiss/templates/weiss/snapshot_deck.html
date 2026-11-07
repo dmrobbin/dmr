@@ -1,4 +1,4 @@
-{# A kept deck, by group (see play.snapshot_groups), with a popup for reading a card. #}
+{# A kept deck, by group (see play.snapshot_groups), with a popup for reading a card (left out with no_popup, for a page showing more than one). #}
   {% for group in groups %}
     <section class="infinite-deck-group">
       <h2>{{ group.label }} <span class="muted small">{{ group.count }}</span></h2>
@@ -12,10 +12,12 @@
       </ul>
     </section>
   {% empty %}
-    <p class="empty">This run's deck wasn't kept.</p>
+    <p class="empty">{{ empty_text|default:"This run's deck wasn't kept." }}</p>
   {% endfor %}
+  {% if not no_popup %}
   <dialog class="card-popup" data-card-popup-dialog aria-label="Card details">
     <form method="dialog"><button class="card-popup-close" aria-label="Close">×</button></form>
     <div data-card-popup-body></div>
   </dialog>
   {% load static %}<script src="{% static 'weiss/lists.js' %}" defer></script>
+  {% endif %}

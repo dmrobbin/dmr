@@ -7,9 +7,15 @@
   {% include "weiss/arcade_tabs.html" with current="challenge" %}
 
   {% if not run %}
+    {% if staff_kinds %}
     <p class="muted small">Build a deck from scratch: open {{ start_packs }} packs{% if narrative_packs != start_packs %} ({{ narrative_packs }} in a narrative challenge){% endif %}, make a deck from only the cards you pull, and fight through an arcade list with it.
       Each win brings {{ win_reward }}{% if narrative_win_reward != win_reward %} ({{ narrative_win_reward }} in a narrative challenge){% endif %} to improve your deck; one loss ends the challenge. At the end, keep the deck or let it go.</p>
+    {% else %}
+    <p class="muted small">Build a deck from scratch: open packs, make a deck from only the cards you pull, and see how far up the path it can take you.
+      One loss ends the challenge. At the end, keep the deck or let it go.</p>
+    {% endif %}
     <div class="challenge-choices">
+      {% if staff_kinds %}
       <section class="challenge-choice">
         <h2>Free challenge</h2>
         <p class="muted small">Open each pack from any set you like.</p>
@@ -39,6 +45,7 @@
           </form>
         {% empty %}<p class="empty">No narrative challenges yet.</p>{% endfor %}
       </section>
+      {% endif %}
       <section class="challenge-choice">
         <h2>Infinite challenge</h2>
         <p class="muted small">A path of CPUs that never ends: choose who to fight from two or three at a time, and see where each one leads.
@@ -52,6 +59,22 @@
           </form>
         {% else %}<p class="empty">No CPUs to fight yet.</p>{% endif %}
       </section>
+      {% if coop_open %}
+      <section class="challenge-choice">
+        <h2>Co-op challenge</h2>
+        <p class="muted small">The infinite challenge, with a friend. You each open your own packs into a pool you share, build your own deck from it
+          (a copy in one deck can't go in the other), and fight your own CPU on every floor. You vote on where the path goes, and on every choice an event offers;
+          when you disagree, a coin decides. Every lost game counts against you both: {{ coop_losses }} and it's over.
+          You each start with {{ coop_packs }} pack{{ coop_packs|pluralize }}{% if coop_extras %} and {{ coop_extras }} specialty pack{{ coop_extras|pluralize }}{% endif %}.</p>
+        {% if cpu_count %}
+          <form method="post" action="{% url 'weiss:arcade_challenge_start' %}">
+            {% csrf_token %}
+            <input type="hidden" name="kind" value="coop">
+            <button type="submit" class="button-small">Start, and invite a partner</button>
+          </form>
+        {% else %}<p class="empty">No CPUs to fight yet.</p>{% endif %}
+      </section>
+      {% endif %}
     </div>
 
   {% else %}
@@ -71,6 +94,7 @@
         <div><dt>Deck</dt><dd>{{ deck_total }} / {{ deck_size }}</dd></div>
         <div><dt>Fights won</dt><dd>{% if run.kind == "infinite" %}{{ arcade_run.position|default:0 }}{% elif arcade_run %}{{ arcade_run.position }} of {{ arcade_run.total }}{% else %}0 of {{ lineup|length }}{% endif %}</dd></div>
       </dl>
+      {% if coop %}{% include "weiss/coop_panel.html" %}{% endif %}
       {% if lineup %}
         <ol class="arcade-lineup">
           {% for fighter in lineup %}
@@ -134,10 +158,17 @@
         </div>
         {% if path %}{% include "weiss/challenge_path.html" %}{% endif %}
         <div class="challenge-danger">
+          {% if coop.invite_url %}
+            <form method="post" action="{% url 'weiss:arcade_coop_cancel' %}" onsubmit="return confirm('Call off this co-op challenge? Your packs and deck for it will be gone.')">
+              {% csrf_token %}<button type="submit" class="button-small secondary">Call it off</button></form>
+          {% elif not coop %}
           <form method="post" action="{% url 'weiss:arcade_challenge_reset' %}" onsubmit="return confirm('Start {{ run.name|escapejs }} again from nothing? Your deck and pulled cards will be gone.')">
             {% csrf_token %}<button type="submit" class="button-small secondary">Reset challenge</button></form>
-          <form method="post" action="{% url 'weiss:arcade_challenge_end' %}" onsubmit="return confirm('End this challenge here? You can still keep the deck.')">
+          {% endif %}
+          {% if not coop.invite_url %}
+          <form method="post" action="{% url 'weiss:arcade_challenge_end' %}" onsubmit="return confirm('{% if coop %}End the co-op challenge here, for you both? You can each still keep your deck.{% else %}End this challenge here? You can still keep the deck.{% endif %}')">
             {% csrf_token %}<button type="submit" class="button-small danger">End challenge</button></form>
+          {% endif %}
         </div>
       {% else %}
         <section class="challenge-keep">
@@ -151,8 +182,10 @@
           </form>
           <form method="post" action="{% url 'weiss:arcade_challenge_close' %}" onsubmit="return confirm('Delete the challenge deck?')">
             {% csrf_token %}<button type="submit" class="button-small secondary">Discard it</button></form>
+          {% if not coop %}
           <form method="post" action="{% url 'weiss:arcade_challenge_reset' %}" onsubmit="return confirm('Discard this deck and start {{ run.name|escapejs }} again?')">
             {% csrf_token %}<button type="submit" class="link-button">Or try {{ run.name }} again from the start</button></form>
+          {% endif %}
         </section>
       {% endif %}
     </section>

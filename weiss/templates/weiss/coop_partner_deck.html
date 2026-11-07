@@ -1,0 +1,11 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}{{ partner.username }}'s deck{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:arcade_challenge' %}">&larr; {{ run.name }}</a> · <a href="{% url 'weiss:arcade_challenge_deck' %}">Your deck</a></p>
+  <h1>{{ partner.username }}'s deck</h1>
+  <p class="muted small">{{ total }} card{{ total|pluralize }}, as {{ partner.username }} last saved it. Only they can change it: the copies in it are theirs until they take them out.
+    Click a card to read it.</p>
+  {% include "weiss/snapshot_deck.html" with empty_text="Their deck is empty so far." %}
+{% endblock %}

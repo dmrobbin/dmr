@@ -1,0 +1,14 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}{{ pair.host.username }} and {{ pair.guest.username }}'s decks · co-op challenge{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:arcade_coop_scores' %}">&larr; Co-op leaderboard</a></p>
+  <h1>{{ pair.host.username }} and {{ pair.guest.username }}'s decks</h1>
+  <p class="muted small">Score <strong>{{ pair.score }}</strong> · {{ pair.wins }} win{{ pair.wins|pluralize }} · floor {{ pair.floor }} ·
+    {% if pair.status == "active" %}still going, as at each player's last win{% else %}as they ended{% endif %} · {{ pair.started|date:"j M Y" }}. Click a card to read it.</p>
+  {% for deck in decks %}
+    <h2 class="coop-deck-owner">{{ deck.run.user.username }}'s deck <span class="muted small">{{ deck.total }} cards · score {{ deck.score }}</span></h2>
+    {% if forloop.last %}{% include "weiss/snapshot_deck.html" with groups=deck.groups %}{% else %}{% include "weiss/snapshot_deck.html" with groups=deck.groups no_popup=True %}{% endif %}
+  {% endfor %}
+{% endblock %}

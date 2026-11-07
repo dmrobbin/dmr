@@ -16,7 +16,7 @@ import random
 import secrets
 from dataclasses import dataclass
 
-from . import challenge, packs
+from . import challenge, coop, packs
 from .models import Card
 
 TRADE_IN = 5  # cards given up for a pack
@@ -134,6 +134,7 @@ def given(payload, picks):
     return found
 
 
+@coop.sharing
 def grant(run, buff_ids, source="", rng=random):
     """Put these buffs on a challenge: those needing nothing more happen now, the rest wait to be claimed. Returns
     what happened, a line for each that did something the player should hear about (pacts mostly)."""
@@ -153,8 +154,9 @@ def grant(run, buff_ids, source="", rng=random):
             said.append(f"Reforge: {cards_said(lost)} melted down, for {REFORGE_PACKS} packs to open.")
         elif buff_id == "sacrifice":
             in_deck = list(run.deck.entries.values_list("card_id", flat=True)) if run.deck else []
-            pk = rng.choice(in_deck or [int(pk) for pk in run.pool] or [0])
-            copies = run.pool.get(str(pk), 0)
+            usable = coop.available(run)  # in co-op, the partner's deck keeps its copies
+            pk = rng.choice(in_deck or [int(pk) for pk in usable] or [0])
+            copies = usable.get(str(pk), 0)
             if copies:
                 take_from_pool(run, {pk: copies})
             reward("lucky_pack")
@@ -168,7 +170,7 @@ def grant(run, buff_ids, source="", rng=random):
             run.lives = 0
         elif BUFFS.get(buff_id) and BUFFS[buff_id].next_fight:
             run.packs += {"blood_pact": BLOOD_PACKS, "outpaced": OUTPACED_PACKS}.get(buff_id, 0)
-            run.path = {**(run.path or {}), "next": [*fight_mods(run), buff_id]}
+            run.path = {**(run.path or {}), "next": [*fight_mods(run), *([] if buff_id in fight_mods(run) else [buff_id])]}  # once is enough
             said.append(f"{BUFFS[buff_id].name}: {BUFFS[buff_id].description}")
         else:
             reward(buff_id)
@@ -177,10 +179,10 @@ def grant(run, buff_ids, source="", rng=random):
 
 
 def take_spares(run, count, rng=random):
-    """Take up to `count` random cards from the pool that the deck isn't using (copies beyond what it has).
-    Returns {card id: copies taken}."""
+    """Take up to `count` random cards from the pool that the deck isn't using (copies beyond what it has, and in
+    co-op, what the partner's deck has). Returns {card id: copies taken}."""
     in_deck = dict(run.deck.entries.values_list("card_id", "quantity")) if run.deck else {}
-    spares = [int(pk) for pk, n in run.pool.items() for _ in range(n - in_deck.get(int(pk), 0))]
+    spares = [int(pk) for pk, n in coop.available(run).items() for _ in range(n - in_deck.get(int(pk), 0))]
     taken = {}
     for pk in rng.sample(spares, min(count, len(spares))):
         taken[pk] = taken.get(pk, 0) + 1
@@ -217,21 +219,28 @@ def exchange_choices(card):
 
 
 def take_from_pool(run, copies):
-    """Take {card id: copies} out of the pool, and out of the deck too where it no longer has them."""
+    """Take {card id: copies} out of the pool, and out of the deck too where it no longer has them. In co-op, the
+    two decks together can't have more than the pool: this player's gives way first, then the partner's."""
+    other = coop.partner_run(run)
+    decks = [deck for deck in (run.deck, other and other.deck) if deck]
     for pk, n in copies.items():
         left = run.pool.get(str(pk), 0) - n
         if left > 0:
             run.pool[str(pk)] = left
         else:
             run.pool.pop(str(pk), None)
-        if run.deck:
-            entry = run.deck.entries.filter(card_id=pk).first()
-            if entry and entry.quantity > max(left, 0):
-                if left > 0:
-                    entry.quantity = left
-                    entry.save(update_fields=["quantity"])
-                else:
-                    entry.delete()
+        entries = [entry for deck in decks for entry in deck.entries.filter(card_id=pk)]
+        over = sum(entry.quantity for entry in entries) - max(left, 0)
+        for entry in entries:
+            if over <= 0:
+                break
+            cut = min(over, entry.quantity)
+            over -= cut
+            if cut < entry.quantity:
+                entry.quantity -= cut
+                entry.save(update_fields=["quantity"])
+            else:
+                entry.delete()
 
 
 def add_to_pool(run, pk, n):
@@ -267,6 +276,7 @@ def reward_pack(run, buff, data):
     return pool, expansion_id
 
 
+@coop.sharing
 def claim(run, key, data, rng=random):
     """Claim a reward with what the player chose (`data`, as posted). Returns True if packs were opened (to be
     shown being opened). Raises ValueError saying what's wrong; nothing changes then."""
@@ -289,7 +299,7 @@ def claim(run, key, data, rng=random):
         add_to_pool(run, pk, COPIES)
     elif buff.claim == "exchange":
         give, take = Card.objects.filter(pk=number(data, "give")).first(), Card.objects.filter(pk=number(data, "take")).first()
-        if not give or str(give.pk) not in run.pool:
+        if not give or str(give.pk) not in coop.available(run):
             raise ValueError("Choose a card from your pool.")
         if not take or take not in exchange_choices(give):
             raise ValueError("It can only be swapped for another card of its set with the same rarity.")
@@ -298,7 +308,8 @@ def claim(run, key, data, rng=random):
     elif buff.claim == "trade_in":
         # trade-<card id>: how many of that card to give up.
         copies = {int(field[6:]): number(data, field) for field in data if field.startswith("trade-") and field[6:].isdigit() and number(data, field)}
-        if sum(copies.values()) != TRADE_IN or any(n > run.pool.get(str(pk), 0) for pk, n in copies.items()):
+        usable = coop.available(run)
+        if sum(copies.values()) != TRADE_IN or any(n > usable.get(str(pk), 0) for pk, n in copies.items()):
             raise ValueError(f"Choose {TRADE_IN} cards from your pool to give up.")
         take_from_pool(run, copies)
         run.packs += 1

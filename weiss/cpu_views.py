@@ -17,7 +17,7 @@ from django.views.decorators.http import require_POST
 from core import s3
 from core.access import weiss_access_required
 
-from . import abilities, arcade, challenge, cpu, packs, scenes
+from . import abilities, arcade, challenge, coop, cpu, packs, scenes
 from .lists import EXPRESS_PROMPT, SESSION_KEY, deck_checks, sorted_entries
 from .card_images import image_type
 from .event_scenes import STARTERS
@@ -34,6 +34,7 @@ TEXT_FIELDS = ("intro_text", "player_win_text", "player_lose_text", "combo_text"
 MAX_START_PACKS = 60  # the most an infinite challenge can be set to start with
 MAX_LOADOUT = 10  # ...of each specialty pack
 MAX_TIER_FLOORS = 30  # floors a tier of CPU can be set to last
+MAX_COOP_LOSSES = 20  # the most lost games a co-op challenge can be set to take
 
 
 def staff_required(view):
@@ -196,7 +197,10 @@ def cpu_home(request):
                        tiers=[{"index": i, "name": name, "floors": count, "models": " or ".join(m.title() for m in tier_models),
                                "default": challenge.INFINITE_MODELS[i][0]}
                               for i, (name, (count, tier_models)) in enumerate(zip(challenge.INFINITE_TIERS, models))],
-                       hard_from=sum(count for count, _ in models) + 1)
+                       hard_from=sum(count for count, _ in models) + 1,
+                       coop_losses=coop.loss_limit(), max_coop_losses=MAX_COOP_LOSSES, coop_start_packs=coop.start_packs(),
+                       coop_loadout=[{"id": buff, "name": BUFFS[buff].name, "count": (settings.coop_loadout if settings else {}).get(buff, 0)}
+                                     for buff in challenge.LOADOUT_BUFFS])
     return render(request, "weiss/cpu_home.html", context)
 
 
@@ -508,11 +512,15 @@ def infinite_settings(request):
             "start_packs": whole("start_packs", 0, MAX_START_PACKS, "Starting packs"),
             "loadout": {buff: n for buff in challenge.LOADOUT_BUFFS if (n := whole(f"loadout_{buff}", 0, MAX_LOADOUT, BUFFS[buff].name))},
             "tier_floors": [whole(f"tier_{i}", 0, MAX_TIER_FLOORS, f"{name} floors") for i, name in enumerate(challenge.INFINITE_TIERS)],
+            "coop_loss_limit": whole("coop_loss_limit", 1, MAX_COOP_LOSSES, "The co-op loss limit"),
+            "coop_start_packs": whole("coop_start_packs", 0, MAX_START_PACKS, "Co-op starting packs"),
+            "coop_loadout": {buff: n for buff in challenge.LOADOUT_BUFFS
+                             if (n := whole(f"coop_loadout_{buff}", 0, MAX_LOADOUT, f"Co-op {BUFFS[buff].name.lower()}"))},
         }
     except ValueError as error:
         messages.error(request, str(error))
         return back_to("infinite")
-    if not fields["start_packs"] and not fields["loadout"]:
+    if not fields["start_packs"] and not fields["loadout"] or not fields["coop_start_packs"] and not fields["coop_loadout"]:
         messages.error(request, "A challenge needs something to build a deck from: some packs or some specialty packs.")
         return back_to("infinite")
     ChallengeSettings.objects.update_or_create(pk=1, defaults={**fields, "updated_by": request.user})
