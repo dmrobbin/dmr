@@ -450,3 +450,58 @@ class EndingTests(PlayingSetup):
         self.assertContains(decks, "bo's deck")
         self.assertContains(decks, "data-card-popup-dialog", count=1)
         self.assertNotIn(self.fresh(self.staff), challenge.leaderboard())  # not on the solo board
+
+
+class SpectateTests(PlayingSetup):
+    """A player waiting on their partner's game can watch it, seeing what's public and the partner's hand."""
+
+    def setUp(self):
+        super().setUp()
+        self.both_vote_and_fight()
+
+    def test_only_while_waiting_on_the_partner(self):
+        self.assertNotContains(self.as_(self.staff).client.get(reverse("weiss:arcade_challenge")), "Watch bo")
+        page = self.as_(self.staff).client.get(reverse("weiss:arcade_coop_spectate"))
+        self.assertRedirects(page, reverse("weiss:play_room", args=[self.room_of(self.staff).pk]))  # their own fight first
+        self.assertEqual(self.client.get(reverse("weiss:arcade_coop_status")).json()["watchable"], False)
+        self.finish(self.staff, won=True)
+        self.assertContains(self.client.get(reverse("weiss:arcade_challenge")), "Watch bo's game")
+        self.assertEqual(self.client.get(reverse("weiss:arcade_coop_status")).json()["watchable"], True)
+        page = self.client.get(reverse("weiss:arcade_coop_spectate"))
+        self.assertContains(page, "data-spectate")
+        self.assertContains(page, "Watching bo's game")
+        self.assertNotContains(page, "data-chat")
+
+    def test_it_shows_the_partners_hand_and_nothing_hidden(self):
+        self.finish(self.staff, won=True)
+        room = self.room_of(self.bo)
+        bo = room.state["players"][str(self.bo.pk)]
+        face_down = bo["zones"]["hand"].pop()
+        face_down.update(face_down=True)
+        room.state["players"][str(self.bo.pk)]["stage"]["C1"] = face_down
+        room.state["attack"] = {"step": "counter", "counters": ["x"]}
+        room.save()
+        data = self.as_(self.staff).client.get(reverse("weiss:arcade_coop_spectate_state")).json()
+        board = data["board"]
+        self.assertEqual([c["card"] for c in board["me"]["zones"]["hand"]], [c["card"] for c in bo["zones"]["hand"]])
+        self.assertEqual(board["me"]["zones"]["deck"], {"count": len(bo["zones"]["deck"])})
+        self.assertIsNone(board["me"]["stage"]["C1"]["card"])  # face down: not public
+        self.assertIn("count", board["opponent"]["zones"]["hand"])  # the CPU's hand stays hidden
+        self.assertNotIn("counters", board["attack"])
+        self.assertFalse(board["damage_pending"] or board["level_up_pending"] or board["auto_next"])
+        self.assertNotIn("intro", data)
+        version = data["version"]
+        self.assertEqual(self.client.get(reverse("weiss:arcade_coop_spectate_state"), {"v": version}).status_code, 204)
+
+    def test_watching_cant_play(self):
+        self.finish(self.staff, won=True)
+        room = self.room_of(self.bo)
+        response = self.as_(self.staff).client.post(reverse("weiss:play_action", args=[room.pk]), json.dumps({"type": "chat", "text": "hi"}),
+                                                    content_type="application/json")
+        self.assertEqual(response.status_code, 403)
+
+    def test_once_the_partner_has_left_their_game_theres_nothing_to_watch(self):
+        self.finish(self.staff, won=True)
+        self.room_of(self.bo).delete()
+        self.assertEqual(self.as_(self.staff).client.get(reverse("weiss:arcade_coop_spectate_state")).json()["status"], "gone")
+        self.assertRedirects(self.client.get(reverse("weiss:arcade_coop_spectate")), reverse("weiss:arcade_challenge"))

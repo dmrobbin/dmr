@@ -91,7 +91,7 @@
       <dl class="challenge-stats">
         <div><dt>Packs to open</dt><dd>{{ run.packs }}</dd></div>
         <div><dt>Cards pulled</dt><dd>{{ pulled }}</dd></div>
-        <div><dt>Deck</dt><dd>{{ deck_total }} / {{ deck_size }}</dd></div>
+        <div><dt>Deck</dt><dd{% if deck_total > deck_size %} class="panel-error"{% endif %}>{{ deck_total }} / {{ deck_size }}</dd></div>
         <div><dt>Fights won</dt><dd>{% if run.kind == "infinite" %}{{ arcade_run.position|default:0 }}{% elif arcade_run %}{{ arcade_run.position }} of {{ arcade_run.total }}{% else %}0 of {{ lineup|length }}{% endif %}</dd></div>
       </dl>
       {% if coop %}{% include "weiss/coop_panel.html" %}{% endif %}
@@ -161,7 +161,8 @@
                 <button type="submit" class="button-small"{% if not deck_total %} disabled{% endif %}>{% if room %}Back to the fight{% elif arcade_run and arcade_run.position %}Next fight{% else %}Start the run{% endif %}</button>
               </form>
             {% endif %}
-            {% if not deck_total %}<p class="muted small">Your deck needs cards first.</p>{% endif %}
+            {% if not deck_total %}<p class="muted small">Your deck needs cards first.</p>
+            {% elif deck_problem %}<p class="small panel-error">{{ deck_problem }} <a href="{% url 'weiss:arcade_challenge_deck' %}">Edit your deck</a>.</p>{% endif %}
           </section>
         </div>
         {% if path %}{% include "weiss/challenge_path.html" %}{% endif %}

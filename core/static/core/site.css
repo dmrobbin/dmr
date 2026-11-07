@@ -438,6 +438,11 @@ select option { color: var(--text); background: var(--surface); }
 .deck-groups li.good strong { color: var(--good); }
 .deck-groups li.bad strong { color: var(--bad); }
 .deck-groups li.suggest strong { color: var(--suggest); }
+/* A co-op partner watching a game (play.js SPECTATING): nothing that plays is shown or clickable. */
+.spectate-banner { margin: 0 0 .5rem; padding: .5rem .75rem; border: 1px solid var(--accent); border-radius: 8px; background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+.play.spectating [data-act], .play.spectating .hand-actions, .play.spectating .play-buttons, .play.spectating .damage-form,
+.play.spectating .damage-note, .play.spectating [data-rules], .play.spectating [data-more], .play.spectating [data-confirm-climax] { display: none; }
+.play.spectating [data-phase] { pointer-events: none; }
 .deck-colors { list-style: none; margin: .5rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: .3rem; font-size: .8rem; max-width: 22rem; }
 .deck-colors li { display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .5rem; border-radius: 999px; border: 1px solid var(--chip, var(--border)); background: color-mix(in srgb, var(--chip, var(--muted)) 18%, var(--surface)); }
 .deck-colors li::before { content: ""; width: .55rem; height: .55rem; border-radius: 50%; background: var(--chip, var(--muted)); }

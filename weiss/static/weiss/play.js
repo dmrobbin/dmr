@@ -9,6 +9,9 @@
   const ACTION_URL = root.dataset.actionUrl;
   const CSRF = root.dataset.csrf;
   const POLL_MS = Number(root.dataset.pollMs) || 1500; // quicker against a CPU: polling is what moves it
+  // A co-op partner watching this game (challenge_views.coop_spectate): the board from the player's seat, with only
+  // what's public and their hand. Nothing is sent, and the cards and piles can only be looked at.
+  const SPECTATING = "spectate" in root.dataset;
 
   const $ = (sel) => root.querySelector(sel);
   const boardEl = $("[data-board]");
@@ -804,6 +807,7 @@
   }
 
   async function act(action) {
+    if (SPECTATING) return;
     // A card its own text lets us play for free by giving up a character: asks how to pay.
     if (action.type === "move" && !action.free_with && !action.pay_full && (board.free_plays || {})[action.uid]
         && (action.to in board.me.stage || action.to === "resolution" || action.to === "climax")) {
@@ -1353,7 +1357,7 @@
         }
         if (attack.step === "counter") {
           status += board.my_turn ? ` — waiting for ${oppName} to counter…` : " — play a counter from your hand, or:";
-          if (!board.my_turn) buttons = `<button type="button" data-act='{"type":"no_counter"}'>No counter</button>`;
+          if (!board.my_turn) buttons = `${counterHidden === counterKey() ? '<button type="button" data-counter-show>Show counters</button>' : ""}<button type="button" data-act='{"type":"no_counter"}'>No counter</button>`;
         }
       }
       panel.innerHTML = `<p class="attack-title">⚔ Attack phase</p>
@@ -1496,6 +1500,7 @@
   }
 
   function gameOverButtons(over) {
+    if (SPECTATING) return `<a class="button" href="${esc(root.dataset.challengeUrl)}">Back to the challenge</a>`;
     if (!arcade) {
       return `<button type="button" data-act='{"type":"rematch"}'${over.rematch ? " disabled" : ""}>Rematch</button>
       <button type="button" class="game-over-end" data-act='{"type":"end_match"}'>End match</button>`;
@@ -1578,6 +1583,12 @@
       modalEl.hidden = true;
       return;
     }
+    if (SPECTATING) {
+      if (board.reveal && board.reveal.card) return renderReveal();
+      if (modal && (modal.zone || modal.revealed)) return renderPileModal();
+      modalEl.hidden = true;
+      return;
+    }
     if (board.rps) return renderRps();
     if (board.reveal && board.reveal.card) return renderReveal();
     if (modal && modal.confirmClimax) return renderClimaxConfirm();
@@ -1589,11 +1600,17 @@
     if (board.ability && board.ability.mine && board.ability.prompt && board.ability.prompt.kind !== "manual") return renderAbilityPrompt();
     if (modal && modal.abilities) return renderAbilityList();
     if (board.my_turn && board.attack && board.attack.step === "trigger" && board.attack.prompt && !board.ability_show) return renderTriggerPrompt();
+    if (counterDue()) return renderCounterPrompt();
     if (encoreDue()) return renderEncorePrompt();
     if (!modal) {
       modalEl.hidden = true;
       return;
     }
+    renderPileModal();
+  }
+
+  // A pile (or the cards an action revealed) to look through.
+  function renderPileModal() {
     let list;
     let owner = "me";
     if (modal.revealed) {
@@ -1609,7 +1626,7 @@
     modalEl.hidden = false;
     modalEl.innerHTML = `<div class="play-modal-box" role="dialog" aria-label="${esc(modal.title)}">
       <div class="play-modal-head"><h2>${modal.owner && modal.owner !== "me" && board.opponent ? `${whose(board.opponent.name)} ${LABELS[modal.zone].toLowerCase()}` : esc(modal.title)}</h2><button type="button" data-close>Close</button></div>
-      <p class="muted small">${owner === "me" ? "Click a card to move it. Top of the pile first." : "Top of the pile first."}</p>
+      <p class="muted small">${owner === "me" && !SPECTATING ? "Click a card to move it. Top of the pile first." : "Top of the pile first."}</p>
       <div class="play-modal-cards">${list.join("") || '<p class="empty">Empty.</p>'}</div>
     </div>`;
   }
@@ -1838,6 +1855,48 @@
     </div>`;
   }
 
+  // Our counter step, when we hold a counter we can play right now (the server lists them in
+  // attack.counters): it pops up with each of them and the battle as it stands. "Look at the board"
+  // puts it aside for this attack; the attack panel's "Show counters" brings it back.
+  let counterHidden = null;
+  const counterKey = () => board.attack ? `${board.turn_number}:${board.attacks}:${board.attack.uid}` : null;
+  const counterDue = () => !board.my_turn && board.attack && board.attack.step === "counter" && (board.attack.counters || []).length > 0
+    && !board.ability && !board.ability_show && counterHidden !== counterKey();
+  const BACKUP_POWER = /Backup\s*(\d+)/i;
+
+  function renderCounterPrompt() {
+    const attack = board.attack;
+    const options = board.me.zones.hand.filter((c) => attack.counters.includes(c.uid));
+    const power = (card) => card && ((board.stats || {})[card.uid] || {}).power;
+    const attacker = Object.values(board.opponent.stage).find((c) => c && c.uid === attack.uid);
+    const defender = attack.kind === "front" ? board.me.stage[attack.target] : null;
+    let battle = "";
+    if (attacker && defender) {
+      const theirs = power(attacker) ?? (cards[attacker.card] || {}).power;
+      const mine = (power(defender) ?? (cards[defender.card] || {}).power) + (attack.backup || 0);
+      battle = `<p class="small">${esc((cards[attacker.card] || {}).name || "Their attacker")} <b>${esc(theirs)}</b> vs your
+        ${esc((cards[defender.card] || {}).name || "character")} <b>${esc(mine)}</b>${attack.backup ? ` (backup +${esc(attack.backup)})` : ""}.</p>`;
+    }
+    const rows = options.map((c) => {
+      const backup = ((cards[c.card] || {}).text || "").match(BACKUP_POWER);
+      return `<div class="trigger-option">${cardHtml(c, "me", "counter")}
+        ${backup ? `<span class="muted small">Backup +${esc(backup[1])}</span>` : ""}
+        <div class="trigger-buttons"><button type="button" data-act='${esc(JSON.stringify({ type: "counter", uid: c.uid }))}'>Counter</button></div>
+      </div>`;
+    });
+    modalEl.hidden = false;
+    modalEl.innerHTML = `<div class="play-modal-box" role="alertdialog" aria-label="Counter step">
+      <div class="play-modal-head"><h2>Counter step</h2></div>
+      <p class="muted small">${opponentWho("Your opponent")} is attacking (${esc(attack.soul)} damage). You can play ${options.length === 1 ? "this counter" : "one of these counters"} from your hand.</p>
+      ${battle}
+      <div class="play-modal-cards">${rows.join("")}</div>
+      <div class="trigger-buttons">
+        <button type="button" data-act='{"type":"no_counter"}'>No counter</button>
+        <button type="button" class="button-cancel" data-counter-hide>Look at the board</button>
+      </div>
+    </div>`;
+  }
+
   // The encore step, with turn rules on: each reversed character of ours, on either player's turn, is
   // encored (3 stock, stays rested) or goes to the waiting room, here, one at a time. The turn waits for
   // every reversed character on the table (see reversedLeft); anything they trigger is resolved first.
@@ -2001,6 +2060,8 @@
   let menuZone = null; // the deck or stage slot whose [...] menu is open, if any
 
   function showMenu(x, y, title, items) {
+    if (SPECTATING) items = items.filter((item) => item !== "-" && item.view);
+    if (!items.length) return hideMenu();
     menuZone = null;
     menuEl.classList.remove("see-through");
     menuEl.innerHTML = `<p class="play-menu-title">${esc(title)}</p>` + items.map((item) => item === "-"
@@ -2050,6 +2111,8 @@
       const live = (board.stats || {})[uid];
       items.push({ label: "Set power…", action: { type: "set_power", uid }, prompt: "Set this card's power until the end of the turn:", promptDefault: live ? live.power : (info && info.power) || 0 });
       if (live && live.manual) items.push({ label: "Put power back to normal", action: { type: "set_power", uid, clear: true } });
+      items.push({ label: "Set soul…", action: { type: "set_soul", uid }, prompt: "Set this card's soul until the end of the turn:", promptDefault: live ? live.soul : (info && info.soul) || 0 });
+      if (live && live.manual_soul) items.push({ label: "Put soul back to normal", action: { type: "set_soul", uid, clear: true } });
       items.push("-");
     }
     if (!["hand", "deck", "stock"].includes(zone)) {
@@ -2255,6 +2318,12 @@
       }
       return;
     }
+    if (event.target.closest("[data-counter-hide]") || event.target.closest("[data-counter-show]")) {
+      counterHidden = event.target.closest("[data-counter-hide]") ? counterKey() : null;
+      renderModal();
+      renderAttackPanel();
+      return;
+    }
     if (event.target.closest("[data-close]") || event.target === modalEl) {
       modal = null;
       renderModal();
@@ -2310,7 +2379,8 @@
 
   root.addEventListener("dragstart", (event) => {
     const card = event.target.closest(".pcard[data-uid][draggable]");
-    if (!card) return;
+    if (SPECTATING) event.preventDefault();
+    if (!card || SPECTATING) return;
     event.dataTransfer.setData("text/plain", card.dataset.uid);
     event.dataTransfer.effectAllowed = "move";
     hideMenu();

@@ -1,7 +1,7 @@
 {% extends "core/dashboard_base.html" %}
 {% load static %}
 
-{% block title %}{% if opponent %}vs {{ opponent_name }}{% else %}New room{% endif %}{% endblock %}
+{% block title %}{% if watching %}Watching {{ watching.username }}{% elif opponent %}vs {{ opponent_name }}{% else %}New room{% endif %}{% endblock %}
 
 {% block head %}
   {# Metal Mania: the heavy-metal display face for the level-up announcement. Cinzel: Victory and Defeat. #}
@@ -80,22 +80,30 @@
       })();
     </script>
   {% else %}
-    <div id="play" class="play layout-focus"
-         data-state-url="{% url 'weiss:play_state' room.pk %}"
-         data-action-url="{% url 'weiss:play_action' room.pk %}"
-         data-csrf="{{ csrf_token }}"{% if room.vs_cpu %} data-poll-ms="700"{% endif %}>
-      <aside class="play-chat-side" aria-label="Chat and game log">
+    {% if watching %}
+      {# A co-op partner watching (challenge_views.coop_spectate): play.js draws the board from their seat and sends nothing. #}
+      <p class="spectate-banner small"><strong>Watching {{ watching.username }}'s game.</strong> Their side is at the bottom: “you” on the board means them.
+        You can look at the cards but not play them. <a href="{% url 'weiss:arcade_challenge' %}">Back to the challenge</a></p>
+    {% endif %}
+    <div id="play" class="play layout-focus{% if watching %} spectating{% endif %}"
+         data-state-url="{% if watching %}{% url 'weiss:arcade_coop_spectate_state' %}{% else %}{% url 'weiss:play_state' room.pk %}{% endif %}"
+         data-action-url="{% if not watching %}{% url 'weiss:play_action' room.pk %}{% endif %}"
+         data-csrf="{{ csrf_token }}"{% if room.vs_cpu %} data-poll-ms="{% if watching %}1000{% else %}700{% endif %}"{% endif %}{% if watching %} data-spectate data-challenge-url="{% url 'weiss:arcade_challenge' %}"{% endif %}>
+      <aside class="play-chat-side" aria-label="{% if watching %}Game log{% else %}Chat and game log{% endif %}">
         <div class="play-log" data-log aria-live="polite"></div>
+        {% if not watching %}
         <form class="panel-row play-chat" data-chat>
           <input type="text" name="text" maxlength="300" placeholder="Message" aria-label="Chat message">
           <button type="submit">Send</button>
         </form>
+        {% endif %}
       </aside>
       <div class="play-board" data-board><p class="muted">Loading the table…</p></div>
       <aside class="play-side">
         <div class="play-preview" data-preview><p class="muted small">Hover over a card to see it here.</p></div>
         <div class="play-controls" data-controls></div>
-        {% if room.arcade_run_id %}
+        {% if watching %}
+        {% elif room.arcade_run_id %}
           <form method="post" action="{% url 'weiss:arcade_quit' room.pk %}" onsubmit="return confirm('Stop this arcade run? It can\'t be picked up again.')">
             {% csrf_token %}<button type="submit" class="link-button">Stop arcade run</button>
           </form>

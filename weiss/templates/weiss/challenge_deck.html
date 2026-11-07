@@ -75,7 +75,7 @@
       <button type="reset" class="button-small secondary" data-pool-clear>Clear</button>
     </form>
     <p class="lead-count small" data-pool-count aria-live="polite"></p>
-    <form method="post" class="challenge-deck" data-challenge-deck data-deck-size="{{ deck_size }}" data-climaxes="{{ climax_target }}" data-climax-min="{{ climax_min }}" data-copy-limit="{{ copy_limit }}"
+    <form method="post" class="challenge-deck" data-challenge-deck data-deck-size="{{ deck_size }}" data-climaxes="{{ climax_target }}" data-climax-min="{{ climax_min }}" data-copy-limit="{{ copy_limit }}"{% if over_size_ok %} data-over-size-ok{% endif %}
           {% if partner %}data-live data-state-url="{{ state_url }}" data-partner="{{ partner.username }}"{% endif %}>
       {% csrf_token %}
       <input type="hidden" name="deck" data-deck-field>
@@ -114,6 +114,7 @@
       <div class="deck-checks">
         <p class="deck-total" aria-live="polite"><strong data-side-total>0</strong> / {{ deck_size }} cards</p>
         <ul class="deck-groups" data-side-groups></ul>
+        <ul class="deck-colors" data-side-colors aria-label="Cards by color" hidden></ul>
       </div>
       <ul class="panel-entries" data-side-entries></ul>
       <p class="empty small" data-side-empty>Use the + buttons on cards to add them.</p>

@@ -489,14 +489,16 @@ def deck_pool(run):
 @coop.sharing
 def save_deck(run, copies):
     """Make the deck exactly these {card id: copies}. Returns what's wrong with them (nothing is saved then), or None.
-    In co-op, it can't have the copies the partner's deck has (both are checked under the same lock, see coop.shared)."""
+    In co-op, it can't have the copies the partner's deck has (both are checked under the same lock, see coop.shared).
+    An infinite challenge's deck can be saved over DECK_SIZE cards while it's being built, but can't fight like that
+    (see deck_ready)."""
     copies = {int(pk): int(n) for pk, n in copies.items() if int(n) > 0}
     pool = coop.available(run)
     for pk, n in copies.items():
         if n > pool.get(str(pk), 0):
             return ("Your partner's deck has those copies: they'll have to take them out first." if n <= run.pool.get(str(pk), 0)
                     else "A deck can only have the cards you've pulled from your packs.")
-    if sum(copies.values()) > DECK_SIZE:
+    if sum(copies.values()) > DECK_SIZE and run.kind != ChallengeRun.Kind.INFINITE:
         return f"A deck has at most {DECK_SIZE} cards."
     if problem := deck_rules_broken(run, copies):
         return problem
@@ -529,13 +531,15 @@ def deck_rules_broken(run, copies):
 
 
 def deck_ready(run):
-    """What stops this deck being fought with as it is, or None: what deck_rules_broken says, or too few climaxes
-    (a deck can be short of DECK_SIZE cards while the pool grows, but not of climaxes)."""
+    """What stops this deck being fought with as it is, or None: more than DECK_SIZE cards (only an infinite deck can be
+    saved like that, see save_deck), what deck_rules_broken says, or too few climaxes (a deck can be short of DECK_SIZE cards while the pool grows, but not of climaxes)."""
     if not run.deck:
         return None
     copies = dict(run.deck.entries.values_list("card_id", "quantity"))
     climaxes = sum(run.deck.entries.filter(card__card_type__iexact="climax").values_list("quantity", flat=True))
-    problem = deck_rules_broken(run, copies) or climax_problem(climaxes, augments.climax_limit(run))
+    total = sum(copies.values())
+    problem = ((total > DECK_SIZE and run.kind == ChallengeRun.Kind.INFINITE and f"A deck has at most {DECK_SIZE} cards, and this one has {total}.")
+               or deck_rules_broken(run, copies) or climax_problem(climaxes, augments.climax_limit(run)))
     return problem and f"{problem} Change your deck to fight on."
 
 

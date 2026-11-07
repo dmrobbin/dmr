@@ -13,11 +13,15 @@ The "standard" model:
 - Clocks a card every turn to draw, and uses abilities that bring cards to its hand. Stock comes third,
   after reversing enemies and cards in hand.
 - Plays cards with a cx combo ahead of others when their climax is available, and that climax next.
+- Plays a climax only with a standing character in its front row to attack with, and only for a cx combo of a
+  character on its stage, or for the power to win a battle it otherwise wouldn't (it ignores possible backups).
+  Power that only turns a lost battle into a tie (both reversed) counts some of the time: never at the lowest
+  aggression, more often the higher it is, always at the highest.
 - Plays a backup when that makes the defender at least as strong as the attacker.
 - Encores only level 2 and up, and not if that leaves too little stock for an equal or better card in hand.
 
-Aggression weighs these against each other: at 1 (standard) as above. Each point more values
-reversing enemies more and its own characters less (see Temper).
+Aggression weighs these against each other: at 1 (standard) as above, where a battle that would be a tie is a
+side attack instead. Each point more values reversing enemies more and its own characters less (see Temper).
 
 The other models play as standard does, apart from:
 - "focused" (Focused) works towards its cx combos. It knows what's in its own deck, as a player knows their
@@ -28,11 +32,15 @@ The other models play as standard does, apart from:
   room, it first uses what puts cards in there, such as brainstorm.
 - "hard" (Hard) plays as strategic does, and gets more aggressive the closer its opponent is to defeat: from
   its own aggression with the opponent at level 0 and an empty clock, up to the most there is at level 3, 6 clock.
+  It plays for the win whenever its attacks could deal the damage that's left to it (the soul of its front line,
+  counting a side attack's loss and a direct attack's extra point; not the trigger checks or cancels): in its
+  climax phase it plays the climax, or none, that brings that closest to exact without going under, and then
+  makes the attacks that add up to the least damage that's enough.
 - "easy" (Easy) plays as standard does, carelessly, though always by the rules: it encores whatever it can pay
   for, however little the card's worth; mostly turns down "you may" abilities and back row abilities, and backups;
   keeps its opening hand; mostly puts any character it can play in any empty place, rather than building its
-  front line; clocks, levels up with and takes trigger rewards of any card, not the right one; plays any climax,
-  not its combos'; and attacks left to right, often into characters stronger than its own. Against standard,
+  front line; clocks, levels up with and takes trigger rewards of any card, not the right one; plays any climax
+  worth playing, not its combos' first; and attacks left to right, often into characters stronger than its own. Against standard,
   with the same decks, it wins about one game in five.
 """
 import copy
@@ -478,20 +486,65 @@ class Mind:
         return next((action for action, ability in self.usable_acts() if HAND_EFFECT.search(ability["text"])), None)
 
     def play_climax(self):
-        """A climax, the one a character's cx combo wants if there is one."""
-        if self.zones["climax"]:
+        """A climax worth playing (see the module's notes): the one a character's cx combo wants first, then one whose
+        power wins a battle."""
+        if self.zones["climax"] or not self.attackers():
             return None
-        climaxes = [c for c in self.zones["hand"] if self.kind(c) == "climax" and self.can_play(c)]
-        if not climaxes:
-            return None
-        lines = [line for card in game.stage_cards(self.side) for line in self.combo_climaxes(card)]
-        wanted = [c for c in climaxes if any(self.names_climax(line, c) for line in lines)]
-        spare = wanted or self.spare_climaxes(climaxes)
-        return {"type": "move", "uid": spare[0]["uid"], "to": "climax"} if spare else None
+        climaxes = self.playable_climaxes()
+        wanted = [c for c in climaxes if self.for_combo(c)] or [c for c in self.spare_climaxes(climaxes) if self.wins_battle_with(c)]
+        return {"type": "move", "uid": wanted[0]["uid"], "to": "climax"} if wanted else None
 
     def spare_climaxes(self, climaxes):
         """The climaxes it's happy to play without a combo."""
         return climaxes
+
+    def playable_climaxes(self):
+        return [c for c in self.zones["hand"] if self.kind(c) == "climax" and self.can_play(c)]
+
+    def attackers(self):
+        """[(slot, card)] for its standing front row characters that can attack this turn."""
+        if not game.can_attack(self.state, self.me):
+            return []
+        stage = self.side["stage"]
+        return [(slot, stage[slot]) for slot in game.OPPOSITE if stage[slot] and stage[slot]["pos"] == "stand"
+                and "all" not in game.attack_bans(self.state, self.me, stage[slot], self.env)]
+
+    def for_combo(self, climax):
+        """Whether a character on its stage has a cx combo with this climax."""
+        return any(self.names_climax(line, climax) for card in game.stage_cards(self.side) for line in self.combo_climaxes(card))
+
+    def stats_now(self):
+        return {uid: dict(values) for uid, values in (self.state.get("stats") or {}).items()}
+
+    def stats_with(self, climax):
+        """Every character's power and soul as they'd be with this climax from its hand in its climax zone."""
+        state = copy.deepcopy({key: value for key, value in self.state.items() if key != "log"})
+        zones = state["players"][self.me]["zones"]
+        card = next(c for c in zones["hand"] if c["uid"] == climax["uid"])
+        zones["hand"].remove(card)
+        zones["climax"].append(card)
+        return game.compute_stats(state, self.env)[0]
+
+    def wins_battle_with(self, climax):
+        """Whether this climax's power wins a front attack that couldn't be won without it. One it would only tie
+        (both reversed) counts as often as its aggression says (see trades)."""
+        now, then = self.stats_now(), self.stats_with(climax)
+        power = lambda stats, card: stats.get(card["uid"], {}).get("power", game.number(self.details(card).get("power")))
+        tie = False
+        for slot, card in self.attackers():
+            enemy = self.their_side["stage"][game.OPPOSITE[slot]]
+            if not enemy or "front" in game.attack_bans(self.state, self.me, card, self.env):
+                continue
+            before, after = power(now, card) - power(now, enemy), power(then, card) - power(then, enemy)
+            if before <= 0 < after:
+                return True
+            tie = tie or before < 0 == after
+        return tie and self.trades()
+
+    def trades(self):
+        """Whether it'll trade its character for the enemy's this time: never at the lowest aggression, always at the highest."""
+        share = (self.temper.aggression - MIN_AGGRESSION) / (MAX_AGGRESSION - MIN_AGGRESSION)
+        return share >= 1 or self.rng.random() < share
 
     def declare(self):
         """Reverse what it can, biggest first; then direct attacks; then side attacks instead of losing
@@ -511,7 +564,8 @@ class Mind:
                 directs.append({"type": "attack", "uid": card["uid"], "kind": "direct"})
                 continue
             power, theirs = self.stat(card, "power"), self.stat(enemy, "power")
-            if "front" not in bans and (power + self.temper.risk >= theirs or "side" in bans):
+            beats = power > theirs or (self.temper.risk and power + self.temper.risk >= theirs)  # a tie only takes some aggression
+            if "front" not in bans and (beats or "side" in bans):
                 wins.append((theirs, {"type": "attack", "uid": card["uid"], "kind": "front"}))
             elif "side" not in bans:
                 sides.append({"type": "attack", "uid": card["uid"], "kind": "side"})
@@ -783,7 +837,67 @@ class Strategic(Mind):
 
 
 class Hard(Strategic):
-    """Strategic, with its aggression set by how close the opponent is to defeat (see hard_aggression)."""
+    """Strategic, with its aggression set by how close the opponent is to defeat (see hard_aggression), playing for the
+    win whenever its attacks could finish the opponent (see the module's notes)."""
+
+    def damage_left(self):
+        """The damage that would take the opponent to the losing level."""
+        them = self.their_side["zones"]
+        return (game.LOSING_LEVEL - len(them["level"])) * game.LEVEL_UP_AT - len(them["clock"])
+
+    def attack_options(self, slot, card, stats):
+        """[(attack, damage)] for what this character could do: a front or side attack, or a direct one."""
+        bans = game.attack_bans(self.state, self.me, card, self.env)
+        soul = stats.get(card["uid"], {}).get("soul", game.number(self.details(card).get("soul")))
+        enemy = self.their_side["stage"][game.OPPOSITE[slot]]
+        if not enemy:
+            return [({"type": "attack", "uid": card["uid"], "kind": "direct"}, soul + 1)]
+        options = [] if "front" in bans else [({"type": "attack", "uid": card["uid"], "kind": "front"}, soul)]
+        if "side" not in bans:
+            loss = 0 if game.has_status(self.state, card["uid"], "no_side_loss") else game.number(game.details_of(enemy, self.env).get("level"))
+            options.append(({"type": "attack", "uid": card["uid"], "kind": "side"}, max(0, soul - loss)))
+        return options
+
+    def finish(self, stats):
+        """(damage, attacks) for the attacks that add up to the least damage that still finishes the opponent, with
+        these stats; or None if all of them together can't. Of those, the most battles won, which go first."""
+        left = self.damage_left()
+        most = 1 - self.state.get("attacks", 0) if self.state["turn_number"] == 1 else len(game.OPPOSITE)
+        plans = [(0, [])]
+        for slot, card in self.attackers():
+            enemy = self.their_side["stage"][game.OPPOSITE[slot]]
+            wins = lambda attack: attack["kind"] == "front" and enemy and \
+                stats.get(card["uid"], {}).get("power", 0) > stats.get(enemy["uid"], {}).get("power", 0)
+            plans += [(damage + more, attacks + [(wins(attack), attack)]) for damage, attacks in plans if len(attacks) < most
+                      for attack, more in self.attack_options(slot, card, stats)]
+        enough = [(damage, attacks) for damage, attacks in plans if attacks and damage >= left]
+        if left <= 0 or not enough:
+            return None
+        damage, attacks = min(enough, key=lambda plan: (plan[0], -sum(won for won, _ in plan[1])))
+        return damage, [attack for _, attack in sorted(attacks, key=lambda pair: not pair[0])]
+
+    def play_climax(self):
+        """When its attacks could finish the opponent, with a climax or without, the choice that comes closest to exact
+        damage without going under; the climax it would otherwise play if that's as close. Otherwise as standard."""
+        usual = super().play_climax()
+        if self.zones["climax"] or not self.attackers():
+            return usual
+        choices = [(None, self.finish(self.stats_now()))] + [(c, self.finish(self.stats_with(c))) for c in self.playable_climaxes()]
+        choices = [(climax, plan[0]) for climax, plan in choices if plan]
+        if not choices:
+            return usual
+        closest = min(damage for _, damage in choices)
+        best = [climax for climax, damage in choices if damage == closest]
+        if usual and any(climax and climax["uid"] == usual["uid"] for climax in best):
+            return usual
+        return None if None in best else {"type": "move", "uid": best[0]["uid"], "to": "climax"}
+
+    def declare(self):
+        """The attacks that finish the opponent, if it can; otherwise as standard."""
+        if not game.can_attack(self.state, self.me):
+            return None
+        plan = self.finish(self.stats_now())
+        return plan[1][0] if plan else super().declare()
 
 
 class Easy(Mind):
@@ -832,9 +946,10 @@ class Easy(Mind):
         return action
 
     def play_climax(self):
-        if self.zones["climax"]:
+        """Any climax worth playing, not its combos' first."""
+        if self.zones["climax"] or not self.attackers():
             return None
-        climaxes = [c for c in self.zones["hand"] if self.kind(c) == "climax" and self.can_play(c)]
+        climaxes = [c for c in self.playable_climaxes() if self.for_combo(c) or self.wins_battle_with(c)]
         return {"type": "move", "uid": self.rng.choice(climaxes)["uid"], "to": "climax"} if climaxes else None
 
     def declare(self):

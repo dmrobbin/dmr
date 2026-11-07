@@ -6,14 +6,14 @@ import random
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from core.access import weiss_access_required
 
-from . import arcade, augments, buffs, challenge, coop, packs
+from . import arcade, augments, buffs, challenge, coop, game, packs, play
 from .lists import CLIMAX_COUNT, DECK_GROUPS, DECK_SIZE, unlimited
 from .models import ArcadeRun, ArcadeScenario, Card, ChallengeRun, CoopRun, CpuProfile, GameRoom, NarrativeChallenge, PlayerProfile
 from .play import deal, not_begun, seat_cpu, snapshot_groups
@@ -34,6 +34,25 @@ def run_room(run):
     return GameRoom.objects.filter(arcade_run_id=run.arcade_run_id, host=run.user).first() if run.arcade_run_id else None
 
 
+def in_a_fight(run):
+    """This run's game, while one is being played (not over yet), or None."""
+    room = run and run_room(run)
+    return room if room and room.status == GameRoom.Status.PLAYING and not room.state.get("game_over") else None
+
+
+def watchable(run):
+    """Whether this co-op player is waiting on their partner's game, which they can watch then (see coop_spectate)."""
+    other = coop.partner_run(run)
+    return bool(other and not in_a_fight(run) and in_a_fight(other))
+
+
+def partner_room(run):
+    """The game a co-op partner is in now (over or not, until they leave it), or None."""
+    other = coop.partner_run(run)
+    room = other and run_room(other)
+    return room if room and room.status == GameRoom.Status.PLAYING else None
+
+
 @challenge_access
 def challenge_home(request):
     run = challenge.current(request.user)
@@ -51,6 +70,7 @@ def challenge_home(request):
     names = {entry["id"]: entry["name"] for entry in packs.pack_sets()}
     return render(request, "weiss/challenge.html", {
         "run": run, "sets": challenge.allowed_sets(run), "deck_total": deck_total, "deck_size": DECK_SIZE, **reward_context(run),
+        "deck_problem": challenge.deck_ready(run) if deck_total else None,
         "pulled": sum(run.pool.values()), "arcade_run": run.arcade_run, "room": run_room(run), "win_reward": challenge.win_reward_text(run.kind),
         "lineup": arcade.lineup(run.scenario, request.user) if run.scenario else [],
         "set_names": [names.get(pk, f"Set {pk}") for pk in run.sets],
@@ -82,7 +102,7 @@ def coop_context(request, run):
         boss["mine"] = boss.get("dealt", {}).get(str(run.user_id), 0)
         boss["theirs"] = boss.get("dealt", {}).get(str(partner.pk), 0) if partner else 0
     other = coop.partner_run(run) if partner else None
-    return {"boss": boss, "partner_augments": augments.of(other) if other else [], "run": pair, "partner": partner, "partner_avatar": profile and profile.avatar, "hosting": pair.host_id == request.user.pk,
+    return {"boss": boss, "watchable": watchable(run), "partner_augments": augments.of(other) if other else [], "run": pair, "partner": partner, "partner_avatar": profile and profile.avatar, "hosting": pair.host_id == request.user.pk,
             "limit_range": range(pair.loss_limit), "floor": mine + 1, "partner_floor": theirs + 1, "behind": theirs < mine, "ahead": theirs > mine,
             "decided": decided_said(run, partner), "status_url": reverse("weiss:arcade_coop_status"),
             "invite_url": request.build_absolute_uri(reverse("weiss:arcade_coop_join", args=[pair.invite_token]))
@@ -316,7 +336,7 @@ def challenge_deck(request):
     groups = [{"label": label, "target": climaxes if required else target, "required": required, "levels": counted}
               for (label, target, required, _), counted in zip(DECK_GROUPS, levels)]
     return render(request, "weiss/challenge_deck.html", {"run": run, "cards": cards, "deck_size": DECK_SIZE, "climax_target": climaxes, "climax_min": CLIMAX_COUNT,
-                                                         "copy_limit": augments.copy_limit(run),
+                                                         "copy_limit": augments.copy_limit(run), "over_size_ok": run.kind == ChallengeRun.Kind.INFINITE,
                                                          "options": options, "partner": partner, "deck_groups": groups,
                                                          "state_url": reverse("weiss:arcade_challenge_deck_state") if partner else ""})
 
@@ -574,10 +594,44 @@ def decided_said(run, partner):
 
 
 @challenge_access
-def coop_status(request):
-    """How far a co-op challenge has got, for its pages to poll: they reload when the version changes."""
+def coop_spectate(request):
+    """Watching a co-op partner's game while waiting for them: the board from their seat, with only what's public and
+    their hand (game.spectator_view). Nothing on it can be played. The page follows them into their next fight."""
     run = challenge.current(request.user)
-    return JsonResponse({"version": run.coop.version if run and run.coop_id else None})
+    room = run and run.coop_id and partner_room(run)
+    if not room:
+        messages.info(request, "Your partner isn't in a fight right now.")
+        return redirect("weiss:arcade_challenge")
+    if mine := in_a_fight(run):
+        messages.info(request, "Your own fight is still going: finish it first.")
+        return redirect("weiss:play_room", pk=mine.pk)
+    return render(request, "weiss/play_room.html", {"room": room, "watching": run.coop.partner_of(request.user)})
+
+
+@challenge_access
+def coop_spectate_state(request):
+    """Polled by the watching page, as play.room_state is by the players': 204 if nothing changed since ?v=, else the
+    board. Watching doesn't move the CPU on: the player's own page does that."""
+    run = challenge.current(request.user)
+    room = run and run.coop_id and partner_room(run)
+    if not room or in_a_fight(run):
+        return JsonResponse({"version": None, "status": "gone"})  # the page reloads, and goes back to the challenge
+    version = f"{room.pk}-{room.version}"
+    if request.GET.get("v") == version:
+        return HttpResponse(status=204)
+    board = game.spectator_view(room.state, room.host_id)
+    shown = {key: value for key, value in play.cpu_payload(room).items() if key != "intro"}
+    return JsonResponse({"version": version, "status": room.status, "board": board, "cards": play.card_info(game.visible_cards(board)),
+                         "avatars": play.room_avatars(room), **shown})
+
+
+@challenge_access
+def coop_status(request):
+    """How far a co-op challenge has got, for its pages to poll: they reload when the version changes, or when the
+    partner's game can be watched or no longer can."""
+    run = challenge.current(request.user)
+    coop_on = bool(run and run.coop_id)
+    return JsonResponse({"version": run.coop.version if coop_on else None, "watchable": coop_on and watchable(run)})
 
 
 @challenge_access

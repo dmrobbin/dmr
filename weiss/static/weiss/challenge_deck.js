@@ -16,6 +16,7 @@
   const groups = JSON.parse(document.getElementById("deck-groups").textContent);
   const live = "live" in form.dataset;
   const COPY_LIMIT = Number(form.dataset.copyLimit) || 4; // the rules' 4, or fewer with an augment
+  const overSizeOk = "overSizeOk" in form.dataset; // an infinite deck can be saved over size, but can't fight like that
   const POLL_MS = 3000;
   let dirty = false;
 
@@ -65,7 +66,7 @@
     const climaxes = mine.filter((tile) => tile.dataset.level === "climax").reduce((sum, tile) => sum + count(tile), 0);
     form.querySelector("[data-deck-total]").textContent = `${total} / ${size} cards`;
     const warnings = [];
-    if (total > size) warnings.push(`More than ${size} cards`);
+    if (total > size) warnings.push(`${total - size} over a full deck${overSizeOk ? ": take them out before you fight" : ""}`);
     else if (total < size) warnings.push(`${size - total} short of a full deck`);
     const climaxRange = climaxMin === climaxTarget ? `${climaxMin}` : `${climaxMin} to ${climaxTarget}`;
     if (climaxes > climaxTarget) warnings.push(`${climaxes} climaxes: a deck has at most ${climaxTarget}`);
@@ -73,7 +74,7 @@
     if (over.length) warnings.push(`more than ${COPY_LIMIT} of ${over.join(", ")}`);
     form.querySelector("[data-deck-warnings]").textContent = warnings.join(" · ");
     const save = form.querySelector('button[type="submit"]');
-    if (save) save.disabled = total > size || climaxes > climaxTarget || (COPY_LIMIT < 4 && over.length > 0); // the server won't take those (Highlander's limit is kept)
+    if (save) save.disabled = (total > size && !overSizeOk) || climaxes > climaxTarget || (COPY_LIMIT < 4 && over.length > 0); // the server won't take those (Highlander's limit is kept)
 
     // The deck on the right, with the card lists' checks: rules go red when broken, the level spread amber when off.
     const sideTotal = document.querySelector("[data-side-total]");
@@ -85,6 +86,13 @@
       const state = ok ? "good" : group.required ? "bad" : "suggest";
       return `<li class="${state}"><span>${esc(group.label)}${group.required ? "" : ' <span class="deck-hint">suggested</span>'}</span><span><strong>${n}</strong> / ${group.required ? climaxRange : group.target}</span></li>`;
     }).join("") + `<li class="${over.length ? "bad" : "good"}"><span>Max ${COPY_LIMIT} of a card</span><span><strong>${over.length ? `${over.length} over` : "OK"}</strong></span></li>`;
+    // Copies by color, most first, as the card lists' deck checks show them.
+    const colors = {};
+    for (const tile of mine) if (tile.dataset.color) colors[tile.dataset.color] = (colors[tile.dataset.color] || 0) + count(tile);
+    const sideColors = document.querySelector("[data-side-colors]");
+    sideColors.innerHTML = Object.entries(colors).sort((a, b) => b[1] - a[1]).map(([color, n]) =>
+      `<li class="color-${esc(color.toLowerCase())}" title="${n} ${esc(color)}"><strong>${n}</strong> ${esc(color)}</li>`).join("");
+    sideColors.hidden = !mine.some((tile) => tile.dataset.color);
     document.querySelector("[data-side-entries]").innerHTML = mine.map((tile) => entry(tile, count(tile), true)).join("");
     document.querySelector("[data-side-empty]").hidden = mine.length > 0;
 

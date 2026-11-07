@@ -265,6 +265,126 @@ class AttackTests(TestCase):
         self.assertEqual(t.next()["uid"], big["uid"])
 
 
+class ClimaxChoiceTests(TestCase):
+    """When a CPU plays a climax: with a front line to attack with, for a combo or a battle's power."""
+    POWER = "【CONT】 All of your characters get +2000 power."
+    SOUL = "【CONT】 All of your characters get +1 soul."
+
+    def table(self, mine=3000, theirs=4000, text=POWER):
+        t = Table()
+        t.state["phase"] = "climax"
+        self.attacker = t.seat(t.me, "C2", t.card(1001, power=mine))
+        if theirs is not None:
+            t.seat(t.them, "C2", t.card(1, power=theirs, level=0))
+        self.cx = t.hand(t.card(1003, card_type="Climax", name="CX", power=None, level=None, text=text))[0]
+        return t
+
+    def next(self, t, model="standard", aggression=1, seed=1):
+        t.refresh()
+        return cpu.next_action(t.state, "2", t.info, aggression, random.Random(seed), model=model)
+
+    def played(self, action):
+        return action == {"type": "move", "uid": self.cx["uid"], "to": "climax"}
+
+    def test_for_the_power_to_win_a_battle(self):
+        for model in ("standard", "focused", "strategic", "easy"):
+            self.assertTrue(self.played(self.next(self.table(), model)), model)
+
+    def test_not_without_a_standing_front_line(self):
+        t = self.table()
+        self.attacker["pos"] = "rest"
+        self.assertEqual(self.next(t), {"type": "phase", "phase": "attack"})
+        t = self.table()
+        t.me["stage"]["B1"], t.me["stage"]["C2"] = self.attacker, None
+        t.state["phase"] = "climax"
+        self.assertFalse(self.played(self.next(t)))
+
+    def test_not_when_the_battle_is_won_or_lost_anyway(self):
+        self.assertFalse(self.played(self.next(self.table(mine=5000))))
+        self.assertFalse(self.played(self.next(self.table(theirs=9000))))
+        self.assertFalse(self.played(self.next(self.table(theirs=None))))  # a direct attack needs no power
+        self.assertFalse(self.played(self.next(self.table(text=self.SOUL))))
+
+    def test_for_a_combo(self):
+        t = self.table(mine=5000, text=self.SOUL)
+        t.cards[1001]["text"] = '【AUTO】 【CXCOMBO】 When this card attacks, if "CX" is in your climax area, draw 1 card.'
+        self.assertTrue(self.played(self.next(t)))
+
+    def test_a_tie_takes_aggression(self):
+        self.assertFalse(self.played(self.next(self.table(theirs=5000), aggression=1)))
+        self.assertTrue(self.played(self.next(self.table(theirs=5000), aggression=cpu.MAX_AGGRESSION)))
+        plays = sum(self.played(self.next(self.table(theirs=5000), aggression=3, seed=seed)) for seed in range(40))
+        self.assertTrue(5 < plays < 35)
+
+    def test_a_tie_is_a_side_attack_at_the_lowest_aggression(self):
+        t = self.table(mine=4000, text=self.SOUL)
+        t.state.update(phase="attack", attack={"step": "declare"})
+        self.assertEqual(self.next(t)["kind"], "side")
+        self.assertEqual(self.next(t, aggression=2)["kind"], "front")
+
+
+class HardFinishTests(TestCase):
+    """A hard CPU plays for the win: the climax, and the attacks, closest to exact damage."""
+
+    def table(self, souls, needed, theirs=(), cx_text=None):
+        """Its front line with these souls (facing enemies of these levels, or nobody), the opponent this much damage from losing."""
+        t = Table()
+        t.state["phase"] = "climax"
+        self.attackers = []
+        for slot, soul in zip(game.OPPOSITE, souls):
+            self.attackers.append(t.seat(t.me, slot, t.card(1100 + len(self.attackers), power=1000, soul=soul)))
+        for slot, level in zip(game.OPPOSITE, theirs):
+            if level is not None:
+                t.seat(t.them, game.OPPOSITE[slot], t.card(1200 + int(slot[1]), power=9000, level=level))
+        them = t.them["zones"]
+        them["level"] = [game.new_card(900) for _ in range(3)]
+        them["clock"] = [game.new_card(900) for _ in range(game.LEVEL_UP_AT - needed)]
+        self.cx = t.hand(t.card(1003, card_type="Climax", name="CX", power=None, level=None, text=cx_text))[0] if cx_text else None
+        return t
+
+    def next(self, t, model="hard"):
+        t.refresh()
+        return cpu.next_action(t.state, "2", t.info, 1, random.Random(1), model=model)
+
+    def test_it_counts_whats_left(self):
+        t = self.table([1], 2)
+        self.assertEqual(cpu.Hard(t.state, "2", t.info, cpu.Temper(), random.Random(1)).damage_left(), 2)
+
+    def test_a_climax_that_makes_the_win_possible(self):
+        t = self.table([1, 1], 5, cx_text=ClimaxChoiceTests.SOUL)  # 2 direct attacks: 2 + 2 without it, 3 + 3 with it
+        self.assertEqual(self.next(t), {"type": "move", "uid": self.cx["uid"], "to": "climax"})
+        self.assertEqual(self.next(t, "strategic"), {"type": "phase", "phase": "attack"})  # it needs a battle to win
+
+    def test_no_climax_that_would_only_go_further_over(self):
+        t = self.table([2, 2], 3, cx_text=ClimaxChoiceTests.SOUL)  # direct 3 + 3: one attack is exact without it
+        self.assertEqual(self.next(t), {"type": "phase", "phase": "attack"})
+
+    def test_one_that_brings_it_closer_to_exact(self):
+        t = self.table([1, 1], 3, theirs=[0, 0], cx_text=ClimaxChoiceTests.SOUL)  # front 1 + 1 can't; 2 + 2 can, nearer than nothing
+        self.assertEqual(self.next(t)["to"], "climax")
+
+    def test_it_attacks_for_exact_damage(self):
+        t = self.table([3, 2], 2, theirs=[None, 0])
+        t.state.update(phase="attack", attack={"step": "declare"})
+        action = self.next(t)
+        self.assertEqual((action["uid"], action["kind"]), (self.attackers[1]["uid"], "front"))  # 2, not the direct 4
+
+    def test_a_side_attack_to_lose_soul_when_thats_exact(self):
+        t = self.table([3], 2, theirs=[1])
+        t.state.update(phase="attack", attack={"step": "declare"})
+        self.assertEqual(self.next(t)["kind"], "side")  # 3 - level 1
+
+    def test_over_rather_than_under(self):
+        t = self.table([3], 2, theirs=[None])
+        t.state.update(phase="attack", attack={"step": "declare"})
+        self.assertEqual(self.next(t)["kind"], "direct")  # 4 is the only way
+
+    def test_as_strategic_when_it_cant_finish(self):
+        t = self.table([1], 7, theirs=[0])
+        t.state.update(phase="attack", attack={"step": "declare"})
+        self.assertEqual(self.next(t)["kind"], "side")  # 1000 power into 9000
+
+
 class DefendingTests(TestCase):
     def setup_attack(self, attacker, defender, *hand, kind="front"):
         t = Table()
@@ -1898,6 +2018,48 @@ class SetPowerTests(TestCase):
         enemy = self.t.seat(self.t.them, "C1", 700)
         with self.assertRaises(game.GameError):  # your own characters only
             self.t.apply(2, {"type": "set_power", "uid": enemy["uid"], "count": 1})
+
+
+class SetSoulTests(TestCase):
+    def setUp(self):
+        self.t = Table()
+        self.card = self.t.seat(self.t.me, "C2", self.t.card(700, power=3000, soul=1, text="【CONT】 During your turn, this card gets +1 soul."))
+        self.t.refresh()
+
+    def set(self, **action):
+        self.t.apply(2, {"type": "set_soul", "uid": self.card["uid"], **action})
+        return self.t.state["stats"][self.card["uid"]]
+
+    def test_it_replaces_whatever_the_soul_was(self):
+        self.assertEqual(self.set(count=3)["soul"], 3)
+        self.assertTrue(self.t.state["stats"][self.card["uid"]]["manual_soul"])
+        self.assertIn("set the soul", self.t.state["log"][-1]["text"])
+
+    def test_it_sets_the_damage_of_an_attack(self):
+        self.set(count=4)
+        self.t.state.update(phase="attack", attack={"step": "trigger", "uid": self.card["uid"], "kind": "direct", "soul": 0, "soul_extra": 1})
+        self.t.refresh()
+        self.assertEqual(self.t.state["attack"]["soul"], 5)  # and +1 for a direct attack
+
+    def test_it_returns_to_normal_when_the_turn_ends_or_is_cleared(self):
+        self.set(count=3)
+        self.assertEqual(self.set(clear=True)["soul"], 2)
+        self.set(count=3)
+        self.t.state["phase"] = "main"
+        self.t.apply(2, {"type": "phase", "phase": "end"})
+        self.t.refresh()
+        self.assertEqual(self.t.state["stats"][self.card["uid"]]["soul"], 1)
+        self.assertNotIn("manual_soul", self.t.state["stats"][self.card["uid"]])
+
+    def test_power_and_soul_are_set_apart(self):
+        self.t.apply(2, {"type": "set_power", "uid": self.card["uid"], "count": 9000})
+        self.set(count=3)
+        self.assertEqual(self.set(clear=True)["power"], 9000)
+
+    def test_bad_values(self):
+        for bad in ({"count": -1}, {"count": 100}, {"count": "lots"}, {}):
+            with self.assertRaises(game.GameError):
+                self.set(**bad)
 
 
 class OlderWordingTests(TestCase):
@@ -5672,9 +5834,15 @@ class FocusedModelTests(TestCase):
         cards = t.hand(802)
         self.assertEqual(self.next(t)["uid"], cards[0]["uid"])
 
+    def battle_it_needs_power_for(self, t):
+        t.seat(t.me, "C2", t.card(1001, power=3000))
+        t.seat(t.them, "C2", t.card(1, power=4000))
+
     def test_it_holds_the_climax_for_the_combo(self):
         t = self.table()
+        t.cards[800]["text"] = "【CONT】 All of your characters get +2000 power."
         t.state["phase"] = "climax"
+        self.battle_it_needs_power_for(t)
         t.hand(800)
         self.assertEqual(self.next(t), {"type": "phase", "phase": "attack"})
         self.assertEqual(self.next(t, "standard")["to"], "climax")
@@ -5682,7 +5850,8 @@ class FocusedModelTests(TestCase):
     def test_it_plays_a_climax_that_isnt_for_the_combo(self):
         t = self.table()
         t.state["phase"] = "climax"
-        t.card(803, card_type="Climax", level=None, cost=None, power=None)
+        self.battle_it_needs_power_for(t)
+        t.card(803, card_type="Climax", level=None, cost=None, power=None, text="【CONT】 All of your characters get +2000 power.")
         cards = t.hand(800, 803)
         self.assertEqual(self.next(t)["uid"], cards[1]["uid"])
 

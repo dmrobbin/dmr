@@ -1,6 +1,6 @@
 {# A co-op challenge's pair, on its page (challenge_views.coop_context): the partner (or the invite link until there's one), how far each has got,
    the last vote, and the lost games. The page reloads when the pair's challenge changes (see coop_status). #}
-<div class="coop-panel" data-status-url="{{ coop.status_url }}" data-version="{{ coop.run.version }}">
+<div class="coop-panel" data-status-url="{{ coop.status_url }}" data-version="{{ coop.run.version }}" data-watchable="{{ coop.watchable|yesno:'true,false' }}">
   {% if coop.invite_url %}
     <p class="small"><strong>Waiting for your partner.</strong> Send them this link; the first to open it plays with you.
       You can open packs and build your deck meanwhile, but the path waits for you both.</p>
@@ -14,6 +14,8 @@
           {% elif coop.ahead %}They've finished fight {{ coop.floor }} and are waiting for you.
           {% else %}You're both on fight {{ coop.floor }}.{% endif %}</span></p>
     </div>
+    {% if coop.watchable %}<p class="small"><a class="button-small secondary" href="{% url 'weiss:arcade_coop_spectate' %}">Watch {{ coop.partner.username }}'s game</a>
+      <span class="muted">while you wait: you'll see their hand and the table, but can't play.</span></p>{% endif %}
   {% endif %}
   <p class="coop-losses small" aria-label="Lost games: {{ coop.run.losses }} of {{ coop.run.loss_limit }}">Lost games
     {% for i in coop.limit_range %}<span class="coop-loss{% if i < coop.run.losses %} lost{% endif %}" aria-hidden="true"></span>{% endfor %}
@@ -48,7 +50,8 @@
       if (document.hidden) return;
       fetch(panel.dataset.statusUrl, {headers: {"Accept": "application/json"}}).then(r => r.ok ? r.json() : null).then(function (data) {
         const busy = document.activeElement && ["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement.tagName);
-        if (data && data.version !== null && String(data.version) !== panel.dataset.version && !busy) location.reload();
+        const changed = data && data.version !== null && (String(data.version) !== panel.dataset.version || String(data.watchable) !== panel.dataset.watchable);
+        if (changed && !busy) location.reload();
       }).catch(function () {});
     }, 5000);
   })();

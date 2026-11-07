@@ -67,6 +67,7 @@ ENCORE_COST = 3  # stock paid to keep a reversed character on the stage, rested
 LEVEL_UP_AT = 7  # clock cards that make a level
 LOSING_LEVEL = 4  # a player who reaches this level has lost
 MAX_SET_POWER = 99999  # the most power a character can be set to by hand
+MAX_SET_SOUL = 99  # and the most soul
 RPS_BEATS = {"rock": "scissors", "paper": "rock", "scissors": "paper"}
 CLOCK_DRAW = 2  # cards drawn after putting a card from the hand into the clock
 PHASES = ["mulligan", "stand", "draw", "clock", "main", "climax", "attack", "encore", "end"]  # mulligan: turn 1 only
@@ -1168,24 +1169,26 @@ def apply_action(state, player, action, env):
         add_log(state, player, f"turned a card in their {LABELS[where]} face {'down' if card['face_down'] else 'up'}")
         return {}
 
-    if kind == "set_power":
-        # For when an ability isn't doing what it should: this character's power, until the end of the turn.
+    if kind in ("set_power", "set_soul"):
+        # For when an ability isn't doing what it should: this character's power or soul, until the end of the turn.
+        stat = kind[4:]
         where, _ = find(side, action.get("uid", ""))
         if where not in STAGE_SLOTS:
-            raise GameError("Only characters on the stage have power to set.")
+            raise GameError(f"Only characters on the stage have {stat} to set.")
         card = side["stage"][where]
-        state["buffs"] = [b for b in state.get("buffs", []) if not (b["uid"] == card["uid"] and "set_power" in b)]
+        state["buffs"] = [b for b in state.get("buffs", []) if not (b["uid"] == card["uid"] and kind in b)]
         if action.get("clear"):
-            add_log(state, player, f"put the power of {name(card['card'])} back to normal")
+            add_log(state, player, f"put the {stat} of {name(card['card'])} back to normal")
             return {}
         try:
-            power = int(action.get("count"))
+            value = int(action.get("count"))
         except (TypeError, ValueError):
-            raise GameError("Power must be a number.")
-        if not 0 <= power <= MAX_SET_POWER:
-            raise GameError(f"Power must be between 0 and {MAX_SET_POWER}.")
-        state["buffs"].append({"uid": card["uid"], "set_power": power, "expires": state["turn_number"]})
-        add_log(state, player, f"set the power of {name(card['card'])} to {power} until the end of the turn")
+            raise GameError(f"{stat.capitalize()} must be a number.")
+        most = MAX_SET_POWER if stat == "power" else MAX_SET_SOUL
+        if not 0 <= value <= most:
+            raise GameError(f"{stat.capitalize()} must be between 0 and {most}.")
+        state["buffs"].append({"uid": card["uid"], kind: value, "expires": state["turn_number"]})
+        add_log(state, player, f"set the {stat} of {name(card['card'])} to {value} until the end of the turn")
         return {}
 
     if kind == "stand_all":
@@ -2182,9 +2185,11 @@ def compute_stats(state, env):
     for values in stats.values():
         values["power"] = max(0, values["power"])
         values["soul"] = max(0, values["soul"])
-    for buff in state.get("buffs", []):  # power set by hand beats everything else, until the turn ends
+    for buff in state.get("buffs", []):  # power or soul set by hand beats everything else, until the turn ends
         if "set_power" in buff and buff["uid"] in stats:
             stats[buff["uid"]].update(power=buff["set_power"], manual=True)
+        if "set_soul" in buff and buff["uid"] in stats:
+            stats[buff["uid"]].update(soul=buff["set_soul"], manual_soul=True)
     return stats, granted
 
 
@@ -4337,3 +4342,27 @@ def view(state, player):
         "acts": state.get("acts", {}).get(player, {}),
         "log": state["log"][-50:],
     }
+
+
+def spectator_view(state, player):
+    """The board as someone watching this player sees it (a co-op partner, see challenge_views.coop_spectate): from
+    their seat, but only what's public and their hand. Nothing in it asks the watcher to do anything."""
+    player = str(player)
+    shown = view(state, player)
+    side = state["players"][player]
+    shown["me"] = side_view(side, False)
+    shown["me"]["zones"]["hand"] = [card_view(c, True) for c in side["zones"]["hand"]]
+    reveal = state.get("reveal")
+    shown.update({
+        "damage_pending": False, "refresh_pending": False, "level_up_pending": False, "climax_pending": False, "auto_next": None,
+        "rps": None, "discard": None, "mulligan": None, "rules_request": None, "acts": {},
+        "reveal": {"card": reveal["card"], "by": state["players"][reveal["player"]]["name"]} if reveal else None,
+        "ability": ability_view(state, None),
+        "stats": stats_view(state, None),
+    })
+    if shown["attack"]:
+        shown["attack"].pop("counters", None)
+    for key in ("combo_show", "ability_show"):
+        if shown[key]:
+            shown[key]["mine"] = False
+    return shown

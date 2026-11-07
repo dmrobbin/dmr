@@ -305,6 +305,22 @@ class InfiniteChallengeTests(ArcadeSetup):
         self.assertEqual(self.run.status, "active")
         self.assertEqual(challenge.defeated(self.run), run.order[:4])
 
+    def test_a_deck_can_be_saved_over_size_but_cant_fight_until_its_cut_down(self):
+        copies = dict(self.run.deck.entries.values_list("card_id", "quantity"))
+        filler = next(pk for pk in copies if not is_climax(Card.objects.get(pk=pk)))
+        over = {**copies, filler: copies[filler] + 60 - sum(copies.values())}
+        self.run.pool[str(filler)] = over[filler]
+        self.run.save(update_fields=["pool"])
+        self.assertIsNone(challenge.save_deck(self.run, over))
+        self.assertEqual(sum(self.run.deck.entries.values_list("quantity", flat=True)), 60)
+        self.assertIn("at most 50 cards", challenge.deck_ready(self.run))
+        page = self.client.get(reverse("weiss:arcade_challenge"))
+        self.assertContains(page, "at most 50 cards")
+        self.fight()
+        self.assertFalse(GameRoom.objects.exists())  # no fight started
+        self.assertIsNone(challenge.save_deck(self.run, copies))
+        self.assertIsNone(challenge.deck_ready(self.run))
+
     def test_the_path_is_laid_out_ahead(self):
         path = self.path()
         self.assertEqual(len(path["floors"]), 1 + challenge.PATH_AHEAD)
