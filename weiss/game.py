@@ -2155,8 +2155,16 @@ def compute_stats(state, env):
         for card in stage_cards(side):
             card.pop("traits_cont", None)
         for source in sources:
-            for ability in abilities.parse(details_of(source, env).get("text")):
+            given = [text for buff in state.get("buffs", []) if buff["uid"] == source["uid"] for text in buff.get("grant", [])]  # "gets the chosen ability"
+            for ability in [*abilities.parse(details_of(source, env).get("text")), *(a for text in given for a in abilities.parse(text))]:
                 if ability["kind"] == "cont" and ability["effects"]:
+                    conts.append((player, source, ability))
+        for source in side["zones"]["memory"]:  # "【CONT】 ... if this card is in your memory": only those work from there
+            if source["face_down"]:
+                continue
+            for ability in abilities.parse(details_of(source, env).get("text")):
+                if ability["kind"] == "cont" and ability["effects"] and any(
+                        cond["type"] == "self_in" and cond["where"] == "memory" for cond in ability["cond"]):
                     conts.append((player, source, ability))
     granted = {}
     for wanted in ("soul", "power"):

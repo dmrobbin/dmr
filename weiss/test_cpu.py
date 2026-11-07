@@ -3203,6 +3203,29 @@ class MemoryKeywordTests(TestCase):
         text = "【AUTO】 Memory [Put this card into your waiting room] When the damage you received is not canceled, if this card is in your memory and that damage is three or more, you may pay the cost. If you do, draw 1 card."
         self.assertEqual(abilities.parse(text)[0]["where"], "memory")
 
+    def test_a_cont_works_from_the_memory(self):
+        t = Table()
+        event = t.card(700, card_type="Event", text="Put this card into your memory.\n"
+                       "【CONT】 Memory During your turn, if this card is in your memory, all of your 《Ooo》 characters get +500 power.")
+        finn = t.seat(t.me, "C1", t.card(701, power=3000, traits="Ooo"))
+        other = t.seat(t.me, "C2", t.card(702, power=3000, traits="Nobody"))
+        t.refresh()
+        self.assertEqual(t.state["stats"][finn["uid"]]["power"], 3000)  # not from the hand
+        t.me["zones"]["memory"].append(game.new_card(event))
+        t.refresh()
+        self.assertEqual((t.state["stats"][finn["uid"]]["power"], t.state["stats"][other["uid"]]["power"]), (3500, 3000))
+        t.state["turn"] = "1"
+        t.refresh()
+        self.assertEqual(t.state["stats"][finn["uid"]]["power"], 3000)  # only during its turn
+
+    def test_a_stage_cards_memory_count_doesnt_work_from_the_memory(self):
+        t = Table()
+        card = t.card(703, power=3000, text="【CONT】 Memory If you have 1 or more cards in your memory, all of your characters get +1000 power.")
+        mine = t.seat(t.me, "C1", t.card(704, power=3000))
+        t.me["zones"]["memory"].append(game.new_card(card))
+        t.refresh()
+        self.assertEqual(t.state["stats"][mine["uid"]]["power"], 3000)
+
 
 class WitchTests(PersonaTests):
     WITCH = '【AUTO】 [(1) 【REST】 1 of your other 【STAND】 characters] During the turn that this card is placed on the stage from your hand or by the 【AUTO】 effect of "The Witches\' Tea Party", when this card\'s battle opponent becomes 【REVERSE】, you may pay the cost. If you do, reveal the top 2 cards of your deck, your opponent chooses 1 event or character from among them, puts it into your hand, puts the rest into your waiting room, you look at the top card of your deck, and put it on the top of your deck or into your waiting room.'
@@ -3981,6 +4004,88 @@ class RwbyHololiveReZeroTests(PersonaTests):
         self.assertEqual(set(self.prompt(t)["options"]), {c["uid"] for c in others})
         self.answer(t, uids=[others[0]["uid"]])
         self.assertIs(t.them["stage"][game.OPPOSITE["C1"]], others[0])
+
+
+class AdventureTimeTests(PersonaTests):
+    CARD_WARS = ('If you do not have a character with "Jake" in its card name, this card cannot be played from your hand.\nYou Floop the Pig.\n'
+                 "Choose 1 of your characters, and that character gets +2500 power until end of turn. Put this card into your memory.\n"
+                 "【REPLAY】 Floop the Pig Put the top 3 cards of your deck into your waiting room. If there are 2 or more level 0 or lower characters among those cards, "
+                 "you may choose 1 of your opponent's characters, and return it to his or her hand.\n"
+                 "If there are 2 or more level 1 or higher characters among those cards, you may choose 1 character in your waiting room, and return it to your hand.\n"
+                 "If there are 2 or more climax among those cards, you may put the top card of your clock into your waiting room.")
+    PROTECTED = ('【AUTO】 【CXCOMBO】 When this card attacks, if "His Hero" is in your climax area, choose 1 of the 2 following abilities, and this card gets the chosen ability '
+                 'until end of turn. "【CONT】 This card gets +2000 power." "【CONT】 This card gets +1 soul."\n'
+                 "【AUTO】 When this card's battle opponent becomes 【REVERSE】, choose 1 of your other 《Ooo》 characters, 【REST】 it, and move it to an open position of your back stage.")
+    KING_OF_MARS = ("【AUTO】 [Put this card into your waiting room] When your other character is put into your waiting room from the stage, if this card is in your back stage, "
+                    "you may pay the cost. If you do, put that character on the stage position it was on as 【REST】.\n"
+                    "【ACT】 [(1)] Choose 1 character on your opponent's center stage, and that character gets -1000 power until end of turn.")
+    RECONSTITUTED = ("【CONT】 All of your other 《Ooo》 characters get +500 power.\n【ACT】 [(2) 【REST】 this card] Choose 1 level X or lower character in your waiting room, "
+                     "and return it to your hand. X is equal to the number of cards you have in your memory.")
+    TEXTS = [
+        CARD_WARS, PROTECTED, KING_OF_MARS, RECONSTITUTED,
+        '【CONT】 Experience If the total level of cards in your level is 2 or higher, this card gets +2000 power.\n【AUTO】 【CXCOMBO】 When this card attacks, if "The Creeps!" is in '
+        "your climax area, and you have 2 or more other 《Ooo》 characters, reveal the top 2 cards of your deck, your opponent chooses a character or event card from among them, "
+        "you put it into your hand, and put the rest into your waiting room.",
+        '【AUTO】 [Put 1 《Ooo》 character from your hand into your waiting room & Put this card into your memory] When this card becomes 【REVERSE】 in battle, if you have 2 or more '
+        "other 《Ooo》 characters and 2 or less cards in your memory, you may pay the cost. If you do, search your deck for up to 1 character with \"Marceline\" in its card name, "
+        "reveal it to your opponent, put it into your hand, and shuffle your deck.",
+        "【AUTO】 [(1) At the beginning of the encore step, if you do not have another 【REST】 character on your center stage, you may pay the cost. If you do, 【REST】 this card.",
+        '【CONT】 If you have 2 or more other 《Ooo》 characters, this card gets +2000 power.\n【AUTO】 【CXCOMBO】 When "The Creeps!" is placed on your climax area, if this card is in '
+        'your center stage, and you have another "Finn: Prince Hotbod" and another "BMO: Professor Pants" and another "Princess Bubblegum: Lady Quietbottom", put up to 1 card '
+        "from the top of your deck into your stock, and deal 1 damage to your opponent. (Damage may be canceled)",
+        "【AUTO】 [(2)] When you use this card's \"Backup\", you may pay the cost. If you do, choose 1 of your opponent's characters with level higher than your opponent's level, "
+        "put it into your opponent's waiting room, your opponent chooses up to 1 level 0 or lower character in his or her waiting room, and puts it on the position that that "
+        "character was on.",
+        '【ACT】 [(2) Put 1 "Billy the Hero" on your stage and this card into your memory] Choose 1 "The Lich: Possessing Billy" in your waiting room, and put it on the stage '
+        "position that this card was on.",
+    ]
+
+    def test_nothing_is_left_to_do_by_hand(self):
+        for text in self.TEXTS:
+            self.assertEqual(abilities.by_hand_parts(text), [], text)
+
+    def test_card_wars_floops_the_pig(self):
+        event = next(a for a in abilities.parse(self.CARD_WARS) if a["kind"] == "event")
+        self.assertEqual([s["do"] for s in event["steps"]], ["top", "if", "if", "if", "choose", "buff", "self_to"])
+        self.assertEqual(event["steps"][0], {"do": "top", "n": 3, "owner": "me", "to": "waiting"})
+
+    def test_finn_chooses_power_or_soul(self):
+        for value, stat, amount in ((0, "power", 5000), (1, "soul", 2)):
+            t = Table()
+            finn = t.seat(t.me, "C1", t.card(1001, power=3000, soul=1, text=self.PROTECTED))
+            t.refresh()
+            self.run_ability(t, finn, self.PROTECTED)
+            self.answer(t, value=value)
+            t.refresh()
+            self.assertEqual(t.state["stats"][finn["uid"]][stat], amount)
+
+    def test_king_of_mars_brings_a_character_back_rested(self):
+        t = Table()
+        king = t.seat(t.me, "B1", t.card(1001, text=self.KING_OF_MARS))
+        jake = t.seat(t.me, "C2", t.card(1002))
+        t.refresh()
+        t.apply(2, {"type": "move", "uid": jake["uid"], "to": "waiting"})
+        t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+        self.shows(t)
+        if t.state.get("resolving") and self.prompt(t)["for"] == "may":
+            self.answer(t, value="yes")
+        self.assertIs(t.me["stage"]["C2"], jake)
+        self.assertEqual(jake["pos"], "rest")
+        self.assertIn(king, t.me["zones"]["waiting"])
+
+    def test_bubblegum_returns_up_to_the_memorys_count(self):
+        t = Table()
+        pb = t.seat(t.me, "B1", t.card(1001, text=self.RECONSTITUTED))
+        t.stock(2)
+        t.me["zones"]["memory"] = [game.new_card(900), game.new_card(900)]
+        low, high = game.new_card(t.card(1002, level=2)), game.new_card(t.card(1003, level=3))
+        t.me["zones"]["waiting"] = [low, high]
+        t.refresh()
+        t.apply(2, {"type": "activate", "uid": pb["uid"], "index": 1})
+        self.shows(t)
+        options = [c["uid"] for c in self.prompt(t)["cards"]]  # with the stock just paid, level 0
+        self.assertIn(low["uid"], options)
+        self.assertNotIn(high["uid"], options)
 
 
 class BanGDreamTests(PersonaTests):

@@ -143,6 +143,8 @@ PRINT_ERRORS = [
      r'[Pay \1 stock or put 1 \4 from your hand into your waiting room & \2]\3'),
     # A granted ability's full stop after its closing bracket, inside the quote.
     (re.compile(r'("【AUTO】 Encore \[Put (?:a|1) character from your hand into your waiting room\])\."'), r'\1"'),
+    # A stock cost whose closing bracket is missing, before its trigger.
+    (re.compile(r'【AUTO】 \[\((\d+)\) (?=At the beginning of|When )'), r'【AUTO】 [(\1)] '),
 ]
 
 WORDING = [
@@ -712,6 +714,15 @@ WORDING = [
     (r"\b[Yy]our opponent looks at the top card of their deck, and declares the number ((?:\d+ or )+\d+)\b", r"your opponent looks at the top card of their deck and declares \1"),
     (r"\byour opponent chooses the number ((?:\d+ or )+\d+)\b", r"your opponent declares \1"),
     (r"\bif that card is a card of a level that matches the number that your opponent chose\b", "if that card's level is the number your opponent declared"),
+    # Adventure Time's wordings.
+    (r"\bchoose 1 of the (?:\d+ )?following abilities, and this card gets the chosen ability\b", "choose 1 of the following abilities, this card gets that ability"),
+    (r"\byour opponent chooses an? (?=character|card|event|climax)", "your opponent chooses 1 "),
+    (r"\byou have another (⟦\d+⟧) and another (⟦\d+⟧) and another (⟦\d+⟧)", r"you have other \1 and \2 and \3"),
+    (r"\b(you have \d+ or (?:more|less) [^,]+?) and (\d+ or (?:more|less) cards in your (?:memory|hand|waiting room|stock|clock))\b", r"\1, and you have \2"),
+    (r"\bput that character on the stage position it was on as 【REST】", "return that character to its previous stage position as 【REST】"),
+    (r"\bputs it on the position that that character was on\b", "puts it on the stage position that that character was on"),
+    (r"\bthe number of cards you have in your (stock|hand|waiting room|memory|clock|level)\b", r"the number of cards in your \1"),
+    (r"\[\((\d+)\) Put 1 (⟦\d+⟧) on your stage and this card into your memory\]", r"[(\1) Put 1 \2 from your stage into your memory & Put this card into your memory]"),
 ]
 
 
@@ -2487,7 +2498,7 @@ def clause_steps(clause, quotes, cost):
     match = re.fullmatch(r"perform the following action once and once more for each time you paid (⟦\d+⟧)", text)
     if match:
         return [{"do": "repeat", "x_stat": "n", "x": {"of": "times_paid", "times": 1, "plus": 1}, "then": parse_effect(quotes[int(match[1][1:-1])], cost)}]
-    if (body := REPLAYS.get().get(text)) is not None:  # a 【REPLAY】 the card names, written out on it
+    if (body := replay_named(text)) is not None:  # a 【REPLAY】 the card names, written out on it
         return replay_steps(body)
     match = re.fullmatch(r"your opponent looks at up to \d+ cards from the top of their deck|puts them on the top of their deck in the original order", text)
     if match:
@@ -3807,15 +3818,42 @@ def replay_steps(body):
     return parse_effect(body)
 
 
+def replay_name(line, others):
+    """(name, body) for a 【REPLAY】 line, or None if it isn't one. The name is as much of its start as the card's other
+    lines say ("You Floop the Pig."); failing that, it ends before the first word that starts a sentence."""
+    start = re.match(r"(?:\[replay\]|【REPLAY】)\s*", line)
+    if not start:
+        return None
+    words = line[start.end():].split(" ")
+    said = "\n".join(others).lower()
+    for n in range(len(words) - 1, 0, -1):
+        if " ".join(words[:n]).lower() in said:
+            return " ".join(words[:n]), " ".join(words[n:])
+    replay = REPLAY_LINE.fullmatch(line)
+    return (replay["name"], replay["body"]) if replay else None
+
+
+def replay_named(text):
+    """What the 【REPLAY】 this clause names does ("you Floop the Pig", "Play a Game with your opponent"), or None."""
+    named = re.sub(r" with your opponent$", "", re.sub(r"^you ", "", text.lower()))
+    return REPLAYS.get().get(named)
+
+
 @lru_cache(maxsize=4096)
 def parse_cached(text):
     """Card text comes from outside and new sets have new wording, so no line of it may ever stop a page or a game."""
     lines, replays = [], {}
-    for line in ability_lines(canonical(text)):
-        replay = REPLAY_LINE.fullmatch(line)
+    every = ability_lines(canonical(text))
+    replaying = None
+    for i, line in enumerate(every):
+        replay = replay_name(line, every[:i] + every[i + 1:])
         if replay:  # "Wager your soul in a game" and so on: the card's abilities say when it happens
-            replays[replay["name"][:1].lower() + replay["name"][1:]] = replay["body"]
+            replaying = replay[0].lower()
+            replays[replaying] = replay[1]
+        elif replaying and not line.startswith("【"):  # what it does goes on over more lines
+            replays[replaying] += " " + line
         else:
+            replaying = None
             lines.append(line)
     token = REPLAYS.set(replays)
     try:
