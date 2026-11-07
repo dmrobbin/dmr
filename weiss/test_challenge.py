@@ -8,7 +8,9 @@ from django.urls import reverse
 from . import arcade, challenge, play, scenes
 from .models import ArcadeEntry, ArcadeRun, ArcadeScenario, CardList, ChallengeRun, GameRoom, NarrativeChallenge, Scene
 from .test_arcade import Base, player
-from .test_packs import make_set
+from .lists import CLIMAX_COUNT, is_climax
+from .models import Card
+from .test_packs import make_set, run_with_climaxes
 from .test_scenes import SCRIPT
 
 
@@ -205,6 +207,7 @@ class FightOrderTests(ArcadeSetup):
         run = challenge.current(self.staff)
         challenge.open_packs(run, 7, 2)
         challenge.save_deck(run, {pk: 1 for pk in run.pool})
+        run = run_with_climaxes(run)
         self.client.post(reverse("weiss:arcade_challenge_fight"))
         run.refresh_from_db()
         self.assertEqual(run.arcade_run.order, [self.opener.pk, self.second.pk, self.filler.pk, self.anchor.pk])
@@ -254,6 +257,7 @@ class InfiniteChallengeTests(ArcadeSetup):
         self.run = challenge.current(self.staff)
         challenge.open_packs(self.run, 7, 2)
         challenge.save_deck(self.run, {pk: 1 for pk in self.run.pool})
+        self.run = run_with_climaxes(self.run)
 
     def test_starting_one(self):
         self.assertEqual((self.run.kind, self.run.name, self.run.scenario, self.run.sets), ("infinite", "Infinite challenge", None, []))
@@ -476,11 +480,13 @@ class ChallengeTests(ArcadeSetup):
         return self.client.post(reverse("weiss:arcade_challenge_open"), {"set": set_id, "count": count})
 
     def build(self, run):
-        """A deck of everything pulled, up to 50."""
-        copies, room = {}, 50
+        """A deck of everything pulled, up to 50, and no more than 8 climaxes."""
+        cards = Card.objects.in_bulk([int(pk) for pk in run.pool])
+        copies, room, climaxes = {}, 50, CLIMAX_COUNT
         for pk, n in run.pool.items():
-            copies[pk] = min(n, room)
+            copies[pk] = min(n, room, climaxes) if is_climax(cards[int(pk)]) else min(n, room)
             room -= copies[pk]
+            climaxes -= copies[pk] if is_climax(cards[int(pk)]) else 0
         self.client.post(reverse("weiss:arcade_challenge_deck"), {"deck": json.dumps(copies)})
         return copies
 
@@ -576,7 +582,7 @@ class ChallengeTests(ArcadeSetup):
         self.open(10)
         run.refresh_from_db()
         self.build(run)
-        return run
+        return run_with_climaxes(run)
 
     def test_fighting_wins_bring_packs(self):
         run = self.ready_to_fight()
@@ -708,11 +714,12 @@ class ChallengeTests(ArcadeSetup):
         self.assertEqual((data["cpu"]["intro"], data["cpu"]["win"], data["cpu"]["lose"]), ("", "", ""))
         self.assertNotIn("intro", data)
         # A fight not yet begun is still dealt again with the deck as it is now.
-        card = next(iter(run.pool))
+        card = next(pk for pk in run.pool if not is_climax(Card.objects.get(pk=pk)))
         challenge.save_deck(run, {card: 1})
+        run_with_climaxes(run)
         self.client.post(reverse("weiss:arcade_challenge_fight"))
         me = self.room().state["players"][str(self.staff.pk)]
-        self.assertEqual(sum(len(zone) for zone in me["zones"].values() if isinstance(zone, list)), 1)
+        self.assertEqual(sum(len(zone) for zone in me["zones"].values() if isinstance(zone, list)), 1 + CLIMAX_COUNT)  # and its climaxes
 
     def test_a_free_challenge_keeps_them(self):
         type(self.opener).objects.filter(pk=self.opener.pk).update(intro_text="Hello!")

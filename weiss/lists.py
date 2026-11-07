@@ -41,8 +41,33 @@ DECK_GROUPS = [
 ]
 
 
+CLIMAX_COUNT = next(target for _, target, required, _ in DECK_GROUPS if required)  # a legal deck has exactly this many climaxes
+
+
 def is_climax(card):
     return card.card_type.lower() == "climax"
+
+
+def climaxes_in(card_list):
+    return sum(e.quantity for e in card_list.entries.select_related("card") if is_climax(e.card))
+
+
+def climax_problem(count, most=CLIMAX_COUNT):
+    """What's wrong with a deck having this many climaxes, or None: it needs CLIMAX_COUNT, or with an infinite
+    challenge's Climax Overload, anything from that to `most` (see weiss.augments)."""
+    if CLIMAX_COUNT <= count <= most:
+        return None
+    needs = f"exactly {CLIMAX_COUNT}" if most == CLIMAX_COUNT else f"{CLIMAX_COUNT} to {most}"
+    return f"A deck needs {needs} climaxes, and this one has {count}."
+
+
+def unplayable(deck):
+    """Why this deck can't be played with as it is, or None: it's empty, or hasn't the climaxes a deck must have."""
+    if not deck.entries.exists():
+        return f"“{deck.name}” is empty; add some cards first."
+    if problem := climax_problem(climaxes_in(deck)):
+        return f"“{deck.name}”: {problem[0].lower()}{problem[1:]}"
+    return None
 
 
 # "【CONT】 You can put any number of cards with the same card name as this card into your deck."
@@ -192,7 +217,8 @@ def respond(request, fallback, error="", **extra):
 
 
 def change_quantity(card_list, card, delta):
-    """Add (delta > 0) or remove (delta < 0) copies, keeping the list within MAX_CARDS. Returns the new quantity."""
+    """Add (delta > 0) or remove (delta < 0) copies, keeping the list within MAX_CARDS, and a deck within
+    CLIMAX_COUNT climaxes. Returns the new quantity."""
     with transaction.atomic():
         card_list = CardList.objects.select_for_update().get(pk=card_list.pk)
         entry = CardListEntry.objects.filter(card_list=card_list, card=card).first()
@@ -201,6 +227,10 @@ def change_quantity(card_list, card, delta):
             room = CardList.MAX_CARDS - card_list.card_count()
             if room <= 0:
                 raise ListError(f"“{card_list.name}” already has {CardList.MAX_CARDS} cards.")
+            if card_list.is_deck and is_climax(card):
+                room = min(room, CLIMAX_COUNT - climaxes_in(card_list))
+                if room <= 0:
+                    raise ListError(f"A deck has at most {CLIMAX_COUNT} climaxes, and “{card_list.name}” has them all.")
             delta = min(delta, room)
         quantity = max(current + delta, 0)
         if quantity == 0:

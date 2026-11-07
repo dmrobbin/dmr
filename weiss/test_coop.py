@@ -12,7 +12,7 @@ from .models import ArcadeRun, CardList, ChallengeRun, ChallengeSettings, CoopRu
 from .test_arcade import player
 from .test_challenge import ArcadeSetup
 from .test_events import EVENT_SCRIPT
-from .test_packs import make_set
+from .test_packs import make_set, run_with_climaxes
 
 
 def staff_player(name):
@@ -228,6 +228,8 @@ class PlayingSetup(CoopSetup):
         half = dict(list(pool.items())[: len(pool) // 2])
         challenge.save_deck(self.fresh(self.staff), {pk: n for pk, n in half.items()})
         challenge.save_deck(self.fresh(self.bo), {pk: n for pk, n in pool.items() if pk not in half})
+        for user in (self.staff, self.bo):
+            run_with_climaxes(self.fresh(user))
 
     def as_(self, user):
         self.client.force_login(user)
@@ -305,7 +307,13 @@ class PlayingTests(PlayingSetup):
         self.assertEqual(host.packs, coop.START_PACKS - 2 + challenge.INFINITE_WIN_PACKS)
         self.assertEqual(len(host.rewards), 1)  # the prize
         self.assertContains(self.as_(self.staff).client.get(reverse("weiss:arcade_challenge")), "still on fight 1")
+        self.pair.refresh_from_db()
+        path = self.pair.path
+        cpu_pk = next(pk for pk in path["floors"][1] if pk is not None)
+        path["floors"][1] = [cpu_pk] * len(path["floors"][1])  # a full floor: more than one way on, so a vote
+        CoopRun.objects.filter(pk=self.pair.pk).update(path=path)
         options = challenge.choices(self.path(self.staff), 1)
+        self.assertGreater(len(options), 1)
         self.vote(self.staff, options[0])
         self.assertEqual(GameRoom.objects.filter(host=self.staff).get().state["game_over"]["winner"], str(self.staff.pk))  # no new fight yet
         self.finish(self.bo, won=False)

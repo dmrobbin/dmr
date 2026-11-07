@@ -151,7 +151,10 @@ class Mind:
         return len(self.zones["level"])
 
     def would_lose(self, cards):
-        """Whether this many more cards in its clock would take it to the losing level."""
+        """Whether this many more cards in its clock would take it to the losing level (which a co-op boss doesn't
+        have: see game.check_game_over)."""
+        if self.side.get("shared_health"):
+            return False
         return len(self.zones["clock"]) + cards >= (game.LOSING_LEVEL - self.my_level()) * game.LEVEL_UP_AT
 
     def fatal(self, ability, owner="me"):

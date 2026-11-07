@@ -199,6 +199,7 @@ class CpuProfile(Avatar):
     aggression = models.PositiveSmallIntegerField(default=1, help_text="1 is the standard behaviour")
     deck = models.ForeignKey(CardList, null=True, blank=True, on_delete=models.SET_NULL, related_name="cpu_profiles")
     finalized = models.BooleanField(default=False, help_text="Offered to players under VS CPU")
+    boss = models.BooleanField(default=False, help_text="Fought on the infinite challenge's boss floors, and only there (see weiss.challenge)")
     image = models.ForeignKey(CpuImage, null=True, blank=True, on_delete=models.SET_NULL, related_name="profiles")
     intro_image = models.ForeignKey(CpuImage, null=True, blank=True, on_delete=models.SET_NULL, related_name="intro_profiles")
     player_win_image = models.ForeignKey(CpuImage, null=True, blank=True, on_delete=models.SET_NULL, related_name="win_profiles")
@@ -376,7 +377,10 @@ class ChallengeSettings(models.Model):
     coop_loss_limit = models.PositiveSmallIntegerField(default=3, help_text="Lost games a co-op challenge can take, both players' together, before it ends")
     coop_start_packs = models.PositiveSmallIntegerField(default=20, help_text="Packs each player of a co-op challenge starts with")
     coop_loadout = models.JSONField(default=dict, blank=True, help_text="Specialty packs each player of a co-op challenge starts with besides: {buff id: how many}")
-    updated = models.DateTimeField(auto_now=True)
+    boss_every = models.PositiveSmallIntegerField(default=5, help_text="Every this many floors of a solo infinite challenge's path, a boss; 0 for none")
+    coop_boss_every = models.PositiveSmallIntegerField(default=5, help_text="...and of a co-op challenge's; 0 for none")
+    coop_boss_health = models.PositiveSmallIntegerField(default=42, help_text="The damage a co-op challenge's boss takes, both players' games together, to go down")
+    updated =models.DateTimeField(auto_now=True)
     updated_by = models.ForeignKey("auth.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
 
     @classmethod
@@ -451,6 +455,7 @@ class ChallengeRun(models.Model):
     last_opening = models.JSONField(default=dict, blank=True, help_text="The latest packs opened, to show them being revealed")
     rewards = models.JSONField(default=list, blank=True, help_text="Buffs from scenes waiting to be claimed: [{key, buff, source}] (see weiss.buffs)")
     lives = models.PositiveSmallIntegerField(default=0, help_text="Losses it can take without ending: second chances")
+    augments = models.JSONField(default=list, blank=True, help_text="The augments picked, in order: [augment id] (see weiss.augments)")
     deck_snapshot = models.JSONField(default=list, blank=True, help_text="The deck as it was at its last win and at the end: [[card id, copies]], for the leaderboard, kept if the deck goes")
     path = models.JSONField(default=dict, blank=True, help_text="An infinite challenge's path: {floors: [[CPU id]], picks: [node chosen on each floor]} (see weiss.challenge)")
     arcade_run =models.ForeignKey(ArcadeRun, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")

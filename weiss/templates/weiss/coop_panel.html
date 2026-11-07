@@ -18,6 +18,24 @@
   <p class="coop-losses small" aria-label="Lost games: {{ coop.run.losses }} of {{ coop.run.loss_limit }}">Lost games
     {% for i in coop.limit_range %}<span class="coop-loss{% if i < coop.run.losses %} lost{% endif %}" aria-hidden="true"></span>{% endfor %}
     {{ coop.run.losses }} / {{ coop.run.loss_limit }}</p>
+  {% if coop.boss %}
+    <div class="coop-boss small">
+      {% if coop.boss.down %}
+        <p><strong>The boss is down!</strong> You both beat it: {{ coop.boss.reward }}, each.</p>
+      {% else %}
+        <p><strong>Boss:</strong> wear it down together. It doesn't lose at level 4: every damage that lands on it, in either of your games, comes off its health, and it's beaten when that's gone.</p>
+      {% endif %}
+      <div class="boss-health" role="meter" aria-label="Boss health" aria-valuemin="0" aria-valuemax="{{ coop.boss.max }}" aria-valuenow="{{ coop.boss.health }}">
+        <span class="boss-health-fill" style="width: {{ coop.boss.percent }}%"></span>
+        <span class="boss-health-text">{{ coop.boss.health }} / {{ coop.boss.max }}</span>
+      </div>
+      <p class="muted">Damage dealt: you {{ coop.boss.mine }} · {{ coop.partner.username }} {{ coop.boss.theirs }}</p>
+    </div>
+  {% endif %}
+  {% if coop.partner_augments %}
+    <p class="coop-decided small">{{ coop.partner.username }}'s augments:
+      {% for augment in coop.partner_augments %}<span class="deck-tag" title="{{ augment.text }}">{{ augment.name }}{% if augment.count > 1 %} ×{{ augment.count }}{% endif %}</span>{% endfor %}</p>
+  {% endif %}
   {% if coop.decided %}<p class="coop-decided small">{{ coop.decided }}</p>{% endif %}
   {% if event_due %}<p class="coop-decided small"><strong>You're at an event together.</strong> <a href="{% url 'weiss:arcade_challenge_event' %}">Go to it</a>: you'll vote on every choice it offers.</p>{% endif %}
 </div>

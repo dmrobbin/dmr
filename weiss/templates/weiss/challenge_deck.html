@@ -75,7 +75,7 @@
       <button type="reset" class="button-small secondary" data-pool-clear>Clear</button>
     </form>
     <p class="lead-count small" data-pool-count aria-live="polite"></p>
-    <form method="post" class="challenge-deck" data-challenge-deck data-deck-size="{{ deck_size }}" data-climaxes="{{ climax_target }}"
+    <form method="post" class="challenge-deck" data-challenge-deck data-deck-size="{{ deck_size }}" data-climaxes="{{ climax_target }}" data-climax-min="{{ climax_min }}" data-copy-limit="{{ copy_limit }}"
           {% if partner %}data-live data-state-url="{{ state_url }}" data-partner="{{ partner.username }}"{% endif %}>
       {% csrf_token %}
       <input type="hidden" name="deck" data-deck-field>

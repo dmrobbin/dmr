@@ -675,6 +675,18 @@ class DeckReminderTests(TestCase):
     def checks(self):
         return self.client.get(reverse("weiss:list", args=[self.deck.pk])).context["deck"]
 
+    def test_a_deck_takes_no_more_than_8_climaxes(self):
+        cx = self.cards["cx"]
+        add = lambda: self.client.post(reverse("weiss:list_change", args=[self.deck.pk]), {"card": cx.pk, "delta": 1}, follow=True)
+        add()
+        quantity = lambda: CardListEntry.objects.get(card_list=self.deck, card=cx).quantity
+        self.assertEqual(quantity(), 8)
+        self.assertContains(add(), "A deck has at most 8 climaxes")
+        self.assertEqual(quantity(), 8)
+        CardList.objects.filter(pk=self.deck.pk).update(is_deck=False)  # a plain list holds any number
+        add()
+        self.assertEqual(quantity(), 9)
+
     def test_new_lists_are_decks_and_plain_lists_show_no_reminders(self):
         self.client.post(reverse("weiss:list_create"), {"name": "Fresh"})
         self.assertTrue(CardList.objects.get(name="Fresh").is_deck)

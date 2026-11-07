@@ -16,7 +16,7 @@ import random
 import secrets
 from dataclasses import dataclass
 
-from . import challenge, coop, packs
+from . import augments, challenge, coop, packs
 from .models import Card
 
 TRADE_IN = 5  # cards given up for a pack
@@ -44,6 +44,7 @@ class Buff:
     pack: str = ""  # for a pack: which cards it's made of
     pact: bool = False  # it has a price: never given at random unless a scene asks for a pact
     next_fight: bool = False  # it changes the next fight (see fight_mods), until that's won
+    special: bool = False  # only given for something (an augment pick, for beating a boss): never at random
 
 
 BUFFS = {buff.id: buff for buff in (
@@ -66,6 +67,7 @@ BUFFS = {buff.id: buff for buff in (
     Buff("ambush", "Ambush", f"Your next fight starts with {AMBUSH_DAMAGE} damage in your clock. Win it for {AMBUSH_PACKS} more packs.", pact=True, next_fight=True),
     Buff("outpaced", "Outpaced", f"Open {OUTPACED_PACKS} packs now. Your next opponent takes the first turn.", pact=True, next_fight=True),
     Buff("war_chest", "War chest", f"Your next fight starts with {WAR_CHEST} cards in your stock.", next_fight=True),
+    Buff("augment", "Augment", f"Choose one of {augments.OFFER} augments: a change to the rest of your run.", "augment", special=True),
 )}
 RANDOM = "random"
 PACT = "pact"  # a scene's "give pact": a pact, at random
@@ -73,7 +75,7 @@ PACT = "pact"  # a scene's "give pact": a pact, at random
 
 def roll(count, rng=random, pacts=False):
     """Some different buffs, at random: pacts, or the rest."""
-    found = sorted(buff_id for buff_id, buff in BUFFS.items() if buff.pact == pacts)
+    found = sorted(buff_id for buff_id, buff in BUFFS.items() if buff.pact == pacts and not buff.special)
     return rng.sample(found, min(count, len(found)))
 
 
@@ -140,8 +142,8 @@ def grant(run, buff_ids, source="", rng=random):
     what happened, a line for each that did something the player should hear about (pacts mostly)."""
     said = []
 
-    def reward(buff_id):
-        run.rewards.append({"key": secrets.token_hex(6), "buff": buff_id, "source": source})
+    def reward(buff_id, **extra):
+        run.rewards.append({"key": secrets.token_hex(6), "buff": buff_id, "source": source, **extra})
 
     for buff_id in buff_ids:
         if buff_id == "extra_packs":
@@ -168,6 +170,12 @@ def grant(run, buff_ids, source="", rng=random):
             said.append(f"All in: {run.lives} second chance{'s' if run.lives != 1 else ''} given up, for {run.lives * ALL_IN_PACKS} lucky packs."
                         if run.lives else "All in: you had no second chances to give up, and nothing to show for it.")
             run.lives = 0
+        elif buff_id == "augment":  # what it offers is settled now, so a reload doesn't change it
+            if options := augments.offer(run, rng):
+                reward(buff_id, options=options)
+            else:
+                run.packs += EXTRA_PACKS
+                said.append(f"You have every augment there is: {EXTRA_PACKS} more packs instead.")
         elif BUFFS.get(buff_id) and BUFFS[buff_id].next_fight:
             run.packs += {"blood_pact": BLOOD_PACKS, "outpaced": OUTPACED_PACKS}.get(buff_id, 0)
             run.path = {**(run.path or {}), "next": [*fight_mods(run), *([] if buff_id in fight_mods(run) else [buff_id])]}  # once is enough
@@ -313,11 +321,15 @@ def claim(run, key, data, rng=random):
             raise ValueError(f"Choose {TRADE_IN} cards from your pool to give up.")
         take_from_pool(run, copies)
         run.packs += 1
+    elif buff.claim == "augment":
+        if data.get("augment") not in reward.get("options", []):
+            raise ValueError("Choose one of the augments offered.")
+        augments.take(run, data["augment"])
     elif buff.claim == "climax":
         pk = number(data, "card")
         if pk not in {card.pk for card in climax_choices(run)}:
             raise ValueError("Choose one of the climaxes.")
         add_to_pool(run, pk, CLIMAX_COPIES)
     run.rewards = [r for r in run.rewards if r["key"] != key]
-    run.save(update_fields=["pool", "packs", "rewards", "last_opening"])
+    run.save(update_fields=["pool", "packs", "rewards", "last_opening", "augments"])
     return opened

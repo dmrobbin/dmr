@@ -19,6 +19,7 @@ from .models import CardList, ChallengeRun, ChallengeSettings, CoopRun
 LOSS_LIMIT = 3  # lost games, both players' together, that end a co-op challenge, until staff set it (see loss_limit)
 START_PACKS = 20  # packs each player starts with, until staff set it (see start_packs)
 NAME = "Co-op challenge"
+BOSS_HEALTH = 42  # the damage a boss takes, both players' games together, to go down, until staff set it (see boss_health)
 
 
 def loss_limit():
@@ -31,6 +32,12 @@ def start_packs():
     """The packs each player of a co-op challenge starts with: what staff set, or START_PACKS."""
     settings = ChallengeSettings.current()
     return settings.coop_start_packs if settings else START_PACKS
+
+
+def boss_health():
+    """What staff set on the CPU tab, or BOSS_HEALTH if they never have."""
+    settings = ChallengeSettings.current()
+    return settings.coop_boss_health if settings else BOSS_HEALTH
 
 
 def loadout():
@@ -222,11 +229,33 @@ def finish_floor(run, players_done=None):
         run.path["next"] = []
 
 
-def lost_game(run):
-    """A game lost that counts (not one a second chance covered): one more towards the limit, and at it, the end
-    of the challenge for both. Call within `shared`. Returns whether that ended it."""
+# Bosses ------------------------------------------------------------------------------------------------------------
+# A boss floor's boss is the pair's to wear down together: kept with the path as "boss", {"floor", "health", "max",
+# "dealt": {user id: damage}, "down"}, for the boss the pair is on (or was on last).
+
+def boss_of(path, floor):
+    """The boss of this floor as the pair has left it; one at full health if they haven't fought it yet."""
+    boss = (path or {}).get("boss")
+    if boss and boss["floor"] == floor:
+        return boss
+    health = boss_health()
+    return {"floor": floor, "health": health, "max": health, "dealt": {}}
+
+
+def hit_boss(run, floor, dealt):
+    """This player's game against the boss of `floor` has just dealt it this much damage (as it lands, see
+    play.wear_boss). Call within `shared`. Returns whether that took it down."""
+    boss = run.path["boss"] = boss_of(run.path, floor)
+    boss["health"] = max(0, boss["health"] - dealt)
+    boss["dealt"][str(run.user_id)] = boss["dealt"].get(str(run.user_id), 0) + dealt
+    return boss["health"] == 0
+
+
+def lost_game(run, count=1):
+    """A game lost that counts (not one a second chance covered): one more towards the limit (or `count`: two with
+    Glass Cannon), and at it, the end of the challenge for both. Call within `shared`. Returns whether that ended it."""
     pair = run.coop
-    pair.losses += 1
+    pair.losses += count
     pair.save(update_fields=["losses"])
     if pair.losses < pair.loss_limit:
         return False

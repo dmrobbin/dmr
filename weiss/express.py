@@ -992,6 +992,7 @@ def express_pick(request, pk):
         entries = list(card_list.entries.select_related("card"))
         copies = Counter({e.card_id: e.quantity for e in entries})
         names = {e.card_id: e.card.name for e in entries}
+        climax_of = {e.card_id: is_climax(e.card) for e in entries}
         removing = Counter({pk: min(n, copies[pk]) for pk, n in removing.items() if copies[pk]})
         copies -= removing
         by_name = Counter()
@@ -1005,6 +1006,8 @@ def express_pick(request, pk):
             error = "The deck is full: tick the copies to take out first."
         elif copy_limit(card) is not None and by_name[card.name] + adding > COPY_LIMIT:  # unless its text lets a deck have any number
             error = f"That would be more than {COPY_LIMIT} copies of {card.name}."
+        elif is_climax(card) and sum(n for pk, n in copies.items() if climax_of[pk]) + adding > CLIMAX_COUNT:
+            error = f"A deck has at most {CLIMAX_COUNT} climaxes: tick the climaxes to take out first."
         else:
             error = ""
             copies[card.pk] += adding

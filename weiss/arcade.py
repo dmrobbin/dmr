@@ -114,7 +114,7 @@ def game_finished(room, over, score=None):
     if over["winner"] != str(room.host_id):
         run.losses += 1
         run.save(update_fields=["losses"])
-        challenge.fight_finished(run, won=False, cleared=False)
+        challenge.fight_finished(run, won=False, cleared=False, fought=challenge.fought(room))
         return
     if score is not None:
         run.scores.append({"cpu": room.cpu_profile_id, "name": room.cpu_name, "score": score})
@@ -125,7 +125,7 @@ def game_finished(room, over, score=None):
     cleared = run.position >= len(run.order) and not challenge.infinite(run)  # whose next is chosen on its path
     if queued := scenes_after(run, room.cpu_profile_id, cleared):
         room.state["scenes"] = queued
-    if prize := challenge.fight_finished(run, won=True, cleared=cleared):
+    if prize := challenge.fight_finished(run, won=True, cleared=cleared, fought=challenge.fought(room)):
         room.state["prize"] = challenge.prize_shown(prize)  # the Victory screen draws it, slot machine and all
     if not cleared:
         run.save(update_fields=["position", "scores", "score", "order", "deck_snapshot"])

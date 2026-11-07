@@ -1,7 +1,7 @@
 {# Buffs from scenes, waiting to be claimed (challenge_views.reward_context). #}
 <section class="challenge-rewards">
   <h3>Rewards to claim</h3>
-  <p class="muted small">From the story so far. Claim them, then look at your deck before the next fight.</p>
+  <p class="muted small">From your fights and the story so far. Claim them, then look at your deck before the next fight.</p>
   <ul class="reward-list">
     {% for reward in rewards %}
       <li class="reward">
@@ -29,6 +29,19 @@
           {% elif kind == "exchange" %}
             <label class="small">Swap away <select name="give">{% for card, pulled in pool %}<option value="{{ card.pk }}">{{ card.name }} ({{ card.rarity }})</option>{% endfor %}</select></label>
             <button type="submit" class="button-small">See what for</button>
+          {% elif kind == "augment" %}
+            <fieldset class="augment-choices">
+              <legend class="small">Pick one, for the rest of the run</legend>
+              {% for augment in reward.augments %}
+                <label class="augment-choice">
+                  <input type="radio" name="augment" value="{{ augment.id }}" required{% if forloop.first %} checked{% endif %}>
+                  <span class="augment-name">{{ augment.name }}</span>
+                  <span class="small">{{ augment.text }}</span>
+                  <span class="muted small">For: {{ augment.playstyle }}</span>
+                </label>
+              {% empty %}<p class="muted small">There are no augments left for you to pick.</p>{% endfor %}
+            </fieldset>
+            <button type="submit" class="button-small"{% if not reward.augments %} disabled{% endif %}>Take it</button>
           {% elif kind == "climax" %}
             <label class="small">Climax <select name="card">{% for card in climaxes %}<option value="{{ card.pk }}">{{ card.name }} · {{ card.expansion }}</option>{% endfor %}</select></label>
             <button type="submit" class="button-small"{% if not climaxes %} disabled{% endif %}>Add them</button>

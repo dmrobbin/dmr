@@ -10,6 +10,7 @@ from django.urls import reverse
 from core.access import WEISS_GROUP
 
 from . import arcade, challenge, lists, play
+from .test_packs import with_climaxes
 from .models import ArcadeClear, ArcadeEntry, ArcadeRun, ArcadeScenario, Card, CardList, CardListEntry, CpuImage, CpuProfile, GameRecord, GameRoom
 
 PNG = b"\x89PNG\r\n\x1a\n" + b"\0" * 32
@@ -31,6 +32,7 @@ class Base(TestCase):
     def deck_for(self, user, name, **fields):
         deck = CardList.objects.create(user=user, name=name, **fields)
         CardListEntry.objects.create(card_list=deck, card=self.card, quantity=4)
+        with_climaxes(deck)
         return deck
 
     def cpu(self, name, **fields):
@@ -381,6 +383,31 @@ class ArcadeBuilderTests(Base):
     def test_saving_comes_back_to_the_tab(self):
         response = self.client.post(reverse("weiss:arcade_create"), {"name": "Other"})
         self.assertRedirects(response, reverse("weiss:cpu_home") + "?tab=arcade", fetch_redirect_response=False)
+
+
+class PlayableDeckTests(Base):
+    """A deck is played with only once it has its 8 climaxes."""
+
+    def setUp(self):
+        super().setUp()
+        self.scenario = ArcadeScenario.objects.create(name="Ark")
+        for cpu, role in ((self.cpu("Open"), "opener"), (self.cpu("F1"), "filler"), (self.cpu("Last"), "anchor")):
+            ArcadeEntry.objects.create(scenario=self.scenario, cpu=cpu, role=role)
+        self.client.force_login(self.alice)
+        CardListEntry.objects.filter(card_list=self.deck, card__serial_number="TEST/CX1").update(quantity=1)  # 7 climaxes
+
+    def test_seven_climaxes_cant_start_a_run_or_a_game(self):
+        page = self.client.post(reverse("weiss:arcade_start"), {"scenario": self.scenario.pk, "deck": self.deck.pk})
+        self.assertEqual([m.message for m in page.wsgi_request._messages], ["“Mine”: a deck needs exactly 8 climaxes, and this one has 7."])
+        self.client.post(reverse("weiss:play_vs_cpu"), {"cpu": CpuProfile.objects.first().pk, "deck": self.deck.pk})
+        self.assertFalse(GameRoom.objects.exists())
+        room = GameRoom.objects.create(host=self.alice)
+        self.client.post(reverse("weiss:play_deck", args=[room.pk]), {"deck": self.deck.pk})
+        room.refresh_from_db()
+        self.assertIsNone(room.host_deck)
+        with_climaxes(self.deck)
+        self.client.post(reverse("weiss:arcade_start"), {"scenario": self.scenario.pk, "deck": self.deck.pk})
+        self.assertTrue(GameRoom.objects.filter(arcade_run__isnull=False).exists())
 
 
 class ArcadeRunTests(Base):

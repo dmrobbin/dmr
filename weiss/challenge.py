@@ -1,15 +1,17 @@
 """Challenge mode: build a deck from packs, then fight through an arcade list with it.
 
 A challenge starts with START_PACKS packs (NARRATIVE_START_PACKS for a narrative one). Opening them adds their cards to the challenge's pool, and its
-deck can hold only what's in the pool (sealed: nothing else, so a deck can be short of 50 or of climaxes
-until more packs come). Each win in its arcade run brings more (see win_reward); a loss ends the challenge. In a
+deck can hold only what's in the pool (sealed: nothing else, so a deck can be short of 50 until more packs
+come), but like any deck, it needs its 8 climaxes to fight (see deck_ready). Each win in its arcade run brings more (see win_reward); a loss ends the challenge. In a
 free challenge the player picks any set for each pack, an arbitrary arcade list to fight; a narrative one
 (NarrativeChallenge, set up by staff) fixes the list, and the sets its packs come from. An infinite one has no
 list: a path of every CPU there is, floor after floor of two or three to choose from, laid ahead of the player as far
 as PATH_AHEAD (see path_of), harder floor by floor (INFINITE_MODELS), for as long as the player wins, each win
 bringing a random reward and no scenes. Some spaces on the path are events instead of fights: a random scene from
 the ones staff have chosen (Scene.infinite_event), whose choices mostly give pacts (weiss.buffs), something for
-something.
+something. Every boss_every floors the path narrows to a boss (see boss_floor): a CPU playing at its hardest, and
+beating it brings BOSS_PACKS more packs and an augment to pick (weiss.augments). In co-op the pair wear it down
+together, every bit of damage either of their games deals it coming off one health bar (wear_boss).
 
 A co-op challenge (weiss.coop) is an infinite one for two: each player has their own run here, with the pool and
 path shared between them, so what changes those goes through coop.shared.
@@ -23,8 +25,8 @@ import random
 from django.db import transaction
 from django.utils import timezone
 
-from . import coop, packs
-from .lists import DECK_SIZE
+from . import augments, coop, packs
+from .lists import DECK_SIZE, climax_problem, is_climax, unlimited
 from .models import ArcadeRun, Card, CardList, CardListEntry, ChallengeRun, ChallengeSettings, CpuProfile, GameRoom, Scene
 
 START_PACKS = 20  # packs to open at the start of a free challenge
@@ -48,6 +50,9 @@ EVENT = "event"  # a space on the path that plays an event scene instead of a fi
 EVENT_CHANCE = .6  # that a floor (after the first) has an event among its spaces, if there are event scenes; until staff set it (see event_chance)
 INFINITE_START_PACKS = 20  # what an infinite challenge starts with, until staff set it (see infinite_start_packs)
 LOADOUT_BUFFS = ("climax_pack", "level_pack", "color_pack", "lucky_pack", "wild_pack", "climax_pick")  # what staff can start it with besides
+BOSS_EVERY = 5  # floors apart the path's bosses are, until staff set it (see boss_every)
+BOSS_STOCK = 3  # cards in the stock a boss starts each game with
+BOSS_PACKS = 3  # what beating a boss brings, besides a win's usual reward
 
 
 def can_start(user, kind):
@@ -109,6 +114,22 @@ def win_reward_text(kind):
     return " and ".join([", ".join(parts[:-1]), parts[-1]] if len(parts) > 1 else parts)
 
 
+def boss_reward_text(run):
+    """What beating a boss brings, for the player."""
+    return f"an augment pick and {BOSS_PACKS} more packs on top of a win's reward"
+
+
+def boss_shown(run, floor):
+    """What a page shows of the boss of this floor: {"reward"}, and in co-op how worn down it is ("health", "max",
+    "down") and each player's share of the damage ("dealt": {user id: damage}; see coop.hit_boss)."""
+    shown = {"reward": boss_reward_text(run)}
+    if run.coop_id:
+        boss = coop.boss_of(run.path, floor)
+        shown.update(health=boss["health"], max=boss["max"], down=bool(boss.get("down")), dealt=dict(boss["dealt"]),
+                     percent=round(boss["health"] / boss["max"] * 100) if boss["max"] else 0)
+    return shown
+
+
 def infinite(arcade_run):
     """Whether this arcade run is an infinite challenge's."""
     return bool(arcade_run and ChallengeRun.objects.filter(arcade_run=arcade_run, kind=ChallengeRun.Kind.INFINITE).exists())
@@ -144,6 +165,36 @@ def event_chance():
     """The chance that a floor offers an event: what staff set on the CPU tab, or EVENT_CHANCE if they never have."""
     settings = ChallengeSettings.current()
     return settings.event_percent / 100 if settings else EVENT_CHANCE
+
+
+def boss_every(coop=False):
+    """How many floors apart a solo (or co-op) challenge's bosses are, as staff set it on the CPU tab; 0 for none."""
+    settings = ChallengeSettings.current()
+    if not settings:
+        return BOSS_EVERY
+    return settings.coop_boss_every if coop else settings.boss_every
+
+
+def bosses_and_others(found):
+    """(the CPUs that can be bosses, those that can be fought on the other floors), from these: staff's bosses
+    and the rest; with no bosses (or nothing but), any of them can be either."""
+    bosses = [cpu.pk for cpu in found if cpu.boss]
+    others = [cpu.pk for cpu in found if not cpu.boss]
+    if not bosses or not others:
+        return [cpu.pk for cpu in found], [cpu.pk for cpu in found]
+    return bosses, others
+
+
+def is_boss(path, f):
+    """Whether floor `f` of a path is a boss's."""
+    return f in (path or {}).get("bosses", [])
+
+
+def boss_floor(bosses, met, rng):
+    """A boss floor: one boss, in the middle, where every column leads; one not `met` on the path yet, if there's one left."""
+    floor = [None] * COLUMNS
+    floor[COLUMNS // 2] = rng.choice([pk for pk in bosses if pk not in met] or bosses)
+    return floor
 
 
 def new_floor(before, found, rng, events=False, chance=None):
@@ -197,10 +248,11 @@ def event_scenes():
 @coop.sharing
 def path_of(run, rng=random):
     """An infinite challenge's path, {"floors": [[CPU id, EVENT or None for each column], ...], "picks": [the column
-    taken on each floor], "done": floors been through}, laid out PATH_AHEAD floors past the one it's on, plus anything
-    else kept with it (the next fight's modifiers, an event under way). CPUs that can't be fought any more are taken
-    off the floors still to come (one picked for a fight is let go too), and events if there are no event scenes; a
-    floor left empty is laid again. Saved if it changed."""
+    taken on each floor], "done": floors been through, "bosses": [the floors that are bosses']}, laid out PATH_AHEAD
+    floors past the one it's on, plus anything else kept with it (the next fight's modifiers, an event under way).
+    CPUs that can't be fought any more are taken off the floors still to come (one picked for a fight is let go too),
+    and events if there are no event scenes; a floor left empty is laid again. Every boss_every floors is a boss's
+    (see boss_floor), kept as one once it's laid. Saved if it changed."""
     path = {**(run.path or {}), "floors": [list(f) for f in (run.path or {}).get("floors", [])], "picks": list((run.path or {}).get("picks", []))}
     floors, picks = path["floors"], path["picks"]
     # In co-op the pair is on the floor both are on, and the path is laid ahead of whichever of them is further on.
@@ -211,7 +263,10 @@ def path_of(run, rng=random):
         picks[:] = [0] * at
     on_grid(floors, picks)
     events = bool(event_scenes())
-    found = [cpu.pk for cpu in opponents()]
+    cpus = opponents()
+    found = [cpu.pk for cpu in cpus]
+    bosses, others = bosses_and_others(cpus)
+    every = boss_every(coop=bool(run.coop_id))
     found_or_event = found + ([EVENT] if events else [])
     found_here = found_or_event if not path.get("event") else found_or_event + [EVENT]  # an event under way stays
     del picks[at + 1:]
@@ -223,7 +278,13 @@ def path_of(run, rng=random):
     del floors[first_empty:]
     chance = event_chance() if events and len(floors) < furthest + 1 + PATH_AHEAD else 0
     while found and len(floors) < furthest + 1 + PATH_AHEAD:
-        floors.append(new_floor(floors[-1] if floors else [], found, rng, events=events and len(floors) > 0, chance=chance))
+        f = len(floors)
+        if is_boss(path, f) or every and (f + 1) % every == 0:
+            met = [floors[b][COLUMNS // 2] for b in path.get("bosses", []) if b < f]
+            floors.append(boss_floor(bosses, met, rng))
+            path["bosses"] = sorted({*path.get("bosses", []), f})
+        else:
+            floors.append(new_floor(floors[-1] if floors else [], others, rng, events=events and f > 0, chance=chance))
     if path != run.path:
         run.path = path
         run.save(update_fields=["path"])
@@ -247,14 +308,14 @@ def pick(run, node, rng=random):
     """Choose where an infinite challenge goes next: a node of the floor it's on that the path leads to. Returns
     that CPU's id (or EVENT), or None if it can't be chosen. A choice made stands until the fight's won or the
     event's over (or the CPU's gone). In co-op this is a vote, and it's None until both players have voted (see
-    coop.vote)."""
+    coop.vote), unless there's only one way on."""
     path = path_of(run)
     at = floor_at(run)
     if at < len(path["picks"]):
         node = path["picks"][at]
     elif node not in choices(path, at):
         return None
-    elif run.coop_id and (node := coop.vote(run, path, f"floor:{at}", node, rng)) is None:
+    elif run.coop_id and len(choices(path, at)) > 1 and (node := coop.vote(run, path, f"floor:{at}", node, rng)) is None:  # one way on: no vote
         run.path = path
         return None
     else:
@@ -437,6 +498,8 @@ def save_deck(run, copies):
                     else "A deck can only have the cards you've pulled from your packs.")
     if sum(copies.values()) > DECK_SIZE:
         return f"A deck has at most {DECK_SIZE} cards."
+    if problem := deck_rules_broken(run, copies):
+        return problem
     with transaction.atomic():
         run.deck.entries.all().delete()
         CardListEntry.objects.bulk_create(CardListEntry(card_list=run.deck, card_id=pk, quantity=n) for pk, n in copies.items())
@@ -444,14 +507,54 @@ def save_deck(run, copies):
     return None
 
 
-def fight_finished(arcade_run, won, cleared, rng=random):
+def deck_rules_broken(run, copies):
+    """What's wrong with a deck of these {card id: copies} as it's built, or None: more climaxes than a deck can have
+    (CLIMAX_COUNT, or more with Climax Overload), or since Highlander was picked, more copies of a card than it
+    allows (see weiss.augments). The rules' 4 copies of a card are only warned about (the deck builder shows them)."""
+    cards = Card.objects.in_bulk(copies)
+    climaxes = sum(n for pk, n in copies.items() if pk in cards and is_climax(cards[pk]))
+    if climaxes > augments.climax_limit(run):
+        return climax_problem(climaxes, augments.climax_limit(run))
+    if not augments.has(run, "highlander"):
+        return None
+    by_name, free = {}, set()
+    for pk, n in copies.items():
+        if pk in cards:
+            by_name[cards[pk].name] = by_name.get(cards[pk].name, 0) + n
+            if unlimited(cards[pk]):
+                free.add(cards[pk].name)
+    most = augments.copy_limit(run)
+    over = sorted(name for name, n in by_name.items() if n > most and name not in free)
+    return f"Highlander: a deck can run at most {most} copies of a card, not {', '.join(over)}." if over else None
+
+
+def deck_ready(run):
+    """What stops this deck being fought with as it is, or None: what deck_rules_broken says, or too few climaxes
+    (a deck can be short of DECK_SIZE cards while the pool grows, but not of climaxes)."""
+    if not run.deck:
+        return None
+    copies = dict(run.deck.entries.values_list("card_id", "quantity"))
+    climaxes = sum(run.deck.entries.filter(card__card_type__iexact="climax").values_list("quantity", flat=True))
+    problem = deck_rules_broken(run, copies) or climax_problem(climaxes, augments.climax_limit(run))
+    return problem and f"{problem} Change your deck to fight on."
+
+
+def fought(room):
+    """What an infinite challenge's game that's just ended was (see play.stamp_floor): {"floor" it was dealt for,
+    "boss": whether it was a boss's}."""
+    return {"floor": room.state.get("floor"), "boss": bool(room.state.get("boss"))}
+
+
+def fight_finished(arcade_run, won, cleared, rng=random, fought=None):
     """A fight in a challenge's run has ended (see arcade.game_finished): a win brings packs; a loss ends it.
-    Returns the prize a win drew (an infinite challenge's), for the Victory screen to show being drawn; or None."""
+    Beating a boss (`fought`, see above) brings BOSS_PACKS more. Returns the prize a win drew (an infinite
+    challenge's), for the Victory screen to show being drawn; or None."""
     run = of(arcade_run)
     if not run:
         return None
+    fought = fought or {}
     if run.coop_id:
-        return coop_fight_finished(run, won, rng)
+        return coop_fight_finished(run, won, rng, fought)
     prize = None
     if won:
         from .buffs import AMBUSH_PACKS, fight_mods, grant, roll  # weiss.buffs uses this module
@@ -459,6 +562,10 @@ def fight_finished(arcade_run, won, cleared, rng=random):
         run.packs += count
         if "ambush" in fight_mods(run):
             run.packs += AMBUSH_PACKS
+        extra_packs, extra_rewards = augments.win_extras(run)
+        run.packs += extra_packs
+        if fought.get("boss"):
+            beat_boss(run, rng)
         path = {**(run.path or {}), "next": []}  # the fight's modifiers are done with
         if run.kind == ChallengeRun.Kind.INFINITE:
             path["done"] = floor_at(run) + 1  # up a floor
@@ -466,15 +573,15 @@ def fight_finished(arcade_run, won, cleared, rng=random):
         drawn = []
         for buff in rewards:
             if buff == "prize":
-                buff = prize = rng.choice(INFINITE_PRIZES)
+                buff = prize = rng.choice(augments.prizes(run, INFINITE_PRIZES))
             elif buff == "random":
                 buff = roll(1, rng)[0]
             drawn.append(buff)
-        grant(run, drawn, "Victory", rng)
+        grant(run, drawn + extra_rewards, "Victory", rng)
         if cleared:
             run.status = ChallengeRun.Status.WON
-    elif run.lives:  # a second chance: the fight's there to try again
-        run.lives -= 1
+    elif run.lives >= augments.loss_cost(run):  # a second chance (two, with Glass Cannon): the fight's there to try again
+        run.lives -= augments.loss_cost(run)
     else:
         run.status = ChallengeRun.Status.LOST
         arcade_run.status, arcade_run.finished = ArcadeRun.Status.ABANDONED, timezone.now()
@@ -485,26 +592,79 @@ def fight_finished(arcade_run, won, cleared, rng=random):
     return prize
 
 
-def coop_fight_finished(run, won, rng=random):
+def beat_boss(run, rng=random):
+    """A boss beaten: BOSS_PACKS more packs to open, and an augment to pick (weiss.augments)."""
+    from .buffs import grant  # weiss.buffs uses this module
+    run.packs += BOSS_PACKS
+    grant(run, ["augment"], "Boss", rng)
+
+
+def coop_fight_finished(run, won, rng=random, fought=None):
     """fight_finished, for one player of a co-op challenge: win or lose, they're done with this floor (see
     coop.finish_floor). A win brings them packs and a prize, as in solo; a loss uses up one of their second chances,
-    or else counts towards the pair's limit (see coop.lost_game)."""
+    or else counts towards the pair's limit (see coop.lost_game). A boss's floor is done only once the boss is down,
+    both players' games having worn it down together as they went (see wear_boss): then it's done for both, both
+    have beaten it, and a game against it still going is won (play.wear_boss ends it). A win against a boss that
+    isn't down (it couldn't refresh its deck) doesn't count, and nor does a game for a floor the player is done with."""
     from .buffs import AMBUSH_PACKS, fight_mods, grant  # weiss.buffs uses this module
+    fought = fought or {}
     prize = None
     with coop.shared(run):
+        floor = fought.get("floor")
+        down = bool(fought.get("boss") and coop.boss_of(run.path, floor).get("down"))
+        if floor is not None and floor != floor_at(run) and not down:
+            return None  # a floor this player is done with
+        if fought.get("boss") and won != down:
+            return None  # a win against a boss with health left (it couldn't refresh its deck), or a loss once it was down
         if won:
             count, _ = win_reward(run.kind)
-            run.packs += count + (AMBUSH_PACKS if "ambush" in fight_mods(run) else 0)
-            prize = rng.choice(INFINITE_PRIZES)
-            grant(run, [prize], "Victory", rng)
-        coop.finish_floor(run)
-        if not won and run.lives:
-            run.lives -= 1
-        elif not won and coop.lost_game(run):
+            extra_packs, extra_rewards = augments.win_extras(run)
+            run.packs += count + extra_packs + (AMBUSH_PACKS if "ambush" in fight_mods(run) else 0)
+            prize = rng.choice(augments.prizes(run, INFINITE_PRIZES))
+            grant(run, [prize, *extra_rewards], "Victory", rng)
+        if not fought.get("boss"):
+            coop.finish_floor(run)
+        cost = augments.loss_cost(run)  # two with Glass Cannon
+        if not won and run.lives >= cost:
+            run.lives -= cost
+        elif not won and coop.lost_game(run, cost):
             return None  # that was the last loss: it's over for both (see coop.end)
         snapshot_deck(run)
         run.save(update_fields=["packs", "rewards", "lives", "path", "deck_snapshot"])
     return prize
+
+
+def wear_boss(run, floor, dealt, rng=random):
+    """This player's game against the co-op boss of `floor` has just dealt it this much damage (see play.wear_boss):
+    off the pair's health bar for it, and if that empties it, it's down (coop_boss_down). Returns whether it's down,
+    now or already (or this player is past its floor)."""
+    with coop.shared(run):
+        if floor != floor_at(run):
+            return True
+        if coop.boss_of(run.path, floor).get("down"):
+            return True
+        if not dealt or not coop.hit_boss(run, floor, dealt):
+            return False
+        coop_boss_down(run, rng)
+        run.save(update_fields=["packs", "rewards"])
+    return True
+
+
+def boss_down(run, floor):
+    """Whether the co-op boss of `floor` is down (or this player is past its floor), as the pair's path has it now."""
+    return floor != floor_at(run) or bool(coop.boss_of(run.path, floor).get("down"))
+
+
+def coop_boss_down(run, rng=random):
+    """The pair's boss is down: its floor is done for both of them, and both have beaten it. Call within coop.shared."""
+    run.path["boss"]["down"] = True
+    coop.finish_floor(run, coop.players(run.coop))
+    beat_boss(run, rng)
+
+    def partner_beat_it(other):
+        beat_boss(other, rng)
+        other.save(update_fields=["packs", "rewards"])
+    coop.for_partner(run, partner_beat_it)
 
 
 def snapshot_deck(run):

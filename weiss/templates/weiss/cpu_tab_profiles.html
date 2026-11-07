@@ -4,7 +4,7 @@
     <summary class="button-small">+ New profile</summary>
     <form method="post" action="{% url 'weiss:cpu_profile_create' %}" class="cpu-form">
       {% csrf_token %}
-      {% include "weiss/cpu_fields.html" with name="" model="standard" aggression=1 deck_id=None intro_text="" player_win_text="" player_lose_text="" combo_text="" %}
+      {% include "weiss/cpu_fields.html" with name="" model="standard" aggression=1 boss=False deck_id=None intro_text="" player_win_text="" player_lose_text="" combo_text="" %}
       <button type="submit" class="button-small">Create profile</button>
       <p class="muted small cpu-wide">Its pictures and the rest come next, on its own page.</p>
     </form>

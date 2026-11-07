@@ -2,16 +2,18 @@
 <section class="spire" aria-labelledby="spire-title">
   <h3 id="spire-title">The path</h3>
   <p class="muted small">Choose who to fight next. Each space only leads to the ones beside it on the next floor, so a side you leave behind takes going through the middle to get back to: the lit paths show where you can go from here.
-    A <strong>?</strong> is an event: no fight, but something happens, mostly a bargain with a price.</p>
+    A <strong>?</strong> is an event: no fight, but something happens, mostly a bargain with a price.
+    {% if path.boss_reward %}Every so often the path narrows to a <strong>boss</strong>: it plays at its hardest, and beating it brings {{ path.boss_reward }}.{% endif %}</p>
   {% if path.voting %}<p class="small"><strong>You choose together:</strong> vote for where to go next. Once you've both voted it's decided: if you disagree, a coin flip picks one of your two votes.</p>{% endif %}
   <div class="spire-map" style="height: {{ path.height }}rem">
     <svg class="spire-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
       {% for line in path.lines %}<line class="{{ line.state }}" x1="{{ line.x1 }}" y1="{{ line.y1 }}" x2="{{ line.x2 }}" y2="{{ line.y2 }}" vector-effect="non-scaling-stroke"/>{% endfor %}
     </svg>
     {% for floor in path.floors %}
-      <p class="spire-floor{% if floor.current %} current{% endif %}" style="top: {{ floor.nodes.0.y }}%">Fight {{ floor.number }}<span>{{ floor.tier }}</span></p>
+      <p class="spire-floor{% if floor.current %} current{% endif %}{% if floor.boss %} boss{% endif %}" style="top: {{ floor.nodes.0.y }}%">Fight {{ floor.number }}<span>{{ floor.tier }}</span></p>
       {% for node in floor.nodes %}
-        <div class="spire-node {{ node.state }}" style="left: {{ node.x }}%; top: {{ node.y }}%">
+        <div class="spire-node {{ node.state }}{% if node.boss %} boss{% endif %}" style="left: {{ node.x }}%; top: {{ node.y }}%">
+          {% if node.boss %}<span class="spire-boss-tag" aria-hidden="true">Boss</span>{% endif %}
           {% if node.my_vote or node.their_vote %}<span class="spire-votes">{% if node.my_vote %}<span class="deck-tag">Your vote</span>{% endif %}{% if node.their_vote %}<span class="deck-tag">{{ coop.partner.username }}'s vote</span>{% endif %}</span>{% endif %}
           {% if node.state == "open" or node.state == "picked" %}
             <form method="post" action="{% url 'weiss:arcade_challenge_fight' %}">

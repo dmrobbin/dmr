@@ -9,7 +9,8 @@ from django.urls import reverse
 from core.access import WEISS_GROUP
 
 from . import packs, play
-from .models import Card
+from .lists import CLIMAX_COUNT, is_climax
+from .models import Card, CardListEntry
 from .templatetags.weiss_lists import rarity_grade
 
 
@@ -23,6 +24,41 @@ def make_set(expansion_id=1, name="Vol.1", **rarities):
             cards.append(Card.objects.create(serial_number=f"S{expansion_id}/{rarity}-{n}", name=f"{rarity} {n}", expansion=name,
                                              expansion_id=expansion_id, card_type=card_type, rarity=rarity))
     return cards
+
+
+TEST_CLIMAX_COPIES = 2  # of each test climax: few enough for Highlander's limit
+
+
+def with_climaxes(deck):
+    """Top this deck up to the CLIMAX_COUNT climaxes it needs to be played, with test climaxes (TEST_CLIMAX_COPIES of
+    each). Returns {card id: copies added}."""
+    short = CLIMAX_COUNT - sum(e.quantity for e in deck.entries.select_related("card") if is_climax(e.card))
+    added, n = {}, 0
+    while short > 0:
+        n += 1
+        card, _ = Card.objects.get_or_create(serial_number=f"TEST/CX{n}", defaults={
+            "name": f"Test climax {n}", "expansion": "Test", "expansion_id": 999, "card_type": "Climax", "rarity": "CC"})
+        entry, _ = CardListEntry.objects.get_or_create(card_list=deck, card=card, defaults={"quantity": 0})
+        more = min(short, TEST_CLIMAX_COPIES - entry.quantity)
+        if more > 0:
+            entry.quantity += more
+            entry.save(update_fields=["quantity"])
+            added[card.pk] = more
+            short -= more
+    return added
+
+
+def run_with_climaxes(run):
+    """with_climaxes for a challenge run's deck, the copies going in its pool too (the pair's, in co-op). Returns the
+    run as it now is."""
+    from .challenge import current
+    added = with_climaxes(run.deck)
+    holder = run.coop if run.coop_id else run
+    holder.refresh_from_db()
+    for pk, n in added.items():
+        holder.pool[str(pk)] = holder.pool.get(str(pk), 0) + n
+    holder.save(update_fields=["pool"])
+    return current(run.user)
 
 
 class PackTests(TestCase):

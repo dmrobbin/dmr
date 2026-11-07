@@ -13,8 +13,8 @@ from django.views.decorators.http import require_POST
 
 from core.access import weiss_access_required
 
-from . import arcade, buffs, challenge, coop, packs
-from .lists import DECK_GROUPS, DECK_SIZE, unlimited
+from . import arcade, augments, buffs, challenge, coop, packs
+from .lists import CLIMAX_COUNT, DECK_GROUPS, DECK_SIZE, unlimited
 from .models import ArcadeRun, ArcadeScenario, Card, ChallengeRun, CoopRun, CpuProfile, GameRoom, NarrativeChallenge, PlayerProfile
 from .play import deal, not_begun, seat_cpu, snapshot_groups
 
@@ -58,6 +58,7 @@ def challenge_home(request):
         "mods": [buffs.BUFFS[buff_id] for buff_id in buffs.fight_mods(run)],
         "event_due": bool((run.path or {}).get("event")),
         "last_set": last_set(run),
+        "augments": augments.of(run),
         "coop": coop_context(request, run),
     })
 
@@ -72,7 +73,16 @@ def coop_context(request, run):
     profile = partner and PlayerProfile.objects.filter(user=partner, avatar_card__isnull=False).first()
     mine = challenge.floor_at(run)
     theirs = coop.floor_of(run.path, partner.pk) if partner else mine
-    return {"run": pair, "partner": partner, "partner_avatar": profile and profile.avatar, "hosting": pair.host_id == request.user.pk,
+    boss = None
+    if challenge.is_boss(run.path, mine):  # the boss this player is on (or, once it's down, the one just beaten)
+        boss = challenge.boss_shown(run, mine)
+    elif (last := (run.path or {}).get("boss")) and last.get("down") and last["floor"] == mine - 1:
+        boss = challenge.boss_shown(run, last["floor"])
+    if boss:
+        boss["mine"] = boss.get("dealt", {}).get(str(run.user_id), 0)
+        boss["theirs"] = boss.get("dealt", {}).get(str(partner.pk), 0) if partner else 0
+    other = coop.partner_run(run) if partner else None
+    return {"boss": boss, "partner_augments": augments.of(other) if other else [], "run": pair, "partner": partner, "partner_avatar": profile and profile.avatar, "hosting": pair.host_id == request.user.pk,
             "limit_range": range(pair.loss_limit), "floor": mine + 1, "partner_floor": theirs + 1, "behind": theirs < mine, "ahead": theirs > mine,
             "decided": decided_said(run, partner), "status_url": reverse("weiss:arcade_coop_status"),
             "invite_url": request.build_absolute_uri(reverse("weiss:arcade_coop_join", args=[pair.invite_token]))
@@ -92,7 +102,7 @@ def path_view(run):
     "nodes": [{"cpu" (None for an event), "event", "node", "x", "y", "state"}]}], "lines": [{"x1", "y1", "x2", "y2", "state"}], "defeated":
     [CPU, ...]}. Positions are percentages of the map. A node's state is "won", "passed" (not taken), "open" (can
     be fought now), "picked" (chosen, its fight under way), "closed" (on this floor, out of reach), "reach" (ahead,
-    on the way from here) or "ahead"."""
+    on the way from here) or "ahead". A boss floor's floor and node have "boss"."""
     path = challenge.path_of(run)
     floors, picks = path["floors"], path["picks"]
     at = challenge.floor_at(run)
@@ -121,14 +131,14 @@ def path_view(run):
     my_vote, their_vote = (coop.vote_of(run, key), coop.partner_vote(run, key)) if run.coop_id else (None, None)
     view_floors, lines = [], []
     for f in shown:
-        nodes = []
+        nodes, boss = [], challenge.is_boss(path, f)
         for i, pk in enumerate(floors[f]):
             if pk is None:  # a gap in the path
                 continue
             x, y = place(f, i)
-            nodes.append({"cpu": cpus.get(pk), "event": pk == challenge.EVENT, "node": i, "x": x, "y": y, "state": state(f, i),
+            nodes.append({"cpu": cpus.get(pk), "event": pk == challenge.EVENT, "boss": boss, "node": i, "x": x, "y": y, "state": state(f, i),
                           "my_vote": f == at and my_vote == i, "their_vote": f == at and their_vote == i})
-        view_floors.append({"number": f + 1, "tier": challenge.tier(f), "current": f == at, "nodes": nodes})
+        view_floors.append({"number": f + 1, "tier": "Boss" if boss else challenge.tier(f), "boss": boss, "current": f == at, "nodes": nodes})
         if f + 1 < last:
             for i, led in enumerate(challenge.links(floors[f], floors[f + 1])):
                 for j in led:
@@ -136,13 +146,17 @@ def path_view(run):
                     taken = f + 1 < len(picks) and picks[f] == i and picks[f + 1] == j
                     onward = f + 1 >= at and j in reach[f + 1] and (i in reach[f] if f >= at else picks[f] == i)
                     lines.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2, "state": "taken" if taken else "onward" if onward else "faint"})
+    shows_bosses = challenge.boss_every(coop=bool(run.coop_id)) or path.get("bosses")
     return {"floors": view_floors[::-1], "lines": lines, "defeated": defeated, "height": len(shown) * 9, "coop": bool(run.coop_id),
-            "voting": bool(run.coop_id) and at >= len(picks)}
+            "voting": bool(run.coop_id) and at >= len(picks) and len(open_now) > 1,
+            "boss_reward": challenge.boss_reward_text(run) if shows_bosses else ""}
 
 
 def reward_context(run):
     """The rewards waiting to be claimed, and what each kind of claim chooses from."""
-    rewards = [{**reward, "buff": buffs.BUFFS[reward["buff"]]} for reward in run.rewards if reward["buff"] in buffs.BUFFS]
+    rewards = [{**reward, "buff": buffs.BUFFS[reward["buff"]],
+                "augments": [augments.shown(a) for a in reward.get("options", []) if a in augments.AUGMENTS]}
+               for reward in run.rewards if reward["buff"] in buffs.BUFFS]
     kinds = {reward["buff"].claim for reward in rewards}
     context = {"rewards": rewards, "levels": buffs.LEVELS, "colors": buffs.COLORS, "trade_in": buffs.TRADE_IN}
     if kinds & {"exchange", "trade_in"}:
@@ -285,7 +299,7 @@ def challenge_deck(request):
         rarity = packs.rarity_of(card)
         cards.append({"card": card, "pulled": pulled, "in_deck": in_deck, "theirs": theirs, "total": pulled + theirs,
                       "rarity": rarity, "grade": packs.grade_of(rarity), "unlimited": unlimited(card)})
-    climaxes = next(target for _, target, required, _ in DECK_GROUPS if required)
+    climaxes = augments.climax_limit(run)  # the most a deck can have: the rules' 8, or more with an augment
     # What the filters offer: only what's in the pool (as the set pages do, see views.card_browser).
     pool = [item["card"] for item in cards]
     options = {
@@ -299,9 +313,10 @@ def challenge_deck(request):
     partner = run.coop.partner_of(request.user) if run.coop_id else None
     # Which of the pool's levels (as the page has them, see data-level) count towards each of the deck rules' groups.
     levels = (["climax"], ["0"], ["1"], ["2", "3"])
-    groups = [{"label": label, "target": target, "required": required, "levels": counted}
+    groups = [{"label": label, "target": climaxes if required else target, "required": required, "levels": counted}
               for (label, target, required, _), counted in zip(DECK_GROUPS, levels)]
-    return render(request, "weiss/challenge_deck.html", {"run": run, "cards": cards, "deck_size": DECK_SIZE, "climax_target": climaxes,
+    return render(request, "weiss/challenge_deck.html", {"run": run, "cards": cards, "deck_size": DECK_SIZE, "climax_target": climaxes, "climax_min": CLIMAX_COUNT,
+                                                         "copy_limit": augments.copy_limit(run),
                                                          "options": options, "partner": partner, "deck_groups": groups,
                                                          "state_url": reverse("weiss:arcade_challenge_deck_state") if partner else ""})
 
@@ -355,8 +370,15 @@ def challenge_fight(request):
     if heading != challenge.EVENT and (not run.deck or not run.deck.entries.exists()):  # an event needs no deck
         messages.error(request, "Your deck is empty: open some packs and build it first.")
         return redirect("weiss:arcade_challenge")
+    if heading != challenge.EVENT and (problem := challenge.deck_ready(run)):
+        messages.error(request, problem)
+        return redirect("weiss:arcade_challenge")
     if endless and run.coop_id and run.coop.status == CoopRun.Status.WAITING:
         messages.error(request, "The path waits for you both: your partner hasn't joined yet.")
+        return redirect("weiss:arcade_challenge")
+    if endless and run.coop_id and challenge.is_boss(path, at) and coop.pair_floor(run) < at:
+        partner = run.coop.partner_of(request.user)
+        messages.info(request, f"The boss waits for you both: {partner.username} is still on fight {coop.pair_floor(run) + 1}.")
         return redirect("weiss:arcade_challenge")
     if endless:
         chosen = challenge.pick(run, node)

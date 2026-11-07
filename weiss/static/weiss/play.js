@@ -139,6 +139,8 @@
     if (data.revealed) modal = { title: data.revealed.title, revealed: data.revealed.cards };
     render();
     renderDefeated();
+    renderBoss();
+    renderAugments();
     showScene();
     animateOpponent(before);
     if (wasInPlay && animations) celebrate(wasInPlay);
@@ -346,6 +348,48 @@
     defeatedEl.innerHTML = `<span class="defeated-count" aria-hidden="true"><strong>${beaten.length}</strong> defeated</span>
       ${beaten.length ? `<ol class="defeated-faces">${beaten.map(face).join("")}</ol>` : ""}`;
     (root.querySelector(".play-chat-side") || root).prepend(defeatedEl);
+  }
+
+  // --- An infinite challenge's boss: what beating it brings, and in co-op its health, worn down by both players' games --
+
+  let bossEl = null;
+  let bossKey = "";
+  function renderBoss() {
+    const boss = arcade && arcade.boss;
+    const key = boss ? JSON.stringify([boss, !!board.game_over]) : "";
+    if (key === bossKey) return;
+    bossKey = key;
+    if (bossEl) bossEl.remove();
+    bossEl = null;
+    if (!boss) return;
+    bossEl = document.createElement("div");
+    bossEl.className = "play-boss";
+    const health = boss.max ? `<div class="boss-health" role="meter" aria-label="Boss health" aria-valuemin="0" aria-valuemax="${boss.max}" aria-valuenow="${boss.health}">
+        <span class="boss-health-fill" style="width: ${boss.percent}%"></span><span class="boss-health-text">${boss.health} / ${boss.max}</span></div>` : "";
+    const note = boss.down ? `<p><strong>The boss is down!</strong> ${arcade.coop ? `You and ${esc(arcade.coop.partner)} beat it` : "Beaten"}.</p>`
+      : boss.max ? `<p>It doesn't lose at level 4: every damage that lands on it, in your game or ${esc(arcade.coop ? arcade.coop.partner : "")}'s, comes off this bar. Beating it: ${esc(boss.reward)}.</p>`
+      : `<p>It plays at its hardest. Beating it: ${esc(boss.reward)}.</p>`;
+    bossEl.innerHTML = `<p class="play-boss-title">Boss</p>${health}${note}
+      ${boss.down && !board.game_over ? `<button type="button" class="button-small" data-act='{"type":"challenge_leave"}'>Back to the path</button>` : ""}`;
+    (root.querySelector(".play-chat-side") || root).prepend(bossEl);
+  }
+
+  // --- The player's augments (weiss.augments), named, with what each does on hover --------------------------------
+
+  let augmentsEl = null;
+  let augmentsKey = "";
+  function renderAugments() {
+    const picked = arcade && arcade.augments;
+    const key = picked ? JSON.stringify(picked) : "";
+    if (key === augmentsKey) return;
+    augmentsKey = key;
+    if (augmentsEl) augmentsEl.remove();
+    augmentsEl = null;
+    if (!picked) return;
+    augmentsEl = document.createElement("p");
+    augmentsEl.className = "play-augments small";
+    augmentsEl.innerHTML = `Augments: ${picked.map((a) => `<span class="deck-tag" title="${esc(a.text)}">${esc(a.name)}${a.count > 1 ? ` ×${a.count}` : ""}</span>`).join(" ")}`;
+    (root.querySelector(".play-chat-side") || root).prepend(augmentsEl);
   }
 
   // --- An infinite challenge's prize: a slot machine on the Victory screen -----------------------------------
@@ -1473,6 +1517,14 @@
       <button type="button" class="game-over-end" data-act='{"type":"arcade_quit"}'>End run</button>`;
   }
 
+  // How a game against a boss left it: beaten, or in co-op how much is left of it.
+  function bossLine(over) {
+    const boss = arcade.boss;
+    if (boss.down) return `The boss is down! ${arcade.coop ? `You and ${esc(arcade.coop.partner)} both get` : "You get"} ${esc(boss.reward)}.`;
+    if (!boss.max) return over.won ? `Boss beaten: ${esc(boss.reward)}.` : "The boss beat you.";
+    return `The boss has ${boss.health} of ${boss.max} health left${over.won ? "" : `, and the damage you dealt it stays off`}. Fight it again from the path, or let ${esc(arcade.coop.partner)} finish it.`;
+  }
+
   // A win's score, and what made it up.
   function scoreLines(score) {
     const parts = score.parts.filter((part) => part.count).map((part) => `${part.count} ${esc(part.label)}: ${part.points}`);
@@ -1497,7 +1549,8 @@
       gameOverEl.setAttribute("role", "alertdialog");
       gameOverEl.setAttribute("aria-label", over.won ? "Victory" : "Defeat");
       const loser = over.won ? opponentWho("Your opponent") : "You";
-      const reason = over.reason === "deck" ? `${loser} can't refresh ${over.won ? "their" : "your"} deck.` : `${loser} reached level 4.`;
+      const reason = over.reason === "deck" ? `${loser} can't refresh ${over.won ? "their" : "your"} deck.`
+        : over.reason === "boss" ? "The boss's health bar is empty." : `${loser} reached level 4.`;
       gameOverEl.innerHTML = `<div class="game-over-rays"></div>
         <div class="game-over-banner">${CREST}${custom ? `<div class="game-over-cpu">${cpuPortrait("game-over-cpu-image", outcome)}${said ? `<p class="cpu-speech">${esc(said)}</p>` : ""}</div>` : ""}
           <h2 class="game-over-word">${over.won ? "Victory" : "Defeat"}</h2>
@@ -1506,6 +1559,7 @@
           ${arcade && arcade.challenge && over.won ? `<p class="game-over-arcade">${prize ? "" : `Won: ${esc(arcade.challenge.won)} · `}${arcade.challenge.packs} packs to open</p>` : ""}
           ${arcade && arcade.challenge && !over.won && !arcade.coop ? `<p class="game-over-arcade">${arcade.challenge.going ? `A second chance: you can fight again${arcade.challenge.lives ? ` (${arcade.challenge.lives} more left)` : ""}.` : "The challenge is over."}</p>` : ""}
           ${arcade && arcade.coop && !over.won ? `<p class="game-over-arcade">${arcade.challenge && arcade.challenge.going ? `Lost games: ${arcade.coop.losses} of ${arcade.coop.limit}, yours and ${esc(arcade.coop.partner)}'s together.` : `That was the last loss: the co-op challenge is over.`}</p>` : ""}
+          ${arcade && arcade.boss ? `<p class="game-over-arcade">${bossLine(over)}</p>` : ""}
           ${arcade ? `<p class="game-over-arcade">${arcade.cleared ? `🏆 ${esc(arcade.scenario)} cleared!` : over.won ? `Up next: ${fightOf()}` : `${esc(arcade.scenario)}: ${fightOf()}`}${arcade.score ? ` · run score ${arcade.score}` : ""}</p>` : ""}
           ${over.won && prize ? prizeSlotHtml(prize) : ""}
           <p class="game-over-status" data-game-over-status></p>

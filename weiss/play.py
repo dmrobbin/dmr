@@ -22,7 +22,7 @@ from django.views.decorators.http import require_POST
 from core import s3
 from core.access import has_weiss_access, weiss_access_required
 
-from . import arcade, buffs, challenge, coop, cpu, game, lists, packs, scenes, scoring
+from . import arcade, augments, buffs, challenge, coop, cpu, game, lists, packs, scenes, scoring
 from .models import ArcadeRun, ArcadeScenario, Card, CardList, ChallengeRun, CpuProfile, GameRecord, GameRoom, PlayerProfile, cpu_user
 
 log = logging.getLogger(__name__)
@@ -85,7 +85,7 @@ def cpu_payload(room):
         payload["arcade"] = {"scenario": run.scenario_name, "fight": run.position + 1 if endless else min(run.position + 1, run.total),
                              "total": None if endless else run.total,
                              "cleared": run.status == ArcadeRun.Status.CLEARED, "score": run.score}
-        trial = ChallengeRun.objects.filter(arcade_run=run).only("kind", "packs", "lives", "status", "rewards", "path", "arcade_run", "coop", "user").first()
+        trial = ChallengeRun.objects.filter(arcade_run=run).only("kind", "packs", "lives", "status", "rewards", "path", "arcade_run", "coop", "user", "augments").first()
         coop.load(trial)
         if trial:
             payload["arcade"]["challenge"] = {"packs": trial.packs, "won": challenge.win_reward_text(trial.kind), "lives": trial.lives,
@@ -93,6 +93,10 @@ def cpu_payload(room):
         if trial and trial.coop_id:  # the pair's lost games, which a loss here adds to
             pair = trial.coop
             payload["arcade"]["coop"] = {"losses": pair.losses, "limit": pair.loss_limit, "partner": getattr(pair.partner_of(trial.user), "username", "")}
+        if trial and trial.augments:
+            payload["arcade"]["augments"] = [{"name": a["name"], "text": a["text"], "count": a["count"]} for a in augments.of(trial)]
+        if room.state.get("boss") and trial:
+            payload["arcade"]["boss"] = challenge.boss_shown(trial, room.state.get("floor"))
         if trial and endless:  # the CPUs beaten so far, for the board's tally
             beaten = challenge.defeated(trial)
             cpus = CpuProfile.objects.in_bulk(beaten)
@@ -262,8 +266,8 @@ def room_vs_cpu(request):
         return redirect("weiss:play_rooms")
     profile = get_object_or_404(CpuProfile, pk=request.POST.get("cpu"), finalized=True, deck__isnull=False)
     deck = get_object_or_404(CardList.objects.players(request.user), pk=request.POST.get("deck"))
-    if not deck.entries.exists():
-        messages.error(request, f"“{deck.name}” is empty; add some cards first.")
+    if problem := lists.unplayable(deck):
+        messages.error(request, problem)
         return redirect("weiss:play_rooms")
     room = GameRoom(host=request.user, host_deck=deck, status=GameRoom.Status.PLAYING)
     seat_cpu(room, profile)
@@ -323,8 +327,8 @@ def arcade_start(request):
     if arcade.scenario_problem(scenario):
         messages.error(request, f"{scenario.name} isn't available right now.")
         return redirect("weiss:arcade")
-    if not deck.entries.exists():
-        messages.error(request, f"“{deck.name}” is empty; add some cards first.")
+    if problem := lists.unplayable(deck):
+        messages.error(request, problem)
         return redirect("weiss:arcade")
     with transaction.atomic():
         run = ArcadeRun.objects.create(user=request.user, scenario=scenario, scenario_name=scenario.name, deck_name=deck.name, order=arcade.fight_order(scenario))
@@ -386,6 +390,9 @@ def arcade_action(request, room, action):
         messages.error(request, f"Your {run.scenario_name} run had to stop: its deck or CPU is no longer available.")
         leave_run(room)
         return JsonResponse({"redirect": reverse("weiss:play_rooms")})
+    trial = challenge.of(run)
+    if problem := challenge.deck_ready(trial) if trial else lists.unplayable(room.host_deck):  # the deck changed between fights
+        return JsonResponse({"error": problem, **board_payload(room, request.user)}, status=400)
     seat_cpu(room, profile, arcade.scenes_before(run, profile) if won else ())  # a retry doesn't play its scenes again
     room.version += 1
     room.save()
@@ -449,8 +456,8 @@ def room_deck(request, pk):
     if room.arcade_run_id:
         return not_for_a_run(request, room)
     deck = get_object_or_404(CardList.objects.players(request.user), pk=request.POST.get("deck"))
-    if not deck.entries.exists():
-        messages.error(request, f"“{deck.name}” is empty; add some cards first.")
+    if problem := lists.unplayable(deck):
+        messages.error(request, problem)
         return redirect("weiss:play_room", pk=room.pk)
     with transaction.atomic():
         room = GameRoom.objects.select_for_update().get(pk=room.pk)
@@ -487,7 +494,87 @@ def deal(room, intro=False):
         room.state["cpu_intro"] = True
     if room.cpu_profile_id and room.cpu_profile and room.cpu_profile.combo_text and not challenge.narrative(room.arcade_run):
         room.state["cut_ins"] = {str(room.guest_id): anchor_cards(room.guest_deck)}
-    fight_mods(room, buffs.fight_mods(challenge.of(room.arcade_run)) if room.arcade_run_id else [])
+    trial = challenge.of(room.arcade_run) if room.arcade_run_id else None
+    fight_mods(room, buffs.fight_mods(trial))
+    if trial and trial.kind == ChallengeRun.Kind.INFINITE:
+        stamp_floor(room, trial)
+        augment_start(room, trial)
+
+
+def augment_start(room, trial):
+    """The player's augments that change their games (weiss.augments) go on their side, for the game's rules to
+    read, and those that change how it starts do so now: stock for them, clock for the CPU. Devotion only counts
+    for a deck of one color."""
+    picked = augments.in_game(trial)
+    if not picked:
+        return
+    state, me = room.state, str(room.host_id)
+    side, cpu_side = state["players"][me], state["players"][str(room.guest_id)]
+    if "devotion" in picked and not augments.mono_color(Card.objects.filter(pk__in={c["card"] for c in side["zones"]["deck"] + side["zones"]["hand"]})):
+        picked.remove("devotion")
+        game.add_log(state, me, "has Devotion, but their deck has more than one color: no power from it this game")
+    side["augments"] = picked
+    for augment_id, who, zone, count in (("deep_reserves", side, "stock", augments.RESERVES), ("head_start", cpu_side, "clock", augments.HEAD_START)):
+        if augment_id in picked:
+            for _ in range(min(count, len(who["zones"]["deck"]))):
+                game.put(who, who["zones"]["deck"].pop(), zone)
+    names = ", ".join(augments.AUGMENTS[a].name for a in picked)
+    game.add_log(state, me, f"plays with {names}")
+
+
+def stamp_floor(room, trial):
+    """An infinite challenge's fight is the floor of the path it was dealt for, and maybe its boss: who then plays
+    at its hardest (cpu_step) and starts with BOSS_STOCK cards in its stock. A co-op boss loses only when the pair's
+    health bar for it is empty, not at level 4 (see wear_boss)."""
+    state = room.state
+    state["floor"] = challenge.floor_at(trial)
+    if not challenge.is_boss(trial.path, state["floor"]):
+        return
+    state["boss"] = True
+    side = state["players"][str(room.guest_id)]
+    for _ in range(min(challenge.BOSS_STOCK, len(side["zones"]["deck"]))):
+        game.put(side, side["zones"]["deck"].pop(), "stock")
+    game.add_log(state, None, f"Boss: {room.guest_name} plays at its hardest, and starts with {challenge.BOSS_STOCK} cards in its stock.")
+    if trial.coop_id:
+        state["shared_boss"], side["shared_health"] = True, True
+        game.add_log(state, None, "It doesn't lose at level 4: every damage that lands on it, in your game or your partner's, "
+                                  "comes off its health bar, and it's beaten when that's empty.")
+
+
+def wear_boss(room, was_over=False):
+    """A co-op boss's game (see stamp_floor): the damage that's landed on the boss since last time (game.deal_damage
+    counts it; a cancelled damage doesn't) comes off the pair's health bar for it (challenge.wear_boss). Once that's
+    empty, here or in the partner's game, the boss has lost this game (unless the player lost it first, in the same
+    action: their damage still counts). Call on a locked room, after an action (`was_over`: the game was over before
+    it); doesn't save it."""
+    state = room.state
+    if not state.get("shared_boss") or was_over:
+        return
+    taken = state["players"][str(room.guest_id)].get("damage_taken", 0)
+    if taken == state.get("boss_counted", 0):
+        return
+    trial = challenge.of(room.arcade_run)
+    down = bool(trial) and challenge.wear_boss(trial, state["floor"], taken - state.get("boss_counted", 0))
+    state["boss_counted"] = taken
+    if down and not state.get("game_over"):
+        game.end_game(state, str(room.guest_id), "boss", "is down, its health bar empty")
+
+
+def boss_gone(room):
+    """A co-op boss's game, polled: if the partner's game has emptied the boss's health bar, this one's won too.
+    Returns the room as it now is."""
+    trial = challenge.of(room.arcade_run)
+    if not trial or not challenge.boss_down(trial, room.state.get("floor")):
+        return room
+    with transaction.atomic():
+        room = GameRoom.objects.select_for_update().select_related("host", "guest", "cpu_profile").get(pk=room.pk)
+        if room.status != GameRoom.Status.PLAYING or room.state.get("game_over"):
+            return room
+        game.end_game(room.state, str(room.guest_id), "boss", "is down, its health bar empty")
+        game_ended(room, room.state["game_over"])
+        room.version += 1
+        room.save(update_fields=["state", "version", "updated"])
+    return room
 
 
 def fight_mods(room, mods):
@@ -537,6 +624,9 @@ def room_start(request, pk):
         if not (room.guest and room.host_deck and room.guest_deck):
             messages.error(request, "Both players need to choose a deck first.")
             return redirect("weiss:play_room", pk=room.pk)
+        if problem := lists.unplayable(room.host_deck) or lists.unplayable(room.guest_deck):  # changed since it was chosen
+            messages.error(request, problem)
+            return redirect("weiss:play_room", pk=room.pk)
         room.state = {}
         deal(room, intro=room.vs_cpu)
         room.status = GameRoom.Status.PLAYING
@@ -581,6 +671,8 @@ def room_state(request, pk):
         return HttpResponseForbidden()
     if room.vs_cpu and room.status == GameRoom.Status.PLAYING:
         room = cpu_step(room)
+        if room.state.get("shared_boss") and not room.state.get("game_over"):
+            room = boss_gone(room)
     if request.GET.get("v") == str(room.version):
         return HttpResponse(status=204)
     if room.status != GameRoom.Status.PLAYING:
@@ -690,28 +782,36 @@ def play_action(room, player, action, lookups=None):
     dealt. Saves the room. Returns the extras for that player."""
     was_over = bool(room.state.get("game_over"))
     extra = game.apply(room.state, player, action, **(lookups or card_lookups(room.state)))
+    wear_boss(room, was_over)
     over = room.state.get("game_over")
     if over and not was_over:  # counted once: this is the action that ended the game
-        host_won = over["winner"] == str(room.host_id)
-        deck_id = room.host_deck_id if host_won else room.guest_deck_id
-        # The player's deck beating a CPU counts apart; a CPU's deck has beaten a human.
-        field = "cpu_wins" if room.vs_cpu and host_won else "wins"
-        CardList.objects.filter(pk=deck_id).update(**{field: F(field) + 1})
-        score = None
-        if room.vs_cpu and host_won:  # only a player's win against a CPU is scored
-            over["score"] = scoring.win_score(room.state, room.host_id)
-            score = over["score"]["total"]
-        record_game(room, over, score)
-        arcade.game_finished(room, over, score)
+        game_ended(room, over)
     if game.rematch_agreed(room.state):
-        if room.host_deck and room.guest_deck:
+        problem = (lists.unplayable(room.host_deck) or lists.unplayable(room.guest_deck)) if room.host_deck and room.guest_deck \
+            else "A deck has been deleted, so there can't be a rematch."
+        if not problem:
             deal(room)
-        else:  # a deck was deleted during the game
+        else:  # a deck was deleted, or changed, during the game
             over["rematch"] = []
-            extra = {"error": "A deck has been deleted, so there can't be a rematch."}
+            extra = {"error": problem}
     room.version += 1
     room.save(update_fields=["state", "version", "updated"])
     return extra
+
+
+def game_ended(room, over):
+    """The game has just ended (`over`, its game_over): the winning deck's win, the record, the score, the arcade run."""
+    host_won = over["winner"] == str(room.host_id)
+    deck_id = room.host_deck_id if host_won else room.guest_deck_id
+    # The player's deck beating a CPU counts apart; a CPU's deck has beaten a human.
+    field = "cpu_wins" if room.vs_cpu and host_won else "wins"
+    CardList.objects.filter(pk=deck_id).update(**{field: F(field) + 1})
+    score = None
+    if room.vs_cpu and host_won:  # only a player's win against a CPU is scored
+        over["score"] = scoring.win_score(room.state, room.host_id)
+        score = over["score"]["total"]
+    record_game(room, over, score)
+    arcade.game_finished(room, over, score)
 
 
 def cpu_step(room, wait=True):
@@ -728,7 +828,9 @@ def cpu_step(room, wait=True):
         lookups = card_lookups(room.state)
         aggression = room.cpu_profile.aggression if room.cpu_profile else cpu.MIN_AGGRESSION
         model = room.cpu_profile.model if room.cpu_profile else "standard"
-        if room.cpu_profile and challenge.infinite(room.arcade_run):  # harder as it goes, whatever the CPU
+        if room.state.get("boss"):  # an infinite challenge's boss: at its hardest
+            model, aggression = "hard", cpu.MAX_AGGRESSION
+        elif room.cpu_profile and challenge.infinite(room.arcade_run):  # harder as it goes, whatever the CPU
             model, aggression = challenge.infinite_style(room.arcade_run, room.cpu_profile)
         elif room.arcade_run_id and "blood_pact" in buffs.fight_mods(challenge.of(room.arcade_run)):
             model, aggression = "hard", cpu.MAX_AGGRESSION

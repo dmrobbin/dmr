@@ -82,6 +82,10 @@ TRIGGER_ALIASES = {"book": "draw", "bag": "pool", "stock": "pool", "wind": "boun
 OPPOSITE = {"C1": "C3", "C2": "C2", "C3": "C1"}  # the opponent's slot facing each center slot
 BACKUP = re.compile(r"【COUNTER】\s*Backup\s*(\d+)(?:,\s*Level\s*(\d+))?(?:\s*\[\((\d+)\))?", re.I)
 MAX_LOG = 100
+# A challenge player's augments that change their games (weiss.augments), on their side as "augments": what each gives.
+DEVOTION_POWER = 1000  # to every character, when the deck is one color (checked when it's dealt)
+LOW_LEVEL_POWER = 1500  # to level 0 characters
+GLASS_CANNON_SOUL = 1  # to every character
 
 LABELS = {
     "deck": "deck", "hand": "hand", "clock": "clock", "level": "level", "stock": "stock",
@@ -305,12 +309,15 @@ def refresh(state, player, name, shuffle):
     shuffle(zones["deck"])
     for card in zones["deck"]:
         card["uid"] = new_uid()
-    damage = zones["deck"].pop()
-    put(side, damage, "clock")
+    clean = "clean_refresh" in (side.get("augments") or ()) and not side.get("refreshes")  # a challenge augment
+    damage = None if clean else zones["deck"].pop()
+    if damage:
+        put(side, damage, "clock")
+        side["damage_taken"] = side.get("damage_taken", 0) + 1
     side["refreshes"] = side.get("refreshes", 0) + 1  # so both pages can show "Deck Out!"
     state.setdefault("pending_events", []).append({"event": "refresh", "player": player})  # run_abilities fires it
     add_log(state, player, f"decked out: shuffled {len(cards)} cards from the waiting room into their deck "
-                           f"and put {name(damage['card'])} into their clock")
+                           + ("with no refresh damage (Clean Refresh)" if clean else f"and put {name(damage['card'])} into their clock"))
 
 
 def deal_damage(state, player, amount, remaining, dealt, name, is_climax):
@@ -337,6 +344,7 @@ def deal_damage(state, player, amount, remaining, dealt, name, is_climax):
         if remaining and not deck and side["zones"]["waiting"]:
             state["pending_refresh"] = {"player": player, "amount": amount, "remaining": remaining, "dealt": dealt}
             return
+    side["damage_taken"] = side.get("damage_taken", 0) + len(dealt)  # all of it landed: a co-op boss counts it (see play.wear_boss)
     names = ", ".join(n for _, n in dealt)
     short = f" (deck ran out after {len(dealt)})" if remaining else ""
     add_log(state, player, f"took {amount} damage{short}: {names}")
@@ -522,6 +530,8 @@ def counter_play(state, player, card, info):
         if color_needed(state, player, card, info):
             return None
         power, level, price = 0, play_level(state, player, card, info), play_cost(state, player, card, info)
+    if "counter_specialist" in (state["players"][player].get("augments") or ()):  # a challenge augment
+        price = max(0, price - 1)
     zones = state["players"][player]["zones"]
     if level > len(zones["level"]) or price > len(zones["stock"]):
         return None
@@ -892,28 +902,33 @@ def auto_end_encore(state, name, shuffle):
 
 
 def check_game_over(state):
-    """A player at level 4 has lost, whatever got them there. So has one, with turn rules on, whose
-    deck is out with no waiting room to refresh it from (once any damage of theirs is over: a cancelled
-    damage's cards are about to reach the waiting room). Everything in progress stops."""
+    """A player at level 4 has lost, whatever got them there, unless they're a co-op challenge's boss, with
+    "shared_health" on their side: they lose only when the pair's health bar for it is empty (see play.wear_boss).
+    So has one, with turn rules on, whose deck is out with no waiting room to refresh it from (once any damage of
+    theirs is over: a cancelled damage's cards are about to reach the waiting room)."""
     if state.get("game_over"):
         return
     for player, side in state["players"].items():
         zones = side["zones"]
-        reason = "level" if len(zones["level"]) >= LOSING_LEVEL else None
+        reason = "level" if len(zones["level"]) >= LOSING_LEVEL and not side.get("shared_health") else None
         if (not reason and rules_on(state) and state.get("phase") != "mulligan" and not zones["deck"]
                 and not zones["waiting"] and not damage_in_progress(state, player)):
             reason = "deck"
         if reason:
-            winner = other_player(state, player)
-            state["game_over"] = {"winner": winner, "loser": player, "reason": reason, "rematch": []}
-            wins = state.setdefault("match_wins", {})
-            wins[winner] = wins.get(winner, 0) + 1
-            for key in ("ability_queue", "resolving", "ability_show", "combo_show", "attack", "auto_next", "pending_end", "pending_damage", "pending_refresh",
-                        "pending_climax", "pending_discard", "reveal", "rules_request"):
-                state.pop(key, None)
-            add_log(state, player, (f"reached level {LOSING_LEVEL}" if reason == "level" else "can't refresh their deck")
-                    + f": {state['players'][winner]['name']} wins!")
+            end_game(state, player, reason, f"reached level {LOSING_LEVEL}" if reason == "level" else "can't refresh their deck")
             return
+
+
+def end_game(state, loser, reason, said):
+    """This player has lost (for `reason`; the log says they `said`...): everything in progress stops."""
+    winner = other_player(state, loser)
+    state["game_over"] = {"winner": winner, "loser": loser, "reason": reason, "rematch": []}
+    wins = state.setdefault("match_wins", {})
+    wins[winner] = wins.get(winner, 0) + 1
+    for key in ("ability_queue", "resolving", "ability_show", "combo_show", "attack", "auto_next", "pending_end", "pending_damage", "pending_refresh",
+                "pending_climax", "pending_discard", "reveal", "rules_request"):
+        state.pop(key, None)
+    add_log(state, loser, f"{said}: {state['players'][winner]['name']} wins!")
 
 
 def rematch_agreed(state):
@@ -2162,6 +2177,8 @@ def compute_stats(state, env):
         if buff["uid"] in stats:
             stats[buff["uid"]]["power"] += buff.get("power", 0)
             stats[buff["uid"]]["soul"] += buff.get("soul", 0)
+    for side in state["players"].values():
+        augment_stats(side, stats, env)
     for values in stats.values():
         values["power"] = max(0, values["power"])
         values["soul"] = max(0, values["soul"])
@@ -2169,6 +2186,23 @@ def compute_stats(state, env):
         if "set_power" in buff and buff["uid"] in stats:
             stats[buff["uid"]].update(power=buff["set_power"], manual=True)
     return stats, granted
+
+
+def augment_stats(side, stats, env):
+    """What a challenge player's augments (side["augments"]) give their characters."""
+    augments = side.get("augments") or ()
+    if not augments:
+        return
+    for card in stage_cards(side):
+        values = stats.get(card["uid"])
+        if values is None:
+            continue
+        if "devotion" in augments:
+            values["power"] += DEVOTION_POWER
+        if "glass_cannon" in augments:
+            values["soul"] += GLASS_CANNON_SOUL
+        if "low_level_army" in augments and number(values.get("level", details_of(card, env).get("level"))) == 0:
+            values["power"] += LOW_LEVEL_POWER
 
 
 def level_buff(state, uid):

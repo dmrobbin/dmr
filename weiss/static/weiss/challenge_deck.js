@@ -11,10 +11,11 @@
   const tiles = [...form.querySelectorAll(".pool-card")];
   const byCard = new Map(tiles.map((tile) => [tile.dataset.card, tile]));
   const size = Number(form.dataset.deckSize);
-  const climaxTarget = Number(form.dataset.climaxes);
+  const climaxTarget = Number(form.dataset.climaxes); // the most a deck can have: 8, or more with an augment...
+  const climaxMin = Number(form.dataset.climaxMin) || 8; // ...and the fewest it needs to fight
   const groups = JSON.parse(document.getElementById("deck-groups").textContent);
   const live = "live" in form.dataset;
-  const COPY_LIMIT = 4;
+  const COPY_LIMIT = Number(form.dataset.copyLimit) || 4; // the rules' 4, or fewer with an augment
   const POLL_MS = 3000;
   let dirty = false;
 
@@ -66,11 +67,13 @@
     const warnings = [];
     if (total > size) warnings.push(`More than ${size} cards`);
     else if (total < size) warnings.push(`${size - total} short of a full deck`);
-    if (climaxes !== climaxTarget) warnings.push(`${climaxes} climaxes, not ${climaxTarget}`);
+    const climaxRange = climaxMin === climaxTarget ? `${climaxMin}` : `${climaxMin} to ${climaxTarget}`;
+    if (climaxes > climaxTarget) warnings.push(`${climaxes} climaxes: a deck has at most ${climaxTarget}`);
+    else if (climaxes < climaxMin) warnings.push(`${climaxes} climaxes: a deck needs ${climaxRange} to fight`);
     if (over.length) warnings.push(`more than ${COPY_LIMIT} of ${over.join(", ")}`);
     form.querySelector("[data-deck-warnings]").textContent = warnings.join(" · ");
     const save = form.querySelector('button[type="submit"]');
-    if (save) save.disabled = total > size;
+    if (save) save.disabled = total > size || climaxes > climaxTarget || (COPY_LIMIT < 4 && over.length > 0); // the server won't take those (Highlander's limit is kept)
 
     // The deck on the right, with the card lists' checks: rules go red when broken, the level spread amber when off.
     const sideTotal = document.querySelector("[data-side-total]");
@@ -78,8 +81,9 @@
     sideTotal.parentElement.className = `deck-total${total > size ? " bad" : total === size ? " good" : ""}`;
     document.querySelector("[data-side-groups]").innerHTML = groups.map((group) => {
       const n = mine.filter((tile) => group.levels.includes(tile.dataset.level)).reduce((sum, tile) => sum + count(tile), 0);
-      const state = n === group.target ? "good" : group.required ? "bad" : "suggest";
-      return `<li class="${state}"><span>${esc(group.label)}${group.required ? "" : ' <span class="deck-hint">suggested</span>'}</span><span><strong>${n}</strong> / ${group.target}</span></li>`;
+      const ok = group.required ? n >= climaxMin && n <= group.target : n === group.target; // the climaxes: any number in range
+      const state = ok ? "good" : group.required ? "bad" : "suggest";
+      return `<li class="${state}"><span>${esc(group.label)}${group.required ? "" : ' <span class="deck-hint">suggested</span>'}</span><span><strong>${n}</strong> / ${group.required ? climaxRange : group.target}</span></li>`;
     }).join("") + `<li class="${over.length ? "bad" : "good"}"><span>Max ${COPY_LIMIT} of a card</span><span><strong>${over.length ? `${over.length} over` : "OK"}</strong></span></li>`;
     document.querySelector("[data-side-entries]").innerHTML = mine.map((tile) => entry(tile, count(tile), true)).join("");
     document.querySelector("[data-side-empty]").hidden = mine.length > 0;

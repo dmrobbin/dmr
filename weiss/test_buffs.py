@@ -8,7 +8,8 @@ from django.urls import reverse
 from . import buffs, challenge, packs, scenes
 from .models import ArcadeEntry, ArcadeRun, Card, ChallengeRun, GameRoom, Scene
 from .test_challenge import ArcadeSetup
-from .test_packs import make_set
+from .lists import CLIMAX_COUNT
+from .test_packs import make_set, run_with_climaxes
 
 GIFTS = """cast rapi as Rapi
 rapi enters
@@ -206,6 +207,7 @@ class SceneBuffFlowTests(ChallengeBuffBase):
             deck[pk] = min(n, 2, room)
             room -= deck[pk]
         self.assertIsNone(challenge.save_deck(self.run, deck))
+        self.run = run_with_climaxes(self.run)
 
     def test_a_scenes_buffs_are_the_players_at_its_end(self):
         self.client.post(reverse("weiss:arcade_challenge_fight"))
@@ -219,13 +221,14 @@ class SceneBuffFlowTests(ChallengeBuffBase):
         self.assertEqual(self.run.packs, challenge.START_PACKS - 10 + buffs.EXTRA_PACKS)  # two more packs, at once
         self.assertEqual([r["buff"] for r in self.run.rewards], ["lucky_pack"])  # the second pick of one step doesn't count
         # Back to the fight: it's dealt again, with the deck as it is now.
-        card = next(iter(self.run.pool))
+        card = next(pk for pk in self.run.pool if Card.objects.get(pk=pk).card_type != "Climax")
         challenge.save_deck(self.run, {card: 1})
+        self.run = run_with_climaxes(self.run)
         self.client.post(reverse("weiss:arcade_challenge_fight"))
         room = self.room()
         self.assertTrue(room.state["cpu_intro"])
         me = room.state["players"][str(self.staff.pk)]
-        self.assertEqual(sum(len(zone) if isinstance(zone, list) else 0 for zone in me["zones"].values()), 1)
+        self.assertEqual(sum(len(zone) if isinstance(zone, list) else 0 for zone in me["zones"].values()), 1 + CLIMAX_COUNT)  # and its climaxes
 
     def test_no_buffs_outside_a_challenge(self):
         self.client.force_login(self.alice)

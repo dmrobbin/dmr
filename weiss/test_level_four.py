@@ -8,7 +8,9 @@ from django.urls import reverse
 from . import challenge, game, play
 from .models import GameRoom
 from .test_challenge import ArcadeSetup
-from .test_packs import make_set
+from .lists import is_climax
+from .models import Card
+from .test_packs import make_set, run_with_climaxes
 
 
 class LevelFourTests(ArcadeSetup):
@@ -23,7 +25,8 @@ class LevelFourTests(ArcadeSetup):
         self.client.post(reverse("weiss:arcade_challenge_start"), {"kind": kind, "scenario": self.scenario.pk})
         run = challenge.current(self.staff)
         challenge.open_packs(run, 7, 3)
-        challenge.save_deck(run, {pk: min(n, 4) for pk, n in run.pool.items()})
+        challenge.save_deck(run, {pk: min(n, 4) for pk, n in run.pool.items() if not is_climax(Card.objects.get(pk=pk))})
+        run = run_with_climaxes(run)
         node = challenge.choices(challenge.path_of(run), 0)[0] if kind == "infinite" else None
         self.client.post(reverse("weiss:arcade_challenge_fight"), {"node": node} if node is not None else {})
         room = GameRoom.objects.get(host=self.staff)

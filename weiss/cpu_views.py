@@ -35,6 +35,8 @@ MAX_START_PACKS = 60  # the most an infinite challenge can be set to start with
 MAX_LOADOUT = 10  # ...of each specialty pack
 MAX_TIER_FLOORS = 30  # floors a tier of CPU can be set to last
 MAX_COOP_LOSSES = 20  # the most lost games a co-op challenge can be set to take
+MAX_BOSS_EVERY = 50  # the most floors apart bosses can be set
+MAX_BOSS_HEALTH = 200  # the most a co-op boss's health can be set to
 
 
 def staff_required(view):
@@ -102,7 +104,7 @@ def read_profile_form(request):
         return None, f"Aggression goes from {cpu.MIN_AGGRESSION} to {cpu.MAX_AGGRESSION}."
     deck = CardList.objects.filter(pk=request.POST.get("deck") or None, reserved_for_cpu=True).first()
     texts = {field: request.POST.get(field, "").strip()[:MAX_TEXT] for field in TEXT_FIELDS}
-    return {"name": name, "model": model, "aggression": aggression, "deck": deck, **texts}, None
+    return {"name": name, "model": model, "aggression": aggression, "deck": deck, "boss": bool(request.POST.get("boss")), **texts}, None
 
 
 # The tab's own tabs: one at a time, each worked out only when it's open (?tab=...).
@@ -200,7 +202,10 @@ def cpu_home(request):
                        hard_from=sum(count for count, _ in models) + 1,
                        coop_losses=coop.loss_limit(), max_coop_losses=MAX_COOP_LOSSES, coop_start_packs=coop.start_packs(),
                        coop_loadout=[{"id": buff, "name": BUFFS[buff].name, "count": (settings.coop_loadout if settings else {}).get(buff, 0)}
-                                     for buff in challenge.LOADOUT_BUFFS])
+                                     for buff in challenge.LOADOUT_BUFFS],
+                       boss_every=challenge.boss_every(), coop_boss_every=challenge.boss_every(coop=True), coop_boss_health=coop.boss_health(),
+                       max_boss_every=MAX_BOSS_EVERY, max_boss_health=MAX_BOSS_HEALTH, boss_stock=challenge.BOSS_STOCK, boss_packs=challenge.BOSS_PACKS,
+                       bosses=CpuProfile.objects.filter(boss=True).order_by("name"))
     return render(request, "weiss/cpu_home.html", context)
 
 
@@ -516,6 +521,9 @@ def infinite_settings(request):
             "coop_start_packs": whole("coop_start_packs", 0, MAX_START_PACKS, "Co-op starting packs"),
             "coop_loadout": {buff: n for buff in challenge.LOADOUT_BUFFS
                              if (n := whole(f"coop_loadout_{buff}", 0, MAX_LOADOUT, f"Co-op {BUFFS[buff].name.lower()}"))},
+            "boss_every": whole("boss_every", 0, MAX_BOSS_EVERY, "Floors between solo bosses"),
+            "coop_boss_every": whole("coop_boss_every", 0, MAX_BOSS_EVERY, "Floors between co-op bosses"),
+            "coop_boss_health": whole("coop_boss_health", 1, MAX_BOSS_HEALTH, "A co-op boss's health"),
         }
     except ValueError as error:
         messages.error(request, str(error))
@@ -524,8 +532,8 @@ def infinite_settings(request):
         messages.error(request, "A challenge needs something to build a deck from: some packs or some specialty packs.")
         return back_to("infinite")
     ChallengeSettings.objects.update_or_create(pk=1, defaults={**fields, "updated_by": request.user})
-    messages.success(request, "Saved: new challenges start with these packs, and runs under way use the new event chance and tiers "
-                              "from the next floors laid out.")
+    messages.success(request, "Saved: new challenges start with these packs, and runs under way use the new event chance, tiers and "
+                              "boss spacing from the next floors laid out.")
     return back_to("infinite")
 
 

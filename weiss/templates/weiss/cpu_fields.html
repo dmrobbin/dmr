@@ -11,6 +11,8 @@
     {% for deck in decks %}<option value="{{ deck.pk }}"{% if deck.pk == deck_id %} selected{% endif %}>{{ deck.name }} ({{ deck.total|default:0 }})</option>{% endfor %}
   </select>
 </label>
+<label class="small"><input type="checkbox" name="boss"{% if boss %} checked{% endif %}> Boss
+  <span class="muted">(fought on the infinite challenge's boss floors, and only there)</span></label>
 <label class="small cpu-text">Before the match <textarea name="intro_text" rows="2" maxlength="1000">{{ intro_text }}</textarea></label>
 <label class="small cpu-text">When the player wins <textarea name="player_win_text" rows="2" maxlength="1000">{{ player_win_text }}</textarea></label>
 <label class="small cpu-text">When the player loses <textarea name="player_lose_text" rows="2" maxlength="1000">{{ player_lose_text }}</textarea></label>

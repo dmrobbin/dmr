@@ -8,6 +8,7 @@ from core.access import WEISS_GROUP
 
 from . import abilities, game
 from .models import Card, CardList, CardListEntry, GameRoom
+from .test_packs import with_climaxes
 
 
 def no_shuffle(cards):
@@ -777,6 +778,7 @@ class RoomFlowTests(TestCase):
         for user in (self.host, self.guest):
             deck = CardList.objects.create(user=user, name=f"{user.username} deck")
             CardListEntry.objects.create(card_list=deck, card=card, quantity=20)
+            with_climaxes(deck)
             self.decks[user] = deck
 
     def as_user(self, user):
@@ -806,7 +808,7 @@ class RoomFlowTests(TestCase):
         data = self.client.get(state_url).json()
         self.assertEqual(len(data["board"]["me"]["zones"]["hand"]), 5)
         self.assertEqual(data["board"]["opponent"]["zones"]["hand"], {"count": 5})
-        self.assertEqual(data["cards"][str(Card.objects.get().pk)]["name"], "Elegg")
+        self.assertEqual(data["cards"][str(Card.objects.get(name="Elegg").pk)]["name"], "Elegg")
         # Nothing changed since that version: cheap 204.
         self.assertEqual(self.client.get(state_url, {"v": data["version"]}).status_code, 204)
         self.assertIsNotNone(data["board"]["rps"])  # game 1 starts with rock, paper, scissors
@@ -1606,6 +1608,7 @@ class MatchFlowTests(TestCase):
             user.groups.add(group)
             self.decks[user] = CardList.objects.create(user=user, name=f"{user.username}'s")
             CardListEntry.objects.create(card_list=self.decks[user], card=card, quantity=30)
+            with_climaxes(self.decks[user])
         self.room = GameRoom.objects.create(host=self.host, guest=self.guest, host_deck=self.decks[self.host], guest_deck=self.decks[self.guest])
         self.client.force_login(self.host)
         self.client.post(reverse("weiss:play_start", args=[self.room.pk]))

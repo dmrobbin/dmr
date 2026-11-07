@@ -9,7 +9,7 @@ from .models import ChallengeRun, ChallengeSettings, GameRoom, Scene
 from .test_arcade import player
 from .test_buffs import ChallengeBuffBase
 from .test_challenge import ArcadeSetup
-from .test_packs import make_set
+from .test_packs import make_set, run_with_climaxes
 
 EVENT_SCRIPT = """narrator: A stranger offers you a deal.
 give extra_packs
@@ -83,6 +83,7 @@ class PactTests(ChallengeBuffBase):
     def test_next_fight_pacts_change_the_fight_until_its_won(self):
         challenge.open_packs(self.run, 7, 2)
         challenge.save_deck(self.run, {pk: 1 for pk in self.run.pool})
+        self.run = run_with_climaxes(self.run)
         packs = self.run.packs
         buffs.grant(self.run, ["ambush", "war_chest", "outpaced"])
         self.run.refresh_from_db()
@@ -106,6 +107,7 @@ class PactTests(ChallengeBuffBase):
     def test_a_loss_with_a_second_chance_keeps_them(self):
         challenge.open_packs(self.run, 7, 2)
         challenge.save_deck(self.run, {pk: 1 for pk in self.run.pool})
+        self.run = run_with_climaxes(self.run)
         buffs.grant(self.run, ["ambush", "second_chance"])
         self.client.post(reverse("weiss:arcade_challenge_fight"))
         self.end_fight("cpu")
@@ -115,6 +117,7 @@ class PactTests(ChallengeBuffBase):
     def test_a_blood_pact_cpu_plays_at_its_hardest(self):
         challenge.open_packs(self.run, 7, 2)
         challenge.save_deck(self.run, {pk: 1 for pk in self.run.pool})
+        self.run = run_with_climaxes(self.run)
         buffs.grant(self.run, ["blood_pact"])
         self.client.post(reverse("weiss:arcade_challenge_fight"))
         room = self.room()
@@ -153,7 +156,8 @@ class EventTests(ArcadeSetup):
         """The infinite settings form as it is, with these changes, posted."""
         form = {"event_percent": "60", "start_packs": "20", **{f"loadout_{buff}": "0" for buff in challenge.LOADOUT_BUFFS},
                 **{f"tier_{i}": str(count) for i, (count, _) in enumerate(challenge.INFINITE_MODELS)},
-                "coop_loss_limit": "3", "coop_start_packs": "20", **{f"coop_loadout_{buff}": "0" for buff in challenge.LOADOUT_BUFFS}}
+                "coop_loss_limit": "3", "coop_start_packs": "20", **{f"coop_loadout_{buff}": "0" for buff in challenge.LOADOUT_BUFFS},
+                "boss_every": "5", "coop_boss_every": "5", "coop_boss_health": "42"}
         return self.client.post(reverse("weiss:cpu_infinite_settings"), {**form, **{k: str(v) for k, v in changes.items()}})
 
     def test_staff_set_what_a_challenge_starts_with(self):
@@ -193,6 +197,30 @@ class EventTests(ArcadeSetup):
         for bad in ({"coop_loss_limit": 0}, {"coop_loss_limit": 21}, {"coop_loadout_wild_pack": 11}, {"coop_start_packs": 0, "coop_loadout_level_pack": 0}):
             self.save_settings(**bad)
             self.assertEqual(coop.loss_limit(), 5)
+
+    def test_staff_set_the_bosses(self):
+        self.assertEqual((challenge.boss_every(), challenge.boss_every(coop=True), coop.boss_health()),
+                         (challenge.BOSS_EVERY, challenge.BOSS_EVERY, coop.BOSS_HEALTH))
+        page = self.client.get(reverse("weiss:cpu_home") + "?tab=infinite")
+        self.assertContains(page, f'name="coop_boss_health" min="1" max="200" value="{coop.BOSS_HEALTH}"')
+        self.assertContains(page, "none marked, so any CPU can be one")
+        self.save_settings(boss_every=0, coop_boss_every=3, coop_boss_health=60)
+        self.assertEqual((challenge.boss_every(), challenge.boss_every(coop=True), coop.boss_health()), (0, 3, 60))
+        for bad in ({"boss_every": -1}, {"coop_boss_every": 51}, {"coop_boss_health": 0}):
+            self.save_settings(**bad)
+            self.assertEqual(coop.boss_health(), 60)
+
+    def test_staff_mark_cpus_as_bosses(self):
+        cpu = self.opener
+        form = {"name": cpu.name, "model": cpu.model, "aggression": cpu.aggression, "deck": cpu.deck_id, "boss": "on"}
+        self.client.post(reverse("weiss:cpu_profile_update", args=[cpu.pk]), form)
+        cpu.refresh_from_db()
+        self.assertTrue(cpu.boss)
+        self.assertNotContains(self.client.get(reverse("weiss:cpu_home") + "?tab=infinite"), "none marked")
+        form.pop("boss")
+        self.client.post(reverse("weiss:cpu_profile_update", args=[cpu.pk]), form)
+        cpu.refresh_from_db()
+        self.assertFalse(cpu.boss)
 
     def test_staff_set_how_often_the_path_offers_an_event(self):
         self.event_scene()
@@ -288,6 +316,7 @@ class EventTests(ArcadeSetup):
         self.event_scene()
         challenge.open_packs(self.run, 7, 2)
         challenge.save_deck(self.run, {pk: 1 for pk in self.run.pool})
+        self.run = run_with_climaxes(self.run)
         self.lay([challenge.EVENT, self.opener], [self.filler, self.anchor], [self.opener, self.anchor], [self.filler, self.anchor])
         self.enter(0)
         self.client.post(reverse("weiss:arcade_challenge_event_done"), {"key": self.state()["event"]["key"], "buffs": "[]"})

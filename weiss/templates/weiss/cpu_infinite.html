@@ -71,6 +71,29 @@
     </div>
   </section>
 
+  <section class="cpu-section">
+    <h2>Bosses</h2>
+    <p class="muted small">Every so many floors, the path reaches a boss: one fight in the middle of the path that every way leads to. The boss plays
+      at its hardest and starts with {{ boss_stock }} cards in its stock. Beating it brings a win's usual reward, {{ boss_packs }} more packs
+      and an augment pick. Set a mode to 0 for no bosses in it. A change applies to floors laid out from now on.</p>
+    <label class="infinite-number">Solo: a boss every
+      <input type="number" name="boss_every" min="0" max="{{ max_boss_every }}" value="{{ boss_every }}" required>
+      <span class="muted small">floors.</span>
+    </label>
+    <label class="infinite-number">Co-op: a boss every
+      <input type="number" name="coop_boss_every" min="0" max="{{ max_boss_every }}" value="{{ coop_boss_every }}" required>
+      <span class="muted small">floors.</span>
+    </label>
+    <label class="infinite-number">Co-op boss health
+      <input type="number" name="coop_boss_health" min="1" max="{{ max_boss_health }}" value="{{ coop_boss_health }}" required>
+      <span class="muted small">Both players fight it in their own games, and every game takes off the damage it dealt: 7 for each of the boss's
+        levels and 1 for each card in its clock, or 28 for a win. It's down once this much is dealt.</span>
+    </label>
+    <p class="muted small">Bosses:
+      {% for cpu in bosses %}{{ cpu.name }}{% if not forloop.last %}, {% endif %}{% empty %}none marked, so any CPU can be one. Mark CPUs as bosses on their profiles.{% endfor %}
+      {% if bosses %}They aren't fought on other floors.{% endif %}</p>
+  </section>
+
   <p><button type="submit" class="button-small">Save infinite challenge settings</button></p>
   <p class="muted small">
     {% if infinite %}Last saved {{ infinite.updated|date:"j M Y, H:i" }}{% if infinite.updated_by %} by {{ infinite.updated_by.username }}{% endif %}.{% else %}Not set yet: these are the defaults.{% endif %}

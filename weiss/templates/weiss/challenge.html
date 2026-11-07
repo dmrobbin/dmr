@@ -112,6 +112,14 @@
       {% if run.status == "active" %}
         {% if run.lives %}<p class="small"><span class="deck-tag">Second chance ×{{ run.lives }}</span> A loss lets you fight again instead of ending the challenge.</p>{% endif %}
         {% if rewards %}{% include "weiss/challenge_rewards.html" %}{% endif %}
+        {% if augments %}
+          <div class="challenge-augments">
+            <h3>Your augments</h3>
+            <ul class="augment-list">
+              {% for augment in augments %}<li class="augment"><strong>{{ augment.name }}</strong>{% if augment.count > 1 %} ×{{ augment.count }}{% endif %} <span class="small">{{ augment.text }}</span></li>{% endfor %}
+            </ul>
+          </div>
+        {% endif %}
         {% if mods %}
           <div class="challenge-mods">
             <h3>Your next fight, until you win it</h3>
