@@ -75,7 +75,7 @@
     <h2>Bosses</h2>
     <p class="muted small">Every so many floors, the path reaches a boss: one fight in the middle of the path that every way leads to. The boss plays
       at its hardest and starts with {{ boss_stock }} cards in its stock. Beating it brings a win's usual reward, {{ boss_packs }} more packs
-      and an augment pick. Set a mode to 0 for no bosses in it. A change applies to floors laid out from now on.</p>
+      and an augment pick, and the player takes a curse: every boss after it carries all their curses, every other CPU half. Set a mode to 0 for no bosses in it. A change applies to floors laid out from now on.</p>
     <label class="infinite-number">Solo: a boss every
       <input type="number" name="boss_every" min="0" max="{{ max_boss_every }}" value="{{ boss_every }}" required>
       <span class="muted small">floors.</span>

@@ -10,7 +10,8 @@ as PATH_AHEAD (see path_of), harder floor by floor (INFINITE_MODELS), for as lon
 bringing a random reward and no scenes. Some spaces on the path are events instead of fights: a random scene from
 the ones staff have chosen (Scene.infinite_event), whose choices mostly give pacts (weiss.buffs), something for
 something. Every boss_every floors the path narrows to a boss (see boss_floor): a CPU playing at its hardest, and
-beating it brings BOSS_PACKS more packs and an augment to pick (weiss.augments). In co-op the pair wear it down
+beating it brings BOSS_PACKS more packs, an augment to pick (weiss.augments) and a curse to take (weiss.curses), which
+makes every CPU after it harder. In co-op the pair wear it down
 together, every bit of damage either of their games deals it coming off one health bar (wear_boss).
 
 A co-op challenge (weiss.coop) is an infinite one for two: each player has their own run here, with the pool and
@@ -116,7 +117,7 @@ def win_reward_text(kind):
 
 def boss_reward_text(run):
     """What beating a boss brings, for the player."""
-    return f"an augment pick and {BOSS_PACKS} more packs on top of a win's reward"
+    return f"an augment pick and {BOSS_PACKS} more packs on top of a win's reward, and a curse to take"
 
 
 def boss_shown(run, floor):
@@ -597,10 +598,18 @@ def fight_finished(arcade_run, won, cleared, rng=random, fought=None):
 
 
 def beat_boss(run, rng=random):
-    """A boss beaten: BOSS_PACKS more packs to open, and an augment to pick (weiss.augments)."""
+    """A boss beaten: BOSS_PACKS more packs to open, an augment to pick (weiss.augments), and a curse to take
+    (weiss.curses), before the next fight (curse_due)."""
     from .buffs import grant  # weiss.buffs uses this module
     run.packs += BOSS_PACKS
-    grant(run, ["augment"], "Boss", rng)
+    grant(run, ["augment", "curse"], "Boss", rng)
+
+
+def curse_due(run):
+    """What's wrong if this player has a curse still to take, which they must before their next fight; or None."""
+    if any(reward["buff"] == "curse" for reward in run.rewards or []):
+        return "Take your curse first: beating the boss means taking one before your next fight."
+    return None
 
 
 def coop_fight_finished(run, won, rng=random, fought=None):
@@ -727,7 +736,7 @@ def reset(run):
         if run.deck:
             run.deck.delete()
         run.deck = CardList.objects.create(user=run.user, name=deck_name(run.name), challenge=True)
-        run.pool, run.packs, run.opened, run.last_opening, run.rewards, run.lives, run.path = {}, start_packs(run.kind), 0, {}, [], 0, {}
+        run.pool, run.packs, run.opened, run.last_opening, run.rewards, run.lives, run.path, run.curses = {}, start_packs(run.kind), 0, {}, [], 0, {}, []
         run.arcade_run, run.status, run.started = None, ChallengeRun.Status.ACTIVE, timezone.now()
         run.save()
         give_loadout(run)

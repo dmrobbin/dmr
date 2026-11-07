@@ -6,6 +6,7 @@ The board page polls `room_state` every second or two; it answers 204 when nothi
 """
 import json
 import logging
+import random
 from datetime import timedelta
 
 from django.contrib import messages
@@ -22,7 +23,7 @@ from django.views.decorators.http import require_POST
 from core import s3
 from core.access import has_weiss_access, weiss_access_required
 
-from . import arcade, augments, buffs, challenge, coop, cpu, game, lists, packs, scenes, scoring
+from . import arcade, augments, buffs, challenge, coop, cpu, curses, game, lists, packs, scenes, scoring
 from .models import ArcadeRun, ArcadeScenario, Card, CardList, ChallengeRun, CpuProfile, GameRecord, GameRoom, PlayerProfile, cpu_user
 
 log = logging.getLogger(__name__)
@@ -85,7 +86,7 @@ def cpu_payload(room):
         payload["arcade"] = {"scenario": run.scenario_name, "fight": run.position + 1 if endless else min(run.position + 1, run.total),
                              "total": None if endless else run.total,
                              "cleared": run.status == ArcadeRun.Status.CLEARED, "score": run.score}
-        trial = ChallengeRun.objects.filter(arcade_run=run).only("kind", "packs", "lives", "status", "rewards", "path", "arcade_run", "coop", "user", "augments").first()
+        trial = ChallengeRun.objects.filter(arcade_run=run).only("kind", "packs", "lives", "status", "rewards", "path", "arcade_run", "coop", "user", "augments", "curses").first()
         coop.load(trial)
         if trial:
             payload["arcade"]["challenge"] = {"packs": trial.packs, "won": challenge.win_reward_text(trial.kind), "lives": trial.lives,
@@ -95,6 +96,9 @@ def cpu_payload(room):
             payload["arcade"]["coop"] = {"losses": pair.losses, "limit": pair.loss_limit, "partner": getattr(pair.partner_of(trial.user), "username", "")}
         if trial and trial.augments:
             payload["arcade"]["augments"] = [{"name": a["name"], "text": a["text"], "count": a["count"]} for a in augments.of(trial)]
+        if trial and trial.curses:
+            payload["arcade"]["curses"] = [{"name": c["name"], "text": c["text"] if room.state.get("boss") else c["ordinary"] or "Nothing yet, against a CPU that isn't a boss.",
+                                            "count": c["count"]} for c in curses.of(trial)]
         if room.state.get("boss") and trial:
             payload["arcade"]["boss"] = challenge.boss_shown(trial, room.state.get("floor"))
         if trial and endless:  # the CPUs beaten so far, for the board's tally
@@ -499,6 +503,7 @@ def deal(room, intro=False):
     if trial and trial.kind == ChallengeRun.Kind.INFINITE:
         stamp_floor(room, trial)
         augment_start(room, trial)
+        curse_start(room, trial)
 
 
 def augment_start(room, trial):
@@ -520,6 +525,32 @@ def augment_start(room, trial):
                 game.put(who, who["zones"]["deck"].pop(), zone)
     names = ", ".join(augments.AUGMENTS[a].name for a in picked)
     game.add_log(state, me, f"plays with {names}")
+
+
+def curse_start(room, trial, rng=random):
+    """The player's curses (weiss.curses), at full strength against a boss and at half against anyone else: those
+    the rules read go on the sides they change, and those that change how it starts do so now: stock for the CPU,
+    clock for the player, and cards out of their starting hand, back into their deck."""
+    state, me = room.state, str(room.host_id)
+    cpu_curses, my_curses, start = curses.for_game(trial, bool(state.get("boss")))
+    if not (cpu_curses or my_curses or start):
+        return
+    side, cpu_side = state["players"][me], state["players"][str(room.guest_id)]
+    if cpu_curses:
+        cpu_side["curses"] = cpu_curses
+    if my_curses:
+        side["curses"] = my_curses
+    for curse_id, who, zone, count in (("hoard", cpu_side, "stock", start.get("hoard", 0)),
+                                       ("old_wounds", side, "clock", min(start.get("old_wounds", 0), curses.MOST_CLOCK))):
+        for _ in range(min(count, len(who["zones"]["deck"]))):
+            game.put(who, who["zones"]["deck"].pop(), zone)
+    if cut := curses.hand_cut(start.get("short_hand", 0)):
+        hand, deck = side["zones"]["hand"], side["zones"]["deck"]
+        for _ in range(min(cut, len(hand))):
+            deck.append(hand.pop())
+        rng.shuffle(deck)
+    said = "; ".join(curses.CURSES[c].name + ": " + curses.CURSES[c].said(n) for c, n in {**start, **cpu_curses, **my_curses}.items())
+    game.add_log(state, me, f"is cursed{'' if state.get('boss') else ' (at half strength, against a CPU that isn’t a boss)'}. {said}")
 
 
 def stamp_floor(room, trial):

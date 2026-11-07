@@ -16,7 +16,7 @@ import random
 import secrets
 from dataclasses import dataclass
 
-from . import augments, challenge, coop, packs
+from . import augments, challenge, coop, curses, packs
 from .models import Card
 
 TRADE_IN = 5  # cards given up for a pack
@@ -68,6 +68,8 @@ BUFFS = {buff.id: buff for buff in (
     Buff("outpaced", "Outpaced", f"Open {OUTPACED_PACKS} packs now. Your next opponent takes the first turn.", pact=True, next_fight=True),
     Buff("war_chest", "War chest", f"Your next fight starts with {WAR_CHEST} cards in your stock.", next_fight=True),
     Buff("augment", "Augment", f"Choose one of {augments.OFFER} augments: a change to the rest of your run.", "augment", special=True),
+    Buff("curse", "Curse", f"Take one of {curses.OFFER} curses, for the rest of your run: it's on every boss from now on, "
+         "and at half strength on every other CPU. Take it before your next fight.", "curse", special=True),
 )}
 RANDOM = "random"
 PACT = "pact"  # a scene's "give pact": a pact, at random
@@ -176,6 +178,8 @@ def grant(run, buff_ids, source="", rng=random):
             else:
                 run.packs += EXTRA_PACKS
                 said.append(f"You have every augment there is: {EXTRA_PACKS} more packs instead.")
+        elif buff_id == "curse":  # what it offers is settled now too
+            reward(buff_id, options=curses.offer(rng))
         elif BUFFS.get(buff_id) and BUFFS[buff_id].next_fight:
             run.packs += {"blood_pact": BLOOD_PACKS, "outpaced": OUTPACED_PACKS}.get(buff_id, 0)
             run.path = {**(run.path or {}), "next": [*fight_mods(run), *([] if buff_id in fight_mods(run) else [buff_id])]}  # once is enough
@@ -325,11 +329,15 @@ def claim(run, key, data, rng=random):
         if data.get("augment") not in reward.get("options", []):
             raise ValueError("Choose one of the augments offered.")
         augments.take(run, data["augment"])
+    elif buff.claim == "curse":
+        if data.get("curse") not in reward.get("options", []):
+            raise ValueError("Choose one of the curses offered.")
+        curses.take(run, data["curse"])
     elif buff.claim == "climax":
         pk = number(data, "card")
         if pk not in {card.pk for card in climax_choices(run)}:
             raise ValueError("Choose one of the climaxes.")
         add_to_pool(run, pk, CLIMAX_COPIES)
     run.rewards = [r for r in run.rewards if r["key"] != key]
-    run.save(update_fields=["pool", "packs", "rewards", "last_opening", "augments"])
+    run.save(update_fields=["pool", "packs", "rewards", "last_opening", "augments", "curses"])
     return opened

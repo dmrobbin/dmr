@@ -22,6 +22,8 @@ Bosses come first. Augments are built after them.
 | Co-op boss down | Both players finish the floor and get the boss reward. Any game still under way against it ends as a win (with a win's usual reward), the partner's on its page's next check. A loss in the same action that empties the bar doesn't count. |
 | Boss reward | 3 packs and an augment pick, on top of a win's usual reward for the game that won. |
 | Augments | Personal. Each pick offers 3 the player doesn't have yet, and they keep one for the rest of the run. Lifeline is co-op only and is the only one that can be taken twice. |
+| Curses | Beating a boss also brings a curse to take: 3 offered, one taken, for the rest of the run. It must be taken before the next fight. Personal, like augments. They stack, the same curse included. |
+| Curse strength | Every boss carries the whole stack; every other CPU carries half of it, rounded down. |
 
 ### Choices I made where the design was silent
 
@@ -36,6 +38,14 @@ These are noted here so they can be changed.
 - Every deck is held to exactly 8 climaxes: it can't be built with more, and it can't be played with fewer (ordinary
   games, arcade and challenge fights alike; a challenge deck can still be short of 50 cards). Climax Overload makes
   that 8 to 10. Challenge decks are still only warned about the 4-copy rule; Highlander's 2-copy limit is enforced.
+- Halving rounds down, so a curse whose step is 1 (all but Iron Skin) does nothing to ordinary CPUs until it's been
+  taken twice.
+- A curse can be offered and taken again, however many the player has: with 7 curses, a long run would run out
+  otherwise.
+- Old Wounds puts at most 6 cards in the clock (never a level up before the game starts); Short Hand never leaves
+  fewer than 3 cards in the starting hand.
+- Heavy Refresh's extra damage comes on top of Clean Refresh: with both, the first refresh deals only the extra.
+- Curses aren't shown on the co-op partner's panel (augments are).
 - Glass Cannon with only one second chance left: the loss isn't covered. In solo the run ends; in co-op, 2 go on
   the counter.
 
@@ -54,6 +64,18 @@ These are noted here so they can be changed.
 | Counter Specialist | Counter cards cost 1 less stock (to a minimum of 0). | Game rules |
 | Lifeline (co-op) | The pair's loss limit goes up by 1. It stacks. | Run |
 
+## The curses
+
+| Curse | What it does, per pick | Built in |
+|---|---|---|
+| Iron Skin | CPU characters get +1000 power. | Game rules |
+| Fury | CPU characters get +1 soul. | Game rules |
+| Hoard | The CPU starts each game with 1 more card in its stock. | Game start |
+| Old Wounds | You start each game with 1 card in your clock. | Game start |
+| Short Hand | You start each game with 1 card fewer in your hand. | Game start |
+| Heavy Refresh | Your first refresh in each game deals 1 more damage. | Game rules |
+| Toll | Your counter cards cost 1 more stock. | Game rules |
+
 ## How it's built
 
 - **Settings:** `ChallengeSettings.boss_every`, `coop_boss_every` and `coop_boss_health`. `CpuProfile.boss`.
@@ -66,6 +88,11 @@ These are noted here so they can be changed.
   The game counts the damage that lands on each side (`side["damage_taken"]`); after every action, `play.wear_boss`
   takes what's new off the health bar. The boss's side has `shared_health`, so `game.check_game_over` doesn't end
   the game at its level 4 and the CPU doesn't play safe near it.
+- **Curses** live on `ChallengeRun.curses` (a list of ids, repeats and all; see `weiss.curses`). A curse pick is a
+  reward like an augment pick; `challenge.curse_due` keeps the player from fighting until it's taken. When a game
+  is dealt, `play.curse_start` works out their strength (full against a boss, half otherwise), deals those that
+  change the start, and puts the rest on the side they change as `side["curses"] = {curse id: strength}`: the
+  CPU's (Iron Skin, Fury) or the player's (Heavy Refresh, Toll).
 - **Augments** live on `ChallengeRun.augments` (a list of ids). An augment pick is a reward like the others,
   with its 3 options settled when it's given. In-game augments are put on the player's side of the game state
   when it's dealt (`side["augments"]`), and the game rules read them from there.
@@ -112,6 +139,15 @@ These are noted here so they can be changed.
 9. **Finish**
    - Docstrings, the full test run, and a check in the browser.
 
+### Part 3: curses
+
+10. **Curses**
+    - `ChallengeRun.curses`, the curse list, the curse reward (3 options, take one) given with the augment pick, and
+      no fight until it's taken.
+    - Their strength in a game, full or half, and the rules that read them.
+    - Shown on the challenge page, the reward pick, and the game page.
+    - Tests.
+
 ## Progress
 
 - [x] 1. Settings
@@ -123,3 +159,4 @@ These are noted here so they can be changed.
 - [x] 7. Run augments
 - [x] 8. Game augments
 - [ ] 9. Finish: docstrings and the full test run done; the check in the browser is still to do
+- [x] 10. Curses

@@ -5,7 +5,7 @@ from unittest import mock
 
 from django.urls import reverse
 
-from . import augments, buffs, challenge, coop, cpu, game, play
+from . import augments, buffs, challenge, coop, cpu, curses, game, play
 from .models import Card, CardListEntry, ChallengeRun, ChallengeSettings, CoopRun, GameRoom, Scene
 from .test_challenge import ArcadeSetup
 from .test_coop import PlayingSetup
@@ -326,6 +326,11 @@ class CoopBossTests(CoopBossSetup):
         for _ in range(4):
             self.climb_both()
         self.fight(self.staff)
+        self.assertEqual(self.room_of(self.staff).state["floor"], 4)  # not until they've taken the first boss's curse
+        run = self.fresh(self.staff)
+        reward = next(r for r in run.rewards if r["buff"] == "curse")
+        buffs.claim(run, reward["key"], {"curse": reward["options"][0]})
+        self.fight(self.staff)
         self.assertEqual(self.room_of(self.staff).state["floor"], 9)
         self.hit(self.staff, 4)
         self.assertEqual((self.boss()["floor"], self.boss()["health"]), (9, 6))
@@ -609,3 +614,134 @@ class GameAugmentTests(SoloSetup):
     def test_devotion_needs_one_color(self):
         self.assertTrue(augments.mono_color([{"color": "Red"}, {"color": "Red"}, {"color": ""}]))
         self.assertFalse(augments.mono_color([{"color": "Red"}, {"color": "Blue"}]))
+
+
+class CursePickTests(SoloSetup):
+    def setUp(self):
+        super().setUp()
+        self.climb(4)
+        self.fight()
+        self.end_fight("me")  # the first boss, beaten
+        self.run.refresh_from_db()
+
+    def pick(self):
+        return next(r for r in self.run.rewards if r["buff"] == "curse")
+
+    def test_beating_a_boss_offers_three_curses_with_the_augment(self):
+        reward = self.pick()
+        self.assertEqual((reward["source"], len(reward["options"])), ("Boss", curses.OFFER))
+        self.assertTrue(any(r["buff"] == "augment" for r in self.run.rewards))
+        page = self.client.get(reverse("weiss:arcade_challenge"))
+        for option in reward["options"]:
+            self.assertContains(page, f'name="curse" value="{option}"')
+        self.assertContains(page, "Take your curse first")
+
+    def test_no_fight_until_its_taken(self):
+        response = self.fight()
+        self.assertEqual(response.status_code, 302)
+        self.run.refresh_from_db()
+        self.assertEqual(challenge.floor_at(self.run), 5)
+        self.assertFalse(GameRoom.objects.filter(host=self.staff, state__floor=5).exists())
+        reward = self.pick()
+        response = self.client.post(reverse("weiss:arcade_challenge_claim"), {"key": reward["key"], "curse": "nope"}, follow=True)
+        self.assertContains(response, "Choose one of the curses offered.")
+        self.client.post(reverse("weiss:arcade_challenge_claim"), {"key": reward["key"], "curse": reward["options"][0]})
+        self.run.refresh_from_db()
+        self.assertEqual(self.run.curses, [reward["options"][0]])
+        self.assertIsNone(challenge.curse_due(self.run))
+        self.assertContains(self.client.get(reverse("weiss:arcade_challenge")), "Your curses")
+
+    def test_never_given_at_random(self):
+        rng = random.Random(3)
+        self.assertNotIn("curse", {buff for _ in range(80) for buff in buffs.roll(4, rng)})
+
+    def test_a_reset_clears_them(self):
+        self.run.curses = ["fury"]
+        self.run.save()
+        challenge.reset(self.run)
+        self.run.refresh_from_db()
+        self.assertEqual(self.run.curses, [])
+
+
+class CurseStrengthTests(SoloSetup):
+    def test_they_stack_and_other_cpus_get_half_rounded_down(self):
+        self.run.curses = ["iron_skin", "fury", "iron_skin", "toll", "toll", "toll"]
+        self.assertEqual(curses.strengths(self.run, True), {"iron_skin": 2000, "fury": 1, "toll": 3})
+        self.assertEqual(curses.strengths(self.run, False), {"iron_skin": 1000, "toll": 1})
+        shown = {c["id"]: c for c in curses.of(self.run)}
+        self.assertEqual((shown["fury"]["text"], shown["fury"]["ordinary"]), ("CPU characters get +1 soul.", ""))
+        self.assertEqual((shown["toll"]["count"], shown["toll"]["ordinary"]), (3, "Your counter cards cost 1 more stock."))
+
+    def test_every_curse_says_what_it_does(self):
+        for curse in curses.CURSES.values():
+            self.assertNotIn("{", curse.said(curse.step))
+
+
+class GameCurseTests(SoloSetup):
+    """The curses that change a game: on the sides they change when it's dealt, and read by the rules."""
+
+    CARDS, env, table, stats = GameAugmentTests.CARDS, GameAugmentTests.env, GameAugmentTests.table, GameAugmentTests.stats
+
+    def test_the_cpus_power_and_soul(self):
+        state = self.table()
+        state["players"]["2"]["curses"] = {"iron_skin": 1500, "fury": 1}
+        self.assertEqual(self.stats(state, side="2"), [(4500, 2), (9500, 3)])
+        self.assertEqual(self.stats(state), [(3000, 1), (8000, 2)])  # not the player's
+
+    def test_heavy_refresh_hurts_the_first_refresh_only(self):
+        state = self.table()
+        state["players"]["1"]["curses"] = {"heavy_refresh": 2}
+        zones = state["players"]["1"]["zones"]
+        for _ in range(2):
+            zones["waiting"], zones["deck"] = zones["deck"], []
+            game.refresh(state, "1", self.env().name, lambda cards: None)
+        self.assertEqual(len(zones["clock"]), 1 + 2 + 1)
+        self.assertEqual(state["players"]["1"]["damage_taken"], 4)
+        self.assertIn("(Heavy Refresh)", " ".join(entry["text"] for entry in state["log"]))
+
+    def test_heavy_refresh_on_top_of_clean_refresh(self):
+        state = self.table("clean_refresh")
+        state["players"]["1"]["curses"] = {"heavy_refresh": 1}
+        zones = state["players"]["1"]["zones"]
+        zones["waiting"], zones["deck"] = zones["deck"], []
+        game.refresh(state, "1", self.env().name, lambda cards: None)
+        self.assertEqual(len(zones["clock"]), 1)
+
+    def test_toll_makes_counters_cost_more(self):
+        state = self.table()
+        state["phase"] = "attack"
+        block = game.new_card(3)
+        me = state["players"]["1"]
+        me["zones"]["hand"].append(block)
+        me["zones"]["stock"] = [game.new_card(1)]
+        self.assertEqual(game.counter_play(state, "1", block, self.env().info), (1, 0))
+        me["curses"] = {"toll": 1}
+        self.assertIsNone(game.counter_play(state, "1", block, self.env().info))  # 2 stock, and there's 1
+        me["augments"] = ["counter_specialist"]
+        self.assertEqual(game.counter_play(state, "1", block, self.env().info), (1, 0))
+
+    def dealt(self):
+        room = self.room()
+        return room, room.state["players"][str(room.host_id)], room.state["players"][str(room.guest_id)]
+
+    def test_dealt_at_half_strength_against_another_cpu(self):
+        CardListEntry.objects.filter(card_list__reserved_for_cpu=True).update(quantity=20)
+        ChallengeRun.objects.filter(pk=self.run.pk).update(curses=["hoard", "hoard", "old_wounds", "old_wounds", "short_hand", "short_hand", "iron_skin", "toll"])
+        self.fight()
+        room, me, them = self.dealt()
+        self.assertEqual((len(them["zones"]["stock"]), len(me["zones"]["clock"]), len(me["zones"]["hand"])), (1, 1, game.STARTING_HAND - 1))
+        self.assertEqual((them["curses"], me.get("curses")), ({"iron_skin": 500}, None))  # Toll at half is nothing yet
+        self.assertIn("half strength", " ".join(entry["text"] for entry in room.state["log"]))
+        data = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()
+        self.assertEqual({c["name"]: c["text"] for c in data["arcade"]["curses"]}["Toll"], "Nothing yet, against a CPU that isn't a boss.")
+
+    def test_dealt_at_full_strength_against_a_boss(self):
+        CardListEntry.objects.filter(card_list__reserved_for_cpu=True).update(quantity=20)
+        self.climb(4)
+        ChallengeRun.objects.filter(pk=self.run.pk).update(curses=["hoard", "hoard", "old_wounds", "short_hand", "short_hand", "short_hand", "iron_skin", "toll"])
+        self.fight()
+        room, me, them = self.dealt()
+        self.assertTrue(room.state["boss"])
+        self.assertEqual((len(them["zones"]["stock"]), len(me["zones"]["clock"])), (challenge.BOSS_STOCK + 2, 1))
+        self.assertEqual(len(me["zones"]["hand"]), curses.LEAST_HAND)  # 3 picks, but never fewer than this
+        self.assertEqual((them["curses"], me["curses"]), ({"iron_skin": 1000}, {"toll": 1}))

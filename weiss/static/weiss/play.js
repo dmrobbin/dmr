@@ -377,21 +377,23 @@
     (root.querySelector(".play-chat-side") || root).prepend(bossEl);
   }
 
-  // --- The player's augments (weiss.augments), named, with what each does on hover --------------------------------
+  // --- The player's augments (weiss.augments) and curses (weiss.curses), named, with what each does on hover -------
 
   let augmentsEl = null;
   let augmentsKey = "";
   function renderAugments() {
     const picked = arcade && arcade.augments;
-    const key = picked ? JSON.stringify(picked) : "";
+    const cursed = arcade && arcade.curses;
+    const key = picked || cursed ? JSON.stringify([picked, cursed]) : "";
     if (key === augmentsKey) return;
     augmentsKey = key;
     if (augmentsEl) augmentsEl.remove();
     augmentsEl = null;
-    if (!picked) return;
+    if (!key) return;
+    const tags = (list) => list.map((a) => `<span class="deck-tag" title="${esc(a.text)}">${esc(a.name)}${a.count > 1 ? ` ×${a.count}` : ""}</span>`).join(" ");
     augmentsEl = document.createElement("p");
     augmentsEl.className = "play-augments small";
-    augmentsEl.innerHTML = `Augments: ${picked.map((a) => `<span class="deck-tag" title="${esc(a.text)}">${esc(a.name)}${a.count > 1 ? ` ×${a.count}` : ""}</span>`).join(" ")}`;
+    augmentsEl.innerHTML = [picked && `Augments: ${tags(picked)}`, cursed && `Curses: ${tags(cursed)}`].filter(Boolean).join("<br>");
     (root.querySelector(".play-chat-side") || root).prepend(augmentsEl);
   }
 

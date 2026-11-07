@@ -315,10 +315,15 @@ def refresh(state, player, name, shuffle):
     if damage:
         put(side, damage, "clock")
         side["damage_taken"] = side.get("damage_taken", 0) + 1
+    heavy = [] if side.get("refreshes") else [zones["deck"].pop() for _ in range(min((side.get("curses") or {}).get("heavy_refresh", 0), len(zones["deck"])))]  # a challenge curse
+    for card in heavy:
+        put(side, card, "clock")
+    side["damage_taken"] = side.get("damage_taken", 0) + len(heavy)
     side["refreshes"] = side.get("refreshes", 0) + 1  # so both pages can show "Deck Out!"
     state.setdefault("pending_events", []).append({"event": "refresh", "player": player})  # run_abilities fires it
     add_log(state, player, f"decked out: shuffled {len(cards)} cards from the waiting room into their deck "
-                           + ("with no refresh damage (Clean Refresh)" if clean else f"and put {name(damage['card'])} into their clock"))
+                           + ("with no refresh damage (Clean Refresh)" if clean else f"and put {name(damage['card'])} into their clock")
+                           + (f", then {', '.join(name(c['card']) for c in heavy)} too (Heavy Refresh)" if heavy else ""))
 
 
 def deal_damage(state, player, amount, remaining, dealt, name, is_climax):
@@ -533,6 +538,7 @@ def counter_play(state, player, card, info):
         power, level, price = 0, play_level(state, player, card, info), play_cost(state, player, card, info)
     if "counter_specialist" in (state["players"][player].get("augments") or ()):  # a challenge augment
         price = max(0, price - 1)
+    price += (state["players"][player].get("curses") or {}).get("toll", 0)  # a challenge curse
     zones = state["players"][player]["zones"]
     if level > len(zones["level"]) or price > len(zones["stock"]):
         return None
@@ -2190,6 +2196,7 @@ def compute_stats(state, env):
             stats[buff["uid"]]["soul"] += buff.get("soul", 0)
     for side in state["players"].values():
         augment_stats(side, stats, env)
+        curse_stats(side, stats)
     for values in stats.values():
         values["power"] = max(0, values["power"])
         values["soul"] = max(0, values["soul"])
@@ -2216,6 +2223,17 @@ def augment_stats(side, stats, env):
             values["soul"] += GLASS_CANNON_SOUL
         if "low_level_army" in augments and number(values.get("level", details_of(card, env).get("level"))) == 0:
             values["power"] += LOW_LEVEL_POWER
+
+
+def curse_stats(side, stats):
+    """What a challenge player's curses (weiss.curses) give the CPU's characters: on its side as "curses"."""
+    curses = side.get("curses") or {}
+    if not (curses.get("iron_skin") or curses.get("fury")):
+        return
+    for card in stage_cards(side):
+        if (values := stats.get(card["uid"])) is not None:
+            values["power"] += curses.get("iron_skin", 0)
+            values["soul"] += curses.get("fury", 0)
 
 
 def level_buff(state, uid):

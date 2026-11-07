@@ -13,7 +13,7 @@ from django.views.decorators.http import require_POST
 
 from core.access import weiss_access_required
 
-from . import arcade, augments, buffs, challenge, coop, game, packs, play
+from . import arcade, augments, buffs, challenge, coop, curses, game, packs, play
 from .lists import CLIMAX_COUNT, DECK_GROUPS, DECK_SIZE, unlimited
 from .models import ArcadeRun, ArcadeScenario, Card, ChallengeRun, CoopRun, CpuProfile, GameRoom, NarrativeChallenge, PlayerProfile
 from .play import deal, not_begun, seat_cpu, snapshot_groups
@@ -79,6 +79,8 @@ def challenge_home(request):
         "event_due": bool((run.path or {}).get("event")),
         "last_set": last_set(run),
         "augments": augments.of(run),
+        "curses": curses.of(run),
+        "curse_due": challenge.curse_due(run),
         "coop": coop_context(request, run),
     })
 
@@ -175,7 +177,8 @@ def path_view(run):
 def reward_context(run):
     """The rewards waiting to be claimed, and what each kind of claim chooses from."""
     rewards = [{**reward, "buff": buffs.BUFFS[reward["buff"]],
-                "augments": [augments.shown(a) for a in reward.get("options", []) if a in augments.AUGMENTS]}
+                "augments": [augments.shown(a) for a in reward.get("options", []) if a in augments.AUGMENTS] if reward["buff"] == "augment" else [],
+                "curses": [curses.shown(c) for c in reward.get("options", []) if c in curses.CURSES] if reward["buff"] == "curse" else []}
                for reward in run.rewards if reward["buff"] in buffs.BUFFS]
     kinds = {reward["buff"].claim for reward in rewards}
     context = {"rewards": rewards, "levels": buffs.LEVELS, "colors": buffs.COLORS, "trade_in": buffs.TRADE_IN}
@@ -391,6 +394,9 @@ def challenge_fight(request):
         messages.error(request, "Your deck is empty: open some packs and build it first.")
         return redirect("weiss:arcade_challenge")
     if heading != challenge.EVENT and (problem := challenge.deck_ready(run)):
+        messages.error(request, problem)
+        return redirect("weiss:arcade_challenge")
+    if heading != challenge.EVENT and (problem := challenge.curse_due(run)):
         messages.error(request, problem)
         return redirect("weiss:arcade_challenge")
     if endless and run.coop_id and run.coop.status == CoopRun.Status.WAITING:

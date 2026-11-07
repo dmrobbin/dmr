@@ -42,6 +42,18 @@
               {% empty %}<p class="muted small">There are no augments left for you to pick.</p>{% endfor %}
             </fieldset>
             <button type="submit" class="button-small"{% if not reward.augments %} disabled{% endif %}>Take it</button>
+          {% elif kind == "curse" %}
+            <fieldset class="augment-choices curse-choices">
+              <legend class="small">Take one, for the rest of the run</legend>
+              {% for curse in reward.curses %}
+                <label class="augment-choice">
+                  <input type="radio" name="curse" value="{{ curse.id }}" required{% if forloop.first %} checked{% endif %}>
+                  <span class="augment-name">{{ curse.name }}</span>
+                  <span class="small">{{ curse.text }} On a boss; half that on any other CPU.</span>
+                </label>
+              {% endfor %}
+            </fieldset>
+            <button type="submit" class="button-small">Take it</button>
           {% elif kind == "climax" %}
             <label class="small">Climax <select name="card">{% for card in climaxes %}<option value="{{ card.pk }}">{{ card.name }} · {{ card.expansion }}</option>{% endfor %}</select></label>
             <button type="submit" class="button-small"{% if not climaxes %} disabled{% endif %}>Add them</button>

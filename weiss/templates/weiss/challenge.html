@@ -120,6 +120,15 @@
             </ul>
           </div>
         {% endif %}
+        {% if curses %}
+          <div class="challenge-augments challenge-curses">
+            <h3>Your curses</h3>
+            <p class="muted small">Every boss carries all of them; every other CPU, half (rounded down).</p>
+            <ul class="augment-list">
+              {% for curse in curses %}<li class="augment"><strong>{{ curse.name }}</strong>{% if curse.count > 1 %} ×{{ curse.count }}{% endif %} <span class="small">Boss: {{ curse.text }} Others: {% if curse.ordinary %}{{ curse.ordinary }}{% else %}nothing yet.{% endif %}</span></li>{% endfor %}
+            </ul>
+          </div>
+        {% endif %}
         {% if mods %}
           <div class="challenge-mods">
             <h3>Your next fight, until you win it</h3>
@@ -163,6 +172,7 @@
             {% endif %}
             {% if not deck_total %}<p class="muted small">Your deck needs cards first.</p>
             {% elif deck_problem %}<p class="small panel-error">{{ deck_problem }} <a href="{% url 'weiss:arcade_challenge_deck' %}">Edit your deck</a>.</p>{% endif %}
+            {% if curse_due %}<p class="small panel-error">{{ curse_due }}</p>{% endif %}
           </section>
         </div>
         {% if path %}{% include "weiss/challenge_path.html" %}{% endif %}
