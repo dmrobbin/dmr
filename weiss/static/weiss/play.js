@@ -2486,7 +2486,9 @@
     if (count >= 1) act({ type: "damage", count });
   });
 
-  $("[data-chat]").addEventListener("submit", (event) => {
+  // No chat form for a co-op partner watching (play_room.html).
+  const chatEl = $("[data-chat]");
+  if (chatEl) chatEl.addEventListener("submit", (event) => {
     event.preventDefault();
     const input = event.target.elements.text;
     if (input.value.trim()) act({ type: "chat", text: input.value });
