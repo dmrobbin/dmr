@@ -1609,7 +1609,36 @@
     gameOverEl.querySelector("[data-game-over-buttons]").innerHTML = gameOverButtons(over);
   }
 
+  // A decision's pop-up (one without a Close button) can be put aside to look at the board, until we go back to it
+  // or there's a different decision to make: peekKey is the pop-up being put aside.
+  let peekKey = null;
+  const peekEl = document.createElement("button");
+  peekEl.type = "button";
+  peekEl.className = "play-peek-back";
+  peekEl.dataset.peekBack = "";
+  peekEl.textContent = "Back to the choice";
+  peekEl.hidden = true;
+  root.appendChild(peekEl);
+
   function renderModal() {
+    drawModal();
+    peekEl.hidden = true;
+    const box = modalEl.hidden ? null : modalEl.querySelector(".play-modal-box");
+    if (!box || SPECTATING || box.querySelector("[data-close], [data-counter-hide]")) {
+      peekKey = null;
+      return;
+    }
+    const key = modalEl.innerHTML;
+    if (peekKey === key) {
+      modalEl.hidden = true;
+      peekEl.hidden = false;
+      return;
+    }
+    peekKey = null;
+    box.insertAdjacentHTML("afterbegin", '<button type="button" class="button-cancel play-peek" data-peek>Look at the board</button>');
+  }
+
+  function drawModal() {
     if (board.game_over) {
       modalEl.hidden = true;
       return;
@@ -1736,7 +1765,7 @@
     const rows = (board.acts || {})[modal.abilities];
     if (!rows) {
       modal = null;
-      return renderModal();
+      return drawModal();
     }
     const pk = rows[0].card;
     const info = cards[pk];
@@ -1774,7 +1803,7 @@
     const options = (board.free_plays || {})[action.uid];
     if (!card || !options) {
       modal = null;
-      return renderModal();
+      return drawModal();
     }
     const info = cards[card.card];
     const stage = Object.values(board.me.stage).filter(Boolean);
@@ -1802,7 +1831,7 @@
     const info = card && cards[card.card];
     if (!card || !inPhase("main")) {
       modal = null;
-      return renderModal();
+      return drawModal();
     }
     modalEl.hidden = false;
     modalEl.innerHTML = `<div class="play-modal-box confirm-box" role="alertdialog" aria-label="Play a climax">
@@ -2382,6 +2411,15 @@
         const [title, items] = cardMenu(card);
         showMenu(event.clientX, event.clientY, title, items);
       }
+      return;
+    }
+    if (event.target.closest("[data-peek]") || event.target.closest("[data-peek-back]")) {
+      peekKey = null;
+      if (event.target.closest("[data-peek]")) {
+        event.target.closest("[data-peek]").remove();
+        peekKey = modalEl.innerHTML;
+      }
+      renderModal();
       return;
     }
     if (event.target.closest("[data-counter-hide]") || event.target.closest("[data-counter-show]")) {

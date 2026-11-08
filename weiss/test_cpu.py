@@ -1025,6 +1025,28 @@ class AutomatedEffectTests(TestCase):
         self.assertEqual(protected["pos"], "stand")
         self.assertIn("neither reversed", " ".join(e["text"] for e in self.t.state["log"]))
 
+    UNBREAKABLE = ('【COUNTER】 If you do not have a 《Villain》 character, this card cannot be played from your hand. Choose 1 of your characters, and that character gets the following ability '
+                   'until end of turn. "【CONT】 This card cannot become 【REVERSE】."')
+
+    def test_a_given_cant_become_reverse_keeps_the_character_standing(self):
+        grant = abilities.parse(self.UNBREAKABLE)[1]["steps"][1]["grant"]
+        self.assertEqual(abilities.parse(grant[0])[0].get("no_reverse"), True)
+        self.t.card(160, power=1000)
+        self.t.card(161, power=9000)
+        protected = self.t.seat(self.me, "C2", 160)
+        attacker = self.t.seat(self.them, "C2", 161)
+        self.t.state.setdefault("buffs", []).append({"uid": protected["uid"], "power": 0, "soul": 0, "expires": self.t.state["turn_number"], "grant": grant})
+        self.t.state.update(turn="1", phase="attack", attack={"step": "declare"})
+        self.t.refresh()
+        self.t.apply(1, {"type": "attack", "uid": attacker["uid"], "kind": "front"})
+        if self.t.state.get("attack") and self.t.state["attack"]["step"] == "counter":
+            self.t.apply(2, {"type": "no_counter"})
+        self.assertEqual(protected["pos"], "stand")
+        self.assertIn("neither reversed", " ".join(e["text"] for e in self.t.state["log"]))
+        env = game.SimpleNamespace(info=self.t.info, name=lambda pk: "x")
+        game.set_position(self.t.state, env, "1", protected, "reverse")  # nor by an ability
+        self.assertEqual(protected["pos"], "stand")
+
     def done_show(self):
         shown = self.t.state.get("ability_show")
         if shown:
@@ -4390,6 +4412,23 @@ class SeventhBatchTests(TestCase):
         self.assertFalse(mind.can_play(event))
         t.seat(t.me, "C1", 800)
         self.assertTrue(mind.can_play(event))
+
+    def test_the_cpu_doesnt_play_what_would_clock_it_to_death(self):
+        t = Table()
+        bleed = t.hand(t.card(801, text="【AUTO】 When this card is placed on stage from your hand, choose 1 card in your hand, and put it into your clock."))[0]
+        offer = t.hand(t.card(2001, card_type="Event", text="Put the top card of your deck into your clock. Draw 2 cards."))[0]
+        maybe = t.hand(t.card(802, text="【AUTO】 When this card is placed on stage from your hand, you may put the top card of your deck into your clock. If you do, draw 1 card."))[0]
+        t.hand(800)
+        for kind in (cpu.Mind, cpu.Strategic):
+            mind = kind(t.state, "2", t.info, cpu.Temper(), random.Random(1))
+            self.assertTrue(mind.can_play(bleed) and mind.can_play(offer))
+            t.me["zones"]["level"] = [game.new_card(800) for _ in range(3)]
+            t.me["zones"]["clock"] = [game.new_card(800) for _ in range(game.LEVEL_UP_AT - 1)]
+            self.assertFalse(mind.can_play(bleed) or mind.can_play(offer), kind)
+            self.assertTrue(mind.can_play(maybe))  # it can say no to that
+            action = mind.main()
+            self.assertNotIn((action or {}).get("uid"), (bleed["uid"], offer["uid"]), kind)
+            t.me["zones"]["level"], t.me["zones"]["clock"] = [], []
 
     def test_a_counter_with_a_condition_stays_a_counter(self):
         text = '【COUNTER】 If you have 1 or less 《Hero》 characters, this card cannot be played from your hand.\nChoose 1 character in battle, and that character gets +1000 power until end of turn.'

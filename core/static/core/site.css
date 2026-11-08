@@ -1052,6 +1052,10 @@ button.button-small.secondary { border: 1px solid var(--border); }
 
 .play-modal { position: fixed; inset: 0; z-index: 25; display: grid; place-items: center; padding: 1rem; background: rgb(0 0 0 / .6); }
 .play-modal[hidden] { display: none; }
+/* A decision's pop-up put aside to look at the board (play.js renderModal), and the way back to it. */
+.play-peek { float: right; margin: 0 0 .5rem .75rem; font-size: .8rem; }
+.play-peek-back { position: fixed; bottom: 1.25rem; left: 50%; z-index: 26; transform: translateX(-50%); padding: .6rem 1.2rem; border: 1px solid var(--accent); border-radius: 999px; background: var(--surface); color: var(--text); font: inherit; font-weight: 700; cursor: pointer; box-shadow: 0 8px 24px rgb(0 0 0 / .6); }
+.play-peek-back[hidden] { display: none; }
 .play-modal-box { width: min(60rem, 100%); max-height: 85vh; overflow-y: auto; padding: 1.25rem; border: 1px solid var(--border); border-radius: .75rem; background: var(--surface); }
 .play-modal-head { display: flex; justify-content: space-between; align-items: center; }
 .play-modal-head h2 { margin: 0; font-size: 1rem; }

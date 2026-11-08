@@ -799,7 +799,7 @@ def advance_attack(state, env):
                 mine = stats[attacker["uid"]]["power"]
                 theirs = stats[target["uid"]]["power"] + attack["backup"]
                 losers = ([attacker] if mine <= theirs else []) + ([target] if theirs <= mine else [])
-                losers = [card for card in losers if not has_status(state, card["uid"], "no_reverse")]
+                losers = [card for card in losers if not cant_reverse(state, card, env)]
                 for card in losers:
                     card["pos"] = "reverse"
                 add_log(state, player, f"battle: {env.name(attacker['card'])} ({mine}) against {env.name(target['card'])} ({theirs})"
@@ -1699,6 +1699,16 @@ def attack_bans(state, player, card, env):
         if ability.get("attack_ban") and all(condition_met(c, state, player, card, {"source_uid": card["uid"]}, env) for c in ability["cond"]):
             kinds.add(ability["attack_ban"])
     return kinds
+
+
+def cant_reverse(state, card, env):
+    """Whether this character can't become 【REVERSE】 right now: an effect said so until some time, or a CONT
+    ability does (its own, or one given: "gets the following ability. "【CONT】 This card cannot become 【REVERSE】."")."""
+    if has_status(state, card["uid"], "no_reverse"):
+        return True
+    owner = locate(state, card["uid"])[0]
+    return any(ability.get("no_reverse") and all(condition_met(c, state, owner, card, {"source_uid": card["uid"]}, env) for c in ability["cond"])
+               for ability in abilities_of(state, card, env))
 
 
 def abilities_of(state, card, env):
@@ -4022,6 +4032,9 @@ def apply_buff(step, res, state, env):
 
 
 def set_position(state, env, actor, card, pos):
+    if pos == "reverse" and card["pos"] != "reverse" and cant_reverse(state, card, env):
+        add_log(state, actor, f"{env.name(card['card'])} can't become reversed")
+        return
     was_standing = card["pos"] == "stand"
     card["pos"] = pos
     if pos == "rest" and was_standing:

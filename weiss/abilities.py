@@ -3725,6 +3725,9 @@ def parse_cont(body, quotes, line, head):
     if re.fullmatch(r"this card can be played from your hand without fulfilling color requirements", text, re.I):
         ability["color_free"] = {"self": True}
         return ability
+    if re.fullmatch(r"this card cannot become 【REVERSE】", text, re.I):
+        ability["no_reverse"] = True
+        return ability
     match = re.fullmatch(r"this card cannot (frontal |side )?attack", text, re.I)
     if match:
         ability["attack_ban"] = {"frontal ": "front", "side ": "side", None: "all"}[(match[1] or "").lower() or None]

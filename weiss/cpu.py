@@ -184,7 +184,17 @@ class Mind:
         return (self.play_level(card) <= self.my_level()
                 and not game.play_banned(self.state, self.me, card, self.info)
                 and self.play_cost(card) <= len(self.zones["stock"])
-                and not game.color_needed(self.state, self.me, card, self.info))
+                and not game.color_needed(self.state, self.me, card, self.info)
+                and not self.kills_me(card))
+
+    def kills_me(self, card):
+        """Whether playing this card would lose it the game whatever it chooses: an event, or a "when this card is
+        placed on stage" ability, that has to put enough into its own clock. "You may" parts it can turn down."""
+        for ability in abilities.parse(self.details(card).get("text")):
+            if ability["kind"] == "event" or ability["kind"] == "auto" and any(w["on"] == "play" for w in ability.get("when") or []):
+                if self.fatal({**ability, "steps": without_may(ability.get("steps", [])), "then": without_may(ability.get("then", []))}):
+                    return True
+        return False
 
     def value(self, card):
         """How much it's worth keeping a card in hand, for what to clock or discard."""
@@ -699,15 +709,21 @@ def stock_cost(ability):
 def self_clock(ability, owner="me"):
     """How many cards an ability (or a "you may" step: its cost and "then") puts into the clock of the
     player it calls owner: its costs, the top of the deck or stock into the clock, itself into the clock,
-    and damage to them (counted as if it isn't canceled)."""
+    chosen cards of theirs put into it (from the hand, the stage, the waiting room...), and damage to them
+    (counted as if it isn't canceled)."""
     def paid(cost):
-        return sum(owner == "me" and (part["part"] in ("deck_to_clock", "stock_to_clock") or part["part"] == "self_to" and part.get("to") == "clock")
-                   for part in cost or [])
+        return sum((part.get("n", 1) if part["part"] == "pick" else 1) for part in cost or []
+                   if owner == "me" and (part["part"] in ("deck_to_clock", "stock_to_clock") or part["part"] in ("self_to", "pick") and part.get("to") in ("clock", "clock_bottom")))
 
     count = paid(ability.get("cost"))
+    chosen = None  # the step whose cards a "put it into ... clock" moves
     for step in all_steps(ability.get("steps", []) + ability.get("then", [])):
         do = step["do"]
         count += paid(step.get("cost")) if do == "may" else 0
+        if do in ("choose", "top"):
+            chosen = step
+        if do == "move_it" and step.get("to") in ("clock", "clock_bottom") and chosen and chosen["do"] == "choose" and chosen.get("owner", "me") == owner:
+            count += chosen["max"] if isinstance(chosen.get("max"), int) else 1
         if do == "top" and step.get("to") == "clock" and step.get("owner", "me") == owner:
             count += step["n"] if isinstance(step.get("n"), int) else 1
         elif do == "damage" and ("me" if step.get("self") else "opp") == owner:
@@ -715,6 +731,11 @@ def self_clock(ability, owner="me"):
         elif owner == "me" and (do == "stock_to_clock" or do == "self_to" and step.get("to") == "clock"):
             count += 1
     return count
+
+
+def without_may(steps):
+    """The steps that happen whatever's chosen: no "you may" parts."""
+    return [{**step, "then": without_may(step.get("then", []))} for step in steps if step["do"] != "may"]
 
 
 def all_steps(steps):
@@ -812,7 +833,7 @@ class Strategic(Mind):
             if kind not in ("event", "character") or not self.can_play(card) or (kind == "character" and not slot):
                 continue
             for ability in abilities.parse(self.details(card).get("text")):
-                if self.by_hand_only(ability):
+                if self.by_hand_only(ability) or self.fatal(ability):
                     continue
                 if kind == "event" and ability["kind"] == "event":
                     yield {"type": "move", "uid": card["uid"], "to": "resolution"}, ability
