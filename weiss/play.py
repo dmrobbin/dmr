@@ -504,6 +504,10 @@ def deal(room, intro=False):
         stamp_floor(room, trial)
         augment_start(room, trial)
         curse_start(room, trial)
+        if challenge.flash_now(trial):  # last: the hand it's dealt, curses and all, is what's drawn again
+            game.flash_start(room.state)
+            if colors := anchor_colors(room.guest_deck):  # what the CPU's level cards are to be (cpu.Mind.flash_level)
+                room.state["players"][str(room.guest_id)]["anchor_colors"] = colors
 
 
 def augment_start(room, trial):
@@ -626,6 +630,13 @@ def fight_mods(room, mods):
             game.add_log(state, me, f"starts with {count} card{'s' if count != 1 else ''} in their {zone} ({buffs.BUFFS[buff_id].name})")
     if "blood_pact" in mods:
         game.add_log(state, None, f"Blood pact: {room.guest_name} plays at its hardest.")
+
+
+def anchor_colors(deck):
+    """The colors of an express-built deck's anchors, one for each, in order (both the same if they are); or []."""
+    anchors = (deck.express or {}).get("anchors") if deck else None
+    colors = dict(Card.objects.filter(pk__in=anchors or []).values_list("pk", "color"))
+    return [colors[pk] for pk in anchors or [] if colors.get(pk)]
 
 
 def anchor_cards(deck):

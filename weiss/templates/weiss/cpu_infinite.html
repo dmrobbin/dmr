@@ -17,6 +17,20 @@
       the {{ path_ahead }} floors a run already shows ahead stay as they are.</p>
     {% if not event_scenes %}<p class="empty">There are no event scenes, so the path has no events whatever this is. Mark scenes as infinite events on the Scenes tab.</p>{% endif %}
   </section>
+  <section class="cpu-section">
+    <h2>Flash battles</h2>
+    <p class="muted small">Each fight on the path (never a boss) has this chance of being a flash battle: both players start at level 2, each
+      choosing 2 cards from their deck for their level zone, and after the mulligan the top 3 cards of each deck go to the stock.
+      The path marks them, and winning one brings a win's usual reward.</p>
+    <label class="infinite-chance">Flash battle chance
+      <span class="infinite-slider">
+        <input type="range" name="flash_percent" min="0" max="100" step="5" value="{{ flash_percent }}"
+               oninput="this.nextElementSibling.value = this.value + '%'">
+        <output>{{ flash_percent }}%</output>
+      </span>
+    </label>
+    <p class="muted small">Default {{ default_flash }}%. A change applies to floors laid out from now on.</p>
+  </section>
 
   <section class="cpu-section">
     <h2>Starting loadout</h2>

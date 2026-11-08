@@ -48,6 +48,7 @@ PATH_WIDTHS = (2, 3)  # how many CPUs a floor of the path offers, at random (few
 PATH_AHEAD = 3  # floors of the path laid out past the one being fought
 COLUMNS = 3  # the path's width: left, middle and right; each space leads only to those beside it (see links)
 EVENT = "event"  # a space on the path that plays an event scene instead of a fight
+FLASH_CHANCE = .15  # that a fight on the path (not a boss's) is a flash battle (see is_flash); until staff set it
 EVENT_CHANCE = .6  # that a floor (after the first) has an event among its spaces, if there are event scenes; until staff set it (see event_chance)
 INFINITE_START_PACKS = 20  # what an infinite challenge starts with, until staff set it (see infinite_start_packs)
 LOADOUT_BUFFS = ("climax_pack", "level_pack", "color_pack", "lucky_pack", "wild_pack", "climax_pick")  # what staff can start it with besides
@@ -168,6 +169,25 @@ def event_chance():
     return settings.event_percent / 100 if settings else EVENT_CHANCE
 
 
+def flash_chance():
+    """The chance that a fight on the path is a flash battle: what staff set on the CPU tab, or FLASH_CHANCE."""
+    settings = ChallengeSettings.current()
+    return settings.flash_percent / 100 if settings else FLASH_CHANCE
+
+
+def is_flash(path, f, node):
+    """Whether the space in column `node` of floor `f` is a flash battle: both players start at level 2, with
+    stock (see game.flash_start)."""
+    return [f, node] in (path or {}).get("flash", [])
+
+
+def flash_now(run):
+    """Whether the fight this player's on is a flash battle: the space picked on their floor."""
+    path, at = run.path or {}, floor_at(run)
+    picks = path.get("picks", [])
+    return at < len(picks) and is_flash(path, at, picks[at])
+
+
 def boss_every(coop=False):
     """How many floors apart a solo (or co-op) challenge's bosses are, as staff set it on the CPU tab; 0 for none."""
     settings = ChallengeSettings.current()
@@ -249,7 +269,8 @@ def event_scenes():
 @coop.sharing
 def path_of(run, rng=random):
     """An infinite challenge's path, {"floors": [[CPU id, EVENT or None for each column], ...], "picks": [the column
-    taken on each floor], "done": floors been through, "bosses": [the floors that are bosses']}, laid out PATH_AHEAD
+    taken on each floor], "done": floors been through, "bosses": [the floors that are bosses'], "flash": [[floor, column]
+    of each flash battle (see is_flash)]}, laid out PATH_AHEAD
     floors past the one it's on, plus anything else kept with it (the next fight's modifiers, an event under way).
     CPUs that can't be fought any more are taken off the floors still to come (one picked for a fight is let go too),
     and events if there are no event scenes; a floor left empty is laid again. Every boss_every floors is a boss's
@@ -277,6 +298,9 @@ def path_of(run, rng=random):
         floors[f] = [pk if pk in (found_here if f == at else found_or_event) else None for pk in floors[f]]
     first_empty = next((f for f in range(at, len(floors)) if not any(pk is not None for pk in floors[f])), len(floors))
     del floors[first_empty:]
+    if path.get("flash"):
+        path["flash"] = [space for space in path["flash"] if space[0] < first_empty]  # those floors are laid again
+    flash = flash_chance()
     chance = event_chance() if events and len(floors) < furthest + 1 + PATH_AHEAD else 0
     while found and len(floors) < furthest + 1 + PATH_AHEAD:
         f = len(floors)
@@ -286,6 +310,10 @@ def path_of(run, rng=random):
             path["bosses"] = sorted({*path.get("bosses", []), f})
         else:
             floors.append(new_floor(floors[-1] if floors else [], others, rng, events=events and f > 0, chance=chance))
+            if flash:
+                spaces = [[f, c] for c, pk in enumerate(floors[f]) if pk not in (None, EVENT) and rng.random() < flash]
+                if spaces:
+                    path["flash"] = [*path.get("flash", []), *spaces]
     if path != run.path:
         run.path = path
         run.save(update_fields=["path"])

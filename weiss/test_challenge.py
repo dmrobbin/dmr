@@ -19,6 +19,9 @@ class ArcadeSetup(Base):
 
     def setUp(self):
         super().setUp()
+        no_flash = mock.patch.object(challenge, "FLASH_CHANCE", 0)  # no flash battles by chance: a test that wants them sets the chance
+        no_flash.start()
+        self.addCleanup(no_flash.stop)
         self.scenario = ArcadeScenario.objects.create(name="Ark")
         self.opener, self.filler, self.anchor = self.cpu("Rapi"), self.cpu("Anis"), self.cpu("Last")
         for cpu, role in ((self.opener, "opener"), (self.filler, "filler"), (self.anchor, "anchor")):

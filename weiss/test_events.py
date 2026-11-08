@@ -154,7 +154,7 @@ class EventTests(ArcadeSetup):
 
     def save_settings(self, **changes):
         """The infinite settings form as it is, with these changes, posted."""
-        form = {"event_percent": "60", "start_packs": "20", **{f"loadout_{buff}": "0" for buff in challenge.LOADOUT_BUFFS},
+        form = {"event_percent": "60", "flash_percent": "15", "start_packs": "20", **{f"loadout_{buff}": "0" for buff in challenge.LOADOUT_BUFFS},
                 **{f"tier_{i}": str(count) for i, (count, _) in enumerate(challenge.INFINITE_MODELS)},
                 "coop_loss_limit": "3", "coop_start_packs": "20", **{f"coop_loadout_{buff}": "0" for buff in challenge.LOADOUT_BUFFS},
                 "boss_every": "5", "coop_boss_every": "5", "coop_boss_health": "42"}

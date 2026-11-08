@@ -3,6 +3,7 @@
   <h3 id="spire-title">The path</h3>
   <p class="muted small">Choose who to fight next. Each space only leads to the ones beside it on the next floor, so a side you leave behind takes going through the middle to get back to: the lit paths show where you can go from here.
     A <strong>?</strong> is an event: no fight, but something happens, mostly a bargain with a price.
+    A space marked <strong>Flash</strong> is a flash battle: you both start at level 2, with 2 cards you choose from your deck in your level zone and 3 in your stock.
     {% if path.boss_reward %}Every so often the path narrows to a <strong>boss</strong>: it plays at its hardest, and beating it brings {{ path.boss_reward }}.{% endif %}</p>
   {% if path.voting %}<p class="small"><strong>You choose together:</strong> vote for where to go next. Once you've both voted it's decided: if you disagree, a coin flip picks one of your two votes.</p>{% endif %}
   <div class="spire-map" style="height: {{ path.height }}rem">
@@ -13,7 +14,7 @@
       <p class="spire-floor{% if floor.current %} current{% endif %}{% if floor.boss %} boss{% endif %}" style="top: {{ floor.nodes.0.y }}%">Fight {{ floor.number }}<span>{{ floor.tier }}</span></p>
       {% for node in floor.nodes %}
         <div class="spire-node {{ node.state }}{% if node.boss %} boss{% endif %}" style="left: {{ node.x }}%; top: {{ node.y }}%">
-          {% if node.boss %}<span class="spire-boss-tag" aria-hidden="true">Boss</span>{% endif %}
+          {% if node.boss %}<span class="spire-boss-tag" aria-hidden="true">Boss</span>{% elif node.flash %}<span class="spire-flash-tag" title="A flash battle: both start at level 2, with stock">Flash</span>{% endif %}
           {% if node.my_vote or node.their_vote %}<span class="spire-votes">{% if node.my_vote %}<span class="deck-tag">Your vote</span>{% endif %}{% if node.their_vote %}<span class="deck-tag">{{ coop.partner.username }}'s vote</span>{% endif %}</span>{% endif %}
           {% if node.state == "open" or node.state == "picked" %}
             <form method="post" action="{% url 'weiss:arcade_challenge_fight' %}">

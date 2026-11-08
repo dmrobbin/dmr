@@ -158,7 +158,7 @@ def path_view(run):
             if pk is None:  # a gap in the path
                 continue
             x, y = place(f, i)
-            nodes.append({"cpu": cpus.get(pk), "event": pk == challenge.EVENT, "boss": boss, "node": i, "x": x, "y": y, "state": state(f, i),
+            nodes.append({"cpu": cpus.get(pk), "event": pk == challenge.EVENT, "boss": boss, "flash": challenge.is_flash(path, f, i), "node": i, "x": x, "y": y, "state": state(f, i),
                           "my_vote": f == at and my_vote == i, "their_vote": f == at and their_vote == i})
         view_floors.append({"number": f + 1, "tier": "Boss" if boss else challenge.tier(f), "boss": boss, "current": f == at, "nodes": nodes})
         if f + 1 < last:

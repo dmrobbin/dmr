@@ -192,6 +192,7 @@ def cpu_home(request):
         chosen = settings.loadout if settings else {}
         models = challenge.infinite_models()
         context.update(infinite=settings, event_percent=round(challenge.event_chance() * 100),
+                       flash_percent=round(challenge.flash_chance() * 100), default_flash=round(challenge.FLASH_CHANCE * 100),
                        default_percent=round(challenge.EVENT_CHANCE * 100), event_scenes=len(challenge.event_scenes()),
                        path_ahead=challenge.PATH_AHEAD, start_packs=challenge.infinite_start_packs(), max_start_packs=MAX_START_PACKS,
                        loadout=[{"id": buff, "name": BUFFS[buff].name, "description": BUFFS[buff].description, "count": chosen.get(buff, 0)}
@@ -514,6 +515,7 @@ def infinite_settings(request):
     try:
         fields = {
             "event_percent": whole("event_percent", 0, 100, "The event chance"),
+            "flash_percent": whole("flash_percent", 0, 100, "The flash battle chance"),
             "start_packs": whole("start_packs", 0, MAX_START_PACKS, "Starting packs"),
             "loadout": {buff: n for buff in challenge.LOADOUT_BUFFS if (n := whole(f"loadout_{buff}", 0, MAX_LOADOUT, BUFFS[buff].name))},
             "tier_floors": [whole(f"tier_{i}", 0, MAX_TIER_FLOORS, f"{name} floors") for i, name in enumerate(challenge.INFINITE_TIERS)],

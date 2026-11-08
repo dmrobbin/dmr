@@ -46,6 +46,7 @@ The other models play as standard does, apart from:
 import copy
 import random
 import re
+from collections import Counter
 from functools import cached_property
 from types import SimpleNamespace
 
@@ -234,6 +235,8 @@ class Mind:
             return {"type": "rules_answer", "accept": False}  # the CPU only knows how to play by the rules
         if state.get("reveal") and state["reveal"]["player"] != self.me:
             return {"type": "close_reveal"}
+        if game.flash_due(state, self.me):
+            return self.flash_level()
         if state.get("phase") == "mulligan":
             return self.mulligan()
         if state.get("pending_damage", {}).get("player") == self.me:
@@ -290,6 +293,24 @@ class Mind:
         return None
 
     # Before the game ------------------------------------------------------------------------------------
+
+    def flash_level(self):
+        """A flash battle's level cards (see game.flash_start): level 0 cards in the colors of its deck's anchors, one
+        for each (put on its side as "anchor_colors", see play.deal), so it can pay their colors; least needed first,
+        a climax only if there's nothing else of that color. Any left to choose (no anchors, or no level 0 card of
+        one's color) are its highest-level cards, of the color its deck has most of."""
+        deck = self.zones["deck"]
+        colors = Counter(self.details(c).get("color") for c in deck)
+        chosen = []
+        for color in self.side.get("anchor_colors", [])[:game.FLASH_LEVEL]:
+            spare = [c for c in deck if c not in chosen and self.details(c).get("color") == color
+                     and game.number(self.details(c).get("level")) == 0]
+            if spare:
+                chosen.append(min(spare, key=lambda c: (self.kind(c) == "climax", self.value(c))))
+        ranked = sorted((c for c in deck if c not in chosen), key=lambda c: (self.kind(c) != "climax", game.number(self.details(c).get("level")),
+                                                                          colors[self.details(c).get("color")]), reverse=True)
+        chosen += ranked[:game.FLASH_LEVEL - len(chosen)]
+        return {"type": "flash_level", "uids": [c["uid"] for c in chosen]}
 
     def mulligan(self):
         if self.me in self.state.get("mulligan_done", []):

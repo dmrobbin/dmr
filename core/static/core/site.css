@@ -1832,6 +1832,8 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .spire-boss-tag { position: absolute; bottom: calc(100% + .15rem); left: 50%; transform: translateX(-50%); padding: .05rem .45rem; font-family: "Cinzel", var(--serif); font-size: .68rem; font-weight: 700;
   letter-spacing: .1em; text-transform: uppercase; color: #f2c4c4; background: rgb(110 20 35); border: 1px solid rgb(212 90 90 / .8); border-radius: .3rem; }
 .spire-floor.boss { color: rgb(230 130 130); }
+.spire-flash-tag { position: absolute; bottom: calc(100% + .15rem); left: 50%; transform: translateX(-50%); padding: .05rem .45rem; font-family: "Cinzel", var(--serif); font-size: .68rem; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: #fff1c2; background: rgb(120 85 10); border: 1px solid rgb(235 190 70 / .8); border-radius: .3rem; }
 @media (max-width: 40rem) {
   .spire-node.boss { transform: translate(-50%, -1.9rem); }
   .spire-node.boss .spire-portrait { width: 3.8rem; height: 3.8rem; }

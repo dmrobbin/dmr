@@ -83,6 +83,7 @@
   const COMBO_SHOW_MS = 1600; // the cut-in's time on screen: a second, then it fades (as cpu.WAITS has it)
   let rpsTimer = null; // pending end of rock, paper, scissors' result
   const mulliganPicks = new Set(); // hand cards picked to mulligan away
+  const flashPicks = new Set(); // deck cards picked for a flash battle's level zone
   const discardPicks = new Set(); // hand cards picked for the end phase's discard
   let abilityPicks = []; // cards picked for an ability's prompt, in the order they were picked
 
@@ -1323,6 +1324,7 @@
       : board.reveal && board.reveal.mine ? `Waiting for ${opponentWho()} to close the card you revealed.`
       : board.discard ? (board.discard.mine ? `End phase: discard ${board.discard.count} to get down to 7.`
         : `Waiting for ${opponentWho()} to discard down to 7…`)
+      : board.flash && board.flash.deck ? `Flash battle: choose ${board.flash.need} cards for your level zone.`
       : board.mulligan ? (board.mulligan.me ? `Waiting for ${opponentWho()} to finish their mulligan…` : "Mulligan: choose cards to swap.")
       : !board.rules ? "Turn rules are off: anything goes."
       : board.attack ? ""
@@ -1595,6 +1597,7 @@
     if (board.reveal && board.reveal.card) return renderReveal();
     if (modal && modal.confirmClimax) return renderClimaxConfirm();
     if (modal && modal.confirmFree) return renderFreeConfirm();
+    if (board.flash && board.flash.deck) return renderFlashLevel();
     if (board.mulligan && !board.mulligan.me) return renderMulligan();
     if (board.discard && board.discard.mine) return renderDiscard();
     if (board.level_up_pending) return renderLevelUp();
@@ -1798,6 +1801,27 @@
       <div class="play-modal-cards">${hand.map((c) => `<div class="level-pick${discardPicks.has(c.uid) ? " picked" : ""}" role="button"
         tabindex="0" aria-pressed="${discardPicks.has(c.uid)}" data-discard-pick="${esc(c.uid)}">${cardHtml(c, "me", "discard")}</div>`).join("")}</div>
       <div class="trigger-buttons"><button type="button" data-discard-submit${picked === need ? "" : " disabled"}>Discard ${picked === need ? "them" : `${need}`}</button></div>
+    </div>`;
+  }
+
+  // A flash battle, before the mulligan: pick cards from the deck for the level zone (see flash_start in game.py).
+  function renderFlashLevel() {
+    const need = board.flash.need;
+    const deck = [...board.flash.deck].sort((a, b) => (Number((cards[b.card] || {}).level) || 0) - (Number((cards[a.card] || {}).level) || 0)
+      || String((cards[a.card] || {}).name || "").localeCompare(String((cards[b.card] || {}).name || "")));
+    for (const uid of [...flashPicks]) if (!deck.some((c) => c.uid === uid)) flashPicks.delete(uid);
+    const picked = flashPicks.size;
+    modalEl.hidden = false;
+    modalEl.innerHTML = `<div class="play-modal-box" role="dialog" aria-label="Flash battle">
+      <div class="play-modal-head"><h2>Flash battle</h2></div>
+      <p class="muted small">You start at level ${need}. Choose ${need} cards from your deck for your level zone; then your deck is shuffled and you draw your hand.
+        After the mulligan, the top 3 cards of your deck go to your stock.</p>
+      <div class="play-modal-cards">${deck.map((c) => {
+        const on = flashPicks.has(c.uid);
+        const can = on || picked < need;
+        return `<div class="level-pick${on ? " picked" : ""}${can ? "" : " unpickable"}"${can ? ` role="button" tabindex="0" aria-pressed="${on}" data-flash-pick="${esc(c.uid)}"` : ""}>${cardHtml(c, "me", "flash")}</div>`;
+      }).join("")}</div>
+      <div class="trigger-buttons"><button type="button" data-flash-submit${picked === need ? "" : " disabled"}>${picked === need ? "Put them in my level zone" : `Choose ${need - picked} more`}</button></div>
     </div>`;
   }
 
@@ -2225,6 +2249,13 @@
       renderModal();
       return;
     }
+    const flashPick = event.target.closest("[data-flash-pick]");
+    if (flashPick) {
+      const uid = flashPick.dataset.flashPick;
+      if (flashPicks.has(uid)) flashPicks.delete(uid); else if (board.flash && flashPicks.size < board.flash.need) flashPicks.add(uid);
+      renderModal();
+      return;
+    }
     const mulliganPick = event.target.closest("[data-mulligan-pick]");
     if (mulliganPick) {
       const uid = mulliganPick.dataset.mulliganPick;
@@ -2268,6 +2299,12 @@
       const uids = [...discardPicks];
       discardPicks.clear();
       act({ type: "discard", uids });
+      return;
+    }
+    if (event.target.closest("[data-flash-submit]")) {
+      const uids = [...flashPicks];
+      flashPicks.clear();
+      act({ type: "flash_level", uids });
       return;
     }
     if (event.target.closest("[data-mulligan-submit]")) {
@@ -2361,6 +2398,12 @@
     if (abilityPick && (event.key === "Enter" || event.key === " ")) {
       event.preventDefault();
       abilityPick.click();
+      return;
+    }
+    const flashPick = event.target.closest && event.target.closest("[data-flash-pick]");
+    if (flashPick && (event.key === "Enter" || event.key === " ")) {
+      event.preventDefault();
+      flashPick.click();
       return;
     }
     const levelPick = event.target.closest && event.target.closest("[data-level-up]");

@@ -70,6 +70,8 @@ MAX_SET_POWER = 99999  # the most power a character can be set to by hand
 MAX_SET_SOUL = 99  # and the most soul
 RPS_BEATS = {"rock": "scissors", "paper": "rock", "scissors": "paper"}
 CLOCK_DRAW = 2  # cards drawn after putting a card from the hand into the clock
+FLASH_LEVEL = 2  # cards a flash battle's players choose from their deck for their level zone (see flash_start)...
+FLASH_STOCK = 3  # ...and that go from the top of it to their stock, once both have mulliganed
 PHASES = ["mulligan", "stand", "draw", "clock", "main", "climax", "attack", "encore", "end"]  # mulligan: turn 1 only
 PLAY_ZONES = set(STAGE_SLOTS) | {"climax", "resolution"}  # playing a card from the hand here pays its cost
 ATTACK_STEPS = ["declare", "trigger", "counter", "damage", "battle"]
@@ -200,6 +202,28 @@ def find(side, uid):
             if card["uid"] == uid:
                 return MARKER + slot, i
     raise GameError("That card isn't on your side of the board.")
+
+
+def flash_start(state):
+    """A flash battle (an infinite challenge's, see weiss.challenge.is_flash): both players start at level
+    FLASH_LEVEL. Before their mulligan, each searches their deck for that many cards for their level zone
+    ("flash_level"): the hand they were dealt goes back into the deck first, and once they've chosen, the deck is
+    shuffled and they draw as many again. Once both have mulliganed, the top FLASH_STOCK cards of each deck go to
+    their stock, and the game begins there."""
+    state["flash"] = {"picked": []}
+    for side in state["players"].values():
+        zones = side["zones"]
+        side["flash_hand"] = len(zones["hand"])
+        for card in zones["hand"]:
+            put(side, card, "deck")
+        zones["hand"] = []
+    add_log(state, None, f"Flash battle! Each player chooses {FLASH_LEVEL} cards from their deck for their level zone, "
+                         f"then draws their hand; after the mulligan, the top {FLASH_STOCK} cards of each deck go to the stock.")
+
+
+def flash_due(state, player):
+    """Whether this player still has to choose their flash battle's level cards."""
+    return bool(state.get("flash")) and state.get("phase") == "mulligan" and player not in state["flash"]["picked"]
 
 
 def take(side, uid):
@@ -1259,6 +1283,25 @@ def apply_action(state, player, action, env):
                                + (f" [{icons}]" if icons else " (no trigger)"))
         return {}
 
+    if kind == "flash_level":
+        # A flash battle, before the mulligan (see flash_start): FLASH_LEVEL cards from the deck to the level zone,
+        # then the deck's shuffled and the hand drawn.
+        if not flash_due(state, player):
+            raise GameError("There are no level cards to choose right now.")
+        uids = list(dict.fromkeys(action.get("uids") or []))
+        need = min(FLASH_LEVEL, len(zones["deck"]))
+        if len(uids) != need or not set(uids) <= {c["uid"] for c in zones["deck"]}:
+            raise GameError(f"Choose {need} cards from your deck.")
+        chosen = [take(side, uid)[0] for uid in uids]
+        for card in chosen:
+            put(side, card, "level")
+        shuffle(zones["deck"])
+        for _ in range(min(side.pop("flash_hand", STARTING_HAND), len(zones["deck"]))):
+            put(side, zones["deck"].pop(), "hand")
+        state["flash"]["picked"].append(player)
+        add_log(state, player, f"put {', '.join(name(c['card']) for c in chosen)} into their level zone, shuffled their deck and drew their hand")
+        return {}
+
     if kind == "mulligan":
         # Turn 1, before the first stand phase: put any of the hand into the waiting room and draw
         # as many. Once both players have, the first player's turn begins.
@@ -1267,6 +1310,8 @@ def apply_action(state, player, action, env):
         done = state.setdefault("mulligan_done", [])
         if player in done:
             raise GameError("You've already done your mulligan.")
+        if flash_due(state, player):
+            raise GameError(f"Choose your {FLASH_LEVEL} level cards first.")
         uids = list(dict.fromkeys(action.get("uids") or []))
         hand_uids = {c["uid"] for c in zones["hand"]}
         if not set(uids) <= hand_uids:
@@ -1279,6 +1324,12 @@ def apply_action(state, player, action, env):
         add_log(state, player, f"mulliganed {len(uids)} card{'s' if len(uids) != 1 else ''}" if uids else "kept their hand")
         done.append(player)
         if len(done) == len(state["order"]):
+            if state.get("flash"):
+                for other_side in state["players"].values():
+                    deck = other_side["zones"]["deck"]
+                    for _ in range(min(FLASH_STOCK, len(deck))):
+                        put(other_side, deck.pop(), "stock")
+                add_log(state, None, f"Flash battle: the top {FLASH_STOCK} cards of each deck went to the stock.")
             state["phase"] = "stand"
             add_log(state, state["turn"], "moved to the stand phase")
             if rules_on(state):
@@ -4272,6 +4323,7 @@ def visible_cards(view):
             pks.update(c["card"] for c in cards if c["card"])
     if (view.get("reveal") or {}).get("card"):
         pks.add(view["reveal"]["card"])
+    pks.update(c["card"] for c in (view.get("flash") or {}).get("deck") or [])
     ability = view.get("ability") or {}
     if ability.get("card"):
         pks.add(ability["card"])
@@ -4330,6 +4382,11 @@ def view(state, player):
         # Whether each player has finished their mulligan (only during the mulligan phase).
         "mulligan": ({"me": player in state.get("mulligan_done", []),
                       "opponent": other in state.get("mulligan_done", [])} if state.get("phase") == "mulligan" else None),
+        # A flash battle's level cards still to choose (see flash_start): this player's deck to choose from, if
+        # they haven't yet, and whether the opponent has.
+        "flash": ({"need": min(FLASH_LEVEL, len(state["players"][player]["zones"]["deck"])),
+                   "deck": [card_view(c, True) for c in state["players"][player]["zones"]["deck"]] if flash_due(state, player) else None,
+                   "opponent": not flash_due(state, other)} if state.get("flash") and state.get("phase") == "mulligan" else None),
         # A hand card being shown: to the opponent as {"card", "by"}, to its owner as {"mine": True}.
         "reveal": (None if not state.get("reveal")
                    else {"mine": True} if state["reveal"]["player"] == player
@@ -4381,7 +4438,7 @@ def spectator_view(state, player):
     reveal = state.get("reveal")
     shown.update({
         "damage_pending": False, "refresh_pending": False, "level_up_pending": False, "climax_pending": False, "auto_next": None,
-        "rps": None, "discard": None, "mulligan": None, "rules_request": None, "acts": {},
+        "rps": None, "discard": None, "mulligan": None, "flash": None, "rules_request": None, "acts": {},
         "reveal": {"card": reveal["card"], "by": state["players"][reveal["player"]]["name"]} if reveal else None,
         "ability": ability_view(state, None),
         "stats": stats_view(state, None),
