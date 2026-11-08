@@ -1,0 +1,82 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Vs. battle{% endblock %}
+
+{% block content %}
+  {# A co-op challenge's vs. battle after a boss, and its curses (challenge_views.coop_duel): the same three for both players,
+     the winner's pick first. The page reloads when the pair's challenge changes (see coop_status). #}
+  <p class="back"><a href="{% url 'weiss:arcade_challenge' %}">&larr; {{ run.name }}</a></p>
+  <h1>Vs. battle</h1>
+  <div class="coop-duel" data-status-url="{{ status_url }}" data-version="{{ version }}">
+    <p class="coop-rivalry" aria-label="Vs. battles won: you {{ mine_won }}, {{ partner.username }} {{ theirs_won }}">
+      <span class="coop-rivalry-side"><strong>{{ mine_won }}</strong> You</span>
+      <span class="coop-rivalry-vs" aria-hidden="true">vs</span>
+      <span class="coop-rivalry-side"><strong>{{ theirs_won }}</strong> {{ partner.username }}</span></p>
+
+    {% if not duel.winner %}
+      <p>The boss is down. Now you and {{ partner.username }} play each other, your challenge decks as they are, in one game.
+        Neither loss counts against you, and your augments play as they do against a CPU (curses don't: they only make CPUs stronger).
+        The winner picks their augment and curse first, from these; the loser takes one of each from what's left.</p>
+      {% if room %}
+        <p><a class="button" href="{% url 'weiss:play_room' room.pk %}">Go to the table</a></p>
+      {% elif ready %}
+        <p class="small muted">You're ready. It starts once {{ partner.username }} is too, and this page takes you to the table.</p>
+      {% else %}
+        {% if deck_problem %}<p class="small panel-error">{{ deck_problem }}</p>{% endif %}
+        <form method="post" action="{% url 'weiss:arcade_coop_duel_ready' %}">
+          {% csrf_token %}
+          <button type="submit"{% if deck_problem %} disabled{% endif %}>Ready</button>
+          <span class="small muted">{% if partner_ready %}{{ partner.username }} is ready and waiting for you.{% else %}Open packs and change your deck first, if you like: it's dealt as it is when you're both ready.{% endif %}</span>
+        </form>
+      {% endif %}
+    {% else %}
+      <p><strong>{% if won %}You won!{% else %}{{ partner.username }} won.{% endif %}</strong>
+        {% if done %}You've both taken your augment and curse: on up the path.
+        {% elif my_turn %}{% if won %}You pick your augment and curse first.{% else %}{{ partner.username }} has taken theirs: now yours, from what's left.{% endif %}
+        {% elif picked %}You've taken yours. Waiting for {{ partner.username }} to take theirs.
+        {% else %}{{ partner.username }} picks their augment and curse first.{% endif %}</p>
+    {% endif %}
+
+    <form method="post" action="{% url 'weiss:arcade_coop_duel_pick' %}">
+      {% csrf_token %}
+      <fieldset class="augment-choices">
+        <legend class="small">The augments: each of you takes one, for the rest of the run</legend>
+        {% for augment in augments %}
+          <label class="augment-choice{% if augment.taken %} curse-taken{% endif %}">
+            {% if my_turn and not augment.taken %}<input type="radio" name="augment" value="{{ augment.id }}" required>{% endif %}
+            <span class="augment-name">{{ augment.name }}</span>
+            <span class="small">{{ augment.text }}</span>
+            {% if augment.taken %}<span class="deck-tag">Taken by {{ augment.taken }}</span>{% endif %}
+          </label>
+        {% endfor %}
+        {% if my_turn and not augments_left %}<p class="muted small">There's no augment left for you: {{ extra_packs }} more packs instead.</p>{% endif %}
+      </fieldset>
+      <fieldset class="augment-choices curse-choices">
+        <legend class="small">The curses: each of you takes one, making the CPUs you face stronger for the rest of the run</legend>
+        {% for curse in curses %}
+          <label class="augment-choice{% if curse.taken %} curse-taken{% endif %}">
+            {% if my_turn and not curse.taken %}<input type="radio" name="curse" value="{{ curse.id }}" required>{% endif %}
+            <span class="augment-name">{{ curse.name }}</span>
+            <span class="small">{{ curse.text }} On a boss; half that on any other CPU.</span>
+            {% if curse.taken %}<span class="deck-tag">Taken by {{ curse.taken }}</span>{% endif %}
+          </label>
+        {% endfor %}
+      </fieldset>
+      {% if my_turn %}<button type="submit" class="button-small">Take them</button>{% endif %}
+    </form>
+    {% if done %}<p><a class="button" href="{% url 'weiss:arcade_challenge' %}">Back to the path</a></p>{% endif %}
+  </div>
+  <script>
+    (function () {
+      const page = document.querySelector(".coop-duel");
+      // Reload when the partner does something: readies up, finishes the game, or takes their curse.
+      setInterval(function () {
+        if (document.hidden) return;
+        fetch(page.dataset.statusUrl, {headers: {"Accept": "application/json"}}).then(r => r.ok ? r.json() : null).then(function (data) {
+          const busy = document.activeElement && document.activeElement.tagName === "INPUT";
+          if (data && data.version !== null && String(data.version) !== page.dataset.version && !busy) location.reload();
+        }).catch(function () {});
+      }, 3000);
+    })();
+  </script>
+{% endblock %}

@@ -4,9 +4,11 @@ An augment changes the rest of the player's run, pushing them towards a playstyl
 the player doesn't have yet (settled when the pick is given, see offer), and they keep one. They're the player's
 own, in co-op too, where the partner can see them.
 
-Some change the run (deck rules, rewards, losses: see the functions below); the rest change every game the player
-plays: those are put on their side of the game when it's dealt (see play.augment_start), and the game's rules read
-them from there (see game.augment_stats, game.refresh and game.counter_play).
+Every augment builds the player up; none holds their opponent back (that's what curses do, to the CPUs: see
+weiss.curses). Some change the run (deck rules, rewards, losses: see the functions below); the rest change every game
+the player plays, a co-op vs. battle included: those are put on their side of the game when it's dealt (see
+play.augment_side), and the game's rules read them from there (see game.augment_stats, game.refresh and
+game.counter_play).
 """
 import random
 from dataclasses import dataclass
@@ -19,7 +21,7 @@ OVERLOAD_CLIMAXES = 10  # ...with Climax Overload
 HIGHLANDER_COPIES = 2  # the most copies of a card a Highlander deck can run...
 HIGHLANDER_PACKS = 2  # ...and the packs each win brings it
 RESERVES = 2  # cards in the stock Deep Reserves starts each game with
-HEAD_START = 2  # cards in the clock every CPU starts with against Head Start
+HEAD_START = 1  # cards more in the starting hand with Head Start
 
 
 @dataclass(frozen=True)
@@ -40,8 +42,8 @@ AUGMENTS = {augment.id: augment for augment in (
             "Expensive events and costly abilities early", in_game=True),
     Augment("devotion", "Devotion", f"If every card in your deck is one color, your characters get +{DEVOTION_POWER} power. "
             "The win prize lands on a color pack more often.", "Mono-color", in_game=True),
-    Augment("head_start", "Head Start", f"Every CPU starts each game with {HEAD_START} cards in its clock.",
-            "Aggro: close games out fast", in_game=True),
+    Augment("head_start", "Head Start", f"You start each game with {HEAD_START} more card in your hand.",
+            "Fast starts: more options from the first turn", in_game=True),
     Augment("clean_refresh", "Clean Refresh", "Your first refresh in each game deals no refresh damage.",
             "Long control games, thinning the deck", in_game=True),
     Augment("highlander", "Highlander", f"Your deck can't run more than {HIGHLANDER_COPIES} copies of any card. "
@@ -74,11 +76,23 @@ def of(run):
     return [{**shown(augment_id), "count": n} for augment_id, n in counts.items()]
 
 
+def can_take(run, augment_id):
+    """Whether this player could pick this augment: not one they have (unless it stacks), and in solo, not one
+    that's co-op only."""
+    augment = AUGMENTS[augment_id]
+    return bool(run.coop_id or not augment.coop_only) and (augment.stacks or augment_id not in (run.augments or []))
+
+
 def offer(run, rng=random):
-    """OFFER augments this player could pick, at random: not one they have (unless it stacks), and in solo, none
-    that are co-op only."""
-    found = sorted(augment.id for augment in AUGMENTS.values()
-                   if (run.coop_id or not augment.coop_only) and (augment.stacks or augment.id not in (run.augments or [])))
+    """OFFER augments this player could pick, at random."""
+    found = sorted(augment_id for augment_id in AUGMENTS if can_take(run, augment_id))
+    return rng.sample(found, min(OFFER, len(found)))
+
+
+def shared_offer(runs, rng=random):
+    """OFFER augments every one of these players could pick, at random: a co-op vs. battle's, which the winner picks
+    from first, and the loser from what's left (see coop.pick_after_duel)."""
+    found = sorted(augment_id for augment_id in AUGMENTS if all(can_take(run, augment_id) for run in runs if run))
     return rng.sample(found, min(OFFER, len(found)))
 
 

@@ -66,6 +66,7 @@
   let cpuInfo = null; // the CPU in a game against one: its images and what it says
   let arcade = null; // where an arcade run has got to
   let prize = null; // an infinite challenge's prize for this win: what the Victory screen's slot machine lands on
+  let duel = null; // a co-op challenge's vs. battle: the pair's rivalry, and the way to its curses
   let sceneData = null; // a scene the run plays before the board goes on (weiss.scenes), until the server hears it's done
   let sceneViewer = ""; // the player's name, for {player} in a scene
   let sceneShown = null; // the key of the scene being played, so a poll doesn't start it again
@@ -139,11 +140,13 @@
     intro = Boolean(data.intro);
     sceneData = data.scene || null;
     prize = data.prize || null;
+    duel = data.duel || null;
     sceneViewer = data.player_name || sceneViewer;
     if (data.revealed) modal = { title: data.revealed.title, revealed: data.revealed.cards };
     render();
     renderDefeated();
     renderBoss();
+    renderDuel();
     renderAugments();
     showScene();
     animateOpponent(before);
@@ -376,6 +379,26 @@
     bossEl.innerHTML = `<p class="play-boss-title">Boss</p>${health}${note}
       ${boss.down && !board.game_over ? `<button type="button" class="button-small" data-act='{"type":"challenge_leave"}'>Back to the path</button>` : ""}`;
     (root.querySelector(".play-chat-side") || root).prepend(bossEl);
+  }
+
+  // --- A co-op challenge's vs. battle: what's at stake, the rivalry so far, and a way to concede ----------------------
+
+  let duelEl = null;
+  let duelKey = "";
+  function renderDuel() {
+    const key = duel ? JSON.stringify([duel, !!board.game_over]) : "";
+    if (key === duelKey) return;
+    duelKey = key;
+    if (duelEl) duelEl.remove();
+    duelEl = null;
+    if (!duel) return;
+    duelEl = document.createElement("div");
+    duelEl.className = "play-boss play-duel";
+    duelEl.innerHTML = `<p class="play-boss-title">Vs. battle</p>
+      <p>Neither loss counts against you. The winner picks their augment and curse first.</p>
+      <p>Rivalry: you ${duel.mine} – ${duel.theirs} ${esc(duel.partner)}</p>
+      ${board.game_over ? "" : `<button type="button" class="button-small secondary" data-act='{"type":"duel_concede"}'>Concede</button>`}`;
+    (root.querySelector(".play-chat-side") || root).prepend(duelEl);
   }
 
   // --- The player's augments (weiss.augments) and curses (weiss.curses), named, with what each does on hover -------
@@ -811,6 +834,7 @@
 
   async function act(action) {
     if (SPECTATING) return;
+    if (action.type === "duel_concede" && !window.confirm(`Concede the vs. battle? ${duel.partner} picks their augment and curse first.`)) return;
     // A card its own text lets us play for free by giving up a character: asks how to pay.
     if (action.type === "move" && !action.free_with && !action.pay_full && (board.free_plays || {})[action.uid]
         && (action.to in board.me.stage || action.to === "resolution" || action.to === "climax")) {
@@ -1505,6 +1529,7 @@
 
   function gameOverButtons(over) {
     if (SPECTATING) return `<a class="button" href="${esc(root.dataset.challengeUrl)}">Back to the challenge</a>`;
+    if (duel) return `<a class="button" href="${esc(duel.url)}">On to the augments &amp; curses</a>`;
     if (!arcade) {
       return `<button type="button" data-act='{"type":"rematch"}'${over.rematch ? " disabled" : ""}>Rematch</button>
       <button type="button" class="game-over-end" data-act='{"type":"end_match"}'>End match</button>`;
@@ -1559,7 +1584,8 @@
       gameOverEl.setAttribute("aria-label", over.won ? "Victory" : "Defeat");
       const loser = over.won ? opponentWho("Your opponent") : "You";
       const reason = over.reason === "deck" ? `${loser} can't refresh ${over.won ? "their" : "your"} deck.`
-        : over.reason === "boss" ? "The boss's health bar is empty." : `${loser} reached level 4.`;
+        : over.reason === "boss" ? "The boss's health bar is empty."
+        : over.reason === "concede" ? `${loser} conceded.` : `${loser} reached level 4.`;
       gameOverEl.innerHTML = `<div class="game-over-rays"></div>
         <div class="game-over-banner">${CREST}${custom ? `<div class="game-over-cpu">${cpuPortrait("game-over-cpu-image", outcome)}${said ? `<p class="cpu-speech">${esc(said)}</p>` : ""}</div>` : ""}
           <h2 class="game-over-word">${over.won ? "Victory" : "Defeat"}</h2>
@@ -1569,6 +1595,7 @@
           ${arcade && arcade.challenge && !over.won && !arcade.coop ? `<p class="game-over-arcade">${arcade.challenge.going ? `A second chance: you can fight again${arcade.challenge.lives ? ` (${arcade.challenge.lives} more left)` : ""}.` : "The challenge is over."}</p>` : ""}
           ${arcade && arcade.coop && !over.won ? `<p class="game-over-arcade">${arcade.challenge && arcade.challenge.going ? `Lost games: ${arcade.coop.losses} of ${arcade.coop.limit}, yours and ${esc(arcade.coop.partner)}'s together.` : `That was the last loss: the co-op challenge is over.`}</p>` : ""}
           ${arcade && arcade.boss ? `<p class="game-over-arcade">${bossLine(over)}</p>` : ""}
+          ${duel ? `<p class="game-over-arcade">${over.won ? "You pick your augment and curse first." : `${esc(duel.partner)} picks their augment and curse first.`} Rivalry: you ${duel.mine} – ${duel.theirs} ${esc(duel.partner)}</p>` : ""}
           ${arcade ? `<p class="game-over-arcade">${arcade.cleared ? `🏆 ${esc(arcade.scenario)} cleared!` : over.won ? `Up next: ${fightOf()}` : `${esc(arcade.scenario)}: ${fightOf()}`}${arcade.score ? ` · run score ${arcade.score}` : ""}</p>` : ""}
           ${over.won && prize ? prizeSlotHtml(prize) : ""}
           <p class="game-over-status" data-game-over-status></p>

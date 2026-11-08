@@ -17,6 +17,7 @@ the limit staff set.
 | Finishing first | A player whose game ends first can open packs, edit their deck, view the run screen and vote on the next floor. Nothing moves on until both have voted. |
 | Events | Both players see the same scene and vote on each choice. What it gives goes to both players. |
 | Leaderboard | A separate co-op board lists both players by name, and both decks can be viewed. |
+| Vs. battles | After each boss the pair play each other once, for first pick of the curses. See [coop-vs-battles.md](coop-vs-battles.md). |
 
 ### Choices I made where the design was silent
 

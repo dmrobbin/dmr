@@ -104,7 +104,8 @@ def coop_context(request, run):
         boss["mine"] = boss.get("dealt", {}).get(str(run.user_id), 0)
         boss["theirs"] = boss.get("dealt", {}).get(str(partner.pk), 0) if partner else 0
     other = coop.partner_run(run) if partner else None
-    return {"boss": boss, "watchable": watchable(run), "partner_augments": augments.of(other) if other else [], "run": pair, "partner": partner, "partner_avatar": profile and profile.avatar, "hosting": pair.host_id == request.user.pk,
+    mine_won, theirs_won = coop.rivalry(pair, request.user.pk)
+    return {"duel": coop.duel_of(run), "duel_due": coop.duel_due(run), "rivalry": (mine_won, theirs_won) if mine_won or theirs_won else None, "boss": boss, "watchable": watchable(run), "partner_augments": augments.of(other) if other else [], "run": pair, "partner": partner, "partner_avatar": profile and profile.avatar, "hosting": pair.host_id == request.user.pk,
             "limit_range": range(pair.loss_limit), "floor": mine + 1, "partner_floor": theirs + 1, "behind": theirs < mine, "ahead": theirs > mine,
             "decided": decided_said(run, partner), "status_url": reverse("weiss:arcade_coop_status"),
             "invite_url": request.build_absolute_uri(reverse("weiss:arcade_coop_join", args=[pair.invite_token]))
@@ -390,6 +391,9 @@ def challenge_fight(request):
         if at < len(path["picks"]):
             node = path["picks"][at]
         heading = path["floors"][at][node] if node in options else None
+    if run.coop_id and (problem := coop.duel_due(run)):  # an event too waits for it
+        messages.error(request, problem)
+        return redirect("weiss:arcade_coop_duel")
     if heading != challenge.EVENT and (not run.deck or not run.deck.entries.exists()):  # an event needs no deck
         messages.error(request, "Your deck is empty: open some packs and build it first.")
         return redirect("weiss:arcade_challenge")
@@ -638,6 +642,84 @@ def coop_status(request):
     run = challenge.current(request.user)
     coop_on = bool(run and run.coop_id)
     return JsonResponse({"version": run.coop.version if coop_on else None, "watchable": coop_on and watchable(run)})
+
+
+def duel_context(run, user):
+    """The vs. battle page's: the pair's battle (or the last one, once both have taken their picks), its augments and
+    curses with who took each, whose pick it is, and the rivalry."""
+    pair = run.coop
+    partner = pair.partner_of(user)
+    duel = coop.duel_of(run)
+    done = not duel
+    duel = duel or (run.path or {}).get("last_duel")
+    if not duel:
+        return None
+    me, them = str(user.pk), str(partner.pk) if partner else ""
+    taken = {curse_id: voter for voter, curse_id in duel["picks"].items()}
+    augment_taken = {augment_id: voter for voter, augment_id in duel.get("augment_picks", {}).items() if augment_id}
+    room = GameRoom.objects.filter(pk=duel["room"]).first() if duel["room"] else None
+    mine, theirs = coop.rivalry(pair, user.pk)
+    names = {me: "You", them: partner.username if partner else ""}
+    return {"duel": duel, "done": done, "partner": partner, "room": room, "playing": bool(room and not room.state.get("game_over")),
+            "ready": me in duel["ready"], "partner_ready": them in duel["ready"], "won": duel["winner"] == me if duel["winner"] else None,
+            "curses": [{**curses.shown(c), "taken": names.get(taken[c]) if c in taken else None, "mine": taken.get(c) == me} for c in duel["options"] if c in curses.CURSES],
+            "augments": [{**augments.shown(a), "taken": names.get(augment_taken[a]) if a in augment_taken else None} for a in duel.get("augments", []) if a in augments.AUGMENTS],
+            "augments_left": bool(coop.augments_left(duel)), "extra_packs": buffs.EXTRA_PACKS,
+            "my_turn": coop.duel_turn(duel) == me, "picked": me in duel["picks"], "mine_won": mine, "theirs_won": theirs,
+            "deck_problem": challenge.deck_ready(run)}
+
+
+@challenge_access
+def coop_duel(request):
+    """A co-op challenge's vs. battle after a boss, and the curses it decides the picks of: the same three for both
+    players, the winner's pick first, then the loser's from those left. The page reloads as the pair's challenge
+    changes (see coop_status)."""
+    run = challenge.current(request.user)
+    context = run and run.coop_id and duel_context(run, request.user)
+    if not context:
+        return redirect("weiss:arcade_challenge")
+    if context["playing"]:  # dealt: off to its table
+        return redirect("weiss:play_room", pk=context["room"].pk)
+    return render(request, "weiss/coop_duel.html", {"run": run, **context, "status_url": reverse("weiss:arcade_coop_status"), "version": run.coop.version})
+
+
+@challenge_access
+@require_POST
+def coop_duel_ready(request):
+    """This player is ready for the vs. battle: once both are, it's dealt, and they go to its table."""
+    run = challenge.current(request.user)
+    if not run or not run.coop_id or not coop.duel_of(run):
+        return redirect("weiss:arcade_challenge")
+    if problem := challenge.deck_ready(run):
+        messages.error(request, problem)
+        return redirect("weiss:arcade_coop_duel")
+    with coop.shared(run):
+        if not coop.duel_of(run):  # both have taken their curses meanwhile
+            return redirect("weiss:arcade_challenge")
+        room = coop.ready_for_duel(run)
+    if room:
+        return redirect("weiss:play_room", pk=room.pk)
+    messages.info(request, "You're ready. The vs. battle starts once your partner is too.")
+    return redirect("weiss:arcade_coop_duel")
+
+
+@challenge_access
+@require_POST
+def coop_duel_pick(request):
+    """This player takes their augment and curse, of those the vs. battle offered, in their turn."""
+    run = challenge.current(request.user)
+    if not run or not run.coop_id:
+        return redirect("weiss:arcade_challenge")
+    try:
+        with transaction.atomic():
+            run = ChallengeRun.objects.select_for_update().get(pk=run.pk)
+            with coop.shared(run):
+                coop.pick_after_duel(run, request.POST.get("curse", ""), request.POST.get("augment", ""))
+    except ValueError as error:
+        messages.error(request, str(error))
+        return redirect("weiss:arcade_coop_duel")
+    messages.success(request, "Taken. On up the path, once your partner has taken theirs.")
+    return redirect("weiss:arcade_coop_duel")
 
 
 @challenge_access

@@ -4,20 +4,19 @@ The longer a run goes, the stronger a player's deck gets; curses keep the CPUs u
 OFFER of them (settled when the pick is given, see offer), and the player has to take one before their next fight
 (see challenge.curse_due). They stack, the same curse included: every pick makes the rest of the run harder.
 
-Every curse changes the rules, never a card, so it works whatever deck the CPU has. A boss fight carries the whole
-stack; any other fight carries half of it, rounded down (see strengths). Those that change how a game starts do so
-when it's dealt (see play.curse_start); the rest are put on the sides of the game, the CPU's or the player's, and
-the game's rules read them from there (see game.curse_stats, game.refresh and game.counter_play).
+Every curse makes the CPUs the player faces stronger, and never the player weaker, so a curse never just cancels
+out an augment: augments build the player up, curses build the enemy up. Each changes the rules, never a card, so it
+works whatever deck the CPU has. A boss fight carries the whole stack; any other fight carries half of it, rounded
+down (see strengths). Those that change how a game starts do so when it's dealt (see play.curse_start); the rest are
+put on the CPU's side of the game, and the game's rules read them from there (see game.curse_stats, game.refresh
+and game.heal). A game between two players (a co-op vs. battle) has none.
 """
 import random
 from collections import Counter
 from dataclasses import dataclass
 
-from .game import STARTING_HAND
-
 OFFER = 3  # curses a pick offers
-MOST_CLOCK = 6  # the most cards a curse puts in a clock: never a level up before the game has started
-LEAST_HAND = 3  # the fewest cards a curse leaves in a starting hand
+MOST_HAND = 4  # the most cards a curse adds to a starting hand
 
 
 @dataclass(frozen=True)
@@ -26,20 +25,20 @@ class Curse:
     name: str
     text: str  # what it does at strength {n}
     step: int = 1  # the strength each pick adds
-    side: str = ""  # the game side it's put on ("cpu" or "player") as {id: strength}; "" for one dealt at the start
+    side: str = ""  # "cpu" for one put on the CPU's side of the game as {id: strength}; "" for one dealt at the start
 
     def said(self, n):
-        return self.text.format(n=n, s="" if n == 1 else "s")
+        return self.text.format(n=n, s="" if n == 1 else "s", es="" if n == 1 else "es")
 
 
 CURSES = {curse.id: curse for curse in (
     Curse("iron_skin", "Iron Skin", "CPU characters get +{n} power.", step=1000, side="cpu"),
     Curse("fury", "Fury", "CPU characters get +{n} soul.", side="cpu"),
     Curse("hoard", "Hoard", "The CPU starts each game with {n} more card{s} in its stock."),
-    Curse("old_wounds", "Old Wounds", "You start each game with {n} card{s} in your clock."),
-    Curse("short_hand", "Short Hand", "You start each game with {n} card{s} fewer in your hand."),
-    Curse("heavy_refresh", "Heavy Refresh", "Your first refresh in each game deals {n} more damage.", side="player"),
-    Curse("toll", "Toll", "Your counter cards cost {n} more stock.", side="player"),
+    Curse("deep_pockets", "Deep Pockets", "The CPU starts each game with {n} more card{s} in its hand."),
+    Curse("second_wind", "Second Wind", "The CPU's first {n} refresh{es} in each game deal no refresh damage.", side="cpu"),
+    Curse("bulwark", "Bulwark", "CPU characters get +{n} power while they're front attacked.", step=2000, side="cpu"),
+    Curse("recovery", "Recovery", "At the start of each of its turns, the CPU heals {n} damage: the top of its clock goes to its waiting room.", side="cpu"),
 )}
 
 
@@ -81,14 +80,9 @@ def of(run):
 
 
 def for_game(run, boss):
-    """What this player's curses put on each side of a game: ({id: strength} for the CPU's, for the player's), and
-    {id: strength} of those dealt at the start (see play.curse_start)."""
-    cpu, player, start = {}, {}, {}
+    """What this player's curses give the CPU in a game: ({id: strength} put on its side, {id: strength} of those
+    dealt at the start, see play.curse_start)."""
+    cpu, start = {}, {}
     for curse_id, n in strengths(run, boss).items():
-        {"cpu": cpu, "player": player}.get(CURSES[curse_id].side, start)[curse_id] = n
-    return cpu, player, start
-
-
-def hand_cut(n):
-    """How many cards Short Hand at strength n takes out of a starting hand."""
-    return min(n, STARTING_HAND - LEAST_HAND)
+        (cpu if CURSES[curse_id].side == "cpu" else start)[curse_id] = n
+    return cpu, start

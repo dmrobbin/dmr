@@ -1916,6 +1916,13 @@ button.spire-node-face:disabled { cursor: not-allowed; }
   border: 1px solid rgb(212 90 90 / .8); border-radius: .6rem; }
 .play-boss p { margin: 0; }
 .play-boss-title { font-family: "Cinzel", var(--serif); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #f2c4c4; }
+.play-duel { background: rgb(18 30 58 / .85); border-color: rgb(110 150 230 / .8); }
+.play-duel .play-boss-title { color: #c9d8f5; }
+.curse-taken { opacity: .5; cursor: default; text-decoration: line-through; text-decoration-color: var(--muted); }
+.curse-taken .deck-tag { justify-self: start; text-decoration: none; }
+.coop-rivalry { display: flex; align-items: baseline; justify-content: center; gap: 1rem; margin: .5rem 0 1rem; font-family: "Cinzel", var(--serif); }
+.coop-rivalry-side strong { font-size: 1.8rem; margin-right: .3rem; }
+.coop-rivalry-vs { color: var(--muted); text-transform: uppercase; letter-spacing: .1em; font-size: .8rem; }
 .vn-option.voted { border-color: var(--accent); background: rgb(40 34 18 / .95); }
 .vn-option:disabled:not(.voted) { opacity: .55; cursor: default; }
 .leaderboard-pair { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .9rem; }

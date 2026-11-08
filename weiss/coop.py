@@ -4,7 +4,8 @@ The host starts one and shares its invite link; whoever opens it first (with no 
 is their partner. Each player has their own ChallengeRun, as in a solo infinite challenge: their own packs to open,
 rewards to claim, deck and fights. What they share is on the CoopRun: the pool every pack opens into (a copy in one
 deck can't be in the other), the path, the votes on where it goes, and the lost games, theirs together, that end it
-at the loss limit staff set (each loss adds one; the run goes on until then).
+at the loss limit staff set (each loss adds one; the run goes on until then). After each boss they play each other
+once, for first pick of the curses beating it brings (see the vs. battles, below).
 """
 import copy
 from contextlib import contextmanager
@@ -14,6 +15,7 @@ from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 
+from . import augments, curses
 from .models import CardList, ChallengeRun, ChallengeSettings, CoopRun
 
 LOSS_LIMIT = 3  # lost games, both players' together, that end a co-op challenge, until staff set it (see loss_limit)
@@ -274,6 +276,128 @@ def end(pair):
         give_up(half, keep_room=True)
 
 
+# Vs. battles -----------------------------------------------------------------------------------------------------
+# After each boss the pair play each other, a game of its own that no loss counts from (see docs/coop-vs-battles.md).
+# It's kept with the path as "duel", {"floor" of the boss, "options": the curses offered and "augments": the augments,
+# the same for both, "ready": [user id, ...], "room" (its GameRoom, once dealt), "winner" and "loser" (user ids, once
+# it's over), "picks": {user id: curse id}, "augment_picks": {user id: augment id, or None for packs instead}}. The
+# winner takes their augment and curse first; the loser, of those left. Once both have, it's done with, kept as
+# "last_duel" for the page to say how it went. The pair's rivalry, its wins, is CoopRun.duel_wins.
+
+def start_duel(run, floor, rng):
+    """The pair has beaten the boss of `floor`: their vs. battle is due, with the augments and curses it decides the
+    picks of: augments either of them could take. Call within `shared`."""
+    run.path["duel"] = {"floor": floor, "options": curses.offer(rng), "augments": augments.shared_offer([run, partner_run(run)], rng),
+                        "ready": [], "room": None, "winner": None, "picks": {}, "augment_picks": {}}
+
+
+def duel_of(run):
+    """The pair's vs. battle still to be played or picked after, or None."""
+    return (run.path or {}).get("duel")
+
+
+def duel_due(run):
+    """What's wrong if this player has the vs. battle, or its picks, still to come, which they must before their next
+    fight; or None."""
+    duel = duel_of(run)
+    if not duel or str(run.user_id) in duel["picks"]:
+        return None
+    if not duel["winner"]:
+        return "Your vs. battle with your partner comes first: its winner picks their augment and curse first."
+    return "Take your augment and curse first: the vs. battle is over, and they're waiting."
+
+
+def ready_for_duel(run):
+    """This player is ready for the vs. battle. Once both are, it's dealt, with both decks as they are now (a partner
+    whose deck isn't ready any more is made unready instead). Returns its room once dealt, else None. Call within
+    `shared`."""
+    from .challenge import deck_ready  # weiss.challenge uses this module
+    from .models import GameRoom
+    from .play import deal
+    duel = duel_of(run)
+    if duel["room"]:
+        return GameRoom.objects.filter(pk=duel["room"]).first()
+    if str(run.user_id) not in duel["ready"]:
+        duel["ready"].append(str(run.user_id))
+    other = partner_run(run)
+    if not other or str(other.user_id) not in duel["ready"]:
+        return None
+    if deck_ready(other):
+        duel["ready"].remove(str(other.user_id))
+        return None
+    pair = run.coop
+    host, guest = (run, other) if run.user_id == pair.host_id else (other, run)
+    room = GameRoom(host=host.user, guest=guest.user, host_deck=host.deck, guest_deck=guest.deck, coop_duel=pair, status=GameRoom.Status.PLAYING)
+    deal(room)
+    room.save()
+    duel["room"] = room.pk
+    return room
+
+
+def duel_finished(room, over):
+    """The vs. battle's game is over (`over`, its game_over): its winner's, and one more win in the pair's rivalry."""
+    with transaction.atomic():
+        pair = CoopRun.objects.select_for_update().get(pk=room.coop_duel_id)
+        duel = (pair.path or {}).get("duel")
+        if not duel or duel["room"] != room.pk or duel["winner"]:
+            return
+        duel["winner"], duel["loser"] = over["winner"], over["loser"]
+        pair.duel_wins[over["winner"]] = pair.duel_wins.get(over["winner"], 0) + 1
+        pair.version += 1
+        pair.save(update_fields=["path", "duel_wins", "version"])
+
+
+def duel_turn(duel):
+    """Whose pick of the augments and curses it is (user id), or None: the winner's, then the loser's."""
+    if not duel["winner"]:
+        return None
+    if duel["winner"] not in duel["picks"]:
+        return duel["winner"]
+    return duel["loser"] if duel["loser"] not in duel["picks"] else None
+
+
+def augments_left(duel):
+    """The vs. battle's augments not taken yet."""
+    return [a for a in duel.get("augments", []) if a not in duel.get("augment_picks", {}).values()]
+
+
+def pick_after_duel(run, curse_id, augment_id):
+    """This player takes one of the vs. battle's augments and one of its curses, in their turn (duel_turn), neither
+    one their partner took. With no augment left to take, they get packs instead (buffs.EXTRA_PACKS). Once both have,
+    the battle's done with, and its room goes. Raises ValueError saying what's wrong. Call within `shared`."""
+    from .buffs import EXTRA_PACKS  # weiss.buffs uses this module
+    duel = duel_of(run)
+    me = str(run.user_id)
+    if not duel or not duel["winner"]:
+        raise ValueError("The vs. battle isn't over yet.")
+    if me in duel["picks"]:
+        raise ValueError("You've taken your augment and curse already.")
+    if duel_turn(duel) != me:
+        raise ValueError("The winner picks first: wait for your partner.")
+    left = augments_left(duel)
+    if left and augment_id not in left:
+        raise ValueError("Choose one of the augments left.")
+    if curse_id not in duel["options"] or curse_id in duel["picks"].values():
+        raise ValueError("Choose one of the curses left.")
+    duel["picks"][me], duel.setdefault("augment_picks", {})[me] = curse_id, augment_id if left else None
+    curses.take(run, curse_id)
+    if left:
+        augments.take(run, augment_id)
+    else:
+        run.packs += EXTRA_PACKS
+    run.save(update_fields=["curses", "augments", "packs"])
+    if len(duel["picks"]) == len(players(run.coop)):
+        run.path["last_duel"] = run.path.pop("duel")
+        run.coop.duel_rooms.all().delete()  # its game is recorded (GameRecord); the table needn't stay among their rooms
+
+
+def rivalry(pair, user_id):
+    """The pair's vs. battles won: (this player's, their partner's)."""
+    wins = pair.duel_wins or {}
+    theirs = sum(n for winner, n in wins.items() if winner != str(user_id))
+    return wins.get(str(user_id), 0), theirs
+
+
 # Starting --------------------------------------------------------------------------------------------------------
 
 def new_half(user, coop):
@@ -331,13 +455,17 @@ def waiting_for(user):
 def leaderboard(limit=50):
     """The best co-op challenges, by both players' scores added up (each win's score, see arcade.game_finished), the
     earliest first on a tie: those that have won at least once. Each has `halves` (both players' runs, the host's
-    first), `score`, `wins` and `floor` worked out."""
+    first, each with `duels`, the vs. battles that player won), `score`, `wins`, `rivalry` (whether they've played
+    one) and `floor` worked out."""
     pairs = []
     for pair in CoopRun.objects.exclude(guest=None).select_related("host", "guest").prefetch_related("runs__arcade_run", "runs__user"):
         pair.halves = sorted(pair.runs.all(), key=lambda run: run.user_id != pair.host_id)
         pair.score = sum(run.arcade_run.score for run in pair.halves if run.arcade_run)
         pair.wins = sum(run.arcade_run.position for run in pair.halves if run.arcade_run)
         pair.floor = (pair.path or {}).get("done", 0) + 1
+        for run in pair.halves:
+            run.duels = (pair.duel_wins or {}).get(str(run.user_id), 0)
+        pair.rivalry = bool(pair.duel_wins)
         if pair.score:
             pairs.append(pair)
     pairs.sort(key=lambda pair: (-pair.score, pair.started, pair.pk))

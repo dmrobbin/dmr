@@ -20,9 +20,9 @@ Bosses come first. Augments are built after them.
 | Co-op losing | A co-op boss doesn't lose at level 4: it keeps levelling up. It loses only when the health bar is empty. |
 | Co-op refights | Until the boss is down, a player who lost to it can fight it again; the damage they dealt stays off. Every lost game still adds to the loss counter (or uses a second chance). |
 | Co-op boss down | Both players finish the floor and get the boss reward. Any game still under way against it ends as a win (with a win's usual reward), the partner's on its page's next check. A loss in the same action that empties the bar doesn't count. |
-| Boss reward | 3 packs and an augment pick, on top of a win's usual reward for the game that won. |
-| Augments | Personal. Each pick offers 3 the player doesn't have yet, and they keep one for the rest of the run. Lifeline is co-op only and is the only one that can be taken twice. |
-| Curses | Beating a boss also brings a curse to take: 3 offered, one taken, for the rest of the run. It must be taken before the next fight. Personal, like augments. They stack, the same curse included. |
+| Boss reward | 3 packs and an augment pick, on top of a win's usual reward for the game that won. In co-op, the augment and curse picks come from the vs. battle after the boss instead (see [coop-vs-battles.md](coop-vs-battles.md)). |
+| Augments | Personal. Each pick offers 3 the player doesn't have yet, and they keep one for the rest of the run. Lifeline is co-op only and is the only one that can be taken twice. Every augment helps the player; none holds back their opponent. |
+| Curses | Beating a boss also brings a curse to take: 3 offered, one taken, for the rest of the run. It must be taken before the next fight. Personal, like augments. They stack, the same curse included. Every curse makes the CPUs the player faces stronger; none weakens the player, so a curse never just cancels out an augment. |
 | Curse strength | Every boss carries the whole stack; every other CPU carries half of it, rounded down. |
 
 ### Choices I made where the design was silent
@@ -38,13 +38,14 @@ These are noted here so they can be changed.
 - Every deck is held to exactly 8 climaxes: it can't be built with more, and it can't be played with fewer (ordinary
   games, arcade and challenge fights alike; a challenge deck can still be short of 50 cards). Climax Overload makes
   that 8 to 10. Challenge decks are still only warned about the 4-copy rule; Highlander's 2-copy limit is enforced.
-- Halving rounds down, so a curse whose step is 1 (all but Iron Skin) does nothing to ordinary CPUs until it's been
-  taken twice.
+- Halving rounds down, so a curse whose step is 1 (all but Iron Skin and Bulwark) does nothing to ordinary CPUs until
+  it's been taken twice.
 - A curse can be offered and taken again, however many the player has: with 7 curses, a long run would run out
   otherwise.
-- Old Wounds puts at most 6 cards in the clock (never a level up before the game starts); Short Hand never leaves
-  fewer than 3 cards in the starting hand.
-- Heavy Refresh's extra damage comes on top of Clean Refresh: with both, the first refresh deals only the extra.
+- Deep Pockets adds at most 4 cards to the CPU's starting hand.
+- Recovery heals at the start of the CPU's draw phase, before it draws, and only what's in its clock.
+- Bulwark only counts for the CPU character being front attacked, not side attacked (a side attack's damage doesn't
+  depend on power).
 - Curses aren't shown on the co-op partner's panel (augments are).
 - Glass Cannon with only one second chance left: the loss isn't covered. In solo the run ends; in co-op, 2 go on
   the counter.
@@ -56,7 +57,7 @@ These are noted here so they can be changed.
 | Climax Overload | The deck can run up to 10 climaxes instead of 8, and each win also gives a climax pick. | Run rules |
 | Deep Reserves | Start each game with 2 cards in stock. | Game start |
 | Devotion | If every card in the deck is one color, its characters get +1000 power. The win prize lands on a color pack more often. | Game rules + run |
-| Head Start | Every CPU starts each game with 2 cards in its clock. | Game start |
+| Head Start | Start each game with 1 more card in your hand. | Game start |
 | Clean Refresh | The first refresh in each game deals no refresh damage. | Game rules |
 | Highlander | The deck can't run more than 2 copies of any card. Each win gives 2 extra packs. | Run rules |
 | Glass Cannon | Characters get +1 soul. Each loss counts twice: two on the co-op loss counter, or two second chances in solo. | Game rules + run |
@@ -71,10 +72,13 @@ These are noted here so they can be changed.
 | Iron Skin | CPU characters get +1000 power. | Game rules |
 | Fury | CPU characters get +1 soul. | Game rules |
 | Hoard | The CPU starts each game with 1 more card in its stock. | Game start |
-| Old Wounds | You start each game with 1 card in your clock. | Game start |
-| Short Hand | You start each game with 1 card fewer in your hand. | Game start |
-| Heavy Refresh | Your first refresh in each game deals 1 more damage. | Game rules |
-| Toll | Your counter cards cost 1 more stock. | Game rules |
+| Deep Pockets | The CPU starts each game with 1 more card in its hand. | Game start |
+| Second Wind | The CPU's first refresh in each game deals no refresh damage (one more refresh per pick). | Game rules |
+| Bulwark | CPU characters get +2000 power while they're front attacked. | Game rules |
+| Recovery | At the start of each of its turns, the CPU heals 1 damage. | Game rules |
+
+Deep Pockets, Second Wind, Bulwark and Recovery replaced Short Hand, Heavy Refresh, Toll and Old Wounds, which
+weakened the player instead (migration `0037_curses_buff_the_cpu` moves runs that had them onto their replacements).
 
 ## How it's built
 
@@ -91,11 +95,12 @@ These are noted here so they can be changed.
 - **Curses** live on `ChallengeRun.curses` (a list of ids, repeats and all; see `weiss.curses`). A curse pick is a
   reward like an augment pick; `challenge.curse_due` keeps the player from fighting until it's taken. When a game
   is dealt, `play.curse_start` works out their strength (full against a boss, half otherwise), deals those that
-  change the start, and puts the rest on the side they change as `side["curses"] = {curse id: strength}`: the
-  CPU's (Iron Skin, Fury) or the player's (Heavy Refresh, Toll).
+  change the start, and puts the rest on the CPU's side as `side["curses"] = {curse id: strength}`
+  (`game.curse_stats`, `game.refresh`, `game.heal`). A game between two players has none.
 - **Augments** live on `ChallengeRun.augments` (a list of ids). An augment pick is a reward like the others,
   with its 3 options settled when it's given. In-game augments are put on the player's side of the game state
-  when it's dealt (`side["augments"]`), and the game rules read them from there.
+  when it's dealt (`side["augments"]`, see `play.augment_side`), co-op vs. battles included, and the game rules
+  read them from there.
 
 ## Steps
 

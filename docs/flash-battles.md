@@ -13,7 +13,7 @@ game skips the slow start and goes straight to the big plays.
 | Clock | Empty: both players are 7 damage from level 3. |
 | The CPU | Takes level 0 cards in the colors of its deck's two anchors, one for each (two of one color if both anchors are), so it can pay their colors. A climax only if it's the last level 0 card of that color. With no anchors (a deck not built by express), or no level 0 card in an anchor's color, it takes its highest-level cards instead, of the color its deck has most of. |
 | Reward | A win's usual reward. |
-| Augments and curses | Still apply on top: Deep Reserves and Hoard add to the 3 stock, Old Wounds still fills the clock, and Short Hand's smaller hand is the one drawn again. |
+| Augments and curses | Still apply on top: Deep Reserves and Hoard add to the 3 stock, and the bigger hands of Head Start and Deep Pockets are the ones drawn again. |
 
 ## How it's built
 

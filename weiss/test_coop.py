@@ -242,7 +242,7 @@ class PlayingSetup(CoopSetup):
         return self.as_(user).client.post(reverse("weiss:arcade_challenge_fight"), {"node": node})
 
     def room_of(self, user):
-        return GameRoom.objects.get(host=user)
+        return GameRoom.objects.get(host=user, coop_duel=None)  # their fight, not a vs. battle
 
     def finish(self, user, won):
         """End this player's game, as if the last move had just been made."""

@@ -1,4 +1,5 @@
 """The infinite challenge's bosses (see docs/infinite-bosses.md)."""
+import json
 import random
 from types import SimpleNamespace
 from unittest import mock
@@ -215,6 +216,23 @@ class CoopBossSetup(PlayingSetup):
             play.play_action(room, room.host_id, {"type": "x"}, lookups={"info": None})
         return self.room_of(user)
 
+    def settle_duel(self, winner=None):
+        """The pair's vs. battle after the boss, played (`winner` wins it: the host, if not given) and its augments and
+        curses taken.
+        Returns the room it was played in."""
+        winner = winner or self.staff
+        loser = self.bo if winner == self.staff else self.staff
+        for user in (self.staff, self.bo):
+            self.as_(user).client.post(reverse("weiss:arcade_coop_duel_ready"))
+        room = GameRoom.objects.get(coop_duel=self.pair)
+        self.as_(loser).client.post(reverse("weiss:play_action", args=[room.pk]), json.dumps({"type": "duel_concede"}), content_type="application/json")
+        for user in (winner, loser):
+            duel = coop.duel_of(self.fresh(user))
+            left = [c for c in duel["options"] if c not in duel["picks"].values()]
+            augment = (coop.augments_left(duel) or [""])[0]
+            self.as_(user).client.post(reverse("weiss:arcade_coop_duel_pick"), {"curse": left[0], "augment": augment})
+        return room
+
     def poll(self, user):
         self.as_(user).client.get(reverse("weiss:play_state", args=[self.room_of(user).pk]))
         return self.room_of(user)
@@ -326,10 +344,8 @@ class CoopBossTests(CoopBossSetup):
         for _ in range(4):
             self.climb_both()
         self.fight(self.staff)
-        self.assertEqual(self.room_of(self.staff).state["floor"], 4)  # not until they've taken the first boss's curse
-        run = self.fresh(self.staff)
-        reward = next(r for r in run.rewards if r["buff"] == "curse")
-        buffs.claim(run, reward["key"], {"curse": reward["options"][0]})
+        self.assertEqual(self.room_of(self.staff).state["floor"], 4)  # not until the vs. battle's done, and its curses taken
+        self.settle_duel()
         self.fight(self.staff)
         self.assertEqual(self.room_of(self.staff).state["floor"], 9)
         self.hit(self.staff, 4)
@@ -607,7 +623,8 @@ class GameAugmentTests(SoloSetup):
         colors = {card.color for card in Card.objects.filter(pk__in=[int(pk) for pk in self.run.pool])}
         mono = len(colors - {None, ""}) <= 1
         self.assertEqual(me["augments"], ["deep_reserves", "head_start", "devotion"] if mono else ["deep_reserves", "head_start"])  # not the run's
-        self.assertEqual((len(me["zones"]["stock"]), len(them["zones"]["clock"])), (augments.RESERVES, augments.HEAD_START))
+        self.assertEqual((len(me["zones"]["stock"]), len(me["zones"]["hand"])), (augments.RESERVES, game.STARTING_HAND + augments.HEAD_START))
+        self.assertEqual((them["zones"]["clock"], len(them["zones"]["hand"])), ([], game.STARTING_HAND))  # nothing taken from the CPU
         data = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()
         self.assertEqual([a["name"] for a in data["arcade"]["augments"]], ["Deep Reserves", "Head Start", "Highlander", "Devotion"])
 
@@ -665,16 +682,26 @@ class CursePickTests(SoloSetup):
 
 class CurseStrengthTests(SoloSetup):
     def test_they_stack_and_other_cpus_get_half_rounded_down(self):
-        self.run.curses = ["iron_skin", "fury", "iron_skin", "toll", "toll", "toll"]
-        self.assertEqual(curses.strengths(self.run, True), {"iron_skin": 2000, "fury": 1, "toll": 3})
-        self.assertEqual(curses.strengths(self.run, False), {"iron_skin": 1000, "toll": 1})
+        self.run.curses = ["iron_skin", "fury", "iron_skin", "recovery", "recovery", "recovery"]
+        self.assertEqual(curses.strengths(self.run, True), {"iron_skin": 2000, "fury": 1, "recovery": 3})
+        self.assertEqual(curses.strengths(self.run, False), {"iron_skin": 1000, "recovery": 1})
         shown = {c["id"]: c for c in curses.of(self.run)}
         self.assertEqual((shown["fury"]["text"], shown["fury"]["ordinary"]), ("CPU characters get +1 soul.", ""))
-        self.assertEqual((shown["toll"]["count"], shown["toll"]["ordinary"]), (3, "Your counter cards cost 1 more stock."))
+        self.assertEqual((shown["recovery"]["count"], shown["recovery"]["ordinary"]),
+                         (3, "At the start of each of its turns, the CPU heals 1 damage: the top of its clock goes to its waiting room."))
 
     def test_every_curse_says_what_it_does(self):
         for curse in curses.CURSES.values():
             self.assertNotIn("{", curse.said(curse.step))
+
+    def test_every_curse_makes_the_cpu_stronger(self):
+        """None hinders the player: a game's curses are all on the CPU's side, or how it starts (play.curse_start)."""
+        self.run.curses = list(curses.CURSES)
+        cpu_side, start = curses.for_game(self.run, True)
+        self.assertEqual(set(cpu_side) | set(start), set(curses.CURSES))
+        self.assertEqual(set(start), {"hoard", "deep_pockets"})
+        for curse in curses.CURSES.values():
+            self.assertTrue(curse.said(curse.step).startswith(("CPU", "The CPU", "At the start of each of its turns, the CPU")), curse.id)
 
 
 class GameCurseTests(SoloSetup):
@@ -688,37 +715,55 @@ class GameCurseTests(SoloSetup):
         self.assertEqual(self.stats(state, side="2"), [(4500, 2), (9500, 3)])
         self.assertEqual(self.stats(state), [(3000, 1), (8000, 2)])  # not the player's
 
-    def test_heavy_refresh_hurts_the_first_refresh_only(self):
+    def test_second_wind_spares_the_cpus_first_refreshes(self):
         state = self.table()
-        state["players"]["1"]["curses"] = {"heavy_refresh": 2}
-        zones = state["players"]["1"]["zones"]
-        for _ in range(2):
+        state["players"]["2"]["curses"] = {"second_wind": 2}
+        zones = state["players"]["2"]["zones"]
+        for _ in range(3):
             zones["waiting"], zones["deck"] = zones["deck"], []
-            game.refresh(state, "1", self.env().name, lambda cards: None)
-        self.assertEqual(len(zones["clock"]), 1 + 2 + 1)
-        self.assertEqual(state["players"]["1"]["damage_taken"], 4)
-        self.assertIn("(Heavy Refresh)", " ".join(entry["text"] for entry in state["log"]))
+            game.refresh(state, "2", self.env().name, lambda cards: None)
+        self.assertEqual((len(zones["clock"]), state["players"]["2"]["damage_taken"]), (1, 1))  # the third one's
+        self.assertIn("no refresh damage (Second Wind)", " ".join(entry["text"] for entry in state["log"]))
 
-    def test_heavy_refresh_on_top_of_clean_refresh(self):
-        state = self.table("clean_refresh")
-        state["players"]["1"]["curses"] = {"heavy_refresh": 1}
-        zones = state["players"]["1"]["zones"]
-        zones["waiting"], zones["deck"] = zones["deck"], []
-        game.refresh(state, "1", self.env().name, lambda cards: None)
-        self.assertEqual(len(zones["clock"]), 1)
-
-    def test_toll_makes_counters_cost_more(self):
+    def test_bulwark_powers_up_the_cpus_character_being_front_attacked(self):
         state = self.table()
+        state["players"]["2"]["curses"] = {"bulwark": 2000}
+        self.assertEqual(self.stats(state, side="2"), [(3000, 1), (8000, 2)])  # not attacked
+        state["turn"], state["attack"] = "1", {"step": "trigger", "slot": "C2", "target": "C1", "kind": "front"}
+        self.assertEqual(self.stats(state, side="2"), [(5000, 1), (8000, 2)])
+        state["attack"]["kind"] = "side"
+        self.assertEqual(self.stats(state, side="2"), [(3000, 1), (8000, 2)])
+        state["turn"], state["attack"] = "2", {"step": "trigger", "slot": "C1", "target": "C1", "kind": "front"}
+        self.assertEqual(self.stats(state, side="2"), [(3000, 1), (8000, 2)])  # its own attack
+
+    def test_recovery_heals_the_cpu_before_it_draws(self):
+        state = self.table()
+        cpu_side = state["players"]["2"]
+        cpu_side["curses"] = {"recovery": 2}
+        cpu_side["zones"]["clock"] = [game.new_card(1) for _ in range(3)]
+        state["turn"] = "2"
+        game.enter_phase(state, "2", "draw", self.env())
+        self.assertEqual((len(cpu_side["zones"]["clock"]), len(cpu_side["zones"]["waiting"])), (1, 2))
+        self.assertIn("heals 2 (Recovery)", " ".join(entry["text"] for entry in state["log"]))
+        state["turn"] = "1"
+        me = state["players"]["1"]
+        me["zones"]["clock"] = [game.new_card(1)]
+        game.enter_phase(state, "1", "draw", self.env())
+        self.assertEqual(len(me["zones"]["clock"]), 1)  # not the player
+
+    def test_nothing_hinders_the_player_any_more(self):
+        state = self.table("clean_refresh")
         state["phase"] = "attack"
         block = game.new_card(3)
         me = state["players"]["1"]
         me["zones"]["hand"].append(block)
         me["zones"]["stock"] = [game.new_card(1)]
-        self.assertEqual(game.counter_play(state, "1", block, self.env().info), (1, 0))
-        me["curses"] = {"toll": 1}
-        self.assertIsNone(game.counter_play(state, "1", block, self.env().info))  # 2 stock, and there's 1
-        me["augments"] = ["counter_specialist"]
-        self.assertEqual(game.counter_play(state, "1", block, self.env().info), (1, 0))
+        state["players"]["2"]["curses"] = {curse_id: 3 for curse_id in curses.CURSES}
+        self.assertEqual(game.counter_play(state, "1", block, self.env().info), (1, 0))  # what a counter costs: as ever
+        zones = me["zones"]
+        zones["waiting"], zones["deck"] = zones["deck"], []
+        game.refresh(state, "1", self.env().name, lambda cards: None)
+        self.assertEqual(len(zones["clock"]), 0)
 
     def dealt(self):
         room = self.room()
@@ -726,22 +771,23 @@ class GameCurseTests(SoloSetup):
 
     def test_dealt_at_half_strength_against_another_cpu(self):
         CardListEntry.objects.filter(card_list__reserved_for_cpu=True).update(quantity=20)
-        ChallengeRun.objects.filter(pk=self.run.pk).update(curses=["hoard", "hoard", "old_wounds", "old_wounds", "short_hand", "short_hand", "iron_skin", "toll"])
+        ChallengeRun.objects.filter(pk=self.run.pk).update(curses=["hoard", "hoard", "deep_pockets", "deep_pockets", "recovery", "recovery", "iron_skin", "bulwark"])
         self.fight()
         room, me, them = self.dealt()
-        self.assertEqual((len(them["zones"]["stock"]), len(me["zones"]["clock"]), len(me["zones"]["hand"])), (1, 1, game.STARTING_HAND - 1))
-        self.assertEqual((them["curses"], me.get("curses")), ({"iron_skin": 500}, None))  # Toll at half is nothing yet
+        self.assertEqual((len(them["zones"]["stock"]), len(them["zones"]["hand"])), (1, game.STARTING_HAND + 1))
+        self.assertEqual((me["zones"]["clock"], len(me["zones"]["hand"]), me.get("curses")), ([], game.STARTING_HAND, None))  # the player as ever
+        self.assertEqual(them["curses"], {"iron_skin": 500, "recovery": 1, "bulwark": 1000})
         self.assertIn("half strength", " ".join(entry["text"] for entry in room.state["log"]))
         data = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()
-        self.assertEqual({c["name"]: c["text"] for c in data["arcade"]["curses"]}["Toll"], "Nothing yet, against a CPU that isn't a boss.")
+        self.assertEqual({c["name"]: c["text"] for c in data["arcade"]["curses"]}["Bulwark"], "CPU characters get +1000 power while they're front attacked.")
 
     def test_dealt_at_full_strength_against_a_boss(self):
         CardListEntry.objects.filter(card_list__reserved_for_cpu=True).update(quantity=20)
         self.climb(4)
-        ChallengeRun.objects.filter(pk=self.run.pk).update(curses=["hoard", "hoard", "old_wounds", "short_hand", "short_hand", "short_hand", "iron_skin", "toll"])
+        ChallengeRun.objects.filter(pk=self.run.pk).update(curses=["hoard", "hoard", "deep_pockets"] + ["deep_pockets"] * 5 + ["iron_skin", "second_wind"])
         self.fight()
         room, me, them = self.dealt()
         self.assertTrue(room.state["boss"])
-        self.assertEqual((len(them["zones"]["stock"]), len(me["zones"]["clock"])), (challenge.BOSS_STOCK + 2, 1))
-        self.assertEqual(len(me["zones"]["hand"]), curses.LEAST_HAND)  # 3 picks, but never fewer than this
-        self.assertEqual((them["curses"], me["curses"]), ({"iron_skin": 1000}, {"toll": 1}))
+        self.assertEqual(len(them["zones"]["stock"]), challenge.BOSS_STOCK + 2)
+        self.assertEqual(len(them["zones"]["hand"]), game.STARTING_HAND + curses.MOST_HAND)  # 6 picks, but never more than this
+        self.assertEqual((them["curses"], me.get("curses")), ({"iron_skin": 1000, "second_wind": 1}, None))

@@ -5,12 +5,12 @@
 {% block content %}
   <h1>Arcade Mode</h1>
   {% include "weiss/arcade_tabs.html" with current="coop" %}
-  <p class="muted small">The best co-op challenges: two players on one path, each scoring every CPU they beat. A pair's score is both of theirs added up.
+  <p class="muted small">The best co-op challenges: two players on one path, each scoring every CPU they beat. A pair's score is both of theirs added up; Vs. is how their vs. battles against each other, after each boss, have gone.
     Their decks are as they were at each player's last win, or the end.</p>
   {% if pairs %}
     <div class="cpu-table-wrap">
       <table class="cpu-table leaderboard">
-        <thead><tr><th scope="col">#</th><th scope="col">Players</th><th scope="col">Score</th><th scope="col">Wins</th><th scope="col" class="leaderboard-wide">Floor</th><th scope="col" class="leaderboard-wide">Played</th><th scope="col">Decks</th></tr></thead>
+        <thead><tr><th scope="col">#</th><th scope="col">Players</th><th scope="col">Score</th><th scope="col">Wins</th><th scope="col" class="leaderboard-wide">Floor</th><th scope="col" class="leaderboard-wide" title="Vs. battles won, each player's, in the host's order">Vs.</th><th scope="col" class="leaderboard-wide">Played</th><th scope="col">Decks</th></tr></thead>
         <tbody>
           {% for pair in pairs %}
             <tr{% if pair.mine %} class="leaderboard-mine"{% endif %}>
@@ -19,6 +19,7 @@
               <td class="leaderboard-score">{{ pair.score }}</td>
               <td>{{ pair.wins }}</td>
               <td class="leaderboard-wide">{{ pair.floor }}</td>
+              <td class="leaderboard-wide">{% if pair.rivalry %}{% for run in pair.halves %}{% if not forloop.first %} – {% endif %}{{ run.duels }}{% endfor %}{% else %}<span class="muted">–</span>{% endif %}</td>
               <td class="muted small leaderboard-wide">{{ pair.started|date:"j M Y" }}</td>
               <td><a href="{% url 'weiss:arcade_coop_deck' pair.pk %}">View decks</a></td>
             </tr>

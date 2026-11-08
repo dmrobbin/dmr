@@ -6,7 +6,6 @@ The board page polls `room_state` every second or two; it answers 204 when nothi
 """
 import json
 import logging
-import random
 from datetime import timedelta
 
 from django.contrib import messages
@@ -118,7 +117,15 @@ def board_payload(room, user, extra=None):
     if room.state.get("prize"):
         scene["prize"] = room.state["prize"]
     return {"version": room.version, "status": room.status, "board": board, "cards": card_info(pks),
-            "avatars": room_avatars(room), **cpu_payload(room), **scene, **(extra or {})}
+            "avatars": room_avatars(room), **cpu_payload(room), **duel_payload(room, user), **scene, **(extra or {})}
+
+
+def duel_payload(room, user):
+    """What a co-op challenge's vs. battle adds: the pair's rivalry so far, and the way to its augments and curses."""
+    if not room.coop_duel_id:
+        return {}
+    mine, theirs = coop.rivalry(room.coop_duel, user.pk)
+    return {"duel": {"url": reverse("weiss:arcade_coop_duel"), "partner": room.opponent_of(user).username, "mine": mine, "theirs": theirs}}
 
 
 ARCADE_EDITING = "arcade_editing"  # session: the room of a run whose player has gone to change their deck
@@ -373,9 +380,12 @@ def arcade_action(request, room, action):
     if not run:
         return JsonResponse({"error": "This isn't an arcade run.", **board_payload(room, request.user)}, status=400)
     if kind in ("arcade_quit", "challenge_leave"):
-        # A challenge's player goes back to its page: to open packs and change the deck, or to see how it ended.
+        # A challenge's player goes back to its page: to open packs and change the deck, or to see how it ended. In
+        # co-op, with the boss down, to the vs. battle that follows it.
+        trial = challenge.of(run)
+        duel = bool(trial and trial.coop_id and coop.duel_due(trial))
         paused = leave_run(room)
-        return JsonResponse({"redirect": reverse("weiss:arcade_challenge" if paused else "weiss:profile")})
+        return JsonResponse({"redirect": reverse("weiss:arcade_coop_duel" if paused and duel else "weiss:arcade_challenge" if paused else "weiss:profile")})
     over = room.state.get("game_over")
     won = over and over["winner"] == str(room.host_id)
     if kind == "arcade_edit_deck":
@@ -457,7 +467,7 @@ def room_deck(request, pk):
     room = my_room(request, pk)
     if not room:
         return HttpResponseForbidden()
-    if room.arcade_run_id:
+    if room.arcade_run_id or room.coop_duel_id:
         return not_for_a_run(request, room)
     deck = get_object_or_404(CardList.objects.players(request.user), pk=request.POST.get("deck"))
     if problem := lists.unplayable(deck):
@@ -476,6 +486,9 @@ def deck_cards(card_list):
 
 
 def not_for_a_run(request, room):
+    if room.coop_duel_id:
+        messages.error(request, "A co-op challenge's vs. battle is one game, with your challenge decks.")
+        return redirect("weiss:play_room", pk=room.pk)
     messages.error(request, "An arcade run keeps its deck and opponents. You can stop the run instead.")
     return redirect("weiss:play_room", pk=room.pk)
 
@@ -500,60 +513,66 @@ def deal(room, intro=False):
         room.state["cut_ins"] = {str(room.guest_id): anchor_cards(room.guest_deck)}
     trial = challenge.of(room.arcade_run) if room.arcade_run_id else None
     fight_mods(room, buffs.fight_mods(trial))
+    if room.coop_duel_id:
+        duel_augments(room)
     if trial and trial.kind == ChallengeRun.Kind.INFINITE:
         stamp_floor(room, trial)
         augment_start(room, trial)
         curse_start(room, trial)
-        if challenge.flash_now(trial):  # last: the hand it's dealt, curses and all, is what's drawn again
+        if challenge.flash_now(trial):  # last: the hand it's dealt, augments and curses and all, is what's drawn again
             game.flash_start(room.state)
             if colors := anchor_colors(room.guest_deck):  # what the CPU's level cards are to be (cpu.Mind.flash_level)
                 room.state["players"][str(room.guest_id)]["anchor_colors"] = colors
 
 
 def augment_start(room, trial):
-    """The player's augments that change their games (weiss.augments) go on their side, for the game's rules to
-    read, and those that change how it starts do so now: stock for them, clock for the CPU. Devotion only counts
-    for a deck of one color."""
-    picked = augments.in_game(trial)
+    """The player's augments that change their games (weiss.augments) go on their side (see augment_side)."""
+    augment_side(room.state, str(room.host_id), trial)
+
+
+def duel_augments(room):
+    """A co-op vs. battle: each player's augments go on their own side, as against a CPU (see augment_side). Their
+    curses don't: those only make the CPUs stronger."""
+    for run in ChallengeRun.objects.filter(coop_id=room.coop_duel_id, status=ChallengeRun.Status.ACTIVE):
+        if str(run.user_id) in room.state["players"]:
+            augment_side(room.state, str(run.user_id), run)
+
+
+def augment_side(state, player, run):
+    """This player's augments that change their games go on their side, for the game's rules to read, and those that
+    change how it starts do so now: more stock, or a bigger hand. Devotion only counts for a deck of one color. Every
+    augment helps the player; none hinders their opponent."""
+    picked = augments.in_game(run)
     if not picked:
         return
-    state, me = room.state, str(room.host_id)
-    side, cpu_side = state["players"][me], state["players"][str(room.guest_id)]
+    side = state["players"][player]
     if "devotion" in picked and not augments.mono_color(Card.objects.filter(pk__in={c["card"] for c in side["zones"]["deck"] + side["zones"]["hand"]})):
         picked.remove("devotion")
-        game.add_log(state, me, "has Devotion, but their deck has more than one color: no power from it this game")
+        game.add_log(state, player, "has Devotion, but their deck has more than one color: no power from it this game")
     side["augments"] = picked
-    for augment_id, who, zone, count in (("deep_reserves", side, "stock", augments.RESERVES), ("head_start", cpu_side, "clock", augments.HEAD_START)):
+    for augment_id, zone, count in (("deep_reserves", "stock", augments.RESERVES), ("head_start", "hand", augments.HEAD_START)):
         if augment_id in picked:
-            for _ in range(min(count, len(who["zones"]["deck"]))):
-                game.put(who, who["zones"]["deck"].pop(), zone)
+            for _ in range(min(count, len(side["zones"]["deck"]))):
+                game.put(side, side["zones"]["deck"].pop(), zone)
     names = ", ".join(augments.AUGMENTS[a].name for a in picked)
-    game.add_log(state, me, f"plays with {names}")
+    game.add_log(state, player, f"plays with {names}")
 
 
-def curse_start(room, trial, rng=random):
-    """The player's curses (weiss.curses), at full strength against a boss and at half against anyone else: those
-    the rules read go on the sides they change, and those that change how it starts do so now: stock for the CPU,
-    clock for the player, and cards out of their starting hand, back into their deck."""
+def curse_start(room, trial):
+    """The player's curses (weiss.curses), at full strength against a boss and at half against anyone else, all of
+    them the CPU's: those the rules read go on its side, and those that change how it starts do so now: more stock,
+    or a bigger hand."""
     state, me = room.state, str(room.host_id)
-    cpu_curses, my_curses, start = curses.for_game(trial, bool(state.get("boss")))
-    if not (cpu_curses or my_curses or start):
+    cpu_curses, start = curses.for_game(trial, bool(state.get("boss")))
+    if not (cpu_curses or start):
         return
-    side, cpu_side = state["players"][me], state["players"][str(room.guest_id)]
+    cpu_side = state["players"][str(room.guest_id)]
     if cpu_curses:
         cpu_side["curses"] = cpu_curses
-    if my_curses:
-        side["curses"] = my_curses
-    for curse_id, who, zone, count in (("hoard", cpu_side, "stock", start.get("hoard", 0)),
-                                       ("old_wounds", side, "clock", min(start.get("old_wounds", 0), curses.MOST_CLOCK))):
-        for _ in range(min(count, len(who["zones"]["deck"]))):
-            game.put(who, who["zones"]["deck"].pop(), zone)
-    if cut := curses.hand_cut(start.get("short_hand", 0)):
-        hand, deck = side["zones"]["hand"], side["zones"]["deck"]
-        for _ in range(min(cut, len(hand))):
-            deck.append(hand.pop())
-        rng.shuffle(deck)
-    said = "; ".join(curses.CURSES[c].name + ": " + curses.CURSES[c].said(n) for c, n in {**start, **cpu_curses, **my_curses}.items())
+    for curse_id, zone, count in (("hoard", "stock", start.get("hoard", 0)), ("deep_pockets", "hand", min(start.get("deep_pockets", 0), curses.MOST_HAND))):
+        for _ in range(min(count, len(cpu_side["zones"]["deck"]))):
+            game.put(cpu_side, cpu_side["zones"]["deck"].pop(), zone)
+    said = "; ".join(curses.CURSES[c].name + ": " + curses.CURSES[c].said(n) for c, n in {**start, **cpu_curses}.items())
     game.add_log(state, me, f"is cursed{'' if state.get('boss') else ' (at half strength, against a CPU that isn’t a boss)'}. {said}")
 
 
@@ -657,7 +676,7 @@ def room_start(request, pk):
     room = my_room(request, pk)
     if not room:
         return HttpResponseForbidden()
-    if room.arcade_run_id:
+    if room.arcade_run_id or room.coop_duel_id:
         return not_for_a_run(request, room)
     with transaction.atomic():
         room = GameRoom.objects.select_for_update().select_related("host", "guest").get(pk=room.pk)
@@ -684,7 +703,7 @@ def room_reset(request, pk):
     room = my_room(request, pk)
     if not room:
         return HttpResponseForbidden()
-    if room.arcade_run_id:
+    if room.arcade_run_id or room.coop_duel_id:
         return not_for_a_run(request, room)
     with transaction.atomic():
         room = GameRoom.objects.select_for_update().get(pk=room.pk)
@@ -700,6 +719,8 @@ def room_delete(request, pk):
     room = my_room(request, pk)
     if not room or room.seat_of(request.user) != "host":
         return HttpResponseForbidden()
+    if room.coop_duel_id and not room.state.get("game_over"):
+        return not_for_a_run(request, room)
     leave_run(room)
     messages.success(request, "Room deleted.")
     return redirect("weiss:play_rooms")
@@ -771,6 +792,16 @@ def room_action(request, pk):
             return arcade_action(request, room, action)
         if room.arcade_run_id and kind in ("rematch", "end_match"):
             return JsonResponse({"error": "An arcade run goes on with Continue or Retry.", **board_payload(room, request.user)}, status=400)
+        if room.coop_duel_id and kind in ("rematch", "end_match"):
+            return JsonResponse({"error": "A vs. battle is one game: on to the augments and curses.", **board_payload(room, request.user)}, status=400)
+        if kind == "duel_concede":
+            if not room.coop_duel_id or room.state.get("game_over"):
+                return JsonResponse({"error": "That isn't possible right now.", **board_payload(room, request.user)}, status=400)
+            game.end_game(room.state, str(request.user.pk), "concede", "concedes")
+            game_ended(room, room.state["game_over"])
+            room.version += 1
+            room.save(update_fields=["state", "version", "updated"])
+            return JsonResponse(board_payload(room, request.user))
         if action.get("type") == "end_match":
             # From the victory or defeat screen, either player: back to choosing decks.
             if not room.state.get("game_over"):
@@ -854,6 +885,8 @@ def game_ended(room, over):
         score = over["score"]["total"]
     record_game(room, over, score)
     arcade.game_finished(room, over, score)
+    if room.coop_duel_id:
+        coop.duel_finished(room, over)
 
 
 def cpu_step(room, wait=True):

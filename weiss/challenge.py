@@ -118,6 +118,8 @@ def win_reward_text(kind):
 
 def boss_reward_text(run):
     """What beating a boss brings, for the player."""
+    if run and run.coop_id:
+        return f"{BOSS_PACKS} more packs on top of a win's reward, then a vs. battle with your partner, whose winner picks their augment and curse first"
     return f"an augment pick and {BOSS_PACKS} more packs on top of a win's reward, and a curse to take"
 
 
@@ -627,14 +629,18 @@ def fight_finished(arcade_run, won, cleared, rng=random, fought=None):
 
 def beat_boss(run, rng=random):
     """A boss beaten: BOSS_PACKS more packs to open, an augment to pick (weiss.augments), and a curse to take
-    (weiss.curses), before the next fight (curse_due)."""
+    (weiss.curses), before the next fight (curse_due). In co-op the augment and curse come from the pair's vs.
+    battle instead (coop.start_duel)."""
     from .buffs import grant  # weiss.buffs uses this module
     run.packs += BOSS_PACKS
-    grant(run, ["augment", "curse"], "Boss", rng)
+    if not run.coop_id:
+        grant(run, ["augment", "curse"], "Boss", rng)
 
 
 def curse_due(run):
     """What's wrong if this player has a curse still to take, which they must before their next fight; or None."""
+    if run.coop_id and (problem := coop.duel_due(run)):
+        return problem
     if any(reward["buff"] == "curse" for reward in run.rewards or []):
         return "Take your curse first: beating the boss means taking one before your next fight."
     return None
@@ -700,6 +706,7 @@ def coop_boss_down(run, rng=random):
     """The pair's boss is down: its floor is done for both of them, and both have beaten it. Call within coop.shared."""
     run.path["boss"]["down"] = True
     coop.finish_floor(run, coop.players(run.coop))
+    coop.start_duel(run, run.path["boss"]["floor"], rng)
     beat_boss(run, rng)
 
     def partner_beat_it(other):

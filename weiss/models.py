@@ -414,6 +414,7 @@ class CoopRun(models.Model):
                             "player's progress and their votes (see weiss.coop)")
     losses = models.PositiveSmallIntegerField(default=0, help_text="Lost games so far, both players' together")
     loss_limit = models.PositiveSmallIntegerField(default=3, help_text="Lost games that end it, as staff had it set when it started")
+    duel_wins = models.JSONField(default=dict, blank=True, help_text="{user id: vs. battles won}, the pair's rivalry (see weiss.coop)")
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.WAITING)
     version = models.PositiveIntegerField(default=0, help_text="Goes up on every change, so both players' pages can poll cheaply")
     started = models.DateTimeField(auto_now_add=True)
@@ -510,6 +511,8 @@ class GameRoom(models.Model):
     cpu_name = models.CharField(max_length=100, blank=True, help_text="The CPU in the guest seat, if it's a game against one")
     cpu_profile = models.ForeignKey(CpuProfile, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     arcade_run = models.ForeignKey(ArcadeRun, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    # A co-op challenge's vs. battle after a boss: its two players against each other, in a game of its own (see weiss.coop).
+    coop_duel = models.ForeignKey(CoopRun, null=True, blank=True, on_delete=models.CASCADE, related_name="duel_rooms")
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.SETUP)
     state = models.JSONField(default=dict, blank=True, help_text="See weiss.game for the format")
     version = models.PositiveIntegerField(default=0, help_text="Goes up on every change, so browsers can poll cheaply")

@@ -335,19 +335,16 @@ def refresh(state, player, name, shuffle):
     for card in zones["deck"]:
         card["uid"] = new_uid()
     clean = "clean_refresh" in (side.get("augments") or ()) and not side.get("refreshes")  # a challenge augment
-    damage = None if clean else zones["deck"].pop()
+    winded = not clean and side.get("refreshes", 0) < (side.get("curses") or {}).get("second_wind", 0)  # a challenge curse, the CPU's
+    damage = None if clean or winded else zones["deck"].pop()
     if damage:
         put(side, damage, "clock")
         side["damage_taken"] = side.get("damage_taken", 0) + 1
-    heavy = [] if side.get("refreshes") else [zones["deck"].pop() for _ in range(min((side.get("curses") or {}).get("heavy_refresh", 0), len(zones["deck"])))]  # a challenge curse
-    for card in heavy:
-        put(side, card, "clock")
-    side["damage_taken"] = side.get("damage_taken", 0) + len(heavy)
     side["refreshes"] = side.get("refreshes", 0) + 1  # so both pages can show "Deck Out!"
     state.setdefault("pending_events", []).append({"event": "refresh", "player": player})  # run_abilities fires it
     add_log(state, player, f"decked out: shuffled {len(cards)} cards from the waiting room into their deck "
-                           + ("with no refresh damage (Clean Refresh)" if clean else f"and put {name(damage['card'])} into their clock")
-                           + (f", then {', '.join(name(c['card']) for c in heavy)} too (Heavy Refresh)" if heavy else ""))
+                           + ("with no refresh damage (Clean Refresh)" if clean else "with no refresh damage (Second Wind)" if winded
+                              else f"and put {name(damage['card'])} into their clock"))
 
 
 def deal_damage(state, player, amount, remaining, dealt, name, is_climax):
@@ -562,7 +559,6 @@ def counter_play(state, player, card, info):
         power, level, price = 0, play_level(state, player, card, info), play_cost(state, player, card, info)
     if "counter_specialist" in (state["players"][player].get("augments") or ()):  # a challenge augment
         price = max(0, price - 1)
-    price += (state["players"][player].get("curses") or {}).get("toll", 0)  # a challenge curse
     zones = state["players"][player]["zones"]
     if level > len(zones["level"]) or price > len(zones["stock"]):
         return None
@@ -823,6 +819,16 @@ def reversed_characters(state):
                for side in state["players"].values() for card in side["stage"].values())
 
 
+def heal(state, player, count, name):
+    """This player heals `count`: the top cards of their clock go to their waiting room (Recovery, a challenge curse)."""
+    side = state["players"][player]
+    healed = [side["zones"]["clock"].pop() for _ in range(min(count, len(side["zones"]["clock"])))]
+    for card in healed:
+        put(side, card, "waiting")
+    if healed:
+        add_log(state, player, f"heals {len(healed)} (Recovery): {', '.join(name(c['card']) for c in healed)} from their clock to their waiting room")
+
+
 def draw_step(state, player, name, shuffle):
     """The draw phase's card."""
     side = state["players"][player]
@@ -852,6 +858,7 @@ def enter_phase(state, player, phase, env):
     if phase == "attack" and rules:
         state["attack"] = {"step": "declare"}
     if phase == "draw" and rules:
+        heal(state, player, (side.get("curses") or {}).get("recovery", 0), name)  # a challenge curse, the CPU's: before it draws
         add_log(state, player, "moved to the draw phase")
         if state["turn_number"] <= len(state["order"]):
             fire(state, env, "phase", phase="first_turn", player=player)
@@ -2245,9 +2252,9 @@ def compute_stats(state, env):
         if buff["uid"] in stats:
             stats[buff["uid"]]["power"] += buff.get("power", 0)
             stats[buff["uid"]]["soul"] += buff.get("soul", 0)
-    for side in state["players"].values():
+    for player, side in state["players"].items():
         augment_stats(side, stats, env)
-        curse_stats(side, stats)
+        curse_stats(state, player, side, stats)
     for values in stats.values():
         values["power"] = max(0, values["power"])
         values["soul"] = max(0, values["soul"])
@@ -2276,14 +2283,17 @@ def augment_stats(side, stats, env):
             values["power"] += LOW_LEVEL_POWER
 
 
-def curse_stats(side, stats):
-    """What a challenge player's curses (weiss.curses) give the CPU's characters: on its side as "curses"."""
+def curse_stats(state, player, side, stats):
+    """What a challenge player's curses (weiss.curses) give the CPU's characters: on its side as "curses". Bulwark's
+    power is for the character being front attacked."""
     curses = side.get("curses") or {}
-    if not (curses.get("iron_skin") or curses.get("fury")):
+    if not (curses.get("iron_skin") or curses.get("fury") or curses.get("bulwark")):
         return
+    attack = state.get("attack") or {}
+    defending = side["stage"].get(attack["target"]) if attack.get("kind") == "front" and state.get("turn") != player and attack.get("target") else None
     for card in stage_cards(side):
         if (values := stats.get(card["uid"])) is not None:
-            values["power"] += curses.get("iron_skin", 0)
+            values["power"] += curses.get("iron_skin", 0) + (curses.get("bulwark", 0) if defending and defending["uid"] == card["uid"] else 0)
             values["soul"] += curses.get("fury", 0)
 
 

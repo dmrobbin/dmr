@@ -54,7 +54,7 @@ class FlashGameTests(SoloSetup):
 
     def test_the_hand_drawn_again_is_the_size_it_was_dealt(self):
         state = game.new_game([(1, "me", [1] * 20), (2, "cpu", [1] * 20)], shuffle=lambda cards: None)
-        state["players"]["1"]["zones"]["deck"].append(state["players"]["1"]["zones"]["hand"].pop())  # Short Hand, say
+        state["players"]["1"]["zones"]["deck"].append(state["players"]["1"]["zones"]["hand"].pop())  # a smaller hand, say
         game.flash_start(state)
         deck = state["players"]["1"]["zones"]["deck"]
         play(state, "1", {"type": "flash_level", "uids": [deck[0]["uid"], deck[1]["uid"]]})

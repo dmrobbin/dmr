@@ -38,6 +38,9 @@
     <p class="coop-decided small">{{ coop.partner.username }}'s augments:
       {% for augment in coop.partner_augments %}<span class="deck-tag" title="{{ augment.text }}">{{ augment.name }}{% if augment.count > 1 %} ×{{ augment.count }}{% endif %}</span>{% endfor %}</p>
   {% endif %}
+  {% if coop.rivalry %}<p class="coop-decided small">Vs. battles: you {{ coop.rivalry.0 }} – {{ coop.rivalry.1 }} {{ coop.partner.username }}</p>{% endif %}
+  {% if coop.duel_due %}<p class="coop-decided small"><strong>{% if coop.duel.winner %}The augments and curses are waiting.{% else %}Your vs. battle with {{ coop.partner.username }} is due.{% endif %}</strong>
+    <a class="button-small" href="{% url 'weiss:arcade_coop_duel' %}">{% if coop.duel.winner %}Take yours{% else %}Go to it{% endif %}</a></p>{% endif %}
   {% if coop.decided %}<p class="coop-decided small">{{ coop.decided }}</p>{% endif %}
   {% if event_due %}<p class="coop-decided small"><strong>You're at an event together.</strong> <a href="{% url 'weiss:arcade_challenge_event' %}">Go to it</a>: you'll vote on every choice it offers.</p>{% endif %}
 </div>
