@@ -1953,3 +1953,6 @@ button.spire-node-face:disabled { cursor: not-allowed; }
   .deck-builder .deck-side:not(.partner-side) { order: -1; }  /* your deck first, above the pool */
 }
 .play-augments { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: .3rem; margin: 0; }
+.sound-switch { align-items: center; }
+.sound-switch input[type="range"] { width: 5.5rem; margin: 0 .55rem; accent-color: var(--accent); }
+.sound-switch input[type="range"]:disabled { opacity: .4; }

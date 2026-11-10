@@ -88,7 +88,7 @@
     <div id="play" class="play layout-focus{% if watching %} spectating{% endif %}"
          data-state-url="{% if watching %}{% url 'weiss:arcade_coop_spectate_state' %}{% else %}{% url 'weiss:play_state' room.pk %}{% endif %}"
          data-action-url="{% if not watching %}{% url 'weiss:play_action' room.pk %}{% endif %}"
-         data-csrf="{{ csrf_token }}"{% if room.vs_cpu %} data-poll-ms="{% if watching %}1000{% else %}700{% endif %}"{% endif %}{% if watching %} data-spectate data-challenge-url="{% url 'weiss:arcade_challenge' %}"{% endif %}>
+         data-csrf="{{ csrf_token }}" data-sound-url="{% url 'weiss:sound_settings' %}" data-sound-base="{% static 'weiss/sounds/' %}" data-sound-volume="{{ sound_volume }}"{% if sound_on %} data-sound-on{% endif %}{% if room.vs_cpu %} data-poll-ms="{% if watching %}1000{% else %}700{% endif %}"{% endif %}{% if watching %} data-spectate data-challenge-url="{% url 'weiss:arcade_challenge' %}"{% endif %}>
       <aside class="play-chat-side" aria-label="{% if watching %}Game log{% else %}Chat and game log{% endif %}">
         <div class="play-log" data-log aria-live="polite"></div>
         {% if not watching %}

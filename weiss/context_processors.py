@@ -16,7 +16,9 @@ def card_lists(request):
     current = challenge.current(user)
     header = {"nav_avatar": profile.avatar if profile else None, "challenge_open": True,
               # The header's infinite challenge button: to the challenge menu, or with a challenge under way, back to it.
-              "infinite_start": current is None}
+              "infinite_start": current is None,
+              # The game board's sound effects (see play.js), as the player last set them.
+              "sound_on": profile.sound_on if profile else True, "sound_volume": profile.sound_volume if profile else 60}
     if not match or match.namespace != "weiss":
         return header
     return {**header, **panel_context(request), "arcade_paused": paused_run(request)}

@@ -262,6 +262,12 @@ class DamageTests(TestCase):
         self.assertEqual(self.state["log"][-1]["text"], "took 3 damage: Card15, Card14, Card13")
         self.assertFalse(game.view(self.state, 1)["damage_pending"])
 
+    def test_both_pages_see_damage_taken_so_its_sound_plays(self):
+        self.damage(3)
+        self.damage(2, climaxes={11})  # cancelled: not counted
+        self.assertEqual(game.view(self.state, 1)["me"]["damage_taken"], 3)
+        self.assertEqual(game.view(self.state, 2)["opponent"]["damage_taken"], 3)
+
     def test_climax_cancels_the_damage_after_the_board_shows_it(self):
         self.damage(4, climaxes={14})
         # Revealing stops at the climax; for now both cards sit in the clock.

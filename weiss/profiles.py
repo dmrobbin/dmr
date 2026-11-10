@@ -11,6 +11,7 @@ from django.db.models import Count, Q, Sum
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 
 from core.access import weiss_access_required
 
@@ -120,3 +121,16 @@ def profile(request):
 def profile_picture(request):
     owner, _ = PlayerProfile.objects.get_or_create(user=request.user)
     return avatar_picker(request, owner, request.user.username, reverse("weiss:profile"))
+
+
+@weiss_access_required
+@require_POST
+def sound_settings(request):
+    """The game board's sound effects: on or off, and their volume (0 to 100). Either can be sent alone."""
+    owner, _ = PlayerProfile.objects.get_or_create(user=request.user)
+    if "on" in request.POST:
+        owner.sound_on = request.POST["on"] == "1"
+    if str(request.POST.get("volume", "")).isdigit():
+        owner.sound_volume = min(100, int(request.POST["volume"]))
+    owner.save(update_fields=["sound_on", "sound_volume"])
+    return JsonResponse({"on": owner.sound_on, "volume": owner.sound_volume})

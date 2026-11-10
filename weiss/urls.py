@@ -14,6 +14,7 @@ urlpatterns = [
     path("profile/", profiles.profile, name="profile"),
     path("profile/picture/", profiles.profile_picture, name="profile_picture"),
     path("profile/picture/cards/", profiles.avatar_search, name="avatar_search"),
+    path("profile/sound/", profiles.sound_settings, name="sound_settings"),
     path("play/", play.room_list, name="play_rooms"),
     path("play/new/", play.room_create, name="play_create"),
     path("play/cpu/", play.room_vs_cpu, name="play_vs_cpu"),

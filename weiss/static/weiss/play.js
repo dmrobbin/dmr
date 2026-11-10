@@ -120,6 +120,284 @@
     if (board) renderControls();
   }
 
+  // --- Sound effects: recorded card sounds and a prompt blip (Kenney's CC0 casino and interface packs, in
+  // static/weiss/sounds), with hits and chimes made in the browser (Web Audio) on top of them ----------
+  // On or off and the volume are kept on the player's profile (profiles.sound_settings). The other
+  // side's draws, damage and so on play the same sounds, quieter; prompts are only ever for us.
+
+  const SOUND_URL = root.dataset.soundUrl;
+  const SOUND_BASE = root.dataset.soundBase || "";
+  let soundOn = "soundOn" in root.dataset;
+  let soundVolume = Number(root.dataset.soundVolume ?? 60); // 0 to 100
+  const OPPONENT_VOLUME = 0.55; // the other side's sounds, against ours
+  const SOUND_BOOST = 2.2; // into the limiter, so sounds are loud without clipping
+  const SOUND_STAGGER_MS = 140; // between sounds from the same board, e.g. clocking a card and then drawing
+  const SOUND_SAVE_MS = 400; // the slider's last value is saved once it stops moving
+  const takes = (prefix, n) => Array.from({ length: n }, (_, i) => `${prefix}-${i + 1}`);
+  // Each recording's takes; one is picked at random each time, so repeats don't sound canned.
+  const SAMPLE_FILES = {
+    slide: takes("card-slide", 8), place: takes("card-place", 4), shove: takes("card-shove", 4),
+    fan: takes("card-fan", 2), shuffle: ["card-shuffle"], chip: takes("chip-lay", 3), prompt: ["prompt"],
+  };
+  const samples = {}; // name -> [AudioBuffer, ...], filled in as they load
+  let audio = null; // the AudioContext, made on the first click (browsers only start one after a click)
+  let mix = null; // where every sound goes: a boost into a limiter
+  let noiseBuffer = null;
+  let soundSaveTimer = null;
+
+  function audioContext() {
+    const Context = window.AudioContext || window.webkitAudioContext;
+    if (!Context) return null;
+    if (!audio) {
+      audio = new Context();
+      const limiter = audio.createDynamicsCompressor();
+      limiter.threshold.value = -8;
+      limiter.knee.value = 6;
+      limiter.ratio.value = 12;
+      limiter.attack.value = 0.002;
+      limiter.release.value = 0.15;
+      limiter.connect(audio.destination);
+      mix = audio.createGain();
+      mix.gain.value = SOUND_BOOST;
+      mix.connect(limiter);
+      noiseBuffer = audio.createBuffer(1, audio.sampleRate, audio.sampleRate);
+      const data = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+      loadSamples(audio);
+    }
+    if (audio.state === "suspended") audio.resume().catch(() => {});
+    return audio;
+  }
+
+  // A browser that can't decode them (or a failed download) leaves a recording out; its sound falls back on Web Audio.
+  function loadSamples(ctx) {
+    for (const [name, files] of Object.entries(SAMPLE_FILES)) {
+      samples[name] = [];
+      for (const file of files) {
+        fetch(`${SOUND_BASE}${file}.ogg`)
+          .then((response) => (response.ok ? response.arrayBuffer() : Promise.reject(response.status)))
+          .then((data) => ctx.decodeAudioData(data))
+          .then((buffer) => samples[name].push(buffer))
+          .catch(() => {});
+      }
+    }
+  }
+
+  // One of a recording's takes, a touch faster or slower each time. False if none has loaded.
+  function sample(ctx, out, name, { at = 0, gain = 1, rate = 1 } = {}) {
+    const loaded = samples[name] || [];
+    if (!loaded.length) return false;
+    const source = ctx.createBufferSource();
+    const amp = ctx.createGain();
+    source.buffer = loaded[Math.floor(Math.random() * loaded.length)];
+    source.playbackRate.value = rate * (0.94 + Math.random() * 0.12);
+    amp.gain.value = gain;
+    source.connect(amp).connect(out);
+    source.start(ctx.currentTime + at / 1000);
+    return true;
+  }
+
+  // One note: a wave gliding from `from` to `to` Hz, quickly in and fading out over `ms`.
+  function tone(ctx, out, { at = 0, ms, from, to = from, wave = "sine", gain = 1 }) {
+    const start = ctx.currentTime + at / 1000;
+    const end = start + ms / 1000;
+    const osc = ctx.createOscillator();
+    const amp = ctx.createGain();
+    osc.type = wave;
+    osc.frequency.setValueAtTime(from, start);
+    osc.frequency.exponentialRampToValueAtTime(to, end);
+    amp.gain.setValueAtTime(0.0001, start);
+    amp.gain.exponentialRampToValueAtTime(gain, start + 0.006);
+    amp.gain.exponentialRampToValueAtTime(0.0001, end);
+    osc.connect(amp).connect(out);
+    osc.start(start);
+    osc.stop(end + 0.02);
+  }
+
+  // A burst of noise through a filter sweeping from `from` to `to` Hz: swishes, cracks and rumbles.
+  function noise(ctx, out, { at = 0, ms, from, to = from, type = "bandpass", q = 0.7, gain = 1 }) {
+    const start = ctx.currentTime + at / 1000;
+    const end = start + ms / 1000;
+    const source = ctx.createBufferSource();
+    const filter = ctx.createBiquadFilter();
+    const amp = ctx.createGain();
+    source.buffer = noiseBuffer;
+    filter.type = type;
+    filter.Q.value = q;
+    filter.frequency.setValueAtTime(from, start);
+    filter.frequency.exponentialRampToValueAtTime(to, end);
+    amp.gain.setValueAtTime(0.0001, start);
+    amp.gain.exponentialRampToValueAtTime(gain, start + 0.005);
+    amp.gain.exponentialRampToValueAtTime(0.0001, end);
+    source.connect(filter).connect(amp).connect(out);
+    source.start(start, Math.random() * 0.5);
+    source.stop(end + 0.02);
+  }
+
+  // A bell: a note with the inharmonic overtones that make it ring, decaying over `ms`.
+  function bell(ctx, out, { at = 0, ms = 900, hz, gain = 0.5 }) {
+    for (const [ratio, level] of [[1, 1], [2.76, 0.4], [5.4, 0.18]]) {
+      tone(ctx, out, { at, ms: ms / Math.sqrt(ratio), from: hz * ratio, gain: gain * level });
+    }
+  }
+
+  // A heavy hit, for damage: a falling boom under a crack.
+  function impact(ctx, out, { at = 0, gain = 1 } = {}) {
+    tone(ctx, out, { at, ms: 420, from: 150, to: 38, gain });
+    noise(ctx, out, { at, ms: 260, from: 1200, to: 120, type: "lowpass", q: 1, gain: gain * 0.9 });
+    noise(ctx, out, { at, ms: 70, from: 4000, to: 1500, q: 0.8, gain: gain * 0.6 });
+  }
+
+  const SOUNDS = {
+    // A card slid off the deck into the hand.
+    draw: (ctx, out) => sample(ctx, out, "slide", { gain: 1.2 })
+      || noise(ctx, out, { ms: 160, from: 1500, to: 5000, gain: 0.9 }),
+    // Any other card going anywhere: set down on the table.
+    move: (ctx, out) => sample(ctx, out, "place")
+      || noise(ctx, out, { ms: 90, from: 3000, to: 900, gain: 0.8 }),
+    // A card going into the clock: set down hard, with a click like a counter ticking over.
+    clock: (ctx, out) => {
+      if (!sample(ctx, out, "place", { gain: 1.1, rate: 0.85 })) tone(ctx, out, { ms: 150, from: 520, to: 300, wave: "triangle", gain: 0.8 });
+      if (!sample(ctx, out, "chip", { at: 35, gain: 0.9 })) noise(ctx, out, { at: 35, ms: 45, from: 3500, q: 2, gain: 0.6 });
+    },
+    // Damage landed: the card slammed into the clock with a hit.
+    damage: (ctx, out) => {
+      sample(ctx, out, "shove", { gain: 1.1, rate: 0.8 });
+      impact(ctx, out);
+    },
+    // A climax cancelled the damage: the hit glances off with a falling shimmer.
+    negated: (ctx, out) => {
+      sample(ctx, out, "shove", { gain: 0.9 });
+      tone(ctx, out, { ms: 380, from: 1600, to: 520, wave: "triangle", gain: 0.5 });
+      noise(ctx, out, { ms: 380, from: 7000, to: 2500, q: 2, gain: 0.4 });
+    },
+    // A level up: cards fanned out under a rising arpeggio, ending on a ringing chord.
+    level: (ctx, out) => {
+      sample(ctx, out, "fan", { gain: 1.1 });
+      noise(ctx, out, { ms: 420, from: 600, to: 6000, gain: 0.35 });
+      [523, 659, 784].forEach((hz, i) => tone(ctx, out, { at: i * 80, ms: 180, from: hz, wave: "triangle", gain: 0.55 }));
+      for (const hz of [1047, 1319, 1568]) bell(ctx, out, { at: 240, ms: 1400, hz, gain: 0.3 });
+    },
+    // Something needs our answer: a low, rising game-menu blip.
+    prompt: (ctx, out) => {
+      if (sample(ctx, out, "prompt", { gain: 1.1 })) return;
+      [392, 523, 784].forEach((hz, i) => tone(ctx, out, { at: i * 75, ms: i === 2 ? 220 : 110, from: hz, wave: "square", gain: 0.25 }));
+    },
+    // A deck out: the waiting room shuffled into a new deck.
+    shuffle: (ctx, out) => {
+      if (sample(ctx, out, "shuffle", { gain: 1.2 })) return;
+      for (const at of [0, 70, 140, 210, 280]) noise(ctx, out, { at, ms: 70, from: 2500, to: 4500, gain: 0.6 });
+    },
+  };
+
+  function playSound(name, { quiet = false, at = 0 } = {}) {
+    if (!soundOn || !soundVolume || !SOUNDS[name]) return;
+    const ctx = audioContext();
+    if (!ctx) return;
+    const out = ctx.createGain();
+    out.gain.value = (soundVolume / 100) * (quiet ? OPPONENT_VOLUME : 1);
+    out.connect(mix);
+    setTimeout(() => SOUNDS[name](ctx, out), at);
+  }
+
+  function saveSound(fields) {
+    if (!SOUND_URL) return;
+    fetch(SOUND_URL, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "X-CSRFToken": CSRF },
+      body: new URLSearchParams(fields),
+    }).catch(() => { /* only this visit, then */ });
+  }
+
+  function setSound(on) {
+    soundOn = on;
+    saveSound({ on: on ? "1" : "0" });
+    if (on) playSound("prompt");
+    if (board) renderControls();
+  }
+
+  function setSoundVolume(volume, save) {
+    soundVolume = volume;
+    clearTimeout(soundSaveTimer);
+    if (save) soundSaveTimer = setTimeout(() => saveSound({ volume: String(volume) }), SOUND_SAVE_MS);
+  }
+
+  // What each side's sounds come from, at the last board we heard: the first board (and a new
+  // game's) only sets this, so reopening the page doesn't replay anything.
+  let heard = null;
+  let heardPrompt = "";
+
+  const pileCount = (zone) => (Array.isArray(zone) ? zone.length : (zone && zone.count) || 0);
+
+  function soundSnapshot(side) {
+    const counts = Object.entries(side.zones).map(([zone, cardsThere]) => `${zone}:${pileCount(cardsThere)}`);
+    const stage = STAGE.map((slot) => `${(side.stage[slot] || {}).uid || ""}/${(side.markers[slot] || []).length}`);
+    return {
+      deck: pileCount(side.zones.deck), hand: pileCount(side.zones.hand), clock: pileCount(side.zones.clock),
+      refreshes: side.refreshes || 0, level_ups: side.level_ups || 0, damage_taken: side.damage_taken || 0, negated: side.negated || 0,
+      layout: `${counts.join(",")}|${stage.join(",")}`,
+    };
+  }
+
+  // The prompt that's waiting on us, if any, as a key that changes when a new one comes up (as drawModal picks them).
+  function promptKey() {
+    if (SPECTATING || board.game_over) return "";
+    const attack = board.attack;
+    if (board.rps) return board.rps.mine || board.rps.won !== null ? "" : `rps:${JSON.stringify(board.rps.last)}`;
+    if (board.flash && board.flash.deck) return "flash";
+    if (board.mulligan && !board.mulligan.me) return "mulligan";
+    if (board.discard && board.discard.mine) return `discard:${board.turn_number}`;
+    if (board.level_up_pending) return `level:${board.me.level_ups || 0}`;
+    if (board.ability && board.ability.mine && (!board.ability.resolving || (board.ability.prompt && board.ability.prompt.kind !== "manual"))) {
+      return `ability:${JSON.stringify(board.ability.resolving ? board.ability.prompt : board.ability.queue || "queue")}`;
+    }
+    if (board.my_turn && attack && attack.step === "trigger" && attack.prompt && !board.ability_show) return `trigger:${attack.uid}:${attack.prompt.kind}`;
+    if (!board.my_turn && attack && attack.step === "counter" && (attack.counters || []).length && !board.ability && !board.ability_show) {
+      return `counter:${board.turn_number}:${board.attacks}`;
+    }
+    if (encoreDue()) return `encore:${board.turn_number}`;
+    if (board.rules_request && !board.rules_request.mine) return "rules";
+    return "";
+  }
+
+  function playBoardSounds() {
+    const now = { game: board.game_number };
+    for (const owner of ["me", "opponent"]) {
+      const side = board[owner];
+      if (side) now[owner] = soundSnapshot(side);
+    }
+    const before = heard && heard.game === now.game ? heard : null;
+    heard = now;
+    const prompt = promptKey();
+    if (!before) {
+      heardPrompt = prompt;
+      return;
+    }
+    let at = 0;
+    for (const owner of ["me", "opponent"]) {
+      const was = before[owner];
+      const is = now[owner];
+      if (!was || !is) continue;
+      const sounds = [];
+      if (is.refreshes > was.refreshes) sounds.push("shuffle");
+      if (is.level_ups > was.level_ups) sounds.push("level");
+      else if (is.damage_taken > was.damage_taken) sounds.push("damage");
+      else if (is.negated > was.negated) sounds.push("negated");
+      else {
+        if (is.clock > was.clock) sounds.push("clock");
+        if (is.hand > was.hand && is.deck < was.deck) sounds.push("draw");
+        if (!sounds.length && is.layout !== was.layout) sounds.push("move");
+      }
+      for (const name of sounds) {
+        playSound(name, { quiet: owner === "opponent", at });
+        at += SOUND_STAGGER_MS;
+      }
+    }
+    if (prompt && prompt !== heardPrompt) playSound("prompt", { at: at && at + SOUND_STAGGER_MS });
+    heardPrompt = prompt;
+  }
+
   // --- Talking to the server -------------------------------------------------------------------
 
   function receive(data) {
@@ -152,6 +430,7 @@
     animateOpponent(before);
     if (wasInPlay && animations) celebrate(wasInPlay);
     announce();
+    playBoardSounds();
     // A climax cancelled our damage: leave it on the board for a moment, then let the server clean up.
     if (board.damage_pending && !resolveTimer) {
       resolveTimer = setTimeout(() => {
@@ -1310,6 +1589,10 @@
           <div class="layout-switch">
             <button type="button" data-animations title="Turn animations on or off">Animations</button>
           </div>
+          <div class="layout-switch sound-switch">
+            <button type="button" data-sound title="Turn sound effects on or off">Sound</button>
+            <input type="range" min="0" max="100" step="5" data-sound-volume aria-label="Sound volume" title="Sound volume">
+          </div>
           <div class="layout-switch">
             <button type="button" data-rules title="Turn the turn rules on or off (both players have to agree)">Turn rules</button>
           </div>
@@ -1320,6 +1603,10 @@
       button.setAttribute("aria-pressed", String(button.dataset.layout === layout));
     });
     controlsEl.querySelector("[data-animations]").setAttribute("aria-pressed", String(animations));
+    controlsEl.querySelector("[data-sound]").setAttribute("aria-pressed", String(soundOn));
+    const volumeEl = controlsEl.querySelector("[data-sound-volume]");
+    volumeEl.disabled = !soundOn;
+    if (document.activeElement !== volumeEl) volumeEl.value = String(soundVolume);
     const errorEl = controlsEl.querySelector("[data-error]");
     errorEl.textContent = error;
     errorEl.hidden = !error;
@@ -2394,6 +2681,10 @@
       setAnimations(!animations);
       return;
     }
+    if (event.target.closest("[data-sound]")) {
+      setSound(!soundOn);
+      return;
+    }
     const layoutButton = event.target.closest("[data-layout]");
     if (layoutButton) {
       setLayout(layoutButton.dataset.layout);
@@ -2532,6 +2823,16 @@
     if (input.value.trim()) act({ type: "chat", text: input.value });
     input.value = "";
   });
+
+  // The volume slider: heard as it moves, saved once it stops.
+  root.addEventListener("input", (event) => {
+    if (event.target.matches("[data-sound-volume]")) setSoundVolume(Number(event.target.value), true);
+  });
+  root.addEventListener("change", (event) => {
+    if (event.target.matches("[data-sound-volume]")) playSound("draw");
+  });
+  // Browsers only let a page make sound after it's been clicked: start the audio on the first click.
+  root.addEventListener("pointerdown", () => { if (soundOn) audioContext(); }, { once: true });
 
   poll();
   setInterval(poll, POLL_MS);

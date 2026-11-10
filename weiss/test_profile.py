@@ -108,6 +108,40 @@ class PictureTests(TestCase):
         self.assertContains(self.client.get(reverse("weiss:sets")), f'href="{reverse("weiss:profile")}"')
 
 
+class SoundSettingsTests(TestCase):
+    def setUp(self):
+        self.user = player("alice")
+        self.client.force_login(self.user)
+        self.url = reverse("weiss:sound_settings")
+
+    def test_on_and_loud_until_changed(self):
+        profile = PlayerProfile.objects.create(user=self.user)
+        self.assertEqual((profile.sound_on, profile.sound_volume), (True, 60))
+
+    def test_turning_it_off_keeps_the_volume(self):
+        self.assertEqual(self.client.post(self.url, {"on": "0"}).json(), {"on": False, "volume": 60})
+        self.assertEqual(self.client.post(self.url, {"volume": "35"}).json(), {"on": False, "volume": 35})
+        self.assertEqual(self.client.post(self.url, {"on": "1"}).json(), {"on": True, "volume": 35})
+
+    def test_the_volume_stays_in_range(self):
+        self.assertEqual(self.client.post(self.url, {"volume": "250"}).json()["volume"], 100)
+        for bad in ("-5", "loud", ""):
+            self.assertEqual(self.client.post(self.url, {"volume": bad}).json()["volume"], 100, bad)
+
+    def test_only_by_post(self):
+        self.assertEqual(self.client.get(self.url).status_code, 405)
+
+    def test_the_game_board_starts_from_them(self):
+        PlayerProfile.objects.create(user=self.user, sound_on=False, sound_volume=20)
+        card, bob = add_card(), player("bob")
+        room = GameRoom(host=self.user, guest=bob, host_deck=deck_for(self.user, card), guest_deck=deck_for(bob, card), status="playing")
+        play.deal(room)
+        room.save()
+        page = self.client.get(reverse("weiss:play_room", args=[room.pk])).content.decode()
+        self.assertIn('data-sound-volume="20"', page)
+        self.assertNotIn("data-sound-on", page)
+
+
 class CpuPictureTests(TestCase):
     def setUp(self):
         self.card = add_card()

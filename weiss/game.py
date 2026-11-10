@@ -6,7 +6,8 @@ is to keep hidden things hidden (hands, deck and stock order) and to keep both b
 State is plain JSON, stored on the GameRoom:
 
     {"players": {"<user id>": {"name": ..., "zones": {zone: [card, ...]}, "stage": {slot: card|None},
-                               "markers": {slot: [card, ...]}, "refreshes": n, "level_ups": n, "climaxes": n, "negated": n, "negated_card": pk}},
+                               "markers": {slot: [card, ...]}, "refreshes": n, "level_ups": n, "climaxes": n, "negated": n, "negated_card": pk,
+                               "damage_taken": n}},
      "order": [host id, guest id], "turn": "<user id>", "turn_number": 1, "phase": "mulligan", "log": [...],
      "mulligan_done": [user id, ...],  # during the mulligan: who has finished theirs
      "reveal": {"player": id, "uid": ..., "card": pk},  # a hand card shown to the opponent, until they close it
@@ -4329,7 +4330,8 @@ def side_view(side, mine):
                for slot in STAGE_SLOTS}
     return {"name": side["name"], "zones": zones, "stage": stage, "markers": markers,
             "refreshes": side.get("refreshes", 0), "level_ups": side.get("level_ups", 0),
-            "climaxes": side.get("climaxes", 0), "negated": side.get("negated", 0), "negated_card": side.get("negated_card")}
+            "climaxes": side.get("climaxes", 0), "negated": side.get("negated", 0), "negated_card": side.get("negated_card"),
+            "damage_taken": side.get("damage_taken", 0)}  # so both pages can tell damage from other cards going to the clock
 
 
 def visible_cards(view):

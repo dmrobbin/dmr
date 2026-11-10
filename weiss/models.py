@@ -163,6 +163,8 @@ class PlayerProfile(Avatar):
     """What a player has chosen for their profile."""
 
     user = models.OneToOneField("auth.User", on_delete=models.CASCADE, related_name="player_profile")
+    sound_on = models.BooleanField(default=True, help_text="Sound effects on the game board")
+    sound_volume = models.PositiveSmallIntegerField(default=60, help_text="Their volume, 0 to 100")
 
     def __str__(self):
         return str(self.user)
