@@ -21,7 +21,7 @@ from . import abilities, arcade, challenge, coop, cpu, packs, scenes
 from .lists import EXPRESS_PROMPT, SESSION_KEY, deck_checks, sorted_entries
 from .card_images import image_type
 from .event_scenes import STARTERS
-from .models import ArcadeEntry, ArcadeScenario, Card, CardList, ChallengeSettings, CpuImage, CpuProfile, NarrativeChallenge, Scene
+from .models import ArcadeEntry, ArcadeScenario, Card, CardList, ChallengeSettings, CpuImage, CpuProfile, NarrativeChallenge, Scene, Sleeve
 from .profiles import avatar_picker
 
 
@@ -104,12 +104,13 @@ def read_profile_form(request):
         return None, f"Aggression goes from {cpu.MIN_AGGRESSION} to {cpu.MAX_AGGRESSION}."
     deck = CardList.objects.filter(pk=request.POST.get("deck") or None, reserved_for_cpu=True).first()
     texts = {field: request.POST.get(field, "").strip()[:MAX_TEXT] for field in TEXT_FIELDS}
-    return {"name": name, "model": model, "aggression": aggression, "deck": deck, "boss": bool(request.POST.get("boss")), **texts}, None
+    sleeve = Sleeve.objects.filter(pk=request.POST.get("sleeve") if str(request.POST.get("sleeve", "")).isdigit() else None).first()
+    return {"name": name, "model": model, "aggression": aggression, "deck": deck, "boss": bool(request.POST.get("boss")), "sleeve": sleeve, **texts}, None
 
 
 # The tab's own tabs: one at a time, each worked out only when it's open (?tab=...).
 TABS = {"profiles": "Profiles", "scenes": "Scenes", "decks": "Decks", "arcade": "Arcade lists", "challenges": "Narrative challenges",
-        "infinite": "Infinite challenge", "unplayable": "Unplayable cards"}
+        "infinite": "Infinite challenge", "sleeves": "Card sleeves", "unplayable": "Unplayable cards"}
 
 
 def back_to(tab):
@@ -122,7 +123,8 @@ def cpu_decks():
 
 
 def profile_form_context():
-    return {"decks": cpu_decks(), "models": cpu.MODELS.items(), "aggressions": range(cpu.MIN_AGGRESSION, cpu.MAX_AGGRESSION + 1)}
+    return {"decks": cpu_decks(), "models": cpu.MODELS.items(), "aggressions": range(cpu.MIN_AGGRESSION, cpu.MAX_AGGRESSION + 1),
+            "sleeves": Sleeve.objects.all()}
 
 
 def with_status(profiles):
@@ -152,7 +154,7 @@ def scene_uses():
 def cpu_home(request):
     tab = request.GET.get("tab") if request.GET.get("tab") in TABS else "profiles"
     counts = {"profiles": CpuProfile.objects.count(), "scenes": Scene.objects.count(), "decks": CardList.objects.filter(reserved_for_cpu=True).count(),
-              "arcade": ArcadeScenario.objects.count(), "challenges": NarrativeChallenge.objects.count()}
+              "arcade": ArcadeScenario.objects.count(), "challenges": NarrativeChallenge.objects.count(), "sleeves": Sleeve.objects.count()}
     context = {"tab": tab, "tabs": [(key, label, counts.get(key)) for key, label in TABS.items()]}
     if tab == "profiles":
         profiles = with_status(list(CpuProfile.objects.select_related("deck", "image").order_by("name")))
@@ -186,6 +188,9 @@ def cpu_home(request):
         for scenario in scenarios:
             scenario.problem = arcade.scenario_problem(scenario)
         context.update(narratives=NarrativeChallenge.objects.select_related("scenario"), scenarios=scenarios, pack_sets=packs.pack_sets())
+    elif tab == "sleeves":
+        from .sleeve_views import staff_list  # weiss.sleeve_views uses this module
+        context.update(sleeves=staff_list())
     elif tab == "infinite":
         from .buffs import BUFFS
         settings = ChallengeSettings.current()

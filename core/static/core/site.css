@@ -11,6 +11,15 @@
   --accent-soft: rgb(212 175 55 / .12);
   --on-accent: #14120e;
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  /* The built-in card sleeves (weiss.models.Sleeve.STYLES). */
+  --sleeve-classic: repeating-linear-gradient(45deg, #2a2418, #2a2418 6px, #332b1c 6px, #332b1c 12px);
+  --sleeve-midnight: radial-gradient(circle at 50% 50%, rgb(214 224 245 / .5) 0 7%, rgb(214 224 245 / .15) 8% 11%, transparent 12%),
+    repeating-linear-gradient(45deg, rgb(196 210 236 / .16) 0 1px, transparent 1px 9px),
+    repeating-linear-gradient(-45deg, rgb(196 210 236 / .16) 0 1px, transparent 1px 9px),
+    radial-gradient(ellipse at 50% 40%, #22325a, #0a1024 75%);
+  --sleeve-crimson: radial-gradient(circle at 50% 50%, #e8c15a 0 8%, #7a1220 9% 12%, #d4a64a 13% 14%, transparent 15%),
+    repeating-radial-gradient(circle at 50% 50%, transparent 0 7px, rgb(212 166 74 / .16) 7px 8px),
+    linear-gradient(160deg, #7a1220, #3a0510);
 }
 
 * { box-sizing: border-box; }
@@ -965,7 +974,11 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .pcard.pcard-turned { border-radius: .35rem; box-shadow: 0 2px 6px rgb(0 0 0 / .5); }
 .pcard.pcard-turned img { position: absolute; left: 50%; top: 50%; width: var(--card-h); height: var(--card-w); max-width: none;
   transform: translate(-50%, -50%) rotate(90deg); box-shadow: none; }
-.pcard-back { display: block; width: 100%; height: 100%; border-radius: .35rem; border: 1px solid #3a3326; background: repeating-linear-gradient(45deg, #2a2418, #2a2418 6px, #332b1c 6px, #332b1c 12px); }
+/* A face-down card's back: its owner's card sleeve (weiss.sleeves), as --sleeve, a CSS background. Each side of the
+   board sets it from --sleeve-me and --sleeve-opponent, which play.js sets on the page; the built-in ones are below. */
+.pcard-back { display: block; width: 100%; height: 100%; border-radius: .35rem; border: 1px solid #3a3326; background: var(--sleeve, var(--sleeve-classic)); }
+.side-me, .card-flight { --sleeve: var(--sleeve-me, var(--sleeve-classic)); }
+.side-opponent, .card-flight.card-flight-opponent { --sleeve: var(--sleeve-opponent, var(--sleeve-classic)); }
 .pcard.face-down img { filter: brightness(.35) sepia(.6); }
 .pcard.pos-rest { transform: rotate(90deg); }
 .pcard.pos-reverse { transform: rotate(180deg); }
@@ -1956,3 +1969,37 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .sound-switch { align-items: center; }
 .sound-switch input[type="range"] { width: 5.5rem; margin: 0 .55rem; accent-color: var(--accent); }
 .sound-switch input[type="range"]:disabled { opacity: .4; }
+
+/* Card sleeves: the shelf on a player's profile and on the staff's tab, the banner for new ones, and the sleeve form. */
+.sleeve-shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: .75rem; margin: 0; padding: 0; list-style: none; }
+.sleeve-item { display: flex; flex-direction: column; align-items: flex-start; gap: .3rem; padding: .75rem; border: 1px solid var(--border); border-radius: .6rem; background: var(--surface); }
+.sleeve-item.sleeve-chosen { border-color: var(--accent); background: var(--accent-soft); }
+.sleeve-item.sleeve-hidden { opacity: .6; }
+.sleeve-preview { position: relative; display: block; width: 4.4rem; aspect-ratio: 5 / 7; flex: none; box-shadow: 0 2px 6px rgb(0 0 0 / .5); border-radius: .35rem; }
+.sleeve-preview-large { width: 10rem; }
+.sleeve-locked .sleeve-preview .pcard-back { filter: grayscale(.7) brightness(.55); }
+.sleeve-lock { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 1.3rem; }
+.sleeve-name { font-weight: 600; }
+.sleeve-in-use { color: var(--accent); font-weight: 600; }
+.sleeve-conditions { display: flex; flex-direction: column; gap: .35rem; width: 100%; margin: 0; padding: 0; list-style: none; }
+.sleeve-conditions li { display: flex; flex-direction: column; gap: .1rem; }
+.sleeve-progress { display: block; height: .35rem; border-radius: 999px; background: var(--border); overflow: hidden; }
+.sleeve-progress span { display: block; height: 100%; background: var(--accent); }
+.sleeve-met .sleeve-progress span { background: #5cb85c; }
+.sleeve-banner { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin: 0 0 1rem; padding: .75rem 1rem; border: 1px solid var(--accent); border-radius: .75rem; background: var(--accent-soft); }
+.sleeve-banner form { margin: 0; }
+.sleeve-banner-backs { display: inline-flex; }
+.sleeve-banner-backs .pcard-back { width: 1.6rem; height: 2.24rem; box-shadow: 0 1px 4px rgb(0 0 0 / .5); }
+.sleeve-banner-backs .pcard-back + .pcard-back { margin-left: -.6rem; }
+.sleeve-cropper { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
+.sleeve-crop-frame { position: relative; width: 15rem; max-width: 100%; aspect-ratio: 5 / 7; overflow: hidden; border-radius: .6rem; border: 1px solid var(--border);
+  background: repeating-conic-gradient(#1e2026 0 25%, #16181d 0 50%) 0 0 / 16px 16px; touch-action: none; cursor: grab; user-select: none; }
+.sleeve-crop-frame.dragging { cursor: grabbing; }
+.sleeve-crop-frame img { position: absolute; max-width: none; pointer-events: none; }
+.sleeve-crop-frame .pcard-back { border-radius: 0; border: none; }
+.sleeve-crop-controls { display: flex; flex-direction: column; gap: .5rem; flex: 1 1 12rem; }
+.sleeve-rows { display: flex; flex-direction: column; gap: .5rem; margin: .5rem 0; }
+.sleeve-row { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.sleeve-row input[type="number"] { width: 7rem; }
+.game-over-sleeves { display: flex; align-items: center; justify-content: center; gap: .6rem; margin: .6rem 0 0; font-weight: 700; color: var(--word-light); }
+.game-over-sleeves .pcard-back { width: 1.8rem; height: 2.52rem; flex: none; box-shadow: 0 1px 4px rgb(0 0 0 / .6); }

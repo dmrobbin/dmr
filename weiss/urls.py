@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import challenge_views, cpu_views, express, lists, pack_views, play, profiles, scene_views, views
+from . import challenge_views, cpu_views, express, lists, pack_views, play, profiles, scene_views, sleeve_views, views
 
 app_name = "weiss"
 
@@ -15,6 +15,9 @@ urlpatterns = [
     path("profile/picture/", profiles.profile_picture, name="profile_picture"),
     path("profile/picture/cards/", profiles.avatar_search, name="avatar_search"),
     path("profile/sound/", profiles.sound_settings, name="sound_settings"),
+    path("profile/sleeve/", sleeve_views.sleeve_choose, name="sleeve_choose"),
+    path("profile/sleeves/seen/", sleeve_views.sleeves_seen, name="sleeves_seen"),
+    path("sleeves/<int:pk>/image/", sleeve_views.sleeve_image, name="sleeve_image"),
     path("play/", play.room_list, name="play_rooms"),
     path("play/new/", play.room_create, name="play_create"),
     path("play/cpu/", play.room_vs_cpu, name="play_vs_cpu"),
@@ -78,6 +81,11 @@ urlpatterns = [
     path("cpu/scenes/<int:pk>/delete/", scene_views.scene_delete, name="cpu_scene_delete"),
     path("cpu/scenes/<int:pk>/event/", scene_views.scene_event, name="cpu_scene_event"),
     path("cpu/scenes/starter-events/", scene_views.starter_events, name="cpu_starter_events"),
+    path("cpu/sleeves/new/", sleeve_views.sleeve_create, name="sleeve_create"),
+    path("cpu/sleeves/<int:pk>/", sleeve_views.sleeve_edit, name="sleeve_edit"),
+    path("cpu/sleeves/<int:pk>/award/", sleeve_views.sleeve_award, name="sleeve_award"),
+    path("cpu/sleeves/<int:pk>/revoke/", sleeve_views.sleeve_revoke, name="sleeve_revoke"),
+    path("cpu/sleeves/<int:pk>/delete/", sleeve_views.sleeve_delete, name="sleeve_delete"),
     path("cpu/unplayable/", cpu_views.cpu_excluded, name="cpu_excluded"),
     path("cpu/unplayable.txt", cpu_views.cpu_excluded_export, name="cpu_excluded_export"),
     path("cpu/decks/new/", cpu_views.cpu_deck_create, name="cpu_deck_create"),

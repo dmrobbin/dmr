@@ -1,6 +1,6 @@
 from core.access import has_weiss_access
 
-from . import challenge
+from . import challenge, sleeves
 from .lists import panel_context
 from .play import paused_run
 
@@ -21,4 +21,5 @@ def card_lists(request):
               "sound_on": profile.sound_on if profile else True, "sound_volume": profile.sound_volume if profile else 60}
     if not match or match.namespace != "weiss":
         return header
-    return {**header, **panel_context(request), "arcade_paused": paused_run(request)}
+    return {**header, **panel_context(request), "arcade_paused": paused_run(request),
+            "sleeves_unlocked": sleeves.unseen(user) if match.url_name != "profile" else []}

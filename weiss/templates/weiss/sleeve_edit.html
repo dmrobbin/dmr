@@ -1,0 +1,97 @@
+{% extends "weiss/base.html" %}
+{% load static %}
+
+{% block title %}{% if creating %}New card sleeve{% else %}{{ sleeve.name }}{% endif %}{% endblock %}
+
+{% block weiss_content %}
+  <p class="small"><a href="{% url 'weiss:cpu_home' %}?tab=sleeves">← Card sleeves</a></p>
+  <h1>{% if creating %}New card sleeve{% else %}{{ sleeve.name }}{% endif %}</h1>
+
+  <form method="post" enctype="multipart/form-data" class="cpu-form sleeve-form" data-sleeve-form
+        action="{% if creating %}{% url 'weiss:sleeve_create' %}{% else %}{% url 'weiss:sleeve_edit' sleeve.pk %}{% endif %}">
+    {% csrf_token %}
+    <div class="cpu-profile-grid">
+      <section class="cpu-panel">
+        <h2>Picture</h2>
+        {% if sleeve.style %}
+          <p class="muted small">A built-in sleeve, drawn by the site: its look can't be changed.</p>
+          <span class="sleeve-preview sleeve-preview-large"><span class="pcard-back" style="--sleeve: {{ sleeve.css }}"></span></span>
+        {% else %}
+          {# The cropper (sleeve_crop.js): the picture chosen is dragged and zoomed in a card-shaped frame, and what the frame shows is what's uploaded. #}
+          <div class="sleeve-cropper" data-cropper data-width="{{ crop_width }}" data-height="{{ crop_height }}">
+            <div class="sleeve-crop-frame" data-crop-frame>
+              {% if sleeve.key %}<span class="pcard-back" data-crop-current style="--sleeve: {{ sleeve.css }}"></span>{% endif %}
+              <img alt="" data-crop-image hidden draggable="false">
+            </div>
+            <div class="sleeve-crop-controls">
+              <label class="small">{% if sleeve.key %}Replace the picture{% else %}Picture{% endif %}
+                <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" data-crop-source></label>
+              <label class="small" data-crop-zoom-label hidden>Zoom <input type="range" min="1" max="4" step="0.01" value="1" data-crop-zoom></label>
+              <p class="muted small" data-crop-help>{% if sleeve.key %}Choose a new picture to replace this one.{% else %}Choose a picture: then drag it, and zoom, to fit the card.{% endif %}
+                It's saved at {{ crop_width }}×{{ crop_height }}, a card's shape.</p>
+              <input type="file" name="image" hidden data-crop-output>
+            </div>
+          </div>
+        {% endif %}
+      </section>
+
+      <section class="cpu-panel">
+        <h2>About it</h2>
+        <label class="small">Name <input type="text" name="name" value="{{ sleeve.name|default:'' }}" maxlength="100" required></label>
+        <label class="small">Description <input type="text" name="description" value="{{ sleeve.description|default:'' }}" maxlength="300" placeholder="Shown to players under its name"></label>
+        <label class="small"><input type="checkbox" name="hidden"{% if sleeve.hidden %} checked{% endif %}> Hidden
+          <span class="muted">(not offered: nobody new unlocks it, and only those who have it see it; you can still give it out)</span></label>
+      </section>
+    </div>
+
+    <section class="cpu-panel">
+      <h2>What unlocks it</h2>
+      <p class="muted small">No conditions: everyone has it. Only what players do from when sleeves came in counts.</p>
+      <label class="small">Needs
+        <select name="match">{% for value, label in matches %}<option value="{{ value }}"{% if value == sleeve.match %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      </label>
+      <div class="sleeve-rows" data-condition-rows>
+        {% for row in rows %}{% include "weiss/sleeve_condition.html" with row=row %}{% endfor %}
+      </div>
+      <template data-condition-template>{% include "weiss/sleeve_condition.html" with row=None %}</template>
+      <p><button type="button" class="button-small secondary" data-add-condition>Add a condition</button></p>
+    </section>
+
+    <p><button type="submit" class="button-small" data-sleeve-save>{% if creating %}Make the sleeve{% else %}Save{% endif %}</button></p>
+  </form>
+
+  {% if not creating %}
+    <section class="cpu-panel">
+      <h2>Who has it</h2>
+      {% if sleeve.free and not sleeve.hidden %}<p class="muted small">Everyone: it has no conditions.</p>{% endif %}
+      <p class="muted small">{{ using }} player{{ using|pluralize }} using it now.</p>
+      <form method="post" action="{% url 'weiss:sleeve_award' sleeve.pk %}" class="panel-row cpu-form">{% csrf_token %}
+        <input type="text" name="username" placeholder="Username" aria-label="Username" required>
+        <button type="submit" class="button-small">Give it to them</button>
+      </form>
+      {% if owners %}
+        <ul class="cpu-list cpu-rows">
+          {% for owner in owners %}
+            <li>
+              <span>{{ owner.user.username }}</span>
+              <span class="muted small">{% if owner.awarded_by %}given by {{ owner.awarded_by.username }}{% else %}unlocked{% endif %} {{ owner.unlocked|date:"M j, Y" }}</span>
+              <form method="post" action="{% url 'weiss:sleeve_revoke' sleeve.pk %}" onsubmit="return confirm('Take {{ sleeve.name|escapejs }} back from {{ owner.user.username|escapejs }}?')">{% csrf_token %}
+                <input type="hidden" name="user" value="{{ owner.user_id }}"><button type="submit" class="button-small secondary">Take back</button></form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty">Nobody has unlocked it, or been given it, yet.</p>
+      {% endif %}
+    </section>
+
+    {% if not sleeve.style %}
+      <form method="post" action="{% url 'weiss:sleeve_delete' sleeve.pk %}" onsubmit="return confirm('Delete {{ sleeve.name|escapejs }}? Anyone using it goes back to the default.')">{% csrf_token %}
+        <button type="submit" class="button-small danger">Delete {{ sleeve.name }}</button></form>
+    {% endif %}
+  {% endif %}
+{% endblock %}
+
+{% block weiss_scripts %}
+  <script src="{% static 'weiss/sleeve_edit.js' %}" defer></script>
+{% endblock %}

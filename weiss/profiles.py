@@ -1,4 +1,4 @@
-"""Player profiles: their lists, the games they've played, and a picture cut from a card.
+"""Player profiles: their lists, the games they've played, a picture cut from a card, and their card sleeve.
 
 A picture is a card and a circle on its image, kept as numbers and cropped by the browser. The same
 picker sets a CPU's picture, from the CPU creation tab.
@@ -15,8 +15,9 @@ from django.views.decorators.http import require_POST
 
 from core.access import weiss_access_required
 
+from . import sleeves
 from .card_images import series_title
-from .models import ArcadeRun, Card, CardList, CpuProfile, GameRecord, PlayerProfile
+from .models import ArcadeRun, Card, CardList, CpuProfile, GameRecord, PlayerProfile, SleeveUnlock
 from .views import summarize_sets
 
 MIN_RADIUS = .05
@@ -109,8 +110,12 @@ def profile(request):
     opponents_avatars(records, user)
     for record in records:
         record.view_for(user)
+    sleeves.check(user.pk)  # one added since their last game may be theirs already
+    fresh = SleeveUnlock.objects.filter(user=user, seen=False)
+    new = set(fresh.values_list("sleeve_id", flat=True))
+    fresh.update(seen=True)  # they're seeing them now
     return render(request, "weiss/profile.html", {
-        "avatar": owner.avatar if owner else None,
+        "avatar": owner.avatar if owner else None, "shelf": sleeves.shelf(user, owner), "new_sleeves": new,
         "lists": CardList.objects.players(user).annotate(total=Sum("entries__quantity")).order_by("-updated", "-pk").prefetch_related("arcade_clears"),
         "runs": ArcadeRun.objects.filter(user=user)[:RECORDS_PER_PAGE],
         "records": records, "page": page, "played": tally["played"], "won": tally["won"], "lost": tally["played"] - tally["won"],

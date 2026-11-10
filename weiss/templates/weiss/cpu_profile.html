@@ -32,7 +32,7 @@
       <h2>How it plays and what it says</h2>
       <form method="post" action="{% url 'weiss:cpu_profile_update' profile.pk %}" class="cpu-form">
         {% csrf_token %}
-        {% include "weiss/cpu_fields.html" with name=profile.name model=profile.model aggression=profile.aggression boss=profile.boss deck_id=profile.deck_id intro_text=profile.intro_text player_win_text=profile.player_win_text player_lose_text=profile.player_lose_text combo_text=profile.combo_text %}
+        {% include "weiss/cpu_fields.html" with name=profile.name model=profile.model aggression=profile.aggression boss=profile.boss deck_id=profile.deck_id sleeve_id=profile.sleeve_id intro_text=profile.intro_text player_win_text=profile.player_win_text player_lose_text=profile.player_lose_text combo_text=profile.combo_text %}
         <button type="submit" class="button-small">Save</button>
       </form>
     </section>

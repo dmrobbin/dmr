@@ -11,6 +11,37 @@
     </div>
   </div>
 
+  <section class="cpu-section" id="sleeves">
+    <h2>Card sleeves</h2>
+    <p class="muted small">How your face-down cards look in a game (your deck, stock and the hand your opponent sees), to you and to them.</p>
+    <ul class="sleeve-shelf">
+      {% for item in shelf %}
+        <li class="sleeve-item{% if item.chosen %} sleeve-chosen{% endif %}{% if not item.owned %} sleeve-locked{% endif %}">
+          <span class="sleeve-preview"><span class="pcard-back" style="--sleeve: {{ item.sleeve.css }}"></span>{% if not item.owned %}<span class="sleeve-lock" aria-hidden="true">🔒</span>{% endif %}</span>
+          <span class="sleeve-name">{{ item.sleeve.name }}{% if item.sleeve.pk in new_sleeves %} <span class="deck-tag">New</span>{% endif %}</span>
+          {% if item.sleeve.description %}<span class="muted small">{{ item.sleeve.description }}</span>{% endif %}
+          {% if item.chosen %}
+            <span class="small sleeve-in-use">In use</span>
+          {% elif item.owned %}
+            <form method="post" action="{% url 'weiss:sleeve_choose' %}">{% csrf_token %}<input type="hidden" name="sleeve" value="{{ item.sleeve.pk }}">
+              <button type="submit" class="button-small secondary">Use</button></form>
+          {% else %}
+            {% if item.conditions|length > 1 %}<span class="muted small">{% if item.sleeve.match == "any" %}Any one of these:{% else %}All of these:{% endif %}</span>{% endif %}
+            <ul class="sleeve-conditions">
+              {% for condition in item.conditions %}
+                <li{% if condition.met %} class="sleeve-met"{% endif %}>
+                  <span class="small">{{ condition.text }}</span>
+                  <span class="sleeve-progress" role="progressbar" aria-valuemin="0" aria-valuemax="{{ condition.need }}" aria-valuenow="{{ condition.have }}"><span style="width: {{ condition.percent }}%"></span></span>
+                  <span class="muted small">{{ condition.have }} / {{ condition.need }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+
   <section class="cpu-section">
     <h2>Card lists</h2>
     {% if lists %}

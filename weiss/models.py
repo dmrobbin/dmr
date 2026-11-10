@@ -159,12 +159,71 @@ class Avatar(models.Model):
                 "left": round(-(self.avatar_x - self.avatar_r) / across * 100, 3), "top": round(-(self.avatar_y - self.avatar_r) / across * 100, 3)}
 
 
+class Sleeve(models.Model):
+    """A card sleeve: how a player's face-down cards look, to them and to their opponent (deck, stock, hand). The
+    built-in ones are drawn by the site's CSS (`style`); staff upload the rest (`key`). One with no conditions is
+    everyone's; the rest are unlocked by meeting them (see weiss.sleeves), or given by staff."""
+
+    STYLES = {"classic": "Classic", "midnight": "Midnight", "crimson": "Crimson"}  # site.css: --sleeve-<style>
+    DEFAULT = "classic"
+
+    class Match(models.TextChoices):
+        ALL = "all", "All of them"
+        ANY = "any", "Any one of them"
+
+    name = models.CharField(max_length=100)
+    description = models.CharField(max_length=300, blank=True)
+    style = models.CharField(max_length=20, blank=True, help_text="A built-in look, drawn by CSS; empty for an uploaded image")
+    key = models.CharField(max_length=500, blank=True, help_text="Where its image is in the S3 bucket, cropped to a card's shape")
+    conditions = models.JSONField(default=list, blank=True, help_text="What unlocks it: [{kind, count, target}] (see weiss.sleeves); empty for everyone's")
+    match = models.CharField(max_length=3, choices=Match.choices, default=Match.ALL, help_text="Whether all the conditions are needed, or any one")
+    hidden = models.BooleanField(default=False, help_text="Not offered: only those who already have it see it, and nobody new unlocks it (staff can still give it)")
+    created_by = models.ForeignKey("auth.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["pk"]
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def free(self):
+        return not self.conditions
+
+    @property
+    def css(self):
+        """Its look, as a CSS background: what a .pcard-back's --sleeve is set to."""
+        if self.key:
+            return f'url("{reverse("weiss:sleeve_image", args=[self.pk])}?v={self.key.rsplit("/", 1)[-1]}") center / cover no-repeat, #1b1b1b'
+        return f"var(--sleeve-{self.style if self.style in self.STYLES else self.DEFAULT})"
+
+
+class SleeveUnlock(models.Model):
+    """A player has this sleeve: earned by its conditions, or given by staff (awarded_by)."""
+
+    user = models.ForeignKey("auth.User", on_delete=models.CASCADE, related_name="sleeve_unlocks")
+    sleeve = models.ForeignKey(Sleeve, on_delete=models.CASCADE, related_name="unlocks")
+    awarded_by = models.ForeignKey("auth.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    seen = models.BooleanField(default=False, help_text="The player has been told about it")
+    unlocked = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-unlocked", "-pk"]
+        constraints = [models.UniqueConstraint(fields=["user", "sleeve"], name="one_unlock_per_sleeve")]
+
+    def __str__(self):
+        return f"{self.user}: {self.sleeve}"
+
+
 class PlayerProfile(Avatar):
     """What a player has chosen for their profile."""
 
     user = models.OneToOneField("auth.User", on_delete=models.CASCADE, related_name="player_profile")
     sound_on = models.BooleanField(default=True, help_text="Sound effects on the game board")
     sound_volume = models.PositiveSmallIntegerField(default=60, help_text="Their volume, 0 to 100")
+    sleeve = models.ForeignKey(Sleeve, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", help_text="Their face-down cards' look; none for the default")
+    progress = models.JSONField(default=dict, blank=True, help_text="What they've done towards card sleeves since those came in: {key: number} (see weiss.sleeves)")
 
     def __str__(self):
         return str(self.user)
@@ -202,6 +261,7 @@ class CpuProfile(Avatar):
     deck = models.ForeignKey(CardList, null=True, blank=True, on_delete=models.SET_NULL, related_name="cpu_profiles")
     finalized = models.BooleanField(default=False, help_text="Offered to players under VS CPU")
     boss = models.BooleanField(default=False, help_text="Fought on the infinite challenge's boss floors, and only there (see weiss.challenge)")
+    sleeve = models.ForeignKey(Sleeve, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", help_text="Its face-down cards' look; none for the default")
     image = models.ForeignKey(CpuImage, null=True, blank=True, on_delete=models.SET_NULL, related_name="profiles")
     intro_image = models.ForeignKey(CpuImage, null=True, blank=True, on_delete=models.SET_NULL, related_name="intro_profiles")
     player_win_image = models.ForeignKey(CpuImage, null=True, blank=True, on_delete=models.SET_NULL, related_name="win_profiles")

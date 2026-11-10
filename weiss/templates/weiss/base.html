@@ -12,6 +12,16 @@
           <a class="button-small" href="{% url 'weiss:play_room' arcade_paused.pk %}">Back to the run</a>
         </div>
       {% endif %}
+      {% if sleeves_unlocked %}
+        <div class="sleeve-banner" role="status">
+          <span class="sleeve-banner-backs">{% for unlock in sleeves_unlocked|slice:":3" %}<span class="pcard-back" style="--sleeve: {{ unlock.sleeve.css }}"></span>{% endfor %}</span>
+          <span>New card sleeve{{ sleeves_unlocked|pluralize }} unlocked:
+            <strong>{% for unlock in sleeves_unlocked %}{{ unlock.sleeve.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</strong>{% if sleeves_unlocked.0.awarded_by_id %} (a gift from the staff){% endif %}.</span>
+          <a class="button-small" href="{% url 'weiss:profile' %}#sleeves">Choose on your profile</a>
+          <form method="post" action="{% url 'weiss:sleeves_seen' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit" class="button-small secondary">Dismiss</button></form>
+        </div>
+      {% endif %}
       {% block weiss_content %}{% endblock %}
     </div>
     <aside class="list-panel" aria-label="Card lists" data-list-panel>

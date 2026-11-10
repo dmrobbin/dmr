@@ -1,0 +1,23 @@
+{# The CPU creation tab's card sleeves: the built-in ones everyone has, and those staff upload, with what unlocks them. #}
+<section class="cpu-section">
+  <p><a class="button-small" href="{% url 'weiss:sleeve_create' %}">New sleeve</a></p>
+  <p class="muted small">How a player's face-down cards look. One with no conditions is everyone's; the rest unlock when a player meets
+    them (counted from when sleeves came in), or when you give one out. A hidden sleeve isn't offered: only those who have it see it.</p>
+  <ul class="sleeve-shelf">
+    {% for sleeve in sleeves %}
+      <li class="sleeve-item{% if sleeve.hidden %} sleeve-hidden{% endif %}">
+        <span class="sleeve-preview"><span class="pcard-back" style="--sleeve: {{ sleeve.css }}"></span></span>
+        <a class="sleeve-name" href="{% url 'weiss:sleeve_edit' sleeve.pk %}">{{ sleeve.name }}</a>
+        <span class="muted small">
+          {% if sleeve.style %}Built in · {% endif %}{% if sleeve.hidden %}Hidden · {% endif %}{% if sleeve.free %}Everyone's{% else %}{{ sleeve.owners }} player{{ sleeve.owners|pluralize }} {{ sleeve.owners|pluralize:"has,have" }} it{% endif %}
+        </span>
+        {% if sleeve.described %}
+          <ul class="sleeve-conditions small">
+            {% if sleeve.described|length > 1 %}<li class="muted">{% if sleeve.match == "any" %}Any one of:{% else %}All of:{% endif %}</li>{% endif %}
+            {% for condition in sleeve.described %}<li>{{ condition.text }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+</section>

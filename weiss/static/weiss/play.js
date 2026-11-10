@@ -67,6 +67,7 @@
   let arcade = null; // where an arcade run has got to
   let prize = null; // an infinite challenge's prize for this win: what the Victory screen's slot machine lands on
   let duel = null; // a co-op challenge's vs. battle: the pair's rivalry, and the way to its curses
+  let unlocked = null; // card sleeves this game unlocked for the player: [{name, css}], for the Victory or Defeat screen
   let sceneData = null; // a scene the run plays before the board goes on (weiss.scenes), until the server hears it's done
   let sceneViewer = ""; // the player's name, for {player} in a scene
   let sceneShown = null; // the key of the scene being played, so a poll doesn't start it again
@@ -419,6 +420,13 @@
     sceneData = data.scene || null;
     prize = data.prize || null;
     duel = data.duel || null;
+    unlocked = data.unlocked || null;
+    // Each side's card sleeve (weiss.sleeves), a CSS background: site.css puts it on that side's face-down cards.
+    for (const side of ["me", "opponent"]) {
+      const sleeve = (data.sleeves || {})[side];
+      if (sleeve) document.documentElement.style.setProperty(`--sleeve-${side}`, sleeve);
+      else document.documentElement.style.removeProperty(`--sleeve-${side}`);
+    }
     sceneViewer = data.player_name || sceneViewer;
     if (data.revealed) modal = { title: data.revealed.title, revealed: data.revealed.cards };
     render();
@@ -1046,9 +1054,9 @@
   // Fly card-shaped boxes {from, to, face, ms}: `hide` is hidden for the flight (it's the card
   // leaving; the board is redrawn afterwards anyway), `show` is hidden until its flight lands.
   function flyAll(flights) {
-    return Promise.all(flights.map(({ from, to, face, ms = FLIGHT_MS, hide, show }, i) => {
+    return Promise.all(flights.map(({ from, to, face, ms = FLIGHT_MS, hide, show, opponent }, i) => {
       const el = document.createElement("div");
-      el.className = "card-flight";
+      el.className = opponent ? "card-flight card-flight-opponent" : "card-flight";
       el.innerHTML = face;
       Object.assign(el.style, { left: `${from.left}px`, top: `${from.top}px`, width: `${from.width}px`, height: `${from.height}px` });
       document.body.appendChild(el);
@@ -1095,7 +1103,7 @@
       if (!el || before.slots[card.uid] === slot) continue;
       const from = before.slots[card.uid] ? before.boxes[before.slots[card.uid]]
         : board.opponent.zones.hand.count < before.handCount ? before.hand : null;
-      if (from) flights.push({ from, to: layoutBox(el), face: faceOf(el), show: el });
+      if (from) flights.push({ from, to: layoutBox(el), face: faceOf(el), show: el, opponent: true });
     }
     flyAll(flights);
   }
@@ -1852,6 +1860,13 @@
     return `<p class="game-over-score">Score ${score.total}</p>${parts.length ? `<p class="game-over-score-parts">${parts.join(" · ")}</p>` : ""}`;
   }
 
+  // The card sleeves a game unlocked: each one's back, and where to put it on.
+  function sleevesUnlockedHtml(sleeves) {
+    const backs = sleeves.map((s) => `<span class="pcard-back" style="--sleeve: ${esc(s.css)}"></span>`).join("");
+    const names = sleeves.map((s) => esc(s.name)).join(", ");
+    return `<p class="game-over-sleeves">${backs}<span>New card sleeve${sleeves.length === 1 ? "" : "s"} unlocked: ${names}! Put ${sleeves.length === 1 ? "it" : "them"} on from your profile.</span></p>`;
+  }
+
   function renderGameOver() {
     const over = board.game_over;
     if (!over) {
@@ -1885,6 +1900,7 @@
           ${duel ? `<p class="game-over-arcade">${over.won ? "You pick your augment and curse first." : `${esc(duel.partner)} picks their augment and curse first.`} Rivalry: you ${duel.mine} – ${duel.theirs} ${esc(duel.partner)}</p>` : ""}
           ${arcade ? `<p class="game-over-arcade">${arcade.cleared ? `🏆 ${esc(arcade.scenario)} cleared!` : over.won ? `Up next: ${fightOf()}` : `${esc(arcade.scenario)}: ${fightOf()}`}${arcade.score ? ` · run score ${arcade.score}` : ""}</p>` : ""}
           ${over.won && prize ? prizeSlotHtml(prize) : ""}
+          ${unlocked ? sleevesUnlockedHtml(unlocked) : ""}
           <p class="game-over-status" data-game-over-status></p>
           <div class="game-over-buttons" data-game-over-buttons></div></div>`;
       root.appendChild(gameOverEl);

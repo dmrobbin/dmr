@@ -13,7 +13,7 @@ from django.views.decorators.http import require_POST
 
 from core.access import weiss_access_required
 
-from . import arcade, augments, buffs, challenge, coop, curses, game, packs, play
+from . import arcade, augments, buffs, challenge, coop, curses, game, packs, play, sleeves
 from .lists import CLIMAX_COUNT, DECK_GROUPS, DECK_SIZE, unlimited
 from .models import ArcadeRun, ArcadeScenario, Card, ChallengeRun, CoopRun, CpuProfile, GameRoom, NarrativeChallenge, PlayerProfile
 from .play import deal, not_begun, seat_cpu, snapshot_groups
@@ -632,7 +632,7 @@ def coop_spectate_state(request):
     board = game.spectator_view(room.state, room.host_id)
     shown = {key: value for key, value in play.cpu_payload(room).items() if key != "intro"}
     return JsonResponse({"version": version, "status": room.status, "board": board, "cards": play.card_info(game.visible_cards(board)),
-                         "avatars": play.room_avatars(room), **shown})
+                         "avatars": play.room_avatars(room), "sleeves": sleeves.board_sleeves(room, room.host_id), **shown})
 
 
 @challenge_access

@@ -1,0 +1,16 @@
+{# One condition on the sleeve form: a kind, what it's limited to (one target select per kind of target, the right one switched on by sleeve_edit.js; none for a kind with no target), and the number to reach. #}
+<div class="sleeve-row" data-condition-row>
+  <select name="kind" aria-label="Condition" data-kind>
+    <option value="">Choose a condition</option>
+    {% for kind in kinds %}<option value="{{ kind.id }}" data-target="{{ kind.target }}"{% if row and row.kind == kind.id %} selected{% endif %}>{{ kind.label }}</option>{% endfor %}
+  </select>
+  <input type="hidden" name="target" value="" data-target-for=""{% if row and row.target_type %} disabled{% endif %}>
+  {% for what, any_label, options in targets %}
+    <select name="target" aria-label="Limited to" data-target-for="{{ what }}"{% if not row or row.target_type != what %} disabled hidden{% endif %}>
+      <option value="">{{ any_label }}</option>
+      {% for option in options %}<option value="{{ option.pk }}"{% if row and row.target == option.pk %} selected{% endif %}>{{ option }}</option>{% endfor %}
+    </select>
+  {% endfor %}
+  <label class="small">Reach <input type="number" name="count" min="1" max="1000000" value="{{ row.count|default:1 }}" required></label>
+  <button type="button" class="button-small secondary" data-remove-condition>Remove</button>
+</div>

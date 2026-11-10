@@ -22,7 +22,7 @@ from django.views.decorators.http import require_POST
 from core import s3
 from core.access import has_weiss_access, weiss_access_required
 
-from . import arcade, augments, buffs, challenge, coop, cpu, curses, game, lists, packs, scenes, scoring
+from . import arcade, augments, buffs, challenge, coop, cpu, curses, game, lists, packs, scenes, scoring, sleeves
 from .models import ArcadeRun, ArcadeScenario, Card, CardList, ChallengeRun, CpuProfile, GameRecord, GameRoom, PlayerProfile, cpu_user
 
 log = logging.getLogger(__name__)
@@ -116,8 +116,12 @@ def board_payload(room, user, extra=None):
     scene = {"scene": room.state["scenes"][0], "player_name": user.username} if room.state.get("scenes") else {}
     if room.state.get("prize"):
         scene["prize"] = room.state["prize"]
+    unlocked = (room.state.get("game_over") or {}).get("sleeves", {}).get(str(user.pk))
+    if unlocked:  # for the Victory or Defeat screen
+        scene["unlocked"] = unlocked
     return {"version": room.version, "status": room.status, "board": board, "cards": card_info(pks),
-            "avatars": room_avatars(room), **cpu_payload(room), **duel_payload(room, user), **scene, **(extra or {})}
+            "avatars": room_avatars(room), "sleeves": sleeves.board_sleeves(room, user.pk),
+            **cpu_payload(room), **duel_payload(room, user), **scene, **(extra or {})}
 
 
 def duel_payload(room, user):
@@ -884,7 +888,10 @@ def game_ended(room, over):
         over["score"] = scoring.win_score(room.state, room.host_id)
         score = over["score"]["total"]
     record_game(room, over, score)
+    run = room.arcade_run if room.arcade_run_id and room.arcade_run.status == ArcadeRun.Status.ACTIVE else None
+    trial = challenge.of(run)  # before the fight's end can finish it
     arcade.game_finished(room, over, score)
+    sleeves.game_ended(room, over, run, trial)
     if room.coop_duel_id:
         coop.duel_finished(room, over)
 
