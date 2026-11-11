@@ -41,7 +41,7 @@ from core.access import weiss_access_required
 
 from . import abilities
 from .card_images import names_in_card
-from .lists import COPY_LIMIT, DECK_GROUPS, copy_limit, DECK_SIZE, EXPRESS_PROMPT, SESSION_KEY, deck_checks, is_climax, sorted_entries
+from .lists import COPY_LIMIT, DECK_GROUPS, copy_limit, DECK_SIZE, EXPRESS_PROMPT, SESSION_KEY, deck_checks, editable_lists, is_climax, sorted_entries
 from .models import Card, CardList, CardListEntry
 from .views import series_code, summarize_sets, with_image_urls
 
@@ -787,7 +787,7 @@ def replace_cards(pool, anchors, copies, required, removing, mode, rng=random, k
 # --- Pages ----------------------------------------------------------------------------------------------
 
 def own_list(request, pk):
-    return get_object_or_404(CardList, pk=pk, user=request.user, challenge=False)
+    return get_object_or_404(editable_lists(request.user), pk=pk, challenge=False)
 
 
 def series_choices(for_cpu=False):

@@ -138,3 +138,39 @@ class CpuCorpusTests(TestCase):
             self.assertIn("Rapi: Hello", (Path(folder) / "scenes.json").read_text(encoding="utf-8"))
             with self.assertRaises(CommandError):  # the second time, the names are taken
                 call_command("import_cpu", str(path), stdout=StringIO(), stderr=StringIO())
+
+
+class CpuDeckAccessTests(TestCase):
+    """An imported CPU's deck belongs to the superuser import_cpu ran as: any staff member can still open and edit it."""
+
+    def setUp(self):
+        from django.contrib.auth.models import Group
+        from core.access import WEISS_GROUP
+        group = Group.objects.get_or_create(name=WEISS_GROUP)[0]
+        self.owner = User.objects.create_superuser("importer", password="x")
+        self.staff = User.objects.create_user("staff", password="x", is_staff=True)
+        self.player = User.objects.create_user("player", password="x")
+        for user in (self.owner, self.staff, self.player):
+            user.groups.add(group)
+        self.cpu_deck = CardList.objects.create(user=self.owner, name="CPU deck", reserved_for_cpu=True)
+        self.private = CardList.objects.create(user=self.owner, name="Mine")
+
+    def get(self, user, deck):
+        from django.urls import reverse
+        self.client.force_login(user)
+        return self.client.get(reverse("weiss:list", args=[deck.pk])).status_code
+
+    def test_staff_open_any_cpu_deck(self):
+        self.assertEqual(self.get(self.staff, self.cpu_deck), 200)
+
+    def test_staff_start_editing_any_cpu_deck(self):
+        from django.urls import reverse
+        self.client.force_login(self.staff)
+        self.client.post(reverse("weiss:list_edit", args=[self.cpu_deck.pk]))
+        self.assertEqual(self.client.session.get("weiss_editing_list"), self.cpu_deck.pk)
+
+    def test_but_not_someone_elses_own_list(self):
+        self.assertEqual(self.get(self.staff, self.private), 404)
+
+    def test_players_cant_open_cpu_decks(self):
+        self.assertEqual(self.get(self.player, self.cpu_deck), 404)

@@ -985,9 +985,18 @@ class ChoosingByHandTests(TestCase):
         self.client.post(self.pick, {"card": self.filler.pk, "replace": [self.filler.pk]})  # for itself: 1 extra would pass the limit
         self.assertEqual(self.copies(), {self.filler.pk: 4, self.kept.pk: 2})
 
-    def test_someone_elses_deck_is_out_of_reach(self):
+    def test_someone_elses_own_deck_is_out_of_reach(self):
+        personal = self.make_deck({self.filler: 4, self.kept: 2}, reserved=False)
         self.client.force_login(User.objects.create_user("other", password="x", is_staff=True))
-        self.assertEqual(self.client.post(self.pick, {"card": self.outside.pk}).status_code, 404)
+        pick = reverse("weiss:list_express_pick", args=[personal.pk])
+        self.assertEqual(self.client.post(pick, {"card": self.outside.pk}).status_code, 404)
+        self.assertEqual(self.copies(personal), {self.filler.pk: 4, self.kept.pk: 2})
+
+    def test_other_staff_can_change_a_cpu_deck(self):
+        # import_cpu's decks belong to whichever superuser it ran as; any staff member finishes them.
+        self.client.force_login(User.objects.create_user("other", password="x", is_staff=True))
+        self.client.post(self.pick, {"card": self.outside.pk, "replace": [self.filler.pk]})
+        self.assertEqual(self.copies()[self.outside.pk], 1)
 
     def test_it_warns_when_the_climax_count_comes_off_eight(self):
         climax = Card.objects.get(name="BIG", serial_number__startswith="OTH/")
