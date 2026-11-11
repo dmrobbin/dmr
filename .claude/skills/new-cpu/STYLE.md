@@ -16,6 +16,14 @@ The standard to match. Read the closest of these before writing; when a series h
 - Two CPUs from the same series: `Madoka/Homura`, `Takina/Chisato`.
 - Other: `Rescued From Tartarus`.
 
+## Character notes
+
+Which version of a character an existing CPU is, where the obvious guess is wrong. Their pictures show this version,
+so scenes must match it.
+
+- **Madoka**: Ultimate Madoka, the goddess who became the Law of Cycles. Not the schoolgirl: she appears from
+  beyond time, watches over magical girls, and most people don't remember her (Homura does). See `LordGenome/Madoka`.
+
 ## Content rules (not negotiable)
 
 - Stay true to the character: their way of speaking, what they care about, who they know. When unsure, keep it
@@ -45,8 +53,8 @@ Both are chosen mostly to spread the difficulty across the roster, not from the 
 **Aggression**: 1 by far the most common, each level above it much rarer than the one below.
 
 How to choose: count the models and aggression levels across `corpus/cpus/` and pick what keeps the roster closest
-to that spread. Today it's 14 standard, 14 strategic, 9 focused, 4 hard and 1 easy, so strategic is over its share
-and standard is the usual pick; aggression is 30 at 1, 6 at 2, 3 at 3, 3 at 4 and none at 5. Use the character
+to that spread. Today it's 14 standard, 14 strategic, 9 focused, 4 hard and 1 easy, so standard or strategic is
+the usual pick, whichever suits the character; aggression is 30 at 1, 6 at 2, 3 at 3, 3 at 4 and none at 5. Use the character
 to settle close calls: higher aggression for those known for charging in (Denji 3, Power 4, Simon 4). Say in the
 summary why you chose what you did. Never make a CPU a boss unless asked.
 

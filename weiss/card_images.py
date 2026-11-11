@@ -1,12 +1,15 @@
 """Finding images from outside the official card site: another source for a card whose picture is
-missing, and art of the characters on cx combo cards. Used by the find_card_images command."""
+missing, and art of the characters on cx combo cards, both used by the find_card_images command; and a shortlist of
+PNGitem renders of a character for staff to download, used by shortlist_renders."""
 import json
 import re
 import time
 from http.client import HTTPException
 from urllib.error import HTTPError
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urljoin
 from urllib.request import Request, urlopen
+
+from bs4 import BeautifulSoup
 
 from . import abilities, tcgcsv
 
@@ -319,3 +322,85 @@ def character_art(title, other_titles, character):
                 art["official"] = (*found, url)
                 break
     return art
+
+
+# --- Renders: a character's whole figure, cut out on a transparent background ------------------------------
+
+# PNGitem is where most of the CPUs' pictures have come from. Its searches are open to robots but its download
+# pages aren't, and the pictures its pages show are flattened onto grey: so this only finds the likeliest
+# renders, for staff to download by hand and upload. Its terms allow personal and non-commercial use only.
+# It stopped growing some years ago, so newer shows have nothing there.
+PNGITEM_URL = "https://www.pngitem.com"
+PNGITEM_THUMB = re.compile(r"/pimgs/s/[\w.-]+\.png$")
+PNGITEM_SIZE = re.compile(r"^\s*(\d+)\s*x\s*(\d+)\s*$")
+PNGITEM_DELAY = 2  # seconds between its requests: it asks for none, but it's a small site
+SHORTLIST = 5  # results to list for each character
+FULL_BODY = 1.3  # height over width, as listed: tall enough to be a whole figure standing
+MIN_RENDER_HEIGHT = 500
+# A title like these is of something else: part of the character, or not a cut-out at all.
+NOT_A_RENDER = re.compile(r"\b(chibi|face|head|icon|logo|emotes?|emoji|stickers?|cosplay|meme|wallpaper|background|silhouette|"
+                          r"coloring|line ?art|sketch|banner|text|gif|cursor|symbol|outline|clipart|clip art|drawing|plush|figure|figma|nendoroid)\b", re.I)
+SEVERAL = re.compile(r"\s(?:and|&|x|vs\.?|with)\s|\b(?:group|team|cast|characters)\b", re.I)  # more than one character
+RENDER_WORDS = re.compile(r"\b(full body|render|standing|sprite)\b", re.I)
+TITLE_TAIL = re.compile(r",\s*(?:HD\s+)?(?:Transparent\s+)?Png(?:\s+Download)?\b.*$", re.I)  # every title ends in its own boilerplate
+
+
+def pngitem_results(query):
+    """[{title, page, thumb, width, height}]: one page of PNGitem's results for a search, in its order, with
+    the original's size as listed. `page` is where staff download it; `thumb` is a small JPEG of it."""
+    slug = re.sub(r"[^a-z0-9]+", "-", query.lower()).strip("-")
+    try:
+        data, _ = get(f"{PNGITEM_URL}/so/{slug}/")  # the slash matters: without it, a 404
+    except NotFound:
+        return []
+    results = []
+    for item in BeautifulSoup(data, "html.parser").select("div.item"):
+        img = item.find("img", attrs={"data-original": True})
+        size = item.find("a", string=PNGITEM_SIZE)
+        if not (img and size and PNGITEM_THUMB.search(img["data-original"])):
+            continue
+        width, height = map(int, PNGITEM_SIZE.match(size.string).groups())
+        results.append({"title": " ".join(TITLE_TAIL.sub("", img.get("title") or img.get("alt") or "").split()),
+                        "page": urljoin(PNGITEM_URL, size["href"]), "thumb": img["data-original"], "width": width, "height": height})
+    return results
+
+
+def likely_renders(results, character, cast=(), show_titles=()):
+    """The results that could be a render of this character alone, likeliest first: named for them and only them,
+    nothing that's a face or a logo; then whole figures (tall, and big enough) before the rest, those that say
+    they're a render first, then the tallest. `cast`: the show's characters, so a title naming any other of them
+    (a group picture) is left out; `show_titles`, so a show called after a character doesn't count as naming them."""
+    names = [[long_vowels(word) for word in re.split(r"[^a-z0-9]+", name.lower()) if word] for name in character["names"] if name]
+    own = {word for name in names for word in name}
+    others = [c for c in cast if not {long_vowels(w) for w in re.split(r"[^a-z0-9]+", c["name"].lower()) if w} & own]
+
+    def named(title):
+        words = {long_vowels(word) for word in re.split(r"[^a-z0-9]+", title.lower())}
+        return any(name and all(word in words for word in name) for name in names)
+
+    def names_others(title):
+        for show in show_titles:
+            title = re.sub(re.escape(show), " ", title, flags=re.I)
+        return bool(characters_named(title, others))
+
+    def full_body(result):
+        return result["height"] >= MIN_RENDER_HEIGHT and result["height"] >= FULL_BODY * result["width"]
+
+    fits = [r for r in results if named(r["title"]) and not NOT_A_RENDER.search(r["title"]) and not SEVERAL.search(r["title"])
+            and not names_others(r["title"])]
+    return sorted(fits, key=lambda r: (not full_body(r), not RENDER_WORDS.search(r["title"]), -r["height"] / max(r["width"], 1)))
+
+
+def render_shortlist(character, show="", count=SHORTLIST, delay=PNGITEM_DELAY, cast=(), show_titles=()):
+    """The `count` likeliest renders of a character on PNGitem, as likely_renders gives them. Searched by their
+    name, then by their name and the show's when that finds too few."""
+    found, seen = [], set()
+    for query in (character["name"], f"{character['name']} {show}" if show else None):
+        if not query or len(found) >= count:
+            continue
+        time.sleep(delay)
+        for result in likely_renders(pngitem_results(query), character, cast, (show, *show_titles) if show else show_titles):
+            if result["page"] not in seen:
+                seen.add(result["page"])
+                found.append(result)
+    return found[:count]

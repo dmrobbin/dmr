@@ -48,6 +48,11 @@ Write `corpus/new/<name>.json` in the format in `reference.md`. Leave out `deck.
   existing CPUs who'd make an interesting meeting (shared themes, opposite temperaments), favouring those in few scenes
   (count them in `corpus/scenes.json`'s `cast`); say why you chose each. Cast them by the exact `name` in their file in
   `corpus/cpus/`. Use only commands, backgrounds, buffs and pictures listed in `reference.md`.
+- **Every CPU you cast is a particular version of its character**: the one its anchors and pictures show, which may
+  not be the best-known one (a later form, an alternate timeline, a transformed self). Before writing anyone into a
+  scene, read their whole file: profile texts, `context.key_cards` (names and flavor text) and `context.images`, and
+  the scenes they're already in. Check STYLE.md's character notes. Write the version they show, and in your summary
+  name the version you took each one to be.
 
 ## Checking
 
@@ -64,5 +69,8 @@ anything you were unsure of. Then what's left for them:
 1. Copy the file to the instance: `scp -i $HOME\.ssh\aws-eb corpus\new\<name>.json ec2-user@<instance IP>:/tmp/`
 2. There (`eb ssh`): `bash /var/app/current/go_time.sh import_cpu /tmp/<name>.json --dry-run --seed <N>`, then the same
    without `--dry-run` once it passes (the same seed builds the same deck). Express notes are worth a look; they aren't errors.
-3. Pictures: `find_card_images --series <SERIES>`, then the CPU's images page.
+3. Pictures: run `.\go_time.ps1 shortlist_renders --cpu corpus\new\<name>.json --show "<the show's full title>" --html renders.html`
+   and open renders.html: the likeliest full body renders on PNGitem. Download one from its page (the Download
+   button gives the transparent PNG) and upload it on the CPU's images page. Note which of them show the version
+   of the character the CPU is. For a show too new for PNGitem, `find_card_images --series <SERIES>` on the instance instead.
 4. Play the scenes on the scene page and a game against the CPU, then finalize it.

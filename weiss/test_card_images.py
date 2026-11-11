@@ -314,3 +314,73 @@ class CommandTests(TestCase):
         make("NIK/4", "Rapi")
         output = self.run_it("--skip-art", "--series", "AOT")
         self.assertNotIn("NIK", output)
+
+
+def pngitem_item(slug, title, size):
+    return (f'<div class="item" data-w="192" data-h="240"><a href="https://www.pngitem.com/middle/{slug}/">'
+            f'<img src="/images/bg.png" class="lazy" data-original="https://png.pngitem.com/pimgs/s/1-{slug}.png" '
+            f'alt="{title}, HD Png Download, Transparent PNG" title="{title}, HD Png Download"></a>'
+            f'<div><span><a style="color:#fff!important; " href="/middle/{slug}/">{size}</a></span></div></div>')
+
+
+MAMI_PAGE = ("<html><body>" + "".join([
+    pngitem_item("a1_mami-tomoe-face", "Mami Tomoe Face Png", "800x900"),
+    pngitem_item("a2_mami-tomoe-wide", "Mami Tomoe Magia Record", "800x600"),
+    pngitem_item("a3_tomoe-mami-render", "Tomoe Mami Render", "500x900"),
+    pngitem_item("a4_homura-and-mami", "Homura Akemi And Mami Tomoe", "500x1000"),
+    pngitem_item("a5_mami-tall", "Mami Tomoe Magical Girl", "600x1200"),
+    pngitem_item("a6_madoka", "Madoka Kaname Render", "500x1000"),
+]) + "</body></html>").encode()
+
+
+class RenderShortlistTests(TestCase):
+    def test_results_are_read_from_a_search_page(self):
+        with mock.patch("weiss.card_images.get", return_value=(MAMI_PAGE, "text/html")) as get:
+            results = card_images.pngitem_results("Mami Tomoe")
+        self.assertEqual(get.call_args.args[0], "https://www.pngitem.com/so/mami-tomoe/")
+        self.assertEqual(results[2], {"title": "Tomoe Mami Render", "page": "https://www.pngitem.com/middle/a3_tomoe-mami-render/",
+                                      "thumb": "https://png.pngitem.com/pimgs/s/1-a3_tomoe-mami-render.png", "width": 500, "height": 900})
+
+    def test_a_search_with_no_page_finds_nothing(self):
+        with mock.patch("weiss.card_images.get", side_effect=card_images.NotFound("HTTP 404")):
+            self.assertEqual(card_images.pngitem_results("Frieren"), [])
+
+    def test_only_this_character_alone_whole_figures_and_renders_first(self):
+        with mock.patch("weiss.card_images.get", return_value=(MAMI_PAGE, "text/html")):
+            results = card_images.pngitem_results("Mami Tomoe")
+        titles = [r["title"] for r in card_images.likely_renders(results, {"name": "Mami Tomoe", "names": ["Mami Tomoe"]})]
+        # Not her face, nor her with Homura, nor Madoka; tall ones first, the one that says it's a render first of those.
+        self.assertEqual(titles, ["Tomoe Mami Render", "Mami Tomoe Magical Girl", "Mami Tomoe Magia Record"])
+
+    def test_a_title_naming_others_from_the_show_is_a_group_picture(self):
+        page = ("<html>" + pngitem_item("b1_group", "Kyoko Sakura Mami Tomoe Homura Akemi Sayaka Miki", "500x1000")
+                + pngitem_item("b2_show", "Puella Magi Madoka Magica Mami Tomoe", "500x1000") + "</html>").encode()
+        cast = [{"name": n, "names": [n]} for n in ("Madoka Kaname", "Homura Akemi", "Mami Tomoe", "Kyouko Sakura")]
+        with mock.patch("weiss.card_images.get", return_value=(page, "text/html")):
+            results = card_images.pngitem_results("Mami Tomoe")
+        mami = {"name": "Mami Tomoe", "names": ["Mami Tomoe"]}
+        found = card_images.likely_renders(results, mami, cast, ["Puella Magi Madoka Magica"])
+        self.assertEqual([r["title"] for r in found], ["Puella Magi Madoka Magica Mami Tomoe"])  # the show's name isn't Madoka
+
+    @mock.patch("weiss.card_images.time.sleep")
+    def test_the_show_is_searched_too_when_the_name_finds_too_few(self, sleep):
+        pages = {"https://www.pngitem.com/so/mami-tomoe/": b"<html></html>", "https://www.pngitem.com/so/mami-tomoe-madoka-magica/": MAMI_PAGE}
+        with mock.patch("weiss.card_images.get", side_effect=lambda url: (pages[url], "text/html")):
+            found = card_images.render_shortlist({"name": "Mami Tomoe", "names": ["Mami Tomoe"]}, "Madoka Magica", count=2)
+        self.assertEqual([r["title"] for r in found], ["Tomoe Mami Render", "Mami Tomoe Magical Girl"])
+
+    @mock.patch("weiss.card_images.time.sleep")
+    def test_the_command_lists_them_and_writes_a_page(self, sleep):
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as folder, mock.patch("weiss.card_images.get", return_value=(MAMI_PAGE, "text/html")):
+            cpu = Path(folder) / "mami.json"
+            cpu.write_text(json.dumps({"profile": {"name": "Mami Tomoe"}}), encoding="utf-8")
+            out = io.StringIO()
+            call_command("shortlist_renders", "--cpu", str(cpu), "--html", str(Path(folder) / "renders.html"), stdout=out)
+            page = (Path(folder) / "renders.html").read_text(encoding="utf-8")
+        self.assertIn("https://www.pngitem.com/middle/a3_tomoe-mami-render/", out.getvalue())
+        self.assertIn('href="https://www.pngitem.com/middle/a3_tomoe-mami-render/"', page)
+        self.assertNotIn("a1_mami-tomoe-face", page)
+        with self.assertRaises(CommandError):
+            call_command("shortlist_renders", stdout=io.StringIO())
