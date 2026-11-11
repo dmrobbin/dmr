@@ -227,3 +227,6 @@ staticfiles/
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
+
+# CPUs exported by export_cpu_corpus, and new ones written from them
+corpus/
