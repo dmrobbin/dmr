@@ -312,6 +312,13 @@
     // Whoever's speaking stands out: the others on stage fade back a little. Nobody (narration) clears it.
     listening(speaker) {
       for (const [name, actor] of Object.entries(this.actors)) actor.el.classList.toggle("vn-listening", Boolean(speaker) && name !== speaker);
+      if (speaker && this.actors[speaker]) this.raise(this.actors[speaker]);
+    }
+
+    // Bring an actor to the front, over anyone they overlap: whoever last spoke or moved stays on top.
+    raise(actor) {
+      this.topLayer = (this.topLayer || 0) + 1;
+      actor.el.style.zIndex = this.topLayer;
     }
 
     // --- The stage --------------------------------------------------------------------------------
@@ -399,7 +406,7 @@
     animate(actor, name) {
       const animation = ANIMATIONS[name];
       if (!animation || reduced) return;
-      this.queue(actor, () => actor.body.animate(animation.frames, { duration: animation.ms, easing: animation.easing || "ease-in-out" }).finished);
+      this.queue(actor, () => this.raise(actor) || actor.body.animate(animation.frames, { duration: animation.ms, easing: animation.easing || "ease-in-out" }).finished);
     }
 
     // An actor's directions play one after another, while the script carries on.
