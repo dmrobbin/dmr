@@ -17,6 +17,7 @@ Cards go by serial number, not by id, so a file from one database means the same
 import json
 import random
 import re
+from types import SimpleNamespace
 
 from django.db import transaction
 
@@ -124,16 +125,24 @@ def reference():
     return "\n".join(lines) + "\n"
 
 
-def anchor_report(code):
-    """The cx combo cards a CPU deck in a series can be built around, each with the CPUs whose decks already have it,
-    and the climaxes it combos with: for choosing a new CPU's anchors."""
-    choices = cpu_anchor_choices(code)
-    pool = series_pool(code)
-    climaxes = {abilities.plain_name(c.name): c for c in pool if c.card_type.lower() == "climax"}
+def cards_used():
+    """{card name: [CPUs whose decks have it]}."""
     used = {}
     for profile in CpuProfile.objects.filter(deck__isnull=False).prefetch_related("deck__entries__card"):
         for entry in profile.deck.entries.all():
             used.setdefault(entry.card.name, []).append(profile.name)
+    return used
+
+
+def anchor_report(code, used=None):
+    """The cx combo cards a CPU deck in a series can be built around, each with the CPUs whose decks already have it,
+    and the climaxes it combos with: for choosing a new CPU's anchors."""
+    choices = cpu_anchor_choices(code)
+    if not choices:
+        return []
+    pool = series_pool(code)
+    climaxes = {abilities.plain_name(c.name): c for c in pool if c.card_type.lower() == "climax"}
+    used = cards_used() if used is None else used
     return [{**card_record(card), "used_by": sorted(set(used.get(card.name, []))),
              "combos_with": [card_record(climaxes[name]) for name in sorted(card.combos) if name in climaxes]}
             for card in choices]
@@ -151,12 +160,21 @@ def export_corpus():
         files[f"cpus/{name}.json"] = json.dumps(export_profile(profile, casts, uses), indent=2, ensure_ascii=False)
     files["scenes.json"] = json.dumps(export_scenes(casts, uses), indent=2, ensure_ascii=False)
     files["reference.md"] = reference()
+    used = cards_used()
+    for code in sorted({series_code(s) for s in Card.objects.values_list("serial_number", flat=True)}):
+        if anchors := anchor_report(code, used):
+            files[f"anchors/{code}.json"] = json.dumps(anchors, indent=2, ensure_ascii=False)
     return files
 
 
 # --- Import ---------------------------------------------------------------------------------------------
 
-def read_profile(data, problems):
+def not_anchors(serials):
+    return "isn't a cx combo card" if len(serials) == 1 else "aren't cx combo cards"
+
+
+def read_profile(data, problems, taken=None):
+    """taken: the CPU names already used, lowercase; None to look in the database."""
     data = data or {}
     unknown = sorted(set(data) - set(PROFILE_FIELDS))
     if unknown:
@@ -165,7 +183,7 @@ def read_profile(data, problems):
               "aggression": data.get("aggression", cpu.MIN_AGGRESSION), "boss": bool(data.get("boss", False))}
     if not fields["name"] or len(fields["name"]) > 100:
         problems.append("profile: a name, at most 100 characters, is needed.")
-    elif CpuProfile.objects.filter(name__iexact=fields["name"]).exists():
+    elif fields["name"].lower() in taken if taken is not None else CpuProfile.objects.filter(name__iexact=fields["name"]).exists():
         problems.append(f"profile: there's already a CPU called “{fields['name']}”.")
     if fields["model"] not in cpu.MODELS:
         problems.append(f"profile: the model must be one of {', '.join(cpu.MODELS)}.")
@@ -217,7 +235,7 @@ def make_deck(data, user, rng, problems):
         if anchor:
             anchors.append(anchor)
     if unusable:
-        problems.append(f"deck: {', '.join(unusable)} {'isn' if len(unusable) == 1 else 'aren'}'t cx combo cards a CPU can play in {code}.")
+        problems.append(f"deck: {', '.join(unusable)} {not_anchors(unusable)} a CPU can play in {code}.")
         return None, []
     needed = min(ANCHORS, len(choices))
     if len(anchors) != needed or len({a.pk for a in anchors}) != needed:
@@ -233,14 +251,15 @@ def make_deck(data, user, rng, problems):
     return deck, notes
 
 
-def read_scenes(data, problems):
-    """[(name, script, infinite event)], checked for everything but the script, which needs the CPU to exist first."""
+def read_scenes(data, problems, taken=None):
+    """[(name, script, infinite event)], checked for everything but the script, which needs the CPU to exist first.
+    taken: the scene names already used, lowercase; None to look in the database."""
     found, names = [], set()
     for number, scene in enumerate(data or [], 1):
         name = str(scene.get("name", "")).strip()
         if not name or len(name) > 100:
             problems.append(f"scene {number}: a name, at most 100 characters, is needed.")
-        elif name.lower() in names or Scene.objects.filter(name__iexact=name).exists():
+        elif name.lower() in names or (name.lower() in taken if taken is not None else Scene.objects.filter(name__iexact=name).exists()):
             problems.append(f"scene {number}: there's already a scene called “{name}”.")
         names.add(name.lower())
         found.append((name, str(scene.get("script", "")), bool(scene.get("infinite_event", False))))
@@ -276,3 +295,45 @@ def import_cpu(data, user, rng=random, dry_run=False):
     except DryRun:
         pass
     return profile, notes
+
+
+# --- Checking a new CPU against an export, without the database it came from ------------------------------
+
+def load_corpus(folder):
+    """(CPU names, scene names, {series: anchors}) from an export: lowercase names, to check new ones against."""
+    cpus = {json.loads(path.read_text(encoding="utf-8"))["profile"]["name"] for path in (folder / "cpus").glob("*.json")}
+    scene_names = {scene["name"].lower() for scene in json.loads((folder / "scenes.json").read_text(encoding="utf-8"))}
+    anchors = {path.stem: json.loads(path.read_text(encoding="utf-8")) for path in (folder / "anchors").glob("*.json")}
+    return cpus, scene_names, anchors
+
+
+def check_offline(data, cpus, scene_names, anchors):
+    """Every problem import_cpu would find with a CPU's file, as far as an export can tell: all but the deck itself,
+    which express building makes on import. cpus, scene_names, anchors: from load_corpus."""
+    problems = []
+    fields = read_profile(data.get("profile"), problems, taken={name.lower() for name in cpus})
+    wanted_scenes = read_scenes(data.get("scenes"), problems, taken=scene_names)
+    deck = data.get("deck") or {}
+    code, serials = str(deck.get("series", "")), [str(s) for s in deck.get("anchors", ())]
+    if deck.get("cards"):
+        problems.append("deck: leave out the cards: express building makes the deck from the series and anchors.")
+    elif code not in anchors:
+        problems.append(f"deck: the series “{code}” has no cx combo cards a CPU can play.")
+    else:
+        usable = {a["serial_number"]: a["name"] for a in anchors[code]}
+        unusable = [s for s in serials if s not in usable]
+        needed = min(ANCHORS, len(usable))
+        if unusable:
+            problems.append(f"deck: {', '.join(unusable)} {not_anchors(unusable)} a CPU can play in {code} "
+                            f"(see anchors/{code}.json).")
+        elif len({usable[s] for s in serials}) != needed or len(serials) != needed:
+            problems.append(f"deck: it needs {needed} different anchors.")
+    known = {name.lower(): name for name in [*cpus, fields["name"]] if name}
+
+    def find(who):
+        who = who.strip().strip('"“”').strip()
+        return (SimpleNamespace(name=known[who.lower()]), None) if who.lower() in known else (None, f"There's no CPU called “{who}” in the export.")
+
+    for name, script, _ in wanted_scenes:
+        problems += [f"scene “{name}”, line {line}: {error}" for line, error in scenes.compile_scene(script, find=find)[1]]
+    return problems

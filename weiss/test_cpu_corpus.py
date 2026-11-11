@@ -107,6 +107,22 @@ class CpuCorpusTests(TestCase):
         call_command("list_cpu_anchors", "TST", "--unused", stdout=out)
         self.assertNotIn("Combo Red", [a["name"] for a in json.loads(out.getvalue())])
 
+    def test_a_new_cpu_is_checked_against_an_export_without_its_database(self):
+        self.import_cpu(self.cpu_file(profile={"name": "Anis"}, scenes=[]))
+        with tempfile.TemporaryDirectory() as folder:
+            call_command("export_cpu_corpus", "--out", folder, stdout=StringIO())
+            self.assertTrue((Path(folder) / "anchors" / "TST.json").exists())
+            corpus = cpu_corpus.load_corpus(Path(folder))
+        CpuProfile.objects.all().delete()  # what's checked is the export, not the database
+        pair = self.cpu_file(scenes=[{"name": "Rapi/Anis", "script": "cast rapi as Rapi\ncast anis as Anis\nanis: Hi.\nrapi: Hello.",
+                                      "infinite_event": True}])
+        self.assertEqual(cpu_corpus.check_offline(pair, *corpus), [])
+        wrong = self.cpu_file(profile={"name": "anis"}, deck={"anchors": [serial("Combo Red"), "TST/S1-001"]},
+                              scenes=[{"name": "Bad", "script": "cast neon as Neon\nneon: Hi."}])
+        problems = cpu_corpus.check_offline(wrong, *corpus)
+        self.assertEqual(len(problems), 4, problems)  # the taken name, the anchor, and the unknown CPU cast and speaking
+        self.assertIn("Neon", problems[2])
+
     def test_the_reference_covers_every_model_and_buff(self):
         text = cpu_corpus.reference()
         for name in [*cpu.MODELS, *buffs.BUFFS]:
