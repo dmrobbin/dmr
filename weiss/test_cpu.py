@@ -4110,6 +4110,149 @@ class AdventureTimeTests(PersonaTests):
         self.assertNotIn(high["uid"], options)
 
 
+class AvatarDanMachiTests(PersonaTests):
+    WELF = ('【AUTO】 When this card is placed on the stage from your hand, reveal the top card of your deck. If that card is ""Crozzo\'s Magic Sword"" or a 《Familia》 '
+            "or 《Guild》 or 《Hostess of Fertility》 character, you may deal 1 damage to your opponent. (Damage may be canceled. Return the revealed card to its original place)\n"
+            "【AUTO】 [(1) Put 1 《Familia》 or 《Guild》 or 《Hostess of Fertility》 character from your hand into your waiting room] When this card's battle opponent becomes "
+            '【REVERSE】, you may pay the cost. If you do, choose up to 1 ""Crozzo\'s Magic Sword"" in your hand, and if the level and color requirements are fulfilled, '
+            "play it without paying the cost.")
+    PLAY_SWORD = 'Choose up to 1 ""Crozzo\'s Magic Sword"" in your hand, and if the level and color requirements are fulfilled, play it without paying the cost.'
+    AANG_KATARA = ('【CONT】 If your level is 2 or higher, this card gets the following ability. "【ACT】 [Put this card into your waiting room] Choose up to 1 "Katara & Aang: '
+                   'Reciprocated Feelings" in your hand, and put it in the stage position that this card was in."\n'
+                   '【AUTO】 【CXCOMBO】 [Put 1 "Struck Down" from your climax area into your waiting room] At the beginning of your encore step, if you have another '
+                   "《World of Avatar》 character, you may pay the cost. If you do, choose this card and up to 1 of your other characters, and return them to your hand.")
+    WATER = ("【AUTO】 When this card is placed on the stage from your hand, reveal the top 3 cards of your deck, if the total number of colors among those cards is 3 or more, "
+             "choose up to 1 card from among them, and put it into your hand. Put the rest into your waiting room.\n"
+             "【AUTO】 When this card is placed on the stage from your hand, you may choose the bottom card of your clock and 1 《World of Avatar》 character in your waiting room, "
+             "and exchange them.")
+    AZULA = ('【CONT】 If you have 2 or more other 《World of Avatar》 characters, this card gets +2000 power.\n【AUTO】 【CXCOMBO】 When this card attacks, if "Falling Out" is in '
+             "your climax area, and you have 2 or more other 《World of Avatar》 characters, reveal the top 3 cards of your deck, your opponent chooses 1 event or character from "
+             "among them, you add it to your hand, you choose up to 1 of the revealed cards except the card put into your hand, put it on the top of your deck, and put the rest "
+             "into your waiting room.")
+    CHIBI_ZUKO = ("【AUTO】 When this card is placed on the stage from your hand, if your opponent has 1 or less characters in their center stage, you may choose 1 cost 0 or "
+                  "lower character in their center stage,  and put it into their waiting room.\n【AUTO】 When this card is placed on the stage from your hand, all players perform "
+                  'the following action. "If your memory has 5 or more cards, choose 4 cards in your memory, and put all of the cards in your memory except those cards into your '
+                  'waiting room."')
+    FINN = ("【AUTO】 At the beginning of your climax phase, you may choose 2 《Familia》 or 《Guild》 or 《Hostess of Fertility》 characters in your waiting room, and put them at "
+            "the bottom of your clock in any order. If you put 2 cards into your clock, at the end of the turn, put the bottom 2 cards of your clock into your waiting room.\n"
+            "【ACT】 Brainstorm [(1) 【REST】 this card] Flip over 4 cards from the top of your deck, and put them into your waiting room. For each climax revealed among those "
+            "cards, choose up to 1 《Familia》 or 《Guild》 or 《Hostess of Fertility》 character in your waiting room, and return it to your hand.")
+    LILI = ("【AUTO】 When this card is placed on the stage from your hand, your opponent declares 0 or 1 or 2 or 3. Put the top card of your deck into your waiting room, and "
+            "if that card is the level your opponent declared, draw up to X cards. X is equal to the number your opponent declared +1. (Climax are regarded as level 0)\n"
+            "【AUTO】 At the beginning of your opponent's draw phase, put the top card of your deck into your waiting room. If that card is level 1 or higher, you may return "
+            "this card to your hand. (Climax are regarded as level 0)")
+    TRANSFORMATION = ("【AUTO】 [Put 1 of your other characters from your stage into your waiting room] During your opponent's turn, when this card becomes 【REVERSE】, you "
+                      "may pay the cost. If you do, 【REST】 this card, and at the start of your next encore step, put this card into your waiting room.")
+    HESTIA_KNIFE = ('【COUNTER】 If you do not have a character with "Hestia(ヘスティア)" or "Bell(ベル)" in its card name, this card cannot be played from your hand. If you '
+                    'do not have a character with "Bell(ベル)" in its card name, this card cannot be played from your hand during the counter step. This card can be played '
+                    "from your hand without fulfilling color requirements. Look at up to 4 cards from the top of your deck, choose up to 1 《Familia》 or 《Guild》 or 《Hostess "
+                    "of Fertility》 character from among them, reveal it to your opponent, put it into your hand, and put the rest into your waiting room.")
+    TEXTS = [WELF, AANG_KATARA, WATER, AZULA, CHIBI_ZUKO, FINN, LILI, TRANSFORMATION, HESTIA_KNIFE]
+
+    def test_nothing_is_left_to_do_by_hand(self):
+        for text in self.TEXTS:
+            self.assertEqual(abilities.by_hand_parts(text), [], text)
+
+    def sword_table(self, sword_level=1):
+        t = Table()
+        welf = t.seat(t.me, "C1", t.card(1001, text=self.WELF))
+        t.card(1002, name='"Crozzo\'s Magic Sword"', card_type="Event", level=sword_level, color="Red", text="Draw 1 card.")
+        sword = t.hand(1002)[0]
+        t.me["zones"]["deck"].append(game.new_card(900))
+        t.refresh()
+        return t, welf, sword
+
+    def test_welf_plays_the_sword_for_nothing(self):
+        t, welf, sword = self.sword_table()
+        t.level(1)
+        t.me["zones"]["clock"].append(game.new_card(t.card(1003, color="Red")))
+        self.run_ability(t, welf, self.PLAY_SWORD)
+        self.answer(t, uids=[sword["uid"]])
+        while t.state.get("ability_queue") and not t.state.get("resolving"):  # the sword's own text, played
+            t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+            self.shows(t)
+        self.assertIn(sword, t.me["zones"]["waiting"])
+        self.assertEqual([c["card"] for c in t.me["zones"]["hand"]], [900])
+        self.assertEqual(t.me["zones"]["stock"], [])
+
+    def test_welf_cant_play_the_sword_without_its_level_or_color(self):
+        for leveled, colored in ((False, True), (True, False)):
+            t, welf, sword = self.sword_table()
+            if leveled:
+                t.level(1)
+            if colored:
+                t.me["zones"]["clock"].append(game.new_card(t.card(1003, color="Red")))
+            self.run_ability(t, welf, self.PLAY_SWORD)
+            self.answer(t, uids=[sword["uid"]])
+            self.assertIn(sword, t.me["zones"]["hand"])
+
+    def test_a_character_played_for_nothing_is_played_from_the_hand(self):
+        t = Table()
+        source = t.seat(t.me, "C1", t.card(1001))
+        played = t.card(1002, name="Crozzo's Magic Sword", text="【AUTO】 When this card is placed on the stage from your hand, draw 1 card.")
+        card = t.hand(played)[0]
+        t.me["zones"]["deck"].append(game.new_card(900))
+        t.refresh()
+        self.run_ability(t, source, self.PLAY_SWORD)
+        self.answer(t, uids=[card["uid"]])
+        self.assertEqual(self.prompt(t)["for"], "place")
+        self.answer(t, value="C2")
+        self.assertIs(t.me["stage"]["C2"], card)
+        self.assertEqual(t.state["ability_queue"][0]["uid"], card["uid"])  # its "placed on the stage from your hand"
+
+    def test_aang_and_katara_go_back_to_the_hand_with_a_friend(self):
+        t = Table()
+        aang = t.seat(t.me, "C1", t.card(1001, traits="World of Avatar", text=self.AANG_KATARA))
+        sokka = t.seat(t.me, "C2", t.card(1002, traits="World of Avatar"))
+        t.refresh()
+        self.run_ability(t, aang, "Choose this card and up to 1 of your other characters, and return them to your hand.")
+        self.assertEqual(self.prompt(t)["min"], 0)
+        self.answer(t, uids=[sokka["uid"]])
+        self.assertEqual({c["uid"] for c in t.me["zones"]["hand"]}, {aang["uid"], sokka["uid"]})
+
+    def test_finn_sends_the_bottom_of_the_clock_back(self):
+        t = Table()
+        finn = t.seat(t.me, "C1", t.card(1001, text=self.FINN))
+        clock = [game.new_card(t.card(1002 + i)) for i in range(3)]
+        t.me["zones"]["clock"] = list(clock)
+        t.refresh()
+        self.run_ability(t, finn, "Put the bottom 2 cards of your clock into your waiting room.")
+        self.assertEqual(t.me["zones"]["clock"], [clock[2]])
+        self.assertEqual(t.me["zones"]["waiting"][-2:], clock[:2])
+
+    def test_lili_draws_one_more_than_declared_on_a_match(self):
+        for declared, drawn in ((2, 3), (1, 0)):
+            t = Table()
+            lili = t.seat(t.me, "C1", t.card(1001, text=self.LILI))
+            t.me["zones"]["deck"] = [game.new_card(900) for _ in range(4)] + [game.new_card(t.card(1002, level=2))]
+            t.refresh()
+            self.run_ability(t, lili, self.LILI)
+            self.assertEqual(self.prompt(t)["player"], "1")
+            self.answer(t, player=1, value=declared)
+            if t.state.get("resolving") and self.prompt(t)["for"] == "number":  # draw up to X
+                self.assertEqual(self.prompt(t)["options"][0]["value"], drawn)
+                self.answer(t, value=drawn)
+            self.assertEqual(len(t.me["zones"]["hand"]), drawn)
+
+    def test_transformation_magic_waits_for_its_own_encore_step(self):
+        may = abilities.parse(self.TRANSFORMATION)[0]["steps"][0]
+        self.assertEqual(may["then"][-1], {"do": "delay", "phase": "encore", "whose": "me", "then": [{"do": "self_to", "to": "waiting"}]})
+
+    def test_hestia_knife_needs_bell_in_the_counter_step(self):
+        t = Table()
+        knife = t.hand(t.card(1001, card_type="Event", level=1, color="Blue", text=self.HESTIA_KNIFE))[0]
+        t.level(1)
+        banned = lambda: game.play_banned(t.state, "2", knife, t.info)
+        self.assertTrue(banned())
+        t.seat(t.me, "C1", t.card(1002, name="Goddess, Hestia"))
+        self.assertFalse(banned())
+        self.assertIsNone(game.color_needed(t.state, "2", knife, t.info))
+        t.state["attack"] = {"step": "counter"}
+        self.assertTrue(banned())
+        t.seat(t.me, "C2", t.card(1003, name="Bell Cranel"))
+        self.assertFalse(banned())
+
+
 class BanGDreamTests(PersonaTests):
     COOKIES = "【CONT】 This card gets +500 power for each of your other 《Music》 characters.\n【AUTO】 【CXCOMBO】 At the beginning of your encore step, if \"Making Cookies\" is in your climax area, this card is on your center stage, and your opponent does not have any characters on his or her center stage, or all characters on your opponent's center stage are 【REVERSE】, Trigger FEVER.\n【REPLAY】 Trigger FEVER Search your deck for up to 1 character, reveal it to your opponent, put it into your hand, shuffle your deck, choose up to 1  《Music》 character in your waiting room, put it into your stock, choose 1 of your other characters, and that character gets +1000 power until the end of your opponent's next turn."
     STARRIN = "【AUTO】  When this card is placed on the stage from your hand, search your deck for up to one 《Music》 character, reveal it to your opponent, put it into your hand, and shuffle your deck.\n【AUTO】  【CXCOMBO】  [(4) Put three cards from your hand into your waiting room] At the beginning of your attack phase, if a card named \"We Are Poppin'Party\" is in your climax area, this card is in your center stage, and you have other cards named \"Starrin' PARTY, Tae Hanazono\", \"Starrin'PARTY, Rimi Ushigome\", \"Starrin'PARTY, Saya Yamabuki\" and \"Starrin'PARTY, Arisa Ichigaya\", you may pay the cost. If you do, 【STAND】  all of your opponent's characters, deal X damage to your opponent, and put up to X cards from the top of your clock into your waiting room. X is equal to the number of your opponent's 【STAND】  characters. (This damage may be canceled)"

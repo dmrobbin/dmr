@@ -723,6 +723,11 @@ WORDING = [
     (r"\bputs it on the position that that character was on\b", "puts it on the stage position that that character was on"),
     (r"\bthe number of cards you have in your (stock|hand|waiting room|memory|clock|level)\b", r"the number of cards in your \1"),
     (r"\[\((\d+)\) Put 1 (⟦\d+⟧) on your stage and this card into your memory\]", r"[(\1) Put 1 \2 from your stage into your memory & Put this card into your memory]"),
+    # Avatar's and DanMachi's wordings.
+    (r"\bput all of the cards in your memory except those cards\b", "put all cards in your memory except those cards"),
+    (r"\byou add it to your hand, you choose up to 1 of the revealed cards except the card put into your hand\b", "put it into your hand, choose up to 1 card from among them"),
+    (r"\bthe total number of colors among those cards\b", "the total number of colors revealed among those cards"),
+    (r"\bif that card is the level your opponent declared\b", "if that card's level is the number your opponent declared"),
 ]
 
 
@@ -956,7 +961,7 @@ def matches_filter(filter_, details, x=None, my_level=0):
         low, high = alt.get("level_min"), alt.get("level_max")
         if "type" in alt and alt["type"] != kind:
             continue
-        if "name" in alt and plain_name(alt["name"]) != name:
+        if "name" in alt and plain_name(alt["name"]) != name and plain_name(alt["name"]).strip('"') != name.strip('"'):  # ""Crozzo's Magic Sword"", quoted or not
             continue
         if "in_name" in alt and plain_name(alt["in_name"]).lower() not in name.lower():
             continue
@@ -1033,6 +1038,8 @@ def parse_condition(words, quotes):
         return {"type": "total_level", "n": int(match[1]), "dir": match[2]}
     if re.fullmatch(r"during this card's battle", text, re.I):
         return {"type": "in_battle"}
+    if re.fullmatch(r"the level and color requirements are fulfilled", text, re.I):  # of the card just chosen, to play it
+        return {"type": "it_playable"}
     match = re.fullmatch(r"there is (a|no) character facing this card", text, re.I)
     if match:
         return {"type": "facing_exists", "absent": match[1].lower() == "no"}
@@ -2637,10 +2644,11 @@ def clause_steps(clause, quotes, cost):
     match = re.fullmatch(r"deal (\d+) damage to your opponent (\d+) times", text)
     if match:
         return [{"do": "damage", "n": int(match[1])}] * int(match[2])
-    if re.fullmatch(r"choose this card and (\d+) of your (.+?)", text) or re.fullmatch(r"choose (\d+) of your (.+?) and this card", text):
-        match = re.fullmatch(r"choose (?:this card and )?(\d+) of your (.+?)(?: and this card)?", text)
-        if f := parse_filter(match[2], quotes):
-            return [{"do": "choose", "zone": "stage", "filter": {"other": True, **f}, "min": int(match[1]), "max": int(match[1]), "text": unmask(clause, quotes)}, {"do": "add_self_to_it"}]
+    if re.fullmatch(r"choose this card and (?:up to )?(\d+) of your (.+?)", text) or re.fullmatch(r"choose (\d+) of your (.+?) and this card", text):
+        match = re.fullmatch(r"choose (?:this card and )?(up to )?(\d+) of your (.+?)(?: and this card)?", text)
+        if f := parse_filter(match[3], quotes):
+            return [{"do": "choose", "zone": "stage", "filter": {"other": True, **f}, "min": 0 if match[1] else int(match[2]), "max": int(match[2]), "text": unmask(clause, quotes)},
+                    {"do": "add_self_to_it"}]
     match = re.fullmatch(r"choose 1 card in your (level|clock|memory) and 1 (.+?) in your waiting room", text)
     if match and (f := parse_filter(match[2], quotes)):
         return [{"do": "choose", "zone": ZONE_WORDS[match[1]], "filter": None, "max": 1, "min": 1, "text": f"Choose 1 card in your {match[1]}"},
@@ -2881,9 +2889,11 @@ def clause_steps(clause, quotes, cost):
     match = re.fullmatch(r"put up to (\d+) cards? from the top of your deck into your (waiting room|stock|clock)", text)
     if match:
         return [{"do": "top", "n": int(match[1]), "upto": True, "owner": "me", "to": ZONE_WORDS[match[2]]}]
-    match = re.fullmatch(r"put the (top|bottom) card of your (opponent's )?clock into (?:your|their) (waiting room|stock|hand)", text)
+    if text == "play it without paying the cost":
+        return [{"do": "play_it"}]
+    match = re.fullmatch(r"put the (top|bottom) (?:card|(\d+) cards) of your (opponent's )?clock into (?:your|their) (waiting room|stock|hand)", text)
     if match:
-        return [{"do": "clock_card", "end": match[1], "owner": "opp" if match[2] else "me", "to": ZONE_WORDS[match[3]]}]
+        return [{"do": "clock_card", "end": match[1], "owner": "opp" if match[3] else "me", "to": ZONE_WORDS[match[4]], **({"n": int(match[2])} if match[2] else {})}]
     match = re.fullmatch(r"all players put up to (\d+) cards? from the top of their clock into their waiting room", text)
     if match:  # each says how many of their own
         return [{"do": "clock_card", "end": "top", "owner": who, "to": "waiting", "n": int(match[1]), "upto": True, **({"chooser": "opp"} if who == "opp" else {})}
@@ -2982,7 +2992,7 @@ def has_manual(steps):
 def parse_clauses(parts, quotes, cost):
     steps = []
     for i, part in enumerate(parts):
-        match = re.fullmatch(r"[Aa]t the beginning of (your next|the next|the|your|your opponent's next) (draw phase|clock phase|main phase|climax phase|attack phase|encore step)", part)
+        match = re.fullmatch(r"[Aa]t the (?:beginning|start) of (your next|the next|the|your|your opponent's next) (draw phase|clock phase|main phase|climax phase|attack phase|encore step)", part)
         if match and i + 1 < len(parts):
             whose = {"your next": "me", "your": "me", "your opponent's next": "opp"}.get(match[1].lower(), "any")
             steps.append({"do": "delay", "phase": match[2].split()[0], "whose": whose, "then": parse_clauses(parts[i + 1:], quotes, cost)})
@@ -3792,16 +3802,16 @@ def play_ban(line):
     """ "If you do not have X, this card cannot be played from your hand." As (the ability, whatever else is
     on the line, whether it marked the card as a counter), or None if that isn't what this line says."""
     body, quotes = mask(line)
-    match = re.fullmatch(r"(?:【(COUNTER|CONT|AUTO)】\s*)?(?:Experience |Memory )?(If .+?), this card cannot be played from your hand\.?\s*(.*)", body)
+    match = re.fullmatch(r"(?:【(COUNTER|CONT|AUTO)】\s*)?(?:Experience |Memory )?(If .+?), this card cannot be played from your hand( during the counter step)?\.?\s*(.*)", body)
     if not match:
         return None
-    ability = {"kind": "cont", "text": unmask(body[:match.start(3)].strip(), quotes), "cond": [], "effects": [], "once": False, "where": None, "limit": 0}
-    conds = [parse_condition(p, quotes) for p in clauses(match[2])]
+    ability = {"kind": "cont", "text": unmask(body[:match.start(4)].strip(), quotes), "cond": [], "effects": [], "once": False, "where": None, "limit": 0}
+    conds = [parse_condition(p, quotes) for p in clauses(match[2])] + ([{"type": "counter_step"}] if match[3] else [])
     if all(conds):
         ability.update(cond=conds, play_ban=True)
     else:  # it has to be known when this can't be played
         ability["steps"] = [{"do": "manual", "text": ability["text"]}]
-    return ability, unmask(match[3], quotes), match[1] == "COUNTER"
+    return ability, unmask(match[4], quotes), match[1] == "COUNTER"
 
 
 REPLAYS = contextvars.ContextVar("replays", default={})  # the card being read's 【REPLAY】 names: {name: what it does}
@@ -3870,19 +3880,18 @@ def read_lines(text, lines):
     event_lines = []
     counter_card = False
     for line in lines:
-        banned = play_ban(line)
-        if banned:
-            ability, rest, counter = banned
+        while banned := play_ban(line):  # one after another: "... cannot be played from your hand. If ..., ... during the counter step."
+            ability, line, counter = banned
             abilities.append(ability)
             counter_card = counter_card or counter
-            if not rest:
+        if not line or line.startswith(("(", ": ")) or re.fullmatch(r"[-－―ー\s]*", line):  # a trigger icon's reminder text, sometimes missing the start
+            continue
+        free = re.match(r"This card can be played from your hand without fulfilling color requirements\.?\s*", line)
+        if free:
+            abilities.append({"kind": "cont", "text": line[:free.end()].strip(), "cond": [], "effects": [], "once": False, "where": None, "limit": 0, "color_free": {"self": True}})
+            line = line[free.end():]
+            if not line:
                 continue
-            line = rest
-        if line.startswith(("(", ": ")) or re.fullmatch(r"[-－―ー\s]*", line):  # a trigger icon's reminder text, sometimes missing the start
-            continue
-        if re.fullmatch(r"This card can be played from your hand without fulfilling color requirements\.?", line):
-            abilities.append({"kind": "cont", "text": line, "cond": [], "effects": [], "once": False, "where": None, "limit": 0, "color_free": {"self": True}})
-            continue
         body, quotes = mask(line)
         tag = re.match(r"【(AUTO|ACT|CONT|COUNTER)】\s*", body)
         if not tag:

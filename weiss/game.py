@@ -1788,6 +1788,8 @@ def condition_met(cond, state, player, source, ctx, env):
         return bool(slot and pile(side, MARKER + slot)) == cond["any"]
     if kind == "total_level":
         return compare(sum(number(details_of(c, env).get("level")) for c in zones["level"]), cond["n"], cond["dir"])
+    if kind == "counter_step":
+        return (state.get("attack") or {}).get("step") == "counter"
     if kind == "in_battle":
         attack = state.get("attack") or {}
         return bool(uid) and attack.get("kind") == "front" and uid in battle_uids(state)
@@ -1886,6 +1888,10 @@ def condition_met(cond, state, player, source, ctx, env):
         facing = facing_card(state, player, source, ctx)
         limit = x_value(cond.get("x"), state, player, None, ctx, env)
         return bool(facing) and compare(number(details_of(facing, env).get("level")), limit, cond["dir"])
+    if kind == "it_playable":  # "if the level and color requirements are fulfilled" of the card just chosen from the hand
+        owner, card, where = locate(state, (ctx.get("it") or [None])[0])
+        return bool(card) and where == "hand" and play_level(state, owner, card, env.info) <= len(state["players"][owner]["zones"]["level"]) \
+            and not color_needed(state, owner, card, env.info)
     if kind == "revealed_level_declared":
         return (number((env.info(ctx.get("revealed")) or {}).get("level")) == ctx.get("declared")) != bool(cond.get("negate"))
     if kind == "said":  # "and you declared "True""
@@ -3215,7 +3221,8 @@ def run_step(step, res, state, env):
                 return
             shown = [c for c in (locate(state, uid)[1] for uid in ctx["it"]) if c]
             ask_choice(res, "place", "Choose a stage position", [(s, LABELS[s].capitalize()) for s in slots],
-                       cards=[dict(c) for c in shown], owner=owner, rest=step.get("rest", False), keep_pos=step.get("keep_pos", False))
+                       cards=[dict(c) for c in shown], owner=owner, rest=step.get("rest", False), keep_pos=step.get("keep_pos", False),
+                       **({"played": True} if step.get("played") else {}))
             if step.get("opponent_places") or step.get("chooser") == "opp":
                 res["prompt"]["player"] = opponent
     elif do == "to_old_slot":
@@ -3615,6 +3622,20 @@ def run_step(step, res, state, env):
             ctx["it"], ctx["it_owner"] = [ctx["that"]], locate(state, ctx["that"])[0]
     elif do == "add_self_to_it":
         ctx["it"] = [*ctx.get("it", []), res["uid"]]
+    elif do == "play_it":  # "play it without paying the cost": the card just chosen from the hand, as if played from there
+        owner, card, where = locate(state, (ctx.get("it") or [None])[0])
+        if not card or where != "hand" or owner != player:
+            return
+        kind = ((env.info(card["card"]) or {}).get("card_type") or "").lower()
+        if kind == "character":
+            res["steps"].insert(0, {"do": "place", "played": True})
+            return
+        if kind != "event":
+            return
+        take(side, card["uid"])
+        put(side, card, "resolution")
+        add_log(state, player, f"played {env.name(card['card'])} without paying its cost")
+        played(state, player, card, "resolution", env)
     elif do == "rest_all":
         for card in stage_cards(side):
             if card["uid"] != res["uid"] and fits(step["filter"], card, env) and position_fits(step["filter"], card):
@@ -4197,6 +4218,9 @@ def answer_ability(state, player, action, env):
                     fire(state, env, "leave", uid=occupant["uid"], source=occupant, source_owner=player, slot=value)
                 add_log(state, player, f"put {env.name(card['card'])} on {LABELS[value]}")
                 counted(ctx, "stage")  # "if you placed a character on your stage"
+                if prompt.get("played") and src == "hand":  # "play it without paying the cost": as if from the hand
+                    played(state, player, card, value, env)
+                    break
                 card["placed_turn"] = state["turn_number"]
                 card["placed_by"] = res["card"]
                 fire(state, env, "placed", uid=card["uid"], by=res["card"], src=src, card=card["card"], owner=prompt.get("owner", player), actor=player)
