@@ -1322,6 +1322,21 @@ button .cx, .phase-bar button.current .cx { filter: drop-shadow(0 0 2px rgb(0 0 
 .play-zoom[hidden] { display: none; }
 .play-zoom img { display: block; height: min(80vh, 44rem); width: auto; border-radius: .9rem; box-shadow: 0 20px 60px rgb(0 0 0 / .75); }
 .play-zoom.zoom-climax img { height: min(68vh, 37.4rem); } /* landscape, so a little smaller */
+/* Beside the zoom (play.js showSources): what's changing a character's power, soul or level, with each source's card. */
+.play-zoom-sources { position: fixed; top: 50%; z-index: 48; transform: translateY(-50%); pointer-events: none; max-width: min(24rem, 90vw); max-height: 80vh; overflow: hidden;
+  padding: .75rem; border: 1px solid var(--accent); border-radius: .75rem; background: var(--surface); box-shadow: 0 20px 60px rgb(0 0 0 / .75); font-size: .9rem; }
+.play-zoom-sources[hidden] { display: none; }
+.play-zoom-sources .source-totals { display: flex; flex-wrap: wrap; gap: .25rem .75rem; margin: 0 0 .6rem; font-weight: 600; }
+.play-zoom-sources ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; }
+.play-zoom-sources li { display: flex; align-items: center; gap: .65rem; }
+.play-zoom-sources li img { flex: none; height: 7.5rem; width: auto; border-radius: .4rem; box-shadow: 0 4px 14px rgb(0 0 0 / .5); }
+.play-zoom-sources li img.source-climax { height: auto; width: 7.5rem; } /* landscape */
+.play-zoom-sources .source-chip { flex: none; display: grid; place-items: center; width: 5.4rem; height: 3rem; border: 1px dashed var(--border); border-radius: .4rem; color: var(--accent); font-size: 1.3rem; }
+.play-zoom-sources .source-text { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
+.play-zoom-sources .source-text b { font-size: 1.05rem; }
+.play-zoom-sources .source-name { overflow-wrap: anywhere; }
+.play-zoom-sources .boosted { color: #6be08a; }
+.play-zoom-sources .lowered { color: #e0605b; }
 
 /* Booster packs (weiss/packs.js). A pack is white over black with a gold band; sized by --pw. */
 .pack-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem 2rem; margin: 0 0 2rem; }

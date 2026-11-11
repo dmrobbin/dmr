@@ -148,9 +148,22 @@ def paused_run(request):
     return room
 
 
+STALE_ROOM_DAYS = 3  # a room nobody has played in for this long is cleared away
+
+
+def clear_stale_rooms():
+    """Rooms nobody has played in for STALE_ROOM_DAYS go, as if their players had left them (see leave_run). A co-op
+    vs. battle's room stays: its pair's challenge goes by it, and clears it away itself (weiss.coop)."""
+    cutoff = timezone.now() - timedelta(days=STALE_ROOM_DAYS)
+    for room in GameRoom.objects.filter(updated__lt=cutoff, coop_duel__isnull=True).select_related("arcade_run"):
+        with transaction.atomic():
+            leave_run(room)
+
+
 @weiss_access_required
 def room_list(request):
-    rooms = (GameRoom.objects.filter(host=request.user) | GameRoom.objects.filter(guest=request.user)) \
+    clear_stale_rooms()
+    rooms =(GameRoom.objects.filter(host=request.user) | GameRoom.objects.filter(guest=request.user)) \
         .select_related("host", "guest", "arcade_run").distinct()
     return render(request, "weiss/play_list.html", {
         "rooms": rooms,

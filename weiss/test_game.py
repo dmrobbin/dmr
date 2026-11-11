@@ -1,13 +1,15 @@
 import json
+from datetime import timedelta
 
 from django.contrib.auth.models import Group, User
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from core.access import WEISS_GROUP
 
 from . import abilities, game
-from .models import Card, CardList, CardListEntry, GameRoom
+from .models import Card, CardList, CardListEntry, CoopRun, GameRoom
 from .test_packs import with_climaxes
 
 
@@ -790,6 +792,17 @@ class RoomFlowTests(TestCase):
     def as_user(self, user):
         self.client.force_login(user)
 
+    def test_rooms_nobody_has_played_in_for_3_days_are_cleared(self):
+        old, recent = (GameRoom.objects.create(host=self.host, guest=self.guest) for _ in range(2))
+        pair = CoopRun.objects.create(host=self.host, guest=self.guest)
+        duel = GameRoom.objects.create(host=self.host, guest=self.guest, coop_duel=pair)
+        long_ago = timezone.now() - timedelta(days=3, minutes=1)
+        GameRoom.objects.filter(pk__in=[old.pk, duel.pk]).update(updated=long_ago)
+        GameRoom.objects.filter(pk=recent.pk).update(updated=timezone.now() - timedelta(days=2))
+        self.as_user(self.host)
+        self.client.get(reverse("weiss:play_rooms"))
+        self.assertCountEqual(GameRoom.objects.values_list("pk", flat=True), [recent.pk, duel.pk])
+
     def test_invite_join_choose_decks_start_and_play(self):
         self.as_user(self.host)
         self.client.post(reverse("weiss:play_create"))
@@ -993,6 +1006,14 @@ class AbilityGameTests(TestCase):
         self.assertEqual(self.stats(uid), {"power": 2000, "soul": 2})
         self.assertEqual(self.stats(uid, player=2), {"power": 2000, "soul": 2})  # both players see it
 
+    def test_each_boost_says_which_card_it_comes_from(self):
+        self.card(20, "【CONT】 All of your other characters get +500 power.")
+        uid = self.seat(50, "C2")
+        back, left = self.seat(20, "B1"), self.seat(20, "C1")
+        sources = game.view(self.state, 2)["stat_sources"][uid]  # the opponent sees them too
+        self.assertEqual(self.stats(uid)["power"], 2000)
+        self.assertCountEqual(sources, [{"uid": back, "card": 20, "power": 500}, {"uid": left, "card": 20, "power": 500}])
+
     def test_a_character_boost_only_on_its_owners_turn(self):
         self.card(20, "【CONT】 During your turn, this card gets +2000 power.")
         uid = self.play(20, "C1")
@@ -1049,6 +1070,8 @@ class AbilityGameTests(TestCase):
         self.act(1, {"type": "ability_answer", "uids": [other]})
         self.assertIsNone(self.ability())
         self.assertEqual(self.stats(other)["power"], 3000)
+        played = self.state["players"]["1"]["stage"]["C2"]["uid"]
+        self.assertEqual(game.view(self.state, 1)["stat_sources"][other], [{"uid": played, "card": 20, "power": 2000}])
         self.act(1, {"type": "phase", "phase": "end"})
         self.assertEqual(self.stats(other, player=1)["power"], 1000)
 

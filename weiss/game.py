@@ -32,6 +32,7 @@ State is plain JSON, stored on the GameRoom:
      "needs_color": {user id: {uid: color}},  # hand cards the color rule is holding back
      "hand_mods": {user id: {uid: {"level", "cost"}}},  # hand cards an ability has lowered, and what they count as now
      "buffs": [...], "stats": {uid: {"power", "soul", "level" (when an effect changed it)}}, "granted": {uid: [text]},  # what's boosting characters
+     "stat_sources": {uid: [{"uid", "card"} or {"label"}, with "power", "soul", "level" or "set_power", "set_soul"]},  # where each change comes from
      "acts": {user id: {uid: [...]}}, "used": [...]}  # what each ! button can do, and 1/TURN abilities used
 
 With turn rules on, phases end themselves when there's nothing left to do in them, the page offers
@@ -1654,7 +1655,8 @@ def apply_action(state, player, action, env):
 #
 # CONT abilities and buffs aren't stored on cards: refresh_stats works out every character's power
 # and soul after each action, into state["stats"], from the printed numbers, every CONT ability
-# in play and state["buffs"] ({"uid", "power", "soul", "expires": turn number, "grant": [text]}).
+# in play and state["buffs"] ({"uid", "power", "soul", "expires": turn number, "grant": [text], "from": {"uid", "card"}}).
+# Where each change came from goes into state["stat_sources"], so the page can show it on hover.
 
 PUBLIC_CHOICES = {"stage", "center", "back", "waiting", "clock", "level", "memory"}  # choices both players can see
 STEP_LIMIT = 500  # steps one action may run: a safety net, far above what any card does
@@ -2213,9 +2215,20 @@ def markers_fit(filter_, side, card):
     return has if filter_.get("has_markers") else not has
 
 
-def compute_stats(state, env):
+def credit(credits, uid, stat, amount, source=None, label=None):
+    """Note in `credits` (when given) that `source` (a card) or else `label` changed this character's stat by
+    amount. Each source's changes add up into one entry."""
+    if credits is None or not amount:
+        return
+    key = source["uid"] if source else label
+    entry = credits.setdefault(uid, {}).setdefault(key, {"uid": source["uid"], "card": source["card"]} if source else {"label": label})
+    entry[stat] = entry.get(stat, 0) + amount
+
+
+def compute_stats(state, env, credits=None):
     """Every character's power and soul right now, and the abilities CONT abilities are giving them.
-    Soul first, since some power depends on it ("X is equal to that character's soul ×1000")."""
+    Soul first, since some power depends on it ("X is equal to that character's soul ×1000").
+    `credits`, if given, is filled with what changed each character's stats: {uid: {source key: entry}}."""
     stats = {}
     conts = []
     stamp_levels(state)
@@ -2255,6 +2268,7 @@ def compute_stats(state, env):
                     if effect.get("per"):
                         amount *= x_value(effect["per"], state, player, target, ctx, env, stats)
                     stats[target["uid"]][wanted] += amount
+                    credit(credits, target["uid"], wanted, amount, source)
                     if wanted == "power" and effect.get("grant"):
                         granted.setdefault(target["uid"], []).extend(effect["grant"])
                     if wanted == "soul" and effect.get("traits"):
@@ -2263,9 +2277,11 @@ def compute_stats(state, env):
         if buff["uid"] in stats:
             stats[buff["uid"]]["power"] += buff.get("power", 0)
             stats[buff["uid"]]["soul"] += buff.get("soul", 0)
+            for stat in ("power", "soul", "level"):
+                credit(credits, buff["uid"], stat, buff.get(stat, 0), buff.get("from"), "Effects")
     for player, side in state["players"].items():
-        augment_stats(side, stats, env)
-        curse_stats(state, player, side, stats)
+        augment_stats(side, stats, env, credits)
+        curse_stats(state, player, side, stats, credits)
     for values in stats.values():
         values["power"] = max(0, values["power"])
         values["soul"] = max(0, values["soul"])
@@ -2274,10 +2290,13 @@ def compute_stats(state, env):
             stats[buff["uid"]].update(power=buff["set_power"], manual=True)
         if "set_soul" in buff and buff["uid"] in stats:
             stats[buff["uid"]].update(soul=buff["set_soul"], manual_soul=True)
+        if credits is not None and buff["uid"] in stats and ("set_power" in buff or "set_soul" in buff):
+            entry = credits.setdefault(buff["uid"], {}).setdefault("Set by hand", {"label": "Set by hand"})
+            entry.update({key: buff[key] for key in ("set_power", "set_soul") if key in buff})
     return stats, granted
 
 
-def augment_stats(side, stats, env):
+def augment_stats(side, stats, env, credits=None):
     """What a challenge player's augments (side["augments"]) give their characters."""
     augments = side.get("augments") or ()
     if not augments:
@@ -2288,13 +2307,16 @@ def augment_stats(side, stats, env):
             continue
         if "devotion" in augments:
             values["power"] += DEVOTION_POWER
+            credit(credits, card["uid"], "power", DEVOTION_POWER, label="Devotion (augment)")
         if "glass_cannon" in augments:
             values["soul"] += GLASS_CANNON_SOUL
+            credit(credits, card["uid"], "soul", GLASS_CANNON_SOUL, label="Glass Cannon (augment)")
         if "low_level_army" in augments and number(values.get("level", details_of(card, env).get("level"))) == 0:
             values["power"] += LOW_LEVEL_POWER
+            credit(credits, card["uid"], "power", LOW_LEVEL_POWER, label="Low-Level Army (augment)")
 
 
-def curse_stats(state, player, side, stats):
+def curse_stats(state, player, side, stats, credits=None):
     """What a challenge player's curses (weiss.curses) give the CPU's characters: on its side as "curses". Bulwark's
     power is for the character being front attacked."""
     curses = side.get("curses") or {}
@@ -2304,8 +2326,12 @@ def curse_stats(state, player, side, stats):
     defending = side["stage"].get(attack["target"]) if attack.get("kind") == "front" and state.get("turn") != player and attack.get("target") else None
     for card in stage_cards(side):
         if (values := stats.get(card["uid"])) is not None:
-            values["power"] += curses.get("iron_skin", 0) + (curses.get("bulwark", 0) if defending and defending["uid"] == card["uid"] else 0)
+            bulwark = curses.get("bulwark", 0) if defending and defending["uid"] == card["uid"] else 0
+            values["power"] += curses.get("iron_skin", 0) + bulwark
             values["soul"] += curses.get("fury", 0)
+            credit(credits, card["uid"], "power", curses.get("iron_skin", 0), label="Iron Skin (curse)")
+            credit(credits, card["uid"], "power", bulwark, label="Bulwark (curse)")
+            credit(credits, card["uid"], "soul", curses.get("fury", 0), label="Fury (curse)")
 
 
 def level_buff(state, uid):
@@ -2339,7 +2365,9 @@ def refresh_stats(state, env):
     on_stage = {card["uid"] for side in state["players"].values() for card in stage_cards(side)}
     if state.get("buffs"):
         state["buffs"] = [buff for buff in state["buffs"] if buff["uid"] in on_stage]
-    state["stats"], state["granted"] = compute_stats(state, env)
+    credits = {}
+    state["stats"], state["granted"] = compute_stats(state, env, credits)
+    state["stat_sources"] = {uid: list(entries.values()) for uid, entries in credits.items()}
     update_attack_soul(state, state["stats"], env)
     state["acts"] = {player: player_acts(state, player, env) for player in state["players"]}
     state["attack_bans"] = {player: {card["uid"]: sorted(bans) for card in stage_cards(side) if (bans := attack_bans(state, player, card, env))}
@@ -3000,9 +3028,13 @@ def move_card(state, env, actor, owner, uid, to):
     return card
 
 
-def add_buff(state, uid, step, power, soul):
+def add_buff(state, uid, step, power, soul, res=None):
+    """`res` is the ability giving it, so the page can show which card the boost came from."""
     expires = state["turn_number"] + (1 if step.get("until") == "next" else 0)
-    state.setdefault("buffs", []).append({"uid": uid, "power": power, "soul": soul, "level": step.get("level", 0), "expires": expires, "grant": step.get("grant", [])})
+    buff = {"uid": uid, "power": power, "soul": soul, "level": step.get("level", 0), "expires": expires, "grant": step.get("grant", [])}
+    if res and res.get("card"):
+        buff["from"] = {"uid": res["uid"], "card": res["card"]}
+    state.setdefault("buffs", []).append(buff)
     if step.get("level"):
         stamp_levels(state)
 
@@ -3787,7 +3819,7 @@ def run_step(step, res, state, env):
             power = step.get("sign", 1) * x_value(step.get("x"), state, player, None, ctx, env)
             for card in (state["players"][owner]["stage"][s] for s in OPPOSITE):
                 if card:
-                    add_buff(state, card["uid"], {"until": "turn"}, power, 0)
+                    add_buff(state, card["uid"], {"until": "turn"}, power, 0, res)
             add_log(state, owner, f"all characters in their center stage get {power:+d} power until end of turn")
     elif do == "repeat_may":
         # "You may perform that action as many times as you like": again for as long as it's taken.
@@ -4026,7 +4058,7 @@ def apply_buff(step, res, state, env):
             else:
                 soul += amount
         note_target(res, card)
-        add_buff(state, card["uid"], step, power, soul)
+        add_buff(state, card["uid"], step, power, soul, res)
         for trait in step.get("traits", []):
             card.setdefault("traits_plus", []).append({"t": trait, "until": state["turn_number"] + (1 if step.get("until") == "next" else 0)})
         add_log(state, player, f"gave {env.name(card['card'])} {buff_label(power, soul, step.get('grant'))}")
@@ -4355,6 +4387,7 @@ def visible_cards(view):
     pks.update(entry["card"] for entry in ability.get("queue", []))
     pks.update(c["card"] for c in (ability.get("prompt") or {}).get("cards", []) if c["card"])
     pks.update(row["card"] for rows in view.get("acts", {}).values() for row in rows)
+    pks.update(entry["card"] for entries in (view.get("stat_sources") or {}).values() for entry in entries if entry.get("card"))
     shown = view.get("ability_show") or {}
     if shown:
         pks.update([shown["card"], *shown["targets"], *(shown.get("check") or [])])
@@ -4371,13 +4404,14 @@ def attack_view(state, player):
     return shown
 
 
-def stats_view(state, player):
-    """Characters' current power and soul, for the ones this player can see."""
+def stats_view(state, player, key="stats"):
+    """Characters' current power and soul (or with key="stat_sources", where the changes to them come from), for
+    the ones this player can see."""
     shown = {}
     for owner, side in state["players"].items():
         for card in stage_cards(side):
-            if (owner == player or not card["face_down"]) and card["uid"] in state.get("stats", {}):
-                shown[card["uid"]] = state["stats"][card["uid"]]
+            if (owner == player or not card["face_down"]) and card["uid"] in state.get(key, {}):
+                shown[card["uid"]] = state[key][card["uid"]]
     return shown
 
 
@@ -4446,6 +4480,7 @@ def view(state, player):
         # Characters that can't be encored this turn.
         "no_encore": [b["uid"] for b in state.get("buffs", []) if b.get("status") == "no_encore"],
         "stats": stats_view(state, player),
+        "stat_sources": stats_view(state, player, "stat_sources"),
         # This player's cards with a ! button, and why each ability can't be activated right now.
         "acts": state.get("acts", {}).get(player, {}),
         "log": state["log"][-50:],
@@ -4467,6 +4502,7 @@ def spectator_view(state, player):
         "reveal": {"card": reveal["card"], "by": state["players"][reveal["player"]]["name"]} if reveal else None,
         "ability": ability_view(state, None),
         "stats": stats_view(state, None),
+        "stat_sources": stats_view(state, None, "stat_sources"),
     })
     if shown["attack"]:
         shown["attack"].pop("counters", None)
