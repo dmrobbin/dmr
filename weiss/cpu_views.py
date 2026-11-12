@@ -110,7 +110,7 @@ def read_profile_form(request):
 
 # The tab's own tabs: one at a time, each worked out only when it's open (?tab=...).
 TABS = {"profiles": "Profiles", "scenes": "Scenes", "decks": "Decks", "arcade": "Arcade lists", "challenges": "Narrative challenges",
-        "infinite": "Infinite challenge", "sleeves": "Card sleeves", "unplayable": "Unplayable cards"}
+        "infinite": "Infinite challenge", "sleeves": "Card sleeves", "unplayable": "Unplayable cards", "import": "Import"}
 
 
 def back_to(tab):
@@ -150,12 +150,17 @@ def scene_uses():
     return uses
 
 
+def home_context(tab):
+    """What every tab of the CPU creation page needs: which tab it is, and the row of tabs with their counts."""
+    counts = {"profiles": CpuProfile.objects.count(), "scenes": Scene.objects.count(), "decks": CardList.objects.filter(reserved_for_cpu=True).count(),
+              "arcade": ArcadeScenario.objects.count(), "challenges": NarrativeChallenge.objects.count(), "sleeves": Sleeve.objects.count()}
+    return {"tab": tab, "tabs": [(key, label, counts.get(key)) for key, label in TABS.items()]}
+
+
 @staff_required
 def cpu_home(request):
     tab = request.GET.get("tab") if request.GET.get("tab") in TABS else "profiles"
-    counts = {"profiles": CpuProfile.objects.count(), "scenes": Scene.objects.count(), "decks": CardList.objects.filter(reserved_for_cpu=True).count(),
-              "arcade": ArcadeScenario.objects.count(), "challenges": NarrativeChallenge.objects.count(), "sleeves": Sleeve.objects.count()}
-    context = {"tab": tab, "tabs": [(key, label, counts.get(key)) for key, label in TABS.items()]}
+    context = home_context(tab)
     if tab == "profiles":
         profiles = with_status(list(CpuProfile.objects.select_related("deck", "image").order_by("name")))
         lists = {}

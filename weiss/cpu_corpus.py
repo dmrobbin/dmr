@@ -270,31 +270,56 @@ class DryRun(Exception):
     pass
 
 
-def import_cpu(data, user, rng=random, dry_run=False):
-    """Make a CPU from its file: (profile, notes). Nothing is saved if anything's wrong (CorpusError, listing
-    it all) or for a dry run. The CPU is never finalized: staff look it over and give it pictures first."""
+def import_cpus(files, user, seed=None, dry_run=False, rngs=None):
+    """Make CPUs from several files in one go: a result for each file, in order, with .profile (None if it couldn't be
+    made), .notes (from express building), .problems and .cards (its deck, [(card, copies)], as built).
+
+    Every file's profile is made before any file's scenes, so a scene can cast a CPU from another file of the batch,
+    whatever order they come in. The batch goes in whole or not at all: nothing is saved if any file has a problem,
+    or for a dry run. Each deck is built with random.Random(seed) (or rngs, one for each file), as a single import
+    of that file would be, so a dry run's decks are the ones the real run builds. No CPU is finalized: staff look
+    them over and give them pictures first."""
+    from .lists import sorted_entries  # weiss.lists is imported by weiss.cpu_views, which this module needs first
+
+    results = [SimpleNamespace(data=data, profile=None, notes=[], problems=[], cards=[], scenes=[]) for data in files]
+    rngs = rngs or [random.Random(seed) for _ in files]
     try:
         with transaction.atomic():
-            problems = []
-            fields = read_profile(data.get("profile"), problems)
-            wanted_scenes = read_scenes(data.get("scenes"), problems)
-            deck, notes = make_deck(data.get("deck"), user, rng, problems)
-            if deck and (problem := deck_problem(deck)):
-                problems.append(f"deck: {problem}")
-            if problems:
-                raise CorpusError(problems)
-            profile = CpuProfile.objects.create(created_by=user, deck=deck, finalized=False, **fields)
-            for name, script, infinite_event in wanted_scenes:
-                _, errors = scenes.compile_scene(script)
-                problems += [f"scene “{name}”, line {line}: {error}" for line, error in errors]
-                Scene.objects.create(name=name, script=script, infinite_event=infinite_event, created_by=user)
-            if problems:
-                raise CorpusError(problems)
-            if dry_run:
+            batch_scenes = {}
+            for result, rng in zip(results, rngs):
+                fields = read_profile(result.data.get("profile"), result.problems)
+                result.scenes = read_scenes(result.data.get("scenes"), result.problems)
+                for name, _, _ in result.scenes:  # two files of the batch can't both have a scene by one name
+                    if batch_scenes.setdefault(name.lower(), result) is not result:
+                        result.problems.append(f"scene “{name}”: another file of this batch has a scene called that.")
+                deck, result.notes = make_deck(result.data.get("deck"), user, rng, result.problems)
+                if deck:
+                    result.cards = [(entry.card, entry.quantity) for entry in sorted_entries(deck)]
+                    if problem := deck_problem(deck):
+                        result.problems.append(f"deck: {problem}")
+                if not result.problems:  # made now, so the scenes below (this file's or any other's) can cast it
+                    result.profile = CpuProfile.objects.create(created_by=user, deck=deck, finalized=False, **fields)
+            for result in results:
+                if not result.profile:
+                    continue
+                for name, script, infinite_event in result.scenes:
+                    _, errors = scenes.compile_scene(script)
+                    result.problems += [f"scene “{name}”, line {line}: {error}" for line, error in errors]
+                    Scene.objects.create(name=name, script=script, infinite_event=infinite_event, created_by=user)
+            if dry_run or any(result.problems for result in results):
                 raise DryRun
     except DryRun:
         pass
-    return profile, notes
+    return results
+
+
+def import_cpu(data, user, rng=random, dry_run=False):
+    """Make a CPU from its file: (profile, notes). Nothing is saved if anything's wrong (CorpusError, listing
+    it all) or for a dry run. The CPU is never finalized: staff look it over and give it pictures first."""
+    result = import_cpus([data], user, dry_run=dry_run, rngs=[rng])[0]
+    if result.problems:
+        raise CorpusError(result.problems)
+    return result.profile, result.notes
 
 
 # --- Checking a new CPU against an export, without the database it came from ------------------------------

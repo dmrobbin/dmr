@@ -1,0 +1,68 @@
+{# The CPU creation page's Import tab (cpu_import_views): the export new CPUs are written from, and their files checked and imported. #}
+<section class="cpu-section">
+  <h2>1. Download the export</h2>
+  <p class="muted small">Every CPU, scene and playable anchor as it is now, for writing new CPUs from (the new-cpu skill reads it).
+    Unzip it over <code>corpus/</code>: in PowerShell, <code>Expand-Archive -Force $HOME\Downloads\corpus.zip corpus</code>.
+    Download it again after importing, so the next CPUs see the names, scenes and anchors just taken.</p>
+  <p><a class="button-small secondary" href="{% url 'weiss:cpu_corpus_download' %}" download>Download export (.zip)</a></p>
+</section>
+
+<section class="cpu-section">
+  <h2>2. Check and import CPU files</h2>
+  <p class="muted small">Choose one or more files from <code>corpus/new/</code>. They're checked first, nothing saved, decks built as they will be.
+    They go in together, whole or not at all, so their scenes can cast each other. None is finalized.</p>
+  <form method="post" action="{% url 'weiss:cpu_import' %}" enctype="multipart/form-data" class="panel-row cpu-form">
+    {% csrf_token %}
+    <input type="hidden" name="step" value="check">
+    <input type="file" name="files" accept=".json,application/json" multiple required aria-label="CPU files">
+    <button type="submit" class="button-small">Check</button>
+  </form>
+
+  {% if batch %}
+    <h3>{% if imported %}Imported{% elif ready %}Ready to import{% else %}Not ready{% endif %}
+      <span class="muted small">· {{ batch|length }} file{{ batch|length|pluralize }} · seed {{ seed }}</span></h3>
+    <ul class="cpu-list cpu-rows">
+      {% for entry in batch %}
+        {% with result=entry.result %}
+        <li>
+          <strong>{% if imported %}<a href="{% url 'weiss:cpu_profile_update' result.profile.pk %}">{{ result.profile.name }}</a>{% else %}{{ entry.data.profile.name|default:entry.name }}{% endif %}</strong>
+          <span class="muted small">{{ entry.name }}{% if entry.show %} · {{ entry.show }}{% endif %} · {{ entry.data.profile.model|default:"standard" }}, aggression {{ entry.data.profile.aggression|default:1 }} · {{ result.scenes|length }} scene{{ result.scenes|length|pluralize }}</span>
+          {% if result.problems %}
+            <ul class="small panel-error">{% for problem in result.problems %}<li>{{ problem }}</li>{% endfor %}</ul>
+          {% else %}
+            {% if imported %}<span class="small"><a href="{% url 'weiss:cpu_images' result.profile.pk %}">Pictures</a> · <a href="{% url 'weiss:list' result.profile.deck_id %}">Deck</a></span>{% endif %}
+            {% if result.notes %}<ul class="muted small">{% for note in result.notes %}<li>{{ note }}</li>{% endfor %}</ul>{% endif %}
+            {% if result.cards %}
+              <details class="small">
+                <summary>Deck: {{ entry.deck_size }} cards</summary>
+                <ul class="cpu-list small">{% for card, copies in result.cards %}<li>{{ copies }}× {{ card.name }} <span class="muted">{{ card.serial_number }}{% if card.level is not None %} · level {{ card.level }}{% else %} · climax{% endif %}</span></li>{% endfor %}</ul>
+              </details>
+            {% endif %}
+          {% endif %}
+        </li>
+        {% endwith %}
+      {% endfor %}
+    </ul>
+
+    {% if ready and not imported %}
+      <form method="post" action="{% url 'weiss:cpu_import' %}" class="panel-row cpu-form">
+        {% csrf_token %}
+        <input type="hidden" name="step" value="import">
+        <input type="hidden" name="seed" value="{{ seed }}">
+        {% for entry in batch %}<input type="hidden" name="name" value="{{ entry.name }}"><input type="hidden" name="text" value="{{ entry.text }}">{% endfor %}
+        <button type="submit" class="button-small">Import {{ batch|length }} CPU{{ batch|length|pluralize }}</button>
+        <span class="muted small">With the same seed, so the decks are the ones above.</span>
+      </form>
+    {% elif not ready %}
+      <p class="small panel-error">Nothing was saved. Fix the files and check them again{% if batch|length > 1 %}, or leave out the ones with problems{% endif %}.</p>
+    {% endif %}
+
+    {% if imported %}
+      <h3>Pictures</h3>
+      <p class="muted small">Find full-body renders on PNGitem from the project folder, then upload one on each CPU's Pictures page:</p>
+      {% for show, names in shortlists %}
+        <pre class="small">.\go_time.ps1 shortlist_renders --cpu{% for name in names %} corpus\new\{{ name }}{% endfor %}{% if show %} --show "{{ show }}"{% endif %} --html renders.html</pre>
+      {% endfor %}
+    {% endif %}
+  {% endif %}
+</section>

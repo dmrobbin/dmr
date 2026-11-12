@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import challenge_views, cpu_views, express, lists, pack_views, play, profiles, scene_views, sleeve_views, views
+from . import challenge_views, cpu_import_views, cpu_views, express, lists, pack_views, play, profiles, scene_views, sleeve_views, views
 
 app_name = "weiss"
 
@@ -74,6 +74,8 @@ urlpatterns = [
     path("cpu/challenges/<int:pk>/", cpu_views.narrative_update, name="cpu_narrative_update"),
     path("cpu/challenges/<int:pk>/delete/", cpu_views.narrative_delete, name="cpu_narrative_delete"),
     path("cpu/", cpu_views.cpu_home, name="cpu_home"),
+    path("cpu/import/", cpu_import_views.cpu_import, name="cpu_import"),
+    path("cpu/corpus.zip", cpu_import_views.corpus_download, name="cpu_corpus_download"),
     path("cpu/scenes/new/", scene_views.scene_create, name="cpu_scene_create"),
     path("cpu/scenes/<int:pk>/", scene_views.scene_edit, name="cpu_scene_edit"),
     path("cpu/scenes/<int:pk>/check/", scene_views.scene_check, name="cpu_scene_check"),

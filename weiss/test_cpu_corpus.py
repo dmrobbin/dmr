@@ -1,3 +1,4 @@
+import io
 import json
 import random
 import tempfile
@@ -174,3 +175,106 @@ class CpuDeckAccessTests(TestCase):
 
     def test_players_cant_open_cpu_decks(self):
         self.assertEqual(self.get(self.player, self.cpu_deck), 404)
+
+
+class CpuBatchImportTests(TestCase):
+    """Several CPU files in one go, from the command or the CPU page's Import tab: their scenes can cast each other."""
+
+    def setUp(self):
+        from django.contrib.auth.models import Group
+        from core.access import WEISS_GROUP
+        make_series()
+        self.user = User.objects.create_user("staff", password="x", is_staff=True)
+        self.user.groups.add(Group.objects.get_or_create(name=WEISS_GROUP)[0])
+        self.client.force_login(self.user)
+
+    def cpu_file(self, name, partner=None):
+        script = f"cast me as {name}\n" + (f"cast them as {partner}\nthem: Hello.\n" if partner else "") + "me: Hi."
+        return {"profile": {"name": name, "intro_text": "Hi."},
+                "deck": {"series": "TST", "anchors": [serial("Combo Red"), serial("Combo Blue")]},
+                "scenes": [{"name": f"{name} meets {partner or 'nobody'}", "script": script, "infinite_event": True}]}
+
+    def upload(self, *files, **extra):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from django.urls import reverse
+        uploads = [SimpleUploadedFile(f"{data['profile']['name'].lower()}.json", json.dumps(data).encode(), "application/json") for data in files]
+        return self.client.post(reverse("weiss:cpu_import"), {"step": "check", "files": uploads, **extra})
+
+    def test_files_in_a_batch_can_cast_each_other_whatever_their_order(self):
+        # The first file's scene casts a CPU that only the second file makes.
+        results = cpu_corpus.import_cpus([self.cpu_file("Joker", "Batman"), self.cpu_file("Batman")], self.user, seed=1)
+        self.assertEqual([r.problems for r in results], [[], []])
+        self.assertEqual(sorted(CpuProfile.objects.values_list("name", flat=True)), ["Batman", "Joker"])
+        self.assertEqual(Scene.objects.count(), 2)
+
+    def test_one_bad_file_keeps_the_whole_batch_out(self):
+        bad = self.cpu_file("Batman")
+        bad["profile"]["model"] = "genius"
+        results = cpu_corpus.import_cpus([self.cpu_file("Joker", "Batman"), bad], self.user, seed=1)
+        self.assertIn("model", results[1].problems[0])
+        self.assertFalse(CpuProfile.objects.exists() or CardList.objects.exists() or Scene.objects.exists())
+
+    def test_two_files_cant_share_a_scene_name(self):
+        twin = self.cpu_file("Batman")
+        twin["scenes"][0]["name"] = "Joker meets nobody"
+        results = cpu_corpus.import_cpus([self.cpu_file("Joker"), twin], self.user, seed=1, dry_run=True)
+        self.assertIn("another file", results[1].problems[0])
+
+    def test_the_command_imports_files_together(self):
+        with tempfile.TemporaryDirectory() as folder:
+            paths = []
+            for data in (self.cpu_file("Joker", "Batman"), self.cpu_file("Batman")):
+                paths.append(Path(folder) / f"{data['profile']['name']}.json")
+                paths[-1].write_text(json.dumps(data), encoding="utf-8")
+            call_command("import_cpu", *map(str, paths), "--user", "staff", "--dry-run", stdout=StringIO())
+            self.assertFalse(CpuProfile.objects.exists())
+            call_command("import_cpu", *map(str, paths), "--user", "staff", "--seed", "1", stdout=StringIO())
+        self.assertEqual(CpuProfile.objects.count(), 2)
+
+    def test_a_check_saves_nothing_and_its_import_builds_the_decks_it_showed(self):
+        page = self.upload(self.cpu_file("Joker", "Batman"), self.cpu_file("Batman"))
+        self.assertEqual(page.status_code, 200)
+        self.assertTrue(page.context["ready"])
+        self.assertFalse(CpuProfile.objects.exists() or CardList.objects.exists() or Scene.objects.exists())
+        checked = [[(card.serial_number, n) for card, n in entry["result"].cards] for entry in page.context["batch"]]
+        self.assertContains(page, "Import 2 CPUs")
+        from django.urls import reverse
+        form = {"step": "import", "seed": page.context["seed"],
+                "name": [e["name"] for e in page.context["batch"]], "text": [e["text"] for e in page.context["batch"]]}
+        done = self.client.post(reverse("weiss:cpu_import"), form)
+        self.assertTrue(done.context["imported"])
+        made = [[(card.serial_number, n) for card, n in entry["result"].cards] for entry in done.context["batch"]]
+        self.assertEqual(made, checked)
+        self.assertFalse(CpuProfile.objects.filter(finalized=True).exists())
+        self.assertEqual(CpuProfile.objects.get(name="Joker").deck.user, self.user)
+        self.assertContains(done, r"shortlist_renders --cpu corpus\new\joker.json corpus\new\batman.json")
+
+    def test_a_check_with_problems_offers_no_import(self):
+        page = self.upload(self.cpu_file("Joker", "Nobody"))
+        self.assertFalse(page.context["ready"])
+        self.assertContains(page, "Nobody")
+        self.assertNotContains(page, "Import 1 CPU")
+
+    def test_a_file_that_isnt_json_is_refused(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from django.urls import reverse
+        page = self.client.post(reverse("weiss:cpu_import"), {"step": "check", "files": [SimpleUploadedFile("x.json", b"{nope")]}, follow=True)
+        self.assertContains(page, "not JSON")
+
+    def test_the_export_downloads_as_a_zip(self):
+        import zipfile
+        from django.urls import reverse
+        cpu_corpus.import_cpus([self.cpu_file("Batman")], self.user, seed=1)
+        response = self.client.get(reverse("weiss:cpu_corpus_download"))
+        self.assertEqual(response["Content-Type"], "application/zip")
+        names = zipfile.ZipFile(io.BytesIO(response.content)).namelist()
+        self.assertLessEqual({"cpus/batman.json", "scenes.json", "reference.md", "anchors/TST.json"}, set(names))
+
+    def test_only_staff_can_import_or_download(self):
+        from django.urls import reverse
+        player = User.objects.create_user("player", password="x")
+        player.groups.add(*self.user.groups.all())
+        self.client.force_login(player)
+        self.assertEqual(self.client.get(reverse("weiss:cpu_corpus_download")).status_code, 403)
+        self.assertEqual(self.upload(self.cpu_file("Batman")).status_code, 403)
+        self.assertFalse(CpuProfile.objects.exists())

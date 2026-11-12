@@ -18,8 +18,11 @@ Ask only for what you can't work out:
 
 ## Before writing
 
-1. `corpus/reference.md` must exist. If it doesn't, stop: staff need to run `export_cpu_corpus` on production
-   and copy its folder to `corpus/`. Read `reference.md` in full; it lists everything a file and a script can say.
+1. `corpus/reference.md` must exist. If it doesn't, stop: staff download the export from the CPU creation page's
+   Import tab on production and unzip it over `corpus/` (`Expand-Archive -Force $HOME\Downloads\corpus.zip corpus`).
+   If CPUs were imported since the export was downloaded, say it should be downloaded again first, or the new
+   CPU may take a name, scene name or anchor that's already gone. Read `reference.md` in full; it lists everything
+   a file and a script can say.
 2. Read `STYLE.md` beside this file. It overrides anything the examples do.
 3. Find the existing CPUs from the same series: those in `corpus/cpus/` whose `deck.series` is the new CPU's. They
    decide the same-series and group scenes STYLE.md asks for.
@@ -59,18 +62,25 @@ Write `corpus/new/<name>.json` in the format in `reference.md`. Leave out `deck.
 Run `.venv/Scripts/python.exe manage.py check_cpu_file corpus/new/<name>.json` and fix every problem it lists, then
 run it again, until it passes. It checks against the export in `corpus/`, not a database, so it's safe to run any time.
 
-Don't run `import_cpu` yourself. The local database doesn't have production's cards or CPUs, so it can only be run on
-the production instance, by staff. Give them the commands in your summary.
+A scene may cast a CPU from another new file of the same batch: the Import tab imports a batch together, so it works
+there. The checker doesn't know the batch, though, and reports that CPU as missing from the export: that's the one
+problem to leave, and the summary says which files must be imported together.
+
+Don't import CPUs yourself. The local database doesn't have production's cards or CPUs, so staff import them on
+production, from the CPU creation page's Import tab.
 
 ## Summary for the user
 
 Give the file's path, the CPU's name, model, anchors and why, each scene in a line (who it pairs with, and why), and
 anything you were unsure of. Then what's left for them:
-1. Copy the file to the instance: `scp -i $HOME\.ssh\aws-eb corpus\new\<name>.json ec2-user@<instance IP>:/tmp/`
-2. There (`eb ssh`): `bash /var/app/current/go_time.sh import_cpu /tmp/<name>.json --dry-run --seed <N>`, then the same
-   without `--dry-run` once it passes (the same seed builds the same deck). Express notes are worth a look; they aren't errors.
-3. Pictures: run `.\go_time.ps1 shortlist_renders --cpu corpus\new\<name>.json --show "<the show's full title>" --html renders.html`
-   and open renders.html: the likeliest full body renders on PNGitem. Download one from its page (the Download
-   button gives the transparent PNG) and upload it on the CPU's images page. Note which of them show the version
-   of the character the CPU is. For a show too new for PNGitem, `find_card_images --series <SERIES>` on the instance instead.
+1. On production's CPU creation page, Import tab: choose the file (or every file of the batch) and Check. It's a dry
+   run: the problems, express notes and the deck each would get. Express notes are worth a look; they aren't errors.
+   Then Import, which builds the same decks.
+2. Pictures: the import's page gives the command, one per show:
+   `.\go_time.ps1 shortlist_renders --cpu corpus\new\<name>.json --show "<the show's full title>" --html renders.html`.
+   Open renders.html: the likeliest full body renders on PNGitem. Download one from its page (the Download
+   button gives the transparent PNG) and upload it on the CPU's Pictures page (linked from the import). Note which
+   of them show the version of the character the CPU is. For a show too new for PNGitem, `find_card_images --series <SERIES>`
+   on the instance instead.
+3. Download the export again from the Import tab before writing the next CPUs.
 4. Play the scenes on the scene page and a game against the CPU, then finalize it.
