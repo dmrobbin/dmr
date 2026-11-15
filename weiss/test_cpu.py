@@ -4253,6 +4253,114 @@ class AvatarDanMachiTests(PersonaTests):
         self.assertFalse(banned())
 
 
+class BatmanNinjaTests(PersonaTests):
+    ALFRED = ('【AUTO】 Bond/"Batman Ninja"  [Put 1 card from your hand into your waiting room] (When this card is played and placed on stage, you may pay the cost. '
+              'If you do, choose 1 "Batman Ninja" in your waiting room, and return it to your hand)\n'
+              '【ACT】 [【REST】 this card] Choose 1 of your "Batman Ninja", and that character gets +2000 and the following ability until end of turn. '
+              '"【CONT】 This card cannot be chosen by your opponent\'s effects."')
+    DISGUISE = ('Choose 1 of your 《Villain》 characters, and put it into your waiting room. If you do, choose 1 character in your waiting room with level equal to or '
+                'lower than your level with "Harley Quinn" in its card name, and put it on any position of your stage.')
+    JOKER = ("【AUTO】 When this card is placed on the stage from your hand, if there are 3 or more climax in your opponent's waiting room, 【REST】 this card.\n"
+             '【AUTO】 Bond/"Harley Quinn: Battle on the Big Boat"  [Put 1 card from your hand into your waiting room] (When this card is played and placed on stage, '
+             'you may pay the cost. If you do, choose 1 "Harley Quinn: Battle on the Big Boat" in your waiting room, and return it to your hand)')
+    PENGUIN = ("【AUTO】 When this card attacks, if all of the other characters on your center stage are 【STAND】, this card gets +2000 power until end of turn.\n"
+               '【AUTO】 When this card becomes 【REVERSE】 in battle, you cannot use "【AUTO】 Encore" until end of turn. (You cannot use the "【AUTO】 Encore [(3)]" rule either)')
+    TWO_FACE = ('【AUTO】 【CXCOMBO】 When "Coin Toss" is placed on your climax area, if this card is on your center stage, perform the following 2 effects in order. '
+                '"Your opponent declares "Heads" or "Tails"." "Put the top card of your deck into your waiting room, if that card is level 1 or higher and your opponent '
+                'declared "Heads", or that card is level 0 or lower and your opponent declared "Tails", choose up to 1 《Villain》 character in your waiting room, and '
+                'return it to your hand." (Climax are regarded as level 0)')
+    TEXTS = [ALFRED, DISGUISE, JOKER, PENGUIN, TWO_FACE]
+
+    def test_nothing_is_left_to_do_by_hand(self):
+        for text in self.TEXTS:
+            self.assertEqual(abilities.by_hand_parts(text), [], text)
+
+    def holds(self, t, card, text):
+        """Whether the condition on this card's first AUTO ability holds right now (it's checked as the ability triggers)."""
+        env = game.SimpleNamespace(info=t.info, name=lambda pk: "x")
+        return all(game.condition_met(c, t.state, "2", card, {"source_uid": card["uid"]}, env) for c in abilities.parse(text)[0]["cond"])
+
+    def test_joker_rests_once_they_have_three_climaxes_in_the_waiting_room(self):
+        t = Table()
+        t.card(950, card_type="Climax")
+        joker = t.seat(t.me, "C1", t.card(1001, text=self.JOKER))
+        for climaxes, rests in ((2, False), (3, True)):
+            t.them["zones"]["waiting"] = [game.new_card(950) for _ in range(climaxes)] + [game.new_card(1)]
+            self.assertEqual(self.holds(t, joker, self.JOKER), rests, climaxes)
+        self.run_ability(t, joker, self.JOKER)
+        self.assertEqual(joker["pos"], "rest")
+
+    def test_penguin_needs_the_rest_of_the_center_standing(self):
+        for pos, stands in (("stand", True), ("rest", False)):
+            t = Table()
+            penguin = t.seat(t.me, "C1", t.card(1001, power=3000, text=self.PENGUIN))
+            t.seat(t.me, "C2", t.card(1002), pos=pos)
+            t.seat(t.me, "C3", t.card(1003))
+            t.seat(t.me, "B1", t.card(1004), pos="rest")  # the back stage doesn't count
+            self.assertEqual(self.holds(t, penguin, self.PENGUIN), stands, pos)
+        self.run_ability(t, penguin, self.PENGUIN)
+        t.refresh()
+        self.assertEqual(t.state["stats"][penguin["uid"]]["power"], 5000)
+
+    def test_alfred_gives_batman_power_and_shelter(self):
+        t = Table()
+        alfred = t.seat(t.me, "C3", t.card(1001, text=self.ALFRED))
+        batman = t.seat(t.me, "C1", t.card(1002, name="Batman Ninja", power=5000))
+        t.refresh()
+        self.run_ability(t, alfred, self.ALFRED, index=1)
+        if t.state.get("resolving"):
+            self.answer(t, uids=[batman["uid"]])
+        t.refresh()
+        self.assertEqual(t.state["stats"][batman["uid"]]["power"], 7000)
+        env = game.SimpleNamespace(info=t.info, name=lambda pk: "x")
+        self.assertTrue(any("cannot be chosen by your opponent's effects" in a["text"] for a in game.abilities_of(t.state, batman, env)))
+
+    def test_the_disguise_swaps_a_villain_for_a_harley_of_our_level_or_lower(self):
+        t = Table()
+        villain = t.seat(t.me, "C1", t.card(1001, traits="Villain"))
+        harley = game.new_card(t.card(1002, name="Harley Quinn: Battle on the Big Boat", level=1))
+        too_high = game.new_card(t.card(1003, name="Harley Quinn: Ninja", level=2))
+        t.me["zones"]["waiting"] += [harley, too_high]
+        t.level(1)
+        t.refresh()
+        t.card(2000, card_type="Event", text=self.DISGUISE)
+        card = game.new_card(2000)
+        t.me["zones"]["resolution"].append(card)
+        self.run_ability(t, card, self.DISGUISE)
+        if t.state.get("resolving") and self.prompt(t).get("for") != "place":
+            self.answer(t, uids=[villain["uid"]])
+        self.assertIn(villain, t.me["zones"]["waiting"])
+        self.assertNotIn(too_high["uid"], json.dumps(self.prompt(t)))
+        self.answer(t, uids=[harley["uid"]])
+        self.answer(t, value="C2")
+        self.assertIs(t.me["stage"]["C2"], harley)
+
+    def coin_toss(self, call, top):
+        t = Table()
+        two_face = t.seat(t.me, "C1", t.card(1001, text=self.TWO_FACE))
+        t.card(950, card_type="Climax", level=0)
+        t.card(951, level=1)
+        villain = game.new_card(t.card(1002, traits="Villain"))
+        t.me["zones"]["waiting"].append(villain)
+        t.me["zones"]["deck"].append(game.new_card(top))
+        t.refresh()
+        self.run_ability(t, two_face, self.TWO_FACE)
+        prompt = self.prompt(t)
+        self.assertEqual((prompt["player"], {o[0] if isinstance(o, (list, tuple)) else o.get("value") for o in prompt["options"]}), ("1", {"Heads", "Tails"}))
+        self.answer(t, player=1, value=call)
+        if t.state.get("resolving"):
+            self.answer(t, uids=[villain["uid"]])
+        return villain in t.me["zones"]["hand"]
+
+    def test_two_face_wins_the_toss_on_a_matching_call(self):
+        self.assertTrue(self.coin_toss("Heads", 951))
+        self.assertTrue(self.coin_toss("Tails", 950))  # a climax is level 0
+
+    def test_two_face_loses_the_toss_on_a_wrong_call(self):
+        self.assertFalse(self.coin_toss("Tails", 951))
+        self.assertFalse(self.coin_toss("Heads", 950))
+
+
 class BanGDreamTests(PersonaTests):
     COOKIES = "【CONT】 This card gets +500 power for each of your other 《Music》 characters.\n【AUTO】 【CXCOMBO】 At the beginning of your encore step, if \"Making Cookies\" is in your climax area, this card is on your center stage, and your opponent does not have any characters on his or her center stage, or all characters on your opponent's center stage are 【REVERSE】, Trigger FEVER.\n【REPLAY】 Trigger FEVER Search your deck for up to 1 character, reveal it to your opponent, put it into your hand, shuffle your deck, choose up to 1  《Music》 character in your waiting room, put it into your stock, choose 1 of your other characters, and that character gets +1000 power until the end of your opponent's next turn."
     STARRIN = "【AUTO】  When this card is placed on the stage from your hand, search your deck for up to one 《Music》 character, reveal it to your opponent, put it into your hand, and shuffle your deck.\n【AUTO】  【CXCOMBO】  [(4) Put three cards from your hand into your waiting room] At the beginning of your attack phase, if a card named \"We Are Poppin'Party\" is in your climax area, this card is in your center stage, and you have other cards named \"Starrin' PARTY, Tae Hanazono\", \"Starrin'PARTY, Rimi Ushigome\", \"Starrin'PARTY, Saya Yamabuki\" and \"Starrin'PARTY, Arisa Ichigaya\", you may pay the cost. If you do, 【STAND】  all of your opponent's characters, deal X damage to your opponent, and put up to X cards from the top of your clock into your waiting room. X is equal to the number of your opponent's 【STAND】  characters. (This damage may be canceled)"

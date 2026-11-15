@@ -298,7 +298,7 @@ WORDING = [
     (r"\bIf you do not have any (《[^》]+》) characters, this card cannot be played\b", r"If you do not have a \1 character, this card cannot be played"),
     (r"\byour level has an? (red|blue|green|yellow) card, an? (red|blue|green|yellow) card, and an? (red|blue|green|yellow) card\b", r"your level has \1 and \2 and \3 cards"),
     (r"\byou may choose 1 card in your stock, and look at it\b", "you may look at a card in your stock"),
-    (r"\bif all of your other characters (?:on|in) (?:the|your) center stage are 【STAND】", "if all of your other characters in your center stage are 【STAND】"),
+    (r"\bif all of (?:your|the) other characters (?:on|in) (?:the|your) center stage are 【STAND】", "if all of your other characters in your center stage are 【STAND】"),
     (r"\bput that character on the stage position that it was on as 【REST】", "return that character to its previous stage position as 【REST】"),
     (r"(?m)^Memory (?=If you do not have)", ""),
     (r"\b([Cc]hoose (?:up to )?\d+ .+?) among those cards, put it\b", r"\1 from among them, put it"),
@@ -728,6 +728,11 @@ WORDING = [
     (r"\byou add it to your hand, you choose up to 1 of the revealed cards except the card put into your hand\b", "put it into your hand, choose up to 1 card from among them"),
     (r"\bthe total number of colors among those cards\b", "the total number of colors revealed among those cards"),
     (r"\bif that card is the level your opponent declared\b", "if that card's level is the number your opponent declared"),
+    # Batman Ninja's wordings.
+    (r"\bthere are (\d+) or (more|less) climax in your (opponent's )?waiting room\b", r"the number of climax in your \3waiting room is \1 or \2"),
+    (r"\bgets ([+-]\d+) and the following (ability|\d abilities)\b", r"gets \1 power and the following \2"),
+    (r"\bcharacter (with level equal to or lower than your level(?: \+\d+)?) (with (?:⟦\d+⟧|\"[^\"]+\") in its card name)", r"character \2 \1"),
+    (r"\b(and (?:you|your opponent) declared ⟦\d+⟧), or (that card is [^,]+ and (?:you|your opponent) declared ⟦\d+⟧,)", r"\1 or \2"),  # one condition, not two clauses
 ]
 
 
@@ -789,7 +794,7 @@ def without_reminders(text):
 
 def sentences(text):
     """Split at full stops, keeping "the following ability. ⟦1⟧ ⟦2⟧" together."""
-    text = re.sub(r"((?:following (?:abilit\w+|effects?|actions?|combinations)|perform it|that ability)[^.⟦]*)\.\s+((?:⟦\d+⟧\s*)+)", r"\1 \2", text)
+    text = re.sub(r"((?:following (?:abilit\w+|(?:\d+ )?effects?|actions?|combinations)|perform it|that ability)[^.⟦]*)\.\s+((?:⟦\d+⟧\s*)+)", r"\1 \2", text)
     text = re.sub(r"((?:following abilities), this card gets that ability[^.⟦]*)\.\s+((?:⟦\d+⟧\s*)+)", r"\1 \2", text)
     text = re.sub(r"(?<=⟧)\s+Then, ", ". ", text)
     text = re.sub(r"(?<=⟧)\s*(?=(?:X is|If |Reveal |Put |Choose |Deal |Draw |You may |At the beginning|Look |Search |Shuffle |This card cannot ))", ". ", text)  # a quote and the next sentence, space or not
@@ -1240,7 +1245,13 @@ def parse_condition(words, quotes):
         return {"type": "have", "n": int(match[1]), "dir": "more", "filter": f}
     if re.fullmatch(r"that character is on the stage", text, re.I):
         return {"type": "that_on_stage"}
-    both = re.fullmatch(r"(.+?) and (this card is .+|there are .+|your opponent's level is .+|you have .+)", text, re.I)
+    match = re.fullmatch(r"(?:you|your opponent) declared (⟦\d+⟧)", text, re.I)  # "Declare "True" or "False"", whoever said it
+    if match:
+        return {"type": "said", "value": quotes[int(match[1][1:-1])]}
+    either = re.fullmatch(r"(.+? and (?:you|your opponent) declared ⟦\d+⟧),? or (.+? and (?:you|your opponent) declared ⟦\d+⟧)", text, re.I)
+    if either and (one := parse_condition(either[1], quotes)) and (two := parse_condition(either[2], quotes)):  # "if A and they declared X, or B and ..."
+        return {"type": "any_of", "conds": [one, two]}
+    both = re.fullmatch(r"(.+?) and (this card is .+|there are .+|your opponent's level is .+|you have .+|(?:you|your opponent) declared ⟦\d+⟧)", text, re.I)
     if both and (one := parse_condition(both[1], quotes)) and (two := parse_condition(both[2], quotes)):
         return {"type": "any_of_all", "conds": [one, two]}
     match = re.fullmatch(r"(?:it|that character) is (?:an? )?(.+)", text, re.I)
@@ -2234,9 +2245,10 @@ def clause_steps(clause, quotes, cost):
     match = re.fullmatch(r"your opponent looks at the top card of their deck and declares ((?:\d+(?: or )?)+)", text)
     if match:  # what they saw, only they know
         return [{"do": "declare", "options": [int(n) for n in re.findall(r"\d+", match[1])], "chooser": "opp", "peek_top": True}]
-    match = re.fullmatch(r"declare ((?:⟦\d+⟧ or )+⟦\d+⟧)", text)
+    match = re.fullmatch(r"(your opponent declares|declare) ((?:⟦\d+⟧ or )+⟦\d+⟧)", text)
     if match:  # "Declare "True" or "False"": one word or the other
-        return [{"do": "declare", "options": [quotes[int(n)] for n in re.findall(r"⟦(\d+)⟧", match[1])], "key": "said"}]
+        return [{"do": "declare", "options": [quotes[int(n)] for n in re.findall(r"⟦(\d+)⟧", match[2])], "key": "said",
+                 **({"chooser": "opp"} if "opponent" in match[1] else {})}]
     if text == "reveal your hand":
         return [{"do": "reveal_hand", "owner": "me"}]
     if text == "all players reveal their hand":
@@ -2965,6 +2977,9 @@ def clause_steps(clause, quotes, cost):
     if match:
         body = parse_effect(quotes[int(match[2])], cost)
         return body * int(match[1] or 1)
+    match = re.fullmatch(r"perform the following (\d+) effects in order ((?:⟦\d+⟧\s*)+)", text)
+    if match and len(effects := re.findall(r"⟦(\d+)⟧", match[2])) == int(match[1]):
+        return [step for t in effects for step in parse_effect(quotes[int(t)], cost)]
     if text == "perform the [standby] effect":
         return [{"do": "choose", "zone": "waiting", "filter": {"any": [{"type": "character", "level_plus": 1}]}, "max": 1, "min": 0,
                  "text": "You may choose 1 character with level equal to or lower than your level +1 in your waiting room"},
