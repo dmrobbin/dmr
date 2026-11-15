@@ -1336,6 +1336,11 @@ button .cx, .phase-bar button.current .cx { filter: drop-shadow(0 0 2px rgb(0 0 
 .place-slot-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .place-slot .zone-empty { border: 1px dashed #4a4e57; box-sizing: border-box; }
 .level-pick.picked-place { outline-color: var(--accent); }
+/* The opponent's center stage over ours: their left on our right, so each sits over the one it faces. */
+.place-facing-caption { margin: 0; text-align: center; }
+.place-row-facing { flex-direction: row-reverse; padding-bottom: .5rem; margin-bottom: .1rem; border-bottom: 1px dashed var(--border); }
+.place-slot-facing { cursor: default; }
+.place-slot-facing .place-slot-note { min-height: 0; }
 @media (prefers-reduced-motion: reduce) { .place-slot { transition: none; } }
 .ability-order { position: absolute; top: .3rem; right: .3rem; display: grid; place-items: center; width: 1.4rem; height: 1.4rem; font-weight: 800; color: #111; background: var(--accent); border-radius: 50%; }
 /* In the side panel: the board has to stay clear for a step done by hand. */

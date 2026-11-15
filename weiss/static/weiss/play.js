@@ -2119,8 +2119,20 @@
   // replaces named on its way to the waiting room, and the position it leaves if it's moving within the stage.
   // A stage drawn small in a prompt, as it sits on the board: the opponent's faces us, back row furthest
   // away and their left on our right. `cell` draws each position (stageSlotHtml).
-  function stageBoardHtml(owner, cell) {
+  // Our own stage comes with the opponent's center stage above it (`facing`, read only), each character
+  // over the one it faces, as on the board: what they're up against is part of the choice.
+  function stageBoardHtml(owner, cell, facing = null) {
+    const facingCell = (slot) => {
+      const card = facing.stage[slot];
+      const note = card ? stageNameOf(card) : "Empty";
+      return `<div class="place-slot place-slot-facing" aria-label="${esc(`${board.opponent.name}'s ${LABELS[slot].toLowerCase()}: ${note}`)}">
+        <span class="place-slot-card">${card ? cardHtml(card, "view", slot).replace('tabindex="0"', 'tabindex="-1"') : '<span class="zone-empty"></span>'}</span>
+        <span class="place-slot-note" title="${esc(note)}">${esc(note)}</span></div>`;
+    };
+    const across = facing ? `<p class="place-facing-caption muted small">${esc(board.opponent.name)}'s center stage, facing yours</p>
+      <div class="place-row place-row-facing">${["C1", "C2", "C3"].map(facingCell).join("")}</div>` : "";
     return `<div class="place-board${owner === "opponent" ? " place-board-opponent" : ""}" role="group" aria-label="${owner === "opponent" ? "Their" : "Your"} stage">
+      ${across}
       <div class="place-row">${["C1", "C2", "C3"].map(cell).join("")}</div>
       <div class="place-row">${["B1", "B2"].map(cell).join("")}</div></div>`;
   }
@@ -2137,7 +2149,9 @@
   // An ability choosing characters on the stage (a target, or a cost): each stage they're on, drawn as on
   // the board, each one that may be chosen a button. The usual picks (abilityPicks) and Confirm apply.
   function choiceBoardsHtml(prompt, options, ordered) {
-    return ["me", "opponent"].filter((owner) => prompt.cards.some((c) => c.side === owner)).map((owner) => {
+    const owners = ["me", "opponent"].filter((owner) => prompt.cards.some((c) => c.side === owner));
+    const facing = owners.includes("opponent") ? null : board.opponent; // their whole stage is drawn already otherwise
+    return owners.map((owner) => {
       const side = owner === "me" ? board.me : board.opponent;
       const cell = (slot) => {
         const card = side.stage[slot];
@@ -2150,7 +2164,7 @@
           badge: at >= 0 ? `<span class="ability-order">${ordered ? at + 1 : "✓"}</span>` : "",
         });
       };
-      return `<div><p class="muted small place-caption">${owner === "me" ? "Your stage" : `${esc(board.opponent.name)}'s stage`}</p>${stageBoardHtml(owner, cell)}</div>`;
+      return `<div><p class="muted small place-caption">${owner === "me" ? "Your stage" : `${esc(board.opponent.name)}'s stage`}</p>${stageBoardHtml(owner, cell, owner === "me" ? facing : null)}</div>`;
     }).join("");
   }
 
@@ -2179,7 +2193,7 @@
         attrs: `role="button" tabindex="0" aria-pressed="${picked === slot}" data-place-pick="${slot}"`,
       });
     };
-    return stageBoardHtml(owner, cell);
+    return stageBoardHtml(owner, cell, owner === "me" ? board.opponent : null);
   }
 
   const placeButtonLabel = (slot) => (slot ? `Put it on ${LABELS[slot].toLowerCase()}` : "Choose a position");
