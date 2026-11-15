@@ -169,6 +169,22 @@ class CardPagesTests(TestCase):
         self.assertContains(response, 'value="Red" checked')
         self.assertContains(response, 'value="Yellow" checked')
 
+    def test_filter_by_card_type(self):
+        Card.objects.filter(name="Elegg").update(card_type="Character")
+        Card.objects.filter(name="Anis").update(card_type="Event")
+        Card.objects.filter(name="Footstep").update(card_type="Climax")
+        self.assertEqual(self.names(type="Character"), ["Elegg"])
+        self.assertEqual(self.names(type=["Character", "Event"]), ["Anis", "Elegg"])
+        self.assertEqual(self.names(type=["Climax"], color="Red"), ["Footstep"])
+        response = self.client.get(reverse("weiss:set", args=[290]), {"type": "Event"})
+        self.assertEqual(response.context["types"], ["Character", "Event", "Climax"])  # not alphabetical
+        self.assertContains(response, 'value="Event" checked')
+        self.assertTrue(response.context["filtered"])
+
+    def test_no_type_chips_for_a_set_of_one_type(self):
+        Card.objects.update(card_type="Character")
+        self.assertNotContains(self.client.get(reverse("weiss:set", args=[290])), 'name="type"')
+
     def test_search_by_card_text(self):
         Card.objects.filter(name="Elegg").update(description="【AUTO】 When this card is placed on stage, draw 1 card.")
         Card.objects.filter(name="Anis").update(description="【CONT】 All your other characters get +500 power.")
@@ -254,6 +270,17 @@ class CardPagesTests(TestCase):
         self.assertContains(response, 'href="/dashboard/weiss/" class="current"')
         response = self.client.get(reverse("dashboard"))
         self.assertContains(response, 'href="/dashboard/" class="current"')
+
+    def test_set_page_has_its_phone_controls(self):
+        # lists.js on a phone: the filters past the name search fold behind a button, a tap on a card opens its
+        # popup (there's no hovering over it), and the card lists panel is a drawer opened from a bar.
+        response = self.client.get(reverse("weiss:set", args=[290]))
+        self.assertContains(response, "data-filters-toggle")
+        self.assertContains(response, 'class="filter-extra">Card text')
+        elegg = Card.objects.get(serial_number="NIK/S135-E001")
+        self.assertContains(response, f'data-card-popup-touch="{reverse("weiss:card_popup", args=[elegg.pk])}"')
+        self.assertContains(response, 'aria-controls="list-panel"')
+        self.assertContains(response, 'id="list-panel"')
 
 
 GROUPS = [{"groupId": 24696, "name": "GODDESS OF VICTORY: NIKKE Vol.2"}, {"groupId": 1, "name": "Other"}]
@@ -556,6 +583,20 @@ class CardListTests(TestCase):
         response = self.client.get(reverse("weiss:set", args=[290]))
         self.assertEqual(response.context["editing_list"], deck)
         self.assertContains(response, 'data-qty-for="%d"' % self.elegg.pk)
+
+    def test_a_lists_cards_can_be_filtered_by_type(self):
+        Card.objects.filter(pk=self.anis.pk).update(card_type="Event")
+        deck = self.create_list()
+        self.change(deck, self.elegg)
+        self.change(deck, self.anis)
+        page = self.client.get(reverse("weiss:list", args=[deck.pk]))
+        for key in ("list", "panel"):  # the list's own page, and the side panel editing it
+            self.assertContains(page, f'data-type-filter="{key}"')
+            self.assertContains(page, f'data-type-cards="{key}"')
+        self.assertContains(page, 'data-type="event"', count=2)
+        self.assertContains(page, "weiss/type_filter.js")
+        panel = self.change(deck, self.elegg, json=True).json()["panel"]  # re-rendered after a +, chips and all
+        self.assertIn('data-type-filter="panel"', panel)
 
     def test_add_copies_and_remove_down_to_zero(self):
         deck = self.create_list()

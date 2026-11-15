@@ -1,10 +1,13 @@
-{# A kept deck, by group (see play.snapshot_groups), with a popup for reading a card (left out with no_popup, for a page showing more than one). #}
+{# A kept deck, by group (see play.snapshot_groups), with type chips over it (type_key names them, for a page showing more than one), and a popup for reading a card (left out with no_popup, for a page showing more than one). #}
+  {% load static %}
+  {% if groups %}{% include "weiss/type_filter.html" with cards=type_key|default:"deck" %}{% endif %}
+  <div data-type-cards="{{ type_key|default:'deck' }}">
   {% for group in groups %}
-    <section class="infinite-deck-group">
+    <section class="infinite-deck-group" data-type-group>
       <h2>{{ group.label }} <span class="muted small">{{ group.count }}</span></h2>
       <ul class="pool-grid">
         {% for item in group.cards %}{% with card=item.card %}
-          <li class="pool-card in-deck">
+          <li class="pool-card in-deck" data-type="{{ card.card_type|lower }}">
             <a href="{% url 'weiss:card' card.pk %}" data-card-popup="{% url 'weiss:card_popup' card.pk %}">{% include "weiss/card_art.html" with alt=card.name lazy=True %}</a>
             <span class="pool-name small">{{ card.name }} <strong>×{{ item.copies }}</strong></span>
           </li>
@@ -14,10 +17,12 @@
   {% empty %}
     <p class="empty">{{ empty_text|default:"This run's deck wasn't kept." }}</p>
   {% endfor %}
+  </div>
+  <script src="{% static 'weiss/type_filter.js' %}" defer></script>
   {% if not no_popup %}
   <dialog class="card-popup" data-card-popup-dialog aria-label="Card details">
     <form method="dialog"><button class="card-popup-close" aria-label="Close">×</button></form>
     <div data-card-popup-body></div>
   </dialog>
-  {% load static %}<script src="{% static 'weiss/lists.js' %}" defer></script>
+  <script src="{% static 'weiss/lists.js' %}" defer></script>
   {% endif %}

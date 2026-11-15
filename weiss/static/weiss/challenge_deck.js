@@ -116,13 +116,14 @@
     const f = new FormData(filters);
     const words = (field) => String(f.get(field) || "").trim().toLowerCase();
     const colors = f.getAll("color");
-    const { level, cost, type, rarity, set, show } = Object.fromEntries(["level", "cost", "type", "rarity", "set", "show"].map((k) => [k, f.get(k) || ""]));
+    const types = f.getAll("type");
+    const { level, cost, rarity, set, show } = Object.fromEntries(["level", "cost", "rarity", "set", "show"].map((k) => [k, f.get(k) || ""]));
     let visible = 0;
     for (const tile of tiles) {
       const d = tile.dataset;
       const ok = has(d.name, words("name")) && has(d.text, words("text")) && has(d.traits, words("trait"))
         && (!colors.length || colors.includes(d.color)) && (!level || d.level === level) && (!cost || d.cost === cost)
-        && (!type || d.type === type) && (!rarity || d.rarity === rarity) && (!set || d.set === set)
+        && (!types.length || types.includes(d.type)) &&(!rarity || d.rarity === rarity) && (!set || d.set === set)
         && (!show || (show === "theirs" ? theirs(tile) > 0 : show === "free" ? count(tile) < Number(d.pulled) : (show === "deck") === (count(tile) > 0)));
       tile.hidden = !ok;
       if (ok) visible += 1;

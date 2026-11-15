@@ -24,14 +24,19 @@
       {% endif %}
       {% block weiss_content %}{% endblock %}
     </div>
-    <aside class="list-panel" aria-label="Card lists" data-list-panel>
+    <aside class="list-panel" id="list-panel" aria-label="Card lists" data-list-panel>
       {% include "weiss/list_panel.html" %}
     </aside>
+    {# Phones and tablets: the panel is a drawer, opened from this bar along the bottom of the screen (lists.js fills in the count). #}
+    <button type="button" class="list-panel-toggle" data-list-panel-toggle aria-controls="list-panel" aria-expanded="false">
+      <span class="list-panel-summary" data-list-panel-summary>Card lists</span><span class="list-panel-hint" data-list-panel-hint>Show ▲</span>
+    </button>
   </div>
   <dialog class="card-popup" data-card-popup-dialog aria-label="Card details">
     <form method="dialog"><button class="card-popup-close" aria-label="Close">×</button></form>
     <div data-card-popup-body></div>
   </dialog>
   <script src="{% static 'weiss/lists.js' %}" defer></script>
+  <script src="{% static 'weiss/type_filter.js' %}" defer></script>
   {% block weiss_scripts %}{% endblock %}
 {% endblock %}

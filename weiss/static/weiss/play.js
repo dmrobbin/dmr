@@ -89,6 +89,34 @@
   const discardPicks = new Set(); // hand cards picked for the end phase's discard
   let abilityPicks = []; // cards picked for an ability's prompt, in the order they were picked
 
+  // Phones and tablets. Touch: there's no mouse to hover with, so a tap picks a card and its buttons go in a
+  // tray along the bottom of the screen, and a long press (or the tray's View) shows it full screen.
+  // Compact: the screen is too narrow for both sides of the table, so one side shows at a time.
+  const touchQuery = window.matchMedia("(hover: none) and (pointer: coarse)");
+  const compactQuery = window.matchMedia("(max-width: 48rem)");
+  let touch = touchQuery.matches;
+  let compact = compactQuery.matches;
+  let boardView = "me"; // compact: the side of the table showing, "me" or "opponent"
+  let oppSeen = ""; // compact: the opponent's side as last drawn, to tell when it changes out of sight...
+  let oppMoved = false; // ...and whether it has since we last looked at it
+  let selected = null; // touch: the uid of the card picked by a tap, its buttons in the tray
+
+  function setModes() {
+    touch = touchQuery.matches;
+    compact = compactQuery.matches;
+    root.classList.toggle("touch", touch);
+    root.classList.toggle("compact", compact);
+    const tools = root.querySelector("[data-tools]");
+    if (tools) tools.open = !compact;
+    if (!touch) selected = null;
+    showLayout();
+    if (board) render();
+  }
+  root.classList.toggle("touch", touch);
+  root.classList.toggle("compact", compact);
+  touchQuery.addEventListener("change", setModes);
+  compactQuery.addEventListener("change", setModes);
+
   // Board view: "focus" (big stage, piles around it) or "classic" (three even rows). Remembered
   // per browser; storage can be unavailable (private windows), so it falls back to focus.
   const LAYOUT_KEY = "weiss-board-layout";
@@ -101,8 +129,14 @@
   function setLayout(next) {
     layout = next;
     try { localStorage.setItem(LAYOUT_KEY, next); } catch (e) { /* only this visit, then */ }
-    for (const name of Object.keys(LAYOUTS)) root.classList.toggle(`layout-${name}`, name === layout);
+    showLayout();
     if (board) render();
+  }
+
+  // A compact screen has the focused board whichever is picked (its own layout is built on that one).
+  function showLayout() {
+    const shown = compact ? "focus" : layout;
+    for (const name of Object.keys(LAYOUTS)) root.classList.toggle(`layout-${name}`, name === shown);
   }
   setLayout(layout);
 
@@ -412,7 +446,16 @@
     }
     const before = opponentSnapshot();
     const wasInPlay = board ? inPlay(board) : null;
+    const wasMyTurn = board ? board.my_turn : null;
     board = data.board;
+    // Compact: our turn starting brings our side back into view (it's where the hand is), and a change on the
+    // opponent's side while it's out of sight puts a dot on the button that shows it.
+    if (wasMyTurn === false && board.my_turn) boardView = "me";
+    const opp = board.opponent;
+    const oppNow = opp ? JSON.stringify([opp.stage, opp.markers, opp.zones.hand.count, opp.zones.clock.length, opp.zones.level.length,
+      opp.zones.climax, opp.zones.waiting.length, opp.zones.stock.count]) : "";
+    if (oppSeen && oppNow !== oppSeen && compact && boardView === "me") oppMoved = true;
+    oppSeen = oppNow;
     avatars = data.avatars || {};
     cpuInfo = data.cpu || null;
     arcade = data.arcade || null;
@@ -581,7 +624,7 @@
       const info = cards[pk];
       if (before[uid] || !info || !info.grade) continue;
       const el = boardEl.querySelector(`.pcard[data-uid="${CSS.escape(uid)}"]`);
-      if (!el) continue;
+      if (outOfSight(el)) continue;
       // The opponent's card flies in first (animateOpponent): burst once it lands.
       setTimeout(() => { if (el.isConnected) rarityBurst(el, info); }, el.style.visibility === "hidden" ? FLIGHT_MS + 80 : 0);
     }
@@ -701,11 +744,24 @@
     if (augmentsEl) augmentsEl.remove();
     augmentsEl = null;
     if (!key) return;
-    const tags = (list) => list.map((a) => `<span class="deck-tag" title="${esc(a.text)}">${esc(a.name)}${a.count > 1 ? ` ×${a.count}` : ""}</span>`).join(" ");
-    augmentsEl = document.createElement("p");
+    // Each one says what it does when hovered, or clicked or tapped (there's no hovering on a touch screen).
+    const tags = (list) => list.map((a) => `<button type="button" class="deck-tag" title="${esc(a.text)}" data-augment="${esc(a.text)}" aria-expanded="false">${esc(a.name)}${a.count > 1 ? ` ×${a.count}` : ""}</button>`).join(" ");
+    augmentsEl = document.createElement("div");
     augmentsEl.className = "play-augments small";
-    augmentsEl.innerHTML = [picked && `Augments: ${tags(picked)}`, cursed && `Curses: ${tags(cursed)}`].filter(Boolean).join("<br>");
+    augmentsEl.innerHTML = `<p>${[picked && `Augments: ${tags(picked)}`, cursed && `Curses: ${tags(cursed)}`].filter(Boolean).join("<br>")}</p>
+      <p class="augment-text" aria-live="polite" hidden></p>`;
     (root.querySelector(".play-chat-side") || root).prepend(augmentsEl);
+  }
+
+  // An augment or curse's text under the list of them; clicking it again hides it.
+  function showAugment(tag) {
+    const text = augmentsEl && augmentsEl.querySelector(".augment-text");
+    if (!text) return;
+    const open = tag.getAttribute("aria-expanded") !== "true";
+    augmentsEl.querySelectorAll("[data-augment]").forEach((t) => t.setAttribute("aria-expanded", "false"));
+    tag.setAttribute("aria-expanded", String(open));
+    text.textContent = open ? `${tag.textContent}: ${tag.dataset.augment}` : "";
+    text.hidden = !open;
   }
 
   // --- An infinite challenge's prize: a slot machine on the Victory screen -----------------------------------
@@ -867,7 +923,11 @@
   }
 
   // The point halfway between the centers of two zones on one side of the table.
+  // A side of the table a compact screen isn't showing (announcements on it are left out; its button gets a dot).
+  const outOfSight = (el) => !el || !el.getClientRects().length;
+
   function between(mat, fromSel, toSel) {
+    if (outOfSight(mat)) return null;
     const from = mat && mat.querySelector(fromSel);
     const to = mat && mat.querySelector(toSel);
     if (!from || !to) return null;
@@ -879,6 +939,7 @@
   // The middle of the empty stretch between the level zone and the clock's cards (the level zone
   // is on the clock's left on our side, on its right on the opponent's).
   function levelGap(mat) {
+    if (outOfSight(mat)) return null;
     const level = mat && mat.querySelector('[data-pile="level"]');
     const clock = mat && mat.querySelector('[data-pile="clock"]');
     if (!level || !clock) return null;
@@ -1054,6 +1115,8 @@
   // Fly card-shaped boxes {from, to, face, ms}: `hide` is hidden for the flight (it's the card
   // leaving; the board is redrawn afterwards anyway), `show` is hidden until its flight lands.
   function flyAll(flights) {
+    // A compact screen shows one side of the table at a time: nothing flies to or from the side out of sight.
+    flights = flights.filter(({ from, to }) => from && to && from.width && to.width);
     return Promise.all(flights.map(({ from, to, face, ms = FLIGHT_MS, hide, show, opponent }, i) => {
       const el = document.createElement("div");
       el.className = opponent ? "card-flight card-flight-opponent" : "card-flight";
@@ -1492,8 +1555,21 @@
     </div>`;
   }
 
+  // A compact screen always has the focused board: site.css lays it out for a phone.
   function matHtml(side, owner) {
-    return layout === "classic" ? classicMatHtml(side, owner) : focusMatHtml(side, owner);
+    return layout === "classic" && !compact ? classicMatHtml(side, owner) : focusMatHtml(side, owner);
+  }
+
+  // Compact: the buttons that switch between our side of the table and the opponent's, each with what
+  // matters most on it. A dot shows the opponent's side has changed since we last looked.
+  function boardSwitchHtml(me, opp) {
+    const summary = (side, hand) => `✋ ${hand} · Lv ${side.zones.level.length} · Clock ${side.zones.clock.length}`;
+    const button = (view, label, sub, dot = false) => `<button type="button" data-board-view="${view}" aria-pressed="${boardView === view}">
+      <span>${label}${dot ? '<span class="board-switch-dot" aria-hidden="true"></span><span class="sr-only"> (changed)</span>' : ""}</span>
+      <span class="board-switch-sub">${sub}</span></button>`;
+    return `<div class="board-switch" role="group" aria-label="Side of the table to show">
+      ${button("me", SPECTATING ? `${esc(me.name)}'s board` : "Your board", summary(me, me.zones.hand.length))}
+      ${button("opponent", `${esc(opp.name)}'s board`, summary(opp, opp.zones.hand.count), oppMoved)}</div>`;
   }
 
   function classicMatHtml(side, owner) {
@@ -1537,7 +1613,11 @@
     const me = board.me;
     const opp = board.opponent;
     const oppHand = opp ? opp.zones.hand.count : 0;
+    const split = compact && opp;
+    if (!split) boardView = "me";
+    if (split) boardEl.dataset.view = boardView; else delete boardEl.dataset.view;
     boardEl.innerHTML = `
+      ${split ? boardSwitchHtml(me, opp) : ""}
       ${opp ? `<div class="table-side side-opponent">
         <div class="hand hand-opponent${avatars[opp.name] ? " has-portrait" : ""}">${handPortrait(opp.name)}<span class="zone-label">${avatars[opp.name] ? "Hand" : `${whose(opp.name)} hand`} <b>${oppHand}</b></span>
           <div class="hand-cards">${Array.from({ length: oppHand }, backHtml).join("")}</div></div>
@@ -1562,6 +1642,7 @@
     renderModal();
     renderGameOver();
     renderIntro();
+    renderTray();
   }
 
   const gameNumber = () => board.game_number || 1;
@@ -1582,6 +1663,8 @@
           <div class="attack-panel" data-attack-panel hidden></div>
         </div>
         <p class="muted small phase-note"></p>
+        <details class="play-tools" data-tools${compact ? "" : " open"}>
+        <summary>Damage, sound and settings</summary>
         <div class="play-buttons">
           <button type="button" data-act='{"type":"move_top","from":"deck","to":"resolution"}'>Trigger</button>
         </div>
@@ -1591,7 +1674,7 @@
         </form>
         <p class="muted small damage-note">Cards go to your clock one at a time; a climax cancels it all.</p>
         <div class="view-options">
-          <div class="layout-switch" role="group" aria-label="Board view">
+          <div class="layout-switch layout-switch-board" role="group" aria-label="Board view">
             ${Object.entries(LAYOUTS).map(([name, label]) => `<button type="button" data-layout="${name}">${label}</button>`).join("")}
           </div>
           <div class="layout-switch">
@@ -1605,6 +1688,7 @@
             <button type="button" data-rules title="Turn the turn rules on or off (both players have to agree)">Turn rules</button>
           </div>
         </div>
+        </details>
         <div class="rules-prompt" data-rules-prompt role="alertdialog" aria-live="assertive" hidden></div>`;
     }
     controlsEl.querySelectorAll("[data-layout]").forEach((button) => {
@@ -1671,7 +1755,7 @@
       let status = "";
       let buttons = "";
       if (attack.step === "declare") {
-        status = board.my_turn ? "Choose an attacker: hover a standing center-stage character." : `Waiting for ${oppName} to attack…`;
+        status = board.my_turn ? `Choose an attacker: ${touch ? "tap" : "hover"} a standing center-stage character.` : `Waiting for ${oppName} to attack…`;
         if (board.my_turn) buttons = '<button type="button" data-phase="encore">End attack phase</button>';
       } else {
         status = `${kinds[attack.kind]} · ${attack.soul} damage${attack.backup ? ` · backup +${attack.backup}` : ""}`;
@@ -1923,7 +2007,13 @@
   peekEl.hidden = true;
   root.appendChild(peekEl);
 
+  // A pop-up hides the tray of buttons for a picked card (touch), and closing it brings the tray back.
   function renderModal() {
+    renderModalBox();
+    renderTray();
+  }
+
+  function renderModalBox() {
     drawModal();
     peekEl.hidden = true;
     const box = modalEl.hidden ? null : modalEl.querySelector(".play-modal-box");
@@ -1990,7 +2080,7 @@
     modalEl.hidden = false;
     modalEl.innerHTML = `<div class="play-modal-box" role="dialog" aria-label="${esc(modal.title)}">
       <div class="play-modal-head"><h2>${modal.owner && modal.owner !== "me" && board.opponent ? `${whose(board.opponent.name)} ${LABELS[modal.zone].toLowerCase()}` : esc(modal.title)}</h2><button type="button" data-close>Close</button></div>
-      <p class="muted small">${owner === "me" && !SPECTATING ? "Click a card to move it. Top of the pile first." : "Top of the pile first."}</p>
+      <p class="muted small">${owner === "me" && !SPECTATING ? `${touch ? "Tap" : "Click"} a card to move it. Top of the pile first.` : "Top of the pile first."}</p>
       <div class="play-modal-cards">${list.join("") || '<p class="empty">Empty.</p>'}</div>
     </div>`;
   }
@@ -2366,19 +2456,23 @@
 
   // --- Card preview ----------------------------------------------------------------------------
 
-  function showPreview(pk) {
-    const info = cards[pk];
-    if (!info) return;
+  // A card's serial, name, stats, traits and text: beside the board, and in the full-screen view.
+  function cardTextHtml(info) {
     const stats = [
       info.type, info.rarity, info.color,
       info.level != null ? `Level ${info.level}` : "", info.cost != null ? `Cost ${info.cost}` : "",
       info.power != null ? `Power ${info.power}` : "", info.soul != null ? `Soul ${info.soul}` : "",
       info.trigger ? `Trigger: ${info.trigger}` : "",
     ].filter(Boolean).join(" · ");
-    previewEl.innerHTML = `<img src="${esc(info.image)}" alt="">
-      <p class="muted small">${esc(info.serial)}</p><p class="play-preview-name">${esc(info.name)}</p>
+    return `<p class="muted small">${esc(info.serial)}</p><p class="play-preview-name">${esc(info.name)}</p>
       <p class="small">${esc(stats)}</p>${info.traits ? `<p class="small muted">${esc(info.traits)}</p>` : ""}
       ${info.text ? `<div class="card-peek-text">${esc(info.text).replace(/\n/g, "<br>")}</div>` : ""}`;
+  }
+
+  function showPreview(pk) {
+    const info = cards[pk];
+    if (!info) return;
+    previewEl.innerHTML = `<img src="${esc(info.image)}" alt="">${cardTextHtml(info)}`;
   }
 
   root.addEventListener("mouseover", (event) => {
@@ -2426,13 +2520,25 @@
   }
 
   function showSources(el) {
-    const uid = el.dataset.uid;
-    const entries = STAGE.includes(el.dataset.zone) && (board.stat_sources || {})[uid];
-    const info = cards[el.dataset.card];
-    if (!entries || !entries.length || !info) {
+    const html = sourcesHtml(el.dataset.uid, el.dataset.card, el.dataset.zone);
+    if (!html) {
       sourcesEl.hidden = true;
       return;
     }
+    sourcesEl.innerHTML = html;
+    sourcesEl.hidden = false;
+    const zoomBox = zoomEl.getBoundingClientRect();
+    const width = sourcesEl.getBoundingClientRect().width;
+    // To the right of the zoomed card, or to its left if the window's too narrow.
+    const right = zoomBox.right + 16;
+    sourcesEl.style.left = `${right + width <= window.innerWidth - 8 ? right : Math.max(8, zoomBox.left - 16 - width)}px`;
+  }
+
+  // What's changing a character's power, soul or level, and by how much ("" if nothing is).
+  function sourcesHtml(uid, pk, zone) {
+    const entries = STAGE.includes(zone) && (board.stat_sources || {})[uid];
+    const info = cards[pk];
+    if (!entries || !entries.length || !info) return "";
     const live = (board.stats || {})[uid] || {};
     const signed = (n) => `${n > 0 ? "+" : ""}${n}`;
     const totals = [["power", "Power"], ["soul", "Soul"], ["level", "Level"]]
@@ -2452,13 +2558,7 @@
         : '<span class="source-chip" aria-hidden="true">✦</span>';
       return `<li>${face}<span class="source-text">${changes.join("")}<span class="source-name">${esc(name)}</span>${where ? `<span class="muted small">${esc(where)}</span>` : ""}</span></li>`;
     });
-    sourcesEl.innerHTML = `${totals.length ? `<p class="source-totals">${totals.join("")}</p>` : ""}<ul>${rows.join("")}</ul>`;
-    sourcesEl.hidden = false;
-    const zoomBox = zoomEl.getBoundingClientRect();
-    const width = sourcesEl.getBoundingClientRect().width;
-    // To the right of the zoomed card, or to its left if the window's too narrow.
-    const right = zoomBox.right + 16;
-    sourcesEl.style.left = `${right + width <= window.innerWidth - 8 ? right : Math.max(8, zoomBox.left - 16 - width)}px`;
+    return `${totals.length ? `<p class="source-totals">${totals.join("")}</p>` : ""}<ul>${rows.join("")}</ul>`;
   }
 
   let pointer = null; // where the mouse last was, to find the hovered card again after a redraw
@@ -2484,6 +2584,7 @@
   }
 
   root.addEventListener("mousemove", (event) => {
+    if (touch) return; // a tap sends a mousemove too: a touch screen has the tray and the full-screen view instead
     pointer = { x: event.clientX, y: event.clientY };
     const el = event.target.closest(".pcard[data-card]");
     if (el === zoomCard) return;
@@ -2499,18 +2600,231 @@
   root.addEventListener("dragstart", hideZoom);
   window.addEventListener("scroll", hideZoom, { passive: true });
 
+  // --- Touch screens: a tapped card's buttons in a tray, and cards full screen ----------------------
+  // On a desktop a card's quick buttons sit on it and show while the mouse is over it, and resting on a card
+  // enlarges it. With no mouse, a tap picks the card (it's outlined) and the tray along the bottom of the
+  // screen has the same buttons, big enough to press, with their names written out. The tray's View, or a
+  // long press on any card (pop-ups included), shows the card full screen: its picture, or its text.
+
+  const LONG_PRESS_MS = 450;
+  const trayEl = document.createElement("div");
+  trayEl.className = "play-tray";
+  trayEl.dataset.tray = "";
+  trayEl.hidden = true;
+  trayEl.setAttribute("role", "region");
+  trayEl.setAttribute("aria-label", "Picked card");
+  root.appendChild(trayEl);
+
+  const selectedEl = () => (selected ? boardEl.querySelector(`.pcard[data-uid="${CSS.escape(selected)}"]`) : null);
+
+  function select(uid) {
+    selected = selected === uid ? null : uid; // tapping the picked card again puts it down
+    hideMenu();
+    renderTray();
+  }
+
+  function clearSelection() {
+    selected = null;
+    renderTray();
+  }
+
+  // A board button copied into the tray: its symbol, then its name (only in its tooltip on the board).
+  function trayButton(b, { symbolOnly = false } = {}) {
+    const copy = b.cloneNode(true);
+    copy.className = [...b.classList].filter((c) => ["ability-button", "ready", "counter-button"].includes(c)).join(" ");
+    copy.removeAttribute("style");
+    const label = b.getAttribute("aria-label");
+    if (label && !symbolOnly && b.textContent.trim() !== label) {
+      copy.innerHTML = `<span class="tray-symbol" aria-hidden="true">${b.innerHTML}</span><span>${esc(label)}</span>`;
+    }
+    return copy;
+  }
+
+  const actOf = (b) => {
+    try { return JSON.parse(b.dataset.act || "{}"); } catch (e) { return {}; }
+  };
+
+  // The picked card's name and numbers as they are now (abilities included), and where it is.
+  function trayStats(el, info) {
+    const live = (board.stats || {})[el.dataset.uid] || {};
+    const has = (value) => value !== null && value !== undefined && value !== "";
+    const parts = [info.type];
+    if (has(info.level)) parts.push(`Level ${has(live.level) ? live.level : info.level}`);
+    if (has(info.cost)) parts.push(`Cost ${info.cost}`);
+    if (has(info.power)) parts.push(`Power ${has(live.power) ? live.power : info.power}`);
+    if (has(info.soul)) parts.push(`Soul ${has(live.soul) ? live.soul : info.soul}`);
+    const where = el.dataset.zone === "hand" ? "In hand" : LABELS[el.dataset.zone];
+    const pos = el.classList.contains("pos-rest") ? "rested" : el.classList.contains("pos-reverse") ? "reversed" : "";
+    return [parts.filter(Boolean).join(" · "), [where, pos].filter(Boolean).join(", ")];
+  }
+
+  function renderTray() {
+    if (!board) return;
+    boardEl.querySelectorAll(".pcard.selected").forEach((el) => el.classList.remove("selected"));
+    const el = selectedEl();
+    const holder = el && (el.closest(".hand-card") || el.closest(".zone.slot"));
+    const show = Boolean(touch && holder && !outOfSight(el) && !board.game_over);
+    if (!show) selected = null;
+    trayEl.hidden = !show || !modalEl.hidden; // a pop-up comes first; the tray is back once it's closed
+    root.classList.toggle("tray-open", !trayEl.hidden);
+    if (!show) return;
+    el.classList.add("selected");
+
+    const pk = el.dataset.card;
+    const info = pk ? cards[pk] : null;
+    const zone = el.dataset.zone;
+    const mine = el.dataset.owner === "me" && !SPECTATING;
+    const zoomAttrs = `data-zoom-card="${esc(pk)}" data-zoom-uid="${esc(el.dataset.uid)}" data-zoom-zone="${esc(zone)}"`;
+    const [stats, where] = info ? trayStats(el, info) : ["", LABELS[zone] || ""];
+    const notes = [...holder.querySelectorAll(".hand-needs")].map((n) => `<p class="play-tray-note">${esc(n.textContent)}</p>`).join("");
+    trayEl.innerHTML = `<div class="play-tray-head">
+        ${info ? `<button type="button" class="play-tray-thumb" ${zoomAttrs} aria-label="Show ${esc(info.name)} full screen"><img src="${esc(info.image)}" alt=""></button>`
+          : '<span class="play-tray-thumb"><span class="pcard-back"></span></span>'}
+        <div class="play-tray-info"><p class="play-tray-name">${info ? esc(info.name) : "Face-down card"}</p>
+          <p class="play-tray-stats">${esc(stats)}${stats && where ? " · " : ""}${esc(where)}</p>${notes}</div>
+        <button type="button" class="play-tray-close" data-tray-close aria-label="Put the card down">×</button>
+      </div>`;
+
+    const actions = document.createElement("div");
+    actions.className = "play-tray-actions";
+    if (info) actions.insertAdjacentHTML("beforeend", `<button type="button" ${zoomAttrs}>🔍 View</button>`);
+    if (mine && zone === "hand") {
+      // Where it can be played on the stage, laid out like the stage (front row, then back row), then the rest.
+      const buttons = [...holder.querySelectorAll(".hand-actions button")];
+      const toStage = (b) => actOf(b).type === "move" && STAGE.includes(actOf(b).to);
+      const stage = buttons.filter(toStage);
+      if (stage.length) {
+        const row = (slots) => `<div class="tray-stage-row">${slots.map((s) => `<span data-tray-slot="${s}"></span>`).join("")}</div>`;
+        actions.insertAdjacentHTML("beforeend", `<div class="tray-stage" role="group" aria-label="Play to the stage">
+          <span class="tray-group-label">Play to</span>${row(["C1", "C2", "C3"])}${row(["B1", "B2"])}</div>`);
+        for (const b of stage) actions.querySelector(`[data-tray-slot="${actOf(b).to}"]`).replaceWith(trayButton(b, { symbolOnly: true }));
+        actions.querySelectorAll("[data-tray-slot]").forEach((gap) => gap.remove());
+      }
+      for (const b of buttons.filter((b) => !toStage(b))) actions.appendChild(trayButton(b));
+    } else if (mine) {
+      // Attacks first, then abilities, then the card's corner buttons, then moves to the slots beside it
+      // (a move between two slots is drawn on the first of them, so it may be on a neighbour).
+      const found = new Set([
+        ...holder.querySelectorAll(".slot-actions button"),
+        ...holder.querySelectorAll(".ability-button"),
+        ...holder.querySelectorAll(".slot-pos button"),
+        ...[...boardEl.querySelectorAll(".mat-me .slot-link")].filter((b) => actOf(b).uid === selected || actOf(b).to === zone),
+      ]);
+      for (const b of found) actions.appendChild(trayButton(b));
+    }
+    trayEl.appendChild(actions);
+  }
+
+  const viewerEl = document.createElement("div");
+  viewerEl.className = "play-viewer";
+  viewerEl.hidden = true;
+  viewerEl.setAttribute("role", "dialog");
+  viewerEl.setAttribute("aria-modal", "true");
+  document.body.appendChild(viewerEl);
+  let viewerReturn = null; // where the focus goes back to once it's closed
+
+  // A card full screen: its picture, or its text (with what's changing its power, soul or level, on the stage).
+  function openViewer(pk, uid = null, zone = null) {
+    const info = cards[pk];
+    if (!info) return;
+    hideZoom();
+    hideMenu();
+    const sources = uid ? sourcesHtml(uid, pk, zone) : "";
+    viewerReturn = document.activeElement;
+    viewerEl.setAttribute("aria-label", info.name);
+    viewerEl.innerHTML = `<div class="play-viewer-bar">
+        <div class="layout-switch" role="group" aria-label="Show">
+          <button type="button" data-viewer-tab="picture">Picture</button><button type="button" data-viewer-tab="text">${sources ? "Text and boosts" : "Text"}</button>
+        </div>
+        <button type="button" class="play-viewer-close" data-viewer-close aria-label="Close">×</button>
+      </div>
+      <div class="play-viewer-picture" data-viewer-panel="picture"><img src="${esc(info.image)}" alt="${esc(info.name)}"></div>
+      <div class="play-viewer-text" data-viewer-panel="text">${cardTextHtml(info)}${sources ? `<div class="play-viewer-sources">${sources}</div>` : ""}</div>`;
+    showViewerTab("picture");
+    viewerEl.hidden = false;
+    viewerEl.querySelector("[data-viewer-close]").focus({ preventScroll: true });
+  }
+
+  function showViewerTab(tab) {
+    viewerEl.querySelectorAll("[data-viewer-tab]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.viewerTab === tab)));
+    viewerEl.querySelectorAll("[data-viewer-panel]").forEach((panel) => { panel.hidden = panel.dataset.viewerPanel !== tab; });
+  }
+
+  function closeViewer() {
+    if (viewerEl.hidden) return false;
+    viewerEl.hidden = true;
+    viewerEl.innerHTML = "";
+    if (viewerReturn && viewerReturn.isConnected) viewerReturn.focus({ preventScroll: true });
+    return true;
+  }
+
+  viewerEl.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-viewer-tab]");
+    if (tab) return showViewerTab(tab.dataset.viewerTab);
+    if (event.target.closest("[data-viewer-close]")) return closeViewer();
+    if (event.target.matches(".play-viewer-picture img")) return showViewerTab("text"); // the picture, tapped: its text
+    if (event.target === viewerEl || event.target.matches(".play-viewer-picture")) closeViewer(); // the dark space around it
+  });
+
+  // A long press on a card (not a mouse's) shows it full screen. The tap that ends it does nothing else.
+  let pressTimer = null;
+  let pressAt = null;
+  let swallowClick = false;
+  const cancelPress = () => {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+  };
+  root.addEventListener("pointerdown", (event) => {
+    swallowClick = false;
+    cancelPress();
+    const el = event.pointerType !== "mouse" && event.target.closest(".pcard[data-card]");
+    if (!el) return;
+    pressAt = { x: event.clientX, y: event.clientY };
+    pressTimer = setTimeout(() => {
+      pressTimer = null;
+      swallowClick = true;
+      openViewer(el.dataset.card, el.dataset.uid, el.dataset.zone);
+    }, LONG_PRESS_MS);
+  });
+  root.addEventListener("pointermove", (event) => {
+    if (pressTimer && pressAt && Math.hypot(event.clientX - pressAt.x, event.clientY - pressAt.y) > 10) cancelPress(); // scrolling
+  });
+  root.addEventListener("pointerup", cancelPress);
+  root.addEventListener("pointercancel", cancelPress);
+  document.addEventListener("click", (event) => {
+    if (!swallowClick) return;
+    swallowClick = false;
+    event.preventDefault();
+    event.stopPropagation();
+  }, true);
+  // Not the browser's own long-press menu (save image...) over a card, but the card full screen: some browsers
+  // (Chrome on Android) end the press themselves to bring up their menu, before the timer above goes off.
+  root.addEventListener("contextmenu", (event) => {
+    const el = touch && event.target.closest(".pcard");
+    if (!el) return;
+    event.preventDefault();
+    if (el.dataset.card && viewerEl.hidden) {
+      cancelPress();
+      swallowClick = true;
+      openViewer(el.dataset.card, el.dataset.uid, el.dataset.zone);
+    }
+  });
+
   // --- Menus -----------------------------------------------------------------------------------
 
   let menuZone = null; // the deck or stage slot whose [...] menu is open, if any
 
   function showMenu(x, y, title, items) {
-    if (SPECTATING) items = items.filter((item) => item !== "-" && item.view);
+    if (SPECTATING) items = items.filter((item) => item !== "-" && (item.view || item.zoom));
     if (!items.length) return hideMenu();
     menuZone = null;
     menuEl.classList.remove("see-through");
+    const zoom = (z) => `data-zoom-card="${esc(z.pk)}" data-zoom-uid="${esc(z.uid || "")}" data-zoom-zone="${esc(z.zone || "")}"`;
     menuEl.innerHTML = `<p class="play-menu-title">${esc(title)}</p>` + items.map((item) => item === "-"
       ? "<hr>"
-      : `<button type="button" data-menu-item='${esc(JSON.stringify(item.action || {}))}' ${item.prompt ? `data-prompt="${esc(item.prompt)}" data-prompt-default="${esc(item.promptDefault ?? 1)}"` : ""} ${item.view ? `data-view='${esc(JSON.stringify(item.view))}'` : ""}>${esc(item.label)}</button>`).join("");
+      : item.zoom ? `<button type="button" ${zoom(item.zoom)}>${esc(item.label)}</button>`
+      : `<button type="button" data-menu-item='${esc(JSON.stringify(item.action || {}))}' ${item.prompt ? `data-prompt="${esc(item.prompt)}" data-prompt-default="${esc(item.promptDefault ?? 1)}"` : ""} ${item.view ? `data-view='${esc(JSON.stringify(item.view))}'` : ""}>${esc(item.label)}</button>`).join("")
+      + (touch ? '<hr><button type="button" class="play-menu-cancel" data-menu-cancel>Cancel</button>' : ""); // a sheet over the board needs a way out
     menuEl.hidden = false;
     const box = menuEl.getBoundingClientRect();
     menuEl.style.left = `${Math.min(x, window.innerWidth - box.width - 8)}px`;
@@ -2541,6 +2855,8 @@
     const zone = el.dataset.zone;
     const info = el.dataset.card ? cards[el.dataset.card] : null;
     const items = [];
+    // With no mouse to rest on a card, the menu is the way to see it whole.
+    if (touch && info) items.push({ label: "🔍 View card", zoom: { pk: el.dataset.card, uid, zone } }, "-");
     if (["C1", "C2", "C3"].includes(zone) && el.classList.contains("pos-stand") && board.my_turn) {
       items.push({ label: "⚔ Attack (rest + trigger check)", action: { type: "attack", uid } }, "-");
     }
@@ -2638,8 +2954,36 @@
   }
 
   root.addEventListener("click", (event) => {
+    const viewButton = event.target.closest("[data-zoom-card]");
+    if (viewButton) {
+      openViewer(viewButton.dataset.zoomCard, viewButton.dataset.zoomUid || null, viewButton.dataset.zoomZone || null);
+      return;
+    }
+    if (event.target.closest("[data-tray-close]")) {
+      clearSelection();
+      return;
+    }
+    const sideButton = event.target.closest("[data-board-view]");
+    if (sideButton) {
+      boardView = sideButton.dataset.boardView;
+      if (boardView === "opponent") oppMoved = false;
+      selected = null;
+      hideMenu();
+      render();
+      return;
+    }
+    const augment = event.target.closest("[data-augment]");
+    if (augment) {
+      showAugment(augment);
+      return;
+    }
+    if (event.target.closest("[data-menu-cancel]")) {
+      hideMenu();
+      return;
+    }
     const menuItem = event.target.closest("[data-menu-item]");
     if (menuItem) {
+      if (touch) selected = null; // the card's been dealt with: put it down
       if (menuItem.dataset.view) {
         modal = JSON.parse(menuItem.dataset.view);
         hideMenu();
@@ -2658,7 +3002,7 @@
     const zoneMenu = event.target.closest("[data-zone-menu]");
     if (zoneMenu) {
       if (menuZone === zoneMenu.dataset.zoneMenu && !menuEl.hidden) hideMenu();
-      else openZoneMenu(zoneMenu.dataset.zoneMenu, zoneMenu.closest(".zone"));
+      else openZoneMenu(zoneMenu.dataset.zoneMenu, zoneMenu.closest(".zone") || zoneEl(zoneMenu.dataset.zoneMenu)); // or from the tray
       return;
     }
     const confirmClimax = event.target.closest("[data-confirm-climax]");
@@ -2767,12 +3111,13 @@
     }
     const button = event.target.closest("[data-act]");
     if (button) {
+      if (button.closest("[data-tray]")) clearSelection(); // done with the picked card
       act(JSON.parse(button.dataset.act));
       return;
     }
     const more = event.target.closest("[data-more]");
     if (more) {
-      const card = more.closest(".hand-card").querySelector(".pcard[data-uid]");
+      const card = more.closest(".hand-card") ? more.closest(".hand-card").querySelector(".pcard[data-uid]") : selectedEl(); // or from the tray
       if (card) {
         const [title, items] = cardMenu(card);
         showMenu(event.clientX, event.clientY, title, items);
@@ -2798,6 +3143,25 @@
       modal = null;
       renderModal();
       return;
+    }
+    // A touch screen: a tap on a card in the hand or on the stage picks it (its buttons go in the tray); one
+    // on the other side's card in a pop-up shows it; one on our deck opens its menu (there's no hovering to
+    // find the [...] button). A tap anywhere else on the board puts the picked card down.
+    if (touch) {
+      const tapped = event.target.closest(".pcard[data-uid]");
+      if (tapped && boardEl.contains(tapped) && (tapped.closest(".zone.slot") || tapped.closest(".hand-card"))) {
+        select(tapped.dataset.uid);
+        return;
+      }
+      if (tapped && modalEl.contains(tapped) && tapped.dataset.card && (tapped.dataset.owner !== "me" || SPECTATING)) {
+        openViewer(tapped.dataset.card, tapped.dataset.uid, tapped.dataset.zone);
+        return;
+      }
+      if (!SPECTATING && event.target.closest('[data-pile="deck"][data-owner="me"]')) {
+        openZoneMenu("deck", zoneEl("deck"));
+        return;
+      }
+      if (selected && boardEl.contains(event.target)) clearSelection();
     }
     // The deck's and stage cards' menus are on their [...] buttons.
     if (event.target.closest('[data-pile="deck"][data-owner="me"]') || event.target.closest('.zone.slot[data-owner="me"]:not(:has(.marker-pile:hover))')) {
@@ -2844,11 +3208,18 @@
       return;
     }
     if (event.key === "Escape") {
+      if (closeViewer()) return; // the full-screen card first, then the rest
+      clearSelection();
       hideZoom();
       hideMenu();
       modal = null;
       renderModal();
     }
+  });
+
+  // A tap outside the table (the header, say) closes a menu: on a touch screen it covers the bottom of the screen.
+  document.addEventListener("click", (event) => {
+    if (!menuEl.hidden && !root.contains(event.target)) hideMenu();
   });
 
   // --- Drag and drop ---------------------------------------------------------------------------

@@ -1,0 +1,13 @@
+{# Character / Event / Climax chips over the cards inside [data-type-cards="{{ cards }}"], each of them marked data-type="<its type, lower case>". #}
+{# Ticked types are the only ones shown; none ticked shows every card. Chips for types the cards don't have are hidden, and so is the whole bar when there's only one type (type_filter.js). #}
+<div class="lead-filters type-filter-bar" data-type-filter="{{ cards }}" role="group" aria-label="Filter by card type" hidden>
+  <fieldset class="color-filter">
+    <legend>Type</legend>
+    <div class="color-chips">
+      <label class="color-chip type-chip"><input type="checkbox" value="character"><span>Character</span></label>
+      <label class="color-chip type-chip"><input type="checkbox" value="event"><span>Event</span></label>
+      <label class="color-chip type-chip"><input type="checkbox" value="climax"><span>Climax</span></label>
+    </div>
+  </fieldset>
+  <p class="lead-count small" data-type-filter-count aria-live="polite"></p>
+</div>

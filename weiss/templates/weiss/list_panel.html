@@ -38,9 +38,10 @@
       {% if editing_unpriced %}<p class="small muted list-total-note">Not counting {{ editing_unpriced }} card{{ editing_unpriced|pluralize }} without a price.</p>{% endif %}
     {% endif %}
     {% if editing_entries %}
-      <ul class="panel-entries">
+      {% include "weiss/type_filter.html" with cards="panel" %}
+      <ul class="panel-entries" data-type-cards="panel">
         {% for entry in editing_entries %}
-          <li>
+          <li data-type="{{ entry.card.card_type|lower }}">
             {# Clicking opens a small popup (lists.js); the href is the full page for new tabs or no script. #}
             {% url 'weiss:card_popup' entry.card.pk as popup_url %}
             {% if entry.card.level is not None %}<span class="panel-level" title="Level {{ entry.card.level }}">{{ entry.card.level }}</span>

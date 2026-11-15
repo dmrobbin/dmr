@@ -35,9 +35,10 @@
   </div>
 
   {% if entries %}
-    <ul class="card-grid">
+    {% include "weiss/type_filter.html" with cards="list" %}
+    <ul class="card-grid" data-type-cards="list">
       {% for entry in entries %}
-        <li>
+        <li data-type="{{ entry.card.card_type|lower }}">
           {% url 'weiss:card_popup' entry.card.pk as popup_url %}
           <a href="{% url 'weiss:card' entry.card.pk %}?list={{ card_list.pk }}" data-card-popup="{{ popup_url }}">
             {% if entry.card.image_src %}{% include "weiss/card_art.html" with card=entry.card alt=entry.card.name lazy=True %}{% endif %}

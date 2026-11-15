@@ -49,9 +49,14 @@
       <label>Cost
         <select name="cost"><option value="">Any</option>{% for cost in options.costs %}<option value="{{ cost }}">{{ cost }}</option>{% endfor %}</select>
       </label>
-      <label>Type
-        <select name="type"><option value="">Any</option>{% for type in options.types %}<option value="{{ type|lower }}">{{ type }}</option>{% endfor %}</select>
-      </label>
+      {% if options.types|length > 1 %}
+        <fieldset class="color-filter">
+          <legend>Type</legend>
+          <div class="color-chips">
+            {% for type in options.types %}<label class="color-chip type-chip"><input type="checkbox" name="type" value="{{ type|lower }}"><span>{{ type }}</span></label>{% endfor %}
+          </div>
+        </fieldset>
+      {% endif %}
       <label>Rarity
         <select name="rarity"><option value="">Any</option>{% for rarity in options.rarities %}<option value="{{ rarity }}">{{ rarity|default:"None" }}</option>{% endfor %}</select>
       </label>

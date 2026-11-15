@@ -17,6 +17,7 @@ from . import arcade, augments, buffs, challenge, coop, curses, game, packs, pla
 from .lists import CLIMAX_COUNT, DECK_GROUPS, DECK_SIZE, unlimited
 from .models import ArcadeRun, ArcadeScenario, Card, ChallengeRun, CoopRun, CpuProfile, GameRoom, NarrativeChallenge, PlayerProfile
 from .play import deal, not_begun, seat_cpu, snapshot_groups
+from .views import card_types
 
 
 def challenge_access(view):
@@ -330,7 +331,7 @@ def challenge_deck(request):
         "colors": sorted({card.color for card in pool if card.color}),
         "levels": sorted({card.level for card in pool if card.level is not None}),
         "costs": sorted({card.cost for card in pool if card.cost is not None}),
-        "types": sorted({card.card_type for card in pool if card.card_type}),
+        "types": card_types(card.card_type for card in pool),
         "rarities": [rarity for rarity, _ in sorted({(item["rarity"], item["grade"]) for item in cards}, key=lambda pair: (-pair[1], pair[0]))],
         "sets": sorted({(card.expansion_id, card.expansion) for card in pool}, key=lambda pair: pair[1]),
     }

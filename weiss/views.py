@@ -102,6 +102,15 @@ def set_list(request):
     })
 
 
+CARD_TYPES = ["Character", "Event", "Climax"]  # the order the type filters offer them in
+
+
+def card_types(values):
+    """The card types among these (blanks left out), characters first, then events and climaxes, then anything else."""
+    found = {v for v in values if v}
+    return sorted(found, key=lambda t: (CARD_TYPES.index(t) if t in CARD_TYPES else len(CARD_TYPES), t))
+
+
 # Card sort options on a set page: (value, label, ordering field). Blank values go last, except
 # that climaxes (no level) come before level 0 when sorting by level, low to high.
 CARD_SORTS = [
@@ -139,6 +148,7 @@ def card_browser(request, pool, template_context):
     name = request.GET.get("name", "").strip()
     text = request.GET.get("text", "").strip()
     colors = [c for c in request.GET.getlist("color") if c]  # any of these (?color=Red&color=Blue)
+    types = [t for t in request.GET.getlist("type") if t]  # any of these (?type=Character&type=Event)
     level = request.GET.get("level", "")
     cost = request.GET.get("cost", "")
     expansion = request.GET.get("set", "")
@@ -148,6 +158,8 @@ def card_browser(request, pool, template_context):
         cards = cards.filter(description__icontains=text)
     if colors:
         cards = cards.filter(color__in=colors)
+    if types:
+        cards = cards.filter(card_type__in=types)
     cards = filter_number(cards, "level", level)
     cards = filter_number(cards, "cost", cost)
     if expansion.isdigit():
@@ -172,12 +184,13 @@ def card_browser(request, pool, template_context):
         "total": pool.count(),
         "cards": with_image_urls(cards),
         "colors": sorted(set(pool.exclude(color="").values_list("color", flat=True))),
+        "types": card_types(pool.order_by().values_list("card_type", flat=True).distinct()),
         "levels": values_in(pool, "level"),
         "costs": values_in(pool, "cost"),
         "sort_options": [(value, label) for value, label, _ in CARD_SORTS],
-        "filters": {"name": name, "text": text, "colors": colors, "level": level, "cost": cost, "set": expansion,
+        "filters": {"name": name, "text": text, "colors": colors, "types": types, "level": level, "cost": cost, "set": expansion,
                     "sort": sort},
-        "filtered": bool(name or text or colors or level or cost or expansion),
+        "filtered": bool(name or text or colors or types or level or cost or expansion),
     })
 
 

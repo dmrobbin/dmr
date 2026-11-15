@@ -674,6 +674,9 @@ class ArcadeRunTests(Base):
         deck = self.client.get(reverse("weiss:arcade_deck", args=[run.pk]))
         self.assertEqual(deck.context["total"], sum(n for _, n in run.deck_snapshot))
         self.assertContains(deck, "Arcade high scores")
+        self.assertContains(deck, 'data-type-filter="deck"')  # type chips over the kept deck, its level groups hidden when emptied
+        self.assertContains(deck, "data-type-group")
+        self.assertContains(deck, "weiss/type_filter.js")
         unscored = ArcadeRun.objects.create(user=self.alice, scenario=self.scenario, scenario_name="Ark")
         self.assertEqual(self.client.get(reverse("weiss:arcade_deck", args=[unscored.pk])).status_code, 404)
 

@@ -9,11 +9,12 @@
     {% if series %}<a class="button-small" href="{% url 'weiss:series' series %}">All {{ series }} cards →</a>{% endif %}
   </div>
 
-  <form class="lead-filters" method="get">
+  {# On a phone only the name search shows; the rest are behind the Filters button (lists.js). #}
+  <form class="lead-filters filters-collapsible" method="get" data-filters>
     <label>Name <input type="search" name="name" value="{{ filters.name }}" placeholder="e.g. Elegg"></label>
-    <label>Card text <input type="search" name="text" value="{{ filters.text }}" placeholder="e.g. draw 1 card"></label>
+    <label class="filter-extra">Card text <input type="search" name="text" value="{{ filters.text }}" placeholder="e.g. draw 1 card"></label>
     {% if series_page %}
-      <label>Set
+      <label class="filter-extra">Set
         <select name="set" onchange="this.form.submit()" data-searchable="sets">
           <option value="">Any</option>
           {% for expansion_id, expansion in sets %}<option value="{{ expansion_id }}"{% if filters.set == expansion_id|stringformat:"d" %} selected{% endif %}>{{ expansion }}</option>{% endfor %}
@@ -21,7 +22,7 @@
       </label>
     {% endif %}
     {# Tick any number of colors; none ticked means any color. #}
-    <fieldset class="color-filter">
+    <fieldset class="color-filter filter-extra">
       <legend>Colors</legend>
       <div class="color-chips">
         {% for color in colors %}
@@ -32,7 +33,21 @@
         {% endfor %}
       </div>
     </fieldset>
-    <label>Level
+    {# Likewise types: none ticked means any type. #}
+    {% if types|length > 1 %}
+      <fieldset class="color-filter filter-extra">
+        <legend>Type</legend>
+        <div class="color-chips">
+          {% for type in types %}
+            <label class="color-chip type-chip">
+              <input type="checkbox" name="type" value="{{ type }}"{% if type in filters.types %} checked{% endif %} onchange="this.form.submit()">
+              <span>{{ type }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+    {% endif %}
+    <label class="filter-extra">Level
       <select name="level" onchange="this.form.submit()">
         <option value="">Any</option>
         {% for level in levels %}
@@ -41,7 +56,7 @@
         {% endfor %}
       </select>
     </label>
-    <label>Cost
+    <label class="filter-extra">Cost
       <select name="cost" onchange="this.form.submit()">
         <option value="">Any</option>
         {% for cost in costs %}
@@ -50,11 +65,12 @@
         {% endfor %}
       </select>
     </label>
-    <label>Sort
+    <label class="filter-extra">Sort
       <select name="sort" onchange="this.form.submit()">
         {% for value, label in sort_options %}<option value="{{ value }}"{% if filters.sort == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
     </label>
+    <button type="button" class="filters-toggle" data-filters-toggle aria-expanded="false">Filters</button>
     <button type="submit">Search</button>
     {% if filtered %}<a href="{{ clear_url }}{% if filters.sort != 'serial' %}?sort={{ filters.sort|urlencode }}{% endif %}">Clear</a>{% endif %}
   </form>
@@ -65,7 +81,8 @@
     <ul class="card-grid">
       {% for card in cards %}
         <li data-peek>
-          <a href="{% url 'weiss:card' card.pk %}">
+          {# A tap on a touch screen opens the card's popup (lists.js), as there's no hovering to see it. #}
+          <a href="{% url 'weiss:card' card.pk %}" data-card-popup-touch="{% url 'weiss:card_popup' card.pk %}">
             {% if card.image_src %}{% include "weiss/card_art.html" with alt=card.name lazy=True %}{% endif %}
             <span class="card-title-row">
               <span class="card-name">{{ card.name }}{% include "weiss/cpu_flag.html" %}</span>
