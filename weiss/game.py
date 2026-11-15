@@ -2787,6 +2787,81 @@ def used_key(card, ability):
     return f"{card['uid']}:{ability['text'][:80]}"
 
 
+# Effect steps that only act on what a choose step just chose: after choosing nothing, they do nothing.
+ON_CHOSEN = {"move_it", "reveal_it", "place", "marker", "dest", "pos_it", "swap_stage", "self_marker_on_it"}
+
+
+def on_chosen(step):
+    do = step.get("do")
+    return (do in ON_CHOSEN or (do == "buff" and step.get("target") == "it")
+            or (do == "status" and step.get("target") in ("it_all", "it_first"))
+            or (do == "to_old_slot" and not step.get("self") and not step.get("that")))
+
+
+def cost_arrivals(cost, state, player, source, env):
+    """{zone: cards} that paying this cost could put into the player's zones, or None if it can't be told."""
+    side = state["players"][player]
+    arrivals = {}
+    for part in cost or []:
+        kind = part["part"]
+        if kind == "stock":  # paid from the top, into the waiting room
+            arrivals.setdefault("waiting", []).extend(side["zones"]["stock"][-part["n"]:] if part["n"] else [])
+        elif kind == "self_to" and source and part.get("to") in side["zones"]:
+            arrivals.setdefault(part["to"], []).append(source)
+        elif kind == "pick" and part.get("to") in side["zones"]:  # any of the cards it could be paid with
+            arrivals.setdefault(part["to"], []).extend(cost_options(part, state, player, source, env))
+        elif kind == "pick" and not part.get("to"):  # only revealed
+            continue
+        elif kind not in ("self_rest", "self_face_down", "level_face_down", "shuffle", "deck_to_clock", "stock_to_clock", "stock_to_deck"):
+            return None
+    return arrivals
+
+
+def leaves_stage(part, choose):
+    """Whether paying this part of a cost leaves the stage as a choose step sees it: who's there, and how they stand."""
+    kind = part["part"]
+    if kind == "self_rest":  # this card rests: it matters only if what's chosen has to stand or be rested
+        return not any((choose.get("filter") or {}).get(pos) for pos in ("stand", "rest", "reverse"))
+    if kind == "pick":
+        return part.get("zone") not in ("stage", "center", "back") and part.get("to") != "marker"
+    return kind in ("stock", "deck_to_clock", "stock_to_clock", "stock_to_deck", "shuffle")
+
+
+def no_target(steps, cost, state, player, card, ctx, env):
+    """Why these effect steps would do nothing, or None if they might do something: they start by choosing from where
+    there's nothing to choose, even counting what paying `cost` first could put there, and then only act on what was
+    chosen. ("Choose a "Ultimate Madoka" in your waiting room, and put it ..." with none there.)"""
+    if not steps or steps[0].get("do") != "choose" or not all(on_chosen(step) for step in steps[1:]):
+        return None
+    choose = steps[0]
+    if choose["zone"] in ("among", "among_or_stage") or (choose["zone"] in ("stage", "center", "back") and not all(leaves_stage(p, choose) for p in cost or [])):
+        return None  # what's looked at isn't known yet; a cost can change the stage
+    arrivals = cost_arrivals(cost, state, player, card, env) if choose.get("owner") != "opp" else {}
+    if arrivals is None:
+        return None
+    side = state["players"][player]
+    extra = arrivals.get(choose["zone"], [])
+    trial = state
+    if extra:  # look as if they'd arrived already
+        zones = {**side["zones"], choose["zone"]: side["zones"][choose["zone"]] + [c for c in extra if c not in side["zones"][choose["zone"]]]}
+        trial = {**state, "players": {**state["players"], player: {**side, "zones": zones}}}
+    _, found = choose_options(choose, {"player": player, "ctx": ctx or {}, "uid": card["uid"] if card else None}, trial, env)
+    return None if found else "no valid target"
+
+
+def may_no_target(ability, state, player, card, ctx, env):
+    """no_target for an ability that starts "you may (pay the cost)": what it'd do if you did. Its cost (an ACT's,
+    or the may's) is counted for what it could put where."""
+    steps = ability.get("steps") or []
+    cost = list(ability.get("cost") or []) if ability.get("kind") == "act" else []
+    if steps and steps[0].get("do") == "may":
+        first = steps[0]
+        if first.get("otherwise") or first.get("chooser") == "opp" or len(steps) > 1:
+            return None  # something happens either way
+        return no_target(first.get("then", []), cost + list(first.get("cost") or []), state, player, card, ctx, env)
+    return no_target(steps, cost, state, player, card, ctx, env) if ability.get("kind") == "act" else None
+
+
 def queue_ability(state, player, card, ability, ctx, env):
     """An AUTO ability triggered: queue it if it can still do something."""
     if used_up(state, card, ability):
@@ -2799,6 +2874,8 @@ def queue_ability(state, player, card, ability, ctx, env):
     first = (ability.get("steps") or [{}])[0]
     if first.get("do") == "may" and first.get("cost") and not first.get("otherwise") and can_pay(first["cost"], state, player, card, env):
         return  # "you may pay the cost", and it can't be paid, with nothing to do if you don't
+    if may_no_target(ability, state, player, card, ctx, env):
+        return  # "you may", and doing it would only pay the cost: nothing to choose (a CPU won't, and a player isn't asked)
     state.setdefault("ability_queue", []).append(
         {"id": new_uid(), "player": player, "uid": card["uid"], "card": card["card"], "ability": copy.deepcopy(ability), "ctx": ctx})
 
@@ -4240,7 +4317,7 @@ def act_status(state, player, card, ability, where, env):
         return "already used this turn"
     if where in STAGE_SLOTS and card["face_down"]:
         return "this card is face down"
-    return can_pay(ability.get("cost"), state, player, card, env)
+    return can_pay(ability.get("cost"), state, player, card, env) or may_no_target(ability, state, player, card, {"source_uid": card["uid"]}, env)
 
 
 def activatable(ability):
