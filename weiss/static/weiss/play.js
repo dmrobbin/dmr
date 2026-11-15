@@ -88,6 +88,7 @@
   const flashPicks = new Set(); // deck cards picked for a flash battle's level zone
   const discardPicks = new Set(); // hand cards picked for the end phase's discard
   let abilityPicks = []; // cards picked for an ability's prompt, in the order they were picked
+  let placePick = { kind: null, uid: null, slot: null }; // the card and stage position picked to put it on, before confirming
 
   // Phones and tablets. Touch: there's no mouse to hover with, so a tap picks a card and its buttons go in a
   // tray along the bottom of the screen, and a long press (or the tray's View) shows it full screen.
@@ -2113,6 +2114,76 @@
     </div>`;
   }
 
+  // Putting a card on a stage: that stage as it stands, each position the card may go to a button. The
+  // picked position shows the stage as it will be: the card there (as it will stand), the character it
+  // replaces named on its way to the waiting room, and the position it leaves if it's moving within the stage.
+  // A stage drawn small in a prompt, as it sits on the board: the opponent's faces us, back row furthest
+  // away and their left on our right. `cell` draws each position (stageSlotHtml).
+  function stageBoardHtml(owner, cell) {
+    return `<div class="place-board${owner === "opponent" ? " place-board-opponent" : ""}" role="group" aria-label="${owner === "opponent" ? "Their" : "Your"} stage">
+      <div class="place-row">${["C1", "C2", "C3"].map(cell).join("")}</div>
+      <div class="place-row">${["B1", "B2"].map(cell).join("")}</div></div>`;
+  }
+
+  const stageNameOf = (c) => (c.card && cards[c.card] ? cards[c.card].name : "a face-down card");
+
+  function stageSlotHtml(slot, { card, can, picked, note, noteHtml = esc(note), out = false, attrs, badge = "" }) {
+    return `<div class="place-slot${picked ? " picked" : ""}${can ? "" : " unpickable"}" ${can ? attrs : 'aria-disabled="true"'} aria-label="${esc(`${LABELS[slot]}: ${note}`)}">
+      <span class="place-slot-label">${LABELS[slot]}</span>
+      <span class="place-slot-card">${card ? cardHtml(card, "view", slot).replace('tabindex="0"', 'tabindex="-1"') : '<span class="zone-empty"></span>'}${badge}</span>
+      <span class="place-slot-note${out ? " out" : ""}" title="${esc(note)}">${noteHtml}</span></div>`;
+  }
+
+  // An ability choosing characters on the stage (a target, or a cost): each stage they're on, drawn as on
+  // the board, each one that may be chosen a button. The usual picks (abilityPicks) and Confirm apply.
+  function choiceBoardsHtml(prompt, options, ordered) {
+    return ["me", "opponent"].filter((owner) => prompt.cards.some((c) => c.side === owner)).map((owner) => {
+      const side = owner === "me" ? board.me : board.opponent;
+      const cell = (slot) => {
+        const card = side.stage[slot];
+        const can = Boolean(card) && options.has(card.uid);
+        const at = can ? abilityPicks.indexOf(card.uid) : -1;
+        const note = !card ? "Empty" : at >= 0 ? `${stageNameOf(card)} · chosen` : can ? stageNameOf(card) : `${stageNameOf(card)} · can't be chosen`;
+        return stageSlotHtml(slot, {
+          card, can, picked: at >= 0, note, noteHtml: esc(card ? stageNameOf(card) : "Empty"),
+          attrs: can ? `role="button" tabindex="0" aria-pressed="${at >= 0}" data-ability-pick="${esc(card.uid)}"` : "",
+          badge: at >= 0 ? `<span class="ability-order">${ordered ? at + 1 : "✓"}</span>` : "",
+        });
+      };
+      return `<div><p class="muted small place-caption">${owner === "me" ? "Your stage" : `${esc(board.opponent.name)}'s stage`}</p>${stageBoardHtml(owner, cell)}</div>`;
+    }).join("");
+  }
+
+  function placeBoardHtml({ side, owner, slots, card, pos, picked }) {
+    const nameOf = stageNameOf;
+    const cell = (slot) => {
+      const can = slots.includes(slot);
+      const here = side.stage[slot];
+      const moving = card && here && here.uid === card.uid; // the card being placed is on this position now
+      let shown = here;
+      let note = !here ? "Empty" : moving ? "Here now" : `Replaces ${nameOf(here)}`;
+      let out = false;
+      if (picked === slot) {
+        shown = card ? { ...card, pos } : here;
+        if (here && !moving) [note, out] = [`${nameOf(here)} → waiting room`, true];
+        else note = card ? `${nameOf(card)} goes here` : "Your character goes here";
+      } else if (moving && picked) {
+        [shown, note] = [null, "Moves from here"];
+      } else if (!can) {
+        note = "Can't go here";
+      }
+      return stageSlotHtml(slot, {
+        card: shown, can, picked: picked === slot, note, out,
+        // A long name is cut short, but never the "→ waiting room" after it: that's the part that matters.
+        noteHtml: out ? `<span class="place-slot-name">${esc(nameOf(here))}</span>→ waiting room` : esc(note),
+        attrs: `role="button" tabindex="0" aria-pressed="${picked === slot}" data-place-pick="${slot}"`,
+      });
+    };
+    return stageBoardHtml(owner, cell);
+  }
+
+  const placeButtonLabel = (slot) => (slot ? `Put it on ${LABELS[slot].toLowerCase()}` : "Choose a position");
+
   // An ability being resolved needs an answer: cards to pick, or one choice from a list.
   function renderAbilityPrompt() {
     const ability = board.ability;
@@ -2129,14 +2200,32 @@
       const need = prompt.min === prompt.max ? `${prompt.max}` : `${prompt.min}–${prompt.max}`;
       const ready = count >= prompt.min && count <= prompt.max;
       const ordered = prompt.for === "order";
+      // All on the stage (and the board we hold agrees): chosen there, among the characters around them.
+      const stageOf = (c) => (c.side === "me" ? board.me : board.opponent || { stage: {} }).stage;
+      const onStage = prompt.for !== "look" && prompt.cards.length > 0
+        && prompt.cards.every((c) => STAGE.includes(c.where) && c.side && (stageOf(c)[c.where] || {}).uid === c.uid);
       body = `<p class="small"><b>${esc(prompt.title)}</b>${prompt.for === "look" ? "" : ` (${count} of ${need} chosen)`}</p>
-        <div class="play-modal-cards">${prompt.cards.map((c) => {
+        ${onStage ? `<div class="place-layout">${choiceBoardsHtml(prompt, options, ordered)}</div>` : `<div class="play-modal-cards">${prompt.cards.map((c) => {
           const can = options.has(c.uid);
           const picked = abilityPicks.indexOf(c.uid);
           return `<div class="trigger-option"><div class="level-pick${picked >= 0 ? " picked" : ""}${can ? "" : " unpickable"}"${can ? ` role="button" tabindex="0" aria-pressed="${picked >= 0}" data-ability-pick="${esc(c.uid)}"` : ""}>
             ${cardHtml(c, "view", "ability")}${ordered && picked >= 0 ? `<span class="ability-order">${picked + 1}</span>` : ""}</div>${label(c)}</div>`;
-        }).join("")}</div>
+        }).join("")}</div>`}
         <div class="trigger-buttons"><button type="button" data-ability-submit${ready ? "" : " disabled"}>${prompt.for === "look" ? "OK" : count || prompt.min ? "Confirm" : "Choose none"}</button>${stopButton}</div>`;
+    } else if (prompt.for === "place" && (prompt.cards || []).length) {
+      const card = prompt.cards[0]; // the one this answer places (an ability placing several asks again for each)
+      const slots = prompt.options.map((option) => option.value);
+      const kind = `ability:${card.uid}`;
+      if (placePick.kind !== kind || !slots.includes(placePick.slot)) placePick = { kind, uid: card.uid, slot: slots.length === 1 ? slots[0] : null };
+      const theirs = prompt.side === "opponent";
+      const pos = prompt.rest ? "rest" : prompt.keep_pos ? card.pos : "stand";
+      body = `<p class="small"><b>${abilityText(prompt.title)}</b></p>
+        <div class="place-layout">
+          <div class="play-modal-cards">${prompt.cards.map((c) => `<div class="trigger-option">${cardHtml(c, "view", "ability")}${label(c)}</div>`).join("")}</div>
+          <div><p class="muted small place-caption">${theirs ? `${esc(board.opponent.name)}'s stage` : "Your stage"}${pos === "rest" ? " · it goes in rested" : ""}</p>
+            ${placeBoardHtml({ side: theirs ? board.opponent : board.me, owner: theirs ? "opponent" : "me", slots, card, pos, picked: placePick.slot })}</div>
+        </div>
+        <div class="trigger-buttons"><button type="button" data-place-submit${placePick.slot ? "" : " disabled"}>${placeButtonLabel(placePick.slot)}</button>${stopButton}</div>`;
     } else {
       const shown = prompt.cards || [];
       body = `<p class="small"><b>${abilityText(prompt.title)}</b></p>
@@ -2316,6 +2405,20 @@
           <div class="trigger-buttons">${choice({ uid: c.uid }, "→ Their hand")}</div>
         </div>`).join("")}</div>
         <div class="trigger-buttons">${choice({}, "Choose nothing")}</div>`;
+    } else if (prompt.kind === "standby") {
+      // Pick the character, then where it goes (in either order): the stage shows the result before it's done.
+      const options = board.me.zones.waiting.filter((c) => prompt.options.includes(c.uid));
+      const kind = `standby:${board.turn_number}:${board.attacks}`; // a fresh choice for each attack's trigger
+      if (placePick.kind !== kind) placePick = { kind, uid: null, slot: null };
+      if (!options.some((c) => c.uid === placePick.uid)) placePick.uid = options.length === 1 ? options[0].uid : null;
+      const card = options.find((c) => c.uid === placePick.uid) || null;
+      const ready = card && placePick.slot;
+      body = `<p class="small"><b>Choose a character</b></p>
+        <div class="play-modal-cards">${options.map((c) => `<div class="level-pick${c === card ? " picked-place" : ""}" role="button" tabindex="0"
+          aria-pressed="${c === card}" data-standby-pick="${esc(c.uid)}">${cardHtml(c, "view", "waiting").replace('tabindex="0"', 'tabindex="-1"')}</div>`).join("")}</div>
+        <p class="small place-caption"><b>Choose where it goes</b> <span class="muted">· it goes in rested</span></p>
+        ${placeBoardHtml({ side: board.me, owner: "me", slots: STAGE, card, pos: "rest", picked: placePick.slot })}
+        <div class="trigger-buttons"><button type="button" data-standby-submit${ready ? "" : " disabled"}>${card ? placeButtonLabel(placePick.slot) : "Choose a character"}</button>${choice({}, "Choose nothing")}</div>`;
     } else {
       const options = board.me.zones.waiting.filter((c) => prompt.options.includes(c.uid));
       body = `<div class="play-modal-cards">${options.map((c) => `<div class="trigger-option">${cardHtml(c, "me", "waiting")}
@@ -3041,6 +3144,25 @@
       act({ type: "ability_answer", uids });
       return;
     }
+    // Putting a card on the stage: picking previews it; the button below puts it there.
+    const placeSlot = event.target.closest("[data-place-pick]");
+    const standbyPick = event.target.closest("[data-standby-pick]");
+    if (placeSlot || standbyPick) {
+      if (placeSlot) placePick = { ...placePick, slot: placeSlot.dataset.placePick };
+      else placePick = { ...placePick, uid: standbyPick.dataset.standbyPick };
+      const again = placeSlot ? `[data-place-pick="${placePick.slot}"]` : `[data-standby-pick="${placePick.uid}"]`;
+      renderModal();
+      const el = modalEl.querySelector(again);
+      if (el) el.focus(); // the redraw replaced what had focus
+      return;
+    }
+    if (event.target.closest("[data-place-submit], [data-standby-submit]")) {
+      const { uid, slot } = placePick;
+      const standby = Boolean(event.target.closest("[data-standby-submit]"));
+      placePick = { kind: null, uid: null, slot: null };
+      act(standby ? { type: "trigger_choice", uid, to: slot } : { type: "ability_answer", value: slot });
+      return;
+    }
     const abilities = event.target.closest("[data-abilities]");
     if (abilities) {
       modal = { abilities: abilities.dataset.abilities };
@@ -3189,7 +3311,7 @@
   });
 
   document.addEventListener("keydown", (event) => {
-    const abilityPick = event.target.closest && event.target.closest("[data-ability-pick]");
+    const abilityPick = event.target.closest && event.target.closest("[data-ability-pick], [data-place-pick], [data-standby-pick]");
     if (abilityPick && (event.key === "Enter" || event.key === " ")) {
       event.preventDefault();
       abilityPick.click();

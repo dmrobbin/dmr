@@ -4271,9 +4271,24 @@ class AvatarDanMachiTests(PersonaTests):
         self.run_ability(t, source, self.PLAY_SWORD)
         self.answer(t, uids=[card["uid"]])
         self.assertEqual(self.prompt(t)["for"], "place")
+        self.assertEqual(game.ability_view(t.state, "2")["prompt"]["side"], "me")  # the page draws the stage it goes on
+        t.state["resolving"]["prompt"]["owner"] = "1"
+        self.assertEqual(game.ability_view(t.state, "2")["prompt"]["side"], "opponent")
+        t.state["resolving"]["prompt"]["owner"] = "2"
         self.answer(t, value="C2")
         self.assertIs(t.me["stage"]["C2"], card)
         self.assertEqual(t.state["ability_queue"][0]["uid"], card["uid"])  # its "placed on the stage from your hand"
+
+    def test_a_choice_on_the_stage_says_whose_stage_each_card_is_on(self):
+        t = Table()
+        source = t.seat(t.me, "C1", t.card(1001))
+        enemy = t.seat(t.them, "C2", t.card(1002))
+        t.refresh()
+        self.run_ability(t, source, "Choose 1 of your opponent's characters, and return it to their hand.")
+        self.assertEqual([(c["uid"], c["where"], c["side"]) for c in game.ability_view(t.state, "2")["prompt"]["cards"]], [(enemy["uid"], "C2", "opponent")])
+        self.answer(t, uids=[enemy["uid"]])
+        self.run_ability(t, source, "Choose 1 of your characters, and return it to your hand.")
+        self.assertEqual([c["side"] for c in game.ability_view(t.state, "2")["prompt"]["cards"]], ["me"])
 
     def test_aang_and_katara_go_back_to_the_hand_with_a_friend(self):
         t = Table()

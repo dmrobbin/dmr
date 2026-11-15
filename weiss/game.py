@@ -4339,10 +4339,16 @@ def ability_view(state, player):
         prompt = res.get("prompt")
         answering = (prompt or {}).get("player", res["player"])
         mine = answering == player
+        shown = prompt_view(state, prompt) if prompt and mine else None
+        if shown and shown.get("for") == "place":  # whose stage the card goes on, to draw it
+            shown["side"] = "me" if prompt.get("owner", answering) == player else "opponent"
+        for card in (shown or {}).get("cards", []):  # whose stage each card is on, to draw a choice among them there
+            if card.get("where") in STAGE_SLOTS:
+                card["side"] = "me" if locate(state, card["uid"])[0] == player else "opponent"
         return {"resolving": True, "mine": mine, "card": res["card"], "uid": res["uid"], "text": res["text"],
                 "by": state["players"][answering]["name"],
                 "can_stop": res["player"] == player,
-                "prompt": prompt_view(state, prompt) if prompt and mine else None}
+                "prompt": shown}
     queue = state.get("ability_queue") or []
     if not queue:
         return None
