@@ -7516,3 +7516,212 @@ class KonosubaTests(PersonaTests):
     def test_the_opponent_says_how_many_go_to_their_stock(self):
         steps = abilities.parse(self.card_text('"Thief Skill"'))[1]["steps"]
         self.assertIn({"do": "top", "n": 1, "owner": "opp", "to": "stock", "upto": True, "chooser": "opp"}, list(abilities.walk_steps(steps)))
+
+
+class KillLaKillTests(PersonaTests):
+    # The Kill la Kill cards a CPU could not play, as printed (cpu-unplayable-cards.txt).
+    CARDS = (
+        '【AUTO】 When this card is placed on stage from your hand, choose one of your other characters with the highest level, and put it into your waiting room.',  # Along with Senketsu, Satsuki (KLK/S27-E050)
+        '【AUTO】 When this card is placed on stage from your hand, you may choose a card named "Junketsu" from your waiting room, and put it into your memory. If you do, choose a card named "Only Clothing Ryuko Has, Senketsu" in your waiting room, and put it face down underneath this card as a marker.\n【AUTO】 [(1) Reveal a 《Clothes》 character in your hand and put it face down underneath this card as a marker] When this card becomes 【REVERSE】 in battle, you may pay the cost. If you do, 【REST】 this card.\n【AUTO】 [(2)] At the beginning of your encore step, you may pay the cost. If you do, deal X damage to your opponent. X is equal to the number of markers underneath this card. (This damage may be canceled)',  # Conclusion After Wearing! Ryuko (KLK/S27-E042)
+        'AUTO When this card attacks, if a card named "Honnouji Academy Elite Four, Ultimate Battle Regalia!" is in your climax area, look at up to two cards from the top of your deck, choose up to two level 0 or lower cards from among them, reveal them to your opponent, put them into your hand, and put the rest into your waiting room. (Climax are regarded as level 0)',  # Data-minded, Inumuta (KLK/S27-E093)
+        '【AUTO】 [(1) Put a card from your hand into your waiting room & Put this card into your memory] When this card becomes 【REVERSE】 in battle, you may pay the cost. If you do, choose a card named ""Rampage" Ryuko" in your waiting room, and put it on the stage position that this card was on as 【REST】.\n\n\n【AUTO】 Memory If this card is in your memory, when your card or your opponent\'s card in the clock is put into the waiting room due to respective card effects, that player may put the top two cards from stock into the waiting room. If not, that player puts the top card of the deck into the clock.',  # Encounter with Senketsu, Ryuko (KLK/S27-E046)
+        '【AUTO】 [(1) 【REST】 2 of your 【STAND】 characters] This ability activates up to 1 time per turn. When your card is put into the marker area from any zone except the marker area, you may pay the cost. If you do, look at up to 4 cards from the top of your deck, choose up to 1 《Clothes》 or 《Family》 character from among them, reveal it to your opponent, put it into your hand, and put the rest into your waiting room.\n【AUTO】 At the beginning of your climax phase, choose 1 of your characters, and that character gets +500 power until end of turn.',  # Family and Bonds, Ryuko & Mako (KLK/SP03-E01)
+        '【AUTO】 When this card is placed on the stage from your hand, if you have 4 or more other 《Clothes》 characters, you may put the top card of your deck into your stock.\n【AUTO】 [(4) Put 3 cards from your hand into your waiting room & Put this card underneath your character in battle face down as a marker] When your other character in battle with marker and "Ragyo(羅暁)" in its card name becomes 【REVERSE】, you may pay the cost. If you do, 【STAND】 that character.',  # For Her Desires, Nui (KLK/SP03-E09)
+        '【CONT】 Assist All of your level 3 or higher characters in front of this card get +2000 power.\n【AUTO】 When this card is placed on the stage from your hand, you may choose 1 "Junketsu" in your waiting room, and put it face down underneath this card as a marker.\n【AUTO】 [Put 1 marker underneath this card into your waiting room] When your other "Conclusion After Wearing! Ryuko" is placed on the stage from your hand, you may pay the cost. if you do, you may look at the top card of your deck. If you do, put that card underneath that character face down as a marker.',  # For the Survival of the Human Race, Satsuki (KLK/SP03-E07)
+        '【ACT】 [(1) Put a card from your hand into your waiting room] When this card is placed on stage from your hand, you may pay the cost. If you do, search your deck for up to one 《Clothes》 character, reveal it to your opponent, and put it into your hand. Shuffle your deck afterwards.',  # Mini Satsuki (KLK/S27-E104)
+        '【AUTO】 This ability activates up to two times per turn. When your character is put into clock from your hand, this card gets +2000 power until end of turn.\n【AUTO】 Encore ［Put a character from your hand into your waiting room］ （When this card is put into your waiting room from the stage, you may pay the cost. If you do, return this card to its previous stage position as 【REST】)',  # Motionless Mako (KLK/S27-E009)
+        '【CONT】 This card gets +1 level and +2000 power for each marker underneath this card.\n【AUTO】 When this card is placed on stage from your hand, you may put a marker from underneath a card named "Great Spirit, Satsuki" underneath this card as a marker.\n【AUTO】 [(1)] When this card attacks, if a card named "Shinra Koketsu, Absolute Submission!" is in your climax area, you may pay the cost. If you do, choose a 《Clothes》 character in your waiting room, and put it face down underneath this card as a marker.',  # Ragyo Plots Cocoon Sphere Birth (KLK/S27-E021)
+        '【CONT】 If there is a marker underneath this card, this card gets +4000 power.\n【AUTO】 When this card is placed on the stage from your hand, you can choose 1 "Only Clothing Ryuko Has, Senketsu" or ""Life Fiber Synchronize" Senketsu" in your waiting room, and put it face down underneath this card as a marker.\n【AUTO】 When this card\'s battle opponent becomes 【REVERSE】, if "Battle of Fate" is in your climax area, you may choose 1 character in your waiting room, and put it into your hand.',  # Scissor Blade Decapitation Mode, Ryuko (KLK/SP03-E03)
+        '【AUTO】 [Put a card from your hand into your waiting room] When a card named "Honnouji Academy Elite Four, Ultimate Battle Regalia!" is placed in your climax area, if this card is in your center stage, you may pay the cost. If you do, look at up to two cards from the top of your opponent\'s deck, choose up to one card and put it on the bottom of your opponent\'s deck. Put the rest of the cards on the top of your opponent\'s deck in any order, and this card gets +4000 power until end of turn.',  # Shingantsu Surpassing Tengantsu, Sanageyama (KLK/S27-E084)
+        "【CONT】 If all of your characters are 《Clothes》, this card gets +2000 power.\n【AUTO】 When this card is placed on stage from your hand, you may choose one of your opponent's level 2 or lower characters, and put it into your opponent's waiting room. If you do, your opponent will choose up to one level 0 or lower character from your opponent's waiting room, and put it on the stage position that character was on.",  # Spinning Wheel of Fate, Nui (KLK/S27-E022)
+        '【AUTO】 When this card attacks, if a card named "The time comes when a girl\noutgrows her sailor uniform" is in your climax area, this card gets +4500 power until end of turn.\n【AUTO】 When this card attacks, if a card named "The time comes when a girl\noutgrows her sailor uniform" is in your climax area, and your level is two or higher, you may choose a card in your opponent\'s waiting room, and put it on the top of your opponent\'s deck.',  # Towards a New Self, Ryuko (KLK/S27-E041)
+        "【AUTO】 [(1)] When this card becomes 【REVERSE】 in battle, you may pay the cost. If you do, put this card into your memory.\n【AUTO】 Memory If this card is in your memory, when your card or your opponent's card in the clock is put into the waiting room due to respective card effects, that player may choose 1 card in their hand, and put it into their waiting room. Otherwise, that player puts the top card of their deck into their clock.",  # Farewell and Promise, Kazuki (GRI/S72-E004): the same Memory ability, paid from the hand
+    )
+
+    def test_they_are_all_read(self):
+        for text in self.CARDS:
+            self.assertEqual(abilities.by_hand_parts(text), [], text[:60])
+
+    def card_text(self, words):
+        return next(text for text in self.CARDS if words in text)
+
+    def env(self, t):
+        return game.SimpleNamespace(info=t.info, name=lambda pk: t.info(pk)["name"], shuffle=no_shuffle)
+
+    def pile(self, side, slot):
+        return game.pile(side, game.MARKER + slot)
+
+    def test_the_line_broken_inside_a_climax_name_is_one_name(self):
+        attack = abilities.parse(self.card_text("outgrows her sailor uniform"))[0]
+        self.assertEqual(attack["cond"][0]["filter"], {"any": [{"name": "The time comes when a girl outgrows her sailor uniform"}]})
+
+    def test_misprinted_tags_are_read_as_what_they_are(self):
+        inumuta = abilities.parse(self.card_text("AUTO When this card attacks"))[0]  # "AUTO" with no brackets
+        self.assertEqual((inumuta["kind"], inumuta["when"]), ("auto", [{"on": "attack"}]))
+        mini = abilities.parse(self.card_text("Shuffle your deck afterwards"))[0]  # printed 【ACT】, but it has a trigger
+        self.assertEqual((mini["kind"], mini["when"]), ("auto", [{"on": "play"}]))
+
+    def test_satsuki_puts_the_highest_level_other_character_into_the_waiting_room(self):
+        text = self.card_text("with the highest level")
+        t = Table()
+        satsuki = t.seat(t.me, "C2", t.card(2000, text=text, level=1))
+        low = t.seat(t.me, "C1", t.card(2001, level=1))
+        high = t.seat(t.me, "C3", t.card(2002, level=2))
+        t.refresh()
+        self.run_ability(t, satsuki, text)
+        self.assertEqual(self.prompt(t)["options"], [high["uid"]])  # only the highest is on offer
+        self.answer(t, uids=[high["uid"]])
+        self.assertIn(high, t.me["zones"]["waiting"])
+        self.assertIs(t.me["stage"]["C1"], low)
+        self.assertIs(t.me["stage"]["C2"], satsuki)
+
+    def test_ryuko_marks_senketsu_only_if_junketsu_went_to_the_memory(self):
+        text = self.card_text('choose a card named "Junketsu"')
+        for junketsu in (False, True):
+            t = Table()
+            t.card(2001, name="Junketsu")
+            t.card(2002, name="Only Clothing Ryuko Has, Senketsu")
+            ryuko = t.seat(t.me, "C1", t.card(2000, text=text))
+            t.me["zones"]["waiting"] += [game.new_card(2002)] + ([game.new_card(2001)] if junketsu else [])
+            self.run_ability(t, ryuko, text)
+            while t.state.get("resolving") and self.prompt(t):
+                self.answer(t, uids=self.prompt(t)["options"][:1])
+            self.assertEqual(len(self.pile(t.me, "C1")), 1 if junketsu else 0, junketsu)
+            self.assertEqual(len(t.me["zones"]["memory"]), 1 if junketsu else 0, junketsu)
+
+    def test_sanageyama_gets_its_power_only_if_the_cost_was_paid(self):
+        steps = abilities.parse(self.card_text("choose up to one card and put it on the bottom"))[0]["steps"]
+        self.assertEqual([s["do"] for s in steps], ["may"])
+        self.assertEqual([s["do"] for s in steps[0]["then"]][-2:], ["order_top", "buff"])
+
+    def test_mako_gets_power_when_a_character_is_clocked_from_the_hand(self):
+        text = self.card_text("put into clock from your hand")
+        t = Table()
+        mako = t.seat(t.me, "C1", t.card(2000, text=text, power=1000))
+        clocked = t.hand(2001)[0]
+        t.me["zones"]["deck"] = [game.new_card(1) for _ in range(5)]
+        t.state["phase"] = "clock"
+        t.refresh()
+        t.apply(2, {"type": "clock_draw", "uid": clocked["uid"]})
+        entry = next(e for e in t.state["ability_queue"] if e["uid"] == mako["uid"])
+        t.apply(2, {"type": "ability_trigger", "id": entry["id"], "accept": True})
+        self.shows(t)
+        t.refresh()
+        self.assertEqual(t.state["stats"][mako["uid"]]["power"], 3000)
+
+    def test_a_card_becoming_a_marker_triggers_family_and_bonds_but_a_marker_moving_doesnt(self):
+        text = self.card_text("put into the marker area")
+        t = Table()
+        family = t.seat(t.me, "B1", t.card(2000, text=text))
+        t.seat(t.me, "C1", 2001)
+        t.seat(t.me, "C2", 2001)
+        t.stock(1)  # its cost: 1 stock and 2 standing characters to rest
+        env = self.env(t)
+        game.put(t.me, game.new_card(2002), game.MARKER + "C1", from_marker=True)
+        game.fire_new_markers(t.state, env)
+        self.assertFalse(t.state.get("ability_queue"))
+        game.put(t.me, game.new_card(2002), game.MARKER + "C1")
+        game.fire_new_markers(t.state, env)
+        self.assertEqual([e["uid"] for e in t.state["ability_queue"]], [family["uid"]])
+
+    def test_nui_stands_a_ragyo_with_a_marker_reversed_in_battle(self):
+        text = self.card_text('"Ragyo(羅暁)" in its card name becomes')
+        t = Table()
+        nui = t.seat(t.me, "B1", t.card(2000, text=text))
+        ragyo = t.seat(t.me, "C1", t.card(2001, name="Ragyo Kiryuin"), pos="reverse")
+        game.put(t.me, game.new_card(2002), game.MARKER + "C1")
+        t.me.pop("new_markers", None)
+        t.stock(4)
+        t.hand(2003, 2003, 2003)
+        env = self.env(t)
+        for data in ({"had_markers": False, "by": "x"}, {"had_markers": True}):  # no marker; not in battle
+            game.fire(t.state, env, "reverse", uid=ragyo["uid"], card=2001, owner="2", **data)
+            self.assertFalse(t.state.get("ability_queue"), data)
+        game.fire(t.state, env, "reverse", uid=ragyo["uid"], card=2001, owner="2", by="x", had_markers=True)
+        t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+        self.shows(t)
+        self.answer(t, uids=self.prompt(t)["options"][:3])  # the 3 cards from the hand
+        self.assertEqual(ragyo["pos"], "stand")
+        self.assertIn(nui, self.pile(t.me, "C1"))
+        self.assertTrue(nui["face_down"])
+        self.assertIsNone(t.me["stage"]["B1"])
+        self.assertEqual((len(t.me["zones"]["stock"]), len(t.me["zones"]["hand"])), (0, 0))
+
+    def test_satsuki_puts_the_top_card_face_down_under_the_ryuko_just_played(self):
+        text = self.card_text("you may look at the top card of your deck")
+        t = Table()
+        satsuki = t.seat(t.me, "B1", t.card(2000, text=text))
+        game.put(t.me, game.new_card(2001), game.MARKER + "B1")
+        ryuko = t.seat(t.me, "C1", t.card(2002, name="Conclusion After Wearing! Ryuko"))
+        top = game.new_card(2003)
+        t.me["zones"]["deck"] = [game.new_card(1), top]
+        self.run_ability(t, satsuki, text, index=2, that=ryuko["uid"])
+        self.assertEqual(self.pile(t.me, "B1"), [])  # the marker paid
+        self.assertEqual(self.pile(t.me, "C1"), [top])
+        self.assertTrue(top["face_down"])
+
+    def test_ragyo_takes_a_marker_from_great_spirit_satsuki(self):
+        text = self.card_text('a card named "Great Spirit, Satsuki"')
+        t = Table()
+        satsuki = t.seat(t.me, "C1", t.card(2001, name="Great Spirit, Satsuki"))
+        markers = [game.new_card(2002), game.new_card(2003)]
+        for marker in markers:
+            game.put(t.me, marker, game.MARKER + "C1", face_down=True)
+        ragyo = t.seat(t.me, "C2", t.card(2000, text=text, level=1, power=3000))
+        t.me.pop("new_markers", None)
+        self.run_ability(t, ragyo, text, index=1)
+        if t.state.get("resolving") and self.prompt(t):
+            self.answer(t, uids=[satsuki["uid"]])
+        self.assertEqual(self.pile(t.me, "C2"), [markers[1]])
+        self.assertTrue(markers[1]["face_down"])
+        self.assertEqual(self.pile(t.me, "C1"), [markers[0]])
+        t.refresh()
+        self.assertEqual(t.state["stats"][ragyo["uid"]]["power"], 5000)  # +2000 for its marker
+
+    def memory_table(self, text):
+        t = Table()
+        t.card(2000, text=text)
+        t.me["zones"]["memory"].append(game.new_card(2000))
+        t.them["zones"]["clock"] = [game.new_card(3)]
+        t.them["zones"]["deck"] = [game.new_card(4) for _ in range(3)]
+        return t
+
+    def heal_theirs(self, t):
+        """Their clock card into their waiting room by an effect, and the Memory ability that sets off."""
+        game.move_card(t.state, self.env(t), "1", "1", t.them["zones"]["clock"][-1]["uid"], "waiting")
+        entry = next(e for e in t.state["ability_queue"] if e["player"] == "2")
+        t.apply(2, {"type": "ability_trigger", "id": entry["id"], "accept": True})
+        self.shows(t)
+
+    def test_ryuko_in_the_memory_makes_a_healed_opponent_pay_stock_or_take_a_clock(self):
+        text = self.card_text("top two cards from stock")
+        for choice, left in (("pay", (1, 0)), ("clock", (3, 1))):
+            t = self.memory_table(text)
+            t.them["zones"]["stock"] = [game.new_card(5) for _ in range(3)]
+            self.heal_theirs(t)
+            self.assertEqual(self.prompt(t)["player"], "1")  # theirs to choose
+            self.answer(t, player=1, value=choice)
+            self.assertEqual((len(t.them["zones"]["stock"]), len(t.them["zones"]["clock"])), left, choice)
+
+    def test_without_the_stock_its_the_clock(self):
+        t = self.memory_table(self.card_text("top two cards from stock"))
+        t.them["zones"]["stock"] = [game.new_card(5)]
+        self.heal_theirs(t)
+        self.assertIsNone(t.state.get("resolving"))
+        self.assertEqual(len(t.them["zones"]["clock"]), 1)
+
+    def test_kazuki_pays_with_a_card_from_the_hand(self):
+        t = self.memory_table(self.card_text("choose 1 card in their hand"))
+        t.them["zones"]["hand"] = [game.new_card(6), game.new_card(7)]
+        self.heal_theirs(t)
+        self.answer(t, player=1, value="pay")
+        self.assertEqual(self.prompt(t)["player"], "1")
+        self.answer(t, player=1, uids=self.prompt(t)["options"][:1])
+        self.assertEqual((len(t.them["zones"]["hand"]), len(t.them["zones"]["clock"])), (1, 0))
+
+    def test_the_cpu_pays_rather_than_take_the_damage(self):
+        t = self.memory_table(self.card_text("top two cards from stock"))
+        t.them["zones"]["stock"] = [game.new_card(5) for _ in range(2)]
+        self.heal_theirs(t)
+        mind = cpu.Mind(t.state, "1", t.info, cpu.Temper(1), random.Random(1))
+        self.assertEqual(mind.answer(t.state["resolving"])["value"], "pay")

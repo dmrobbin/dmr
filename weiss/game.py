@@ -245,8 +245,10 @@ def check_marker_target(side, to, leaving=None):
             raise GameError("There's no character in that slot to put a marker under.")
 
 
-def put(side, card, to, where="top", face_down=False):
-    """Place a card in a zone, stage slot or marker pile. Returns whatever was already in that slot, if anything."""
+def put(side, card, to, where="top", face_down=False, from_marker=False):
+    """Place a card in a zone, stage slot or marker pile. Returns whatever was already in that slot, if anything.
+    A card that becomes a marker, other than one moving between marker piles (`from_marker`), is noted for the
+    "put into the marker area" trigger (see fire_new_markers)."""
     if to in STAGE_SLOTS:
         occupant, side["stage"][to] = side["stage"][to], card
         return occupant
@@ -256,6 +258,8 @@ def put(side, card, to, where="top", face_down=False):
         card["pos"] = "stand"
         card["face_down"] = bool(face_down)
         pile(side, to).append(card)
+        if not from_marker:
+            side.setdefault("new_markers", []).append(card["uid"])
         return None
     if to not in ZONES:
         raise GameError(f"Unknown zone: {to}")
@@ -808,8 +812,10 @@ def advance_attack(state, env):
                         + " — " + (", ".join(f"{env.name(c['card'])} reversed" for c in losers) or "neither reversed"))
                 for card in losers:
                     other = target if card is attacker else attacker
+                    owner = player if card is attacker else defender
+                    slot = attack["slot"] if card is attacker else attack["target"]
                     fire(state, env, "reverse", uid=card["uid"], by=other["uid"], by_card=other["card"], by_owner=defender if card is attacker else player,
-                         card=card["card"], owner=player if card is attacker else defender)
+                         card=card["card"], owner=owner, had_markers=bool(pile(state["players"][owner], MARKER + slot)))
             end_attack(state, env)
             continue
         return
@@ -1502,6 +1508,7 @@ def apply_action(state, player, action, env):
             raise GameError("Only cards in your hand can be clocked to draw.")
         card = zones["hand"].pop(index)
         put(side, card, "clock")
+        fire(state, env, "hand_to_clock", uid=card["uid"], owner=player, card=card["card"])
         drawn = 0
         for _ in range(CLOCK_DRAW):
             if not zones["deck"] and zones["waiting"]:
@@ -2479,6 +2486,9 @@ def cost_steps(cost):
             steps.append({"do": "stock_to_clock"})
         elif kind == "stock_to_deck":
             steps.append({"do": "stock_top_to_deck"})
+        elif kind == "self_under_that":  # "Put this card underneath your character in battle": the one that set this off
+            steps.append({"do": "that_it"})
+            steps.append({"do": "self_marker_on_it", "face_down": part.get("face_down")})
         elif kind == "self_under":
             steps.append({"do": "choose", "zone": "stage", "filter": {**part["filter"], "other": True}, "min": 1, "max": 1,
                           "text": "Cost: choose the character to put this card under", "cost": True})
@@ -2585,8 +2595,12 @@ def when_matches(when, event, data, player, card, env):
         return {}
     if on == "leave" and event == "leave" and data.get("uid") == uid:
         return {"had_markers": data.get("had_markers", False)}
-    if on == "hand_to_waiting":
-        if event != "hand_to_waiting" or data.get("owner") != player:
+    if on == "clock_to_waiting":  # either player's: "that player" is whoever's card it was
+        return {"that": data["uid"], "that_owner": data["owner"]} if event == "clock_to_waiting" else None
+    if on == "to_marker":
+        return {"that": data["uid"]} if event == "to_marker" and data.get("owner") == player else None
+    if on in ("hand_to_waiting", "hand_to_clock"):
+        if event != on or data.get("owner") != player:
             return None
         return {"that": data["uid"]} if abilities.matches_filter(when["filter"], env.info(data["card"]) or {}) else None
     if on == "salvaged":
@@ -2668,7 +2682,9 @@ def when_matches(when, event, data, player, card, env):
             level = number((env.info(data["card"]) or {}).get("level"))
             return {"that": reversed_card, "reversed": reversed_card} if level >= when.get("level_min", 0) else None
         if (on == "reverse_other" and data.get("owner") == player and reversed_card != uid
-                and abilities.matches_filter(when["filter"], env.info(data["card"]) or {})):
+                and abilities.matches_filter(when["filter"], env.info(data["card"]) or {})
+                and (not when.get("in_battle") or data.get("by"))
+                and (not when.get("with_marker") or data.get("had_markers"))):
             return {"that": reversed_card}
         return None
     if event == "attack":
@@ -2788,14 +2804,15 @@ def used_key(card, ability):
 
 
 # Effect steps that only act on what a choose step just chose: after choosing nothing, they do nothing.
-ON_CHOSEN = {"move_it", "reveal_it", "place", "marker", "dest", "pos_it", "swap_stage", "self_marker_on_it"}
+ON_CHOSEN = {"move_it", "reveal_it", "place", "marker", "dest", "pos_it", "swap_stage", "self_marker_on_it", "marker_of_it_to_self"}
 
 
 def on_chosen(step):
     do = step.get("do")
     return (do in ON_CHOSEN or (do == "buff" and step.get("target") == "it")
             or (do == "status" and step.get("target") in ("it_all", "it_first"))
-            or (do == "to_old_slot" and not step.get("self") and not step.get("that")))
+            or (do == "to_old_slot" and not step.get("self") and not step.get("that"))
+            or (do == "if" and step.get("cond") == [{"type": "did_it"}] and not step.get("otherwise")))  # "If you do, ..."
 
 
 def cost_arrivals(cost, state, player, source, env):
@@ -2947,6 +2964,7 @@ def run_abilities(state, env):
     first, or it's done."""
     for pending in state.pop("pending_events", []):
         fire(state, env, pending.pop("event"), **pending)
+    fire_new_markers(state, env)
     for _ in range(STEP_LIMIT):
         res = state.get("resolving")
         if not res or res.get("prompt") or state.get("ability_show") or state.get("combo_show"):
@@ -2964,6 +2982,14 @@ def run_abilities(state, env):
         except BOARD_ERRORS as exc:  # a card this couldn't follow must not stop the game: hand it to the player
             res["steps"][:0] = [{"do": "manual", "text": step.get("text") or res["text"]}]
             add_log(state, res["player"], f"couldn't apply a step automatically ({exc}); resolve it by hand")
+        fire_new_markers(state, env)
+
+
+def fire_new_markers(state, env):
+    """The cards that have become markers since last time (see put): "When your card is put into the marker area"."""
+    for player, side in state["players"].items():
+        for uid in side.pop("new_markers", []):
+            fire(state, env, "to_marker", uid=uid, owner=player)
 
 
 def among_them(state, ctx):
@@ -3104,6 +3130,10 @@ def move_card(state, env, actor, owner, uid, to):
         fire(state, env, "to_memory", uid=uid, owner=owner)
     if src == "hand" and to == "waiting":
         fire(state, env, "hand_to_waiting", uid=uid, owner=owner, card=card["card"])
+    if src == "hand" and target == "clock":
+        fire(state, env, "hand_to_clock", uid=uid, owner=owner, card=card["card"])
+    if src == "clock" and target == "waiting":
+        fire(state, env, "clock_to_waiting", uid=uid, owner=owner)
     if src == "memory" and to == "waiting":
         fire(state, env, "memory_to_waiting", uid=uid, owner=owner)
     if src == "waiting" and to == "hand" and (env.info(card["card"]) or {}).get("card_type", "").lower() == "character":
@@ -3213,6 +3243,10 @@ def run_step(step, res, state, env):
             powers = {c["uid"]: compute_stats(state, env)[0].get(c["uid"], {}).get("power", 0) for c in found}
             best = (max if step["power_extreme"] == "highest" else min)(powers.values())
             found = [c for c in found if powers[c["uid"]] == best]
+        if found and step.get("level_extreme"):  # "with the highest level": its level now, anything raising it counted
+            levels = {c["uid"]: number(details_of(c, env).get("level")) for c in found}
+            best = (max if step["level_extreme"] == "highest" else min)(levels.values())
+            found = [c for c in found if levels[c["uid"]] == best]
         if not found:
             ctx["it_before"], ctx["it"] = ctx.get("it", []), []
             add_log(state, player, "had nothing to choose")
@@ -3450,6 +3484,8 @@ def run_step(step, res, state, env):
             put(target, card, step["to"])
             ctx["it"].append(card["uid"])
             add_log(state, owner, f"put {env.name(card['card'])} from their clock into {LABELS[step['to']]}")
+            if step["to"] == "waiting":
+                fire(state, env, "clock_to_waiting", uid=card["uid"], owner=owner)
     elif do == "look":
         if step.get("x_stat"):
             step = {**step, "n": x_value(step.get("x"), state, player, None, ctx, env), "x_stat": None}
@@ -3516,7 +3552,7 @@ def run_step(step, res, state, env):
             card, _ = take(side, res["uid"])
             for marker in under:
                 if marker["uid"] in chosen:
-                    put(side, marker, MARKER + to)
+                    put(side, marker, MARKER + to, from_marker=True)
                 else:
                     put(side, marker, "waiting")
                     marker["face_down"] = False
@@ -3851,7 +3887,7 @@ def run_step(step, res, state, env):
             side["markers"][here] = []
             card, _ = take(side, res["uid"])
             for under in [*going, card]:
-                put(side, under, MARKER + to)
+                put(side, under, MARKER + to, from_marker=under is not card)
             add_log(state, player, f"put {env.name(card['card'])} and {len(going)} marker(s) under {LABELS[to]}")
     elif do == "rps_round":
         # "Play "Rock-Paper-Scissors" with your opponent until you lose": each picks unseen by the other, a tie
@@ -3978,6 +4014,25 @@ def run_step(step, res, state, env):
             card = pile(side, MARKER + slot).pop()
             put(side, card, "waiting")
             card["face_down"] = False
+    elif do == "pay_or_clock":
+        # "that player may put the top 2 cards from stock (or 1 card from their hand) into the waiting room. If not,
+        # that player puts the top card of the deck into the clock": theirs to choose, unless they can't pay.
+        who = ctx.get("that_owner", player)
+        n = step["n"]
+        if len(state["players"][who]["zones"][step["pay"]]) < n:
+            res["steps"][:0] = [{"do": "top", "n": 1, "owner": "me" if who == player else "opp", "to": "clock"}]
+            return
+        paying = f"the top {n} cards of your stock" if step["pay"] == "stock" else f"{n} card{'s' if n != 1 else ''} from your hand"
+        ask_choice(res, "pay_or_clock", f"Put {paying} into your waiting room? If not, the top card of your deck goes into your clock.",
+                   [("pay", f"{paying[:1].upper()}{paying[1:]} to the waiting room"), ("clock", "Top of your deck to your clock")], step=step)
+        res["prompt"]["player"] = who
+    elif do == "marker_of_it_to_self":  # the top marker under what was chosen goes under this card, face up or down as it was
+        slot = slot_of(side, (ctx.get("it") or [None])[0]) if ctx.get("it") else None
+        here = slot_of(side, res["uid"])
+        if slot and here and slot != here and pile(side, MARKER + slot):
+            card = pile(side, MARKER + slot).pop()
+            put(side, card, MARKER + here, face_down=card.get("face_down"), from_marker=True)
+            add_log(state, player, f"moved a marker from under {LABELS[slot]} to under {LABELS[here]}")
     elif do == "cost_either":
         payable = [i for i, option in enumerate(step["options"]) if not can_pay(option, state, player, locate(state, res["uid"])[1], env)]
         if len(payable) == 1:
@@ -4072,7 +4127,7 @@ def run_step(step, res, state, env):
         slot = slot_of(side, (ctx.get("it") or [None])[0]) if ctx.get("it") else None
         if slot:
             for _ in range(min(step["n"], len(zones["deck"]))):
-                put(side, zones["deck"].pop(), MARKER + slot)
+                put(side, zones["deck"].pop(), MARKER + slot, face_down=step.get("face_down"))
             add_log(state, player, f"put {step['n']} card(s) from the top of their deck under {LABELS[slot]}")
     elif do == "used_shift":
         fire(state, env, "shift", player=player)
@@ -4230,6 +4285,20 @@ def answer_ability(state, player, action, env):
                 res["steps"][:0] = step.get("otherwise", [])
         elif purpose == "cost_either":
             res["steps"][:0] = cost_steps(step["options"][value])
+        elif purpose == "pay_or_clock":
+            who = ctx.get("that_owner", res["player"])
+            theirs = who != res["player"]
+            if value == "clock":
+                res["steps"][:0] = [{"do": "top", "n": 1, "owner": "opp" if theirs else "me", "to": "clock"}]
+            elif step["pay"] == "stock":
+                target = state["players"][who]
+                for _ in range(min(step["n"], len(target["zones"]["stock"]))):
+                    put(target, target["zones"]["stock"].pop(), "waiting")
+                add_log(state, who, f"put the top {step['n']} cards of their stock into their waiting room")
+            else:  # they pick which, as they would a cost
+                res["steps"][:0] = [{"do": "choose", "zone": "hand", "filter": {"any": [{}]}, "min": step["n"], "max": step["n"], "cost": True,
+                                     "text": "Choose what to put into your waiting room", **({"owner": "opp", "chooser": "opp"} if theirs else {})},
+                                    {"do": "move_it", "to": "waiting"}]
         elif purpose == "declare_combo":
             ctx["combo"] = step["combos"][value]["filters"]
             add_log(state, player, f"declared {step['combos'][value]['text']}")
