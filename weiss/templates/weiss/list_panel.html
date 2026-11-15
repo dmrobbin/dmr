@@ -1,4 +1,5 @@
 {# Side panel on every Weiss page; re-rendered and swapped in by lists.js after each change. #}
+{% load weiss_lists %}
 {% with next=panel_next|default:request.get_full_path %}
 <h2>Card lists</h2>
 {% if express_prompt %}
@@ -41,7 +42,7 @@
       {% include "weiss/type_filter.html" with cards="panel" %}
       <ul class="panel-entries" data-type-cards="panel">
         {% for entry in editing_entries %}
-          <li data-type="{{ entry.card.card_type|lower }}">
+          <li data-type="{{ entry.card.card_type|lower }}" data-roles="{% card_roles entry.card %}">
             {# Clicking opens a small popup (lists.js); the href is the full page for new tabs or no script. #}
             {% url 'weiss:card_popup' entry.card.pk as popup_url %}
             {% if entry.card.level is not None %}<span class="panel-level" title="Level {{ entry.card.level }}">{{ entry.card.level }}</span>

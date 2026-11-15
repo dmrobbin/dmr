@@ -47,6 +47,20 @@
         </div>
       </fieldset>
     {% endif %}
+    {# Roles too: Combo names a climax, Support helps from the back row (roles.py). #}
+    {% if roles %}
+      <fieldset class="color-filter filter-extra">
+        <legend>Role</legend>
+        <div class="color-chips">
+          {% for value, label, hint in roles %}
+            <label class="color-chip type-chip" title="{{ hint }}">
+              <input type="checkbox" name="role" value="{{ value }}"{% if value in filters.roles %} checked{% endif %} onchange="this.form.submit()">
+              <span>{{ label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+    {% endif %}
     <label class="filter-extra">Level
       <select name="level" onchange="this.form.submit()">
         <option value="">Any</option>

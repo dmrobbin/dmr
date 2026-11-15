@@ -1,5 +1,5 @@
 {% extends "core/dashboard_base.html" %}
-{% load static %}
+{% load static weiss_lists %}
 
 {% block title %}{{ run.name }} deck{% endblock %}
 
@@ -57,6 +57,12 @@
           </div>
         </fieldset>
       {% endif %}
+      <fieldset class="color-filter" data-role-filter>
+        <legend>Role</legend>
+        <div class="color-chips">
+          {% role_options as role_choices %}{% for value, label, hint in role_choices %}<label class="color-chip type-chip" title="{{ hint }}"><input type="checkbox" name="role" value="{{ value }}"><span>{{ label }}</span></label>{% endfor %}
+        </div>
+      </fieldset>
       <label>Rarity
         <select name="rarity"><option value="">Any</option>{% for rarity in options.rarities %}<option value="{{ rarity }}">{{ rarity|default:"None" }}</option>{% endfor %}</select>
       </label>
@@ -99,7 +105,7 @@
           <li class="pool-card" data-card="{{ card.pk }}" data-name="{{ card.name }}" data-pulled="{{ item.pulled }}" data-in-deck="{{ item.in_deck }}" data-theirs="{{ item.theirs }}"
               data-level="{% if card.card_type|lower == 'climax' %}climax{% else %}{{ card.level|default_if_none:'' }}{% endif %}"
               data-text="{{ card.description }}" data-traits="{{ card.traits }}" data-color="{{ card.color }}" data-cost="{{ card.cost|default_if_none:'' }}"
-              data-power="{{ card.power|default_if_none:'' }}" data-type="{{ card.card_type|lower }}" data-rarity="{{ item.rarity }}" data-grade="{{ item.grade }}"
+              data-power="{{ card.power|default_if_none:'' }}" data-type="{{ card.card_type|lower }}" data-roles="{% card_roles card %}" data-rarity="{{ item.rarity }}" data-grade="{{ item.grade }}"
               data-set="{{ card.expansion_id }}" data-serial="{{ card.serial_number }}"{% if item.unlimited %} data-unlimited{% endif %}>
             <a href="{% url 'weiss:card' card.pk %}" data-card-popup="{% url 'weiss:card_popup' card.pk %}" class="pool-picture">{% include "weiss/card_art.html" with alt=card.name lazy=True %}</a>
             <span class="pool-name small">{{ card.name }}</span>

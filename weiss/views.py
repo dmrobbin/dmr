@@ -10,6 +10,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from core import s3
 from core.access import weiss_access_required
 
+from . import roles as card_roles
 from .models import Card, CardList
 
 
@@ -149,6 +150,7 @@ def card_browser(request, pool, template_context):
     text = request.GET.get("text", "").strip()
     colors = [c for c in request.GET.getlist("color") if c]  # any of these (?color=Red&color=Blue)
     types = [t for t in request.GET.getlist("type") if t]  # any of these (?type=Character&type=Event)
+    roles = [r for r in request.GET.getlist("role") if r in card_roles.ROLE_VALUES]  # any of these (?role=combo)
     level = request.GET.get("level", "")
     cost = request.GET.get("cost", "")
     expansion = request.GET.get("set", "")
@@ -179,18 +181,26 @@ def card_browser(request, pool, template_context):
         expression = expression.asc(nulls_first=True) if field == "level" else expression.asc(nulls_last=True)
     cards = cards.order_by(expression, "serial_number").prefetch_related("prices")
 
+    # Roles come from card text (roles.py), so they're worked out here rather than in the query.
+    climaxes = card_roles.climax_names_for(request)
+    roles_by_card = {pk: card_roles.roles_of(text, climaxes) for pk, text in pool.values_list("pk", "description")}
+    pool_roles = {role for found in roles_by_card.values() for role in found}
+    if roles:
+        cards = [card for card in cards if set(roles) & set(roles_by_card.get(card.pk, ()))]
+
     return render(request, "weiss/set_detail.html", {
         **template_context,
         "total": pool.count(),
         "cards": with_image_urls(cards),
         "colors": sorted(set(pool.exclude(color="").values_list("color", flat=True))),
         "types": card_types(pool.order_by().values_list("card_type", flat=True).distinct()),
+        "roles": [role for role in card_roles.ROLES if role[0] in pool_roles],
         "levels": values_in(pool, "level"),
         "costs": values_in(pool, "cost"),
         "sort_options": [(value, label) for value, label, _ in CARD_SORTS],
-        "filters": {"name": name, "text": text, "colors": colors, "types": types, "level": level, "cost": cost, "set": expansion,
+        "filters": {"name": name, "text": text, "colors": colors, "types": types, "roles": roles, "level": level, "cost": cost, "set": expansion,
                     "sort": sort},
-        "filtered": bool(name or text or colors or types or level or cost or expansion),
+        "filtered": bool(name or text or colors or types or roles or level or cost or expansion),
     })
 
 

@@ -1,4 +1,5 @@
 {% extends "weiss/base.html" %}
+{% load weiss_lists %}
 
 {% block title %}Review: {{ card_list.name }}{% endblock %}
 
@@ -55,7 +56,7 @@
     {% include "weiss/type_filter.html" with cards="express" %}
     <ul class="card-grid express-grid express-review" data-type-cards="express">
       {% for tile in tiles %}
-        <li data-type="{{ tile.card.card_type|lower }}">
+        <li data-type="{{ tile.card.card_type|lower }}" data-roles="{% card_roles tile.card %}">
           {% url 'weiss:card_popup' tile.card.pk as popup_url %}
           <div class="express-tile color-{{ tile.card.color|lower }}{% if tile.locked %} locked{% endif %}" title="{{ tile.card.name }}{% if tile.locked %}: required by your anchors, so one copy stays{% endif %}">
             {% if tile.card.image_src %}<a href="{% url 'weiss:card' tile.card.pk %}" data-card-popup="{{ popup_url }}" tabindex="-1" aria-hidden="true">{% include "weiss/card_art.html" with card=tile.card alt="" lazy=True %}</a>{% endif %}

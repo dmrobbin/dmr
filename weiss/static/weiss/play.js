@@ -2052,8 +2052,11 @@
   }
 
   // A decision's pop-up (one without a Close button) can be put aside to look at the board, until we go back to it
-  // or there's a different decision to make: peekKey is the pop-up being put aside.
+  // or there's a different decision to make: peekKey is the pop-up being put aside, shownKey the one showing.
+  // While it's aside, a pile can be looked through (its Close goes back to the board, or straight back to the
+  // choice when the pile was opened from the choice's own button).
   let peekKey = null;
+  let shownKey = null;
   const peekEl = document.createElement("button");
   peekEl.type = "button";
   peekEl.className = "play-peek-back";
@@ -2073,17 +2076,23 @@
     peekEl.hidden = true;
     const box = modalEl.hidden ? null : modalEl.querySelector(".play-modal-box");
     if (!box || SPECTATING || box.querySelector("[data-close], [data-counter-hide]")) {
-      peekKey = null;
+      peekKey = shownKey = null;
       return;
     }
     const key = modalEl.innerHTML;
     if (peekKey === key) {
+      if (modal && modal.zone) return renderPileModal(); // looking through a pile while the choice is aside
       modalEl.hidden = true;
       peekEl.hidden = false;
       return;
     }
     peekKey = null;
-    box.insertAdjacentHTML("afterbegin", '<button type="button" class="button-cancel play-peek" data-peek>Look at the board</button>');
+    shownKey = key;
+    // A choice that talks about the waiting room gets a way to look through all of it first.
+    const waiting = /waiting room/i.test(box.textContent) && board.me
+      ? `<button type="button" class="button-cancel play-peek" data-peek-pile="waiting">Your waiting room (${pileCards(board.me, "waiting").length})</button>`
+      : "";
+    box.insertAdjacentHTML("afterbegin", `<button type="button" class="button-cancel play-peek" data-peek>Look at the board</button>${waiting}`);
   }
 
   function drawModal() {
@@ -2516,17 +2525,41 @@
     const power = (card) => card && ((board.stats || {})[card.uid] || {}).power;
     const attacker = Object.values(board.opponent.stage).find((c) => c && c.uid === attack.uid);
     const defender = attack.kind === "front" ? board.me.stage[attack.target] : null;
+    const nameOf = (card, fallback) => (card && (cards[card.card] || {}).name) || fallback;
+    const powerOf = (card) => Number(power(card) ?? (cards[card.card] || {}).power);
+    // The battle as it stands: their attacker opposite the character it's attacking (a front attack), with the
+    // power each has now (ours includes any backup already played) and how it would end.
+    const theirs = attacker ? powerOf(attacker) : NaN;
+    const mine = defender ? powerOf(defender) + (attack.backup || 0) : NaN;
+    const battling = Number.isFinite(theirs) && Number.isFinite(mine);
+    const outcome = (yours) => yours > theirs ? ["win", "Yours survives, theirs is reversed"]
+      : yours === theirs ? ["tie", "Both are reversed"] : ["lose", "Yours is reversed"];
+    const side = (card, owner, label, value, extra = "") => `<div class="counter-side">
+        <span class="muted small">${label}</span>${cardHtml(card, owner, "battle")}
+        <span class="small">${esc(nameOf(card, ""))}</span>
+        ${Number.isFinite(value) ? `<span class="counter-power">${esc(value)}</span>` : ""}${extra}</div>`;
     let battle = "";
-    if (attacker && defender) {
-      const theirs = power(attacker) ?? (cards[attacker.card] || {}).power;
-      const mine = (power(defender) ?? (cards[defender.card] || {}).power) + (attack.backup || 0);
-      battle = `<p class="small">${esc((cards[attacker.card] || {}).name || "Their attacker")} <b>${esc(theirs)}</b> vs your
-        ${esc((cards[defender.card] || {}).name || "character")} <b>${esc(mine)}</b>${attack.backup ? ` (backup +${esc(attack.backup)})` : ""}.</p>`;
+    if (attacker) {
+      const [now, nowText] = battling ? outcome(mine) : [];
+      battle = `<div class="counter-battle">
+          ${side(attacker, "view", "Attacking", theirs)}
+          ${defender ? `<span class="counter-vs" aria-hidden="true">vs</span>
+            ${side(defender, "view", "Your defender", mine, attack.backup ? `<span class="muted small">incl. backup +${esc(attack.backup)}</span>` : "")}`
+            : `<span class="muted small counter-direct">${attack.kind === "side" ? "Side attack: no battle" : "Direct attack: no defender"}</span>`}
+        </div>
+        ${battling ? `<p class="small counter-now">Without a counter: <b class="outcome-${now}">${nowText}</b>.</p>` : ""}`;
     }
     const rows = options.map((c) => {
       const backup = ((cards[c.card] || {}).text || "").match(BACKUP_POWER);
+      const plus = backup ? Number(backup[1]) : 0;
+      let after = "";
+      if (plus && battling) {
+        const [kind, text] = outcome(mine + plus);
+        after = `<span class="counter-after small">${esc(nameOf(defender, "Yours"))}: ${esc(mine)} → <b>${esc(mine + plus)}</b>
+          <span class="outcome-${kind}">${text}</span></span>`;
+      }
       return `<div class="trigger-option">${cardHtml(c, "me", "counter")}
-        ${backup ? `<span class="muted small">Backup +${esc(backup[1])}</span>` : ""}
+        ${backup ? `<span class="muted small">Backup +${esc(backup[1])}</span>` : ""}${after}
         <div class="trigger-buttons"><button type="button" data-act='${esc(JSON.stringify({ type: "counter", uid: c.uid }))}'>Counter</button></div>
       </div>`;
     });
@@ -3315,11 +3348,15 @@
       return;
     }
     if (event.target.closest("[data-peek]") || event.target.closest("[data-peek-back]")) {
-      peekKey = null;
-      if (event.target.closest("[data-peek]")) {
-        event.target.closest("[data-peek]").remove();
-        peekKey = modalEl.innerHTML;
-      }
+      peekKey = event.target.closest("[data-peek]") ? shownKey : null;
+      renderModal();
+      return;
+    }
+    const peekPile = event.target.closest("[data-peek-pile]");
+    if (peekPile) {
+      const zone = peekPile.dataset.peekPile;
+      peekKey = shownKey;
+      modal = { owner: "me", zone, title: `Your ${LABELS[zone].toLowerCase()}`, backToChoice: true };
       renderModal();
       return;
     }
@@ -3330,6 +3367,7 @@
       return;
     }
     if (event.target.closest("[data-close]") || event.target === modalEl) {
+      if (modal && modal.backToChoice) peekKey = null;
       modal = null;
       renderModal();
       return;
@@ -3402,6 +3440,7 @@
       clearSelection();
       hideZoom();
       hideMenu();
+      if (modal && modal.backToChoice) peekKey = null;
       modal = null;
       renderModal();
     }

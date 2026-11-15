@@ -1,8 +1,20 @@
 from django import template
 
-from weiss import abilities, packs
+from weiss import abilities, packs, roles
 
 register = template.Library()
+
+
+@register.simple_tag(takes_context=True)
+def card_roles(context, card):
+    """A card's roles for the Role filters, space-separated (e.g. "combo support"): data-roles="{% card_roles card %}"."""
+    return " ".join(roles.roles_of(card.description, roles.climax_names_for(context.get("request"))))
+
+
+@register.simple_tag
+def role_options():
+    """The Role filters' (value, label, hint) triples, so every page's chips match roles.py."""
+    return roles.ROLES
 
 
 @register.filter

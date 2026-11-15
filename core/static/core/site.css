@@ -1148,6 +1148,17 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .trigger-buttons button { font: inherit; font-size: .76rem; font-weight: 700; color: var(--on-accent); background: var(--accent); border: none; border-radius: .35rem; padding: .3rem .55rem; cursor: pointer; }
 .trigger-buttons button:hover { background: var(--accent-hover); }
 .trigger-buttons button:disabled { opacity: .4; cursor: default; background: var(--accent); }
+/* The counter step's battle: their attacker opposite our defender, and what each counter's backup would do. */
+.counter-battle { display: flex; justify-content: center; align-items: center; gap: 1rem; margin: .6rem 0 .3rem; padding: .6rem; border: 1px solid var(--border); border-radius: .5rem; background: rgb(178 58 58 / .1); --card-w: 5.5rem; --card-h: 7.7rem; }
+.counter-side { display: flex; flex-direction: column; align-items: center; gap: .25rem; max-width: 9rem; text-align: center; }
+.counter-power { font-size: 1.15rem; font-weight: 700; }
+.counter-vs { font-weight: 700; color: var(--muted); }
+.counter-direct { max-width: 9rem; }
+.counter-now { text-align: center; margin: .2rem 0 .6rem; }
+.counter-after { display: flex; flex-direction: column; align-items: center; max-width: 9rem; text-align: center; }
+.outcome-win { color: #7fd18b; }
+.outcome-tie { color: var(--accent); }
+.outcome-lose { color: #ef8a8a; }
 /* The other player asking to turn the turn rules on or off. */
 .rules-prompt { position: fixed; top: 28vh; left: 50%; z-index: 50; width: min(26rem, calc(100vw - 2rem)); transform: translateX(-50%); padding: .8rem 1rem; border: 1px solid var(--accent); border-radius: .6rem; background: var(--surface); box-shadow: 0 12px 40px rgb(0 0 0 / .7); font-size: .88rem; }
 .rules-prompt p { margin: 0; }

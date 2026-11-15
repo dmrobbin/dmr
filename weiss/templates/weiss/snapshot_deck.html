@@ -1,5 +1,5 @@
 {# A kept deck, by group (see play.snapshot_groups), with type chips over it (type_key names them, for a page showing more than one), and a popup for reading a card (left out with no_popup, for a page showing more than one). #}
-  {% load static %}
+  {% load static weiss_lists %}
   {% if groups %}{% include "weiss/type_filter.html" with cards=type_key|default:"deck" %}{% endif %}
   <div data-type-cards="{{ type_key|default:'deck' }}">
   {% for group in groups %}
@@ -7,7 +7,7 @@
       <h2>{{ group.label }} <span class="muted small">{{ group.count }}</span></h2>
       <ul class="pool-grid">
         {% for item in group.cards %}{% with card=item.card %}
-          <li class="pool-card in-deck" data-type="{{ card.card_type|lower }}">
+          <li class="pool-card in-deck" data-type="{{ card.card_type|lower }}" data-roles="{% card_roles card %}">
             <a href="{% url 'weiss:card' card.pk %}" data-card-popup="{% url 'weiss:card_popup' card.pk %}">{% include "weiss/card_art.html" with alt=card.name lazy=True %}</a>
             <span class="pool-name small">{{ card.name }} <strong>×{{ item.copies }}</strong></span>
           </li>

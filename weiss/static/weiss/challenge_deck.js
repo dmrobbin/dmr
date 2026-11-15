@@ -3,7 +3,7 @@
 // the card lists' side panel lists one, with the same checks. Solo, saving posts the whole deck as {card id: copies}.
 // In co-op (data-live) each change is saved as it's made, the partner's deck is listed on the left, and the page
 // polls for the partner's changes, so both players always see the whole pool and both decks. The filters above it
-// (name, text, trait, colors, level, cost, type, rarity, set, in the deck or not) and the sort work on the page, so
+// (name, text, trait, colors, level, cost, type, role, rarity, set, in the deck or not) and the sort work on the page, so
 // nothing unsaved is lost to a reload.
 (() => {
   const form = document.querySelector("[data-challenge-deck]");
@@ -112,18 +112,26 @@
   const has = (value, words) => !words || value.toLowerCase().includes(words);
   const number = (tile, field) => (tile.dataset[field] === "" ? null : Number(tile.dataset[field]));
 
+  // Role chips only for roles some card in the pool has, and none at all if no card has one.
+  const poolRoles = new Set(tiles.flatMap((tile) => tile.dataset.roles.split(" ").filter(Boolean)));
+  const roleRow = filters.querySelector("[data-role-filter]");
+  for (const input of roleRow.querySelectorAll("input")) input.closest("label").hidden = !poolRoles.has(input.value);
+  roleRow.hidden = poolRoles.size === 0;
+
   function filter() {
     const f = new FormData(filters);
     const words = (field) => String(f.get(field) || "").trim().toLowerCase();
     const colors = f.getAll("color");
     const types = f.getAll("type");
+    const roles = f.getAll("role"); // any of these, as with types
     const { level, cost, rarity, set, show } = Object.fromEntries(["level", "cost", "rarity", "set", "show"].map((k) => [k, f.get(k) || ""]));
     let visible = 0;
     for (const tile of tiles) {
       const d = tile.dataset;
       const ok = has(d.name, words("name")) && has(d.text, words("text")) && has(d.traits, words("trait"))
         && (!colors.length || colors.includes(d.color)) && (!level || d.level === level) && (!cost || d.cost === cost)
-        && (!types.length || types.includes(d.type)) &&(!rarity || d.rarity === rarity) && (!set || d.set === set)
+        && (!types.length || types.includes(d.type)) && (!roles.length || roles.some((role) => d.roles.split(" ").includes(role)))
+        && (!rarity || d.rarity === rarity) && (!set || d.set === set)
         && (!show || (show === "theirs" ? theirs(tile) > 0 : show === "free" ? count(tile) < Number(d.pulled) : (show === "deck") === (count(tile) > 0)));
       tile.hidden = !ok;
       if (ok) visible += 1;
