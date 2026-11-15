@@ -8,6 +8,9 @@ stats on the board. It never reads the other hand, or either deck, except what a
 
 The "standard" model:
 - Fills the front line for the most power it can get, facing enemies it can beat where it can.
+- Brings a back row character up to the front when it has nothing to do in the back row (no act abilities, no
+  cont abilities for other cards, no auto abilities that work outside battle): to an empty place, even facing a
+  stronger enemy, or in place of a front character that does have something to do in the back row, where that helps.
 - Attacks to reverse enemy characters first, and avoids battles it would lose: with nothing left to
   reverse, it still makes a side attack, even for no damage, since its trigger check brings stock.
 - Clocks a card every turn to draw, and uses abilities that bring cards to its hand. Stock comes third,
@@ -38,7 +41,7 @@ The other models play as standard does, apart from:
   makes the attacks that add up to the least damage that's enough.
 - "easy" (Easy) plays as standard does, carelessly, though always by the rules: it encores whatever it can pay
   for, however little the card's worth; mostly turns down "you may" abilities and back row abilities, and backups;
-  keeps its opening hand; mostly puts any character it can play in any empty place, rather than building its
+  keeps its opening hand; leaves back row characters with nothing to do there where they are; mostly puts any character it can play in any empty place, rather than building its
   front line; clocks, levels up with and takes trigger rewards of any card, not the right one; plays any climax
   worth playing, not its combos' first; and attacks left to right, often into characters stronger than its own. Against standard,
   with the same decks, it wins about one game in five.
@@ -62,6 +65,16 @@ PLAN_VALUE = 5  # what being part of a focused CPU's combo adds to a card's valu
 MIN_FRONT_LINE = 2  # a focused CPU saving stock still pays for characters up to this many at the front
 FILL_MIN_DECK = 8  # a strategic CPU won't mill a deck this small, since refreshing costs damage
 HAND_EFFECT = re.compile(r"\bdraw\b|into your hand|to your hand", re.I)
+IDLE_BONUS = 2500  # front line power that bringing up a back row character with nothing to do there is worth: more
+# than a lost battle costs (Temper.lose_penalty), so it fills an empty place rather than leave it open for direct attacks
+# What triggers an auto ability only in battle, or when the card arrives, which has already happened by the time it's
+# on the back row: abilities triggered only by these don't make it worth keeping a character there.
+FRONT_ONLY_TRIGGERS = {"reverse_self", "reverse_opponent", "attack", "attack_end", "frontal", "frontal_self", "facing_attacks",
+                       "being_attacked", "leave", "cancel", "cancel_facing", "no_cancel", "no_cancel_direct", "climax_self",
+                       "play", "placed_by", "placed_self", "placed_from_deck", "placed_from_waiting", "placed_from_own_waiting",
+                       "placed_from_marker"}
+SELF_ONLY = re.compile(r"\bthis card (?:gets|cannot|can't|does not|doesn't|is)\b", re.I)  # a cont ability on itself
+FOR_OTHERS = re.compile(r"\bcharacters?(?: in [^,.]*)? gets?\b|in front of this card|\bassist\b|opponent|back stage", re.I)
 CHOICE_DESTINATIONS = ["hand", "stock", "deck", "deck_bottom", "waiting"]  # best first, for "where does it go?"
 WAITS = {"ability_show": 2, "combo_show": 1.6, "pending_climax": 2, "pending_damage": 2, "auto_next": .9}  # seconds to let these show; otherwise STEP_WAIT
 STEP_WAIT = .8
@@ -471,7 +484,24 @@ class Mind:
         return best or self.useful_event() or self.back_row() or self.hand_ability()
 
     def move_bonus(self, card, src, slot):
-        return 0
+        """A back row character with nothing to do there comes up to the front: to an empty place, or in place of a
+        character that does have something to do in the back row."""
+        if src in game.OPPOSITE or slot not in game.OPPOSITE or not self.idle_in_back(card):
+            return 0
+        there = self.side["stage"][slot]
+        return IDLE_BONUS if not there or not self.idle_in_back(there) else 0
+
+    def idle_in_back(self, card):
+        """Whether none of this character's abilities can do anything for it on the back row: it has no act abilities,
+        no cont abilities for other cards, and only auto abilities that need it in battle or that have already happened."""
+        for ability in game.abilities_of(self.state, card, self.env):
+            kind = ability["kind"]
+            if kind == "cont":
+                if not SELF_ONLY.search(ability["text"]) or FOR_OTHERS.search(ability["text"]):
+                    return False
+            elif kind != "auto" or not ability.get("when") or any(w["on"] not in FRONT_ONLY_TRIGGERS for w in ability["when"]):
+                return False
+        return True
 
     def back_row(self):
         """An open back slot takes a card that pays nothing, to have more characters out."""
@@ -805,7 +835,8 @@ class Focused(Mind):
 
     def move_bonus(self, card, src, slot):
         """A combo character waiting in the back row goes to where it can attack."""
-        return COMBO_BONUS if src not in game.OPPOSITE and slot in game.OPPOSITE and self.combo_live(card) else 0
+        combo = COMBO_BONUS if src not in game.OPPOSITE and slot in game.OPPOSITE and self.combo_live(card) else 0
+        return combo + super().move_bonus(card, src, slot)
 
     def spare_climaxes(self, climaxes):
         return [c for c in climaxes if not self.in_plan(c)]
@@ -973,6 +1004,9 @@ class Easy(Mind):
 
     def combo_live(self, card):
         return False  # it doesn't plan around its climax combos
+
+    def move_bonus(self, card, src, slot):
+        return 0  # it doesn't notice a back row character with nothing to do there
 
     def main(self):
         """Mostly, a character that's to go on the stage goes to any empty place, not the one that does the most."""

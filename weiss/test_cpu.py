@@ -144,6 +144,81 @@ class FrontLineTests(TestCase):
         self.assertEqual(t.next(), {"type": "move", "uid": cards[1]["uid"], "to": "climax"})
 
 
+IDLE_TEXT = ("【AUTO】 When this card becomes 【REVERSE】, if this card's battle opponent is level - or lower, you may 【REVERSE】 "
+             "that character.【AUTO】 [Put 1 card from your hand into your waiting room] When this card is put into your waiting "
+             "room from the stage, you may pay the cost. If you do, look at up to 4 cards from the top of your deck, choose up "
+             "to 1 level 1 or higher card from among them, reveal it to your opponent, put it into your hand, put the rest into "
+             "your waiting room. (Climax are regarded as level -)")
+BRAINSTORM_TEXT = ("【ACT】 Brainstorm [(1) 【REST】 this card] Flip over 4 cards from the top of your deck, put them into your "
+                   "waiting room. For each climax revealed among those cards, draw up to 1 card.")
+
+
+class IdleBackRowTests(TestCase):
+    """A back row character with nothing to do there is brought up to the front."""
+
+    def table(self, back_text, enemy=9000):
+        t = Table()
+        t.seat(t.me, "C2", t.card(1002, power=5000))
+        t.seat(t.me, "C3", t.card(1003, power=5000))
+        back = t.seat(t.me, "B1", t.card(1004, power=1500, text=back_text))
+        t.seat(t.them, game.OPPOSITE["C1"], t.card(1, power=enemy))
+        return t, back
+
+    def act(self, t, model):
+        t.refresh()
+        return cpu.next_action(t.state, "2", t.info, 1, random.Random(1), model=model)
+
+    def test_fills_an_empty_place_even_facing_a_stronger_enemy(self):
+        for model in ("standard", "focused", "strategic", "hard"):
+            with self.subTest(model=model):
+                t, back = self.table(IDLE_TEXT)
+                self.assertEqual(self.act(t, model), {"type": "move", "uid": back["uid"], "to": "C1"})
+
+    def test_easy_leaves_it_there(self):
+        t, back = self.table(IDLE_TEXT)
+        with mock.patch.object(cpu.Easy, "slip", return_value=False):
+            self.assertNotEqual(self.act(t, "easy").get("uid"), back["uid"])
+
+    def test_one_with_something_to_do_there_stays(self):
+        for text in (BRAINSTORM_TEXT, "【CONT】 Assist All of your characters in front of this card get +500 power.",
+                     "【AUTO】 When your other character attacks, choose 1 of your characters, and that character gets +500 power until end of turn."):
+            with self.subTest(text=text):
+                t, back = self.table(text)
+                self.assertNotEqual(self.act(t, "standard").get("uid"), back["uid"])
+
+    def test_takes_the_place_of_one_better_used_in_the_back(self):
+        t = Table()
+        brainstormer = t.seat(t.me, "C1", t.card(1001, power=3000, text=BRAINSTORM_TEXT))
+        t.seat(t.me, "C2", t.card(1002, power=5000))
+        t.seat(t.me, "C3", t.card(1003, power=5000))
+        back = t.seat(t.me, "B1", t.card(1004, power=2000, text=IDLE_TEXT))
+        self.assertEqual(self.act(t, "standard"), {"type": "move", "uid": back["uid"], "to": "C1"})
+        self.assertIs(t.me["stage"]["C1"], brainstormer)  # only chosen so far, not moved
+
+    def test_not_in_place_of_a_stronger_one_thats_idle_too(self):
+        t = Table()
+        t.seat(t.me, "C1", t.card(1001, power=3000))
+        t.seat(t.me, "C2", t.card(1002, power=5000))
+        t.seat(t.me, "C3", t.card(1003, power=5000))
+        t.seat(t.me, "B1", t.card(1004, power=2000, text=IDLE_TEXT))
+        self.assertEqual(self.act(t, "standard"), {"type": "phase", "phase": "climax"})
+
+    def test_what_counts_as_idle(self):
+        t = Table()
+        mind = cpu.Mind(t.state, "2", t.info, cpu.Temper(), random.Random(1))
+        idle = [IDLE_TEXT, "", "【CONT】 During your turn, this card gets +1000 power.",
+                "【AUTO】 Encore [Put 1 character from your hand into your waiting room]",
+                "【AUTO】 When this card attacks, this card gets +1000 power until end of turn.",
+                "【AUTO】 When this card's battle opponent becomes 【REVERSE】, draw 1 card."]
+        busy = [BRAINSTORM_TEXT, "【CONT】 All of your characters in the center stage get +500 power.",
+                "【CONT】 Your opponent cannot play backups.",
+                "【AUTO】 At the beginning of your climax phase, choose 1 of your characters, and that character gets +1000 power until end of turn."]
+        for n, text in enumerate(idle + busy):
+            with self.subTest(text=text):
+                card = game.new_card(t.card(2000 + n, text=text))
+                self.assertEqual(mind.idle_in_back(card), text in idle)
+
+
 class ComboCutInTests(TestCase):
     """A CPU with something to say (cut_ins, from play.deal) shows it before its first CX combo of a turn."""
     COMBO = '【AUTO】 【CXCOMBO】 When "BIG" is placed on your climax area, draw 1 card.'
