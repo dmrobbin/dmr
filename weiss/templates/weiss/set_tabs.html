@@ -1,0 +1,6 @@
+{# The sets pages' own tabs. Expects tab: "all", "favorites" or "recent", and favorite_count / recent_count. #}
+<nav class="arcade-tabs" aria-label="Sets">
+  <a href="{% url 'weiss:sets' %}"{% if tab == "all" %} class="current" aria-current="page"{% endif %}>All sets</a>
+  <a href="{% url 'weiss:set_favorites' %}"{% if tab == "favorites" %} class="current" aria-current="page"{% endif %}>★ Favorites <span class="tab-count" data-set-fav-count>{{ favorite_count }}</span></a>
+  <a href="{% url 'weiss:set_recent' %}"{% if tab == "recent" %} class="current" aria-current="page"{% endif %}>Recently viewed <span class="tab-count">{{ recent_count }}</span></a>
+</nav>

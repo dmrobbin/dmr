@@ -1,0 +1,9 @@
+{# One set in a set grid, with its favorite star over the cover. Expects set and favorite_ids. #}
+<li class="set-tile">
+  <a href="{% url 'weiss:set' set.expansion_id %}">
+    {% if set.cover.image_src %}<img src="{{ set.cover.image_src }}" alt="" loading="lazy">{% else %}<span class="set-cover-missing" aria-hidden="true"></span>{% endif %}
+    <span class="set-name">{{ set.name }}</span>
+    <span class="muted">#{{ set.expansion_id }} · {{ set.code }} · {{ set.cards }} card{{ set.cards|pluralize }}</span>
+  </a>
+  {% if set.expansion_id in favorite_ids %}{% include "weiss/set_fav_button.html" with set_id=set.expansion_id set_name=set.name favorite=True %}{% else %}{% include "weiss/set_fav_button.html" with set_id=set.expansion_id set_name=set.name favorite=False %}{% endif %}
+</li>

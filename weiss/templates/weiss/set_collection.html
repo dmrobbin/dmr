@@ -1,0 +1,27 @@
+{% extends "weiss/base.html" %}
+{% load static %}
+
+{% block title %}{% if tab == "favorites" %}Favorite sets{% else %}Recently viewed sets{% endif %}{% endblock %}
+
+{% block weiss_content %}
+  <h1>Weiss Schwarz sets</h1>
+  {% include "weiss/set_tabs.html" %}
+
+  {% if sets %}
+    <p class="lead-count">
+      {% if tab == "favorites" %}{{ sets|length }} favorite set{{ sets|length|pluralize }}, most recently added first.
+      {% else %}The {{ sets|length }} set{{ sets|length|pluralize }} you opened most recently, newest first.{% endif %}
+    </p>
+    <ul class="set-grid">
+      {% for set in sets %}{% include "weiss/set_tile.html" %}{% endfor %}
+    </ul>
+  {% elif tab == "favorites" %}
+    <p class="empty">No favorite sets yet. Use the ☆ on any set to keep it here.</p>
+    <p><a class="button-small" href="{% url 'weiss:sets' %}">Browse all sets</a></p>
+  {% else %}
+    <p class="empty">You haven't opened any sets yet. The sets you look at will show up here.</p>
+    <p><a class="button-small" href="{% url 'weiss:sets' %}">Browse all sets</a></p>
+  {% endif %}
+{% endblock %}
+
+{% block weiss_scripts %}<script src="{% static 'weiss/set_favorites.js' %}" defer></script>{% endblock %}

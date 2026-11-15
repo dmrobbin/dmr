@@ -1,3 +1,4 @@
+from datetime import timedelta
 from io import StringIO
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -6,9 +7,10 @@ from bs4 import BeautifulSoup
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from . import lists
-from .models import Card, CardList, CardListEntry, CardPrice
+from .models import Card, CardList, CardListEntry, CardPrice, SetFavorite, SetView
 from .scraper import expansion_serials, parse_card
 
 TESTDATA = Path(__file__).parent / "testdata"
@@ -297,6 +299,89 @@ class CardPagesTests(TestCase):
         self.assertContains(response, f'data-card-popup-touch="{reverse("weiss:card_popup", args=[elegg.pk])}"')
         self.assertContains(response, 'aria-controls="list-panel"')
         self.assertContains(response, 'id="list-panel"')
+
+
+class SetFavoritesAndRecentTests(TestCase):
+    def setUp(self):
+        from django.contrib.auth.models import User
+        self.user = User.objects.create_user("daryl", password="x", is_staff=True)
+        self.client.force_login(self.user)
+        for expansion_id in range(1, 8):
+            Card.objects.create(serial_number=f"S{expansion_id}/W01-001", name=f"Card {expansion_id}",
+                                expansion=f"Set {expansion_id}", expansion_id=expansion_id)
+
+    def favorite(self, expansion_id, **data):
+        return self.client.post(reverse("weiss:set_favorite", args=[expansion_id]), data,
+                                headers={"Accept": "application/json"})
+
+    def ids(self, url_name, key="sets"):
+        return [s["expansion_id"] for s in self.client.get(reverse(url_name)).context[key]]
+
+    def test_favorite_toggles_and_can_be_set_outright(self):
+        self.assertEqual(self.favorite(3).json(), {"favorite": True, "count": 1})
+        self.assertEqual(self.favorite(3, favorite="1").json(), {"favorite": True, "count": 1})  # no duplicate
+        self.assertEqual(self.favorite(3).json(), {"favorite": False, "count": 0})
+        self.assertEqual(self.favorite(3, favorite="0").json(), {"favorite": False, "count": 0})
+
+    def test_favorite_needs_post_and_a_real_set(self):
+        self.assertEqual(self.client.get(reverse("weiss:set_favorite", args=[3])).status_code, 405)
+        self.assertEqual(self.favorite(999).status_code, 404)
+
+    def test_plain_form_post_goes_back_to_next(self):
+        url = reverse("weiss:set_favorite", args=[3])
+        self.assertRedirects(self.client.post(url, {"next": reverse("weiss:set", args=[3])}), reverse("weiss:set", args=[3]))
+        self.assertRedirects(self.client.post(url, {"next": "https://evil.example/"}), reverse("weiss:sets"))
+
+    def test_favorites_page_lists_newest_favorite_first(self):
+        for expansion_id in (2, 5, 4):
+            self.favorite(expansion_id)
+        SetFavorite.objects.filter(expansion_id=5).update(created=timezone.now() + timedelta(minutes=1))
+        self.assertEqual(self.ids("weiss:set_favorites"), [5, 4, 2])
+
+    def test_opening_a_set_records_it_most_recent_first_once_each(self):
+        for expansion_id in (1, 2, 1):
+            self.client.get(reverse("weiss:set", args=[expansion_id]))
+        self.assertEqual(self.ids("weiss:set_recent"), [1, 2])
+
+    def test_only_the_latest_views_are_kept(self):
+        start = timezone.now()
+        for n in range(SetView.KEEP + 3):
+            SetView.objects.create(user=self.user, expansion_id=1000 + n, viewed=start - timedelta(minutes=n))
+        self.client.get(reverse("weiss:set", args=[1]))
+        self.assertEqual(SetView.objects.filter(user=self.user).count(), SetView.KEEP)
+        self.assertEqual(SetView.objects.filter(user=self.user).first().expansion_id, 1)
+
+    def test_sets_page_shelves_show_five_of_each_while_browsing(self):
+        self.assertFalse(self.client.get(reverse("weiss:sets")).context["shelves"])  # nothing to show yet
+        for expansion_id in range(1, 8):
+            self.favorite(expansion_id)
+            self.client.get(reverse("weiss:set", args=[expansion_id]))
+        response = self.client.get(reverse("weiss:sets"))
+        self.assertTrue(response.context["shelves"])
+        self.assertEqual(len(response.context["shelf_favorites"]), 5)
+        self.assertEqual(len(response.context["shelf_recent"]), 5)
+        self.assertEqual(response.context["shelf_recent"][0]["expansion_id"], 7)
+        self.assertContains(response, "See all 7")
+        self.assertEqual(len(response.context["sets"]), 7)  # every set still listed below
+        self.assertFalse(self.client.get(reverse("weiss:sets"), {"name": "Set 1"}).context["shelves"])
+
+    def test_stars_show_each_sets_state(self):
+        self.favorite(2)
+        response = self.client.get(reverse("weiss:sets"))
+        self.assertContains(response, 'aria-pressed="true"', count=2)  # the shelf's tile and the grid's
+        self.assertContains(response, 'aria-label="Favorite Set 2"')
+        self.assertContains(self.client.get(reverse("weiss:set", args=[2])), "Favorited")
+        self.assertContains(self.client.get(reverse("weiss:set", args=[3])), 'aria-pressed="false"')
+
+    def test_empty_pages_explain_themselves(self):
+        self.assertContains(self.client.get(reverse("weiss:set_favorites")), "No favorite sets yet")
+        self.assertContains(self.client.get(reverse("weiss:set_recent")), "haven't opened any sets yet")
+
+    def test_favorites_are_per_user(self):
+        from django.contrib.auth.models import User
+        self.favorite(2)
+        self.client.force_login(User.objects.create_user("other", password="x", is_staff=True))
+        self.assertEqual(self.ids("weiss:set_favorites"), [])
 
 
 GROUPS = [{"groupId": 24696, "name": "GODDESS OF VICTORY: NIKKE Vol.2"}, {"groupId": 1, "name": "Other"}]

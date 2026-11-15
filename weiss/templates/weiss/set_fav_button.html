@@ -1,0 +1,9 @@
+{# Star or unstar a set. Expects set_id, set_name and favorite; `labelled` shows the words too (the set page). #}
+{# Works as a plain form post; set_favorites.js does it in the background and updates every star for the set. #}
+<form class="set-fav-form" method="post" action="{% url 'weiss:set_favorite' set_id %}" data-set-fav="{{ set_id }}">
+  {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+  <button type="submit" class="set-fav{% if labelled %} set-fav-labelled{% endif %}" aria-pressed="{{ favorite|yesno:'true,false' }}"
+          aria-label="Favorite {{ set_name }}" title="{% if favorite %}Remove from favorites{% else %}Add to favorites{% endif %}">
+    <span class="set-fav-star" aria-hidden="true">{% if favorite %}★{% else %}☆{% endif %}</span>{% if labelled %}<span class="set-fav-text" aria-hidden="true">{% if favorite %}Favorited{% else %}Favorite{% endif %}</span>{% endif %}
+  </button>
+</form>

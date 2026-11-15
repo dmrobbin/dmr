@@ -374,6 +374,31 @@ select option { color: var(--text); background: var(--surface); }
 .set-grid a:hover { border-color: var(--accent); }
 .set-grid img, .set-cover-missing { width: 100%; aspect-ratio: 5 / 7; object-fit: cover; border-radius: .5rem; background: var(--bg); margin-bottom: .35rem; }
 .set-grid .set-name { font-weight: 600; font-size: .95rem; line-height: 1.3; }
+/* The favorite star: over a set's cover in the grids, and beside the title on a set's page. */
+.set-tile { position: relative; }
+.set-fav-form { margin: 0; }
+.set-tile .set-fav-form { position: absolute; top: 1.35rem; right: 1.35rem; }
+.set-fav { display: inline-flex; align-items: center; justify-content: center; gap: .35rem; min-width: 2.5rem; min-height: 2.5rem; padding: 0 .5rem; font: inherit; font-size: 1.25rem; line-height: 1; color: var(--text); background: rgb(14 15 18 / .75); border: 1px solid var(--border); border-radius: 999px; cursor: pointer; transition: color .15s, border-color .15s, transform .1s; }
+.set-fav:hover { border-color: var(--accent); color: var(--accent); }
+.set-fav:active { transform: scale(.92); }
+.set-fav:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.set-fav[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+.set-fav-labelled { font-size: .9rem; font-weight: 600; padding: 0 .85rem; background: none; }
+.set-fav-labelled .set-fav-star { font-size: 1.1rem; }
+.tab-count { margin-left: .2rem; padding: 0 .4rem; font-size: .75rem; border-radius: 999px; background: var(--accent-soft); }
+/* The sets page's shelves: the newest few favorites and recently viewed sets, above all the sets. */
+.set-shelves { display: grid; gap: 1.25rem; margin: 0 0 1.5rem; }
+.set-shelf { padding: 1rem; border: 1px solid var(--border); border-radius: .75rem; background: var(--accent-soft); }
+.set-shelf-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .25rem 1rem; margin-bottom: .75rem; }
+.set-shelf-head h2 { margin: 0; font-size: 1.05rem; }
+.set-shelf-head a { color: var(--accent); font-size: .85rem; }
+.set-shelf .empty { margin: 0; }
+.set-grid-compact { grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: .75rem; }
+.set-grid-compact a { padding: .6rem; font-size: .78rem; }
+.set-grid-compact .set-name { font-size: .85rem; }
+.set-grid-compact .set-fav-form { top: .9rem; right: .9rem; }
+.set-grid-compact .set-fav { min-width: 2.25rem; min-height: 2.25rem; font-size: 1.1rem; }
+.set-all-heading { font-size: 1.05rem; margin: 0 0 .75rem; }
 .lead-filters input.narrow { min-width: 0; width: 8rem; }
 
 /* Multi-select color filter: toggle chips with a colored dot. */

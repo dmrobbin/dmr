@@ -6,6 +6,7 @@
   <p class="back"><a href="{% url 'weiss:sets' %}">← All sets</a></p>
   <div class="page-title-row">
     <h1>{{ title }}</h1>
+    {% if expansion_id %}{% include "weiss/set_fav_button.html" with set_id=expansion_id set_name=title labelled=True %}{% endif %}
     {% if series %}<a class="button-small" href="{% url 'weiss:series' series %}">All {{ series }} cards →</a>{% endif %}
   </div>
 
@@ -120,4 +121,4 @@
   {% endif %}
 {% endblock %}
 
-{% block weiss_scripts %}{% load static %}<script src="{% static 'weiss/peek.js' %}" defer></script>{% endblock %}
+{% block weiss_scripts %}{% load static %}<script src="{% static 'weiss/peek.js' %}" defer></script>{% if expansion_id %}<script src="{% static 'weiss/set_favorites.js' %}" defer></script>{% endif %}{% endblock %}

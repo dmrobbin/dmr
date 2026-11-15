@@ -1,9 +1,40 @@
 {% extends "weiss/base.html" %}
+{% load static %}
 
 {% block title %}Weiss Schwarz cards{% endblock %}
 
 {% block weiss_content %}
   <h1>Weiss Schwarz sets</h1>
+  {% include "weiss/set_tabs.html" %}
+
+  {# While browsing (not searching): the newest few favorites and recently viewed sets, above the full list. #}
+  {% if shelves %}
+    <div class="set-shelves">
+      <section class="set-shelf" aria-labelledby="shelf-favorites">
+        <div class="set-shelf-head">
+          <h2 id="shelf-favorites">★ Favorites</h2>
+          {% if favorite_count %}<a href="{% url 'weiss:set_favorites' %}">See all {{ favorite_count }} →</a>{% endif %}
+        </div>
+        {% if shelf_favorites %}
+          <ul class="set-grid set-grid-compact">{% for set in shelf_favorites %}{% include "weiss/set_tile.html" %}{% endfor %}</ul>
+        {% else %}
+          <p class="empty">Use the ☆ on a set to keep it here.</p>
+        {% endif %}
+      </section>
+      <section class="set-shelf" aria-labelledby="shelf-recent">
+        <div class="set-shelf-head">
+          <h2 id="shelf-recent">Recently viewed</h2>
+          {% if recent_count %}<a href="{% url 'weiss:set_recent' %}">See all {{ recent_count }} →</a>{% endif %}
+        </div>
+        {% if shelf_recent %}
+          <ul class="set-grid set-grid-compact">{% for set in shelf_recent %}{% include "weiss/set_tile.html" %}{% endfor %}</ul>
+        {% else %}
+          <p class="empty">The sets you open will show up here.</p>
+        {% endif %}
+      </section>
+    </div>
+    <h2 class="set-all-heading">All sets</h2>
+  {% endif %}
 
   <form class="lead-filters" method="get">
     <label>Set name <input type="search" name="name" value="{{ filters.name }}" placeholder="e.g. oshi no ko"></label>
@@ -27,15 +58,7 @@
   {% if sets %}
     <p class="lead-count">{{ sets|length }} set{{ sets|length|pluralize }}</p>
     <ul class="set-grid">
-      {% for set in sets %}
-        <li>
-          <a href="{% url 'weiss:set' set.expansion_id %}">
-            {% if set.cover.image_src %}<img src="{{ set.cover.image_src }}" alt="" loading="lazy">{% else %}<span class="set-cover-missing" aria-hidden="true"></span>{% endif %}
-            <span class="set-name">{{ set.name }}</span>
-            <span class="muted">#{{ set.expansion_id }} · {{ set.code }} · {{ set.cards }} card{{ set.cards|pluralize }}</span>
-          </a>
-        </li>
-      {% endfor %}
+      {% for set in sets %}{% include "weiss/set_tile.html" %}{% endfor %}
     </ul>
   {% elif filtered %}
     <p class="empty">No sets match these filters.</p>
@@ -43,3 +66,5 @@
     <p class="empty">No cards saved yet. Run <code>manage.py fetch_sets &lt;expansion number&gt;</code> to add a set.</p>
   {% endif %}
 {% endblock %}
+
+{% block weiss_scripts %}<script src="{% static 'weiss/set_favorites.js' %}" defer></script>{% endblock %}

@@ -2,16 +2,18 @@ from collections import Counter, defaultdict
 
 from django.conf import settings
 from django.db.models import F, Max, Q
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
 
 from core import s3
 from core.access import weiss_access_required
 
 from . import roles as card_roles
-from .models import Card, CardList
+from .models import Card, CardList, SetFavorite, SetView
 
 
 def with_image_urls(cards):
@@ -62,9 +64,37 @@ def summarize_sets():
     return sets
 
 
+def attach_covers(sets):
+    """Give each set summary its cover card (with `image_src`), in one query."""
+    covers = {card.serial_number: card for card in with_image_urls(
+        Card.objects.filter(serial_number__in=[s["cover_serial"] for s in sets])
+    )}
+    for s in sets:
+        s["cover"] = covers.get(s["cover_serial"])
+
+
+SHELF_SIZE = 5  # how many favorite and recently viewed sets the top of the sets page shows
+
+
+def favorite_set_ids(user):
+    """The sets this user has starred, most recently starred first."""
+    return list(SetFavorite.objects.filter(user=user).values_list("expansion_id", flat=True))
+
+
+def recent_set_ids(user):
+    """The sets this user has opened, most recently opened first."""
+    return list(SetView.objects.filter(user=user).values_list("expansion_id", flat=True))
+
+
+def pick_sets(by_id, ids):
+    """The set summaries for these ids, in this order, leaving out sets that no longer have any cards."""
+    return [by_id[i] for i in ids if i in by_id]
+
+
 @weiss_access_required
 def set_list(request):
-    sets = summarize_sets()
+    all_sets = summarize_sets()
+    sets = list(all_sets)
     codes = sorted({s["code"] for s in sets})
 
     name = request.GET.get("name", "").strip()
@@ -82,11 +112,13 @@ def set_list(request):
         sort = "-number"
     sets.sort(key=SET_SORTS[sort.removeprefix("-")], reverse=sort.startswith("-"))
 
-    covers = {card.serial_number: card for card in with_image_urls(
-        Card.objects.filter(serial_number__in=[s["cover_serial"] for s in sets])
-    )}
-    for s in sets:
-        s["cover"] = covers.get(s["cover_serial"])
+    # The shelves along the top: a few favorite and recently viewed sets, while browsing (not searching).
+    by_id = {s["expansion_id"]: s for s in all_sets}
+    favorites = pick_sets(by_id, favorite_set_ids(request.user))
+    recent = pick_sets(by_id, recent_set_ids(request.user))
+    filtered = bool(name or number or code)
+    shelves = not filtered and bool(favorites or recent)
+    attach_covers(sets + (favorites[:SHELF_SIZE] + recent[:SHELF_SIZE] if shelves else []))
 
     return render(request, "weiss/set_list.html", {
         "sets": sets,
@@ -99,8 +131,71 @@ def set_list(request):
             ("-cards", "Most cards"),
         ],
         "filters": {"name": name, "number": number, "code": code, "sort": sort},
-        "filtered": bool(name or number or code),
+        "filtered": filtered,
+        "shelves": shelves,
+        "shelf_favorites": favorites[:SHELF_SIZE],
+        "shelf_recent": recent[:SHELF_SIZE],
+        "favorite_ids": {s["expansion_id"] for s in favorites},
+        "favorite_count": len(favorites),
+        "recent_count": len(recent),
+        "tab": "all",
     })
+
+
+def set_collection(request, tab):
+    """The favorites or recently viewed page: those sets, in that order, shown as the sets page shows them."""
+    by_id = {s["expansion_id"]: s for s in summarize_sets()}
+    favorites = pick_sets(by_id, favorite_set_ids(request.user))
+    recent = pick_sets(by_id, recent_set_ids(request.user))
+    sets = favorites if tab == "favorites" else recent
+    attach_covers(sets)
+    return render(request, "weiss/set_collection.html", {
+        "sets": sets,
+        "tab": tab,
+        "favorite_ids": {s["expansion_id"] for s in favorites},
+        "favorite_count": len(favorites),
+        "recent_count": len(recent),
+    })
+
+
+@weiss_access_required
+def set_favorites(request):
+    return set_collection(request, "favorites")
+
+
+@weiss_access_required
+def set_recent(request):
+    return set_collection(request, "recent")
+
+
+@weiss_access_required
+@require_POST
+def set_favorite(request, expansion_id):
+    """Star or unstar a set (favorite=1 or 0; anything else toggles). Answers JSON for the page's
+    script, or goes back to `next` for a plain form post."""
+    if not Card.objects.filter(expansion_id=expansion_id).exists():
+        raise Http404("No cards saved for this set")
+    mine = SetFavorite.objects.filter(user=request.user, expansion_id=expansion_id)
+    wanted = request.POST.get("favorite")
+    favorite = wanted == "1" if wanted in ("0", "1") else not mine.exists()
+    if favorite:
+        SetFavorite.objects.get_or_create(user=request.user, expansion_id=expansion_id)
+    else:
+        mine.delete()
+    if "application/json" in request.headers.get("Accept", ""):
+        return JsonResponse({"favorite": favorite, "count": SetFavorite.objects.filter(user=request.user).count()})
+    next_url = request.POST.get("next", "")
+    if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        next_url = reverse("weiss:sets")
+    return redirect(next_url)
+
+
+def record_set_view(user, expansion_id):
+    """Note that this user opened this set just now, keeping only their most recent few."""
+    SetView.objects.update_or_create(user=user, expansion_id=expansion_id, defaults={"viewed": timezone.now()})
+    stale = list(SetView.objects.filter(user=user).values_list("pk", flat=True)[SetView.KEEP:])
+    if stale:
+        SetView.objects.filter(pk__in=stale).delete()
 
 
 CARD_TYPES = ["Character", "Event", "Climax"]  # the order the type filters offer them in
@@ -217,10 +312,13 @@ def set_detail(request, expansion_id):
     first = in_set.first()
     if not first:
         raise Http404("No cards saved for this set")
+    record_set_view(request.user, expansion_id)
     return card_browser(request, in_set, {
         "title": first.expansion,
         "clear_url": reverse("weiss:set", args=[expansion_id]),
         "series": series_code(first.serial_number),
+        "expansion_id": expansion_id,
+        "favorite": SetFavorite.objects.filter(user=request.user, expansion_id=expansion_id).exists(),
     })
 
 

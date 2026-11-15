@@ -638,3 +638,35 @@ class GameRecord(models.Model):
         self.won = self.winner == ("host" if hosting else "guest")
         self.opponent_name = self.guest_name if hosting else self.host_name
         self.my_deck_name = self.host_deck_name if hosting else self.guest_deck_name
+
+
+class SetFavorite(models.Model):
+    """A set (expansion) a user has starred on the sets pages."""
+
+    user = models.ForeignKey("auth.User", on_delete=models.CASCADE, related_name="set_favorites")
+    expansion_id = models.PositiveIntegerField()
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created", "-pk"]
+        constraints = [models.UniqueConstraint(fields=["user", "expansion_id"], name="unique_set_favorite")]
+
+    def __str__(self):
+        return f"{self.user} ★ {self.expansion_id}"
+
+
+class SetView(models.Model):
+    """When a user last opened a set's page: one row per user and set, kept to the most recent few."""
+
+    KEEP = 50  # per user; older ones are dropped as new sets are viewed
+
+    user = models.ForeignKey("auth.User", on_delete=models.CASCADE, related_name="set_views")
+    expansion_id = models.PositiveIntegerField()
+    viewed = models.DateTimeField()
+
+    class Meta:
+        ordering = ["-viewed", "-pk"]
+        constraints = [models.UniqueConstraint(fields=["user", "expansion_id"], name="unique_set_view")]
+
+    def __str__(self):
+        return f"{self.user} viewed {self.expansion_id}"
