@@ -9,6 +9,11 @@
   const ACTION_URL = root.dataset.actionUrl;
   const CSRF = root.dataset.csrf;
   const POLL_MS = Number(root.dataset.pollMs) || 1500; // quicker against a CPU: polling is what moves it
+  // How long a request may take before it's given up on (a poll moves a CPU, which can take a while).
+  const POLL_TIMEOUT_MS = 15000;
+  const ACTION_TIMEOUT_MS = 20000;
+  const CONNECTION_ERROR = "Couldn't reach the server. Try again.";
+  const DRAW_ERROR = "Something went wrong showing that. Checking the game again…";
   // A co-op partner watching this game (challenge_views.coop_spectate): the board from the player's seat, with only
   // what's public and their hand. Nothing is sent, and the cards and piles can only be looked at.
   const SPECTATING = "spectate" in root.dataset;
@@ -441,6 +446,7 @@
       window.location.reload(); // back to deck choice
       return;
     }
+    const previous = version;
     version = String(data.version);
     for (const [pk, info] of Object.entries(data.cards || {})) {
       if (!cards[pk]) cards[pk] = info;
@@ -473,16 +479,35 @@
     }
     sceneViewer = data.player_name || sceneViewer;
     if (data.revealed) modal = { title: data.revealed.title, revealed: data.revealed.cards };
-    render();
-    renderDefeated();
-    renderBoss();
-    renderDuel();
-    renderAugments();
-    showScene();
-    animateOpponent(before);
-    if (wasInPlay && animations) celebrate(wasInPlay);
-    announce();
-    playBoardSounds();
+    // What this page owes the game (finishing a damage, moving a phase on...) is set going first: a
+    // mistake in drawing must never leave the game waiting on us.
+    armTimers();
+    try {
+      render();
+      renderDefeated();
+      renderBoss();
+      renderDuel();
+      renderAugments();
+      showScene();
+    } catch (e) {
+      version = previous === version ? "" : previous; // not drawn: the next poll fetches this board again
+      throw e;
+    }
+    // The show around it (flights, bursts, announcements, sounds) is extra: if it goes wrong, the board stands.
+    for (const extra of [() => animateOpponent(before), () => wasInPlay && animations && celebrate(wasInPlay), announce, playBoardSounds]) {
+      try {
+        extra();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }
+
+  // What this page sends by itself after a moment: each waits for the board to say it's due, and is set
+  // going again by any board that still says so (a poll that finds nothing new as well), so one that
+  // didn't get through is sent again rather than leaving the game stuck.
+  function armTimers() {
+    if (!board) return;
     // A climax cancelled our damage: leave it on the board for a moment, then let the server clean up.
     if (board.damage_pending && !resolveTimer) {
       resolveTimer = setTimeout(() => {
@@ -1108,9 +1133,26 @@
     return flights;
   }
 
+  // The action waits for its flights, but never for long: a browser can hold animations back (a tab out of
+  // sight, a phone put down), and the action, and the game with it, mustn't wait on that.
   async function animateAction(action) {
     if (!animations || !board) return;
-    await flyAll(flightsFor(action));
+    const flights = flightsFor(action);
+    await Promise.race([flyAll(flights), wait(FLIGHT_MS * 2 + flights.length * FLIGHT_STAGGER_MS)]);
+  }
+
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  // A request that gives up: one a phone has left hanging (put away mid-request, or between networks)
+  // would otherwise hold up every one after it until the page is reloaded.
+  async function fetchWithin(ms, url, options = {}) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ms);
+    try {
+      return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   // Fly card-shaped boxes {from, to, face, ms}: `hide` is hidden for the flight (it's the card
@@ -1176,11 +1218,13 @@
     if (busy || (document.hidden && Math.random() < 0.7)) return; // check less often in background tabs
     let data = null;
     try {
-      const response = await fetch(`${STATE_URL}?v=${version}`, { credentials: "same-origin" });
+      const response = await fetchWithin(POLL_TIMEOUT_MS, `${STATE_URL}?v=${version}`, { credentials: "same-origin" });
       if (response.status === 200) data = await response.json();
     } catch (e) { /* offline for a moment; try again next tick */ }
     // Outside the try: a mistake in drawing the board must show in the console, not pass for being offline.
+    if (data && (error === CONNECTION_ERROR || error === DRAW_ERROR)) error = ""; // through again: the board says where things stand
     if (data) receive(data);
+    else if (!busy) armTimers(); // nothing new: anything we owe the game that didn't get through goes again
   }
 
   async function act(action) {
@@ -1198,10 +1242,11 @@
       renderModal();
     }
     busy = true;
+    let failed = false;
     hideMenu();
     try {
       await animateAction(action);
-      const response = await fetch(ACTION_URL, {
+      const response = await fetchWithin(ACTION_TIMEOUT_MS, ACTION_URL, {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json", "X-CSRFToken": CSRF },
@@ -1218,11 +1263,20 @@
       }
       if (data.board || data.status) receive(data); else render();
     } catch (e) {
-      error = "Couldn't reach the server. Try again.";
-      render();
+      failed = true;
+      const offline = e.name === "AbortError" || e instanceof TypeError; // timed out, or no connection
+      if (!offline) console.error(e);
+      error = offline ? CONNECTION_ERROR : DRAW_ERROR;
+      try {
+        render();
+      } catch (again) {
+        console.error(again);
+      }
     } finally {
       busy = false;
     }
+    // It may have gone through all the same (an answer that was lost, or a board that didn't draw): catch up now.
+    if (failed) poll();
   }
 
   // --- Drawing ---------------------------------------------------------------------------------
@@ -3418,4 +3472,6 @@
 
   poll();
   setInterval(poll, POLL_MS);
+  // Back from another tab or app (a phone woken up): catch up at once rather than on the next tick.
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
 })();
