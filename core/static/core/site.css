@@ -387,6 +387,10 @@ select option { color: var(--text); background: var(--surface); }
 .color-chip:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* Card type chips: the color chips without the dot. */
 .type-chip span::before { content: none; }
+/* Level and cost chips: one or two characters, so a steady width that's easy to tap. */
+.lead-filters label.number-chip { min-width: 2.75rem; justify-content: center; }
+/* Chips sit side by side on a phone too, not full width like the filters' other labels. */
+@media (max-width: 30rem) { .lead-filters label.color-chip { width: auto; } }
 /* The type filter on its own above a deck (weiss/type_filter.html): not pinned like a page's full filter bar. */
 .lead-filters.type-filter-bar { position: static; margin: 0 0 .75rem; padding: 0; border-bottom: none; background: none; align-items: center; }
 .lead-filters.type-filter-bar[hidden], .lead-filters label.type-chip[hidden], [data-type][hidden], [data-type-group][hidden] { display: none; }

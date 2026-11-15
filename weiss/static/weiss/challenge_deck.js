@@ -123,13 +123,15 @@
     const words = (field) => String(f.get(field) || "").trim().toLowerCase();
     const colors = f.getAll("color");
     const types = f.getAll("type");
-    const roles = f.getAll("role"); // any of these, as with types
-    const { level, cost, rarity, set, show } = Object.fromEntries(["level", "cost", "rarity", "set", "show"].map((k) => [k, f.get(k) || ""]));
+    const roles = f.getAll("role"); // any of these, as with types, levels and costs
+    const levels = f.getAll("level");
+    const costs = f.getAll("cost");
+    const { rarity, set, show } = Object.fromEntries(["rarity", "set", "show"].map((k) => [k, f.get(k) || ""]));
     let visible = 0;
     for (const tile of tiles) {
       const d = tile.dataset;
       const ok = has(d.name, words("name")) && has(d.text, words("text")) && has(d.traits, words("trait"))
-        && (!colors.length || colors.includes(d.color)) && (!level || d.level === level) && (!cost || d.cost === cost)
+        && (!colors.length || colors.includes(d.color)) && (!levels.length || levels.includes(d.level)) && (!costs.length || costs.includes(d.cost))
         && (!types.length || types.includes(d.type)) && (!roles.length || roles.some((role) => d.roles.split(" ").includes(role)))
         && (!rarity || d.rarity === rarity) && (!set || d.set === set)
         && (!show || (show === "theirs" ? theirs(tile) > 0 : show === "free" ? count(tile) < Number(d.pulled) : (show === "deck") === (count(tile) > 0)));

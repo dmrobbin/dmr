@@ -203,6 +203,22 @@ class CardPagesTests(TestCase):
         self.assertEqual(self.names(cost="none"), ["Footstep"])
         self.assertEqual(self.client.get(reverse("weiss:set", args=[290])).context["costs"], [0, 1, None])
 
+    def test_several_levels_and_costs_at_once(self):
+        Card.objects.filter(name="Elegg").update(cost=1)
+        Card.objects.filter(name="Anis").update(cost=0)
+        self.assertEqual(self.names(level=["0", "1"]), ["Anis", "Elegg"])
+        self.assertEqual(self.names(level=["1", "none"]), ["Elegg", "Footstep"])
+        self.assertEqual(self.names(cost=["0", "none"]), ["Anis", "Footstep"])
+        self.assertEqual(self.names(level=["0", "1"], cost=["1", "none"]), ["Elegg"])  # levels and costs narrow each other
+        self.assertEqual(self.names(level=["bogus"]), ["Anis", "Elegg", "Footstep"])  # ignored, not "nothing"
+        response = self.client.get(reverse("weiss:set", args=[290]), {"level": ["0", "none"], "cost": "1"})
+        self.assertEqual(response.context["filters"]["levels"], ["0", "none"])
+        self.assertContains(response, 'name="level" value="0" checked')
+        self.assertContains(response, 'name="level" value="none" checked')
+        self.assertNotContains(response, 'name="level" value="1" checked')
+        self.assertContains(response, 'name="cost" value="1" checked')
+        self.assertTrue(response.context["filtered"])
+
     def test_sort_by_cost_level_and_price_with_blanks_last(self):
         Card.objects.filter(name="Elegg").update(cost=2)
         Card.objects.filter(name="Anis").update(cost=0)

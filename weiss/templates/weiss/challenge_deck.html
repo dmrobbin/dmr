@@ -43,12 +43,20 @@
           </div>
         </fieldset>
       {% endif %}
-      <label>Level
-        <select name="level"><option value="">Any</option>{% for level in options.levels %}<option value="{{ level }}">{{ level }}</option>{% endfor %}<option value="climax">Climax</option></select>
-      </label>
-      <label>Cost
-        <select name="cost"><option value="">Any</option>{% for cost in options.costs %}<option value="{{ cost }}">{{ cost }}</option>{% endfor %}</select>
-      </label>
+      <fieldset class="color-filter">
+        <legend>Level</legend>
+        <div class="color-chips">
+          {% for level in options.levels %}<label class="color-chip type-chip number-chip"><input type="checkbox" name="level" value="{{ level }}"><span>{{ level }}</span></label>{% endfor %}<label class="color-chip type-chip number-chip" title="Climax"><input type="checkbox" name="level" value="climax"><span>CX</span></label>
+        </div>
+      </fieldset>
+      {% if options.costs %}
+        <fieldset class="color-filter">
+          <legend>Cost</legend>
+          <div class="color-chips">
+            {% for cost in options.costs %}<label class="color-chip type-chip number-chip"><input type="checkbox" name="cost" value="{{ cost }}"><span>{{ cost }}</span></label>{% endfor %}
+          </div>
+        </fieldset>
+      {% endif %}
       {% if options.types|length > 1 %}
         <fieldset class="color-filter">
           <legend>Type</legend>

@@ -1,7 +1,7 @@
 from collections import Counter, defaultdict
 
 from django.conf import settings
-from django.db.models import F, Max
+from django.db.models import F, Max, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -128,13 +128,20 @@ CARD_SORTS = [
 ]
 
 
-def filter_number(cards, field, value):
-    """Filter on level or cost: a number, or 'none' for cards without one (e.g. climaxes)."""
-    if value == "none":
-        return cards.filter(**{field: None})
-    if value.isdigit():
-        return cards.filter(**{field: int(value)})
-    return cards
+def number_choices(request, field):
+    """The level or cost chips ticked (?level=1&level=2): numbers, or 'none' for cards without one (e.g. climaxes)."""
+    return [value for value in request.GET.getlist(field) if value == "none" or value.isdigit()]
+
+
+def filter_numbers(cards, field, values):
+    """Filter on level or cost: cards with any of these values (see number_choices); none at all is any value."""
+    if not values:
+        return cards
+    numbers = [int(value) for value in values if value != "none"]
+    match = Q(**{f"{field}__in": numbers})
+    if "none" in values:
+        match |= Q(**{field: None})
+    return cards.filter(match)
 
 
 def values_in(cards, field):
@@ -151,8 +158,8 @@ def card_browser(request, pool, template_context):
     colors = [c for c in request.GET.getlist("color") if c]  # any of these (?color=Red&color=Blue)
     types = [t for t in request.GET.getlist("type") if t]  # any of these (?type=Character&type=Event)
     roles = [r for r in request.GET.getlist("role") if r in card_roles.ROLE_VALUES]  # any of these (?role=combo)
-    level = request.GET.get("level", "")
-    cost = request.GET.get("cost", "")
+    levels = number_choices(request, "level")  # any of these (?level=0&level=none)
+    costs = number_choices(request, "cost")
     expansion = request.GET.get("set", "")
     if name:
         cards = cards.filter(name__icontains=name)
@@ -162,8 +169,8 @@ def card_browser(request, pool, template_context):
         cards = cards.filter(color__in=colors)
     if types:
         cards = cards.filter(card_type__in=types)
-    cards = filter_number(cards, "level", level)
-    cards = filter_number(cards, "cost", cost)
+    cards = filter_numbers(cards, "level", levels)
+    cards = filter_numbers(cards, "cost", costs)
     if expansion.isdigit():
         cards = cards.filter(expansion_id=int(expansion))
 
@@ -198,9 +205,9 @@ def card_browser(request, pool, template_context):
         "levels": values_in(pool, "level"),
         "costs": values_in(pool, "cost"),
         "sort_options": [(value, label) for value, label, _ in CARD_SORTS],
-        "filters": {"name": name, "text": text, "colors": colors, "types": types, "roles": roles, "level": level, "cost": cost, "set": expansion,
+        "filters": {"name": name, "text": text, "colors": colors, "types": types, "roles": roles, "levels": levels, "costs": costs, "set": expansion,
                     "sort": sort},
-        "filtered": bool(name or text or colors or types or roles or level or cost or expansion),
+        "filtered": bool(name or text or colors or types or roles or levels or costs or expansion),
     })
 
 
