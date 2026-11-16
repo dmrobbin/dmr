@@ -39,6 +39,11 @@
   const DAMAGE_RESOLVE_MS = 500; // how long a climax-cancelled damage stays on the board, with animations off
   const REFRESH_PAUSE_MS = 250; // how long an emptied deck shows before it's refreshed mid-damage
   const CLIMAX_SHOW_MS = 2000; // how long a climax played in the climax phase shows before the attack phase
+  const CLIMAX_LEAD_MS = 380; // a played climax's build-up before it lands, without the music to time it (at most 900)
+  const CLIMAX_HOLD_MS = 1250; // how long a played climax stays once it has landed, before it fades
+  const CLIMAX_FADE_MS = 420;
+  // A climax's colour, for its takeover and the turn it powers; any other is gold.
+  const CLIMAX_COLORS = { red: "#ff4d5e", blue: "#4da3ff", yellow: "#ffd23f", green: "#46d07a", purple: "#b46bff" };
   const PHASE_PAUSE_MS = 900; // how long a phase that ended itself stays before the next begins
   const LEVEL_SHOW_MS = 2200; // how long a level up shows in the middle of the screen
   const PHASE_NAME_FX = ["fx-pop", "fx-flip", "fx-slide", "fx-glow"]; // a new phase's name comes in with one of these
@@ -85,6 +90,8 @@
   let busy = false;
   let resolveTimer = null; // pending "resolve_damage" after a climax cancels our damage
   let refreshTimer = null; // pending "continue_damage" after a damage empties our deck
+  let climaxShowEnds = 0; // when the climax takeover on screen is over (performance.now() time)
+  const cuedClimaxes = {}; // per side, the climax count whose sound the takeover has played (playBoardSounds skips it)
   let gameOverHeldUntil = 0; // the game-over screen waits till then for the last damage to turn over (holdGameOver)
   const gameOverHeld = () => performance.now() < gameOverHeldUntil;
   let climaxTimer = null; // pending move to the attack phase after we play a climax
@@ -391,6 +398,12 @@
   }
 
   const SOUNDS = {
+    // A climax played, without the music: a whoosh rising for CLIMAX_LEAD_MS, then it lands with a boom and a chord.
+    climax: (ctx, out) => {
+      noise(ctx, out, { ms: CLIMAX_LEAD_MS, from: 300, to: 6000, q: 1.2, gain: 0.5 });
+      impact(ctx, out, { at: CLIMAX_LEAD_MS, gain: 1.1 });
+      for (const hz of [392, 494, 587]) bell(ctx, out, { at: CLIMAX_LEAD_MS + 20, ms: 1100, hz, gain: 0.22 });
+    },
     // A card slid off the deck into the hand.
     draw: (ctx, out) => sample(ctx, out, "slide", { gain: 1.2 })
       || noise(ctx, out, { ms: 160, from: 1500, to: 5000, gain: 0.9 }),
@@ -433,17 +446,18 @@
   };
 
   // `count` (how many cards a damage turned over) and `icons` (a trigger check's) are for the music's cues.
+  // Returns how many ms from now the music lands it, if the music plays it (null otherwise).
   function playSound(name, { quiet = false, at = 0, count = 1, icons = [] } = {}) {
-    if (!soundOn || !soundVolume) return;
+    if (!soundOn || !soundVolume) return null;
     const ctx = audioContext();
-    if (!ctx) return;
+    if (!ctx) return null;
     if (musicOn && score) {
       // Played in time with the music, so no stagger: several at once become a little figure (see score.js cue).
       syncMusic();
-      score.cue(name, { opponent: quiet, count, icons });
-      return;
+      const lands = score.cue(name, { opponent: quiet, count, icons });
+      return typeof lands === "number" ? lands * 1000 : null;
     }
-    if (!SOUNDS[name]) return;
+    if (!SOUNDS[name]) return null;
     const out = ctx.createGain();
     out.gain.value = (soundVolume / 100) * (quiet ? OPPONENT_VOLUME : 1);
     out.connect(mix);
@@ -547,7 +561,8 @@
       const is = now[owner];
       if (!was || !is) continue;
       const sounds = [];
-      if (musicOn && score && is.climaxes > was.climaxes) sounds.push("climax"); // the effects play it as a card put down
+      // A climax's sound: the takeover plays it, timed with it (showClimax); here when there's been no takeover.
+      if (is.climaxes > was.climaxes && cuedClimaxes[owner] !== is.climaxes) sounds.push("climax");
       // A damage's cards, which the music turns over one by one before the hit (or the cancel).
       const flipped = { damage: is.damage_taken - was.damage_taken, negated: Math.max(1, is.clock - was.clock) };
       if (is.refreshes > was.refreshes) sounds.push("shuffle");
@@ -659,10 +674,17 @@
     // We played a climax in the climax phase: let it show, then move on to the attack phase
     // (once any abilities it triggered have been resolved).
     if (board.climax_pending && !board.ability && !climaxTimer) {
-      climaxTimer = setTimeout(() => {
+      // Not while the climax's takeover is still on screen (it starts after this, in announce): it waits that out.
+      const moveOn = () => {
+        const left = animations ? climaxShowEnds - performance.now() : 0;
+        if (left > 0) {
+          climaxTimer = setTimeout(moveOn, left);
+          return;
+        }
         climaxTimer = null;
         if (board.climax_pending && !board.ability) act({ type: "phase", phase: "attack" });
-      }, CLIMAX_SHOW_MS);
+      };
+      climaxTimer = setTimeout(moveOn, CLIMAX_SHOW_MS);
     }
     // An ability is being shown: once it has been, play carries on. Its owner's page says so; the
     // other page does too a little later, in case the owner has gone away.
@@ -747,7 +769,7 @@
       if (now[owner].refreshes > seen[owner].refreshes) {
         flash(between(mat, '[data-pile="deck"]', '[data-slot="C3"]'), "Deck Out!", "flash-deck-out");
       }
-      if (now[owner].climaxes > seen[owner].climaxes) showClimax(side.zones.climax[side.zones.climax.length - 1]);
+      if (now[owner].climaxes > seen[owner].climaxes) showClimax(side.zones.climax[side.zones.climax.length - 1], owner, now[owner].climaxes);
       if (now[owner].negated > seen[owner].negated) {
         const card = side.negated_card;
         setTimeout(() => showNegated(card), fx.negatedWait(owner)); // once the damage's cards have turned over (tableFx)
@@ -998,17 +1020,50 @@
     setTimeout(start, board && board.game_over ? 1600 : 0);
   }
 
-  // A climax just played, in the middle of the screen, coming in with a randomly picked effect and
-  // fading away over the time the turn waits before the attack phase.
-  function showClimax(card) {
+  const climaxColor = (info) => CLIMAX_COLORS[String((info && info.color) || "").toLowerCase()] || "#ffb347";
+
+  // A climax just played takes over the screen: it darkens in the climax's colour with streaks drawing in while
+  // the music builds (or a whoosh rises), then the card and its name slam in on the beat with a flash, rings and a
+  // jolt of the board. As it fades, its power surges across its side's stage (play_fx.js climaxSurge). A click puts
+  // it away early. `count`: that side's climaxes played, so its sound isn't played twice (playBoardSounds).
+  function showClimax(card, owner, count) {
     const info = card && card.card ? cards[card.card] : null;
     if (!info) return;
+    cuedClimaxes[owner] = count;
+    const heard = playSound("climax", { quiet: owner === "opponent" });
+    const lead = Math.round(Math.min(900, heard ?? CLIMAX_LEAD_MS));
+    const end = lead + CLIMAX_HOLD_MS;
+    climaxShowEnds = performance.now() + end + CLIMAX_FADE_MS;
+    const color = climaxColor(info);
+    const whose = owner === "me" && !SPECTATING ? "You play a climax" : `${board[owner] ? board[owner].name : "Your opponent"} plays a climax`;
     const el = document.createElement("div");
-    el.className = `climax-show ${CLIMAX_EFFECTS[Math.floor(Math.random() * CLIMAX_EFFECTS.length)]}`;
-    el.style.animationDuration = `${CLIMAX_SHOW_MS}ms`;
-    el.innerHTML = `<img src="${esc(info.image)}" alt="Climax: ${esc(info.name)}">`;
+    el.className = `cx-takeover${reducedMotion ? " still" : ""}`;
+    el.setAttribute("aria-hidden", "true"); // the log says it; this only shows it
+    el.style.setProperty("--cx", color);
+    el.style.setProperty("--lead", `${lead}ms`);
+    el.innerHTML = `<div class="cx-veil"></div><div class="cx-streaks"></div><div class="cx-flash"></div>
+      <div class="cx-core">
+        <div class="cx-rings"><i></i><i></i><i></i></div>
+        <div class="cx-card"${info.grade ? ` data-grade="${info.grade}"` : ""}><img src="${esc(info.image)}" alt="">${info.grade >= 3 ? '<span class="rfx-sheen"></span>' : ""}</div>
+        <p class="cx-title">${CX_HTML}<span class="cx-name">${esc(info.name)}</span></p>
+        <p class="cx-who">${esc(whose)}</p>
+      </div>`;
     document.body.appendChild(el);
-    el.addEventListener("animationend", (event) => { if (event.target === el) el.remove(); }); // not its pieces' own animations
+    let gone = false;
+    const leave = () => {
+      if (gone) return;
+      gone = true;
+      el.classList.add("cx-out");
+      setTimeout(() => el.remove(), CLIMAX_FADE_MS);
+    };
+    el.addEventListener("click", leave);
+    setTimeout(leave, end);
+    // The board jolts as it lands.
+    if (!reducedMotion) {
+      setTimeout(() => boardEl.animate([{ translate: "0 0" }, { translate: "-7px 3px" }, { translate: "6px -3px" }, { translate: "-4px 1px" }, { translate: "2px 0" }, { translate: "0 0" }],
+        { duration: 380, easing: "ease-out" }), lead);
+    }
+    fx.climaxSurge(owner, color, end);
   }
 
   // A climax revealed by damage: it cancels the damage, and both players see that it did.
@@ -3869,8 +3924,8 @@
   // the board goes on without it.
   fx = window.WeissTableFx ? window.WeissTableFx.create({
     boardEl, cards, STAGE, CLIMAX_SHOW_MS, SPECTATING, reducedMotion, esc, who, outOfSight, pileCount, musicTheme, atBrink,
-    board: () => board, avatars: () => avatars, animations: () => animations, score: () => score, holdGameOver,
-  }) : { tableFx() {}, setTableMood() {}, negatedWait: () => 0, noteOwnDamage() {} };
+    board: () => board, avatars: () => avatars, animations: () => animations, score: () => score, holdGameOver, climaxColor,
+  }) : { tableFx() {}, setTableMood() {}, negatedWait: () => 0, noteOwnDamage() {}, climaxSurge() {} };
   recap = window.WeissRecap ? window.WeissRecap.create({
     controlsEl, esc, who, logHtml, gameNumber, board: () => board, avatars: () => avatars,
   }) : { render() {}, dismiss() {} };

@@ -660,16 +660,18 @@
     // --- Cues ---------------------------------------------------------------------------------------
 
     // A moment on the board, played into the music. `opponent`: the other side's, lower and muffled. `count`:
-    // how many cards it was (a damage's, flipped one by one); `icons`: a trigger check's trigger icons.
+    // how many cards it was (a damage's, flipped one by one); `icons`: a trigger check's trigger icons. Returns how
+    // many seconds from now it lands, so the board can show it on the beat (or null if it isn't played).
     cue(type, { opponent = false, count = 1, icons = [] } = {}) {
       const def = CUES[type];
-      if (!this.running || !def) return;
+      if (!this.running || !def) return null;
       const nowStep = (this.now() + 0.03 - this.origin) / this.stepDur;
-      let step = Math.ceil(nowStep / def.grid) * def.grid;
+      // A cue with a `lead` builds into its landing: at least that many sixteenths away.
+      let step = Math.ceil((nowStep + (def.lead || 0)) / def.grid) * def.grid;
       // Several at once play as a figure, one after another, rather than piling onto one note.
       if (step <= this.lastCueStep) step = Math.ceil((this.lastCueStep + 1) / def.grid) * def.grid;
-      if (step - nowStep > BAR / 2) return; // a flood of them: the rest only add to the mood
-      if (this.plan(Math.floor(step / BAR)).name === "coda") return;
+      if (step - nowStep > BAR / 2) return null; // a flood of them: the rest only add to the mood
+      if (this.plan(Math.floor(step / BAR)).name === "coda") return null;
       const side = opponent ? "theirs" : "mine";
       const last = this.runs[side + type];
       const run = last && step - last.step <= 12 ? last.run + 1 : 0;
@@ -691,6 +693,7 @@
       this.energy = clamp(this.energy + (def.energy || 0) * weight, 0, 1);
       this.tension = tension === "release" ? 0 : clamp(this.tension + (tension || 0) * weight, 0, 1);
       this.sparkle = clamp(this.sparkle + (def.sparkle || 0), 0, 1);
+      return Math.max(0, c.t - this.now());
     }
 
     // A damage's cards turned over one at a time before what they came to: a tick each, climbing, over a
@@ -1000,12 +1003,22 @@
         return Math.min(count, 7);
       },
     },
-    // A climax played: a brass stab on the chord, with a crash.
+    // A climax played: a riser and a snare roll building from now into the next beat but one sixteenth (the board
+    // charges up meanwhile), then it lands: a kick, a crash and a brass stab on the chord, answered an octave up.
     climax: {
-      grid: 2, energy: 0.4,
+      grid: 4, lead: 2, energy: 0.5, tension: "release",
       play(s, c) {
-        s.brass(c.t, s.voicing(c.chord, 60), 3 * s.STEP, 0.35 * c.vel, c.out);
-        s.crash(c.t, 0.3 * c.vel, c.out);
+        const from = Math.max(s.now() + 0.02, c.t - BEAT * s.STEP);
+        const build = c.t - from;
+        if (build > 0.05) {
+          s.riser(from, build, 0.22 * c.vel, c.out);
+          const rolls = Math.floor(build / (s.STEP / 2));
+          for (let n = 0; n < rolls; n++) s.snare(c.t - (rolls - n) * s.STEP / 2, (0.05 + 0.2 * n / rolls) * c.vel, c.out);
+        }
+        s.kick(c.t, 0.9 * c.vel, c.out);
+        s.crash(c.t, 0.4 * c.vel, c.out);
+        s.brass(c.t, s.voicing(c.chord, 60), 3 * s.STEP, 0.4 * c.vel, c.out);
+        s.brass(c.t + 4 * s.STEP, s.voicing(c.chord, 72), 4 * s.STEP, 0.3 * c.vel, c.out);
         return 4;
       },
     },

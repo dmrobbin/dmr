@@ -2300,6 +2300,70 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 @keyframes reverse-crack { 0% { filter: brightness(2.2) saturate(.3); box-shadow: 0 0 0 2px rgb(235 70 70 / .95), 0 0 28px rgb(235 70 70 / .65); } 100% { filter: none; box-shadow: 0 2px 6px rgb(0 0 0 / .5); } }
 
 /* A stat that changed: the change floats up off the card, and the number on it flares. */
+/* A climax played (play.js showClimax): it takes over the screen. Until --lead (when the music's hit lands) the
+   screen darkens in the climax's colour (--cx) with streaks drawing in; then the card and its name slam in with a
+   flash and rings; .cx-out fades it all. .still (reduced motion): the colour and the card, without the movement. */
+.cx-takeover { position: fixed; inset: 0; z-index: 47; display: grid; place-items: center; overflow: hidden; cursor: pointer; transition: opacity .42s ease; }
+.cx-takeover.cx-out { opacity: 0; }
+.cx-takeover.cx-out .cx-core { transform: scale(1.06); transition: transform .42s ease-in; }
+.cx-veil { position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--cx) 38%, transparent), rgb(4 5 10 / .82) 62%);
+  animation: cx-veil var(--lead) ease-in both; }
+@keyframes cx-veil { from { opacity: 0; } to { opacity: 1; } }
+.cx-streaks { position: absolute; left: 50%; top: 50%; width: 220vmax; height: 220vmax; margin: -110vmax 0 0 -110vmax; opacity: 0;
+  background: repeating-conic-gradient(color-mix(in srgb, var(--cx) 70%, white) 0 .8deg, transparent .8deg 9deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 9%, #000 22%, transparent 48%); mask-image: radial-gradient(circle, transparent 9%, #000 22%, transparent 48%);
+  animation: cx-streaks-in var(--lead) ease-in both, cx-streaks-spin 14s linear var(--lead) infinite; }
+@keyframes cx-streaks-in { from { opacity: 0; transform: scale(1.8); } to { opacity: .3; transform: scale(1); } }
+@keyframes cx-streaks-spin { from { opacity: .3; transform: rotate(0); } to { opacity: .3; transform: rotate(360deg); } }
+.cx-flash { position: absolute; inset: 0; background: radial-gradient(circle, #fff, color-mix(in srgb, var(--cx) 60%, white) 40%, transparent 75%); opacity: 0;
+  animation: cx-flash .5s ease-out var(--lead) both; }
+@keyframes cx-flash { 0% { opacity: .6; } 100% { opacity: 0; } }
+.cx-core { position: relative; display: flex; flex-direction: column; align-items: center; gap: .5rem; }
+.cx-card { position: relative; border-radius: .9rem; box-shadow: 0 0 0 2px color-mix(in srgb, var(--cx) 80%, white), 0 0 60px color-mix(in srgb, var(--cx) 75%, transparent), 0 24px 70px rgb(0 0 0 / .85);
+  animation: cx-slam .32s cubic-bezier(.2, 1.4, .4, 1) var(--lead) both; }
+.cx-card img { display: block; max-width: min(78vw, 46rem); max-height: 54vh; border-radius: .9rem; }
+.cx-card .rfx-sheen { border-radius: .9rem; }
+@keyframes cx-slam { 0% { opacity: 0; transform: scale(1.7); filter: blur(10px) brightness(2); } 60% { opacity: 1; filter: blur(0) brightness(1.5); } 100% { opacity: 1; transform: none; filter: none; } }
+.cx-title { display: flex; align-items: baseline; justify-content: center; gap: .5rem; margin: .3rem 0 0; padding: 0 .5rem; max-width: 92vw; font-family: "Cinzel", Georgia, serif; font-weight: 700; text-align: center;
+  font-size: clamp(1.4rem, 4.4vw, 3rem); line-height: 1.1; color: #fff; text-shadow: 0 0 22px var(--cx), 0 3px 0 rgb(0 0 0 / .7);
+  animation: cx-title .42s cubic-bezier(.2, 1.5, .4, 1) calc(var(--lead) + 90ms) both; }
+.cx-title .cx { font-size: 1.15em; }
+.cx-name { overflow-wrap: anywhere; }
+@keyframes cx-title { from { opacity: 0; transform: scale(2.2); letter-spacing: .3em; } to { opacity: 1; transform: none; letter-spacing: .02em; } }
+.cx-who { margin: 0; font-size: .85rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgb(255 255 255 / .8); animation: cx-fade .4s ease-out calc(var(--lead) + 200ms) both; }
+@keyframes cx-fade { from { opacity: 0; } to { opacity: 1; } }
+.cx-rings { position: absolute; left: 50%; top: 45%; width: 0; height: 0; }
+.cx-rings i { position: absolute; left: -10rem; top: -10rem; width: 20rem; height: 20rem; border: 4px solid color-mix(in srgb, var(--cx) 80%, white); border-radius: 50%; opacity: 0;
+  animation: cx-ring .9s ease-out var(--lead) both; }
+.cx-rings i:nth-child(2) { animation-delay: calc(var(--lead) + 120ms); border-width: 2px; }
+.cx-rings i:nth-child(3) { animation-delay: calc(var(--lead) + 260ms); border-width: 1px; }
+@keyframes cx-ring { from { opacity: .9; transform: scale(.4); } to { opacity: 0; transform: scale(3.6); } }
+.cx-takeover.still :is(.cx-streaks, .cx-rings) { display: none; }
+.cx-takeover.still :is(.cx-card, .cx-title) { animation-name: cx-fade; }
+.cx-takeover.still .cx-flash { animation: none; }
+/* Its surge (play_fx.js climaxSurge): a ring in its colour from the climax zone, each character charging as it
+   reaches it, and the zone flaring. */
+.cx-wave { position: fixed; z-index: 44; width: 0; height: 0; pointer-events: none; }
+.cx-wave::before { content: ""; position: absolute; left: -45vmax; top: -45vmax; width: 90vmax; height: 90vmax; border-radius: 50%;
+  border: 3px solid var(--cx); background: radial-gradient(circle, transparent 55%, color-mix(in srgb, var(--cx) 22%, transparent) 70%, transparent 72%);
+  animation: cx-wave 1.1s cubic-bezier(.2, .7, .3, 1) both; }
+@keyframes cx-wave { from { opacity: 1; transform: scale(.02); } to { opacity: 0; transform: scale(1); } }
+.pcard.cx-charge { animation: cx-charge .75s ease-out; }
+@keyframes cx-charge { 0% { box-shadow: 0 0 0 0 var(--cx); filter: brightness(1); } 30% { box-shadow: 0 0 0 3px var(--cx), 0 0 26px var(--cx); filter: brightness(1.7); } 100% { box-shadow: 0 0 0 0 transparent; filter: none; } }
+/* A climax in play powers its side for the turn (play_fx.js setTableMood, data-cx): that side's mat edged and
+   tinted in its colour, its climax zone glowing and breathing (and flaring as the surge leaves it). */
+.play-board[data-cx~="me"] .side-me .mat { box-shadow: 0 0 0 1px color-mix(in srgb, var(--cx-me) 70%, transparent), 0 0 30px color-mix(in srgb, var(--cx-me) 30%, transparent), inset 0 0 90px color-mix(in srgb, var(--cx-me) 16%, transparent); }
+.play-board[data-cx~="opponent"] .side-opponent .mat { box-shadow: 0 0 0 1px color-mix(in srgb, var(--cx-opponent) 70%, transparent), 0 0 30px color-mix(in srgb, var(--cx-opponent) 30%, transparent), inset 0 0 90px color-mix(in srgb, var(--cx-opponent) 16%, transparent); opacity: 1; }
+.play-board[data-cx~="me"] .mat-me .zone-climax { --cx-glow: var(--cx-me); }
+.play-board[data-cx~="opponent"] .mat-opponent .zone-climax { --cx-glow: var(--cx-opponent); }
+.play-board[data-cx~="me"] .mat-me .zone-climax, .play-board[data-cx~="opponent"] .mat-opponent .zone-climax {
+  border: 1px solid var(--cx-glow); box-shadow: 0 0 22px color-mix(in srgb, var(--cx-glow) 55%, transparent), inset 0 0 18px color-mix(in srgb, var(--cx-glow) 30%, transparent);
+  animation: cx-zone-breathe 2.4s ease-in-out infinite; }
+@keyframes cx-zone-breathe { 50% { box-shadow: 0 0 34px color-mix(in srgb, var(--cx-glow) 75%, transparent), inset 0 0 24px color-mix(in srgb, var(--cx-glow) 45%, transparent); } }
+.zone.cx-zone-burst { animation: cx-zone-burst .8s ease-out !important; }
+@keyframes cx-zone-burst { 0% { box-shadow: 0 0 0 0 var(--cx); } 35% { box-shadow: 0 0 0 4px var(--cx), 0 0 46px var(--cx); } 100% { box-shadow: 0 0 22px transparent; } }
+.play-board[data-still="1"] .zone-climax { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .play-board .zone-climax, .pcard.cx-charge, .zone.cx-zone-burst { animation: none !important; } .cx-wave { display: none; } }
 .stat-pop { position: fixed; z-index: 45; translate: -50% -100%; pointer-events: none; white-space: nowrap; font-size: .95rem; font-weight: 800;
   text-shadow: 0 0 6px rgb(0 0 0 / .95), 0 1px 2px #000; animation: stat-pop 1.2s ease-out both; }
 .stat-pop-up { color: #6be38a; }

@@ -20,6 +20,7 @@
     let fxSeen = null; // {game, battle, ability}: what's been shown, so reopening the page doesn't replay it
     let negatedWait = { me: 0, opponent: 0 }; // how long "Damage Negated!" waits for its cards to turn over
     let ownDamageAt = -Infinity; // when our own "Take damage" flew its cards in, so they don't turn over twice
+    let surgeFrom = null; // {last, owners}: a board with a climax just played, whose stat changes wait for its surge
 
     const cardEl = (uid) => (uid ? boardEl.querySelector(`.pcard[data-uid="${CSS.escape(uid)}"]`) : null);
     const visibleCard = (uid) => { const el = cardEl(uid); return el && !outOfSight(el) ? el : null; };
@@ -65,8 +66,20 @@
         setTimeout(() => showBattle(battle), flipping);
       }
       const newTurn = app.board().turn_number !== last.turn_number || app.board().my_turn !== last.my_turn;
-      if (!newTurn) statPops(last);
-      else showTurnBanner();
+      // A climax just played: its side's stat changes come with its surge, once its takeover has shown
+      // (climaxSurge, called by it in a moment); the other side's now. If no takeover claims them, they all show now.
+      const climaxed = ["me", "opponent"].filter((owner) => last[owner] && app.board()[owner]
+        && (app.board()[owner].climaxes || 0) > (last[owner].climaxes || 0));
+      if (newTurn) showTurnBanner();
+      else if (climaxed.length) {
+        statPops(last, { skip: climaxed });
+        surgeFrom = { last, owners: climaxed };
+        setTimeout(() => {
+          if (!surgeFrom || surgeFrom.last !== last) return;
+          surgeFrom = null;
+          statPops(last, { only: climaxed });
+        }, 0);
+      } else statPops(last);
       // An ability's trails, once its card has shown in the middle of the screen (which would hide them).
       if (now.ability && now.ability !== before.ability && !app.board().ability_show.check) {
         const shown = app.board().ability_show;
@@ -184,12 +197,14 @@
     }
 
     // A character's power, soul or level changed without a new turn: the change floats up off it, green or red,
-    // and the number on the card flares.
-    function statPops(last) {
+    // and the number on the card flares. `only`/`skip`: the sides to do or leave out; `delayOf(el)`: when each
+    // character's pops start (a climax's surge reaching it).
+    function statPops(last, { only = null, skip = [], delayOf = () => 0 } = {}) {
       const was = last.stats || {};
       const is = app.board().stats || {};
       let shown = 0;
       for (const owner of ["me", "opponent"]) {
+        if ((only && !only.includes(owner)) || skip.includes(owner)) continue;
         const side = app.board()[owner];
         const before = last[owner];
         if (!side || !before) continue;
@@ -204,15 +219,18 @@
             .map(([stat, label, sel]) => ({ change: is[card.uid][stat] - was[card.uid][stat], label, sel }));
           if (!changes.length) continue;
           shown += 1;
-          const box = el.getBoundingClientRect();
-          changes.forEach(({ change, label, sel }, n) => {
-            const up = change > 0;
-            const pop = fxAt({ x: box.left + box.width / 2, y: box.top + n * 16 }, `stat-pop ${up ? "stat-pop-up" : "stat-pop-down"}`,
-              `${up ? "+" : "−"}${Math.abs(change)}${label}`, 1600);
-            pop.style.animationDelay = `${n * 120}ms`;
-            const number = el.querySelector(sel);
-            if (number) pulse(number, up ? "stat-flare-up" : "stat-flare-down");
-          });
+          setTimeout(() => {
+            if (!el.isConnected) return;
+            const box = el.getBoundingClientRect();
+            changes.forEach(({ change, label, sel }, n) => {
+              const up = change > 0;
+              const pop = fxAt({ x: box.left + box.width / 2, y: box.top + n * 16 }, `stat-pop ${up ? "stat-pop-up" : "stat-pop-down"}`,
+                `${up ? "+" : "−"}${Math.abs(change)}${label}`, 1600);
+              pop.style.animationDelay = `${n * 120}ms`;
+              const number = el.querySelector(sel);
+              if (number) pulse(number, up ? "stat-flare-up" : "stat-flare-down");
+            });
+          }, delayOf(el));
         }
       }
     }
@@ -253,6 +271,37 @@
       setTimeout(() => svg.remove(), 2000);
     }
 
+    // A climax's power going out to its side, `after` ms from now (as its takeover fades): a ring in its colour
+    // spreads from the climax zone, and each character charges up as it reaches them, nearest first, with its stat
+    // changes floating off it then (held back from tableFx for this).
+    function climaxSurge(owner, color, after) {
+      const waiting = surgeFrom && surgeFrom.owners.includes(owner) ? surgeFrom : null;
+      if (waiting) surgeFrom = null;
+      setTimeout(() => {
+        const mat = boardEl.querySelector(`.mat-${owner}`);
+        const zone = mat && mat.querySelector('[data-pile="climax"]');
+        if (!zone || outOfSight(zone)) {
+          if (waiting) statPops(waiting.last, { only: [owner] });
+          return;
+        }
+        const from = centerOf(zone);
+        const wave = fxAt(from, "cx-wave", "", 1600);
+        wave.style.setProperty("--cx", color);
+        pulse(zone, "cx-zone-burst");
+        zone.style.setProperty("--cx", color);
+        const SPEED = 1.5; // px per ms
+        const delayOf = (el) => Math.min(700, Math.hypot(centerOf(el).x - from.x, centerOf(el).y - from.y) / SPEED);
+        for (const slot of STAGE) {
+          const card = app.board()[owner] && app.board()[owner].stage[slot];
+          const el = card && visibleCard(card.uid);
+          if (!el) continue;
+          el.style.setProperty("--cx", color);
+          setTimeout(() => pulse(el, "cx-charge"), delayOf(el));
+        }
+        if (waiting) statPops(waiting.last, { only: [owner], delayOf });
+      }, after);
+    }
+
     // The table's mood, from the same reading of the board as the music: warmer as the levels climb, a boss's
     // tint, a red heartbeat at the edges at match point (and that side's clock glowing), and whose turn it is.
     function setTableMood() {
@@ -265,11 +314,22 @@
       boardEl.dataset.brink = live ? ["me", "opponent"].filter(atBrink).join(" ") : "";
       boardEl.dataset.turn = live && app.board().opponent ? (app.board().my_turn ? "me" : "opponent") : "";
       boardEl.dataset.still = app.animations() ? "" : "1"; // animations off: the match point's edges glow without pulsing
+      // A climax in play powers its side for the turn: that side tinted in its colour and its climax zone aglow.
+      const powered = [];
+      for (const owner of ["me", "opponent"]) {
+        const zone = live && app.board()[owner] ? app.board()[owner].zones.climax : null;
+        const top = Array.isArray(zone) && zone.length ? zone[zone.length - 1] : null;
+        if (!top || !top.card) continue;
+        powered.push(owner);
+        boardEl.style.setProperty(`--cx-${owner}`, app.climaxColor(cards[top.card]));
+      }
+      boardEl.dataset.cx = powered.join(" ");
     }
 
     return {
       tableFx,
       setTableMood,
+      climaxSurge,
       negatedWait: (owner) => negatedWait[owner] || 0,
       noteOwnDamage: () => { ownDamageAt = performance.now(); },
     };
