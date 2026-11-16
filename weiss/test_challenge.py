@@ -644,6 +644,7 @@ class ChallengeTests(ArcadeSetup):
         self.open(run.packs)
         run.refresh_from_db()
         self.build(run)
+        run = run_with_climaxes(run)  # random packs needn't hold the 8 climaxes a deck needs to fight
         self.client.post(reverse("weiss:arcade_challenge_fight"))
         room = self.room()
         data = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()
@@ -739,6 +740,7 @@ class ChallengeTests(ArcadeSetup):
         self.open(10)
         run.refresh_from_db()
         self.build(run)
+        run = run_with_climaxes(run)  # ten random packs needn't hold the 8 climaxes a deck needs to fight
         self.client.post(reverse("weiss:arcade_challenge_fight"))
         room = self.room()
         self.assertNotIn("cpu_intro", room.state)  # straight to the game

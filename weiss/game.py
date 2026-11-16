@@ -179,7 +179,8 @@ def rps_view(state, player):
 
 def add_log(state, player, text):
     who = state["players"][player]["name"] if player else ""
-    state["log"].append({"who": who, "text": text})
+    # The turn it happened in, for the recap of the opponent's turn (see recap_view).
+    state["log"].append({"who": who, "text": text, "turn": state.get("turn_number", 0)})
     del state["log"][:-MAX_LOG]
 
 
@@ -979,7 +980,7 @@ def end_game(state, loser, reason, said):
     wins = state.setdefault("match_wins", {})
     wins[winner] = wins.get(winner, 0) + 1
     for key in ("ability_queue", "resolving", "ability_show", "combo_show", "attack", "auto_next", "pending_end", "pending_damage", "pending_refresh",
-                "pending_climax", "pending_discard", "reveal", "rules_request"):
+                "pending_climax", "pending_discard", "reveal", "rules_request", "undo"):
         state.pop(key, None)
     add_log(state, loser, f"{said}: {state['players'][winner]['name']} wins!")
 
@@ -1021,6 +1022,72 @@ def apply(state, player, action, name=lambda pk: f"card {pk}", shuffle=random.sh
 
     `info` gives a card's details for the rules (power, soul, level, cost, text)."""
     env = SimpleNamespace(name=name, shuffle=shuffle, is_climax=is_climax, trigger=trigger, cost=cost, info=info)
+    player = str(player)
+    kind = action.get("type")
+    if kind == "undo":
+        return take_back(state, player)
+    # Any action but chatting uses up the last move's chance to be taken back (see take_back).
+    undo = state.pop("undo", None)
+    if kind == "chat" and undo:
+        state["undo"] = undo
+    before = copy.deepcopy(state) if may_take_back(state, kind) else None
+    extra = apply_after(state, player, action, env)
+    if before is not None and safe_to_take_back(before, state, player):
+        # What it was, for the button: the line it added to the log, if it added one (a full log only ever rolls on).
+        added = len(state["log"]) > len(before["log"]) or len(before["log"]) >= MAX_LOG
+        last = state["log"][-1] if added and state["log"] else None
+        what = last["text"] if last and last["who"] == state["players"][player]["name"] and not last.get("chat") else ""
+        state["undo"] = {"player": player, "before": before, "what": what}
+    return extra
+
+
+# --- Taking a move back: a player's last move, if nothing has happened since and it showed nothing hidden ------
+
+# The moves that can be: cards put down, moved, turned or set wrongly, a phase clicked too soon. Drawing, attacking,
+# searching and the rest show something new (a card from a deck), so they can't, and safe_to_take_back checks
+# what the move led to as well.
+TAKE_BACK = {"move", "move_all", "position", "flip", "set_power", "set_soul", "phase", "end_turn", "level_up", "discard", "encore", "activate"}
+
+
+def may_take_back(state, kind):
+    return (kind in TAKE_BACK and not state.get("rps") and state.get("phase") != "mulligan" and not state.get("game_over")
+            and not abilities_busy(state) and not state.get("reveal"))
+
+
+def safe_to_take_back(before, after, player):
+    """Whether this move left nothing to take back that it shouldn't: it showed no card from a deck (no draw, trigger,
+    damage or shuffle, both players' decks exactly as they were), set off no ability (one could look at cards), didn't
+    pass the turn, reveal a card or end the game, and the opponent's hand is as it was."""
+    if after.get("game_over") or after.get("reveal") or after.get("rps") or abilities_busy(after) or after["turn"] != before["turn"]:
+        return False
+    if after.get("pending_damage") or after.get("pending_refresh"):
+        return False
+    for p, side in after["players"].items():
+        was = before["players"][p]
+        if [c["uid"] for c in side["zones"]["deck"]] != [c["uid"] for c in was["zones"]["deck"]]:
+            return False
+        if side.get("refreshes", 0) != was.get("refreshes", 0) or side.get("damage_taken", 0) != was.get("damage_taken", 0):
+            return False
+        if p != player and sorted(c["uid"] for c in side["zones"]["hand"]) != sorted(c["uid"] for c in was["zones"]["hand"]):
+            return False
+    return True
+
+
+def take_back(state, player):
+    """Put the game back as it was before this player's last move (see apply), and say so in the log."""
+    undo = state.get("undo")
+    if not undo or undo["player"] != player or state.get("game_over"):
+        raise GameError("There's no move of yours to take back now.")
+    what = undo.get("what")
+    state.clear()
+    state.update(undo["before"])
+    add_log(state, player, f"took back a move{f' ({what})' if what else ''}")
+    return {}
+
+
+def apply_after(state, player, action, env):
+    """apply's own work: the action, then everything that follows from it."""
+    name, shuffle = env.name, env.shuffle
     extra = apply_action(state, player, action, env)
     check_game_over(state)
     if state.get("game_over"):
@@ -4692,8 +4759,28 @@ def view(state, player):
         "stat_sources": stats_view(state, player, "stat_sources"),
         # This player's cards with a ! button, and why each ability can't be activated right now.
         "acts": state.get("acts", {}).get(player, {}),
+        # On this player's turn, what happened on the opponent's turn before it (see recap_view).
+        "recap": recap_view(state, player),
+        # This player's last move, if they can still take it back (see take_back): {"what": its log line}.
+        "undo": {"what": state["undo"]["what"]} if (state.get("undo") or {}).get("player") == player else None,
         "log": state["log"][-50:],
     }
+
+
+RECAP_LINES = MAX_LOG  # all of the turn the log still holds (it keeps the last MAX_LOG lines)
+
+
+def recap_view(state, player):
+    """On this player's turn, the log of the opponent's turn just before it: {"turn", "who", "lines": [log entries]},
+    or None (not their turn, the first turn, or nothing logged). The page sums it up and shows it once."""
+    turn = state.get("turn_number", 0)
+    if state.get("turn") != player or turn < 2 or state.get("game_over") or state.get("rps"):
+        return None
+    lines = [entry for entry in state["log"] if entry.get("turn") == turn - 1 and not entry.get("chat")]
+    other = next((p for p in state["order"] if p != player), None)
+    if not lines or other is None:
+        return None
+    return {"turn": turn - 1, "who": state["players"][other]["name"], "lines": lines[-RECAP_LINES:]}
 
 
 def spectator_view(state, player):
@@ -4707,7 +4794,7 @@ def spectator_view(state, player):
     reveal = state.get("reveal")
     shown.update({
         "damage_pending": False, "refresh_pending": False, "level_up_pending": False, "climax_pending": False, "auto_next": None,
-        "rps": None, "discard": None, "mulligan": None, "flash": None, "rules_request": None, "acts": {},
+        "rps": None, "discard": None, "mulligan": None, "flash": None, "rules_request": None, "acts": {}, "undo": None,
         "reveal": {"card": reveal["card"], "by": state["players"][reveal["player"]]["name"]} if reveal else None,
         "ability": ability_view(state, None),
         "stats": stats_view(state, None),

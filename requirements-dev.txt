@@ -1,0 +1,4 @@
+-r requirements.txt
+# For running the tests in parallel (manage.py test --parallel): Django needs it to send a failing test's
+# traceback back from the worker process; without it the whole run stops at the first failure without naming it.
+tblib

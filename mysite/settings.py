@@ -35,6 +35,14 @@ def env_list(name, default=""):
 # --- Core -------------------------------------------------------------------
 DEBUG = os.environ.get("DJANGO_DEBUG", "0") == "1"
 
+# The game board's long-poll (weiss.play.room_state): how long a page's request for the board may wait for a change
+# before answering "nothing new", and how many may wait at once per server process (beyond that they answer at
+# once, as with plain polling). Each waiting request holds a server thread, so in production this stays off (0)
+# until gunicorn runs threaded workers with threads to spare (e.g. --worker-class gthread --threads 8): then set
+# PLAY_LONG_POLL_SECONDS (8 is good) and keep PLAY_LONG_POLL_MAX under the threads per worker.
+PLAY_LONG_POLL_SECONDS = float(os.environ.get("PLAY_LONG_POLL_SECONDS", "8" if DEBUG else "0"))
+PLAY_LONG_POLL_MAX = int(os.environ.get("PLAY_LONG_POLL_MAX", "4"))
+
 if DEBUG:
     SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-insecure-key")
 else:

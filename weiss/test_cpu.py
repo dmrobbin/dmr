@@ -1,12 +1,13 @@
 import copy
 import json
 import random
+import time
 from collections import Counter
 from datetime import timedelta
 from unittest import mock
 
 from django.contrib.auth.models import Group, User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -7055,6 +7056,40 @@ class PagesTests(TestCase):
         self.client.get(state_url)
         room.refresh_from_db()
         self.assertIn(str(room.guest_id), room.state["rps"]["picks"])
+
+    @override_settings(PLAY_LONG_POLL_SECONDS=3, PLAY_LONG_POLL_MAX=4)
+    def test_a_long_poll_answers_with_the_cpus_move_as_soon_as_its_due(self):
+        room, _ = self.challenge()
+        state_url = reverse("weiss:play_state", args=[room.pk])
+        # Its move is due in half a second: the request waits for it, makes it, and answers with it.
+        wait = cpu.wait_seconds(room.state)
+        GameRoom.objects.filter(pk=room.pk).update(updated=timezone.now() - timedelta(seconds=wait - 0.5))
+        started = time.monotonic()
+        response = self.client.get(state_url, {"v": room.version, "wait": "1"})
+        took = time.monotonic() - started
+        self.assertEqual(response.status_code, 200)
+        self.assertGreater(response.json()["version"], room.version)
+        self.assertGreater(took, 0.3)  # it waited for the move (a 204 at the end of its 3 seconds would fail above)
+
+    @override_settings(PLAY_LONG_POLL_SECONDS=1, PLAY_LONG_POLL_MAX=4)
+    def test_a_long_poll_with_nothing_happening_answers_nothing_new_after_its_time(self):
+        room, _ = self.challenge()
+        state_url = reverse("weiss:play_state", args=[room.pk])
+        GameRoom.objects.filter(pk=room.pk).update(updated="2000-01-01T00:00:00Z")
+        version = self.client.get(state_url).json()["version"]  # the CPU picks; now it waits on us
+        started = time.monotonic()
+        self.assertEqual(self.client.get(state_url, {"v": version, "wait": "1"}).status_code, 204)
+        self.assertGreater(time.monotonic() - started, 0.9)
+
+    def test_a_long_poll_off_or_full_answers_at_once(self):
+        room, _ = self.challenge()
+        state_url = reverse("weiss:play_state", args=[room.pk])
+        version = GameRoom.objects.get(pk=room.pk).version
+        for options in ({"PLAY_LONG_POLL_SECONDS": 0, "PLAY_LONG_POLL_MAX": 4}, {"PLAY_LONG_POLL_SECONDS": 5, "PLAY_LONG_POLL_MAX": 0}):
+            with self.settings(**options):
+                started = time.monotonic()
+                self.assertEqual(self.client.get(state_url, {"v": version, "wait": "1"}).status_code, 204)
+                self.assertLess(time.monotonic() - started, 2.5, options)  # not held for its 5 seconds
 
     def play_out(self, room, limit=1500):
         """A full game against the CPU through the real code, with a player who only does the minimum."""

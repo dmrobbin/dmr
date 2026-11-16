@@ -6,6 +6,8 @@ The board page polls `room_state` every second or two; it answers 204 when nothi
 """
 import json
 import logging
+import threading
+import time
 from datetime import timedelta
 
 from django.contrib import messages
@@ -745,19 +747,81 @@ def room_delete(request, pk):
 
 @weiss_access_required
 def room_state(request, pk):
-    """Polled by the page: 204 if nothing changed since ?v=, else the board (or just the status in setup)."""
+    """Polled by the page: 204 if nothing changed since ?v=, else the board (or just the status in setup). With
+    ?wait=1 and the long-poll on (settings.PLAY_LONG_POLL_SECONDS), a request that would be a 204 waits for a change
+    first: the other player's move, or, against a CPU, its next move, made here once it's due."""
     room = my_room(request, pk)
     if not room:
         return HttpResponseForbidden()
-    if room.vs_cpu and room.status == GameRoom.Status.PLAYING:
-        room = cpu_step(room)
-        if room.state.get("shared_boss") and not room.state.get("game_over"):
-            room = boss_gone(room)
-    if request.GET.get("v") == str(room.version):
+    room = keep_going(room)
+    seen = request.GET.get("v")
+    if seen == str(room.version) and request.GET.get("wait") == "1":
+        room = wait_for_change(room, seen)
+    if seen == str(room.version):
         return HttpResponse(status=204)
     if room.status != GameRoom.Status.PLAYING:
         return JsonResponse({"version": room.version, "status": room.status})
     return JsonResponse(board_payload(room, request.user))
+
+
+def keep_going(room):
+    """What polling a room moves along by itself: the CPU's next move, once it's due, and a shared boss already down."""
+    if room.vs_cpu and room.status == GameRoom.Status.PLAYING:
+        room = cpu_step(room)
+        if room.state.get("shared_boss") and not room.state.get("game_over"):
+            room = boss_gone(room)
+    return room
+
+
+LONG_POLL_TICK = 0.25  # seconds between looks at the room's version while a request waits
+_held = 0  # requests waiting right now, in this process
+_held_lock = threading.Lock()
+
+
+def _take_slot():
+    global _held
+    with _held_lock:
+        if _held >= settings.PLAY_LONG_POLL_MAX:
+            return False
+        _held += 1
+        return True
+
+
+def _give_slot():
+    global _held
+    with _held_lock:
+        _held -= 1
+
+
+def wait_for_change(room, seen):
+    """Hold this request until the room's version moves on from `seen` (or PLAY_LONG_POLL_SECONDS pass), looking only
+    at its version and when it last changed, and making the CPU's move here once it's due. Every waiting request holds
+    a server thread, so only PLAY_LONG_POLL_MAX wait at once; the rest answer straight away, as plain polling does.
+    Returns the room as it now is."""
+    seconds = settings.PLAY_LONG_POLL_SECONDS
+    if seconds <= 0 or not _take_slot():
+        return room
+    try:
+        deadline = time.monotonic() + seconds
+        # Whether the CPU may still move: once it's been asked and had nothing to do, it won't until something changes.
+        cpu_may_move = room.vs_cpu and room.status == GameRoom.Status.PLAYING
+        while time.monotonic() < deadline:
+            # When the CPU's next move is due: after what happened last has been on screen long enough.
+            due = (room.updated + timedelta(seconds=cpu.wait_seconds(room.state))) if cpu_may_move else None
+            time.sleep(LONG_POLL_TICK)
+            now = GameRoom.objects.filter(pk=room.pk).values_list("version", flat=True).first()
+            if now is None:
+                break
+            if str(now) != seen:
+                return GameRoom.objects.select_related("host", "guest").get(pk=room.pk)
+            if due and timezone.now() >= due:
+                room = keep_going(GameRoom.objects.select_related("host", "guest").get(pk=room.pk))
+                if str(room.version) != seen:
+                    return room
+                cpu_may_move = False
+        return room
+    finally:
+        _give_slot()
 
 
 @weiss_access_required

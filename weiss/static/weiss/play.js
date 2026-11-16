@@ -161,7 +161,7 @@
     animations = on;
     try { localStorage.setItem(ANIMATIONS_KEY, on ? "on" : "off"); } catch (e) { /* only this visit, then */ }
     if (board) {
-      setTableMood();
+      fx.setTableMood();
       renderControls();
     }
   }
@@ -623,7 +623,7 @@
       throw e;
     }
     // The show around it (flights, bursts, announcements, sounds) is extra: if it goes wrong, the board stands.
-    for (const extra of [() => animateOpponent(before), () => wasInPlay && animations && celebrate(wasInPlay), () => tableFx(lastBoard), announce, playBoardSounds]) {
+    for (const extra of [() => animateOpponent(before), () => wasInPlay && animations && celebrate(wasInPlay), () => fx.tableFx(lastBoard), announce, playBoardSounds]) {
       try {
         extra();
       } catch (e) {
@@ -748,7 +748,7 @@
       if (now[owner].climaxes > seen[owner].climaxes) showClimax(side.zones.climax[side.zones.climax.length - 1]);
       if (now[owner].negated > seen[owner].negated) {
         const card = side.negated_card;
-        setTimeout(() => showNegated(card), negatedWait[owner]); // once the damage's cards have turned over (tableFx)
+        setTimeout(() => showNegated(card), fx.negatedWait(owner)); // once the damage's cards have turned over (tableFx)
       }
       if (now[owner].level_ups > seen[owner].level_ups) {
         showLevelUp(owner === "me" && !SPECTATING ? "You" : side.name, side.zones.level.length);
@@ -1131,253 +1131,13 @@
     el.addEventListener("animationend", () => el.remove());
   }
 
-  // --- The table's show: damage turning over a card at a time, the battle's clash, stat changes floating off
-  // the cards, whose turn it is, and an ability reaching its targets. All worked out from the difference between
-  // the last board and this one, after it's drawn; with animations off, none of it (the table's mood still shows) --
+  // --- The table's show and mood: play_fx.js (WeissTableFx), made at the end once all it uses is defined -------
 
-  const FX_STEP_MS = 160; // between damage cards turning over when the music isn't setting the beat
-  const MAX_STAT_POPS = 6; // characters whose stats float a change at once (an end-of-turn reset is left out anyway)
-  const BATTLE_MS = 1700; // the power duel's time on screen
-  let fxSeen = null; // {game, battle, ability}: what's been shown, so reopening the page doesn't replay it
-  let negatedWait = { me: 0, opponent: 0 }; // how long "Damage Negated!" waits for its cards to turn over
-  let ownDamageAt = -Infinity; // when our own "Take damage" flew its cards in, so they don't turn over twice
+  let fx = null;
 
-  const cardEl = (uid) => (uid ? boardEl.querySelector(`.pcard[data-uid="${CSS.escape(uid)}"]`) : null);
-  const visibleCard = (uid) => { const el = cardEl(uid); return el && !outOfSight(el) ? el : null; };
-  const centerOf = (el) => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
-  // The music's sixteenth, so the cards turn over on its ticks; a steady beat without it.
-  const fxStep = () => (score && score.running ? score.STEP * 1000 : FX_STEP_MS);
+  // --- The recap of the opponent's turn: play_recap.js (WeissRecap), made at the end too --------------------------
 
-  // Something fixed over the board at a point, gone when its animation ends (or after `ms`, in case it never runs).
-  function fxAt(at, className, html, ms = 2500) {
-    const el = document.createElement("div");
-    el.className = className;
-    el.setAttribute("aria-hidden", "true"); // the log and the board say what happened; this only shows it
-    el.innerHTML = html;
-    Object.assign(el.style, { left: `${at.x}px`, top: `${at.y}px` });
-    document.body.appendChild(el);
-    el.addEventListener("animationend", (event) => { if (event.target === el) el.remove(); });
-    setTimeout(() => el.remove(), ms);
-    return el;
-  }
-
-  // A class that plays an animation on a card, taken off again once it has.
-  function pulse(el, className) {
-    el.classList.remove(className);
-    void el.offsetWidth; // restart it
-    el.classList.add(className);
-    el.addEventListener("animationend", () => el.classList.remove(className), { once: true });
-  }
-
-  function tableFx(last) {
-    negatedWait = { me: 0, opponent: 0 };
-    const now = { game: board.game_number, battle: (board.battle || {}).id || "", ability: (board.ability_show || {}).id || "" };
-    const before = fxSeen && fxSeen.game === now.game ? fxSeen : null;
-    fxSeen = now;
-    if (!before || !last || !animations || board.rps || last.game_number !== board.game_number) return;
-    // Damage first (it comes before the battle in an attack), then the clash once its cards have turned over.
-    const flipping = Math.max(damageFlips(last, "me"), damageFlips(last, "opponent"));
-    if (now.battle && now.battle !== before.battle) {
-      const battle = board.battle;
-      // The board already has the loser reversed: it stays upright until the clash turns it over.
-      battle.reversed.map(visibleCard).filter(Boolean).forEach((el) => el.classList.add("battle-pending"));
-      setTimeout(() => showBattle(battle), flipping);
-    }
-    const newTurn = board.turn_number !== last.turn_number || board.my_turn !== last.my_turn;
-    if (!newTurn) statPops(last);
-    else showTurnBanner();
-    // An ability's trails, once its card has shown in the middle of the screen (which would hide them).
-    if (now.ability && now.ability !== before.ability && !board.ability_show.check) {
-      const shown = board.ability_show;
-      setTimeout(() => abilityTrails(shown), CLIMAX_SHOW_MS * 0.75);
-    }
-  }
-
-  // A damage's new clock cards turn over one at a time, on the music's ticks: the last one lands the hit (the
-  // side shakes) or, a climax, the cancel (it flares gold, and "Damage Negated!" waits for it). How long it takes.
-  function damageFlips(last, owner) {
-    const was = last[owner];
-    const is = board[owner];
-    if (!was || !is || !Array.isArray(was.zones.clock) || !Array.isArray(is.zones.clock)) return 0;
-    const negated = (is.negated || 0) > (was.negated || 0);
-    if (!negated && (is.damage_taken || 0) <= (was.damage_taken || 0)) return 0;
-    if (owner === "me" && performance.now() - ownDamageAt < 3000) return 0;
-    const mat = boardEl.querySelector(`.mat-${owner}`);
-    if (outOfSight(mat)) return 0;
-    const old = new Set(was.zones.clock.map((c) => c.uid));
-    const fresh = is.zones.clock.filter((c) => !old.has(c.uid)).map((c) => cardEl(c.uid)).filter(Boolean);
-    if (!fresh.length) return 0;
-    const step = fxStep();
-    fresh.forEach((el, n) => {
-      el.classList.add("dmg-wait");
-      setTimeout(() => {
-        el.classList.remove("dmg-wait");
-        pulse(el, n < fresh.length - 1 ? "dmg-flip" : negated ? "dmg-cancel" : "dmg-hit");
-      }, n * step);
-    });
-    const end = (fresh.length - 1) * step;
-    if (negated) negatedWait[owner] = end + 250;
-    else setTimeout(() => shakeSide(mat, fresh.length), end);
-    return end + 350;
-  }
-
-  // The hit lands: the side of the table jolts (harder for more damage), or, without motion, flashes red.
-  function shakeSide(mat, amount) {
-    if (!mat.isConnected) return;
-    if (reducedMotion) {
-      pulse(mat, "mat-hurt");
-      return;
-    }
-    const d = Math.min(3 + amount, 8);
-    mat.animate([{ translate: "0 0" }, { translate: `${-d}px 1px` }, { translate: `${d * 0.8}px -1px` }, { translate: `${-d * 0.5}px 0` }, { translate: "0 0" }],
-      { duration: 320, easing: "ease-out" });
-    pulse(mat, "mat-hurt");
-  }
-
-  // The battle: the attacker lunges into the defender, they meet in a flash with their power counting up between
-  // them, and the loser turns over to reversed with a crack.
-  function showBattle(battle) {
-    const attacker = visibleCard(battle.attacker);
-    const defender = visibleCard(battle.defender);
-    let impact = 0;
-    if (attacker && defender) {
-      const from = centerOf(attacker);
-      const to = centerOf(defender);
-      const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
-      if (!reducedMotion) {
-        const dx = (to.x - from.x) * 0.38;
-        const dy = (to.y - from.y) * 0.38;
-        attacker.animate([{ translate: "0 0", scale: "1" }, { translate: `${dx * -0.12}px ${dy * -0.12}px`, scale: "1.04", offset: 0.25 },
-          { translate: `${dx}px ${dy}px`, scale: "1.08", offset: 0.5 }, { translate: "0 0", scale: "1" }], { duration: 560, easing: "cubic-bezier(.5, 0, .3, 1)" });
-        impact = 280;
-      }
-      setTimeout(() => {
-        fxAt(mid, "clash-burst", '<span class="clash-ring"></span><span class="clash-ring clash-ring-late"></span><span class="clash-flash"></span>', 1200);
-        powerDuel(mid, battle, attacker, defender);
-      }, impact);
-    } else {
-      const one = attacker || defender;
-      if (one) powerDuel(centerOf(one), battle, attacker, defender);
-    }
-    setTimeout(() => {
-      for (const uid of battle.reversed) {
-        const el = visibleCard(uid);
-        if (!el) continue;
-        el.classList.remove("battle-pending");
-        if (!reducedMotion) el.animate([{ rotate: "-180deg" }, { rotate: "-200deg", offset: 0.2 }, { rotate: "0deg" }], { duration: 520, easing: "cubic-bezier(.3, .8, .3, 1.15)" });
-        pulse(el, "reverse-crack");
-      }
-    }, impact + 260);
-  }
-
-  // The power duel: each side's number counting up from what's printed to what it battled at.
-  function powerDuel(at, battle, attackerEl, defenderEl) {
-    const [mine, theirs] = battle.power;
-    const printed = (el, fallback) => Number((cards[el && el.dataset.card] || {}).power ?? fallback) || 0;
-    const tie = mine === theirs;
-    const side = (cls, value, won) => `<span class="duel-side ${cls}${won ? " duel-won" : tie ? " duel-tie" : " duel-lost"}"><b data-to="${value}">${value}</b></span>`;
-    const el = fxAt(at, "battle-duel",
-      `${side("duel-attacker", mine, mine > theirs)}<span class="duel-vs">vs</span>${side("duel-defender", theirs, theirs > mine)}`, BATTLE_MS + 400);
-    el.style.setProperty("--duel-ms", `${BATTLE_MS}ms`);
-    if (reducedMotion) return;
-    const numbers = el.querySelectorAll("b");
-    const starts = [printed(attackerEl, mine), printed(defenderEl, theirs)];
-    const began = performance.now();
-    const COUNT_MS = 420;
-    (function tick(t) {
-      const k = Math.min(1, (t - began) / COUNT_MS);
-      numbers.forEach((b, i) => {
-        const to = Number(b.dataset.to);
-        b.textContent = String(Math.round((starts[i] + (to - starts[i]) * k) / 50) * 50);
-      });
-      if (k < 1 && el.isConnected) requestAnimationFrame(tick);
-      else numbers.forEach((b) => { b.textContent = b.dataset.to; });
-    })(began);
-  }
-
-  // A character's power, soul or level changed without a new turn: the change floats up off it, green or red,
-  // and the number on the card flares.
-  function statPops(last) {
-    const was = last.stats || {};
-    const is = board.stats || {};
-    let shown = 0;
-    for (const owner of ["me", "opponent"]) {
-      const side = board[owner];
-      const before = last[owner];
-      if (!side || !before) continue;
-      const stood = new Set(STAGE.map((slot) => (before.stage[slot] || {}).uid).filter(Boolean));
-      for (const slot of STAGE) {
-        const card = side.stage[slot];
-        if (!card || !stood.has(card.uid) || !was[card.uid] || !is[card.uid] || shown >= MAX_STAT_POPS) continue;
-        const el = visibleCard(card.uid);
-        if (!el) continue;
-        const changes = [["power", "", ".stat-power"], ["soul", " soul", ".stat-soul"], ["level", " level", ".stat-level"]]
-          .filter(([stat]) => typeof was[card.uid][stat] === "number" && typeof is[card.uid][stat] === "number" && was[card.uid][stat] !== is[card.uid][stat])
-          .map(([stat, label, sel]) => ({ change: is[card.uid][stat] - was[card.uid][stat], label, sel }));
-        if (!changes.length) continue;
-        shown += 1;
-        const box = el.getBoundingClientRect();
-        changes.forEach(({ change, label, sel }, n) => {
-          const up = change > 0;
-          const pop = fxAt({ x: box.left + box.width / 2, y: box.top + n * 16 }, `stat-pop ${up ? "stat-pop-up" : "stat-pop-down"}`,
-            `${up ? "+" : "−"}${Math.abs(change)}${label}`, 1600);
-          pop.style.animationDelay = `${n * 120}ms`;
-          const number = el.querySelector(sel);
-          if (number) pulse(number, up ? "stat-flare-up" : "stat-flare-down");
-        });
-      }
-    }
-  }
-
-  // A new turn: a banner across the middle of the table with whose it is (their picture, if they have one).
-  function showTurnBanner() {
-    if (board.game_over || !board.opponent) return;
-    const divider = boardEl.querySelector(".table-divider");
-    if (outOfSight(divider)) return;
-    const mine = board.my_turn;
-    const name = mine ? board.me.name : board.opponent.name;
-    const box = divider.getBoundingClientRect();
-    const words = mine && !SPECTATING ? "Your turn" : `${esc(name)}'s turn`;
-    fxAt({ x: box.left + box.width / 2, y: box.top + box.height / 2 }, `turn-banner ${mine ? "turn-banner-me" : "turn-banner-opponent"}`,
-      `${avatars[name] ? who(name, "turn-banner-face") : ""}<span>${words}</span>`, 2600);
-  }
-
-  // An ability that resolved: its card pulses where it is on the board and trails run to the cards it was directed at.
-  function abilityTrails(shown) {
-    const source = visibleCard(shown.uid);
-    const targets = (shown.target_uids || []).map(visibleCard).filter((el) => el && el !== source);
-    if (source) pulse(source, "fx-source");
-    targets.forEach((el, n) => setTimeout(() => pulse(el, "fx-target"), 220 + n * 90));
-    if (!source || !targets.length || reducedMotion) return;
-    const from = centerOf(source);
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("class", "ability-trails");
-    svg.setAttribute("aria-hidden", "true");
-    svg.innerHTML = targets.map((el) => {
-      const to = centerOf(el);
-      // A gentle arc, bowing away from the middle of the line.
-      const mx = (from.x + to.x) / 2 - (to.y - from.y) * 0.18;
-      const my = (from.y + to.y) / 2 + (to.x - from.x) * 0.18;
-      return `<path d="M${from.x} ${from.y} Q${mx} ${my} ${to.x} ${to.y}" pathLength="1"/><circle cx="${to.x}" cy="${to.y}" r="5"/>`;
-    }).join("");
-    document.body.appendChild(svg);
-    svg.addEventListener("animationend", (event) => { if (event.target === svg) svg.remove(); });
-    setTimeout(() => svg.remove(), 2000);
-  }
-
-  // The table's mood, from the same reading of the board as the music: warmer as the levels climb, a boss's
-  // tint, a red heartbeat at the edges at match point (and that side's clock glowing), and whose turn it is.
-  function setTableMood() {
-    const live = board && !board.game_over && !board.rps;
-    const sides = [board.me, board.opponent].filter(Boolean);
-    const level = live ? Math.max(0, ...sides.map((side) => pileCount(side.zones.level))) : 0;
-    const theme = musicTheme();
-    boardEl.dataset.tier = String(Math.min(level, 3));
-    boardEl.dataset.boss = live && theme && theme.boss ? "1" : "";
-    boardEl.dataset.brink = live ? ["me", "opponent"].filter(atBrink).join(" ") : "";
-    boardEl.dataset.turn = live && board.opponent ? (board.my_turn ? "me" : "opponent") : "";
-    boardEl.dataset.still = animations ? "" : "1"; // animations off: the match point's edges glow without pulsing
-  }
+  let recap = null;
 
   // --- Card movement: our own moves fly a card from where it is to where it's going, and then the
   // action is sent, so the real card appears as the flight lands ---------------------------------
@@ -1497,7 +1257,7 @@
       }
       case "damage":
         fromZone("deck", "clock", action.count || 1);
-        ownDamageAt = performance.now(); // these cards have flown in: tableFx doesn't turn them over again
+        fx.noteOwnDamage(); // these cards have flown in: the table's show doesn't turn them over again
         break;
       case "encore": fromZone("stock", "waiting", ENCORE_COST); break;
       case "clock_draw": {
@@ -1597,21 +1357,52 @@
     flyAll(flights);
   }
 
+  // Asking for the board: one request at a time, from pollLoop. The server may hold a request until something changes
+  // (its long-poll, weiss.play.room_state): a "nothing new" that took a while says it does, and then the next request
+  // goes straight out, so a move shows as soon as it's made. Otherwise this is plain polling, every POLL_MS.
+  const LONG_POLL_SIGN_MS = 1500;
+  let polling = false;
+  let longPoll = false;
+  let pollWake = null; // ends pollLoop's pause early (the tab coming back into view)
+
+  // "board", "nothing" or "failed" (what came back), or "skipped" (an action of ours is out, or a poll already is).
   async function poll() {
-    if (busy || (document.hidden && Math.random() < 0.7)) return; // check less often in background tabs
+    if (busy || polling) return "skipped";
+    polling = true;
     let data = null;
     let problem = "";
     try {
-      const response = await fetchWithin(POLL_TIMEOUT_MS, `${STATE_URL}?v=${version}`, { credentials: "same-origin" });
+      const started = performance.now();
+      // A tab out of sight doesn't hold a server thread waiting: it only checks, and less often (pollLoop).
+      const response = await fetchWithin(POLL_TIMEOUT_MS, `${STATE_URL}?v=${version}&wait=${document.hidden ? 0 : 1}`, { credentials: "same-origin" });
       if (response.status === 200) data = await response.json();
+      else if (response.status === 204) longPoll = performance.now() - started > LONG_POLL_SIGN_MS;
       else if (response.status >= 500) problem = SERVER_ERROR;
     } catch (e) { problem = CONNECTION_ERROR; } // offline for a moment, or timed out; try again next tick
+    finally { polling = false; }
+    // Our own action's answer may have brought this board already: nothing to draw again.
+    if (data && data.version !== undefined && String(data.version) === version && !problem) data = null;
     // Outside the try: a mistake in drawing the board must show in the console, not pass for being offline.
     if (data && [CONNECTION_ERROR, DRAW_ERROR, SERVER_ERROR].includes(error)) error = ""; // through again: the board says where things stand
     if (data) receive(data);
     else {
       if (problem) pollFailed(problem);
       if (!busy) armTimers(); // nothing new: anything we owe the game that didn't get through goes again
+    }
+    return data ? "board" : problem ? "failed" : "nothing";
+  }
+
+  async function pollLoop() {
+    for (;;) {
+      const got = await poll();
+      // Held requests come back as soon as there's news, so the next goes out at once; plain polling waits its turn,
+      // as does a failure (no hammering a server that's struggling) and a tab out of sight (less often still).
+      const pause = document.hidden ? POLL_MS * 3 : longPoll && (got === "board" || got === "nothing") ? 50 : POLL_MS;
+      await new Promise((resolve) => {
+        pollWake = resolve;
+        setTimeout(resolve, pause);
+      });
+      pollWake = null;
     }
   }
 
@@ -2087,7 +1878,7 @@
           <div class="hand-cards">${me.zones.hand.map((c) => `<div class="hand-card">${cardHtml(c, "me", "hand")}${handActionsHtml(c)}</div>`).join("")}</div></div>
       </div>`;
 
-    setTableMood();
+    fx.setTableMood();
     renderControls();
     announcePhase();
 
@@ -2113,12 +1904,17 @@
       controlsEl.innerHTML = `
         <p class="panel-error" role="alert" data-error hidden></p>
         <div class="ability-dock" data-ability-dock role="alertdialog" aria-live="assertive" hidden></div>
+        <section class="turn-recap" data-recap aria-label="The opponent's last turn" hidden></section>
         <p class="play-turn" data-turn></p>
         <div class="phase-area">
           <div class="phase-bar" role="group" aria-label="Turn phase" data-phase-bar>
             ${PHASE_NAMES.map((p) => `<button type="button" data-phase="${p}">${cxHtml(PHASES[p])}</button>`).join("")}
           </div>
           <div class="attack-panel" data-attack-panel hidden></div>
+        </div>
+        <div class="undo-bar" data-undo-bar hidden>
+          <button type="button" data-act='{"type":"undo"}' aria-keyshortcuts="Control+Z" title="Take back your last move (Ctrl+Z)">↶ Undo</button>
+          <span class="undo-what" data-undo-what></span>
         </div>
         <p class="muted small phase-note"></p>
         <details class="play-tools" data-tools${compact ? "" : " open"}>
@@ -2157,6 +1953,12 @@
     controlsEl.querySelectorAll("[data-layout]").forEach((button) => {
       button.setAttribute("aria-pressed", String(button.dataset.layout === layout));
     });
+    recap.render();
+    // Our last move, while we can still take it back (game.take_back): what it was, beside the button.
+    const undo = !SPECTATING && board.undo;
+    const undoBar = controlsEl.querySelector("[data-undo-bar]");
+    undoBar.hidden = !undo;
+    if (undo) controlsEl.querySelector("[data-undo-what]").textContent = undo.what ? undo.what.charAt(0).toUpperCase() + undo.what.slice(1) : "Your last move";
     controlsEl.querySelector("[data-animations]").setAttribute("aria-pressed", String(animations));
     controlsEl.querySelector("[data-sound]").setAttribute("aria-pressed", String(soundOn));
     const musicEl = controlsEl.querySelector("[data-music]");
@@ -3752,6 +3554,10 @@
       setLayout(layoutButton.dataset.layout);
       return;
     }
+    if (event.target.closest("[data-recap-close]")) {
+      recap.dismiss();
+      return;
+    }
     const button = event.target.closest("[data-act]");
     if (button) {
       if (button.closest("[data-tray]")) clearSelection(); // done with the picked card
@@ -3855,6 +3661,15 @@
       act({ type: "level_up", uid: levelPick.dataset.levelUp });
       return;
     }
+    // Ctrl+Z (⌘Z on a Mac): take back our last move, while it can be (not while typing, where it undoes the typing).
+    if ((event.key === "z" || event.key === "Z") && (event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey
+        && !(event.target.closest && event.target.closest("input, textarea, select, [contenteditable]"))) {
+      if (board && board.undo && !SPECTATING && !busy) {
+        event.preventDefault();
+        act({ type: "undo" });
+      }
+      return;
+    }
     // M: the music on or off, unless typing (chat, a damage amount) or with a modifier held.
     if ((event.key === "m" || event.key === "M") && !event.ctrlKey && !event.metaKey && !event.altKey && !event.repeat
         && !(event.target.closest && event.target.closest("input, textarea, select, [contenteditable]"))) {
@@ -3940,8 +3755,17 @@
     syncMusic();
   }, { once: true });
 
-  poll();
-  setInterval(poll, POLL_MS);
+  // The pieces in files of their own (see each one's header), now that all they use is defined. If one didn't load,
+  // the board goes on without it.
+  fx = window.WeissTableFx ? window.WeissTableFx.create({
+    boardEl, cards, STAGE, CLIMAX_SHOW_MS, SPECTATING, reducedMotion, esc, who, outOfSight, pileCount, musicTheme, atBrink,
+    board: () => board, avatars: () => avatars, animations: () => animations, score: () => score,
+  }) : { tableFx() {}, setTableMood() {}, negatedWait: () => 0, noteOwnDamage() {} };
+  recap = window.WeissRecap ? window.WeissRecap.create({
+    controlsEl, esc, who, logHtml, gameNumber, board: () => board, avatars: () => avatars,
+  }) : { render() {}, dismiss() {} };
+
+  pollLoop();
   // Back from another tab or app (a phone woken up): catch up at once rather than on the next tick. While
   // the page is hidden its sound is paused (the music too, mid-bar, to carry on where it was).
   document.addEventListener("visibilitychange", () => {
@@ -3949,6 +3773,6 @@
       if (document.hidden) audio.suspend().catch(() => {});
       else if (soundOn) audio.resume().catch(() => {});
     }
-    if (!document.hidden) poll();
+    if (!document.hidden && pollWake) pollWake(); // back in view: ask now rather than at the end of the pause
   });
 })();

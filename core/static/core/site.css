@@ -1069,7 +1069,7 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .hand-opponent .pcard { width: calc(var(--card-w) * .6); height: calc(var(--card-h) * .6); }
 .hand-opponent .hand-cards { min-height: calc(var(--card-h) * .6); }
 
-.play-side { position: sticky; top: 5rem; display: grid; gap: .75rem; font-size: .85rem; }
+.play-side { position: sticky; top: 5rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: .75rem; font-size: .85rem; } /* its width, whatever is in it (a long undo line, say) */
 .play-preview { padding: .75rem; border: 1px solid var(--border); border-radius: .75rem; background: var(--surface); min-height: 6rem; }
 .play-preview img { width: 100%; max-width: 13rem; display: block; margin: 0 auto .5rem; border-radius: .5rem; }
 .play-preview p { margin: 0 0 .3rem; }
@@ -1142,6 +1142,36 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .phase-note { margin: 0 0 .4rem; }
 /* The attack phase's panel (in place of the phase bar): its steps, what's happening, and buttons. */
 .attack-panel { margin: .4rem 0 .3rem; padding: .55rem .65rem; border: 1px solid #b23a3a; border-radius: .5rem; background: linear-gradient(135deg, rgb(178 58 58 / .22), rgb(20 22 28 / .6)); }
+/* Our last move, while it can be taken back (play.js renderControls): the button, with what the move was. */
+.undo-bar { display: flex; align-items: center; gap: .55rem; margin: .45rem 0 .2rem; padding: .35rem .45rem; border: 1px dashed var(--border); border-radius: .5rem; font-size: .82rem; animation: undo-in .25s ease-out; }
+.undo-bar[hidden] { display: none; }
+.undo-bar button { flex: none; font: inherit; font-weight: 700; padding: .3rem .7rem; border-radius: .4rem; border: 1px solid var(--accent); background: none; color: var(--accent); cursor: pointer; }
+.undo-bar button:hover { background: rgb(212 175 55 / .14); }
+.undo-bar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.undo-what { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+@keyframes undo-in { from { opacity: 0; transform: translateY(-3px); } }
+@media (prefers-reduced-motion: reduce) { .undo-bar { animation: none; } }
+.play.touch .undo-bar button { min-height: 2.6rem; padding-inline: 1rem; }
+/* The recap of the opponent's turn (play.js renderRecap): what it came to, then every move under a disclosure. */
+.turn-recap { margin: 0 0 .6rem; padding: .55rem .7rem .6rem; border: 1px solid rgb(143 131 255 / .45); border-radius: .6rem;
+  background: linear-gradient(135deg, rgb(91 61 143 / .22), rgb(20 22 28 / .5)); animation: undo-in .3s ease-out; }
+.turn-recap[hidden] { display: none; }
+.turn-recap-head { display: flex; align-items: flex-start; justify-content: space-between; gap: .5rem; }
+.turn-recap-title { margin: 0; font-size: .82rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #cfc8ff; }
+.turn-recap-title > span { display: flex; align-items: center; gap: .35rem; margin-top: .15rem; font-size: .8rem; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--muted); }
+.turn-recap-close { flex: none; width: 2rem; height: 2rem; margin: -.3rem -.4rem 0 0; border: none; border-radius: .4rem; background: none; color: var(--muted); font-size: 1.2rem; line-height: 1; cursor: pointer; }
+.turn-recap-close:hover { color: var(--text); background: rgb(255 255 255 / .06); }
+.turn-recap-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.turn-recap-items { display: flex; flex-wrap: wrap; gap: .3rem; margin: .45rem 0 0; padding: 0; list-style: none; }
+.turn-recap-items li { padding: .15rem .5rem; border-radius: 999px; background: rgb(255 255 255 / .07); font-size: .8rem; }
+.turn-recap-items li.recap-bad { background: rgb(214 60 60 / .22); color: #ffb3ac; }
+.turn-recap-items li.recap-good { background: rgb(80 180 110 / .2); color: #a8ebbb; }
+.turn-recap-moves { margin-top: .45rem; font-size: .8rem; }
+.turn-recap-moves summary { cursor: pointer; color: var(--muted); }
+.turn-recap-moves summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: .2rem; }
+.turn-recap-moves ol { max-height: 14rem; overflow-y: auto; margin: .35rem 0 0; padding-left: 1.3rem; line-height: 1.45; }
+.turn-recap-moves li { margin-bottom: .15rem; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) { .turn-recap { animation: none; } }
 .phase-bar[hidden], .attack-panel[hidden] { display: none; }
 .attack-title { margin: 0 0 .35rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; font-size: .78rem; color: #ff8a80; }
 .attack-steps { display: flex; flex-wrap: wrap; gap: .2rem; }

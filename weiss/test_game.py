@@ -195,6 +195,82 @@ class MoveTests(TestCase):
         self.assertTrue(game.view(self.state, 2)["my_turn"])
 
 
+class UndoTests(TestCase):
+    def setUp(self):
+        self.state = started()
+        self.hand = zones(self.state, 1)["hand"]
+
+    def act(self, player, action):
+        return game.apply(self.state, player, action, name=lambda pk: f"Card{pk}")
+
+    def test_a_card_put_down_wrongly_goes_back(self):
+        uid = self.hand[0]["uid"]
+        self.act(1, {"type": "move", "uid": uid, "to": "C1"})
+        offered = game.view(self.state, 1)["undo"]
+        self.assertIn("Card20", offered["what"])
+        self.assertIsNone(game.view(self.state, 2)["undo"])  # only to the one who made it
+        self.act(1, {"type": "undo"})
+        self.assertIsNone(self.state["players"]["1"]["stage"]["C1"])
+        self.assertIn(uid, [c["uid"] for c in zones(self.state, 1)["hand"]])
+        self.assertTrue(self.state["log"][-1]["text"].startswith("took back a move (") and "Card20" in self.state["log"][-1]["text"])
+        with self.assertRaises(game.GameError):  # once
+            self.act(1, {"type": "undo"})
+
+    def test_only_the_last_move_and_only_until_anyone_acts(self):
+        first, second = self.hand[0]["uid"], self.hand[1]["uid"]
+        self.act(1, {"type": "move", "uid": first, "to": "C1"})
+        self.act(1, {"type": "move", "uid": second, "to": "C2"})
+        self.act(1, {"type": "undo"})
+        self.assertIsNotNone(self.state["players"]["1"]["stage"]["C1"])  # the first stays
+        self.act(1, {"type": "position", "uid": first, "pos": "rest"})
+        self.act(1, {"type": "chat", "text": "oops"})  # talking doesn't use it up
+        self.assertIsNotNone(game.view(self.state, 1)["undo"])
+        with self.assertRaises(game.GameError):  # not the other player's to take back
+            self.act(2, {"type": "undo"})
+        self.act(2, {"type": "chat", "text": "hm"})
+        self.state["turn"] = "2"
+        self.act(2, {"type": "move", "uid": zones(self.state, 2)["hand"][0]["uid"], "to": "C1"})
+        with self.assertRaises(game.GameError):  # they've moved since
+            self.act(1, {"type": "undo"})
+
+    def test_nothing_that_shows_a_card_from_a_deck(self):
+        self.act(1, {"type": "move_top", "from": "deck", "to": "hand"})  # a draw
+        self.assertIsNone(game.view(self.state, 1)["undo"])
+        self.act(1, {"type": "move", "uid": self.hand[0]["uid"], "to": "C1"})
+        self.act(1, {"type": "move_top", "from": "deck", "to": "hand"})  # and it uses up the one before
+        with self.assertRaises(game.GameError):
+            self.act(1, {"type": "undo"})
+
+    def test_not_once_the_turn_has_passed(self):
+        self.act(1, {"type": "end_turn"})
+        self.assertIsNone(game.view(self.state, 1)["undo"])
+
+    def test_not_once_the_game_is_over(self):
+        self.act(1, {"type": "move", "uid": self.hand[0]["uid"], "to": "C1"})
+        game.end_game(self.state, "2", "concede", "concedes")
+        with self.assertRaises(game.GameError):
+            self.act(1, {"type": "undo"})
+
+
+class RecapTests(TestCase):
+    def test_the_opponents_turn_is_summed_up_on_ours_only(self):
+        state = started()
+        act = lambda player, action: game.apply(state, player, action, name=lambda pk: f"Card{pk}")
+        self.assertIsNone(game.view(state, 1)["recap"])  # the first turn: nothing before it
+        act(1, {"type": "end_turn"})
+        self.assertEqual((game.view(state, 2)["recap"]["turn"], game.view(state, 2)["recap"]["who"]), (1, "alice"))  # bob's turn sums up alice's
+        act(2, {"type": "move", "uid": zones(state, 2)["hand"][0]["uid"], "to": "C1"})
+        act(2, {"type": "chat", "text": "your move"})
+        self.assertIsNone(game.view(state, 1)["recap"])  # not alice's turn
+        act(2, {"type": "end_turn"})
+        recap = game.view(state, 1)["recap"]
+        self.assertEqual((recap["turn"], recap["who"]), (2, "bob"))
+        texts = [line["text"] for line in recap["lines"]]
+        self.assertIn("moved Card120 from hand to center stage (left)", texts)
+        self.assertFalse(any(line.get("chat") for line in recap["lines"]))
+        self.assertTrue(all(line["turn"] == 2 for line in recap["lines"]))
+
+
 class MarkerTests(TestCase):
     def setUp(self):
         self.state = started()
