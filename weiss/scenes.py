@@ -48,7 +48,7 @@ REFERENCE = [
     ("rapi shows lose", "Changes their picture without speaking.", " shows "),
     ("rapi moves right", "Walks them to another place.", " moves "),
     ("rapi turns around", "Mirrors their picture, to face the other way; again to turn back.", " turns around"),
-    ("rapi dims / rapi brightens", "Puts them in shadow, or back in the light.", " dims"),
+    ("rapi dims / rapi brightens", "Puts them in shadow until they next speak, or back in the light.", " dims"),
     ("rapi bounces", f"An animation: {', '.join(ACTIONS)}.", " bounces"),
     ("rapi exits right with fade", "Takes them off stage, optionally to one side and by any of the ways in.", " exits with fade"),
     ("choice What do you say?", "Asks the player. The options follow, one a line; each can go to a label, or carry on below.", "choice "),

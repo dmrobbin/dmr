@@ -310,9 +310,13 @@
     }
 
     // Whoever's speaking stands out: the others on stage fade back a little. Nobody (narration) clears it.
+    // Speaking also brings someone out of the shadow ("dims"), or they'd talk in the dark next to a faded listener.
     listening(speaker) {
       for (const [name, actor] of Object.entries(this.actors)) actor.el.classList.toggle("vn-listening", Boolean(speaker) && name !== speaker);
-      if (speaker && this.actors[speaker]) this.raise(this.actors[speaker]);
+      const actor = speaker && this.actors[speaker];
+      if (!actor) return;
+      actor.el.classList.remove("vn-dimmed");
+      this.raise(actor);
     }
 
     // Bring an actor to the front, over anyone they overlap: whoever last spoke or moved stays on top.
