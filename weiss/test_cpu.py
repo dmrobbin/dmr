@@ -2,11 +2,13 @@ import copy
 import json
 import random
 from collections import Counter
+from datetime import timedelta
 from unittest import mock
 
 from django.contrib.auth.models import Group, User
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from core.access import WEISS_GROUP
 
@@ -7173,6 +7175,34 @@ class PagesTests(TestCase):
         finally:
             cpu.next_action = original
         self.assertEqual(room.state["phase"], "climax")  # moved on instead
+
+    def cpu_main_phase(self):
+        room, _ = self.challenge()
+        room.state.pop("rps")
+        room.state["phase"] = "main"
+        room.state["turn"] = str(room.guest_id)
+        room.save()
+        return room
+
+    def test_a_crash_in_the_cpus_play_doesnt_stick_the_game(self):
+        room = self.cpu_main_phase()
+        with mock.patch.object(cpu, "next_action", side_effect=KeyError("a card it can't read")), \
+                self.assertLogs("weiss.play", "ERROR") as logs:
+            room = play.cpu_step(room, wait=False)
+        self.assertIn("its step failed", logs.output[0])
+        self.assertEqual(room.state["phase"], "climax")  # the safe step instead
+
+    def test_the_table_still_loads_when_even_the_safe_step_fails(self):
+        room = self.cpu_main_phase()
+        before = room.version
+        GameRoom.objects.filter(pk=room.pk).update(updated=timezone.now() - timedelta(minutes=1))  # the CPU's turn to move
+        with mock.patch.object(cpu, "next_action", side_effect=KeyError("a card it can't read")), \
+                mock.patch.object(cpu, "fallback_action", side_effect=KeyError("and again")), \
+                self.assertLogs("weiss.play", "ERROR"):
+            response = self.client.get(reverse("weiss:play_state", args=[room.pk]))
+        self.assertEqual(response.status_code, 200)  # not a 500 on every poll, with the page stuck on "Loading the table…"
+        self.assertEqual(response.json()["version"], before)  # the game as it was: nothing half-done was saved
+        self.assertIn("board", response.json())
 
     def test_a_deleted_profile_leaves_the_game_playable(self):
         room, profile = self.challenge()

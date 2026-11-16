@@ -14,6 +14,7 @@
   const ACTION_TIMEOUT_MS = 20000;
   const CONNECTION_ERROR = "Couldn't reach the server. Try again.";
   const DRAW_ERROR = "Something went wrong showing that. Checking the game again…";
+  const SERVER_ERROR = "The server ran into a problem with this game. Still trying…";
   // A co-op partner watching this game (challenge_views.coop_spectate): the board from the player's seat, with only
   // what's public and their hand. Nothing is sent, and the cards and piles can only be looked at.
   const SPECTATING = "spectate" in root.dataset;
@@ -1280,14 +1281,33 @@
   async function poll() {
     if (busy || (document.hidden && Math.random() < 0.7)) return; // check less often in background tabs
     let data = null;
+    let problem = "";
     try {
       const response = await fetchWithin(POLL_TIMEOUT_MS, `${STATE_URL}?v=${version}`, { credentials: "same-origin" });
       if (response.status === 200) data = await response.json();
-    } catch (e) { /* offline for a moment; try again next tick */ }
+      else if (response.status >= 500) problem = SERVER_ERROR;
+    } catch (e) { problem = CONNECTION_ERROR; } // offline for a moment, or timed out; try again next tick
     // Outside the try: a mistake in drawing the board must show in the console, not pass for being offline.
-    if (data && (error === CONNECTION_ERROR || error === DRAW_ERROR)) error = ""; // through again: the board says where things stand
+    if (data && [CONNECTION_ERROR, DRAW_ERROR, SERVER_ERROR].includes(error)) error = ""; // through again: the board says where things stand
     if (data) receive(data);
-    else if (!busy) armTimers(); // nothing new: anything we owe the game that didn't get through goes again
+    else {
+      if (problem) pollFailed(problem);
+      if (!busy) armTimers(); // nothing new: anything we owe the game that didn't get through goes again
+    }
+  }
+
+  // A poll that didn't get through. Before the first board there's nothing else on screen, so the table says what's
+  // wrong rather than looking like it's still loading; after it, a server error shows where errors do (a moment
+  // offline is left to the next tick).
+  function pollFailed(problem) {
+    if (!board) {
+      boardEl.innerHTML = `<p class="panel-error" role="alert">${esc(problem === SERVER_ERROR
+        ? "The table couldn't be loaded: the server ran into a problem with this game. Still trying…"
+        : "The table couldn't be loaded: can't reach the server. Still trying…")}</p>`;
+    } else if (problem === SERVER_ERROR && error !== SERVER_ERROR) {
+      error = SERVER_ERROR;
+      render();
+    }
   }
 
   async function act(action) {

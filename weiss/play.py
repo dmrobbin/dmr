@@ -914,6 +914,22 @@ def cpu_step(room, wait=True):
     time to be seen. The player's page polling is what drives this. Returns the room as it now is."""
     if wait and timezone.now() - room.updated < timedelta(seconds=cpu.wait_seconds(room.state)):
         return room
+    try:
+        return cpu_move(room, wait)
+    except Exception:
+        # A mistake in the CPU's own play, not an action the game refused (cpu_move handles those). The step is
+        # undone, but left at that every poll would fail on it again and the table couldn't even load: it does
+        # something safe instead, and if even that fails, the game is shown as it is.
+        log.exception("CPU in room %s: its step failed", room.pk)
+        try:
+            return cpu_move(room, wait, safe=True)
+        except Exception:
+            log.exception("CPU in room %s: its safe step failed too", room.pk)
+            return GameRoom.objects.select_related("host", "guest", "cpu_profile").get(pk=room.pk)
+
+
+def cpu_move(room, wait, safe=False):
+    """cpu_step's move, in a transaction of its own: what the CPU chooses, or (safe) the fallback that can't stick."""
     with transaction.atomic():
         room = GameRoom.objects.select_for_update().select_related("host", "guest", "cpu_profile").get(pk=room.pk)
         if room.status != GameRoom.Status.PLAYING or room.state.get("cpu_intro") or room.state.get("scenes"):
@@ -929,14 +945,15 @@ def cpu_step(room, wait=True):
             model, aggression = challenge.infinite_style(room.arcade_run, room.cpu_profile)
         elif room.arcade_run_id and "blood_pact" in buffs.fight_mods(challenge.of(room.arcade_run)):
             model, aggression = "hard", cpu.MAX_AGGRESSION
-        action = cpu.next_action(room.state, room.guest_id, lookups["info"], aggression, model=model)
+        action = (cpu.fallback_action(room.state, room.guest_id) if safe
+                  else cpu.next_action(room.state, room.guest_id, lookups["info"], aggression, model=model))
         if not action:
             return room
         try:
             play_action(room, room.guest_id, action, lookups)
         except game.GameError as exc:  # it must never leave the player waiting: do something safe instead
             log.warning("CPU in room %s: %s refused: %s", room.pk, action, exc)
-            fallback = cpu.fallback_action(room.state, room.guest_id)
+            fallback = None if safe else cpu.fallback_action(room.state, room.guest_id)
             if fallback:
                 try:
                     play_action(room, room.guest_id, fallback, lookups)
