@@ -174,6 +174,7 @@
   const SOUND_BASE = root.dataset.soundBase || "";
   let soundOn = "soundOn" in root.dataset;
   let soundVolume = Number(root.dataset.soundVolume ?? 60); // 0 to 100
+  let musicVolume = Number(root.dataset.musicVolume ?? 60); // the music under the cues, 0 to 100 (60 is the default balance)
   const OPPONENT_VOLUME = 0.55; // the other side's sounds, against ours
   const SOUND_BOOST = 2.2; // into the limiter, so sounds are loud without clipping
   const SOUND_STAGGER_MS = 140; // between sounds from the same board, e.g. clocking a card and then drawing
@@ -189,6 +190,7 @@
   let mix = null; // where every sound goes: a boost into a limiter
   let noiseBuffer = null;
   let soundSaveTimer = null;
+  let musicSaveTimer = null;
   const MUSIC_KEY = "weiss-music";
   let musicOn = Boolean(window.WeissScore);
   try {
@@ -227,16 +229,35 @@
   function syncMusic() {
     if (!score) return;
     score.setVolume(soundVolume / 100);
+    score.setMusicLevel(musicVolume / 100);
     const wanted = soundOn && musicOn && soundVolume > 0;
-    if (wanted && board) score.setState(scoreState());
+    if (wanted && board) tellScore();
     if (wanted && !score.running) score.start();
     else if (!wanted && score.running) score.stop();
+  }
+
+  // The board, and whose theme it is, as the music follows them.
+  function tellScore() {
+    score.setTheme(musicTheme());
+    score.setState(scoreState());
+  }
+
+  // A CPU opponent has its own theme (made from its name, so it's the same every time); a boss's, or an arcade
+  // run's last fight, is its boss version. Anyone else gets the house theme.
+  function musicTheme() {
+    if (!cpuInfo) return null;
+    const lastFight = Boolean(arcade && arcade.total && arcade.fight === arcade.total && !arcade.cleared);
+    return { name: cpuInfo.name, boss: Boolean(arcade && arcade.boss) || lastFight };
   }
 
   // What the music follows (see score.js setState).
   function scoreState() {
     const sides = [board.me, board.opponent].filter(Boolean);
     const over = board.game_over;
+    // Match point: a side at level 3 with 4 or more in its clock, a big attack from losing. Not a co-op
+    // boss with a health bar, which doesn't lose at level 4.
+    const hasBar = Boolean(arcade && arcade.boss && arcade.boss.max);
+    const brink = (side) => pileCount(side.zones.level) >= 3 && pileCount(side.zones.clock) >= 4;
     return {
       setup: Boolean(board.rps) || board.phase === "mulligan",
       level: Math.max(0, ...sides.map((side) => pileCount(side.zones.level))),
@@ -245,6 +266,7 @@
       myTurn: Boolean(board.my_turn),
       attacking: board.phase === "attack",
       climax: sides.some((side) => pileCount(side.zones.climax) > 0),
+      matchPoint: Boolean((board.me && brink(board.me)) || (board.opponent && !hasBar && brink(board.opponent))),
       over: over ? (over.won ? "win" : "lose") : null,
     };
   }
@@ -255,6 +277,29 @@
     if (on && soundOn) audioContext();
     syncMusic();
     if (board) renderControls();
+  }
+
+  // The M key: the music on or off from anywhere on the board, said for screen readers (it's heard anyway).
+  function toggleMusicKey() {
+    if (!window.WeissScore || !board) return;
+    if (!soundOn) {
+      sayStatus("Sound is off: turn it on to hear the music.");
+      return;
+    }
+    setMusic(!musicOn);
+    sayStatus(musicOn ? "Music on" : "Music off");
+  }
+
+  function sayStatus(text) {
+    const el = controlsEl.querySelector("[data-sound-status]");
+    if (el) el.textContent = text;
+  }
+
+  function setMusicVolume(volume, save) {
+    musicVolume = volume;
+    syncMusic();
+    clearTimeout(musicSaveTimer);
+    if (save) musicSaveTimer = setTimeout(() => saveSound({ music: String(volume) }), SOUND_SAVE_MS);
   }
 
   // A browser that can't decode them (or a failed download) leaves a recording out; its sound falls back on Web Audio.
@@ -378,14 +423,15 @@
     },
   };
 
-  function playSound(name, { quiet = false, at = 0 } = {}) {
+  // `count` (how many cards a damage turned over) and `icons` (a trigger check's) are for the music's cues.
+  function playSound(name, { quiet = false, at = 0, count = 1, icons = [] } = {}) {
     if (!soundOn || !soundVolume) return;
     const ctx = audioContext();
     if (!ctx) return;
     if (musicOn && score) {
       // Played in time with the music, so no stagger: several at once become a little figure (see score.js cue).
       syncMusic();
-      score.cue(name, { opponent: quiet });
+      score.cue(name, { opponent: quiet, count, icons });
       return;
     }
     if (!SOUNDS[name]) return;
@@ -434,6 +480,7 @@
       deck: pileCount(side.zones.deck), hand: pileCount(side.zones.hand), clock: pileCount(side.zones.clock),
       refreshes: side.refreshes || 0, level_ups: side.level_ups || 0, damage_taken: side.damage_taken || 0, negated: side.negated || 0,
       climaxes: side.climaxes || 0, layout: `${counts.join(",")}|${stage.join(",")}`,
+      reversed: STAGE.filter((slot) => side.stage[slot] && side.stage[slot].pos === "reverse").length,
     };
   }
 
@@ -460,7 +507,7 @@
 
   function playBoardSounds() {
     // The music hears the board first, so a cue that reaches into the next bar (a level up's) finds it.
-    if (score && score.running) score.setState(scoreState());
+    if (score && score.running) tellScore();
     const now = { game: board.game_number, attacks: board.attacks || 0, turn: board.turn_number,
       ability: (board.ability_show || {}).id || "", combo: (board.combo_show || {}).id || "" };
     for (const owner of ["me", "opponent"]) {
@@ -477,7 +524,14 @@
     let at = 0;
     // Only the music has these (the sound effects don't): an attack, an ability going off, a CPU's combo cutting in.
     if (now.attacks > before.attacks && now.turn === before.turn) playSound("attack", { quiet: !board.my_turn });
-    if (now.ability && now.ability !== before.ability) playSound("ability", { quiet: !board.ability_show.mine });
+    if (now.ability && now.ability !== before.ability) {
+      // A trigger check plays its icons (the attacker's, so on their side); any other ability, its run.
+      const check = board.ability_show.check;
+      if (check) {
+        const icons = check.flatMap((pk) => ((cards[pk] || {}).trigger || "").toLowerCase().split(/\s+/).filter(Boolean));
+        playSound("trigger", { quiet: !board.my_turn, icons });
+      } else playSound("ability", { quiet: !board.ability_show.mine });
+    }
     if (now.combo && now.combo !== before.combo) playSound("combo", { quiet: !board.combo_show.mine });
     for (const owner of ["me", "opponent"]) {
       const was = before[owner];
@@ -485,7 +539,10 @@
       if (!was || !is) continue;
       const sounds = [];
       if (musicOn && score && is.climaxes > was.climaxes) sounds.push("climax"); // the effects play it as a card put down
+      // A damage's cards, which the music turns over one by one before the hit (or the cancel).
+      const flipped = { damage: is.damage_taken - was.damage_taken, negated: Math.max(1, is.clock - was.clock) };
       if (is.refreshes > was.refreshes) sounds.push("shuffle");
+      if (musicOn && score && is.reversed > was.reversed) sounds.push("reversed"); // only the music has this
       if (is.level_ups > was.level_ups) sounds.push("level");
       else if (is.damage_taken > was.damage_taken) sounds.push("damage");
       else if (is.negated > was.negated) sounds.push("negated");
@@ -495,7 +552,7 @@
         if (!sounds.length && is.layout !== was.layout) sounds.push("move");
       }
       for (const name of sounds) {
-        playSound(name, { quiet: owner === "opponent", at });
+        playSound(name, { quiet: owner === "opponent", at, count: flipped[name] || 1 });
         at += SOUND_STAGGER_MS;
       }
     }
@@ -1820,9 +1877,13 @@
           </div>
           <div class="layout-switch sound-switch">
             <button type="button" data-sound title="Turn sound on or off">Sound</button>
-            ${window.WeissScore ? `<button type="button" data-music title="Battle music: the game's moments play as part of it, in time and in key, instead of as sound effects">Music</button>` : ""}
             <input type="range" min="0" max="100" step="5" data-sound-volume aria-label="Sound volume" title="Sound volume">
           </div>
+          ${window.WeissScore ? `<div class="layout-switch sound-switch">
+            <button type="button" data-music aria-keyshortcuts="M" title="Battle music: the game's moments play as part of it, in time and in key, instead of as sound effects (M)">Music</button>
+            <input type="range" min="0" max="100" step="5" data-music-volume aria-label="Music volume, under the game's moments" title="Music volume, under the game's moments">
+          </div>` : ""}
+          <p class="sr-only" data-sound-status role="status"></p>
           <div class="layout-switch">
             <button type="button" data-rules title="Turn the turn rules on or off (both players have to agree)">Turn rules</button>
           </div>
@@ -1839,6 +1900,9 @@
     if (musicEl) {
       musicEl.setAttribute("aria-pressed", String(musicOn));
       musicEl.disabled = !soundOn;
+      const musicVolumeEl = controlsEl.querySelector("[data-music-volume]");
+      musicVolumeEl.disabled = !soundOn || !musicOn;
+      if (document.activeElement !== musicVolumeEl) musicVolumeEl.value = String(musicVolume);
     }
     const volumeEl = controlsEl.querySelector("[data-sound-volume]");
     volumeEl.disabled = !soundOn;
@@ -3528,6 +3592,12 @@
       act({ type: "level_up", uid: levelPick.dataset.levelUp });
       return;
     }
+    // M: the music on or off, unless typing (chat, a damage amount) or with a modifier held.
+    if ((event.key === "m" || event.key === "M") && !event.ctrlKey && !event.metaKey && !event.altKey && !event.repeat
+        && !(event.target.closest && event.target.closest("input, textarea, select, [contenteditable]"))) {
+      toggleMusicKey();
+      return;
+    }
     if (event.key === "Escape") {
       if (closeViewer()) return; // the full-screen card first, then the rest
       clearSelection();
@@ -3595,6 +3665,7 @@
   // The volume slider: heard as it moves, saved once it stops.
   root.addEventListener("input", (event) => {
     if (event.target.matches("[data-sound-volume]")) setSoundVolume(Number(event.target.value), true);
+    if (event.target.matches("[data-music-volume]")) setMusicVolume(Number(event.target.value), true);
   });
   root.addEventListener("change", (event) => {
     if (event.target.matches("[data-sound-volume]")) playSound("draw");

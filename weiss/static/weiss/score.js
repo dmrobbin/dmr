@@ -7,6 +7,14 @@
 //   Each level reached on the table moves the key up (D, E, F, G minor). Changes land on the next bar.
 //   The opponent's turn is heard a little muffled; an attack phase brings in toms and a driving bass; a climax
 //   in play adds brass; the end of a game resolves to a major chord or sinks to a minor one, and stops.
+//   At match point (a player at level 3 with 4 or more in the clock) it strips back to the brink: pad,
+//   bass and a heartbeat, the quietest the game gets when the most is riding on it.
+// - Sections. Each version walks two eight-bar progressions in turn (A, then B), and the A section carries a
+//   hook: a two-bar phrase asked at its top and answered four bars later, played from the chords as they go.
+//   Drum fills and the keys' comping change from one pass to the next, so it takes minutes to come round again.
+// - Themes (setTheme). A CPU opponent gets its own: a key, a tempo, which progressions, a hook and what plays
+//   it, all made from its name, so it's the same every time it's fought. A boss's runs hotter and darker.
+//   Anyone else gets the house theme.
 // - Cues (Score.cue). A moment on the board lands on the next sixteenth or beat, played from the chord that is
 //   sounding, so it is always in time and in tune. Cues in a row climb (three draws are three rising notes).
 //   They feed energy (busier drums, the arpeggio) or tension (the music darkens, a heartbeat comes in), both
@@ -20,8 +28,7 @@
 (function () {
   "use strict";
 
-  const BPM = 94;
-  const STEP = 60 / BPM / 4; // a sixteenth, in seconds
+  const BPM = 94; // the house theme's
   const BEAT = 4; // sixteenths
   const BAR = 16;
   const LOOKAHEAD = 0.3; // seconds of music scheduled ahead of the clock
@@ -29,9 +36,11 @@
   const TONIC = 50; // D3, as MIDI
   const MINE = 67; // the bottom of our cues' register (G4); the other side's is an octave down
   const THEIRS = 55;
-  // The music under the cues: low enough that a cue stands out without being loud, and that the music stays
-  // clear of the limiter (which would flatten the difference between the quiet versions and the busy ones).
+  // The music under the cues, at the default music level (0.6): low enough that a cue stands out without
+  // being loud, and that the music stays clear of the limiter (which would flatten the difference between the
+  // quiet versions and the busy ones). setMusicLevel scales it.
   const MUSIC_LEVEL = 0.4;
+  const DEFAULT_MUSIC = 0.6;
 
   const hz = (midi) => 440 * 2 ** ((midi - 69) / 12);
   const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
@@ -45,26 +54,119 @@
   const HALF = [0, 3, 6, 10];
   const ALT = [0, 4, 7, 10, 13];
   const MADD9 = [0, 3, 7, 14];
-  // Eight bars each, a chord a bar, as [root above the key's tonic, chord].
-  const PROGRESSIONS = {
-    // i - iv - bVII - bIII - bVI - ii - V - i: the walk round the key for most of the game.
-    home: [[0, MIN9], [5, MIN9], [10, DOM9], [3, MAJ9], [8, MAJ9], [2, HALF], [7, ALT], [0, MADD9]],
-    // Level 3: it stops wandering and circles the tonic, leaning on the dominant at the end.
-    showdown: [[0, MIN9], [8, MAJ9], [10, DOM9], [0, MIN9], [0, MIN9], [8, MAJ9], [5, MIN9], [7, ALT]],
+  // Eight bars each, a chord a bar, as [root above the key's tonic, chord]; each set is played A, B, A, B...
+  // Every B ends on the dominant, leading back into A's tonic.
+  const HOME_SETS = {
+    // A: i - iv - bVII - bIII - bVI - ii - V - i, the walk round the key. B: out to the major side and back.
+    house: [
+      [[0, MIN9], [5, MIN9], [10, DOM9], [3, MAJ9], [8, MAJ9], [2, HALF], [7, ALT], [0, MADD9]],
+      [[8, MAJ9], [10, DOM9], [3, MAJ9], [0, MIN9], [5, MIN9], [10, DOM9], [3, MAJ9], [7, ALT]],
+    ],
+    // Falling through the major chords of the key, then climbing back.
+    drift: [
+      [[0, MIN9], [8, MAJ9], [3, MAJ9], [10, DOM9], [0, MIN9], [5, MIN9], [8, MAJ9], [7, ALT]],
+      [[5, MIN9], [10, DOM9], [3, MAJ9], [8, MAJ9], [2, HALF], [7, ALT], [0, MIN9], [7, ALT]],
+    ],
+    // Dorian: the minor tonic swapping with a bright IV.
+    dorian: [
+      [[0, MIN9], [5, DOM9], [0, MIN9], [5, DOM9], [10, MAJ9], [5, DOM9], [2, HALF], [7, ALT]],
+      [[10, MAJ9], [8, MAJ9], [0, MIN9], [5, DOM9], [3, MAJ9], [2, HALF], [0, MIN9], [7, ALT]],
+    ],
   };
-  const KEYS = [0, 2, 3, 5]; // the key, above D, at the highest level on the table
+  // Level 3 (and the brink): it stops wandering and circles the tonic, leaning on the dominant at the end.
+  const SHOWDOWN = [
+    [[0, MIN9], [8, MAJ9], [10, DOM9], [0, MIN9], [0, MIN9], [8, MAJ9], [5, MIN9], [7, ALT]],
+    [[5, MIN9], [7, ALT], [0, MIN9], [8, MAJ9], [5, MIN9], [3, MAJ9], [2, HALF], [7, ALT]],
+  ];
+  // A boss's: the flat second (bII) pulling at the tonic.
+  const BOSS_SHOWDOWN = [
+    [[0, MIN9], [1, MAJ9], [0, MIN9], [8, MAJ9], [0, MIN9], [1, MAJ9], [10, DOM9], [7, ALT]],
+    [[8, MAJ9], [1, MAJ9], [5, MIN9], [7, ALT], [0, MIN9], [1, MAJ9], [2, HALF], [7, ALT]],
+  ];
+  const KEYS = [0, 2, 3, 5]; // the key, above D (and the theme's shift), at the highest level on the table
 
-  const LAYERS = ["pad", "keys", "bass", "kit", "hats", "arp", "lead", "brass", "echo"];
+  // The house hook: [step in the two bars, note of the chord counting up from G4, length in sixteenths]. The
+  // call ends up in the air; the answer, in the same rhythm, comes down.
+  const HOUSE_HOOK = {
+    call: [[0, 4, 3], [3, 5, 3], [6, 4, 2], [8, 6, 6], [16, 5, 2], [18, 4, 2], [20, 3, 4], [26, 4, 6]],
+    answer: [[0, 4, 3], [3, 5, 3], [6, 4, 2], [8, 3, 6], [16, 2, 2], [18, 1, 2], [20, 2, 4], [26, 0, 6]],
+  };
+  // The rhythms a theme's hook can take, as [step, length] over two bars.
+  const HOOK_RHYTHMS = [
+    [[0, 3], [3, 3], [6, 2], [8, 6], [16, 2], [18, 2], [20, 4], [26, 6]],
+    [[0, 2], [2, 2], [4, 4], [10, 2], [12, 4], [16, 6], [24, 2], [26, 6]],
+    [[0, 6], [6, 2], [8, 2], [10, 6], [16, 3], [19, 3], [22, 2], [24, 8]],
+    [[2, 2], [4, 2], [6, 4], [12, 4], [18, 2], [20, 2], [22, 4], [28, 4]],
+  ];
+  const HOOK_VOICES = ["lead", "bell", "pluck", "keys"];
+
+  const LAYERS = ["pad", "keys", "bass", "kit", "hats", "arp", "lead", "hook", "brass", "echo"];
   // Each arrangement's level for each layer; a layer left out is silent.
   const ARRANGEMENTS = {
-    lounge: { pad: 0.9, keys: 0.85, bass: 0.6, hats: 0.5, echo: 1 },
-    groove: { pad: 0.55, keys: 1, bass: 1, kit: 0.8, hats: 0.75, echo: 1 },
-    drive: { pad: 0.55, keys: 0.9, bass: 1, kit: 1, hats: 0.9, arp: 0.6, echo: 1 },
+    lounge: { pad: 0.9, keys: 0.85, bass: 0.6, hats: 0.5, hook: 0.55, echo: 1 },
+    groove: { pad: 0.55, keys: 1, bass: 1, kit: 0.8, hats: 0.75, hook: 0.8, echo: 1 },
+    drive: { pad: 0.55, keys: 0.9, bass: 1, kit: 1, hats: 0.9, arp: 0.6, hook: 0.65, echo: 1 },
     showdown: { pad: 0.75, keys: 0.75, bass: 1, kit: 1, hats: 1, arp: 0.75, lead: 0.7, echo: 1 },
+    brink: { pad: 1, keys: 0.6, bass: 0.9, kit: 0.7, hats: 0.6, lead: 0.5, echo: 1 },
     coda: { pad: 1, keys: 0.8, bass: 0.8, echo: 0 },
   };
   // How much of each layer goes to the reverb.
-  const REVERB = { pad: 0.5, keys: 0.3, bass: 0, kit: 0.08, hats: 0.05, arp: 0.3, lead: 0.4, brass: 0.25, echo: 0.55 };
+  const REVERB = { pad: 0.5, keys: 0.3, bass: 0, kit: 0.08, hats: 0.05, arp: 0.3, lead: 0.4, hook: 0.35, brass: 0.25, echo: 0.55 };
+  // The keys' comping, [step, length, velocity], in the A section and the B.
+  const COMP = {
+    lounge: [[[0, 10, 0.3], [10, 5, 0.18]], [[0, 6, 0.28], [6, 4, 0.16], [12, 4, 0.2]]],
+    groove: [[[0, 3, 0.28], [6, 2, 0.2], [10, 3, 0.24]], [[0, 2, 0.26], [3, 3, 0.2], [8, 2, 0.22], [11, 4, 0.22]]],
+    drive: [[[2, 1.5, 0.22], [6, 1.5, 0.2], [10, 1.5, 0.22], [14, 1.5, 0.18]], [[0, 1.5, 0.22], [3, 1.5, 0.2], [6, 1.5, 0.2], [10, 3, 0.22]]],
+    showdown: [[[0, 7, 0.24], [8, 7, 0.2]], [[0, 3, 0.24], [4, 3, 0.18], [8, 7, 0.22]]],
+    brink: [[[0, 14, 0.16]], [[0, 14, 0.16]]],
+  };
+
+  // A number from a string, and numbers from a number: the same name always makes the same theme.
+  function hashOf(text) {
+    let h = 2166136261;
+    for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 16777619);
+    return h >>> 0;
+  }
+  function random(seed) {
+    let a = seed >>> 0;
+    return () => {
+      a = (a + 0x6d2b79f5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // The theme for an opponent: {name, boss}, or nothing for the house theme.
+  function makeTheme({ name = "", boss = false } = {}) {
+    const id = `${name}|${boss ? "boss" : ""}`;
+    const showdown = boss ? BOSS_SHOWDOWN : SHOWDOWN;
+    if (!name) {
+      return { id, seed: 0, shift: 0, bpm: BPM + (boss ? 6 : 0), home: HOME_SETS.house, showdown, hook: HOUSE_HOOK, voice: "lead", boss };
+    }
+    const seed = hashOf(name);
+    const rng = random(seed);
+    const pick = (list) => list[Math.floor(rng() * list.length)];
+    const shift = pick([-3, -2, -1, 0, 1, 2, 3]);
+    const bpm = 88 + Math.floor(rng() * 15) + (boss ? 6 : 0);
+    const home = HOME_SETS[pick(Object.keys(HOME_SETS))];
+    const voice = pick(HOOK_VOICES);
+    // The hook: a walk over the chord's notes, the call ending up high and the answer coming home.
+    const rhythm = pick(HOOK_RHYTHMS);
+    let degree = 3 + Math.floor(rng() * 3);
+    const walk = rhythm.map(() => {
+      const here = degree;
+      degree = clamp(degree + pick([-2, -1, -1, 1, 1, 2]), 1, 7);
+      return here;
+    });
+    const call = rhythm.map(([step, len], n) => [step, n === rhythm.length - 1 ? Math.max(walk[n], 5) : walk[n], len]);
+    const answer = rhythm.map(([step, len], n) => {
+      const fromEnd = rhythm.length - 1 - n;
+      return [step, fromEnd === 0 ? 0 : fromEnd === 1 ? Math.min(walk[n], 2) : walk[n], len];
+    });
+    return { id, seed, shift, bpm, home, showdown, hook: { call, answer }, voice, boss };
+  }
 
   class Score {
     constructor(ctx, output) {
@@ -72,7 +174,10 @@
       this.now = () => ctx.currentTime; // a preview rendering offline sets its own clock
       this.running = false;
       this.volume = 0.6;
-      this.state = { setup: true, level: 0, clock: 0, turn: 0, myTurn: true, attacking: false, climax: false, over: null };
+      this.musicLevel = DEFAULT_MUSIC;
+      this.theme = makeTheme();
+      this.stepDur = 60 / this.theme.bpm / 4; // a sixteenth, in seconds
+      this.state = { setup: true, level: 0, clock: 0, turn: 0, myTurn: true, attacking: false, climax: false, matchPoint: false, over: null };
       this.plans = new Map(); // bar -> what that bar plays, fixed when it's first needed
       this.recent = []; // cues lately: {type, step, degree, opponent}
       this.runs = {}; // side + cue -> {step, run}, for cues in a row
@@ -84,10 +189,15 @@
       this.buildMixer(output);
     }
 
+    // A sixteenth, in seconds, at this theme's tempo: what cues time their notes by.
+    get STEP() {
+      return this.stepDur;
+    }
+
     // --- The mixer -------------------------------------------------------------------------------
-    // Layers -> the music filter (muffled on their turn, darkened by tension) -> the duck (dips under damage)
-    // -> the master volume -> out. Our cues skip the filter and the duck, so they sit on top of the music;
-    // the other side's go through their own muffle. Both feed a delay timed to the music (a dotted eighth).
+    // Layers -> the music filter (muffled on their turn, darkened by tension) -> the music level -> the duck
+    // (dips under damage) -> the master volume -> out. Our cues skip the filter and the duck, so they sit on top
+    // of the music; the other side's go through their own muffle. Both feed a delay timed to the music (a dotted eighth).
     buildMixer(output) {
       const ctx = this.ctx;
       const gain = (value, to) => {
@@ -102,7 +212,8 @@
       this.filter.type = "lowpass";
       this.filter.frequency.value = 16000;
       this.filter.Q.value = 0.5;
-      this.filter.connect(gain(MUSIC_LEVEL, this.duck));
+      this.bed = gain(MUSIC_LEVEL, this.duck);
+      this.filter.connect(this.bed);
       this.musicIn = gain(1, this.filter);
 
       const reverb = ctx.createConvolver();
@@ -117,15 +228,15 @@
         this.layers[name] = layer;
       }
 
-      const delay = ctx.createDelay(2);
-      delay.delayTime.value = STEP * 3;
+      this.delay = ctx.createDelay(2);
+      this.delay.delayTime.value = this.stepDur * 3;
       const delayTone = ctx.createBiquadFilter();
       delayTone.type = "lowpass";
       delayTone.frequency.value = 3200;
-      delay.connect(delayTone);
-      delayTone.connect(gain(0.38, delay)); // feedback
+      this.delay.connect(delayTone);
+      delayTone.connect(gain(0.38, this.delay)); // feedback
       delayTone.connect(gain(0.6, this.master));
-      this.delayIn = gain(0.18, delay);
+      this.delayIn = gain(0.18, this.delay);
 
       this.cueMine = gain(1, this.master);
       this.cueMine.connect(this.delayIn);
@@ -152,7 +263,7 @@
       return buffer;
     }
 
-    // --- Starting, stopping, volume, and the board ----------------------------------------------------
+    // --- Starting, stopping, volume, the theme and the board -----------------------------------------
 
     start({ timer = true } = {}) {
       if (this.running) return;
@@ -180,14 +291,34 @@
       this.master.gain.setTargetAtTime(0, now, 0.12);
     }
 
-    // 0 to 1.
+    // Everything, cues and music: 0 to 1.
     setVolume(volume) {
       this.volume = volume;
       if (this.running) this.master.gain.setTargetAtTime(volume, this.now(), 0.08);
     }
 
+    // The music under the cues, 0 to 1 (0.6 is the default balance); the cues stay as they are.
+    setMusicLevel(level) {
+      this.musicLevel = clamp(level, 0, 1);
+      this.bed.gain.setTargetAtTime(MUSIC_LEVEL * (this.musicLevel / DEFAULT_MUSIC), this.now(), 0.08);
+    }
+
+    // Whose music it is: {name, boss} for a CPU's theme, or nothing for the house theme. A new one takes over
+    // at the next bar, from the top of its progression; its tempo from the next sixteenth not yet scheduled.
+    setTheme(options) {
+      const theme = makeTheme(options || {});
+      if (theme.id === this.theme.id) return;
+      this.theme = theme;
+      const dur = 60 / theme.bpm / 4;
+      if (dur === this.stepDur) return;
+      if (this.running) this.origin = this.timeOf(this.step) - this.step * dur;
+      this.stepDur = dur;
+      this.delay.delayTime.setTargetAtTime(dur * 3, this.now(), 0.05);
+    }
+
     // What the music follows: {setup, level (the highest on the table), clock (the fullest), turn, myTurn,
-    // attacking, climax (one in play), over (null, "win" or "lose")}. Heard from the next bar.
+    // attacking, climax (one in play), matchPoint (someone's a few damage from losing), over (null, "win" or
+    // "lose")}. Heard from the next bar.
     setState(state) {
       this.state = { ...this.state, ...state };
       // A filling clock brings the drive in at 5 and lets it go at 3 (a level up empties it), so a card
@@ -199,17 +330,28 @@
     // --- The clock ----------------------------------------------------------------------------------
 
     timeOf(step) {
-      return this.origin + step * STEP;
+      return this.origin + step * this.stepDur;
     }
 
     // Everything due before `until` that isn't scheduled yet. A tab that was held up skips what it missed.
     pump(until) {
       const late = this.now() - this.timeOf(this.step);
-      if (late > 0.05) this.step += Math.ceil(late / STEP);
+      if (late > 0.05) this.step += Math.ceil(late / this.stepDur);
       while (this.timeOf(this.step) < until) {
         this.playStep(this.step, this.timeOf(this.step));
         this.step += 1;
       }
+    }
+
+    // Which arrangement the board calls for.
+    versionFor(st) {
+      const boss = this.theme.boss;
+      if (st.over) return "coda";
+      if (st.setup) return "lounge";
+      if (st.matchPoint && st.level >= 3) return "brink";
+      if (st.level >= 3 || (boss && st.level >= 2)) return "showdown";
+      if (st.level >= 2 || this.clockHigh || (boss && st.level >= 1)) return "drive";
+      return st.level === 0 && st.turn <= 2 ? "lounge" : "groove";
     }
 
     // What a bar plays: decided from the board the first time anything asks, and kept. `keep` false only
@@ -219,25 +361,36 @@
       if (known) return known;
       const st = this.state;
       const prev = this.plans.get(bar - 1);
-      const name = st.over ? "coda" : st.setup ? "lounge" : st.level >= 3 ? "showdown"
-        : st.level >= 2 || this.clockHigh ? "drive" : st.level === 0 && st.turn <= 2 ? "lounge" : "groove";
-      const key = KEYS[clamp(st.level || 0, 0, 3)];
-      const prog = name === "showdown" ? "showdown" : "home";
-      // A new key or progression starts from the top, so it lands on its tonic; a new arrangement doesn't.
-      const fresh = !prev || prev.key !== key || prev.prog !== prog || (prev.name === "coda") !== (name === "coda");
+      const name = this.versionFor(st);
+      const key = KEYS[clamp(st.level || 0, 0, 3)] + this.theme.shift;
+      const prog = name === "showdown" || name === "brink" ? "showdown" : "home";
+      const theme = this.theme.id;
+      // A new key, progression or theme starts from the top, so it lands on its tonic; a new arrangement doesn't.
+      const fresh = !prev || prev.key !== key || prev.prog !== prog || prev.theme !== theme || (prev.name === "coda") !== (name === "coda");
       const plan = {
-        bar, name, key, prog, since: fresh ? bar : prev.since,
+        bar, name, key, prog, theme, since: fresh ? bar : prev.since,
+        chords: this.theme[prog], // kept with the bar, so a theme arriving mid-bar waits for the next
+        hook: this.theme.hook,
         mix: { ...ARRANGEMENTS[name] },
         myTurn: st.myTurn !== false,
         battle: Boolean(st.attacking) && name !== "coda",
         climax: Boolean(st.climax) && name !== "coda",
         over: st.over,
       };
+      if (this.theme.boss && name === "showdown") plan.mix.brass = 0.3;
       if (plan.climax) plan.mix.brass = 0.55;
+      // At the brink an attack brings the drums back in, for the toms.
+      if (name === "brink" && plan.battle) plan.mix.kit = 1;
       if (!keep) return plan;
       this.plans.set(bar, plan);
       this.plans.delete(bar - 8);
       return plan;
+    }
+
+    // Where a bar is in its progression: {loop (0 to 7, the bar in the section), section (0 for A, 1 for B)}.
+    placeOf(plan, bar) {
+      const into = bar - plan.since;
+      return { loop: into % 8, section: Math.floor(into / 8) % 2 };
     }
 
     // The chord sounding at a step: {root (MIDI), tones}.
@@ -249,7 +402,8 @@
         if (plan.over === "win") return { root: TONIC + plan.key, tones: [0, 4, 7, 11, 14] };
         return into === 0 ? { root: TONIC + plan.key + 5, tones: MIN9 } : { root: TONIC + plan.key, tones: MIN9 };
       }
-      const [root, tones] = PROGRESSIONS[plan.prog][(bar - plan.since) % 8];
+      const { loop, section } = this.placeOf(plan, bar);
+      const [root, tones] = plan.chords[section][loop];
       return { root: TONIC + plan.key + root, tones };
     }
 
@@ -269,6 +423,7 @@
     // --- The arrangement, a sixteenth at a time ------------------------------------------------------
 
     playStep(step, t) {
+      const STEP = this.stepDur;
       const bar = Math.floor(step / BAR);
       const i = step % BAR;
       const plan = this.plan(bar);
@@ -283,22 +438,17 @@
       }
       const chord = this.chordAt(step);
       const name = plan.name;
+      const brink = name === "brink";
       const L = this.layers;
       const on = (layer) => this.heard[layer];
-      const loop = (bar - plan.since) % 8;
+      const { loop, section } = this.placeOf(plan, bar);
 
       // Pad: the chord held across the bar.
       if (i === 0 && on("pad")) this.pad(t, this.voicing(chord, 57), BAR * STEP, 0.16, L.pad);
 
-      // Keys: an electric piano comping.
-      const comp = {
-        lounge: [[0, 10, 0.3], [10, 5, 0.18]],
-        groove: [[0, 3, 0.28], [6, 2, 0.2], [10, 3, 0.24]],
-        drive: [[2, 1.5, 0.22], [6, 1.5, 0.2], [10, 1.5, 0.22], [14, 1.5, 0.18]],
-        showdown: [[0, 7, 0.24], [8, 7, 0.2]],
-      }[name];
+      // Keys: an electric piano comping, a different figure in each section.
       if (on("keys")) {
-        for (const [at, len, vel] of comp) {
+        for (const [at, len, vel] of COMP[name][section]) {
           if (at === i) for (const note of this.voicing(chord, 60)) this.keys(t, note, len * STEP, vel, L.keys);
         }
       }
@@ -307,11 +457,16 @@
       if (on("bass")) {
         const root = fold(chord.root, 38);
         const fifth = root + chord.tones[2];
+        const seventh = root + chord.tones[3];
         // A semitone under the next chord's root, leading into it (a peek: the next bar isn't decided yet).
         const approach = i === 14 ? fold(this.chordAt((bar + 1) * BAR, false).root, 38) - 1 : 0;
         let line;
-        if (plan.battle || name === "drive" || name === "showdown") {
+        if (brink) {
+          line = { 0: [root, 7], 8: [root, 7] };
+        } else if (plan.battle || name === "drive" || name === "showdown") {
           line = { 0: [root, 1.5], 2: [root, 1], 4: [root + 12, 1], 6: [root, 1], 8: [fifth, 1.5], 10: [root, 1], 12: [root + 12, 1], 14: [approach, 1] };
+        } else if (name === "groove" && section === 1) {
+          line = { 0: [root, 1.5], 3: [root + 12, 1], 4: [fifth, 1.5], 7: [root, 1], 8: [root, 1.5], 10: [seventh, 1.5], 12: [fifth, 1], 14: [approach, 1] };
         } else if (name === "groove") {
           line = { 0: [root, 2.5], 3: [root, 1.5], 6: [root + 12, 1], 8: [fifth, 1.5], 10: [root, 2], 14: [approach, 1] };
         } else {
@@ -323,13 +478,21 @@
 
       // Drums.
       if (on("kit")) {
-        const kicks = name === "showdown" ? [0, 4, 8, 10, 12] : name === "drive" ? [0, 6, 10] : [0, 10];
-        if (kicks.includes(i) || (plan.battle && (i === 3 || i === 11))) this.kick(t, i === 0 ? 0.95 : 0.75, L.kit);
-        if (i === 4 || i === 12) this.snare(t, 0.55, L.kit);
-        if (name !== "showdown" && i === 7) this.snare(t, 0.12, L.kit); // a ghost note
-        // The end of the progression: a fill into the top.
-        if (loop === 7 && i >= 13) this.snare(t, 0.2 + (i - 13) * 0.12, L.kit);
-        if (loop === 0 && i === 0 && bar !== plan.since) this.crash(t, 0.25, L.kit);
+        if (brink) {
+          // Only a kick on the one, and the toms in an attack.
+          if (i === 0) this.kick(t, 0.7, L.kit);
+        } else {
+          const kicks = name === "showdown" ? [0, 4, 8, 10, 12] : name === "drive" ? [0, 6, 10] : [0, 10];
+          const filling = loop === 7 && i >= 12;
+          if (!filling && (kicks.includes(i) || (plan.battle && (i === 3 || i === 11)))) this.kick(t, i === 0 ? 0.95 : 0.75, L.kit);
+          if (!filling && (i === 4 || i === 12)) this.snare(t, 0.55, L.kit);
+          if (name !== "showdown" && i === 7) this.snare(t, 0.12, L.kit); // a ghost note
+          // The end of the section: a fill into the top, a different one each pass.
+          if (filling) this.fill(bar, i, t, chord, L.kit);
+          // Halfway through B, a pickup.
+          if (section === 1 && loop === 3 && i >= 14) this.snare(t, 0.18 + (i - 14) * 0.1, L.kit);
+          if (loop === 0 && i === 0 && bar !== plan.since) this.crash(t, 0.25, L.kit);
+        }
         // In an attack: toms rolling down into the next bar.
         if (plan.battle && bar % 2 === 1 && i >= 12 && i % 2 === 0) this.tom(t, fold(chord.root, 45) - (i - 12) * 2, 0.45, L.kit);
       }
@@ -339,10 +502,12 @@
         this.kick(t, (i % 8 === 0 ? 0.55 : 0.4) * Math.min(1, this.tension * 1.6), this.duck);
       }
 
-      // Hats (a shaker, in the lounge). More energy, more of them.
+      // Hats (a shaker, in the lounge). More energy, more of them; at the brink, a tick like a clock.
       if (on("hats")) {
         const sixteenths = name === "drive" || name === "showdown" || this.energy > 0.45;
-        if (name === "lounge") {
+        if (brink) {
+          if (i % 4 === 2) this.hat(t, 0.12, L.hats);
+        } else if (name === "lounge") {
           if (i % 2 === 0 || this.energy > 0.45) this.shaker(t, i % 4 === 0 ? 0.22 : 0.14, L.hats);
         } else if (i % 2 === 0 || sixteenths) {
           const open = (name === "showdown" && i % 4 === 2) || (name === "groove" && i === 14 && bar % 2 === 1);
@@ -353,18 +518,64 @@
       // Arpeggio: up and down the chord in sixteenths.
       if (on("arp")) {
         const notes = this.ladder(chord, 62);
-        const pattern = [0, 1, 2, 3, 4, 3, 2, 1];
+        const pattern = section === 1 ? [0, 2, 1, 3, 2, 4, 3, 1] : [0, 1, 2, 3, 4, 3, 2, 1];
         this.pluck(t, notes[pattern[i % 8]], i % 2 === 0 ? 0.2 : 0.13, L.arp, 0.7);
       }
 
-      // Lead (the showdown): a slow line falling through the top of each chord.
-      if (on("lead") && (i === 0 || i === 8)) {
+      // Lead (the showdown): a slow line falling through the top of each chord. At the brink, one high bell a bar.
+      if (on("lead")) {
         const notes = this.ladder(chord, 64);
-        this.lead(t, notes[(i === 0 ? 5 : 4) + (bar % 2)], 7 * STEP, 0.13, L.lead);
+        if (brink) {
+          if (i === 0) this.bell(t, notes[5 + (bar % 2)], 0.1, L.lead, 2.4);
+        } else if (i === 0 || i === 8) {
+          this.lead(t, notes[(i === 0 ? 5 : 4) + (bar % 2)], 7 * STEP, 0.13, L.lead);
+        }
       }
 
-      // Brass (a climax in play): a swell on each bar.
+      // The hook, in the A section: asked in its first two bars, answered in its fifth and sixth.
+      if (on("hook") && section === 0 && [0, 1, 4, 5].includes(loop)) {
+        const phrase = loop < 4 ? plan.hook.call : plan.hook.answer;
+        const at = (loop % 4) * BAR + i;
+        for (const [when, degree, len] of phrase) {
+          if (when === at) this.hookNote(t, this.ladder(chord, 62)[degree], len * STEP, L.hook);
+        }
+      }
+
+      // Brass (a climax in play, or a boss's showdown): a swell on each bar.
       if (on("brass") && i === 0) this.brass(t, this.voicing(chord, 55), 12 * STEP, 0.14, L.brass);
+    }
+
+    // The last four sixteenths of a section: one of a few fills, picked by the bar (so it's the same if asked twice).
+    fill(bar, i, t, chord, out) {
+      const k = i - 12;
+      switch ((Math.floor(bar / 8) + this.theme.seed) % 4) {
+        case 0: // a snare roll, building
+          this.snare(t, 0.2 + k * 0.12, out);
+          break;
+        case 1: // toms falling round the kit
+          this.tom(t, fold(chord.root, 45) + 7 - k * 3, 0.4 + k * 0.05, out);
+          break;
+        case 2: // snare, snare, kick, snare with an open hat
+          if (k === 2) this.kick(t, 0.8, out);
+          else this.snare(t, 0.3 + k * 0.08, out);
+          if (k === 3) this.hat(t, 0.25, out, true);
+          break;
+        default: // a gap, then one big hit into the top
+          if (k === 3) {
+            this.snare(t, 0.6, out);
+            this.kick(t, 0.8, out);
+          }
+      }
+    }
+
+    // A note of the hook, in the theme's voice.
+    hookNote(t, midi, dur, out) {
+      switch (this.theme.voice) {
+        case "bell": this.bell(t, midi, 0.13, out, Math.max(1, dur * 2)); break;
+        case "pluck": this.pluck(t, midi, 0.24, out, 1.1); break;
+        case "keys": this.keys(t, midi + 12, dur, 0.2, out); break;
+        default: this.lead(t, midi, dur, 0.12, out);
+      }
     }
 
     // The start of a bar: layers fade to this arrangement's levels over a beat, and last bar's cues echo.
@@ -383,16 +594,18 @@
         this.heard[name] = level > 0.01 || (before[name] || 0) > 0.01;
         const g = this.layers[name].gain;
         g.cancelScheduledValues(t);
-        g.setTargetAtTime(level, t, (BEAT * STEP) / 3);
+        g.setTargetAtTime(level, t, (BEAT * this.stepDur) / 3);
       }
       if (plan.name !== "coda") this.echo(bar);
     }
 
-    // Each beat: energy and tension wear off, and the music's filter and the delay follow them and whose turn it is.
+    // Each beat: energy and tension wear off (though never below the brink's), and the music's filter and the
+    // delay follow them and whose turn it is.
     beat(plan, t) {
       this.energy *= 0.9;
       this.tension *= 0.87;
       this.sparkle *= 0.85;
+      if (plan.name === "brink") this.tension = Math.max(this.tension, 0.4);
       const open = plan.myTurn || plan.name === "coda" ? 16000 : 3400;
       const cutoff = Math.max(450, open * (1 - 0.85 * this.tension));
       this.filter.frequency.setTargetAtTime(cutoff, t, 0.12);
@@ -420,10 +633,11 @@
       }
     }
 
-    // The game is over: a final chord or two, then quiet.
+    // The game is over: a final chord or two, then quiet. A win rings out the start of the hook.
     coda(plan, bar, i, t) {
       const into = bar - plan.since;
       if (i !== 0 || into > 1) return;
+      const STEP = this.stepDur;
       const chord = this.chordAt(bar * BAR);
       const L = this.layers;
       if (plan.over === "win") {
@@ -431,7 +645,11 @@
         this.crash(t, 0.35, this.cueMine);
         this.pad(t, this.voicing(chord, 57), 4 * BAR * STEP, 0.2, L.pad);
         this.bass(t, fold(chord.root, 38), 3 * BAR * STEP, 0.5, L.bass);
-        this.ladder(chord, 62).slice(0, 8).forEach((note, n) => this.bell(t + n * STEP, note, 0.16, this.cueMine));
+        const notes = this.ladder(chord, 62);
+        const opening = this.theme.hook.call.filter(([when]) => when < BAR).slice(0, 5);
+        opening.forEach(([when, degree]) => this.bell(t + when * STEP, notes[degree], 0.16, this.cueMine));
+        const last = opening.length ? opening[opening.length - 1][0] + 4 : 0;
+        this.bell(t + last * STEP, fold(chord.root, 74), 0.18, this.cueMine, 2.6);
       } else {
         this.pad(t, this.voicing(chord, 55), (into ? 4 : 1) * BAR * STEP, 0.18, L.pad);
         this.bass(t, fold(chord.root, 38) - (into ? 12 : 0), (into ? 3 : 1) * BAR * STEP, 0.45, L.bass);
@@ -441,34 +659,52 @@
 
     // --- Cues ---------------------------------------------------------------------------------------
 
-    // A moment on the board, played into the music. `opponent`: the other side's, lower and muffled.
-    cue(type, { opponent = false } = {}) {
+    // A moment on the board, played into the music. `opponent`: the other side's, lower and muffled. `count`:
+    // how many cards it was (a damage's, flipped one by one); `icons`: a trigger check's trigger icons.
+    cue(type, { opponent = false, count = 1, icons = [] } = {}) {
       const def = CUES[type];
       if (!this.running || !def) return;
-      const nowStep = (this.now() + 0.03 - this.origin) / STEP;
+      const nowStep = (this.now() + 0.03 - this.origin) / this.stepDur;
       let step = Math.ceil(nowStep / def.grid) * def.grid;
       // Several at once play as a figure, one after another, rather than piling onto one note.
       if (step <= this.lastCueStep) step = Math.ceil((this.lastCueStep + 1) / def.grid) * def.grid;
       if (step - nowStep > BAR / 2) return; // a flood of them: the rest only add to the mood
       if (this.plan(Math.floor(step / BAR)).name === "coda") return;
-      this.lastCueStep = step;
       const side = opponent ? "theirs" : "mine";
       const last = this.runs[side + type];
       const run = last && step - last.step <= 12 ? last.run + 1 : 0;
       this.runs[side + type] = { step, run };
       const chord = this.chordAt(step);
-      const degree = def.play(this, {
-        t: this.timeOf(step), step, chord, run, opponent,
+      const c = {
+        t: this.timeOf(step), step, chord, run, opponent, count: clamp(Math.round(count) || 1, 1, 8), icons,
         notes: this.ladder(chord, opponent ? THEIRS : MINE),
         out: opponent ? this.cueTheirs : this.cueMine,
         vel: opponent ? 0.8 : 1,
-      });
+      };
+      // A cue that takes a while (a damage's flips) holds the next one back until it's done.
+      this.lastCueStep = step + (def.span ? def.span(c) : 0);
+      const degree = def.play(this, c);
       this.recent.push({ type, step, degree: degree ?? null, opponent });
-      this.recent = this.recent.filter((c) => c.step > step - 3 * BAR);
+      this.recent = this.recent.filter((r) => r.step > step - 3 * BAR);
       const weight = opponent ? 0.7 : 1;
+      const tension = typeof def.tension === "function" ? def.tension(c) : def.tension;
       this.energy = clamp(this.energy + (def.energy || 0) * weight, 0, 1);
-      this.tension = def.tension === "release" ? 0 : clamp(this.tension + (def.tension || 0) * weight, 0, 1);
+      this.tension = tension === "release" ? 0 : clamp(this.tension + (tension || 0) * weight, 0, 1);
       this.sparkle = clamp(this.sparkle + (def.sparkle || 0), 0, 1);
+    }
+
+    // A damage's cards turned over one at a time before what they came to: a tick each, climbing, over a
+    // riser once there are a few. The time the last one lands, for the payoff.
+    flips(c) {
+      const STEP = this.stepDur;
+      const n = c.count - 1;
+      for (let k = 0; k < n; k++) {
+        const t = c.t + k * STEP;
+        this.pluck(t, c.notes[Math.min(k, c.notes.length - 1)], (0.14 + 0.04 * k) * c.vel, c.out, 0.6);
+        this.hat(t, (0.1 + 0.04 * k) * c.vel, c.out);
+      }
+      if (n >= 2) this.riser(c.t, n * STEP, 0.14 * c.vel, c.out);
+      return c.t + n * STEP;
     }
 
     // --- Instruments ----------------------------------------------------------------------------------
@@ -683,7 +919,8 @@
 
   // Each cue: `grid` is what it lands on (1 a sixteenth, 2 an eighth, 4 a beat); `play` returns the step of
   // the chord it played (the note the echo repeats), or nothing to leave it out of the echo. `energy`,
-  // `tension` and `sparkle` are what it adds to the mood ("release" clears the tension).
+  // `tension` and `sparkle` are what it adds to the mood ("release" clears the tension; tension can depend on
+  // the cue). `span`: how many sixteenths after its first it takes, which the next cue waits for.
   const CUES = {
     // A card drawn: a plucked note, a step higher for each one in a row.
     draw: {
@@ -710,32 +947,41 @@
     clock: {
       grid: 2, tension: 0.12,
       play(s, c) {
-        s.bass(c.t, fold(c.chord.root, 38) + (c.opponent ? 0 : 12), STEP * 1.5, 0.45 * c.vel, c.out);
+        s.bass(c.t, fold(c.chord.root, 38) + (c.opponent ? 0 : 12), s.STEP * 1.5, 0.45 * c.vel, c.out);
         s.hat(c.t, 0.35 * c.vel, c.out);
         return 0;
       },
     },
-    // Damage: a hit with the music ducking under it, and the floor dropping out (a semitone slide down onto the root).
+    // Damage: its cards ticking over one by one, then a hit with the music ducking under it, and the floor
+    // dropping out (a semitone slide down onto the root). The more cards, the more it hurts.
     damage: {
-      grid: 1, tension: 0.3, energy: 0.1,
+      grid: 1, energy: 0.1,
+      tension: (c) => 0.3 + 0.05 * (c.count - 1),
+      span: (c) => c.count - 1,
       play(s, c) {
-        s.duckUnder(c.t, Math.min(0.85, 0.55 + c.run * 0.1));
-        s.kick(c.t, 1 * c.vel, c.out);
-        s.tom(c.t, fold(c.chord.root, 40) - c.run, 0.6 * c.vel, c.out);
+        const STEP = s.STEP;
+        const t = s.flips(c);
+        s.duckUnder(t, Math.min(0.85, 0.55 + c.run * 0.1 + (c.count - 1) * 0.04));
+        s.kick(t, 1 * c.vel, c.out);
+        s.tom(t, fold(c.chord.root, 40) - c.run, 0.6 * c.vel, c.out);
         const root = fold(c.chord.root, 38);
         const f = hz(root + 1);
-        const o = s.osc("sawtooth", f, c.t, c.t + BEAT * STEP + 0.2);
-        o.frequency.setTargetAtTime(hz(root), c.t + STEP, 0.08);
-        o.connect(s.filtered("lowpass", 600, 2)).connect(s.envelope(c.t, { peak: 0.35 * c.vel, decay: 0.5, sustain: 0.4, hold: BEAT * STEP, release: 0.1 }, c.out));
+        const o = s.osc("sawtooth", f, t, t + BEAT * STEP + 0.2);
+        o.frequency.setTargetAtTime(hz(root), t + STEP, 0.08);
+        o.connect(s.filtered("lowpass", 600, 2)).connect(s.envelope(t, { peak: 0.35 * c.vel, decay: 0.5, sustain: 0.4, hold: BEAT * STEP, release: 0.1 }, c.out));
+        if (c.count >= 4) s.crash(t, 0.25 * c.vel, c.out);
         return 0;
       },
     },
-    // A climax cancelled the damage: bells running up the chord, and the tension let go.
+    // A climax cancelled the damage: the cards ticking over until it turned up, then bells running up the chord,
+    // and the tension let go.
     negated: {
-      grid: 2, tension: "release", energy: 0.15, sparkle: 0.3,
+      grid: 1, tension: "release", energy: 0.15, sparkle: 0.3,
+      span: (c) => c.count - 1,
       play(s, c) {
-        [2, 3, 4, 5].forEach((d, n) => s.bell(c.t + n * STEP, c.notes[d], 0.2 * c.vel, c.out, 1.2));
-        s.hat(c.t, 0.15, c.out, true);
+        const t = s.flips(c);
+        [2, 3, 4, 5].forEach((d, n) => s.bell(t + n * s.STEP, c.notes[d], 0.2 * c.vel, c.out, 1.2));
+        s.hat(t, 0.15, c.out, true);
         return 5;
       },
     },
@@ -744,13 +990,13 @@
       grid: 1, energy: 0.5, tension: "release",
       play(s, c) {
         const left = BAR - (c.step % BAR);
-        const spacing = left < 4 ? STEP / 2 : STEP;
+        const spacing = left < 4 ? s.STEP / 2 : s.STEP;
         const count = Math.min(10, left < 4 ? left * 2 : left);
         for (let n = 0; n < count; n++) s.pluck(c.t + n * spacing, c.notes[Math.min(n, c.notes.length - 1)], (0.2 + 0.25 * n / count) * c.vel, c.out, 1.2);
         const landing = c.step + left;
         const t = s.timeOf(landing);
         s.crash(t, 0.4 * c.vel, c.out);
-        s.brass(t, s.voicing(s.chordAt(landing), 60), 6 * STEP, 0.3 * c.vel, c.out);
+        s.brass(t, s.voicing(s.chordAt(landing), 60), 6 * s.STEP, 0.3 * c.vel, c.out);
         return Math.min(count, 7);
       },
     },
@@ -758,7 +1004,7 @@
     climax: {
       grid: 2, energy: 0.4,
       play(s, c) {
-        s.brass(c.t, s.voicing(c.chord, 60), 3 * STEP, 0.35 * c.vel, c.out);
+        s.brass(c.t, s.voicing(c.chord, 60), 3 * s.STEP, 0.35 * c.vel, c.out);
         s.crash(c.t, 0.3 * c.vel, c.out);
         return 4;
       },
@@ -767,9 +1013,9 @@
     shuffle: {
       grid: 4, energy: 0.3,
       play(s, c) {
-        for (let n = 0; n < 8; n++) s.snare(c.t + n * STEP / 2, (0.08 + n * 0.05) * c.vel, c.out);
-        s.riser(c.t, BEAT * STEP, 0.25 * c.vel, c.out);
-        s.crash(c.t + BEAT * STEP, 0.3 * c.vel, c.out);
+        for (let n = 0; n < 8; n++) s.snare(c.t + n * s.STEP / 2, (0.08 + n * 0.05) * c.vel, c.out);
+        s.riser(c.t, BEAT * s.STEP, 0.25 * c.vel, c.out);
+        s.crash(c.t + BEAT * s.STEP, 0.3 * c.vel, c.out);
       },
     },
     // Something needs our answer: two bells, left on an open note like a question.
@@ -777,23 +1023,63 @@
       grid: 4,
       play(s, c) {
         s.bell(c.t, c.notes[2], 0.2, c.out, 1.2);
-        s.bell(c.t + 2 * STEP, c.notes[4], 0.17, c.out, 1.4);
+        s.bell(c.t + 2 * s.STEP, c.notes[4], 0.17, c.out, 1.4);
       },
     },
     // An ability going off: a quick harp run up the chord, into the delay.
     ability: {
       grid: 1, energy: 0.15, sparkle: 0.5,
       play(s, c) {
-        for (let n = 0; n < 6; n++) s.pluck(c.t + n * STEP / 2, c.notes[1 + n], 0.25 * c.vel, c.out, 1.3);
+        for (let n = 0; n < 6; n++) s.pluck(c.t + n * s.STEP / 2, c.notes[1 + n], 0.25 * c.vel, c.out, 1.3);
         return 6;
+      },
+    },
+    // A trigger check: each icon its own sound, one after another (souls ring high, a shot cracks, a draw
+    // plucks, the rest chime twice); a card with none, one dull note.
+    trigger: {
+      grid: 1, energy: 0.1, sparkle: 0.3,
+      span: (c) => Math.max(0, Math.min(c.icons.length, 3) - 1) * 2,
+      play(s, c) {
+        const icons = c.icons.slice(0, 3);
+        if (!icons.length) {
+          s.mallet(c.t, c.notes[1], 0.22 * c.vel, c.out);
+          return null;
+        }
+        icons.forEach((icon, n) => {
+          const t = c.t + n * 2 * s.STEP;
+          if (icon === "soul") s.bell(t, c.notes[5 + n], 0.2 * c.vel, c.out, 1.4);
+          else if (icon === "shot") {
+            s.snare(t, 0.45 * c.vel, c.out);
+            s.pluck(t, c.notes[6], 0.3 * c.vel, c.out, 1.4);
+          } else if (icon === "draw") s.pluck(t, c.notes[3 + n], 0.34 * c.vel, c.out, 1.2);
+          else {
+            s.bell(t, c.notes[3], 0.16 * c.vel, c.out, 1);
+            s.bell(t + s.STEP, c.notes[5], 0.14 * c.vel, c.out, 1.2);
+          }
+        });
+        return icons[0] === "soul" ? 5 : 3;
+      },
+    },
+    // A character reversed in battle: a note falling away an octave, over a low tom.
+    reversed: {
+      grid: 2, energy: 0.12, tension: 0.06,
+      play(s, c) {
+        const STEP = s.STEP;
+        const from = c.notes[4];
+        const o = s.osc("triangle", hz(from), c.t, c.t + BEAT * STEP + 0.1);
+        o.frequency.exponentialRampToValueAtTime(hz(from - 12), c.t + 3 * STEP);
+        o.connect(s.filtered("lowpass", 2400, 1)).connect(s.hit(c.t, 0.3 * c.vel, BEAT * STEP, c.out));
+        s.tom(c.t, fold(c.chord.root, 41), 0.45 * c.vel, c.out);
+        s.mallet(c.t + 2 * STEP, c.notes[0], 0.22 * c.vel, c.out);
+        return 0;
       },
     },
     // A CPU's climax combo cutting in: the brass and the harp run together.
     combo: {
       grid: 2, energy: 0.5, sparkle: 0.5,
       play(s, c) {
-        s.brass(c.t, s.voicing(c.chord, 60), 6 * STEP, 0.32 * c.vel, c.out);
-        for (let n = 0; n < 8; n++) s.pluck(c.t + n * STEP / 2, c.notes[1 + n], 0.22 * c.vel, c.out, 1.3);
+        s.brass(c.t, s.voicing(c.chord, 60), 6 * s.STEP, 0.32 * c.vel, c.out);
+        for (let n = 0; n < 8; n++) s.pluck(c.t + n * s.STEP / 2, c.notes[1 + n], 0.22 * c.vel, c.out, 1.3);
         s.crash(c.t, 0.3 * c.vel, c.out);
         return 7;
       },
@@ -804,7 +1090,7 @@
       play(s, c) {
         const low = fold(c.chord.root, 43);
         s.tom(c.t, low + 7, 0.55 * c.vel, c.out);
-        s.tom(c.t + STEP, low, 0.6 * c.vel, c.out);
+        s.tom(c.t + s.STEP, low, 0.6 * c.vel, c.out);
       },
     },
   };
@@ -812,6 +1098,7 @@
   window.WeissScore = {
     create: (ctx, output) => new Score(ctx, output),
     cues: Object.keys(CUES),
-    STEP, BAR, LOOKAHEAD,
+    theme: makeTheme,
+    STEP: 60 / BPM / 4, BAR, LOOKAHEAD,
   };
 })();

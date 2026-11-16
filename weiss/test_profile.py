@@ -119,9 +119,16 @@ class SoundSettingsTests(TestCase):
         self.assertEqual((profile.sound_on, profile.sound_volume), (True, 60))
 
     def test_turning_it_off_keeps_the_volume(self):
-        self.assertEqual(self.client.post(self.url, {"on": "0"}).json(), {"on": False, "volume": 60})
-        self.assertEqual(self.client.post(self.url, {"volume": "35"}).json(), {"on": False, "volume": 35})
-        self.assertEqual(self.client.post(self.url, {"on": "1"}).json(), {"on": True, "volume": 35})
+        self.assertEqual(self.client.post(self.url, {"on": "0"}).json(), {"on": False, "volume": 60, "music": 60})
+        self.assertEqual(self.client.post(self.url, {"volume": "35"}).json(), {"on": False, "volume": 35, "music": 60})
+        self.assertEqual(self.client.post(self.url, {"on": "1"}).json(), {"on": True, "volume": 35, "music": 60})
+
+    def test_the_music_level_is_its_own(self):
+        self.assertEqual(self.client.post(self.url, {"music": "20"}).json(), {"on": True, "volume": 60, "music": 20})
+        self.assertEqual(self.client.post(self.url, {"music": "0"}).json()["music"], 0)
+        self.assertEqual(self.client.post(self.url, {"music": "400"}).json()["music"], 100)
+        for bad in ("-5", "quiet", ""):
+            self.assertEqual(self.client.post(self.url, {"music": bad}).json()["music"], 100, bad)
 
     def test_the_volume_stays_in_range(self):
         self.assertEqual(self.client.post(self.url, {"volume": "250"}).json()["volume"], 100)
@@ -132,13 +139,14 @@ class SoundSettingsTests(TestCase):
         self.assertEqual(self.client.get(self.url).status_code, 405)
 
     def test_the_game_board_starts_from_them(self):
-        PlayerProfile.objects.create(user=self.user, sound_on=False, sound_volume=20)
+        PlayerProfile.objects.create(user=self.user, sound_on=False, sound_volume=20, music_volume=35)
         card, bob = add_card(), player("bob")
         room = GameRoom(host=self.user, guest=bob, host_deck=deck_for(self.user, card), guest_deck=deck_for(bob, card), status="playing")
         play.deal(room)
         room.save()
         page = self.client.get(reverse("weiss:play_room", args=[room.pk])).content.decode()
         self.assertIn('data-sound-volume="20"', page)
+        self.assertIn('data-music-volume="35"', page)
         self.assertNotIn("data-sound-on", page)
 
 

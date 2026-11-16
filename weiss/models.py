@@ -222,6 +222,7 @@ class PlayerProfile(Avatar):
     user = models.OneToOneField("auth.User", on_delete=models.CASCADE, related_name="player_profile")
     sound_on = models.BooleanField(default=True, help_text="Sound effects on the game board")
     sound_volume = models.PositiveSmallIntegerField(default=60, help_text="Their volume, 0 to 100")
+    music_volume = models.PositiveSmallIntegerField(default=60, help_text="The battle music under the game's moments, 0 to 100")
     sleeve = models.ForeignKey(Sleeve, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", help_text="Their face-down cards' look; none for the default")
     progress = models.JSONField(default=dict, blank=True, help_text="What they've done towards card sleeves since those came in: {key: number} (see weiss.sleeves)")
 

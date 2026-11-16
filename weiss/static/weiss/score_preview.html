@@ -57,10 +57,17 @@
     <div class="row">
       <button type="button" class="primary" data-start>Start music</button>
       <label>Volume <input type="range" min="0" max="100" value="60" data-volume></label>
+      <label>Music <input type="range" min="0" max="100" value="60" data-music-level></label>
       <span class="muted" data-status role="status">Stopped</span>
+    </div>
+    <div class="row">
+      <label>Opponent <input type="text" data-theme-name placeholder="House theme" autocomplete="off"></label>
+      <label><input type="checkbox" data-theme-boss> Boss</label>
+      <span class="muted" data-theme-info></span>
     </div>
     <div class="readout" aria-live="off">
       <div><span>Version</span><b data-r="version">–</b></div>
+      <div><span>Section</span><b data-r="section">–</b></div>
       <div><span>Bar · chord</span><b data-r="chord">–</b></div>
       <div><span>Energy</span><meter min="0" max="1" data-r="energy"></meter></div>
       <div><span>Tension</span><meter min="0" max="1" data-r="tension"></meter></div>
@@ -82,20 +89,25 @@
     <div class="row">
       <label><input type="checkbox" data-state="attacking"> Attack phase</label>
       <label><input type="checkbox" data-state="climax"> Climax in play</label>
+      <label><input type="checkbox" data-state="matchPoint"> Match point (heard at level 3)</label>
       <label>Game over <select data-state="over"><option value="">No</option><option value="win">Won</option><option value="lose">Lost</option></select></label>
     </div>
   </section>
 
   <section aria-labelledby="cues-title">
     <h2 id="cues-title">Cues</h2>
-    <p class="muted">Keys 1–9 and 0 fire yours; hold Shift for the opponent's.</p>
+    <p class="muted">Keys 1–9 and 0 fire the first ten of yours; hold Shift for the opponent's.</p>
+    <div class="row">
+      <label>Damage cards <select data-count><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></label>
+      <label>Trigger icons <select data-icons><option value="">none</option><option selected>soul</option><option>soul soul</option><option>shot</option><option>draw</option><option>comeback</option></select></label>
+    </div>
     <div class="row"><span class="label">You</span><span data-cues="mine"></span></div>
     <div class="row"><span class="label">Opponent</span><span data-cues="theirs"></span></div>
   </section>
 
   <section aria-labelledby="render-title">
     <h2 id="render-title">Renders</h2>
-    <p class="muted">Each version on its own (eight bars), and a scripted game with every cue. Rendered offline, so they're the same music the game plays.</p>
+    <p class="muted">Each version on its own (sixteen bars: both sections), the brink, a scripted game with every cue, and a CPU's theme with its boss version. Rendered offline, so they're the same music the game plays.</p>
     <div class="row"><button type="button" data-render-all>Render all</button><span class="muted" data-render-status role="status"></span></div>
     <div class="renders" data-renders></div>
   </section>
@@ -106,8 +118,8 @@
 (function () {
   "use strict";
   const $ = (sel) => document.querySelector(sel);
-  const { STEP, BAR, LOOKAHEAD } = WeissScore;
-  const CUES = ["draw", "move", "clock", "damage", "negated", "level", "climax", "shuffle", "ability", "attack", "combo", "prompt"];
+  const { BAR, LOOKAHEAD } = WeissScore;
+  const CUES = ["draw", "move", "clock", "damage", "negated", "level", "climax", "shuffle", "ability", "attack", "trigger", "reversed", "combo", "prompt"];
   const KEYS = "1234567890";
   const NOTE_NAMES = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
 
@@ -133,19 +145,33 @@
     return {
       setup: get("setup").checked, turn: get("late").checked ? 5 : 1, level: Number(get("level").value),
       clock: get("clock").checked ? 5 : 0, myTurn: !get("opponentTurn").checked, attacking: get("attacking").checked,
-      climax: get("climax").checked, over: get("over").value || null,
+      climax: get("climax").checked, matchPoint: get("matchPoint").checked, over: get("over").value || null,
     };
   }
+
+  function themeChoice() {
+    const name = $("[data-theme-name]").value.trim();
+    return name ? { name, boss: $("[data-theme-boss]").checked } : { boss: $("[data-theme-boss]").checked };
+  }
+
+  function showTheme() {
+    const t = WeissScore.theme(themeChoice());
+    const shift = t.shift ? ` · key ${t.shift > 0 ? "+" : ""}${t.shift}` : "";
+    $("[data-theme-info]").textContent = `${t.bpm} BPM${shift} · hook on ${t.voice}${t.boss ? " · boss" : ""}`;
+  }
+  showTheme();
 
   function toggle() {
     if (!ctx) {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
       score = WeissScore.create(ctx, limiter(ctx));
       score.setVolume(Number($("[data-volume]").value) / 100);
+      score.setMusicLevel(Number($("[data-music-level]").value) / 100);
     }
     ctx.resume();
     if (score.running) score.stop();
     else {
+      score.setTheme(themeChoice());
       score.setState(boardState());
       score.start();
     }
@@ -155,6 +181,13 @@
   }
   $("[data-start]").addEventListener("click", toggle);
   $("[data-volume]").addEventListener("input", (e) => score && score.setVolume(Number(e.target.value) / 100));
+  $("[data-music-level]").addEventListener("input", (e) => score && score.setMusicLevel(Number(e.target.value) / 100));
+  for (const sel of ["[data-theme-name]", "[data-theme-boss]"]) {
+    $(sel).addEventListener("change", () => {
+      showTheme();
+      if (score) score.setTheme(themeChoice());
+    });
+  }
   document.querySelectorAll("[data-state]").forEach((el) => el.addEventListener("change", () => score && score.setState(boardState())));
 
   function renderCues() {
@@ -164,7 +197,9 @@
     }
   }
   renderCues();
-  const fire = (cue, side) => score && score.running && score.cue(cue, { opponent: side === "theirs" });
+  const fire = (cue, side) => score && score.running && score.cue(cue, {
+    opponent: side === "theirs", count: Number($("[data-count]").value), icons: $("[data-icons]").value.split(" ").filter(Boolean),
+  });
   document.addEventListener("click", (e) => {
     const b = e.target.closest("[data-cue]");
     if (b) fire(b.dataset.cue, b.dataset.side);
@@ -179,10 +214,13 @@
 
   (function readout() {
     if (score && score.running) {
-      const step = Math.max(0, Math.floor((ctx.currentTime - score.origin) / STEP));
+      const step = Math.max(0, Math.floor((ctx.currentTime - score.origin) / score.STEP));
       const bar = Math.floor(step / BAR);
       const chord = score.chordAt(step);
-      $('[data-r="version"]').textContent = score.plan(bar).name;
+      const plan = score.plan(bar);
+      const place = score.placeOf(plan, bar);
+      $('[data-r="version"]').textContent = plan.name;
+      $('[data-r="section"]').textContent = plan.name === "coda" ? "–" : `${"AB"[place.section]} · bar ${place.loop + 1} of 8`;
       $('[data-r="chord"]').textContent = `${bar + 1} · ${NOTE_NAMES[chord.root % 12]}`;
       $('[data-r="energy"]').value = score.energy;
       $('[data-r="tension"]').value = score.tension;
@@ -192,8 +230,9 @@
 
   // --- Renders ------------------------------------------------------------------------------------------
   const RATE = 44100;
-  const bars = (n) => n * BAR * STEP;
-  const steps = (n) => n * STEP;
+  // Times in sixteenths; render turns them into seconds at the theme's tempo.
+  const bars = (n) => n * BAR;
+  const steps = (n) => n;
   // A version on its own, with a few of our draws and moves in its fourth bar and the opponent's in its sixth.
   const version = (state) => [
     { at: 0, state },
@@ -202,12 +241,17 @@
     ...[0, 4].map((s) => ({ at: bars(5) + steps(s), cue: "move", opponent: true })),
     { at: bars(5) + steps(10), cue: "clock", opponent: true },
   ];
+  // Sixteen bars each, so both sections (and the hook, and a fill into B) are heard.
   const DEMOS = {
-    lounge: { seconds: bars(8) + 2, events: version({ setup: true }) },
-    groove: { seconds: bars(8) + 2, events: version({ setup: false, turn: 4, level: 1 }) },
-    drive: { seconds: bars(8) + 2, events: version({ setup: false, turn: 9, level: 2 }) },
-    showdown: { seconds: bars(8) + 2, events: version({ setup: false, turn: 14, level: 3 }) },
-    game: { seconds: bars(30), events: game() },
+    lounge: { bars: 16, events: version({ setup: true }) },
+    groove: { bars: 16, events: version({ setup: false, turn: 4, level: 1 }) },
+    drive: { bars: 16, events: version({ setup: false, turn: 9, level: 2 }) },
+    showdown: { bars: 16, events: version({ setup: false, turn: 14, level: 3 }) },
+    brink: { bars: 8, events: [...version({ setup: false, turn: 16, level: 3, matchPoint: true }),
+      { at: bars(6) + steps(2), cue: "attack", opponent: true }, { at: bars(6) + steps(8), cue: "damage", count: 4 }] },
+    game: { bars: 30, events: game() },
+    "a CPU's theme": { bars: 16, theme: { name: "Azula" }, events: version({ setup: false, turn: 4, level: 1 }) },
+    "its boss version": { bars: 16, theme: { name: "Azula", boss: true }, events: version({ setup: false, turn: 9, level: 2 }) },
   };
 
   // A whole game in miniature: the setup, a quiet turn each, then levels, attacks, damage and a climax, and a win.
@@ -225,13 +269,14 @@
     at(7, 0, { state: { myTurn: true, turn: 3 } });
     at(7, 2, { cue: "draw" }); at(7, 6, { cue: "clock" }); at(7, 8, { cue: "draw" }); at(7, 9, { cue: "draw" });
     at(8, 0, { cue: "move" }); at(8, 4, { cue: "ability" }); at(8, 10, { cue: "move" });
-    at(9, 0, { state: { attacking: true } }); at(9, 2, { cue: "attack" });
-    at(9, 8, { cue: "clock", opponent: true }); at(9, 12, { cue: "damage", opponent: true });
-    at(10, 2, { cue: "attack" }); at(10, 8, { cue: "negated", opponent: true });
+    at(9, 0, { state: { attacking: true } }); at(9, 2, { cue: "attack" }); at(9, 5, { cue: "trigger", icons: ["soul"] });
+    at(9, 8, { cue: "clock", opponent: true }); at(9, 12, { cue: "damage", opponent: true, count: 2 });
+    at(10, 2, { cue: "attack" }); at(10, 4, { cue: "trigger", icons: [] }); at(10, 8, { cue: "negated", opponent: true, count: 3 });
+    at(10, 14, { cue: "reversed", opponent: true });
     at(11, 0, { state: { attacking: false, myTurn: false, turn: 4 } });
     at(11, 4, { cue: "draw", opponent: true }); at(11, 8, { cue: "climax", opponent: true }); at(11, 9, { state: { climax: true } });
     at(12, 0, { state: { attacking: true } }); at(12, 2, { cue: "attack", opponent: true });
-    at(12, 6, { cue: "damage" }); at(12, 7, { cue: "damage" }); at(12, 8, { cue: "damage" });
+    at(12, 4, { cue: "trigger", icons: ["shot"], opponent: true }); at(12, 8, { cue: "damage", count: 3 });
     at(13, 2, { cue: "attack", opponent: true }); at(13, 6, { cue: "damage" }); at(13, 7, { cue: "damage" });
     at(13, 12, { state: { level: 1 } }); at(13, 12, { cue: "level" });
     at(15, 0, { state: { attacking: false, climax: false, myTurn: true, turn: 5 } });
@@ -248,28 +293,32 @@
     at(23, 0, { state: { level: 3, attacking: false, myTurn: true, turn: 7 } }); at(23, 0, { cue: "level" });
     at(24, 4, { cue: "draw" }); at(24, 6, { cue: "move" }); at(24, 8, { cue: "ability" }); at(24, 12, { cue: "clock" });
     at(25, 0, { state: { attacking: true } }); at(25, 2, { cue: "attack" }); at(25, 8, { cue: "damage", opponent: true });
-    at(26, 2, { cue: "attack" }); at(26, 8, { cue: "damage", opponent: true }); at(26, 9, { cue: "damage", opponent: true });
+    at(25, 12, { state: { matchPoint: true } });
+    at(26, 2, { cue: "attack" }); at(26, 4, { cue: "trigger", icons: ["soul", "soul"] }); at(26, 8, { cue: "damage", opponent: true, count: 5 });
     at(27, 4, { state: { over: "win", attacking: false } });
     return ev.sort((a, b) => a.at - b.at);
   }
 
   async function render(demo) {
-    const offline = new OfflineAudioContext(2, Math.ceil(RATE * demo.seconds), RATE);
+    const step = 60 / WeissScore.theme(demo.theme).bpm / 4;
+    const seconds = demo.bars * BAR * step + 2;
+    const offline = new OfflineAudioContext(2, Math.ceil(RATE * seconds), RATE);
     const s = WeissScore.create(offline, limiter(offline));
     let now = 0;
     s.now = () => now;
     s.setVolume(0.6);
+    s.setTheme(demo.theme);
     s.setState(demo.events[0].state);
     s.start({ timer: false });
-    const events = demo.events.slice(1);
+    const events = demo.events.slice(1).map((e) => ({ ...e, at: e.at * step }));
     // The clock moves in the live scheduler's ticks; what happens is applied when it's due, and the music kept ahead.
-    for (now = 0; now < demo.seconds; now += 0.05) {
+    for (now = 0; now < seconds; now += 0.05) {
       while (events.length && events[0].at <= now) {
         const e = events.shift();
         if (e.state) s.setState(e.state);
-        else s.cue(e.cue, { opponent: e.opponent });
+        else s.cue(e.cue, { opponent: e.opponent, count: e.count, icons: e.icons });
       }
-      s.pump(Math.min(now + LOOKAHEAD, demo.seconds));
+      s.pump(Math.min(now + LOOKAHEAD, seconds));
     }
     return offline.startRendering();
   }
