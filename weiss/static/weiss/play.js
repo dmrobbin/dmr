@@ -39,6 +39,7 @@
   const REFRESH_PAUSE_MS = 250; // how long an emptied deck shows before it's refreshed mid-damage
   const CLIMAX_SHOW_MS = 2000; // how long a climax played in the climax phase shows before the attack phase
   const PHASE_PAUSE_MS = 900; // how long a phase that ended itself stays before the next begins
+  const LEVEL_SHOW_MS = 2200; // how long a level up shows in the middle of the screen
   const PHASE_NAME_FX = ["fx-pop", "fx-flip", "fx-slide", "fx-glow"]; // a new phase's name comes in with one of these
   const RPS_SHOW_MS = 3000; // how long rock, paper, scissors' result shows before the mulligan
   const SHOW_FALLBACK_MS = 3000; // how much later than its owner the other player's page ends an ability's show
@@ -619,8 +620,7 @@
       if (now[owner].climaxes > seen[owner].climaxes) showClimax(side.zones.climax[side.zones.climax.length - 1]);
       if (now[owner].negated > seen[owner].negated) showNegated(side.negated_card);
       if (now[owner].level_ups > seen[owner].level_ups) {
-        const level = side.zones.level.length;
-        flash(levelGap(mat), `lv.${level - 1}`, "flash-level", `lv.${level}`);
+        showLevelUp(owner === "me" && !SPECTATING ? "You" : side.name, side.zones.level.length);
       }
     }
     seen = now;
@@ -962,25 +962,33 @@
     return { x: (a.left + a.right + b.left + b.right) / 4, y: (a.top + a.bottom + b.top + b.bottom) / 4 };
   }
 
-  // The middle of the empty stretch between the level zone and the clock's cards (the level zone
-  // is on the clock's left on our side, on its right on the opponent's).
-  function levelGap(mat) {
-    if (outOfSight(mat)) return null;
-    const level = mat && mat.querySelector('[data-pile="level"]');
-    const clock = mat && mat.querySelector('[data-pile="clock"]');
-    if (!level || !clock) return null;
-    const l = level.getBoundingClientRect();
-    const clockCards = [...clock.querySelectorAll(".pcard")].map((c) => c.getBoundingClientRect());
-    const c = clock.getBoundingClientRect();
-    const left = clockCards.length ? Math.min(...clockCards.map((r) => r.left)) : c.left + c.width / 2;
-    const right = clockCards.length ? Math.max(...clockCards.map((r) => r.right)) : c.left + c.width / 2;
-    const x = l.right <= left ? (l.right + left) / 2 : (right + l.left) / 2;
-    return { x, y: c.top + c.height / 2 };
+  // A level up, in the middle of the screen for both players as a phase change is (the opponent's level
+  // zone may be off the screen): who levelled, and their old level rolling over to the new one. One
+  // that comes with a phase change waits for its graphic to go, and two at once take turns.
+  let levelShowFree = 0; // when the last level up queued has finished showing (performance.now())
+  function showLevelUp(who, level) {
+    const now = performance.now();
+    const phaseShowing = document.querySelector(".phase-show") ? PHASE_PAUSE_MS : 0;
+    const start = Math.max(now + phaseShowing, levelShowFree);
+    levelShowFree = start + LEVEL_SHOW_MS;
+    setTimeout(() => {
+      const el = document.createElement("div");
+      el.className = "level-show";
+      el.style.setProperty("--level-ms", `${LEVEL_SHOW_MS}ms`);
+      el.setAttribute("role", "status");
+      el.innerHTML = `<div class="phase-show-card level-show-card">
+          <span class="phase-show-word">Level up</span>
+          <span class="level-show-numbers" aria-hidden="true"><span class="level-show-old">${level - 1}</span><span class="level-show-new">${level}</span></span>
+          <span class="level-show-who">${esc(who)}</span>
+          <span class="sr-only">${esc(who)} ${who === "You" ? "are" : "is"} now level ${level}</span>
+        </div>`;
+      document.body.appendChild(el);
+      el.addEventListener("animationend", (event) => { if (event.target === el) el.remove(); });
+    }, start - now);
   }
 
-  // Text over the board at a point. It fades in and out; with `next` it flickers as `text`, then
-  // changes to `next` and fades out.
-  function flash(at, text, className, next = null) {
+  // Text over the board at a point, fading in and out.
+  function flash(at, text, className) {
     if (!at) return;
     const el = document.createElement("div");
     el.className = `play-flash ${className}`;
@@ -989,14 +997,7 @@
     el.style.left = `${at.x}px`;
     el.style.top = `${at.y}px`;
     document.body.appendChild(el);
-    el.addEventListener("animationend", () => {
-      if (next && !el.classList.contains("flash-next")) {
-        el.textContent = next;
-        el.classList.add("flash-next");
-      } else {
-        el.remove();
-      }
-    });
+    el.addEventListener("animationend", () => el.remove());
   }
 
   // --- Card movement: our own moves fly a card from where it is to where it's going, and then the

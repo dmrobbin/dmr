@@ -1126,12 +1126,9 @@ button.button-small.secondary { border: 1px solid var(--border); }
   .play, .play.layout-focus { grid-template-columns: minmax(0, 1fr); }
   .play-side { position: static; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
 }
-/* Announcements over the board (play.js flash()): "Deck Out!" between the deck and center right,
-   and a level up's old level flickering between the clock and level zones before the new one fades out. */
+/* Announcements over the board (play.js flash()): "Deck Out!" between the deck and center right. */
 .play-flash { position: fixed; z-index: 45; transform: translate(-50%, -50%); pointer-events: none; white-space: nowrap; font-weight: 800; letter-spacing: .03em; color: var(--accent); text-shadow: 0 0 12px rgb(0 0 0 / .9), 0 2px 4px rgb(0 0 0 / .9); }
 .flash-deck-out { font-size: clamp(1.6rem, 3vw, 2.6rem); animation: flash-fade 1.4s ease-in-out forwards; }
-.flash-level { font-family: "Metal Mania", Impact, "Arial Black", sans-serif; font-weight: 400; letter-spacing: .04em; font-size: clamp(2.6rem, 4.6vw, 4.2rem); color: #ffd36b; -webkit-text-stroke: 1px #6b1d0f; text-shadow: 0 0 18px rgb(255 120 40 / .75), 0 3px 0 #3a0d06, 0 0 4px rgb(0 0 0 / .9); animation: flash-flicker 2s steps(1) forwards; }
-.flash-level.flash-next { animation: flash-out 2s ease-out forwards; }
 /* A card flying between zones while one of your moves is sent (play.js animateAction). */
 .card-flight { position: fixed; z-index: 44; pointer-events: none; transform-origin: top left; border-radius: .35rem; box-shadow: 0 6px 18px rgb(0 0 0 / .6); }
 .card-flight .pcard-back, .card-flight img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: .35rem; }
@@ -1224,6 +1221,24 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .phase-show-in { animation: phase-in var(--phase-ms) ease-out both; }
 @keyframes phase-out { 0%, 35% { opacity: 1; transform: none; } 65%, 100% { opacity: 0; transform: translateX(-70%) scale(.8) rotate(-6deg); } }
 @keyframes phase-in { 0%, 35% { opacity: 0; transform: translateX(70%) scale(.8) rotate(6deg); } 65% { opacity: 1; transform: none; } 85% { opacity: 1; transform: none; } 100% { opacity: 0; transform: scale(1.05); } }
+/* A level up (play.js showLevelUp): the phase change's card, popping in with who levelled and their old
+   level rolling up into the new one, which flares as it lands. */
+.level-show { position: fixed; left: 50%; top: 50%; z-index: 46; width: 15rem; height: 11rem; pointer-events: none; transform: translate(-50%, -50%); animation: level-show var(--level-ms) ease-out both; }
+.level-show-card { gap: .15rem; }
+.level-show-numbers { position: relative; display: block; width: 100%; height: 4.6rem; overflow: hidden; }
+.level-show-old, .level-show-new { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 4.2rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; color: #fff; }
+.level-show-old { animation: level-old var(--level-ms) ease-in both; }
+.level-show-new { color: #f5c542; animation: level-new var(--level-ms) cubic-bezier(.2,.9,.3,1.2) both; }
+.level-show-who { max-width: 13rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1rem; font-weight: 700; letter-spacing: .04em; color: #fff; }
+@keyframes level-show { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.8); } 12%, 85% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); } }
+@keyframes level-old { 0%, 30% { opacity: 1; transform: none; } 45%, 100% { opacity: 0; transform: translateY(-100%); } }
+@keyframes level-new { 0%, 32% { opacity: 0; transform: translateY(100%); text-shadow: none; } 48% { opacity: 1; transform: none; text-shadow: 0 0 22px rgb(245 197 66 / .95); } 70%, 100% { opacity: 1; transform: none; text-shadow: 0 0 10px rgb(245 197 66 / .45); } }
+@media (prefers-reduced-motion: reduce) {
+  .level-show { animation-name: level-show-still; }
+  .level-show-old { display: none; }
+  .level-show-new { animation: none; }
+}
+@keyframes level-show-still { 0% { opacity: 0; } 10%, 85% { opacity: 1; } 100% { opacity: 0; } }
 .climax-zoom { animation-name: climax-zoom; }
 .climax-spin { animation-name: climax-spin; }
 .climax-slide { animation-name: climax-slide; }
@@ -1268,15 +1283,6 @@ button.button-small.secondary { border: 1px solid var(--border); }
   0% { opacity: 0; transform: translate(-50%, -50%) scale(.85); }
   25%, 70% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); }
-}
-@keyframes flash-flicker {
-  0%, 20%, 40%, 60%, 80%, 100% { opacity: 1; }
-  10%, 30%, 50%, 70%, 90% { opacity: .15; }
-}
-@keyframes flash-out {
-  0% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
-  50% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
 }
 .level-pick { border-radius: .45rem; cursor: pointer; outline: 2px solid transparent; outline-offset: 3px; }
 .level-pick:hover, .level-pick:focus-visible { outline-color: var(--accent); }
