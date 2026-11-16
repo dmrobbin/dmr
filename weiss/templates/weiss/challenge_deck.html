@@ -43,12 +43,14 @@
           </div>
         </fieldset>
       {% endif %}
-      <fieldset class="color-filter">
-        <legend>Level</legend>
-        <div class="color-chips">
-          {% for level in options.levels %}<label class="color-chip type-chip number-chip"><input type="checkbox" name="level" value="{{ level }}"><span>{{ level }}</span></label>{% endfor %}<label class="color-chip type-chip number-chip" title="Climax"><input type="checkbox" name="level" value="climax"><span>CX</span></label>
-        </div>
-      </fieldset>
+      {% if options.levels %}{# climaxes have no level: the Type chips find those #}
+        <fieldset class="color-filter">
+          <legend>Level</legend>
+          <div class="color-chips">
+            {% for level in options.levels %}<label class="color-chip type-chip number-chip"><input type="checkbox" name="level" value="{{ level }}"><span>{{ level }}</span></label>{% endfor %}
+          </div>
+        </fieldset>
+      {% endif %}
       {% if options.costs %}
         <fieldset class="color-filter">
           <legend>Cost</legend>

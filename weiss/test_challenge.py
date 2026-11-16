@@ -589,12 +589,17 @@ class ChallengeTests(ArcadeSetup):
         self.assertContains(page, "data-pulled=")
         # The set pages' filters, offering only what's in the pool.
         self.assertContains(page, 'data-pool-filters')
-        for field in ("name", "text", "trait", "level", "type", "rarity", "show", "sort"):
+        for field in ("name", "text", "trait", "type", "rarity", "show", "sort"):
             self.assertContains(page, f'name="{field}"')
         pulled = [c for c in self.cards if str(c.pk) in run.pool]
-        # Levels and costs are chips, any number ticked; a pool with no costs has no Cost chips at all.
-        for level in {c.level for c in pulled if c.level is not None}:
+        # Levels and costs are chips, any number ticked; a pool with none has no chips at all, and climaxes
+        # (no level, no cost) have none of their own: the Type chips find those.
+        levels = {c.level for c in pulled if c.level is not None}
+        for level in levels:
             self.assertContains(page, f'name="level" value="{level}"')
+        if not levels:
+            self.assertNotContains(page, 'name="level"')
+        self.assertNotContains(page, 'name="level" value="climax"')
         costs = {c.cost for c in pulled if c.cost is not None}
         for cost in costs:
             self.assertContains(page, f'name="cost" value="{cost}"')

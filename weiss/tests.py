@@ -203,7 +203,7 @@ class CardPagesTests(TestCase):
         Card.objects.filter(name="Anis").update(cost=0)
         self.assertEqual(self.names(cost="1"), ["Elegg"])
         self.assertEqual(self.names(cost="none"), ["Footstep"])
-        self.assertEqual(self.client.get(reverse("weiss:set", args=[290])).context["costs"], [0, 1, None])
+        self.assertEqual(self.client.get(reverse("weiss:set", args=[290])).context["costs"], [0, 1])  # no "CX" chip: Type finds climaxes
 
     def test_several_levels_and_costs_at_once(self):
         Card.objects.filter(name="Elegg").update(cost=1)
@@ -216,7 +216,7 @@ class CardPagesTests(TestCase):
         response = self.client.get(reverse("weiss:set", args=[290]), {"level": ["0", "none"], "cost": "1"})
         self.assertEqual(response.context["filters"]["levels"], ["0", "none"])
         self.assertContains(response, 'name="level" value="0" checked')
-        self.assertContains(response, 'name="level" value="none" checked')
+        self.assertNotContains(response, 'name="level" value="none"')  # still filters (old links), but no chip for it
         self.assertNotContains(response, 'name="level" value="1" checked')
         self.assertContains(response, 'name="cost" value="1" checked')
         self.assertTrue(response.context["filtered"])
@@ -236,7 +236,7 @@ class CardPagesTests(TestCase):
     def test_filter_options_come_from_the_set(self):
         response = self.client.get(reverse("weiss:set", args=[290]))
         self.assertEqual(response.context["colors"], ["Red", "Yellow"])
-        self.assertEqual(response.context["levels"], [0, 1, None])
+        self.assertEqual(response.context["levels"], [0, 1])
 
     def test_unknown_set_is_404(self):
         self.assertEqual(self.client.get(reverse("weiss:set", args=[999])).status_code, 404)

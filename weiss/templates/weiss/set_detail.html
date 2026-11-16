@@ -62,29 +62,33 @@
         </div>
       </fieldset>
     {% endif %}
-    {# Levels and costs likewise: any number ticked, none ticked means any. "CX" is no level / no cost (climaxes). #}
-    <fieldset class="color-filter filter-extra">
-      <legend>Level</legend>
-      <div class="color-chips">
-        {% for level in levels %}{% with value=level|default_if_none:"none"|stringformat:"s" %}
-          <label class="color-chip type-chip number-chip"{% if level is None %} title="No level (climax)"{% endif %}>
-            <input type="checkbox" name="level" value="{{ value }}"{% if value in filters.levels %} checked{% endif %} onchange="this.form.submit()">
-            <span>{% if level is None %}CX{% else %}{{ level }}{% endif %}</span>
-          </label>
-        {% endwith %}{% endfor %}
-      </div>
-    </fieldset>
-    <fieldset class="color-filter filter-extra">
-      <legend>Cost</legend>
-      <div class="color-chips">
-        {% for cost in costs %}{% with value=cost|default_if_none:"none"|stringformat:"s" %}
-          <label class="color-chip type-chip number-chip"{% if cost is None %} title="No cost (climax)"{% endif %}>
-            <input type="checkbox" name="cost" value="{{ value }}"{% if value in filters.costs %} checked{% endif %} onchange="this.form.submit()">
-            <span>{% if cost is None %}CX{% else %}{{ cost }}{% endif %}</span>
-          </label>
-        {% endwith %}{% endfor %}
-      </div>
-    </fieldset>
+    {# Levels and costs likewise: any number ticked, none ticked means any. Climaxes have neither: the Type chips find those. #}
+    {% if levels %}
+      <fieldset class="color-filter filter-extra">
+        <legend>Level</legend>
+        <div class="color-chips">
+          {% for level in levels %}{% with value=level|stringformat:"s" %}
+            <label class="color-chip type-chip number-chip">
+              <input type="checkbox" name="level" value="{{ value }}"{% if value in filters.levels %} checked{% endif %} onchange="this.form.submit()">
+              <span>{{ level }}</span>
+            </label>
+          {% endwith %}{% endfor %}
+        </div>
+      </fieldset>
+    {% endif %}
+    {% if costs %}
+      <fieldset class="color-filter filter-extra">
+        <legend>Cost</legend>
+        <div class="color-chips">
+          {% for cost in costs %}{% with value=cost|stringformat:"s" %}
+            <label class="color-chip type-chip number-chip">
+              <input type="checkbox" name="cost" value="{{ value }}"{% if value in filters.costs %} checked{% endif %} onchange="this.form.submit()">
+              <span>{{ cost }}</span>
+            </label>
+          {% endwith %}{% endfor %}
+        </div>
+      </fieldset>
+    {% endif %}
     <label class="filter-extra">Sort
       <select name="sort" onchange="this.form.submit()">
         {% for value, label in sort_options %}<option value="{{ value }}"{% if filters.sort == value %} selected{% endif %}>{{ label }}</option>{% endfor %}

@@ -240,8 +240,8 @@ def filter_numbers(cards, field, values):
 
 
 def values_in(cards, field):
-    """The distinct values of a numeric field in a set, with None (no value) last."""
-    return sorted(set(cards.values_list(field, flat=True)), key=lambda v: (v is None, v))
+    """The distinct values of a numeric field in a set. Cards without one (climaxes) are left out: the Type filter finds them."""
+    return sorted(set(cards.exclude(**{field: None}).values_list(field, flat=True)))
 
 
 def card_browser(request, pool, template_context):

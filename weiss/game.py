@@ -2105,6 +2105,9 @@ def x_value(spec, state, player, target, ctx, env, stats=None):
         value = known.get("soul", number(details_of(target, env).get("soul")) if target else 0)
     elif kind == "revealed_level":
         value = number((env.info(ctx.get("revealed")) or {}).get("level")) if ctx and ctx.get("revealed") is not None else 0
+    elif kind == "revealed_icons":  # "the total number of [soul] in the trigger icon of that card": the one revealed
+        found = ((env.info(ctx.get("revealed")) or {}).get("trigger") or "").split() if ctx and ctx.get("revealed") is not None else []
+        value = len(found) if spec["icon"] == "any" else found.count(spec["icon"])
     elif kind == "chosen_level":
         chosen = locate(state, (ctx.get("it") or [None])[0])[1] if ctx else None
         value = number(details_of(chosen, env).get("level")) - spec.get("minus", 0) if chosen else 0
@@ -3096,6 +3099,16 @@ def ask_number(res, step, title):
     ask_choice(res, "number", title, [(n, str(n)) for n in range(step["n"], -1, -1)], step=step)
 
 
+def declare_limit(state, player, upto, res):
+    """The highest number worth offering for "declare any number": as much damage as the opponent has left
+    before their losing level ("lethal"), or the markers underneath the ability's card ("markers")."""
+    if upto == "markers":
+        _, card, slot = locate(state, res["uid"])
+        return len(pile(state["players"][player], MARKER + slot)) if card and slot in STAGE_SLOTS else 0
+    zones = state["players"][other_player(state, player)]["zones"]
+    return max(1, (LOSING_LEVEL - len(zones["level"])) * LEVEL_UP_AT - len(zones["clock"]))
+
+
 def counted(ctx, key):
     counts = ctx.setdefault("counts", {})
     counts[key] = counts.get(key, 0) + 1
@@ -3577,7 +3590,14 @@ def run_step(step, res, state, env):
         show_revealed(state, res, ctx["flipped"])
     elif do == "declare":
         words = [(o, o) for o in step["options"] if isinstance(o, str)]  # "Declare "True" or "False""
-        ask_choice(res, "declare", "Declare" if words else "Declare a number", words or [(n, str(n)) for n in step["options"]],
+        numbers = step["options"]
+        if step.get("upto"):  # "declare any number": from the most worth declaring down to 0 (never negative)
+            numbers = list(range(declare_limit(state, player, step["upto"], res), -1, -1))
+            if numbers == [0]:  # no markers: nothing to ask
+                ctx[step.get("key", "declared")] = 0
+                add_log(state, player, "declared 0")
+                return
+        ask_choice(res, "declare", "Declare" if words else "Declare a number", words or [(n, str(n)) for n in numbers],
                    key=step.get("key", "declared"))
         if step.get("chooser") == "opp":
             res["prompt"]["player"] = opponent

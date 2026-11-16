@@ -7725,3 +7725,171 @@ class KillLaKillTests(PersonaTests):
         self.heal_theirs(t)
         mind = cpu.Mind(t.state, "1", t.info, cpu.Temper(1), random.Random(1))
         self.assertEqual(mind.answer(t.state["resolving"])["value"], "pay")
+
+
+class DragonMaidTests(PersonaTests):
+    # The Miss Kobayashi's Dragon Maid cards a CPU could not play, as printed (cpu-unplayable-cards.txt).
+    CARDS = (
+        '【AUTO】 When this card is placed on the stage from your hand or by the 【AUTO】 effect of "Talent for Magic, Shouta Magatsuchi", you may put the top card of your clock into your waiting room.\n【AUTO】 【CXCOMBO】 [(2) Put 1 card from your hand into your waiting room] When this card\'s battle opponent becomes 【REVERSE】, if "Failed Summoning?" is in your climax area, you may pay the cost. If you do, look at up to 5 cards from the bottom of your opponent\'s deck, choose up to 2 climax from among them, put them into your opponent\'s clock, and put the rest into their waiting room.',  # Demonic Embrace, Lucoa (KMD/W96-E083)
+        'Your opponent puts all cards from their stock into their waiting room, and puts the same number of cards from the top of their deck into their stock. Choose up to 1 character in your waiting room, and return it to your hand.',  # Discussion of Maids (KMD/W96-E022)
+        '【AUTO】 When this card is placed on the stage from your hand or at the beginning of your main phase, choose 1 of the following abilities, and this card gets that ability until end of turn. "【CONT】 During your turn, if you have another 《Human》 or 《Dragon》 character, this card gets +3000 power." "【ACT】 [【REST】 this card] Choose 1 of your 《Human》 or 《Dragon》 characters, and that character gets +1500 power until end of turn."\n【AUTO】 【CXCOMBO】 [Put 1 "Playful Age" from your climax area into your waiting room] At the beginning of your encore step, you may pay the cost. If you do, choose 1 《Human》 or 《Dragon》 character in your waiting room, and return it to your hand.',  # Loves Pranks, Kanna (KMD/W96-E010)
+        '【AUTO】 When this card is placed on the stage from your hand, you may put the top card of your clock into your waiting room.\n【AUTO】 【CXCOMBO】 When this card attacks, if "Words She Wanted to Convey" is in your climax area, and you have another 《Human》 or 《Dragon》 character, choose 1 of the following effects, and perform it. "Deal 1 damage to your opponent." "[(2) Put 1 《Human》 or 《Dragon》 character from your hand into your waiting room] You may pay the cost. If you do, declare any number, and deal X damage to your opponent. X is equal to the number you declared." (You cannot declare a negative number. Damage may be canceled)',  # Perfect Maid, Tohru (KMD/W96-E003)
+        '【CONT】 During your turn, this card gets +2000 power.\n【AUTO】 【CXCOMBO】 When this card\'s battle opponent becomes 【REVERSE】, if "Surprise Reveal" is in your climax area, and you have 4 or more other 《Human》 or 《Dragon》 characters, perform each of the following abilities 1 time in any order. "Choose 1 《Human》 or 《Dragon》 character in your waiting room, and return it to your hand." "You may choose 1 of your opponent\'s level 1 or higher characters. If you do, your opponent chooses 1 level X or lower character in their waiting room, and exchanges them. X is equal to the level of the character you chose -1."',  # Prank-Loving Young Dragon, Kanna (KMD/W96-E054)
+        'If you do not have "School Swimsuits, Perfect Pool Weather! Kanna", this card cannot be played from your hand.\n【CXCOMBO】 Resonate [Put 1 card from your hand into your waiting room & Reveal 1 "Towards Where Everyone Awaits" in your hand] You may pay the cost. If you do, reveal the top card of your deck. If that card is level 0 or lower, deal 3 damage to your opponent, otherwise deal 1 damage to your opponent, and put up to 1 card from the top of your clock into your waiting room. (Climax are regarded as level 0. Damage may be canceled)',  # Pranking With Whole Being (KMD/W96-E073)
+        "【AUTO】 When this card is placed on the stage from your hand, look at up to 2 cards from the top of your deck, and put them on the top of your deck in any order.\n【AUTO】 [(1) Put 1 card from your hand into your waiting room] When this card is placed on the stage from your hand, you may pay the cost. If you do, choose 1 of your opponent's characters, move it to another open position of your opponent's stage, and this card gets +1000 power until end of turn.",  # Unknown to Fear, Kanna (KMD/W96-E013)
+        'You may put up to 8 cards with the same card name as this card into your deck. If you do not have a character with "Elma(エルマ)" in its card name, this card cannot be played from your hand.\nReveal the top card of your deck. If that card is "Unlimited Appetite" or a 《Human》 or 《Dragon》 character, put it into your hand. (Otherwise, return it to its original place)\nYou may put this card face up underneath your "Go Go Choro-gons! Elma" or "Wavering Beliefs, Elma" as a marker.',  # Unlimited Appetite (KMD/W96-E097)
+        '【CONT】 During your opponent\'s turn, this card gets +2000 power.\n【AUTO】 At the beginning of your main phase, this card gets the following ability until end of turn. "【AUTO】 At the beginning of your encore step, if this card is in your center stage, and this card is 【STAND】, 【REST】 this card, reveal the top card of your deck, put it into your stock, and deal X damage to your opponent. X is equal to the total number of [soul] in the trigger icon of that card +1." (Damage may be canceled)',  # Voluptuous Body, Lucoa (KMD/W96-E084)
+        '【AUTO】 When your other 《Human》 or 《Dragon》 character attacks, declare any number equal to or less than the number of markers underneath this card, and that character gets +1000 power and +X soul until end of turn. X is equal to the number you declared. (You cannot declare a negative number)\n【AUTO】 【CXCOMBO】 [(1) Put 1 "Spreading of Wings" from your climax area into your waiting room] At the beginning of your attack phase, if you have 4 or more other 《Human》 or 《Dragon》 characters, you may pay the cost. If you do, look at up to 3 cards from the top of your deck, choose up to 3 《Human》 or 《Dragon》 characters from among them, reveal them to your opponent, put them into your hand, put the rest into your waiting room, and put up to 1 card from the top of your deck face up underneath this card as a marker.',  # Wings of Love, Tohru (KMD/W96-E020)
+        "【AUTO】 When this card is placed on the stage from your hand, choose 1 random card in your opponent's hand, reveal it, put it into their memory, and at the end of your opponent's next turn, your opponent returns that card to their hand.",  # Young Dragon, Kanna (KMD/W96-E071)
+    )
+
+    def test_they_are_all_read(self):
+        for text in self.CARDS:
+            self.assertEqual(abilities.by_hand_parts(text), [], text[:60])
+
+    def card_text(self, words):
+        return next(text for text in self.CARDS if words in text)
+
+    def env(self, t):
+        return game.SimpleNamespace(info=t.info, name=lambda pk: t.info(pk)["name"], shuffle=no_shuffle)
+
+    def settle(self, t, value="yes"):
+        """Answer whatever the ability asks, as a CPU would: "yes" (or `value`) to a choice, the most cards on offer to a pick
+        (the fewest to a cost)."""
+        while t.state.get("resolving") and self.prompt(t):
+            self.settle_one(t, value)
+
+    def test_lucoa_puts_the_climaxes_from_the_bottom_of_their_deck_into_their_clock(self):
+        text = self.card_text("look at up to 5 cards from the bottom")
+        t = Table()
+        t.card(3, card_type="Climax", level=None)
+        lucoa = t.seat(t.me, "C1", t.card(2000, text=text))
+        t.stock(2)
+        t.hand(2001)
+        bottom = [game.new_card(3), game.new_card(4), game.new_card(3), game.new_card(4), game.new_card(4)]
+        top = game.new_card(5)
+        t.them["zones"]["deck"] = [*bottom, top]
+        self.run_ability(t, lucoa, text, index=1)
+        self.settle(t)
+        self.assertEqual(sorted(c["card"] for c in t.them["zones"]["clock"]), [3, 3])
+        self.assertEqual(sorted(c["card"] for c in t.them["zones"]["waiting"]), [4, 4, 4])
+        self.assertEqual(t.them["zones"]["deck"], [top])
+
+    def test_perfect_maid_declares_up_to_what_would_finish_them(self):
+        text = self.card_text("declare any number, and deal X damage")
+        t = Table()
+        tohru = t.seat(t.me, "C1", t.card(2000, text=text))
+        t.them["zones"]["level"] = [game.new_card(6) for _ in range(3)]
+        t.them["zones"]["clock"] = [game.new_card(6) for _ in range(4)]
+        t.them["zones"]["deck"] = [game.new_card(7) for _ in range(10)]
+        t.stock(2)
+        t.hand(t.card(2001, traits="Dragon"))
+        self.run_ability(t, tohru, text, index=1)
+        self.answer(t, value=1)  # the second effect: pay, and declare
+        while self.prompt(t)["for"] != "declare":
+            self.settle_one(t)
+        self.assertEqual([o["value"] for o in self.prompt(t)["options"]], [3, 2, 1, 0])  # 3 more is their 4th level; most first, as a CPU takes
+        self.answer(t, value=2)
+        self.settle(t)
+        self.assertEqual(len(t.them["zones"]["clock"]), 6)
+
+    def settle_one(self, t, value="yes"):
+        prompt = self.prompt(t)
+        player = int(prompt.get("player", 2))
+        if prompt["kind"] == "cards":
+            self.answer(t, player=player, uids=prompt["options"][:prompt["min"] if prompt.get("cost") else prompt["max"]])
+        else:
+            values = [o["value"] for o in prompt["options"]]
+            self.answer(t, player=player, value=value if value in values else values[0])
+
+    def wings(self, markers):
+        text = self.card_text("equal to or less than the number of markers")
+        t = Table()
+        tohru = t.seat(t.me, "B1", t.card(2000, text=text))
+        for _ in range(markers):
+            game.put(t.me, game.new_card(2002), game.MARKER + "B1")
+        t.me.pop("new_markers", None)
+        attacker = t.seat(t.me, "C1", t.card(2001, traits="Human", power=3000, soul=1))
+        self.run_ability(t, tohru, text, that=attacker["uid"])  # as its trigger has it: the one attacking
+        return t, attacker
+
+    def test_wings_of_love_declares_no_more_than_its_markers(self):
+        t, attacker = self.wings(2)
+        self.assertEqual([o["value"] for o in self.prompt(t)["options"]], [2, 1, 0])
+        self.answer(t, value=2)
+        t.refresh()
+        self.assertEqual((t.state["stats"][attacker["uid"]]["power"], t.state["stats"][attacker["uid"]]["soul"]), (4000, 3))
+
+    def test_wings_of_love_without_markers_asks_nothing(self):
+        t, attacker = self.wings(0)
+        self.assertIsNone(t.state.get("resolving"))
+        t.refresh()
+        self.assertEqual((t.state["stats"][attacker["uid"]]["power"], t.state["stats"][attacker["uid"]]["soul"]), (4000, 1))
+
+    def test_wings_of_love_may_put_the_top_card_under_itself(self):
+        steps = abilities.parse(self.card_text("equal to or less than the number of markers"))[1]["steps"][0]["then"]
+        self.assertEqual(steps[-1], {"do": "may", "cost": [], "text": "put up to 1 card from the top of your deck face up underneath this card as a marker",
+                                     "then": [{"do": "top_marker", "face_down": False}]})
+
+    def test_voluptuous_lucoa_deals_the_revealed_cards_soul_plus_one(self):
+        granted = abilities.parse(self.card_text("total number of [soul]"))[1]["steps"][0]["grant"][0]
+        t = Table()
+        lucoa = t.seat(t.me, "C2", t.card(2000, text=granted))
+        top = game.new_card(t.card(2001, trigger="soul soul"))
+        t.me["zones"]["deck"] = [game.new_card(1), top]
+        t.them["zones"]["deck"] = [game.new_card(7) for _ in range(10)]
+        self.run_ability(t, lucoa, granted)
+        self.settle(t)
+        self.assertEqual(lucoa["pos"], "rest")
+        self.assertIn(top, t.me["zones"]["stock"])
+        self.assertEqual(len(t.them["zones"]["clock"]), 3)
+
+    def test_young_kanna_keeps_their_card_in_memory_until_the_end_of_their_next_turn(self):
+        text = self.card_text("choose 1 random card in your opponent's hand")
+        t = Table()
+        kanna = t.seat(t.me, "C1", t.card(2000, text=text))
+        taken = game.new_card(8)
+        t.them["zones"]["hand"] = [taken]
+        self.run_ability(t, kanna, text)
+        self.settle(t)
+        self.assertEqual(t.them["zones"]["memory"], [taken])
+        env = self.env(t)
+        game.fire(t.state, env, "phase", phase="end", player="2")  # the end of this turn: not yet
+        self.assertFalse(t.state.get("ability_queue"))
+        game.fire(t.state, env, "phase", phase="end", player="1")  # the end of theirs
+        entry = t.state["ability_queue"][0]
+        t.apply(2, {"type": "ability_trigger", "id": entry["id"], "accept": True})
+        self.settle(t)
+        self.assertEqual(t.them["zones"]["hand"], [taken])
+        self.assertEqual(t.them["zones"]["memory"], [])
+
+    def test_unlimited_appetite_goes_under_elma(self):
+        text = self.card_text("cards with the same card name as this card")
+        read = abilities.parse(text)
+        self.assertTrue(read[0].get("play_ban"))  # no Elma, no playing it; the deck-building rule isn't an ability at all
+        self.assertEqual([a["kind"] for a in read], ["cont", "event"])
+        t = Table()
+        elma = t.seat(t.me, "C1", t.card(2001, name="Wavering Beliefs, Elma"))
+        event = game.new_card(t.card(2000, card_type="Event", text=text))
+        t.me["zones"]["resolution"].append(event)
+        t.me["zones"]["deck"] = [game.new_card(1)]
+        self.run_ability(t, event, text, index=1)
+        self.settle(t)
+        self.assertEqual(game.pile(t.me, game.MARKER + "C1"), [event])
+        self.assertIs(t.me["stage"]["C1"], elma)
+
+    def test_pranking_heals_only_when_the_top_card_isnt_level_0(self):
+        steps = abilities.parse(self.card_text("Towards Where Everyone Awaits"))[1]["steps"][0]["then"]
+        self.assertEqual(steps[1]["then"], [{"do": "damage", "n": 3}])
+        self.assertEqual(steps[1]["otherwise"], [{"do": "damage", "n": 1}, {"do": "clock_card", "end": "top", "owner": "me", "to": "waiting", "n": 1, "upto": True}])
+
+    def test_loves_pranks_kanna_chooses_on_play_and_each_main_phase(self):
+        ability = abilities.parse(self.card_text("or at the beginning of your main phase"))[0]
+        self.assertEqual(ability["when"], [{"on": "play"}, {"on": "phase", "phase": "main", "whose": "me"}])
+        self.assertEqual(len(ability["steps"][0]["options"]), 2)
+
+    def test_maids_flush_their_stock_and_kanna_moves_theirs(self):
+        maids = abilities.parse(self.card_text("Your opponent puts all cards from their stock"))[0]["steps"]
+        self.assertEqual([s["do"] for s in maids], ["stock_to_deck", "top", "choose", "move_it"])
+        kanna = abilities.parse(self.card_text("move it to another open position of your opponent's stage"))[1]["steps"][0]["then"]
+        self.assertEqual([s["do"] for s in kanna], ["choose", "place", "buff"])
