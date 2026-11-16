@@ -812,6 +812,9 @@ def advance_attack(state, env):
                 losers = [card for card in losers if not cant_reverse(state, card, env)]
                 for card in losers:
                     card["pos"] = "reverse"
+                # For both pages to show the clash: who fought, at what power (the defender's with its backup), who lost.
+                state["last_battle"] = {"id": new_uid(), "player": player, "attacker": attacker["uid"], "defender": target["uid"],
+                                        "power": [mine, theirs], "backup": attack["backup"], "reversed": [card["uid"] for card in losers]}
                 add_log(state, player, f"battle: {env.name(attacker['card'])} ({mine}) against {env.name(target['card'])} ({theirs})"
                         + " — " + (", ".join(f"{env.name(c['card'])} reversed" for c in losers) or "neither reversed"))
                 for card in losers:
@@ -3027,7 +3030,8 @@ def show_ability(state, res):
     if ctx.get("declined") and not ctx.get("targets"):
         return
     state["ability_show"] = {"id": new_uid(), "player": res["player"], "uid": res["uid"], "card": res["card"], "text": res["text"],
-                             "targets": [t["card"] for t in ctx.get("targets", [])[:SHOW_TARGETS]]}
+                             "targets": [t["card"] for t in ctx.get("targets", [])[:SHOW_TARGETS]],
+                             "target_uids": [t.get("uid") for t in ctx.get("targets", [])[:SHOW_TARGETS]]}
 
 
 def show_revealed(state, res, pks):
@@ -4671,7 +4675,12 @@ def view(state, player):
                        if state.get("combo_show") else None),
         # An ability that just resolved, for both pages to show: {"id", "card", "targets": [card, ...], "mine"}.
         "ability_show": ({"id": state["ability_show"]["id"], "card": state["ability_show"]["card"], "targets": state["ability_show"]["targets"],
+                          "uid": state["ability_show"].get("uid"), "target_uids": state["ability_show"].get("target_uids", []),
                           "check": state["ability_show"].get("check"), "label": state["ability_show"].get("label"), "mine": state["ability_show"]["player"] == player} if state.get("ability_show") else None),
+        # The last battle, for both pages to show the clash once (by its id): {"id", "attacker", "defender" (uids),
+        # "power": [attacker's, defender's with backup], "reversed": [uids], "mine": was this player attacking}.
+        "battle": ({**{k: v for k, v in state["last_battle"].items() if k != "player"}, "mine": state["last_battle"]["player"] == player}
+                   if state.get("last_battle") else None),
         "needs_color": state.get("needs_color", {}).get(player, {}),
         "hand_mods": state.get("hand_mods", {}).get(player, {}),
         "play_banned": state.get("play_banned", {}).get(player, []),

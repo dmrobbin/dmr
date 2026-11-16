@@ -2071,6 +2071,108 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .sound-switch input[type="range"] { width: 5.5rem; margin: 0 .55rem; accent-color: var(--accent); }
 .sound-switch input[type="range"]:disabled { opacity: .4; }
 
+/* The table's mood (play.js setTableMood): warmer at the edges as the levels climb, a boss's purple tint, and at
+   match point a red heartbeat round the edges with that side's clock glowing. Whose turn it is: their side edged
+   in gold, the other a touch quieter. Layers behind the board's contents, so nothing on it moves. */
+.play-board { position: relative; isolation: isolate; }
+.play-board::before, .play-board::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 1.4s ease; }
+.play-board::before { background: radial-gradient(ellipse at center, transparent 38%, var(--table-mood, rgb(214 138 40 / .28)) 100%); }
+.play-board[data-tier="1"]::before { opacity: .35; }
+.play-board[data-tier="2"]::before { opacity: .7; }
+.play-board[data-tier="3"]::before, .play-board[data-boss="1"]::before { opacity: 1; }
+.play-board[data-boss="1"] { --table-mood: rgb(136 66 220 / .34); }
+.play-board::after { background: radial-gradient(ellipse at center, transparent 46%, rgb(214 40 48 / .36) 100%); }
+.play-board:is([data-brink~="me"], [data-brink~="opponent"])::after { opacity: 1; animation: table-heartbeat 1.6s ease-in-out infinite; }
+.play-board[data-still="1"]::after { animation: none; }
+@keyframes table-heartbeat { 0%, 100% { opacity: .5; } 12% { opacity: 1; } 24% { opacity: .62; } 36% { opacity: .92; } 60% { opacity: .5; } }
+.play-board[data-brink~="me"] .mat-me .zone-clock, .play-board[data-brink~="opponent"] .mat-opponent .zone-clock {
+  border-radius: .5rem; box-shadow: 0 0 0 1px rgb(235 70 70 / .75), 0 0 18px rgb(235 70 70 / .35); }
+.play-board .mat { border-radius: .8rem; transition: box-shadow .5s, opacity .5s; }
+.play-board[data-turn="me"] .side-me .mat, .play-board[data-turn="opponent"] .side-opponent .mat { box-shadow: 0 0 0 1px rgb(212 175 55 / .4), 0 0 24px rgb(212 175 55 / .1); }
+.play-board[data-turn="me"] .side-opponent .mat, .play-board[data-turn="opponent"] .side-me .mat { opacity: .88; }
+
+/* The table's show (play.js tableFx). Damage: each new clock card turns over in turn; the last lands the hit (red)
+   or the cancel (gold), and the hit side jolts. */
+.pcard.dmg-wait { visibility: hidden; }
+.pcard.dmg-flip { animation: dmg-flip .26s ease-out; }
+.pcard.dmg-hit { animation: dmg-hit .8s ease-out; }
+.pcard.dmg-cancel { animation: dmg-cancel 1.2s ease-out; }
+@keyframes dmg-flip { from { transform: perspective(500px) rotateY(90deg); filter: brightness(1.8); } to { transform: none; filter: none; } }
+@keyframes dmg-hit {
+  0% { transform: perspective(500px) rotateY(90deg); filter: brightness(1.8); }
+  30% { transform: none; filter: brightness(1.3); box-shadow: 0 0 0 2px rgb(235 70 70 / .95), 0 0 24px rgb(235 70 70 / .7); }
+  100% { transform: none; filter: none; box-shadow: 0 2px 6px rgb(0 0 0 / .5); } }
+@keyframes dmg-cancel {
+  0% { transform: perspective(500px) rotateY(90deg); filter: brightness(2); }
+  25% { transform: scale(1.15); filter: brightness(1.6); box-shadow: 0 0 0 3px rgb(255 217 100 / .95), 0 0 34px rgb(255 217 100 / .8); }
+  100% { transform: none; filter: none; box-shadow: 0 2px 6px rgb(0 0 0 / .5); } }
+.mat.mat-hurt { animation: mat-hurt .6s ease-out; }
+@keyframes mat-hurt { 0% { box-shadow: inset 0 0 0 2px rgb(235 70 70 / .8), 0 0 32px rgb(235 70 70 / .35); } 100% { box-shadow: inset 0 0 0 0 transparent; } }
+
+/* The battle: a flash where the two meet, the power duel between them, and the loser cracking as it reverses. */
+.clash-burst { position: fixed; z-index: 45; width: 0; height: 0; pointer-events: none; }
+.clash-burst > span { position: absolute; left: 0; top: 0; translate: -50% -50%; border-radius: 50%; }
+.clash-ring { width: 5rem; height: 5rem; border: 3px solid #ffd964; animation: clash-ring .55s ease-out both; }
+.clash-ring-late { border-color: #fff; animation-delay: .09s; }
+.clash-flash { width: 3.4rem; height: 3.4rem; background: radial-gradient(circle, #fff, rgb(255 217 100 / .8) 35%, transparent 70%); animation: clash-flash .45s ease-out both; }
+@keyframes clash-ring { from { scale: .2; opacity: 1; } to { scale: 1.9; opacity: 0; } }
+@keyframes clash-flash { from { scale: .3; opacity: 1; } to { scale: 1.7; opacity: 0; } }
+.battle-duel { position: fixed; z-index: 46; translate: -50% -50%; display: flex; align-items: center; gap: .55rem; padding: .35rem .85rem; border-radius: 999px;
+  background: rgb(14 15 20 / .9); border: 1px solid rgb(212 175 55 / .55); box-shadow: 0 8px 26px rgb(0 0 0 / .6); pointer-events: none; white-space: nowrap;
+  font-variant-numeric: tabular-nums; animation: duel-show var(--duel-ms, 1.7s) ease-out both; }
+.duel-side b { font-size: 1.25rem; font-weight: 800; color: #fff; }
+.duel-vs { font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #a9a39a; }
+.duel-won b { color: #ffd964; text-shadow: 0 0 12px rgb(255 217 100 / .6); }
+.duel-lost b, .duel-tie b { color: #c9c2b6; text-decoration: line-through 2px rgb(235 70 70 / .9); }
+@keyframes duel-show { 0% { opacity: 0; scale: .7; } 12% { opacity: 1; scale: 1.06; } 20%, 82% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: .96; } }
+.pcard.battle-pending { rotate: -180deg; } /* reversed on the board already, upright until the clash turns it over */
+.pcard.battle-pending .pcard-badge { visibility: hidden; }
+.pcard.reverse-crack { animation: reverse-crack .8s ease-out; }
+@keyframes reverse-crack { 0% { filter: brightness(2.2) saturate(.3); box-shadow: 0 0 0 2px rgb(235 70 70 / .95), 0 0 28px rgb(235 70 70 / .65); } 100% { filter: none; box-shadow: 0 2px 6px rgb(0 0 0 / .5); } }
+
+/* A stat that changed: the change floats up off the card, and the number on it flares. */
+.stat-pop { position: fixed; z-index: 45; translate: -50% -100%; pointer-events: none; white-space: nowrap; font-size: .95rem; font-weight: 800;
+  text-shadow: 0 0 6px rgb(0 0 0 / .95), 0 1px 2px #000; animation: stat-pop 1.2s ease-out both; }
+.stat-pop-up { color: #6be38a; }
+.stat-pop-down { color: #ff7b72; }
+@keyframes stat-pop { 0% { opacity: 0; transform: translateY(8px) scale(.8); } 18% { opacity: 1; transform: scale(1.12); } 30% { transform: none; }
+  80% { opacity: 1; transform: translateY(-14px); } 100% { opacity: 0; transform: translateY(-22px); } }
+.stat-flare-up { animation: stat-flare-up .9s ease-out; }
+.stat-flare-down { animation: stat-flare-down .9s ease-out; }
+@keyframes stat-flare-up { 30% { scale: 1.3; text-shadow: 0 0 10px rgb(107 227 138 / .95); filter: drop-shadow(0 0 4px rgb(107 227 138 / .8)); } }
+@keyframes stat-flare-down { 30% { scale: 1.3; text-shadow: 0 0 10px rgb(255 123 114 / .95); filter: drop-shadow(0 0 4px rgb(255 123 114 / .8)); } }
+
+/* A new turn: a banner across the table's middle line, gold for ours, cool for theirs. */
+.turn-banner { position: fixed; z-index: 45; translate: -50% -50%; display: flex; align-items: center; gap: .6rem; padding: .4rem 1.3rem; border-radius: 999px;
+  pointer-events: none; white-space: nowrap; font-size: 1.1rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+  color: #15161b; background: linear-gradient(90deg, #f5d36b, #d4af37); box-shadow: 0 10px 30px rgb(0 0 0 / .55); animation: turn-banner 1.6s cubic-bezier(.2, .8, .3, 1) both; }
+.turn-banner:has(.turn-banner-face) { padding-left: .4rem; }
+.turn-banner-opponent { color: #fff; background: linear-gradient(90deg, #5b3d8f, #2c2f46); }
+.turn-banner-face { width: 2.2rem; height: 2.2rem; border-color: rgb(255 255 255 / .6); }
+@keyframes turn-banner { 0% { opacity: 0; transform: translateX(-48px) skewX(-12deg); } 18% { opacity: 1; transform: none; } 78% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateX(48px); } }
+
+/* An ability: its card glows where it is, trails arc to its targets, and they flare. */
+.pcard.fx-source { animation: fx-source 1s ease-out; }
+.pcard.fx-target { animation: fx-target 1s ease-out; }
+@keyframes fx-source { 40% { box-shadow: 0 0 0 4px rgb(255 217 100 / .85), 0 0 26px rgb(255 217 100 / .6); } }
+@keyframes fx-target { 35% { box-shadow: 0 0 0 3px rgb(120 200 255 / .9), 0 0 22px rgb(120 200 255 / .6); filter: brightness(1.35); } }
+.ability-trails { position: fixed; inset: 0; z-index: 44; width: 100vw; height: 100vh; overflow: visible; pointer-events: none; animation: trails-fade 1.5s ease-in both; }
+.ability-trails path { fill: none; stroke: #ffd964; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1;
+  filter: drop-shadow(0 0 4px rgb(255 217 100 / .8)); animation: trail-draw .45s ease-out forwards; }
+.ability-trails circle { fill: #ffd964; opacity: 0; animation: trail-dot .3s .35s ease-out forwards; }
+@keyframes trail-draw { to { stroke-dashoffset: 0; } }
+@keyframes trail-dot { to { opacity: 1; } }
+@keyframes trails-fade { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .play-board:is([data-brink~="me"], [data-brink~="opponent"])::after { animation: none; opacity: .85; }
+  .zone-clock .pcard:is(.dmg-flip, .dmg-hit, .dmg-cancel) { transform: none !important; }
+  .stat-pop, .turn-banner, .battle-duel { animation-name: fx-still; }
+  .stat-flare-up, .stat-flare-down { scale: none !important; }
+}
+@keyframes fx-still { 0% { opacity: 0; } 12%, 80% { opacity: 1; } 100% { opacity: 0; } }
+
 /* Card sleeves: the shelf on a player's profile and on the staff's tab, the banner for new ones, and the sleeve form. */
 .sleeve-shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: .75rem; margin: 0; padding: 0; list-style: none; }
 .sleeve-item { display: flex; flex-direction: column; align-items: flex-start; gap: .3rem; padding: .75rem; border: 1px solid var(--border); border-radius: .6rem; background: var(--surface); }

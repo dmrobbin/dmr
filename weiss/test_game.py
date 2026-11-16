@@ -636,6 +636,12 @@ class AttackStepTests(TestCase):
         self.assertEqual(self.stage(1, "C2")["pos"], "reverse")
         self.assertEqual(self.stage(2, "C2")["pos"], "stand")
         self.assertTrue(any("battle: Card20 (5000) against Card101 (6000)" in e["text"] for e in self.state["log"]))
+        # Both pages get the battle to show: who fought, their power (the defender's with its backup), who lost.
+        shown = game.view(self.state, 1)["battle"]
+        self.assertEqual((shown["attacker"], shown["defender"]), (self.stage(1, "C2")["uid"], self.stage(2, "C2")["uid"]))
+        self.assertEqual((shown["power"], shown["backup"], shown["reversed"], shown["mine"]), ([5000, 6000], 3000, [self.stage(1, "C2")["uid"]], True))
+        self.assertFalse(game.view(self.state, 2)["battle"]["mine"])
+        self.assertEqual(game.view(self.state, 2)["battle"]["id"], shown["id"])
         # No attacks left; the encore step then waits for alice's reversed character.
         follow(self.state)
         self.assertEqual((self.state["phase"], self.state["turn"]), ("encore", "1"))
