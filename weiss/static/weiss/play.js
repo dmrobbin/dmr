@@ -166,6 +166,8 @@
   // static/weiss/sounds), with hits and chimes made in the browser (Web Audio) on top of them ----------
   // On or off and the volume are kept on the player's profile (profiles.sound_settings). The other
   // side's draws, damage and so on play the same sounds, quieter; prompts are only ever for us.
+  // With music on (the default, remembered per browser like the animations) the battle music (score.js)
+  // plays instead, and each of these moments is played into it as a cue rather than as a sound of its own.
 
   const SOUND_URL = root.dataset.soundUrl;
   const SOUND_BASE = root.dataset.soundBase || "";
@@ -186,6 +188,13 @@
   let mix = null; // where every sound goes: a boost into a limiter
   let noiseBuffer = null;
   let soundSaveTimer = null;
+  const MUSIC_KEY = "weiss-music";
+  let musicOn = Boolean(window.WeissScore);
+  try {
+    const saved = localStorage.getItem(MUSIC_KEY);
+    if (saved && window.WeissScore) musicOn = saved === "on";
+  } catch (e) { /* keep the default */ }
+  let score = null; // the battle music, made with the AudioContext
 
   function audioContext() {
     const Context = window.AudioContext || window.webkitAudioContext;
@@ -206,9 +215,45 @@
       const data = noiseBuffer.getChannelData(0);
       for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
       loadSamples(audio);
+      if (window.WeissScore) score = window.WeissScore.create(audio, limiter);
     }
-    if (audio.state === "suspended") audio.resume().catch(() => {});
+    // A hidden page stays paused (see the visibilitychange listener), whatever wants to make a sound.
+    if (audio.state === "suspended" && !document.hidden) audio.resume().catch(() => {});
     return audio;
+  }
+
+  // The music plays while sound and music are both on and the volume is up; it follows the board from the next bar.
+  function syncMusic() {
+    if (!score) return;
+    score.setVolume(soundVolume / 100);
+    const wanted = soundOn && musicOn && soundVolume > 0;
+    if (wanted && board) score.setState(scoreState());
+    if (wanted && !score.running) score.start();
+    else if (!wanted && score.running) score.stop();
+  }
+
+  // What the music follows (see score.js setState).
+  function scoreState() {
+    const sides = [board.me, board.opponent].filter(Boolean);
+    const over = board.game_over;
+    return {
+      setup: Boolean(board.rps) || board.phase === "mulligan",
+      level: Math.max(0, ...sides.map((side) => pileCount(side.zones.level))),
+      clock: Math.max(0, ...sides.map((side) => pileCount(side.zones.clock))),
+      turn: board.turn_number || 0,
+      myTurn: Boolean(board.my_turn),
+      attacking: board.phase === "attack",
+      climax: sides.some((side) => pileCount(side.zones.climax) > 0),
+      over: over ? (over.won ? "win" : "lose") : null,
+    };
+  }
+
+  function setMusic(on) {
+    musicOn = on;
+    try { localStorage.setItem(MUSIC_KEY, on ? "on" : "off"); } catch (e) { /* only this visit, then */ }
+    if (on && soundOn) audioContext();
+    syncMusic();
+    if (board) renderControls();
   }
 
   // A browser that can't decode them (or a failed download) leaves a recording out; its sound falls back on Web Audio.
@@ -333,9 +378,16 @@
   };
 
   function playSound(name, { quiet = false, at = 0 } = {}) {
-    if (!soundOn || !soundVolume || !SOUNDS[name]) return;
+    if (!soundOn || !soundVolume) return;
     const ctx = audioContext();
     if (!ctx) return;
+    if (musicOn && score) {
+      // Played in time with the music, so no stagger: several at once become a little figure (see score.js cue).
+      syncMusic();
+      score.cue(name, { opponent: quiet });
+      return;
+    }
+    if (!SOUNDS[name]) return;
     const out = ctx.createGain();
     out.gain.value = (soundVolume / 100) * (quiet ? OPPONENT_VOLUME : 1);
     out.connect(mix);
@@ -356,11 +408,13 @@
     soundOn = on;
     saveSound({ on: on ? "1" : "0" });
     if (on) playSound("prompt");
+    syncMusic();
     if (board) renderControls();
   }
 
   function setSoundVolume(volume, save) {
     soundVolume = volume;
+    syncMusic();
     clearTimeout(soundSaveTimer);
     if (save) soundSaveTimer = setTimeout(() => saveSound({ volume: String(volume) }), SOUND_SAVE_MS);
   }
@@ -378,7 +432,7 @@
     return {
       deck: pileCount(side.zones.deck), hand: pileCount(side.zones.hand), clock: pileCount(side.zones.clock),
       refreshes: side.refreshes || 0, level_ups: side.level_ups || 0, damage_taken: side.damage_taken || 0, negated: side.negated || 0,
-      layout: `${counts.join(",")}|${stage.join(",")}`,
+      climaxes: side.climaxes || 0, layout: `${counts.join(",")}|${stage.join(",")}`,
     };
   }
 
@@ -404,7 +458,10 @@
   }
 
   function playBoardSounds() {
-    const now = { game: board.game_number };
+    // The music hears the board first, so a cue that reaches into the next bar (a level up's) finds it.
+    if (score && score.running) score.setState(scoreState());
+    const now = { game: board.game_number, attacks: board.attacks || 0, turn: board.turn_number,
+      ability: (board.ability_show || {}).id || "", combo: (board.combo_show || {}).id || "" };
     for (const owner of ["me", "opponent"]) {
       const side = board[owner];
       if (side) now[owner] = soundSnapshot(side);
@@ -417,11 +474,16 @@
       return;
     }
     let at = 0;
+    // Only the music has these (the sound effects don't): an attack, an ability going off, a CPU's combo cutting in.
+    if (now.attacks > before.attacks && now.turn === before.turn) playSound("attack", { quiet: !board.my_turn });
+    if (now.ability && now.ability !== before.ability) playSound("ability", { quiet: !board.ability_show.mine });
+    if (now.combo && now.combo !== before.combo) playSound("combo", { quiet: !board.combo_show.mine });
     for (const owner of ["me", "opponent"]) {
       const was = before[owner];
       const is = now[owner];
       if (!was || !is) continue;
       const sounds = [];
+      if (musicOn && score && is.climaxes > was.climaxes) sounds.push("climax"); // the effects play it as a card put down
       if (is.refreshes > was.refreshes) sounds.push("shuffle");
       if (is.level_ups > was.level_ups) sounds.push("level");
       else if (is.damage_taken > was.damage_taken) sounds.push("damage");
@@ -1737,7 +1799,8 @@
             <button type="button" data-animations title="Turn animations on or off">Animations</button>
           </div>
           <div class="layout-switch sound-switch">
-            <button type="button" data-sound title="Turn sound effects on or off">Sound</button>
+            <button type="button" data-sound title="Turn sound on or off">Sound</button>
+            ${window.WeissScore ? `<button type="button" data-music title="Battle music: the game's moments play as part of it, in time and in key, instead of as sound effects">Music</button>` : ""}
             <input type="range" min="0" max="100" step="5" data-sound-volume aria-label="Sound volume" title="Sound volume">
           </div>
           <div class="layout-switch">
@@ -1752,6 +1815,11 @@
     });
     controlsEl.querySelector("[data-animations]").setAttribute("aria-pressed", String(animations));
     controlsEl.querySelector("[data-sound]").setAttribute("aria-pressed", String(soundOn));
+    const musicEl = controlsEl.querySelector("[data-music]");
+    if (musicEl) {
+      musicEl.setAttribute("aria-pressed", String(musicOn));
+      musicEl.disabled = !soundOn;
+    }
     const volumeEl = controlsEl.querySelector("[data-sound-volume]");
     volumeEl.disabled = !soundOn;
     if (document.activeElement !== volumeEl) volumeEl.value = String(soundVolume);
@@ -3328,6 +3396,10 @@
       setSound(!soundOn);
       return;
     }
+    if (event.target.closest("[data-music]")) {
+      setMusic(!musicOn);
+      return;
+    }
     const layoutButton = event.target.closest("[data-layout]");
     if (layoutButton) {
       setLayout(layoutButton.dataset.layout);
@@ -3508,10 +3580,21 @@
     if (event.target.matches("[data-sound-volume]")) playSound("draw");
   });
   // Browsers only let a page make sound after it's been clicked: start the audio on the first click.
-  root.addEventListener("pointerdown", () => { if (soundOn) audioContext(); }, { once: true });
+  root.addEventListener("pointerdown", () => {
+    if (!soundOn) return;
+    audioContext();
+    syncMusic();
+  }, { once: true });
 
   poll();
   setInterval(poll, POLL_MS);
-  // Back from another tab or app (a phone woken up): catch up at once rather than on the next tick.
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
+  // Back from another tab or app (a phone woken up): catch up at once rather than on the next tick. While
+  // the page is hidden its sound is paused (the music too, mid-bar, to carry on where it was).
+  document.addEventListener("visibilitychange", () => {
+    if (audio) {
+      if (document.hidden) audio.suspend().catch(() => {});
+      else if (soundOn) audio.resume().catch(() => {});
+    }
+    if (!document.hidden) poll();
+  });
 })();
