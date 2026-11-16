@@ -95,17 +95,7 @@
       </dl>
       {% if coop %}{% include "weiss/coop_panel.html" %}{% endif %}
       {% if lineup %}
-        <ol class="arcade-lineup">
-          {% for fighter in lineup %}
-            <li class="arcade-fighter{% if not fighter.met %} unknown{% endif %}">
-              {% if fighter.met %}
-                {% if fighter.cpu.image_url %}<img src="{{ fighter.cpu.image_url }}" alt="" loading="lazy">
-                {% else %}{% include "weiss/avatar.html" with avatar=fighter.cpu.avatar name=fighter.cpu.name size="avatar-fill" %}{% endif %}
-                <span class="small">{{ fighter.cpu.name }}</span>
-              {% else %}<span class="arcade-mystery" aria-hidden="true">?</span><span class="small muted">Not met yet</span>{% endif %}
-            </li>
-          {% endfor %}
-        </ol>
+        {% include "weiss/arcade_lineup.html" %}
       {% endif %}
 
       {% if run.status == "active" %}

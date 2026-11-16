@@ -492,6 +492,24 @@ select option { color: var(--text); background: var(--surface); }
 .deck-colors li::before { content: ""; width: .55rem; height: .55rem; border-radius: 50%; background: var(--chip, var(--muted)); }
 .deck-hint { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
 .deck-over-names { margin: .4rem 0 0; color: #e0605b; }
+/* Deck stats (deck_checks.html): two small bar charts, then the triggers and counters. */
+.deck-stats { display: flex; flex-wrap: wrap; gap: .8rem 1.6rem; margin-top: .9rem; }
+.deck-chart { margin: 0; min-width: 0; }
+.deck-chart figcaption, .deck-stat-title { margin: 0 0 .35rem; font-size: .8rem; font-weight: 600; color: var(--text); }
+.deck-chart .deck-stat-title + * { margin-top: 0; }
+.deck-chart .deck-stat-title:not(:first-child) { margin-top: .7rem; }
+.deck-bars { list-style: none; margin: 0; padding: 0 0 0; display: flex; align-items: flex-end; gap: 2px; height: 6.5rem; border-bottom: 1px solid var(--border); }
+.deck-bars li { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: 2.4rem; height: 100%; position: relative; }
+.deck-bar { display: block; width: 1.4rem; height: calc(var(--h) * .8); min-height: 2px; background: var(--accent); border-radius: 4px 4px 0 0; transition: height .25s ease; }
+.deck-bars li:hover .deck-bar { background: var(--accent-hover); }
+.deck-bar-n { font-size: .75rem; font-weight: 600; color: var(--text); margin-bottom: .15rem; font-variant-numeric: tabular-nums; }
+.deck-bar-label { position: absolute; top: 100%; margin-top: .2rem; font-size: .7rem; color: var(--muted); }
+.deck-chart:has(.deck-bars) { padding-bottom: 1.2rem; }
+.deck-triggers { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .3rem; font-size: .8rem; max-width: 22rem; }
+.deck-triggers li { padding: .15rem .55rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); }
+.deck-triggers strong { color: var(--accent); font-variant-numeric: tabular-nums; }
+.deck-chart .small { margin: .35rem 0 0; max-width: 22rem; }
+@media (prefers-reduced-motion: reduce) { .deck-bar { transition: none; } }
 .qty-controls.over-limit button, .qty-controls.over-limit button:disabled { background: #c0504d; color: #fff; }
 .qty-controls.over-limit button:hover { background: #d9625e; }
 .qty-controls.over-limit .qty { color: #e0605b; font-weight: 700; }
@@ -629,6 +647,49 @@ select option { color: var(--text); background: var(--surface); }
 .arcade-fighter > img, .arcade-fighter > .avatar, .arcade-mystery { width: 6rem; height: 6rem; border-radius: .5rem; object-fit: cover; }
 .arcade-mystery { display: grid; place-items: center; font-size: 2.5rem; font-weight: 700; color: var(--muted, #888); border: 2px dashed var(--border); }
 .arcade-fighter .small { overflow-wrap: anywhere; }
+/* The profile's trophy room (profile.html, profiles.trophies): headline numbers, cleared lists as trophies on a
+   shelf, and the CPUs beaten as a gallery of faces. */
+.trophy-room { margin: 1.2rem 0 1.6rem; padding: 1rem 1.1rem 1.2rem; border: 1px solid rgb(212 175 55 / .35); border-radius: .75rem;
+  background: radial-gradient(ellipse at top, rgb(212 175 55 / .1), transparent 70%), var(--surface); }
+.trophy-room h2 { margin: 0 0 .7rem; font-family: "Cinzel", var(--serif); letter-spacing: .04em; color: var(--accent); }
+.trophy-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: .5rem; margin: 0; }
+.trophy-stats > div { min-width: 0; padding: .6rem .75rem; border: 1px solid var(--border); border-radius: .5rem; background: rgb(0 0 0 / .2); }
+.trophy-stats dt { font-size: .75rem; color: var(--muted); }
+.trophy-stats dd { margin: 0; font-size: 1.6rem; font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.trophy-stats dd small { font-size: .95rem; color: var(--muted); }
+.trophy-stats .trophy-deck dd:not(.trophy-note) { font-size: 1.05rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-top: .3rem; }
+.trophy-stats .trophy-note, .trophy .trophy-note { font-size: .75rem; font-weight: 400; color: var(--muted); }
+.trophy-heading { margin: 1.1rem 0 .5rem; font-size: .8rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.trophy-shelf { list-style: none; margin: 0; padding: 0 0 .5rem; display: flex; flex-wrap: wrap; gap: .6rem; border-bottom: 3px solid rgb(212 175 55 / .35); }
+.trophy { display: flex; flex-direction: column; align-items: center; gap: .15rem; width: 8rem; padding: .5rem .4rem .4rem; text-align: center; border-radius: .5rem; background: linear-gradient(180deg, rgb(212 175 55 / .12), transparent); }
+.trophy-cup { font-size: 2rem; line-height: 1; filter: drop-shadow(0 0 8px rgb(212 175 55 / .55)); }
+.trophy-name { font-size: .85rem; font-weight: 600; overflow-wrap: anywhere; }
+.trophy-defeated { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(4.6rem, 1fr)); gap: .6rem; }
+.trophy-defeated li { display: flex; flex-direction: column; align-items: center; gap: .2rem; text-align: center; min-width: 0; }
+.trophy-defeated .small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trophy-face { position: relative; display: block; width: 4rem; height: 4rem; }
+.trophy-face > img, .trophy-face > .avatar { display: block; width: 4rem; height: 4rem; border-radius: 50%; object-fit: cover; border: 2px solid rgb(212 175 55 / .6); box-sizing: border-box; }
+.trophy-times { position: absolute; right: -.3rem; bottom: -.2rem; padding: 0 .35rem; font-size: .72rem; font-weight: 700; line-height: 1.4; color: var(--on-accent); background: var(--accent); border-radius: 999px; box-shadow: 0 0 0 2px var(--surface); }
+/* The fights as a trail (arcade_lineup.html): portraits joined by a line, dotted ahead and gold where it's been walked;
+   beaten fights ticked, the next one pulsing, the last one marked. Sideways scroll rather than wrapping. */
+.arcade-trail { --trail-gap: 1.6rem; flex-wrap: nowrap; gap: var(--trail-gap); overflow-x: auto; padding: 1rem .25rem .5rem; scroll-snap-type: x proximity; scrollbar-width: thin; }
+.arcade-trail:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: .5rem; }
+.arcade-trail .arcade-fighter { position: relative; flex: none; scroll-snap-align: center; }
+.arcade-trail .arcade-fighter + .arcade-fighter::before { content: ""; position: absolute; top: 3rem; right: 100%; width: var(--trail-gap); border-top: 2px dashed var(--border); }
+.arcade-trail .arcade-fighter:is(.trail-won, .trail-current)::before { border-top: 3px solid var(--accent); }
+.trail-portrait { position: relative; display: block; width: 6rem; height: 6rem; }
+.trail-portrait > img, .trail-portrait > .avatar, .trail-portrait > .arcade-mystery { width: 6rem; height: 6rem; border-radius: .5rem; object-fit: cover; }
+.trail-portrait > img, .trail-portrait > .avatar { display: block; border: 2px solid transparent; box-sizing: border-box; }
+.trail-won .trail-portrait > :is(img, .avatar) { border-color: var(--accent); }
+.trail-won .trail-portrait > :is(img, .avatar, .arcade-mystery) { filter: saturate(.55) brightness(.75); }
+.trail-check { position: absolute; right: -.4rem; bottom: -.4rem; display: grid; place-items: center; width: 1.6rem; height: 1.6rem; font-size: .95rem; font-weight: 800; color: var(--on-accent); background: var(--accent); border-radius: 50%; box-shadow: 0 0 0 3px var(--surface); }
+.trail-current .trail-portrait > :is(img, .avatar, .arcade-mystery) { border: 2px solid var(--accent); box-shadow: 0 0 0 4px var(--accent-soft), 0 0 1.4rem rgb(212 175 55 / .35); animation: spire-pulse 1.8s ease-in-out infinite; }
+.trail-current .trail-portrait > .arcade-mystery { color: var(--accent); }
+.trail-last .trail-portrait > :is(img, .avatar, .arcade-mystery) { border: 2px solid rgb(212 90 90 / .9); }
+.trail-tag { position: absolute; top: -.65rem; left: 50%; transform: translateX(-50%); padding: .05rem .5rem; font-family: "Cinzel", var(--serif); font-size: .66rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; color: var(--on-accent); background: var(--accent); border-radius: 999px; box-shadow: 0 2px 6px rgb(0 0 0 / .5); }
+.trail-tag-final { color: #fff; background: rgb(170 50 60); }
+.trail-ahead:not(.trail-last) .trail-portrait { opacity: .9; }
+@media (prefers-reduced-motion: reduce) { .trail-current .trail-portrait > * { animation: none; } }
 .cpu-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem; margin: .5rem 0; }
 .infinite-chance { display: flex; flex-direction: column; gap: .25rem; }
 .infinite-slider { display: flex; align-items: center; gap: .75rem; }
@@ -977,6 +1038,11 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .zone-search:hover { border-color: var(--accent); background: #353a47; }
 .zone.drop-over { border-color: var(--accent); background: var(--accent-soft); }
 .zone.pile { cursor: pointer; }
+/* Climaxes in a waiting room: a badge over the bottom of its top card. */
+.pile-cx { position: absolute; bottom: .45rem; left: 50%; transform: translateX(-50%); z-index: 3; display: inline-flex; align-items: center; gap: .2rem; padding: .05rem .4rem; font-size: .72rem; line-height: 1.3; white-space: nowrap; background: rgb(20 22 28 / .88); border: 1px solid rgb(255 160 80 / .7); border-radius: 999px; box-shadow: 0 1px 4px rgb(0 0 0 / .6); cursor: help; }
+.pile-cx b { color: #fff; font-weight: 700; }
+.pile-cx.none { border-color: rgb(255 255 255 / .25); }
+.pile-cx.none .cx { filter: grayscale(1); opacity: .7; }
 .zone.pile:hover { border-color: rgb(255 255 255 / .3); }
 .zone.spread { flex: 1; align-items: stretch; cursor: pointer; }
 .zone.spread .zone-label { align-self: center; }
@@ -1241,6 +1307,29 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .trigger-show-icons { font-size: 1.15rem; }
 .trigger-show-cards { display: flex; gap: .75rem; }
 .climax-show .trigger-show-cards img { max-width: 34vw; max-height: 46vh; }
+/* The reveal (play.js showTriggerCheck): each card comes in face down and turns over, then the trigger icons pop
+   in one by one under it. Timed within the show's CLIMAX_SHOW_MS (2s), whichever entrance it has. */
+.tc-card { position: relative; border-radius: .9rem; transform-style: preserve-3d; }
+.tc-card > img { position: relative; }
+.tc-card .rfx-sheen { border-radius: .9rem; }
+.tc-back { display: none; }
+.tc-reveal .tc-card { animation: tc-turn .7s ease-in-out both; }
+.tc-reveal .tc-back { display: block; position: absolute; inset: 0; z-index: 2; border-radius: .9rem; animation: tc-back-off .7s step-end both; }
+@keyframes tc-turn { 0%, 30% { transform: perspective(900px) rotateY(0); } 65% { transform: perspective(900px) rotateY(90deg); filter: brightness(1.6); } 100% { transform: perspective(900px) rotateY(0); filter: none; } }
+@keyframes tc-back-off { 0% { opacity: 1; } 65%, 100% { opacity: 0; } }
+.tc-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem; margin: 0; padding: 0; list-style: none; }
+.tc-badge { display: inline-flex; align-items: center; gap: .35rem; padding: .25rem .7rem; font-size: 1.1rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #fff; background: rgb(255 255 255 / .1); border: 1px solid rgb(255 255 255 / .35); border-radius: 999px; text-shadow: 0 2px 6px #000; }
+.tc-badge svg { width: .85em; height: 1.15em; fill: #ffb347; filter: drop-shadow(0 0 4px rgb(255 150 60 / .8)); }
+.tc-soul { border-color: rgb(255 170 80 / .8); background: rgb(255 140 50 / .18); }
+.tc-reveal .tc-badge { animation: tc-pop .35s calc(.75s + var(--n, 0) * .14s) cubic-bezier(.3, 1.6, .5, 1) both; }
+@keyframes tc-pop { from { opacity: 0; transform: scale(.4) translateY(.4rem); } to { opacity: 1; transform: none; } }
+.tc-none { margin: 0; font-size: 1rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgb(255 255 255 / .6); }
+.tc-reveal .tc-none { animation: tc-pop .3s .75s ease-out both; }
+/* Damage negated: a shield flares up behind the climax that cancelled it. */
+.negate-card { isolation: isolate; }
+.negate-shield { position: absolute; left: 50%; top: 50%; z-index: -1; width: 150%; height: 150%; translate: -50% -50%; fill: rgb(245 197 66 / .18); stroke: #f5c542; stroke-width: 2.5; filter: drop-shadow(0 0 18px rgb(245 197 66 / .8)); animation: negate-shield 1.1s .15s cubic-bezier(.2, 1.3, .4, 1) both; }
+@keyframes negate-shield { 0% { opacity: 0; scale: .3; } 55% { opacity: 1; scale: 1.05; } 100% { opacity: .85; scale: 1; } }
+@media (prefers-reduced-motion: reduce) { .negate-shield { animation: none; } }
 /* A phase change: the old phase's graphic, swept away by the new one's. */
 .phase-show { position: fixed; left: 50%; top: 50%; z-index: 45; width: 15rem; height: 11rem; pointer-events: none; transform: translate(-50%, -50%); }
 .phase-show-card { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid #f5c542; border-radius: 1rem; background: linear-gradient(160deg, rgb(32 36 48 / .96), rgb(12 14 20 / .96)); box-shadow: 0 0 24px rgb(245 197 66 / .45), 0 12px 40px rgb(0 0 0 / .7); }
@@ -1368,6 +1457,47 @@ button .cx, .phase-bar button.current .cx { filter: drop-shadow(0 0 2px rgb(0 0 
 .game-over-buttons button:disabled { cursor: default; opacity: .55; filter: none; }
 .game-over-buttons .game-over-end { color: #eee; background: rgb(0 0 0 / .45); border-color: rgb(255 255 255 / .35); box-shadow: none; }
 .game-over.animated { animation: game-over-fade .5s ease-out both; }
+/* The game's summary (play_summary.js): a panel over the game-over screen, opened from its button. */
+.game-over-summary-open { margin-top: .9rem; padding: .45rem .9rem; font: inherit; font-size: .9rem; color: var(--word-light); background: rgb(0 0 0 / .35); border: 1px solid rgb(255 255 255 / .3); border-radius: 999px; cursor: pointer; }
+.game-over-summary-open:hover { border-color: var(--word-mid); background: rgb(0 0 0 / .5); }
+.game-over.animated .game-over-summary-open { animation: game-over-fade .5s 1.3s ease-out both; }
+.game-over.summary-open .game-over-banner { visibility: hidden; }
+.game-summary { position: absolute; z-index: 2; width: min(44rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); overflow-y: auto; padding: 1rem 1.1rem 1.1rem; text-align: left; color: var(--text); background: rgb(14 16 22 / .96); border: 1px solid rgb(255 255 255 / .18); border-radius: .7rem; box-shadow: 0 20px 60px rgb(0 0 0 / .6); }
+.game-summary[hidden] { display: none; }
+.game-summary-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .8rem; }
+.game-summary-head .game-over-summary-open { margin: 0; flex: none; }
+.game-over.animated .game-summary-close { animation: none; }
+.game-summary-head h2 { margin: 0; font-family: "Cinzel", Georgia, serif; font-size: 1.25rem; color: var(--word-light); }
+.gs-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: .5rem; }
+.gs-tile { display: flex; flex-direction: column; gap: .1rem; padding: .55rem .7rem; border: 1px solid var(--border); border-radius: .5rem; background: rgb(255 255 255 / .03); }
+.gs-tile-value { font-size: 1.5rem; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.gs-tile-value small { font-size: .9rem; font-weight: 600; color: var(--muted); }
+.gs-tile-label { font-size: .78rem; color: var(--text); }
+.gs-tile-note { font-size: .72rem; color: var(--muted); }
+.gs-figure { margin: 1rem 0 0; }
+.gs-figure figcaption { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; font-size: .85rem; font-weight: 600; margin-bottom: .3rem; }
+.gs-legend { display: inline-flex; align-items: center; gap: .35rem; font-weight: 400; color: var(--muted); font-size: .78rem; }
+.gs-key { display: inline-block; width: .9rem; height: 2px; border-radius: 1px; }
+.gs-key.gs-theirs { margin-left: .5rem; }
+.gs-chart { --gs-mine: #f2c750; --gs-theirs: #6cc8ff; display: block; width: 100%; height: auto; overflow: visible; }
+.gs-legend .gs-mine { background: #f2c750; }
+.gs-legend .gs-theirs { background: #6cc8ff; }
+.gs-grid { stroke: rgb(255 255 255 / .1); stroke-width: 1; }
+.gs-grid-lose { stroke: rgb(224 96 91 / .45); stroke-dasharray: 4 4; }
+.gs-axis { fill: var(--muted); font-size: 11px; }
+.gs-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.gs-line.gs-mine { stroke: var(--gs-mine); }
+.gs-line.gs-theirs { stroke: var(--gs-theirs); }
+.gs-dot { stroke: rgb(14 16 22); stroke-width: 2; }
+.gs-dot.gs-mine { fill: var(--gs-mine); }
+.gs-dot.gs-theirs { fill: var(--gs-theirs); }
+.gs-dot:hover { r: 6; }
+.gs-end { fill: var(--text); font-size: 12px; font-weight: 600; }
+.gs-table { margin-top: .4rem; font-size: .8rem; }
+.gs-table summary { cursor: pointer; color: var(--muted); }
+.gs-table table { margin-top: .4rem; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.gs-table :is(th, td) { padding: .15rem .8rem .15rem 0; text-align: left; border-bottom: 1px solid var(--border); }
+.gs-empty { margin: 1rem 0 0; color: var(--muted); }
 .game-over.animated .game-over-rays { animation: game-over-spin 40s linear infinite; }
 .game-over.animated .game-over-crest { animation: game-over-drop .7s .15s cubic-bezier(.2, 1.3, .4, 1) both; }
 .game-over.animated .game-over-word { animation: game-over-slam .6s .45s cubic-bezier(.2, 1.2, .4, 1) both; }
@@ -2118,6 +2248,15 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .play-board[data-brink~="me"] .mat-me .zone-clock, .play-board[data-brink~="opponent"] .mat-opponent .zone-clock {
   border-radius: .5rem; box-shadow: 0 0 0 1px rgb(235 70 70 / .75), 0 0 18px rgb(235 70 70 / .35); }
 .play-board .mat { border-radius: .8rem; transition: box-shadow .5s, opacity .5s; }
+/* Match point, said in words too (play.js spreadHtml): beside the clock's label. */
+.match-point-tag { margin-left: .35rem; padding: .05rem .4rem; border-radius: 999px; font-size: .62rem; font-weight: 700; letter-spacing: .08em; color: #fff; background: rgb(200 45 50 / .85); box-shadow: 0 0 10px rgb(235 70 70 / .45); }
+/* A damage that could end the game (play_fx.js damageFlips): everything but that side's clock dims while its cards
+   turn over in slow motion, and the clock is lifted out of the dark. */
+.play-board :is(.hand, .zone, .table-divider, .active-colors) { transition: filter .45s ease, opacity .45s ease; }
+.play-board[data-lethal] :is(.hand, .zone, .table-divider, .active-colors) { filter: brightness(.4) saturate(.6); }
+.play-board[data-lethal="me"] .mat-me .zone-clock, .play-board[data-lethal="opponent"] .mat-opponent .zone-clock {
+  filter: none; position: relative; z-index: 3; border-radius: .5rem; box-shadow: 0 0 0 2px rgb(235 70 70 / .9), 0 0 32px rgb(235 70 70 / .55); animation: lethal-throb .9s ease-in-out infinite; }
+@keyframes lethal-throb { 50% { box-shadow: 0 0 0 2px rgb(255 120 110 / 1), 0 0 48px rgb(235 70 70 / .75); } }
 .play-board[data-turn="me"] .side-me .mat, .play-board[data-turn="opponent"] .side-opponent .mat { box-shadow: 0 0 0 1px rgb(212 175 55 / .4), 0 0 24px rgb(212 175 55 / .1); }
 .play-board[data-turn="me"] .side-opponent .mat, .play-board[data-turn="opponent"] .side-me .mat { opacity: .88; }
 

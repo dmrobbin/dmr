@@ -24,4 +24,40 @@
     </ul>
   {% endif %}
   {% if deck.over_limit %}<p class="small deck-over-names">Too many copies: {{ deck.over_limit|join:", " }}</p>{% endif %}
+  {# The curves, triggers and counters: on the list's own page, not in the narrow side panel (compact). #}
+  {% if not compact and not deck.stats.empty %}{% with stats=deck.stats %}
+    <div class="deck-stats">
+      <figure class="deck-chart">
+        <figcaption>Level curve <span class="deck-hint">characters &amp; events</span></figcaption>
+        <ol class="deck-bars">
+          {% for label, n, height in stats.levels %}
+            <li title="{{ n }} card{{ n|pluralize }} at level {{ label|slice:'1:' }}"><span class="deck-bar-n">{{ n }}</span><span class="deck-bar" style="--h: {{ height }}%"></span><span class="deck-bar-label">{{ label }}</span></li>
+          {% endfor %}
+        </ol>
+      </figure>
+      <figure class="deck-chart">
+        <figcaption>Cost curve <span class="deck-hint">characters &amp; events</span></figcaption>
+        <ol class="deck-bars">
+          {% for label, n, height in stats.costs %}
+            <li title="{{ n }} card{{ n|pluralize }} costing {{ label }}"><span class="deck-bar-n">{{ n }}</span><span class="deck-bar" style="--h: {{ height }}%"></span><span class="deck-bar-label">{{ label }}</span></li>
+          {% endfor %}
+        </ol>
+      </figure>
+      <div class="deck-chart">
+        <p class="deck-stat-title">Triggers</p>
+        {% if stats.triggers %}
+          <ul class="deck-triggers">
+            {% for name, n in stats.triggers %}<li><strong>{{ n }}</strong> {{ name }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+        <p class="small muted">{{ stats.no_trigger }} card{{ stats.no_trigger|pluralize }} with no trigger icon.</p>
+        <p class="deck-stat-title">Counters</p>
+        {% if stats.counters %}
+          <p class="small"><strong>{{ stats.counters }}</strong> counter card{{ stats.counters|pluralize }}: a <strong>{{ stats.counter_chance }}%</strong> chance of one in your opening {{ stats.hand }}, before the mulligan.</p>
+        {% else %}
+          <p class="small muted">No 【COUNTER】 cards yet: nothing to answer an attack with from your hand.</p>
+        {% endif %}
+      </div>
+    </div>
+  {% endwith %}{% endif %}
 </div>

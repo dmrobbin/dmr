@@ -25,7 +25,7 @@
     <p class="panel-list-name"><a href="{% url 'weiss:list' editing_list.pk %}">{{ editing_list.name }}</a></p>
     {% include "weiss/deck_toggle.html" with toggle_list=editing_list %}
     {% if editing_deck %}
-      {% include "weiss/deck_checks.html" with deck=editing_deck %}
+      {% include "weiss/deck_checks.html" with deck=editing_deck compact=True %}
     {% else %}
       <p class="list-counter" aria-live="polite"><strong>{{ editing_count }}</strong> / {{ max_cards }} cards</p>
       <div class="meter{% if editing_full %} full{% endif %}"><span style="width: {% widthratio editing_count max_cards 100 %}%"></span></div>

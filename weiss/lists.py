@@ -112,7 +112,71 @@ def deck_checks(entries):
         colors[entry.card.color or "No color"] += entry.quantity
     return {"total": total, "size": DECK_SIZE, "over": total > DECK_SIZE, "exact": total == DECK_SIZE,
             "groups": groups, "copy_limit": COPY_LIMIT, "over_limit": over,
-            "colors": colors.most_common()}  # [(color, copies), ...], most first
+            "colors": colors.most_common(),  # [(color, copies), ...], most first
+            "stats": deck_stats(entries)}
+
+
+OPENING_HAND = 5  # cards dealt before the mulligan
+# Trigger icons as Card.trigger spells them, and how the deck stats name them, in the order they're shown.
+TRIGGER_NAMES = {"soul": "Soul", "gate": "Gate", "treasure": "Treasure", "choice": "Choice", "comeback": "Comeback",
+                 "standby": "Standby", "shot": "Shot", "bounce": "Bounce", "draw": "Draw", "pool": "Pool"}
+COUNTER = re.compile(r"^\s*【COUNTER】", re.M)  # the ability a card can be played with from hand in the opponent's attack
+
+
+def is_counter(card):
+    return bool(COUNTER.search(card.description or ""))
+
+
+def chance_in_hand(hits, deck_size, hand=OPENING_HAND):
+    """The chance (0-100, rounded) of at least one of `hits` cards among the first `hand` of a shuffled deck."""
+    if not hits or not deck_size:
+        return 0
+    hand = min(hand, deck_size)
+    miss = 1.0
+    for i in range(hand):  # none of the hits in each draw in turn
+        miss *= max(deck_size - hits - i, 0) / (deck_size - i)
+    return round(100 * (1 - miss))
+
+
+def bars(counts):
+    """[(label, count, height as % of the tallest), ...] for a small bar chart."""
+    top = max((n for _, n in counts), default=0) or 1
+    return [(label, n, round(100 * n / top)) for label, n in counts]
+
+
+def deck_stats(entries):
+    """What a deck builder looks at past the rules: its level and cost curves (characters and events), the trigger
+    icons it checks into (soul triggers counted by icon, as a double soul still is one card), and its counters with
+    the chance of one in the opening hand."""
+    levels, costs, triggers = Counter(), Counter(), Counter()
+    counters = total = 0
+    for entry in entries:
+        card, n = entry.card, entry.quantity
+        total += n
+        if not is_climax(card):
+            levels[min(card.level or 0, 3)] += n
+            costs[min(card.cost or 0, 3)] += n
+        icons = (card.trigger or "").split()
+        for icon in set(icons):
+            if icon in TRIGGER_NAMES:
+                triggers[icon] += n
+        if icons.count("soul") >= 2:
+            triggers["double soul"] += n
+        if is_counter(card):
+            counters += n
+    trigger_rows = [(TRIGGER_NAMES[icon], triggers[icon]) for icon in TRIGGER_NAMES if triggers[icon]]
+    if triggers["double soul"]:
+        trigger_rows.insert(1, ("2 Soul", triggers["double soul"]))
+    return {
+        "levels": bars([(f"L{level}", levels[level]) for level in range(4)]),
+        "costs": bars([(f"{cost}+" if cost == 3 else str(cost), costs[cost]) for cost in range(4)]),
+        "triggers": trigger_rows,
+        "no_trigger": sum(e.quantity for e in entries if not (e.card.trigger or "").strip()),
+        "counters": counters,
+        "counter_chance": chance_in_hand(counters, total),
+        "hand": OPENING_HAND,
+        "empty": not total,
+    }
 
 
 class ListError(Exception):

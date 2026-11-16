@@ -26,6 +26,7 @@ State is plain JSON, stored on the GameRoom:
      "rps": {"picks": {id: choice}, "last": {id: choice}, "winner": id},  # game 1's rock, paper, scissors for going first
      "game_over": {"winner": id, "loser": id, "reason": "level"|"deck", "rematch": [id, ...]},  # who lost and how; who's asked for a rematch
      "match_wins": {user id: n},  # games each player has won in this series of rematches
+     "timeline": {"points": [...], "hits": [...]},  # how the game went, for its summary at the end (see record_turn)
      "ability_queue": [...], "resolving": {...},  # card abilities to trigger, and the one running (see Abilities)
      "ability_show": {...},  # an ability just resolved: both pages show it, and play waits (see show_ability)
      "cut_ins": {user id: [anchor card pk, ...]}, "combo_show": {...}, "combo_turns": {user id: turn number},  # a CX combo's cut-in (see cut_in)
@@ -122,7 +123,7 @@ def new_game(players, shuffle=random.shuffle, match_wins=None, game_number=1, fi
     first = str(first or players[0][0])
     state = {"players": {}, "order": [str(p[0]) for p in players], "turn": first, "first_player": first, "game_number": game_number,
              "turn_number": 1, "phase": "mulligan", "mulligan_done": [], "log": [],
-             "match_wins": dict(match_wins or {})}
+             "match_wins": dict(match_wins or {}), "timeline": {"points": [], "hits": []}}
     for user_id, name, cards in players:
         deck = [new_card(pk) for pk in cards]
         shuffle(deck)
@@ -175,6 +176,49 @@ def rps_view(state, player):
     return {"mine": rps["picks"].get(player), "opponent_chose": other in rps["picks"],
             "last": {"me": last[player], "opponent": last[other]} if last else None,
             "won": rps["winner"] == player if rps["winner"] else None}
+
+
+# --- The game's timeline, for its summary when it's over ------------------------------------------
+
+MAX_HITS = 300  # damages remembered for the summary; a game never comes near it
+
+
+def damage_points(state, player):
+    """How far a player is towards losing: 7 per level and 1 per clock card (28 is level 4), leaving out the cards of
+    a cancelled damage still on their way out of the clock (see resolve_damage)."""
+    side = state["players"][player]
+    pending = state.get("pending_damage") or {}
+    cancelled = set(pending.get("uids", [])) if pending.get("player") == player else set()
+    return 7 * len(side["zones"]["level"]) + sum(1 for card in side["zones"]["clock"] if card["uid"] not in cancelled)
+
+
+def record_turn(state, player):
+    """At the end of a turn (and of the game), where each player's damage stands, for the summary's graph."""
+    timeline = state.setdefault("timeline", {"points": [], "hits": []})
+    timeline["points"].append({"turn": state.get("turn_number", 0), "by": player,
+                               "damage": {p: damage_points(state, p) for p in state["players"]}})
+
+
+def record_hit(state, player, amount, cancelled):
+    """A damage this player was dealt: how much, and whether a climax cancelled it."""
+    hits = state.setdefault("timeline", {"points": [], "hits": []})["hits"]
+    hits.append({"turn": state.get("turn_number", 0), "player": player, "amount": amount, "cancelled": cancelled})
+    del hits[:-MAX_HITS]
+
+
+def timeline_view(state, player):
+    """The game's timeline from this player's side, for the game-over summary: the damage graph's points as
+    {"turn", "mine", "theirs"} and the damages as {"turn", "mine" (dealt to us), "amount", "cancelled"}."""
+    timeline = state.get("timeline") or {}
+    other = other_player(state, player)
+    points = [{"turn": p["turn"], "mine": p["damage"].get(player, 0), "theirs": p["damage"].get(other, 0)}
+              for p in timeline.get("points", [])]
+    hits = [{"turn": h["turn"], "mine": h["player"] == player, "amount": h["amount"], "cancelled": h["cancelled"]}
+            for h in timeline.get("hits", [])]
+    return {"points": points, "hits": hits,
+            "climaxes": {"mine": state["players"][player].get("climaxes", 0), "theirs": state["players"][other].get("climaxes", 0)},
+            "refreshes": {"mine": state["players"][player].get("refreshes", 0), "theirs": state["players"][other].get("refreshes", 0)},
+            "turns": state.get("turn_number", 0)}
 
 
 def add_log(state, player, text):
@@ -376,11 +420,14 @@ def deal_damage(state, player, amount, remaining, dealt, name, is_climax):
                                        "amount": amount, "climax": name(card["card"])}
             side["negated"] = side.get("negated", 0) + 1  # so both pages can show "Damage Negated!"
             side["negated_card"] = card["card"]
+            record_hit(state, player, amount, True)
             return
         if remaining and not deck and side["zones"]["waiting"]:
             state["pending_refresh"] = {"player": player, "amount": amount, "remaining": remaining, "dealt": dealt}
             return
     side["damage_taken"] = side.get("damage_taken", 0) + len(dealt)  # all of it landed: a co-op boss counts it (see play.wear_boss)
+    if dealt:
+        record_hit(state, player, len(dealt), False)
     names = ", ".join(n for _, n in dealt)
     short = f" (deck ran out after {len(dealt)})" if remaining else ""
     add_log(state, player, f"took {amount} damage{short}: {names}")
@@ -927,6 +974,7 @@ def finish_turn(state, player, name):
     if climaxes:
         add_log(state, player, "put " + ", ".join(name(c["card"]) for c in climaxes)
                 + " from the climax zone into the waiting room")
+    record_turn(state, player)
     other = next(p for p in state["order"] if p != player)
     if state.pop("extra_turn", None) == player:  # "you get 1 additional turn"
         other = player
@@ -977,6 +1025,7 @@ def end_game(state, loser, reason, said):
     """This player has lost (for `reason`; the log says they `said`...): everything in progress stops."""
     winner = other_player(state, loser)
     state["game_over"] = {"winner": winner, "loser": loser, "reason": reason, "rematch": []}
+    record_turn(state, state.get("turn"))  # where it ended
     wins = state.setdefault("match_wins", {})
     wins[winner] = wins.get(winner, 0) + 1
     for key in ("ability_queue", "resolving", "ability_show", "combo_show", "attack", "auto_next", "pending_end", "pending_damage", "pending_refresh",
@@ -4733,7 +4782,8 @@ def view(state, player):
         # {"won": did this player win, "rematch": have they asked, "opponent_rematch": has the other player}
         "game_over": ({"won": state["game_over"]["winner"] == player, "reason": state["game_over"].get("reason", "level"), "rematch": player in state["game_over"]["rematch"],
                        "score": state["game_over"].get("score") if state["game_over"]["winner"] == player else None,
-                       "opponent_rematch": other in state["game_over"]["rematch"]} if state.get("game_over") else None),
+                       "opponent_rematch": other in state["game_over"]["rematch"],
+                       "timeline": timeline_view(state, player)} if state.get("game_over") else None),
         # Games won in this series, for the first player and then the second, on both players' screens.
         "match_wins": [{"name": state["players"][p]["name"], "wins": state.get("match_wins", {}).get(p, 0)} for p in state["order"]],
         "ability": ability_view(state, player),

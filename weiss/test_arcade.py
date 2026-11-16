@@ -448,6 +448,21 @@ class ArcadeRunTests(Base):
         self.assertEqual([(s.name, s.fights) for s in page.context["scenarios"]], [("Zed", 2), ("Ark", 4)])  # a branch replaces a fight
         self.assertContains(page, '<p class="arcade-fights" aria-label="2 fights"><b>2</b><span>fights</span></p>', html=True)
 
+    def test_the_lineup_follows_a_run_and_marks_how_far_it_has_got(self):
+        run = ArcadeRun.objects.create(user=self.alice, scenario=self.scenario, scenario_name="Ark",
+                                       order=[self.opener.pk, self.filler2.pk, self.filler1.pk, self.anchor.pk], position=2)
+        lineup = arcade.lineup(self.scenario, self.alice, run)
+        self.assertEqual([(f["cpu"].name, f["state"]) for f in lineup],
+                         [("Open", "won"), ("F2", "won"), ("F1", "current"), ("Last", "ahead")])  # the run's shuffled order
+        run.status = ArcadeRun.Status.ABANDONED
+        self.assertEqual([f["state"] for f in arcade.lineup(self.scenario, self.alice, run)], ["won", "won", "ahead", "ahead"])
+        self.assertEqual({f["state"] for f in arcade.lineup(self.scenario, self.alice)}, {"ahead"})  # no run, no progress
+
+    def test_the_arcade_page_draws_the_lineup_as_a_trail(self):
+        page = self.client.get(reverse("weiss:arcade"))
+        self.assertContains(page, 'class="arcade-lineup arcade-trail"')
+        self.assertContains(page, '<span class="trail-tag trail-tag-final">Final</span>', html=True)
+
     def test_opener_first_anchor_last_fillers_between_in_random_order(self):
         seen = set()
         for seed in range(30):

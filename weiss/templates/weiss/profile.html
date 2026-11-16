@@ -11,6 +11,50 @@
     </div>
   </div>
 
+  {# What they've achieved, before the details below: profiles.trophies. #}
+  <section class="trophy-room" aria-labelledby="trophy-title">
+    <h2 id="trophy-title">Trophy room</h2>
+    {% if trophies.empty %}
+      <p class="empty">Nothing on the shelves yet. Beat a CPU to start your gallery, or clear an <a href="{% url 'weiss:arcade' %}">arcade list</a> for your first trophy.</p>
+    {% else %}
+      <dl class="trophy-stats">
+        <div><dt>Win rate</dt><dd>{% if trophies.win_rate is not None %}{{ trophies.win_rate }}%{% else %}–{% endif %}</dd><dd class="trophy-note">{{ won }} won of {{ played }}</dd></div>
+        <div><dt>CPUs beaten</dt><dd>{{ trophies.defeated_count }}</dd></div>
+        <div><dt>Arcade lists cleared</dt><dd>{{ trophies.cleared|length }}</dd>{% if trophies.best_run %}<dd class="trophy-note">best run {{ trophies.best_run }}</dd>{% endif %}</div>
+        <div><dt>Sleeves</dt><dd>{{ trophies.sleeves_owned }}<small> / {{ trophies.sleeves_seen }}</small></dd><dd class="trophy-note"><a href="#sleeves">see them</a></dd></div>
+        {% if trophies.top_deck %}<div class="trophy-deck"><dt>Most wins with</dt><dd title="{{ trophies.top_deck.0 }}">{{ trophies.top_deck.0 }}</dd><dd class="trophy-note">{{ trophies.top_deck.1 }} win{{ trophies.top_deck.1|pluralize }}</dd></div>{% endif %}
+      </dl>
+      {% if trophies.cleared %}
+        <h3 class="trophy-heading">Cleared</h3>
+        <ul class="trophy-shelf">
+          {% for trophy in trophies.cleared %}
+            <li class="trophy">
+              <span class="trophy-cup" aria-hidden="true">🏆</span>
+              <span class="trophy-name">{{ trophy.scenario_name }}</span>
+              <span class="trophy-note">best {{ trophy.best }}{% if trophy.times > 1 %} · cleared ×{{ trophy.times }}{% endif %}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+      {% if trophies.defeated %}
+        <h3 class="trophy-heading">Beaten</h3>
+        <ol class="trophy-defeated">
+          {% for entry in trophies.defeated %}
+            <li title="{{ entry.cpu.name }}: beaten {{ entry.times }} time{{ entry.times|pluralize }}">
+              <span class="trophy-face">
+                {% if entry.cpu.image_url %}<img src="{{ entry.cpu.image_url }}" alt="" loading="lazy">
+                {% else %}{% include "weiss/avatar.html" with avatar=entry.cpu.avatar name=entry.cpu.name size="avatar-fill" %}{% endif %}
+                {% if entry.times > 1 %}<span class="trophy-times">×{{ entry.times }}</span>{% endif %}
+              </span>
+              <span class="small">{{ entry.cpu.name }}</span>
+            </li>
+          {% endfor %}
+        </ol>
+        {% if trophies.defeated_more %}<p class="muted small">And {{ trophies.defeated_more }} more.</p>{% endif %}
+      {% endif %}
+    {% endif %}
+  </section>
+
   <section class="cpu-section" id="sleeves">
     <h2>Card sleeves</h2>
     <p class="muted small">How your face-down cards look in a game (your deck, stock and the hand your opponent sees), to you and to them.</p>

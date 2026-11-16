@@ -72,13 +72,28 @@ def current_cpu(run):
     return None
 
 
-def lineup(scenario, user):
+def lineup(scenario, user, run=None):
     """A scenario's CPUs in the order they're fought (fillers by name), each {"cpu", "role", "role_label",
-    "met"}. The opener is always shown; the rest only once this player has played them in a run."""
-    met = {cpu_id for run in ArcadeRun.objects.filter(user=user, scenario=scenario) for cpu_id in run.fought}
-    return [{"cpu": entry.cpu, "role": entry.role, "role_label": entry.get_role_display(),
-             "met": entry.role == ArcadeEntry.Role.OPENER or entry.cpu_id in met}
-            for entry in scenario.ordered_entries if entry.role != ArcadeEntry.Role.BRANCH or entry.cpu_id in met]
+    "met", "state"}. The opener is always shown; the rest only once this player has played them in a run.
+
+    With the player's `run` through it, "state" says how far it has got: "won" for a CPU beaten in it, "current" for
+    the one it fights next, otherwise "ahead" (also every state without a run)."""
+    met = {cpu_id for past in ArcadeRun.objects.filter(user=user, scenario=scenario) for cpu_id in past.fought}
+    order = list(run.order) if run else []
+    active = bool(run) and run.status == ArcadeRun.Status.ACTIVE
+
+    def state(cpu_id):
+        if cpu_id not in order:
+            return "ahead"
+        at = order.index(cpu_id)
+        return "won" if at < run.position else "current" if at == run.position and active else "ahead"
+
+    fighters = [{"cpu": entry.cpu, "role": entry.role, "role_label": entry.get_role_display(),
+                 "met": entry.role == ArcadeEntry.Role.OPENER or entry.cpu_id in met, "state": state(entry.cpu_id)}
+                for entry in scenario.ordered_entries if entry.role != ArcadeEntry.Role.BRANCH or entry.cpu_id in met]
+    if order:  # the run's own order (its fillers are shuffled), anything it doesn't fight after
+        fighters.sort(key=lambda f: order.index(f["cpu"].pk) if f["cpu"].pk in order else len(order))
+    return fighters
 
 
 def entry_of(run, cpu_id):

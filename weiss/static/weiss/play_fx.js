@@ -15,6 +15,8 @@
     const FX_STEP_MS = 160; // between damage cards turning over when the music isn't setting the beat
     const MAX_STAT_POPS = 6; // characters whose stats float a change at once (an end-of-turn reset is left out anyway)
     const BATTLE_MS = 1700; // the power duel's time on screen
+    const LETHAL_STEP_MS = 420; // at least this long between cards of a damage that could end the game: slow motion
+    const LOSING_CLOCK = 7; // a full clock levels up, and at level 3 that's the game
     let fxSeen = null; // {game, battle, ability}: what's been shown, so reopening the page doesn't replay it
     let negatedWait = { me: 0, opponent: 0 }; // how long "Damage Negated!" waits for its cards to turn over
     let ownDamageAt = -Infinity; // when our own "Take damage" flew its cards in, so they don't turn over twice
@@ -54,6 +56,8 @@
       if (!before || !last || !app.animations() || app.board().rps || last.game_number !== app.board().game_number) return;
       // Damage first (it comes before the battle in an attack), then the clash once its cards have turned over.
       const flipping = Math.max(damageFlips(last, "me"), damageFlips(last, "opponent"));
+      // The damage that ended the game turns over before the game-over screen comes up.
+      if (flipping && app.board().game_over) app.holdGameOver(flipping + 500);
       if (now.battle && now.battle !== before.battle) {
         const battle = app.board().battle;
         // The board already has the loser reversed: it stays upright until the clash turns it over.
@@ -84,7 +88,14 @@
       const old = new Set(was.zones.clock.map((c) => c.uid));
       const fresh = is.zones.clock.filter((c) => !old.has(c.uid)).map((c) => cardEl(c.uid)).filter(Boolean);
       if (!fresh.length) return 0;
-      const step = fxStep();
+      // A damage that would take them to level 4 if it lands: the table dims round their clock and the cards turn
+      // over in slow motion (on every third tick of the music, if it's playing).
+      const lethal = pileCount(was.zones.level) >= 3 && was.zones.clock.length + fresh.length >= LOSING_CLOCK && fresh.length > 1;
+      const step = lethal ? Math.max(fxStep() * 3, LETHAL_STEP_MS) : fxStep();
+      if (lethal) {
+        boardEl.dataset.lethal = owner;
+        setTimeout(() => { if (boardEl.dataset.lethal === owner) delete boardEl.dataset.lethal; }, (fresh.length - 1) * step + 900);
+      }
       fresh.forEach((el, n) => {
         el.classList.add("dmg-wait");
         setTimeout(() => {

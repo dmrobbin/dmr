@@ -74,7 +74,7 @@ def challenge_home(request):
         "run": run, "sets": challenge.allowed_sets(run), "deck_total": deck_total, "deck_size": DECK_SIZE, **reward_context(run),
         "deck_problem": challenge.deck_ready(run) if deck_total else None,
         "pulled": sum(run.pool.values()), "arcade_run": run.arcade_run, "room": run_room(run), "win_reward": challenge.win_reward_text(run.kind),
-        "lineup": arcade.lineup(run.scenario, request.user) if run.scenario else [],
+        "lineup": arcade.lineup(run.scenario, request.user, run.arcade_run) if run.scenario else [],
         "set_names": [names.get(pk, f"Set {pk}") for pk in run.sets],
         "path": path_view(run) if run.kind == ChallengeRun.Kind.INFINITE else None,
         "mods": [buffs.BUFFS[buff_id] for buff_id in buffs.fight_mods(run)],

@@ -4,10 +4,11 @@ A picture is a card and a circle on its image, kept as numbers and cropped by th
 picker sets a CPU's picture, from the CPU creation tab.
 """
 import math
+from collections import Counter
 
 from django.contrib import messages
 from django.core.paginator import Paginator
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Max, Q, Sum
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -114,12 +115,43 @@ def profile(request):
     fresh = SleeveUnlock.objects.filter(user=user, seen=False)
     new = set(fresh.values_list("sleeve_id", flat=True))
     fresh.update(seen=True)  # they're seeing them now
+    shelf = sleeves.shelf(user, owner)
     return render(request, "weiss/profile.html", {
-        "avatar": owner.avatar if owner else None, "shelf": sleeves.shelf(user, owner), "new_sleeves": new,
+        "avatar": owner.avatar if owner else None, "shelf": shelf, "new_sleeves": new,
+        "trophies": trophies(user, tally["played"], tally["won"], shelf),
         "lists": CardList.objects.players(user).annotate(total=Sum("entries__quantity")).order_by("-updated", "-pk").prefetch_related("arcade_clears"),
         "runs": ArcadeRun.objects.filter(user=user)[:RECORDS_PER_PAGE],
         "records": records, "page": page, "played": tally["played"], "won": tally["won"], "lost": tally["played"] - tally["won"],
     })
+
+
+MAX_DEFEATED_SHOWN = 24  # CPUs in the profile's gallery of the beaten; the rest are counted
+
+
+def trophies(user, played, won, shelf):
+    """The top of a player's profile, what they've achieved: their win rate, the CPUs they've beaten (most beaten
+    first, each with how many times), the arcade lists they've cleared with their best score on each, the deck
+    they've won most with, and how many of the sleeves they can see are theirs."""
+    mine = Q(host=user, winner="host") | Q(guest=user, winner="guest")
+    wins = GameRecord.objects.filter(mine)
+    beaten = Counter(wins.filter(cpu=True, cpu_profile__isnull=False).values_list("cpu_profile", flat=True))
+    cpus = CpuProfile.objects.in_bulk(beaten)
+    defeated = sorted(({"cpu": cpus[pk], "times": n} for pk, n in beaten.items() if pk in cpus),
+                      key=lambda d: (-d["times"], d["cpu"].name.lower()))
+    decks = Counter(name for host_id, host_deck, guest_deck in wins.values_list("host_id", "host_deck_name", "guest_deck_name")
+                    for name in [host_deck if host_id == user.pk else guest_deck] if name)
+    cleared = list(ArcadeRun.objects.filter(user=user, status=ArcadeRun.Status.CLEARED).values("scenario_name")
+                   .annotate(times=Count("pk"), best=Max("score")).order_by("-best", "scenario_name"))
+    best_run = ArcadeRun.objects.filter(user=user).aggregate(best=Max("score"))["best"] or 0
+    return {
+        "win_rate": round(100 * won / played) if played else None,
+        "defeated": defeated[:MAX_DEFEATED_SHOWN], "defeated_more": max(0, len(defeated) - MAX_DEFEATED_SHOWN),
+        "defeated_count": len(defeated),
+        "cleared": cleared, "best_run": best_run,
+        "top_deck": decks.most_common(1)[0] if decks else None,
+        "sleeves_owned": sum(1 for item in shelf if item["owned"]), "sleeves_seen": len(shelf),
+        "empty": not played and not cleared,
+    }
 
 
 @weiss_access_required

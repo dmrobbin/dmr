@@ -7,7 +7,7 @@ from django.urls import reverse
 from core.access import WEISS_GROUP
 
 from . import play
-from .models import Card, CardList, CardListEntry, CpuProfile, GameRecord, GameRoom, PlayerProfile, cpu_user
+from .models import ArcadeRun, Card, CardList, CardListEntry, CpuProfile, GameRecord, GameRoom, PlayerProfile, cpu_user
 
 
 def player(name):
@@ -210,6 +210,44 @@ class InGameTests(TestCase):
         self.picture(namesake)
         room = self.room(cpu_user(), cpu_name="alice", cpu_profile=namesake)
         self.assertEqual(play.board_payload(room, self.alice)["avatars"], {})
+
+
+class TrophyRoomTests(TestCase):
+    def setUp(self):
+        self.alice = player("alice")
+        self.client.force_login(self.alice)
+
+    def record(self, won, cpu=None, deck="My deck"):
+        GameRecord.objects.create(host=self.alice, host_name="alice", guest_name=cpu.name if cpu else "bob", host_deck_name=deck,
+                                  cpu=bool(cpu), cpu_profile=cpu, winner="host" if won else "guest")
+
+    def test_a_new_player_sees_where_trophies_come_from(self):
+        page = self.client.get(reverse("weiss:profile"))
+        self.assertTrue(page.context["trophies"]["empty"])
+        self.assertContains(page, "Nothing on the shelves yet")
+
+    def test_wins_cpus_beaten_cleared_lists_and_the_winning_deck(self):
+        rapi, neon = CpuProfile.objects.create(name="Rapi"), CpuProfile.objects.create(name="Neon")
+        self.record(True, rapi)
+        self.record(True, rapi, deck="Other deck")
+        self.record(True, neon)
+        self.record(False, neon)
+        for score in (300, 500):
+            ArcadeRun.objects.create(user=self.alice, scenario_name="Ark", status=ArcadeRun.Status.CLEARED, score=score)
+        ArcadeRun.objects.create(user=self.alice, scenario_name="Lost", status=ArcadeRun.Status.ABANDONED, score=900)
+        trophies = self.client.get(reverse("weiss:profile")).context["trophies"]
+        self.assertEqual(trophies["win_rate"], 75)
+        self.assertEqual([(d["cpu"].name, d["times"]) for d in trophies["defeated"]], [("Rapi", 2), ("Neon", 1)])
+        self.assertEqual([(c["scenario_name"], c["times"], c["best"]) for c in trophies["cleared"]], [("Ark", 2, 500)])
+        self.assertEqual(trophies["best_run"], 900)  # any run's best, cleared or not
+        self.assertEqual(trophies["top_deck"], ("My deck", 2))
+        self.assertFalse(trophies["empty"])
+
+    def test_wins_count_from_either_seat(self):
+        bob = player("bob")
+        GameRecord.objects.create(host=bob, guest=self.alice, host_name="bob", guest_name="alice", guest_deck_name="Guest deck", winner="guest")
+        trophies = self.client.get(reverse("weiss:profile")).context["trophies"]
+        self.assertEqual((trophies["win_rate"], trophies["top_deck"]), (100, ("Guest deck", 1)))
 
 
 class MatchHistoryTests(TestCase):

@@ -1,0 +1,20 @@
+{# An arcade list's fights as a trail, in the order they're fought: each CPU (or a ? until met), joined by a line. #}
+{# With a run under way (arcade.lineup's "state"), beaten fights are ticked off and the next one is marked. #}
+{# The trail scrolls sideways when it's wider than its box, so it never wraps a line in two. #}
+<ol class="arcade-lineup arcade-trail" aria-label="Fights, in order" tabindex="0">
+  {% for fighter in lineup %}
+    <li class="arcade-fighter trail-{{ fighter.state|default:'ahead' }}{% if not fighter.met %} unknown{% endif %}{% if fighter.role == 'anchor' %} trail-last{% endif %}">
+      <span class="trail-portrait">
+        {% if fighter.met %}
+          {% if fighter.cpu.image_url %}<img src="{{ fighter.cpu.image_url }}" alt="" loading="lazy">
+          {% else %}{% include "weiss/avatar.html" with avatar=fighter.cpu.avatar name=fighter.cpu.name size="avatar-fill" %}{% endif %}
+        {% else %}<span class="arcade-mystery" aria-hidden="true">?</span>{% endif %}
+        {% if fighter.state == "won" %}<span class="trail-check" aria-hidden="true">✓</span>{% endif %}
+        {% if fighter.state == "current" %}<span class="trail-tag">Next</span>{% elif fighter.role == "anchor" %}<span class="trail-tag trail-tag-final">Final</span>{% endif %}
+      </span>
+      {% if fighter.met %}<span class="small">{{ fighter.cpu.name }}</span>{% else %}<span class="small muted">Not met yet</span>{% endif %}
+      {% if fighter.role == "opener" or fighter.role == "branch" %}<span class="muted small">{{ fighter.role_label }}</span>{% endif %}
+      {% if fighter.state == "won" %}<span class="sr-only">(beaten)</span>{% elif fighter.state == "current" %}<span class="sr-only">(your next fight)</span>{% endif %}
+    </li>
+  {% endfor %}
+</ol>

@@ -438,6 +438,52 @@ class DamageTests(TestCase):
         self.assertEqual(len(zones(self.state, 1)["deck"]), 14)
 
 
+class TimelineTests(TestCase):
+    """The game's timeline for its summary at the end (game.record_turn, record_hit, timeline_view)."""
+
+    def setUp(self):
+        self.state = started()  # deck top is card 15, then 14, 13, ...
+
+    def damage(self, player, amount, climaxes=()):
+        game.apply(self.state, player, {"type": "damage", "count": amount}, name=lambda pk: f"Card{pk}", is_climax=lambda pk: pk in climaxes)
+
+    def test_damage_is_recorded_landed_or_cancelled(self):
+        self.damage(1, 3)
+        self.damage(1, 4, climaxes={11})  # 12 lands, 11 cancels it
+        self.assertEqual(self.state["timeline"]["hits"], [
+            {"turn": 1, "player": "1", "amount": 3, "cancelled": False},
+            {"turn": 1, "player": "1", "amount": 4, "cancelled": True},
+        ])
+
+    def test_each_turn_end_records_where_the_damage_stands(self):
+        self.damage(1, 2)
+        zones(self.state, 2)["level"].append(zones(self.state, 2)["deck"].pop())
+        game.apply(self.state, 1, {"type": "end_turn"})
+        self.assertEqual(self.state["timeline"]["points"], [{"turn": 1, "by": "1", "damage": {"1": 2, "2": 7}}])
+
+    def test_each_side_sees_it_as_theirs_when_the_game_ends(self):
+        self.damage(2, 3)
+        self.damage(1, 2, climaxes={15})
+        game.end_game(self.state, "2", "level", "reached level 4")
+        mine = game.view(self.state, 1)["game_over"]["timeline"]
+        theirs = game.view(self.state, 2)["game_over"]["timeline"]
+        self.assertEqual(mine["points"], [{"turn": 1, "mine": 0, "theirs": 3}])
+        self.assertEqual(theirs["points"], [{"turn": 1, "mine": 3, "theirs": 0}])
+        self.assertEqual([(h["mine"], h["amount"], h["cancelled"]) for h in mine["hits"]], [(False, 3, False), (True, 2, True)])
+        self.assertEqual(mine["turns"], 1)
+
+    def test_an_older_game_without_one_still_ends(self):
+        del self.state["timeline"]  # a game dealt before timelines
+        game.end_game(self.state, "2", "concede", "concedes")
+        self.assertEqual(len(game.view(self.state, 1)["game_over"]["timeline"]["points"]), 1)
+
+    def test_taking_a_move_back_takes_back_its_record(self):
+        game.apply(self.state, 1, {"type": "move", "uid": zones(self.state, 1)["hand"][0]["uid"], "to": "C1"})
+        before = [dict(p) for p in self.state["timeline"]["points"]]
+        game.apply(self.state, 1, {"type": "undo"})
+        self.assertEqual(self.state["timeline"]["points"], before)
+
+
 class ClockAndLevelTests(TestCase):
     def setUp(self):
         self.state = started()  # hand 20..16, deck top is 15, then 14, ...

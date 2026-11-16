@@ -85,6 +85,8 @@
   let busy = false;
   let resolveTimer = null; // pending "resolve_damage" after a climax cancels our damage
   let refreshTimer = null; // pending "continue_damage" after a damage empties our deck
+  let gameOverHeldUntil = 0; // the game-over screen waits till then for the last damage to turn over (holdGameOver)
+  const gameOverHeld = () => performance.now() < gameOverHeldUntil;
   let climaxTimer = null; // pending move to the attack phase after we play a climax
   let autoTimer = null; // pending move to the next phase after one ended itself (board.auto_next)
   let showTimer = null; // pending end of an ability being shown (board.ability_show)
@@ -266,7 +268,7 @@
       attacking: board.phase === "attack",
       climax: sides.some((side) => pileCount(side.zones.climax) > 0),
       matchPoint: atBrink("me") || atBrink("opponent"),
-      over: over ? (over.won ? "win" : "lose") : null,
+      over: over && !gameOverHeld() ? (over.won ? "win" : "lose") : null,
     };
   }
 
@@ -986,11 +988,14 @@
             fights: picked.fights.map((chosen) => [chosen.step, chosen.option]) });
     };
     overlay.querySelector(".scene-skip").addEventListener("click", done, { once: true });
-    setTimeout(() => {
+    const start = () => {
+      // The game-over screen is waiting for the last damage to turn over (holdGameOver): the scene comes after it.
+      if (gameOverHeld()) return setTimeout(start, gameOverHeldUntil - performance.now() + 1600);
       document.body.appendChild(overlay);
       player = new ScenePlayer(overlay.querySelector(".scene-overlay-stage"), scene, { playerName: sceneViewer, onEnd: () => setTimeout(done, 600) });
       player.start();
-    }, board && board.game_over ? 1600 : 0);
+    };
+    setTimeout(start, board && board.game_over ? 1600 : 0);
   }
 
   // A climax just played, in the middle of the screen, coming in with a randomly picked effect and
@@ -1003,7 +1008,7 @@
     el.style.animationDuration = `${CLIMAX_SHOW_MS}ms`;
     el.innerHTML = `<img src="${esc(info.image)}" alt="Climax: ${esc(info.name)}">`;
     document.body.appendChild(el);
-    el.addEventListener("animationend", () => el.remove());
+    el.addEventListener("animationend", (event) => { if (event.target === el) el.remove(); }); // not its pieces' own animations
   }
 
   // A climax revealed by damage: it cancels the damage, and both players see that it did.
@@ -1015,10 +1020,12 @@
     el.style.animationDuration = `${CLIMAX_SHOW_MS}ms`;
     el.innerHTML = `<div class="trigger-show">
       <p class="trigger-show-title damage-negated">Damage Negated!</p>
-      <div class="trigger-show-cards"><img src="${esc(info.image)}" alt="${esc(info.name)}"></div>
+      <div class="trigger-show-cards"><div class="tc-card negate-card">
+        <svg class="negate-shield" viewBox="0 0 100 116" aria-hidden="true"><path d="M50 4 94 20v34c0 28-19 48-44 58C25 102 6 82 6 54V20z"/></svg>
+        <img src="${esc(info.image)}" alt="${esc(info.name)}"></div></div>
     </div>`;
     document.body.appendChild(el);
-    el.addEventListener("animationend", () => el.remove());
+    el.addEventListener("animationend", (event) => { if (event.target === el) el.remove(); }); // not its pieces' own animations
   }
 
   // An ability that has resolved: its card, in the middle of the screen with the same entrance as a
@@ -1039,7 +1046,7 @@
         </div>`
       : `<img src="${esc(source.image)}" alt="Ability: ${esc(source.name)}">`;
     document.body.appendChild(el);
-    el.addEventListener("animationend", () => el.remove());
+    el.addEventListener("animationend", (event) => { if (event.target === el) el.remove(); }); // not its pieces' own animations
     if (targets.length) {
       const images = [...el.querySelectorAll("img")].map((img) => img.decode().catch(() => {}));
       Promise.all(images).then(() => drawArrows(el));
@@ -1047,20 +1054,46 @@
   }
 
   // A trigger check: the card or cards it turned over, with their icons, or that they have none.
+  // Trigger icons as Card.trigger spells them: what the reveal shows for each.
+  const TRIGGER_BADGES = {
+    soul: ["", "Soul"], draw: ["✋", "Draw"], gate: ["⛩", "Gate"], treasure: ["💰", "Treasure"], choice: ["🔀", "Choice"],
+    comeback: ["↩", "Comeback"], standby: ["⏳", "Standby"], shot: ["🎯", "Shot"], bounce: ["↪", "Bounce"], pool: ["💧", "Pool"],
+  };
+
+  // A checked card's trigger icons as badges, popping in one after another once the card has turned over; a double
+  // soul is one "Soul +2" badge.
+  function triggerBadgesHtml(checked) {
+    const icons = checked.flatMap((c) => (c.trigger || "").split(/\s+/).filter(Boolean));
+    if (!icons.length) return '<p class="tc-none">No trigger</p>';
+    const souls = icons.filter((icon) => icon === "soul").length;
+    const others = [...new Set(icons.filter((icon) => icon !== "soul"))];
+    const badges = [
+      ...(souls ? [`<li class="tc-badge tc-soul">${SOUL_ICON}<span>Soul +${souls}</span></li>`] : []),
+      ...others.map((icon) => {
+        const [symbol, word] = TRIGGER_BADGES[icon] || ["✦", icon.charAt(0).toUpperCase() + icon.slice(1)];
+        return `<li class="tc-badge tc-${esc(icon)}"><span aria-hidden="true">${symbol}</span><span>${esc(word)}</span></li>`;
+      }),
+    ];
+    return `<ul class="tc-badges">${badges.map((b, n) => b.replace('class="tc-badge', `style="--n: ${n}" class="tc-badge`)).join("")}</ul>`;
+  }
+
+  // Cards checked or revealed, in the middle of the screen: each comes in face down and turns over (a high rarity
+  // with its shine), then a trigger check's icons pop in under them.
   function showTriggerCheck(pks, label = null) {
     const checked = pks.map((pk) => cards[pk]).filter(Boolean);
     if (!checked.length) return;
-    const icons = checked.map((c) => c.trigger).filter(Boolean).join(" ");
     const el = document.createElement("div");
     el.className = `climax-show ${CLIMAX_EFFECTS[Math.floor(Math.random() * CLIMAX_EFFECTS.length)]}`;
     el.style.animationDuration = `${CLIMAX_SHOW_MS}ms`;
-    el.innerHTML = `<div class="trigger-show">
+    el.innerHTML = `<div class="trigger-show${reducedMotion ? "" : " tc-reveal"}">
       <p class="trigger-show-title">${esc(label || "Trigger check")}</p>
-      <div class="trigger-show-cards">${checked.map((c) => `<img src="${esc(c.image)}" alt="${esc(c.name)}">`).join("")}</div>
-      ${label ? "" : `<p class="trigger-show-icons">${icons ? esc(icons) : "No trigger"}</p>`}
+      <div class="trigger-show-cards">${checked.map((c) => `<div class="tc-card"${c.grade ? ` data-grade="${c.grade}"` : ""}>
+        <img src="${esc(c.image)}" alt="${esc(c.name)}">${c.grade >= 3 ? '<span class="rfx-sheen" aria-hidden="true"></span>' : ""}
+        <span class="tc-back pcard-back" aria-hidden="true"></span></div>`).join("")}</div>
+      ${label ? "" : triggerBadgesHtml(checked)}
     </div>`;
     document.body.appendChild(el);
-    el.addEventListener("animationend", () => el.remove());
+    el.addEventListener("animationend", (event) => { if (event.target === el) el.remove(); }); // not its pieces' own animations
   }
 
   // Arrows from the shown ability's card to its targets, measured without the entrance's transform.
@@ -1128,7 +1161,7 @@
     el.style.left = `${at.x}px`;
     el.style.top = `${at.y}px`;
     document.body.appendChild(el);
-    el.addEventListener("animationend", () => el.remove());
+    el.addEventListener("animationend", (event) => { if (event.target === el) el.remove(); }); // not its pieces' own animations
   }
 
   // --- The table's show and mood: play_fx.js (WeissTableFx), made at the end once all it uses is defined -------
@@ -1602,7 +1635,20 @@
         iconButton({ type: "move_top", from: "deck", to: "hand" }, "✋", "Draw")}</div>` : ""}
       ${zone === "resolution" && owner === "me" && count ? resolutionButtonsHtml(pile[pile.length - 1]) : ""}
       <div class="pile-top">${top || '<span class="zone-empty"></span>'}</div>
+      ${zone === "waiting" && !hidden && count ? waitingClimaxHtml(pile, owner) : ""}
     </div>`;
+  }
+
+  // Whether a card on the board is a face-up climax.
+  const isClimaxCard = (card) => Boolean(card && card.card && !card.face_down && ((cards[card.card] || {}).type || "").toLowerCase() === "climax");
+
+  // How many climaxes are in a waiting room: public, and the thing to know about it, as it tells how many are still
+  // in the deck (to cancel damage) until the next refresh. A badge over the pile's top card.
+  function waitingClimaxHtml(pile, owner) {
+    const n = pile.filter(isClimaxCard).length;
+    const whose = owner === "me" ? "your" : `${board.opponent.name}'s`;
+    const label = `${n} climax${n === 1 ? "" : "es"} in ${whose} waiting room`;
+    return `<span class="pile-cx${n ? "" : " none"}" title="${esc(label)}" aria-label="${esc(label)}">${CX_HTML}<b>${n}</b></span>`;
   }
 
   function pileCards(side, zone) {
@@ -1797,7 +1843,7 @@
   function spreadHtml(side, owner, zone) {
     const pile = side.zones[zone];
     return `<div class="zone spread zone-${zone}" data-pile="${zone}" data-owner="${owner}" data-drop="${owner === "me" ? zone : ""}">
-      <span class="zone-label">${LABELS[zone]} <b>${pile.length}</b></span>
+      <span class="zone-label">${LABELS[zone]} <b>${pile.length}</b>${zone === "clock" && !board.game_over && atBrink(owner) ? ' <span class="match-point-tag" title="Level 3 with 4 or more in the clock: one big attack from losing">Match point</span>' : ""}</span>
       ${searchHtml(owner, zone, pile.length)}
       <div class="spread-cards">${pile.map((c) => cardHtml(c, owner, zone)).join("") || '<span class="zone-empty"></span>'}</div>
     </div>`;
@@ -2203,6 +2249,49 @@
       <button type="button" class="game-over-end" data-act='{"type":"arcade_quit"}'>End run</button>`;
   }
 
+  // --- The game's summary (play_summary.js), opened from the game-over screen ---------------------------------------
+
+  const hasSummary = (over) => Boolean(over.timeline && window.WeissSummary);
+
+  function summaryButtonHtml(over) {
+    return hasSummary(over) ? '<button type="button" class="game-over-summary-open" data-summary-open aria-haspopup="dialog">📈 How the game went</button>' : "";
+  }
+
+  function summaryPanelHtml(over) {
+    if (!hasSummary(over)) return "";
+    const names = { me: "You", them: board.opponent ? board.opponent.name : "Your opponent" };
+    return `<div class="game-summary" role="dialog" aria-modal="true" aria-labelledby="game-summary-title" data-summary hidden>
+      <div class="game-summary-head"><h2 id="game-summary-title">How the game went</h2>
+        <button type="button" class="game-over-summary-open game-summary-close" data-summary-close>Close</button></div>
+      ${window.WeissSummary.html(over.timeline, names)}
+    </div>`;
+  }
+
+  function wireSummary(el) {
+    const panel = el.querySelector("[data-summary]");
+    if (!panel) return;
+    el.addEventListener("click", (event) => {
+      if (event.target.closest("[data-summary-open]")) {
+        panel.hidden = false;
+        el.classList.add("summary-open");
+        panel.querySelector("[data-summary-close]").focus();
+      } else if (event.target.closest("[data-summary-close]")) {
+        closeSummary();
+      }
+    });
+  }
+
+  // Closes the summary if it's open (Esc, or its Close button), back to the game-over screen. Whether it was.
+  function closeSummary() {
+    const panel = gameOverEl && gameOverEl.querySelector("[data-summary]");
+    if (!panel || panel.hidden) return false;
+    panel.hidden = true;
+    gameOverEl.classList.remove("summary-open");
+    const opener = gameOverEl.querySelector("[data-summary-open]");
+    if (opener) opener.focus();
+    return true;
+  }
+
   // How a game against a boss left it: beaten, or in co-op how much is left of it.
   function bossLine(over) {
     const boss = arcade.boss;
@@ -2224,6 +2313,22 @@
     return `<p class="game-over-sleeves">${backs}<span>New card sleeve${sleeves.length === 1 ? "" : "s"} unlocked: ${names}! Put ${sleeves.length === 1 ? "it" : "them"} on from your profile.</span></p>`;
   }
 
+  // The game-over screen (and its music) can wait for the damage that ended the game to turn over (play_fx.js).
+  function holdGameOver(ms) {
+    gameOverHeldUntil = performance.now() + ms;
+    if (gameOverEl) {
+      gameOverEl.remove(); // only just drawn, in this same render: unseen, so its prize slot still spins when it's back
+      gameOverEl = null;
+      slotSpun = null;
+    }
+    if (score && score.running) tellScore();
+    setTimeout(() => {
+      if (!board || !board.game_over || gameOverHeld()) return;
+      renderGameOver();
+      if (score && score.running) tellScore();
+    }, ms + 20);
+  }
+
   function renderGameOver() {
     const over = board.game_over;
     if (!over) {
@@ -2231,6 +2336,7 @@
       gameOverEl = null;
       return;
     }
+    if (!gameOverEl && gameOverHeld()) return;
     if (!gameOverEl) {
       hideMenu();
       hideZoom();
@@ -2259,8 +2365,11 @@
           ${over.won && prize ? prizeSlotHtml(prize) : ""}
           ${unlocked ? sleevesUnlockedHtml(unlocked) : ""}
           <p class="game-over-status" data-game-over-status></p>
-          <div class="game-over-buttons" data-game-over-buttons></div></div>`;
+          <div class="game-over-buttons" data-game-over-buttons></div>
+          ${summaryButtonHtml(over)}</div>
+        ${summaryPanelHtml(over)}`;
       root.appendChild(gameOverEl);
+      wireSummary(gameOverEl);
       if (over.won && prize) spinPrizeSlot(gameOverEl.querySelector(".slot"), prize);
     }
     const name = opponentWho("Your opponent");
@@ -3677,6 +3786,7 @@
       return;
     }
     if (event.key === "Escape") {
+      if (closeSummary()) return; // the game's summary over the game-over screen
       if (closeViewer()) return; // the full-screen card first, then the rest
       clearSelection();
       hideZoom();
@@ -3759,7 +3869,7 @@
   // the board goes on without it.
   fx = window.WeissTableFx ? window.WeissTableFx.create({
     boardEl, cards, STAGE, CLIMAX_SHOW_MS, SPECTATING, reducedMotion, esc, who, outOfSight, pileCount, musicTheme, atBrink,
-    board: () => board, avatars: () => avatars, animations: () => animations, score: () => score,
+    board: () => board, avatars: () => avatars, animations: () => animations, score: () => score, holdGameOver,
   }) : { tableFx() {}, setTableMood() {}, negatedWait: () => 0, noteOwnDamage() {} };
   recap = window.WeissRecap ? window.WeissRecap.create({
     controlsEl, esc, who, logHtml, gameNumber, board: () => board, avatars: () => avatars,

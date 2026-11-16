@@ -843,6 +843,31 @@ class DeckReminderTests(TestCase):
         self.deck.refresh_from_db()
         self.assertTrue(self.deck.is_deck)
 
+    def test_stats_curves_triggers_and_counters(self):
+        Card.objects.filter(pk=self.cards["lv1"].pk).update(cost=1, trigger="soul")
+        Card.objects.filter(pk=self.cards["lv3"].pk).update(cost=2, trigger="soul soul")
+        Card.objects.filter(pk=self.cards["cx"].pk).update(trigger="soul gate")
+        Card.objects.filter(pk=self.cards["event0"].pk).update(description="【COUNTER】 Backup 1000, Level 0")
+        stats = self.checks()["stats"]
+        self.assertEqual(stats["levels"], [("L0", 18, 100), ("L1", 12, 67), ("L2", 8, 44), ("L3", 4, 22)])  # climaxes left out
+        self.assertEqual(stats["costs"], [("0", 26, 100), ("1", 12, 46), ("2", 4, 15), ("3+", 0, 0)])
+        self.assertEqual(stats["triggers"], [("Soul", 23), ("2 Soul", 4), ("Gate", 7)])  # a card with two soul icons counts once
+        self.assertEqual(stats["no_trigger"], 26)
+        self.assertEqual(stats["counters"], 4)
+        self.assertEqual(stats["counter_chance"], 36)  # 1 - C(45, 5) / C(49, 5) = 35.9%
+
+    def test_stats_show_on_the_lists_page_but_not_the_side_panel(self):
+        page = self.client.get(reverse("weiss:list", args=[self.deck.pk]))
+        self.assertContains(page, "Level curve", count=1)
+        self.assertNotIn("Level curve", self.client.get(reverse("weiss:sets")).content.decode())
+
+    def test_chance_in_hand(self):
+        from weiss.lists import chance_in_hand
+        self.assertEqual(chance_in_hand(0, 50), 0)
+        self.assertEqual(chance_in_hand(50, 50), 100)
+        self.assertEqual(chance_in_hand(8, 50), 60)  # 59.9%
+        self.assertEqual(chance_in_hand(1, 3), 100)  # a deck smaller than a hand
+
     def test_group_counts_and_colors(self):
         CardList.objects.filter(pk=self.deck.pk).update(is_deck=True)
         deck = self.checks()
