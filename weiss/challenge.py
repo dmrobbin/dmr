@@ -36,7 +36,7 @@ WIN_PACKS = 3  # what a win in a free challenge brings
 NARRATIVE_WIN_PACKS = 2  # ...and in a narrative one, with these rewards to claim besides (weiss.buffs)
 NARRATIVE_WIN_REWARDS = ("color_pack",)
 COOP = "coop"  # what starting a co-op challenge (weiss.coop) asks for: an infinite one, for two
-STAFF_ONLY_KINDS = (ChallengeRun.Kind.FREE, ChallengeRun.Kind.NARRATIVE)  # still being tried out: only staff start these
+STAFF_ONLY_KINDS = (ChallengeRun.Kind.FREE,)  # still being tried out: only staff start these
 INFINITE_NAME = "Infinite challenge"
 INFINITE_WIN_PACKS = 2  # what a win in an infinite challenge brings, with one of these besides, at random: its prize,
 INFINITE_PRIZES = ("climax_pack", "color_pack", "lucky_pack")  # which the Victory screen's slot machine lands on (play.js)
@@ -58,7 +58,8 @@ BOSS_PACKS = 3  # what beating a boss brings, besides a win's usual reward
 
 
 def can_start(user, kind):
-    """Whether this player can start (or join) a challenge of this kind: the infinite challenge, solo or co-op, is everyone's."""
+    """Whether this player can start (or join) a challenge of this kind: narrative and infinite challenges (solo or
+    co-op) are everyone's."""
     return user.is_staff or kind not in STAFF_ONLY_KINDS
 
 

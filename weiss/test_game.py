@@ -584,6 +584,7 @@ CARDS = {
     19: {"power": 3000, "soul": 2, "level": 0},
     101: {"power": 3000, "soul": 1, "level": 1},  # bob's defender
     120: {"power": 1000, "level": 0, "text": "【ACT】 【COUNTER】 Backup 3000, Level 0 [(0) Put this card into your waiting room]"},
+    121: {"power": 1000, "level": 1, "text": "【COUNTER】 Backup 2000 Level 1 [(1) Put this card from your hand into your waiting room]"},
 }
 
 
@@ -651,9 +652,29 @@ class AttackStepTests(TestCase):
         self.setup_battle()
         self.stage(1, "C2")["card"] = 19  # soul 2, against a level 1 defender: 1 damage
         self.act(1, {"type": "attack", "uid": self.stage(1, "C2")["uid"], "kind": "side"})
-        self.act(2, {"type": "no_counter"})
+        # No counter step, though bob holds a Backup he could play against a front attack: only those have one.
+        with self.assertRaises(game.GameError):
+            self.act(2, {"type": "no_counter"})
         self.assertEqual(len(zones(self.state, 2)["clock"]), 1)
         self.assertEqual(self.stage(2, "C2")["pos"], "stand")
+
+    def test_a_backup_above_the_defenders_level_isnt_offered(self):
+        self.setup_battle()
+        stock = zones(self.state, 2)["stock"]
+        stock.extend(zones(self.state, 2)["deck"][:2])  # the stock isn't what stops it
+        del zones(self.state, 2)["deck"][:2]
+        self.bob[0]["card"] = 121  # a Level 1 Backup, worded without the comma; bob is level 0
+        self.act(1, {"type": "attack", "uid": self.stage(1, "C2")["uid"], "kind": "front"})
+        self.assertNotEqual(self.state["attack"].get("step"), "counter")
+        self.assertEqual(self.stage(2, "C2")["pos"], "reverse")
+
+    def test_a_backups_level_it_cant_read_is_the_cards_own(self):
+        info = lambda pk: {"level": 1, "text": "【COUNTER】 Backup 2000, at level one [(1) Put this card into your waiting room]"}
+        card = {"uid": "x", "card": 1}
+        zones(self.state, 2)["stock"].extend(zones(self.state, 2)["deck"][:2])
+        self.assertIsNone(game.counter_play(self.state, "2", card, info))  # bob is level 0
+        zones(self.state, 2)["level"].append(zones(self.state, 2)["deck"].pop())
+        self.assertIsNotNone(game.counter_play(self.state, "2", card, info))
 
     def test_a_comeback_trigger_asks_the_attacker_for_a_character(self):
         self.setup_battle(defender=False)

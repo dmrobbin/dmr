@@ -85,7 +85,9 @@ YES_NO_TRIGGERS = {"treasure", "draw", "pool"}  # those that only ask whether
 # Other names a trigger icon goes by (the card data names them after the site's images).
 TRIGGER_ALIASES = {"book": "draw", "bag": "pool", "stock": "pool", "wind": "bounce", "return": "bounce"}
 OPPOSITE = {"C1": "C3", "C2": "C2", "C3": "C1"}  # the opponent's slot facing each center slot
-BACKUP = re.compile(r"【COUNTER】\s*Backup\s*(\d+)(?:,\s*Level\s*(\d+))?(?:\s*\[\((\d+)\))?", re.I)
+# "Backup 2000, Level 1 [(1) ...]": power, level, stock. Card texts vary ("Backup 2000 Level 1", "Level: 1", "Lv 1",
+# "[ (1)"), and a level it can't read must not let the card be played at level 0 (counter_play falls back on its own).
+BACKUP = re.compile(r"【COUNTER】\s*Backup\s*(\d+)(?:\s*[,，]?\s*(?:Level|Lv)\.?\s*:?\s*(\d+))?(?:\s*\[\s*\(\s*(\d+)\s*\))?", re.I)
 MAX_LOG = 100
 # A challenge player's augments that change their games (weiss.augments), on their side as "augments": what each gives.
 DEVOTION_POWER = 1000  # to every character, when the deck is one color (checked when it's dealt)
@@ -558,7 +560,9 @@ def counter_play(state, player, card, info):
     if not backup and rules_on(state) and play_banned(state, player, card, info):
         return None
     if backup:  # exempt from the color rule
-        power, level, price = int(backup[1]), number(backup[2]), number(backup[3])
+        # A Backup's level is the card's own: that's what it counts as if the text's doesn't read.
+        level = number(backup[2]) if backup[2] else play_level(state, player, card, info)
+        power, price = int(backup[1]), number(backup[3])
     else:
         if color_needed(state, player, card, info):
             return None
@@ -710,13 +714,13 @@ def find_card(side, uid):
 
 
 def after_trigger(state, info, env=None):
-    """The trigger step is done: on to the counter step (if the defender can counter a front or side
-    attack) or the damage step."""
+    """The trigger step is done: on to the counter step (if the defender can counter a front attack: side and
+    direct attacks have no counter step) or the damage step."""
     attack = state["attack"]
     attack["step"] = "damage"
-    if attack["kind"] != "direct" and env:
+    if attack["kind"] == "front" and env:
         fire(state, env, "counter_step", player=state["turn"], target=(state["players"][other_player(state, state["turn"])]["stage"].get(attack.get("target")) or {}).get("uid"))
-    if attack["kind"] != "direct":
+    if attack["kind"] == "front":
         counters = counters_for(state, other_player(state, state["turn"]), info)
         defender = state["players"][other_player(state, state["turn"])]
         if attack["kind"] == "front" and (bars_backups(state, attack["uid"], info) or bars_backups(state, attack["uid"], info, "no_opp_backup")

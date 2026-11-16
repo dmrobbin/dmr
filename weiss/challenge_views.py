@@ -59,7 +59,8 @@ def challenge_home(request):
     run = challenge.current(request.user)
     if not run:
         return render(request, "weiss/challenge.html", {"scenarios": arcade.ready_scenarios(), "narratives": narratives(),
-                                                        "staff_kinds": challenge.can_start(request.user, ChallengeRun.Kind.FREE),
+                                                        "free_open": challenge.can_start(request.user, ChallengeRun.Kind.FREE),
+                                                        "narrative_open": challenge.can_start(request.user, ChallengeRun.Kind.NARRATIVE),
                                                         "coop_open": challenge.can_start(request.user, challenge.COOP),
                                                         "start_packs": challenge.START_PACKS, "narrative_packs": challenge.NARRATIVE_START_PACKS,
                                                         "infinite_packs": challenge.infinite_start_packs(), "infinite_extras": len(challenge.loadout()),

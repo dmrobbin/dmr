@@ -1779,7 +1779,7 @@ class NoBackupTests(TestCase):
 
     def test_a_side_attack_isnt_a_battle(self):
         t = self.attack(kind="side", hand=(400,))
-        self.assertEqual(t.state["attack"]["step"], "counter")
+        self.assertNotEqual(t.state["attack"].get("step"), "counter")  # a side attack has no counter step at all
         self.assertFalse(any("no Backups" in e["text"] for e in t.state["log"]))
 
     def defended_by(self, text):

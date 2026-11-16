@@ -7,18 +7,14 @@
   {% include "weiss/arcade_tabs.html" with current="challenge" %}
 
   {% if not run %}
-    {% if staff_kinds %}
-    <p class="muted small">Build a deck from scratch: open {{ start_packs }} packs{% if narrative_packs != start_packs %} ({{ narrative_packs }} in a narrative challenge){% endif %}, make a deck from only the cards you pull, and fight through an arcade list with it.
-      Each win brings {{ win_reward }}{% if narrative_win_reward != win_reward %} ({{ narrative_win_reward }} in a narrative challenge){% endif %} to improve your deck; one loss ends the challenge. At the end, keep the deck or let it go.</p>
-    {% else %}
-    <p class="muted small">Build a deck from scratch: open packs, make a deck from only the cards you pull, and see how far up the path it can take you.
-      One loss ends the challenge. At the end, keep the deck or let it go.</p>
-    {% endif %}
+    <p class="muted small">Build a deck from scratch: open packs, make a deck from only the cards you pull, and see how far it can take you.
+      Wins bring more cards to improve your deck; one loss ends the challenge. At the end, keep the deck or let it go.</p>
     <div class="challenge-choices">
-      {% if staff_kinds %}
+      {% if free_open %}
       <section class="challenge-choice">
         <h2>Free challenge</h2>
-        <p class="muted small">Open each pack from any set you like.</p>
+        <p class="muted small">Open each pack from any set you like, and fight through an arcade list.
+          Starts with {{ start_packs }} pack{{ start_packs|pluralize }}; each win brings {{ win_reward }}.</p>
         {% if scenarios %}
           <form method="post" action="{% url 'weiss:arcade_challenge_start' %}" class="cpu-form">
             {% csrf_token %}
@@ -30,9 +26,12 @@
           </form>
         {% else %}<p class="empty">No arcade lists are available yet.</p>{% endif %}
       </section>
+      {% endif %}
+      {% if narrative_open %}
       <section class="challenge-choice">
         <h2>Narrative challenges</h2>
-        <p class="muted small">A story to play through, with packs from the sets it's set in.</p>
+        <p class="muted small">A story to play through, with packs from the sets it's set in.
+          Starts with {{ narrative_packs }} pack{{ narrative_packs|pluralize }}; each win brings {{ narrative_win_reward }}.</p>
         {% for narrative in narratives %}
           <form method="post" action="{% url 'weiss:arcade_challenge_start' %}" class="challenge-narrative">
             {% csrf_token %}
