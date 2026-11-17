@@ -83,6 +83,14 @@ TRIGGER_CHOICES = {"comeback": {"hand"}, "gate": {"hand"}, "choice": {"hand", "s
                    "standby": set(STAGE_SLOTS), "treasure": set(), "bounce": {"hand"},
                    "draw": set(), "pool": set()}  # trigger icon -> where its card may go
 YES_NO_TRIGGERS = {"treasure", "draw", "pool"}  # those that only ask whether
+NOTHING_TO_CHOOSE = {  # the log's word for a trigger whose choice had nothing in it (see next_trigger)
+    "comeback": "no character in their waiting room to return",
+    "gate": "no climax in their waiting room to return",
+    "choice": "no character with a soul trigger in their waiting room",
+    "standby": "no character of level {level} or lower in their waiting room",
+    "bounce": "no character of their opponent's to return",
+    "treasure": "their deck is empty", "draw": "their deck is empty", "pool": "their deck is empty",
+}
 # Other names a trigger icon goes by (the card data names them after the site's images).
 TRIGGER_ALIASES = {"book": "draw", "bag": "pool", "stock": "pool", "wind": "bounce", "return": "bounce"}
 OPPOSITE = {"C1": "C3", "C2": "C2", "C3": "C1"}  # the opponent's slot facing each center slot
@@ -708,10 +716,13 @@ def next_trigger(state, player, env):
     attack = state["attack"]
     queue = attack.get("trigger_queue", [])
     while queue:
-        prompt = trigger_prompt(state, player, [queue.pop(0)], env.info)
+        kind = queue.pop(0)
+        prompt = trigger_prompt(state, player, [kind], env.info)
         if prompt:
             attack["prompt"] = prompt
             return
+        if kind in NOTHING_TO_CHOOSE:  # said, so a trigger with nothing to choose from doesn't look like one that was missed
+            add_log(state, player, f"{kind} trigger: {NOTHING_TO_CHOOSE[kind].format(level=len(state['players'][player]['zones']['level']) + 1)}")
     attack.pop("trigger_queue", None)
     after_trigger(state, env.info, env)
 

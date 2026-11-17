@@ -819,6 +819,15 @@ class AttackStepTests(TestCase):
         self.assertEqual(zones(self.state, 1)["hand"][-1]["uid"], waiting_uid)
         self.assertEqual(len(zones(self.state, 2)["clock"]), 2)
 
+    def test_a_comeback_trigger_with_no_character_to_return_says_so(self):
+        self.setup_battle(defender=False)
+        self.assertFalse(zones(self.state, 1)["waiting"])
+        self.act(1, {"type": "attack", "uid": self.stage(1, "C2")["uid"], "kind": "direct"},
+                 trigger=lambda pk: "comeback" if pk == 14 else "")
+        self.assertIsNone(self.state["attack"].get("prompt"))  # nothing to choose, so on with the attack
+        self.assertTrue(any(e["text"] == "comeback trigger: no character in their waiting room to return" for e in self.state["log"]))
+        self.assertEqual(len(zones(self.state, 2)["clock"]), 2)
+
     def test_a_standby_trigger_puts_a_character_on_the_stage_rested(self):
         self.setup_battle(defender=False)
         self.act(1, {"type": "move", "uid": next(c["uid"] for c in self.alice if c["card"] == 16), "to": "waiting"})
