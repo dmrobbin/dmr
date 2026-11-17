@@ -6,7 +6,7 @@ from django.http import QueryDict
 from django.urls import reverse
 
 from . import buffs, challenge, packs, scenes
-from .models import ArcadeEntry, ArcadeRun, Card, ChallengeRun, GameRoom, Scene
+from .models import ArcadeEntry, ArcadeRun, Card, ChallengeRun, GameRoom, NarrativeChallenge, Scene
 from .test_challenge import ArcadeSetup
 from .lists import CLIMAX_COUNT
 from .test_packs import make_set, run_with_climaxes
@@ -66,6 +66,8 @@ class ScriptTests(ArcadeSetup):
 
 
 class ChallengeBuffBase(ArcadeSetup):
+    narrative = False  # a free challenge, or a narrative one (whose list's scenes play)
+
     def setUp(self):
         super().setUp()
         self.cards = make_set(expansion_id=7, name="Vol.7", C=12, U=6, CC=3, CR=2, R=4, RR=2, SR=4)
@@ -74,7 +76,11 @@ class ChallengeBuffBase(ArcadeSetup):
             card.save()
         make_set(expansion_id=8, name="Vol.8", C=8, R=2)
         self.client.force_login(self.staff)
-        self.client.post(reverse("weiss:arcade_challenge_start"), {"kind": "free", "scenario": self.scenario.pk})
+        if self.narrative:
+            story = NarrativeChallenge.objects.create(name="Story", scenario=self.scenario, sets=[7])
+            self.client.post(reverse("weiss:arcade_challenge_start"), {"kind": "narrative", "narrative": story.pk})
+        else:
+            self.client.post(reverse("weiss:arcade_challenge_start"), {"kind": "free", "scenario": self.scenario.pk})
         self.run = challenge.current(self.staff)
 
     def claim(self, buff, **data):
@@ -196,6 +202,8 @@ class ClaimTests(ChallengeBuffBase):
 
 
 class SceneBuffFlowTests(ChallengeBuffBase):
+    narrative = True
+
     def setUp(self):
         super().setUp()
         scene = Scene.objects.create(name="Gifts", script=GIFTS)
@@ -226,18 +234,14 @@ class SceneBuffFlowTests(ChallengeBuffBase):
         self.run = run_with_climaxes(self.run)
         self.client.post(reverse("weiss:arcade_challenge_fight"))
         room = self.room()
-        self.assertTrue(room.state["cpu_intro"])
+        self.assertNotIn("cpu_intro", room.state)  # a narrative challenge leaves the CPU's own screen to its scenes
         me = room.state["players"][str(self.staff.pk)]
         self.assertEqual(sum(len(zone) if isinstance(zone, list) else 0 for zone in me["zones"].values()), 1 + CLIMAX_COUNT)  # and its climaxes
 
-    def test_no_buffs_outside_a_challenge(self):
+    def test_no_scene_and_so_no_buffs_outside_a_narrative_challenge(self):
         self.client.force_login(self.alice)
         self.client.post(reverse("weiss:arcade_start"), {"scenario": self.scenario.pk, "deck": self.deck.pk})
-        room = GameRoom.objects.get(host=self.alice)
-        scene = room.state["scenes"][0]
-        self.assertFalse(scene["buffs"])
-        data = self.post(reverse("weiss:play_action", args=[room.pk]), {"type": "scene_done", "key": scene["key"], "buffs": [[1, None]]}).json()
-        self.assertNotIn("redirect", data)
+        self.assertNotIn("scenes", GameRoom.objects.get(host=self.alice).state)
 
     def test_a_second_chance(self):
         buffs.grant(self.run, ["second_chance"])
@@ -248,8 +252,8 @@ class SceneBuffFlowTests(ChallengeBuffBase):
         data = self.client.get(reverse("weiss:play_state", args=[room.pk])).json()
         self.assertEqual((data["arcade"]["challenge"]["going"], data["arcade"]["challenge"]["lives"]), (True, 0))
         data = self.post(reverse("weiss:play_action", args=[room.pk]), {"type": "arcade_retry"}).json()
-        self.assertTrue(data["intro"])
         self.assertNotIn("scene", data)  # a retry doesn't play the scene again
+        self.assertEqual(data["cpu"]["name"], self.opener.name)  # straight back into the same fight
         self.end_fight("cpu")
         self.run.refresh_from_db()
         self.assertEqual(self.run.status, "lost")

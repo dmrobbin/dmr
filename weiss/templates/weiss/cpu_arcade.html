@@ -37,6 +37,7 @@
         <button type="submit" class="button-small secondary"{% if not profiles %} disabled{% endif %}>Add</button>
       </form>
       <h3 class="small">Scenes</h3>
+      <p class="muted small">Played only in narrative challenges through this list, which fight in the set order. Arcade runs and free challenges shuffle the fillers, so they skip them.</p>
       {% if scenes %}
         <form method="post" action="{% url 'weiss:arcade_scenes' scenario.pk %}" class="arcade-scene-form">
           {% csrf_token %}
@@ -49,7 +50,7 @@
           <button type="submit" class="button-small secondary">Save scenes</button>
         </form>
         <p class="muted small">A scene with mistakes in its script is skipped in runs.</p>
-      {% else %}<p class="muted small">Write a scene on the <a href="?tab=scenes">Scenes</a> tab to play it in this list's runs.</p>{% endif %}
+      {% else %}<p class="muted small">Write a scene on the <a href="?tab=scenes">Scenes</a> tab to play it in this list's narrative challenges.</p>{% endif %}
       <form method="post" action="{% url 'weiss:arcade_delete' scenario.pk %}" onsubmit="return confirm('Delete {{ scenario.name|escapejs }}? Decks keep their markers.')">{% csrf_token %}
         <button type="submit" class="button-small danger">Delete list</button></form>
       </div>

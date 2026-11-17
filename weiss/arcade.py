@@ -102,19 +102,26 @@ def entry_of(run, cpu_id):
 
 def scenes_before(run, cpu, opening=True):
     """Scene payloads to play before fighting this CPU: the scenario's opening one first, if this is the first
-    fight (and `opening`: not when a scene has just swapped the CPU, as the opening's been seen)."""
+    fight (and `opening`: not when a scene has just swapped the CPU, as the opening's been seen).
+
+    A list's scenes tell a narrative challenge's story, fought in its set order, so only those runs play them:
+    plain arcade runs and free challenges shuffle the fillers, and the story wouldn't follow."""
+    if not challenge.narrative(run):
+        return []
     scenario = run.scenario
     entry = entry_of(run, cpu.pk)
     first = scenario and run.position == 0 and opening
-    return scenes.playable([scenario.intro_scene if first else None, entry and entry.scene_before],
-                           with_buffs=challenge.of(run) is not None, viewer=run.user)
+    return scenes.playable([scenario.intro_scene if first else None, entry and entry.scene_before], with_buffs=True, viewer=run.user)
 
 
 def scenes_after(run, cpu_id, cleared):
-    """Scene payloads to play after beating this CPU, and the scenario's closing one if that cleared it."""
+    """Scene payloads to play after beating this CPU, and the scenario's closing one if that cleared it. Only a
+    narrative challenge's run plays them (see scenes_before)."""
+    if not challenge.narrative(run):
+        return []
     entry = entry_of(run, cpu_id)
     return scenes.playable([entry and entry.scene_after, run.scenario.outro_scene if cleared and run.scenario else None],
-                           with_buffs=challenge.of(run) is not None, viewer=run.user)
+                           with_buffs=True, viewer=run.user)
 
 
 def game_finished(room, over, score=None):

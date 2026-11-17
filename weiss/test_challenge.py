@@ -34,6 +34,23 @@ class ArcadeSetup(Base):
     def room(self):
         return GameRoom.objects.get(host__in=[self.alice, self.staff])
 
+    def start_narrative(self):
+        """Alice's narrative challenge through the list, its deck built and its first fight under way: the only runs
+        that play the list's scenes. Returns the room."""
+        if not Card.objects.filter(expansion_id=7).exists():
+            make_set(expansion_id=7, name="Vol.7", C=12, U=6, CC=2, R=4)
+        story = NarrativeChallenge.objects.create(name="Story", scenario=self.scenario, sets=[7])
+        self.client.force_login(self.alice)
+        self.client.post(reverse("weiss:arcade_challenge_start"), {"kind": "narrative", "narrative": story.pk})
+        run = challenge.current(self.alice)
+        challenge.open_packs(run, 7, 2)
+        challenge.save_deck(run, {pk: 1 for pk in run.pool})
+        run_with_climaxes(run)
+        self.client.post(reverse("weiss:arcade_challenge_fight"))
+        room = self.room()
+        self.url = reverse("weiss:play_action", args=[room.pk])
+        return room
+
     def end_fight(self, winner):
         """End the room's game, as if the last move had just been made."""
         room = self.room()
@@ -59,10 +76,18 @@ class ArcadeSceneTests(ArcadeSetup):
         ArcadeEntry.objects.filter(cpu=self.opener).update(scene_before=self.before, scene_after=self.after)
 
     def start(self):
+        return self.start_narrative()
+
+    def test_only_a_narrative_challenge_plays_them(self):
+        # A plain arcade run, or a free challenge, shuffles the fillers: the list's story wouldn't follow.
         self.client.post(reverse("weiss:arcade_start"), {"scenario": self.scenario.pk, "deck": self.deck.pk})
-        room = self.room()
-        self.url = reverse("weiss:play_action", args=[room.pk])
-        return room
+        self.assertNotIn("scenes", self.room().state)
+        self.assertNotIn("scenes", self.end_fight("me").state)
+        self.room().delete()
+        run = self.start_narrative().arcade_run
+        self.assertTrue(arcade.scenes_before(run, self.opener))
+        ChallengeRun.objects.filter(arcade_run=run).update(kind=ChallengeRun.Kind.FREE)
+        self.assertEqual((arcade.scenes_before(run, self.opener), arcade.scenes_after(run, self.opener.pk, cleared=True)), ([], []))
 
     def test_scenes_play_before_the_first_fight_and_hold_everything_up(self):
         room = self.start()
@@ -82,7 +107,7 @@ class ArcadeSceneTests(ArcadeSetup):
         self.assertEqual(self.post(self.url, {"type": "scene_done", "key": key}).json()["scene"]["title"], "Before")
         data = self.post(self.url, {"type": "scene_done", "key": GameRoom.objects.get(pk=room.pk).state["scenes"][0]["key"]}).json()
         self.assertNotIn("scene", data)
-        self.assertTrue(data["intro"])  # on to the CPU's screen
+        self.assertNotIn("intro", data)  # straight to the game: the scenes stood in for the CPU's own screen
 
     def test_winning_plays_the_scene_after_and_the_next_fight_has_none(self):
         self.start()
@@ -157,10 +182,7 @@ class FightOrderTests(ArcadeSetup):
     def start(self, script, where="after"):
         scene = Scene.objects.create(name="Fork", script=script)
         ArcadeEntry.objects.filter(cpu=self.opener).update(**{f"scene_{where}": scene})
-        self.client.post(reverse("weiss:arcade_start"), {"scenario": self.scenario.pk, "deck": self.deck.pk})
-        room = self.room()
-        self.url = reverse("weiss:play_action", args=[room.pk])
-        return room
+        return self.start_narrative()
 
     def finish_scene(self, fights):
         room = self.room()
