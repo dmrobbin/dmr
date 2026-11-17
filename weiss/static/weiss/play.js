@@ -117,6 +117,7 @@
   let oppSeen = ""; // compact: the opponent's side as last drawn, to tell when it changes out of sight...
   let oppMoved = false; // ...and whether it has since we last looked at it
   let selected = null; // touch: the uid of the card picked by a tap, its buttons in the tray
+  let dragUid = null; // the card being dragged, so a redraw mid-drag keeps its drop hints
 
   function setModes() {
     touch = touchQuery.matches;
@@ -640,7 +641,10 @@
       throw e;
     }
     // The show around it (flights, bursts, announcements, sounds) is extra: if it goes wrong, the board stands.
-    for (const extra of [() => animateOpponent(before), () => wasInPlay && animations && celebrate(wasInPlay), () => fx.tableFx(lastBoard), announce, playBoardSounds]) {
+    // The battle view reads the board before the table's show, which waits on it (the clock's cards turning over
+    // until its souls land, the battle's loser until its clash).
+    for (const extra of [() => animateOpponent(before), () => wasInPlay && animations && celebrate(wasInPlay), () => battle.update(lastBoard),
+      () => fx.tableFx(lastBoard), announce, playBoardSounds]) {
       try {
         extra();
       } catch (e) {
@@ -770,7 +774,7 @@
         flash(between(mat, '[data-pile="deck"]', '[data-slot="C3"]'), "Deck Out!", "flash-deck-out");
       }
       if (now[owner].climaxes > seen[owner].climaxes) showClimax(side.zones.climax[side.zones.climax.length - 1], owner, now[owner].climaxes);
-      if (now[owner].negated > seen[owner].negated) {
+      if (now[owner].negated > seen[owner].negated && !battle.claimsNegated(owner, now[owner].negated)) { // the battle view's shield shows it
         const card = side.negated_card;
         setTimeout(() => showNegated(card), fx.negatedWait(owner)); // once the damage's cards have turned over (tableFx)
       }
@@ -1086,6 +1090,7 @@
   // An ability that has resolved: its card, in the middle of the screen with the same entrance as a
   // climax, with an arrow to each card it was directed at.
   function showAbility(ability) {
+    if (ability.check && battle.claimsCheck(ability.id)) return; // an attack's trigger check: the battle view shows it
     if (ability.check) return showTriggerCheck(ability.check, ability.label);
     const source = cards[ability.card];
     if (!source) return;
@@ -1226,6 +1231,10 @@
   // --- The recap of the opponent's turn: play_recap.js (WeissRecap), made at the end too --------------------------
 
   let recap = null;
+
+  // --- The battle view, while an attack plays out: play_battle.js (WeissBattle), made at the end too ---------------
+
+  let battle = { update() {}, damageLead: () => 0, battleClaim: () => null, claimsCheck: () => false, claimsNegated: () => false };
 
   // --- Card movement: our own moves fly a card from where it is to where it's going, and then the
   // action is sent, so the real card appears as the flight lands ---------------------------------
@@ -1611,7 +1620,33 @@
     const stats = info && !card.face_down && !climax
       ? statsHtml(info, { live: (board.stats || {})[card.uid], soul: STAGE.includes(zone) && zone.startsWith("C"), lowered: zone === "hand" ? handMod(card) : null })
       : "";
-    return `<div class="${classes.join(" ")}" ${attrs} tabindex="0">${face}${stats}${badge}</div>`;
+    const pinnacle = STAGE.includes(zone) && info && !card.face_down && !climax ? pinnacleHtml(card, info, owner) : "";
+    if (pinnacle) classes.push("pinnacle");
+    return `<div class="${classes.join(" ")}" ${attrs} tabindex="0">${face}${pinnacle}${stats}${badge}</div>`;
+  }
+
+  // A character at 10,000 power or more has reached the pinnacle of strength: a ring of light runs round its edge,
+  // its power is gilded, and the moment it gets there it flares once (on the board). Each redraw makes the card anew,
+  // so the flare carries on from where it was (a negative delay) rather than starting over.
+  const PINNACLE_POWER = 10000;
+  const PINNACLE_FLARE_MS = 1300;
+  const pinnacleSince = {}; // uid -> when it reached the pinnacle (performance.now()), for the board's cards
+  function pinnacleHtml(card, info, owner) {
+    const live = (board.stats || {})[card.uid];
+    const power = live && live.power !== undefined ? live.power : Number(info.power) || 0;
+    const onBoard = owner !== "view";
+    if (power < PINNACLE_POWER) {
+      if (onBoard) delete pinnacleSince[card.uid];
+      return "";
+    }
+    let flare = "";
+    if (onBoard) {
+      // On the first board seen, a card already there doesn't flare: it was there before we looked.
+      if (!(card.uid in pinnacleSince)) pinnacleSince[card.uid] = heard ? performance.now() : -Infinity;
+      const age = performance.now() - pinnacleSince[card.uid];
+      if (age < PINNACLE_FLARE_MS) flare = `<span class="pinnacle-flare" style="animation-delay: ${-Math.round(age)}ms"></span>`;
+    }
+    return `<span class="pinnacle-ring" aria-hidden="true"></span>${flare}`;
   }
 
   // The soul icon: a flame-like wisp, close to the one printed on Weiss Schwarz cards.
@@ -1645,7 +1680,8 @@
     let power = "";
     if (has(info.power)) {
       const { value, glow, note } = current(info.power, live ? live.power : undefined);
-      power = `<span class="stat stat-power${glow}" title="Power${note}">${esc(value)}</span>`;
+      const peak = value >= PINNACLE_POWER ? " — the pinnacle of strength" : "";
+      power = `<span class="stat stat-power${glow}" title="Power${note}${peak}">${esc(value)}</span>`;
     }
     let souls = "";
     if (soul && has(info.soul)) {
@@ -1744,7 +1780,8 @@
         quick = iconButton({ type: "attack", uid: card.uid }, "⚔", "Attack");
       } else if (inPhase("attack") && board.attack && board.attack.step === "declare"
           && !(board.turn_number === 1 && board.attacks >= 1)) { // only one attack on turn 1
-        const attack = (kind, label) => `<button type="button" data-act='${esc(JSON.stringify({ type: "attack", uid: card.uid, kind }))}'>⚔ ${label}</button>`;
+        const attack = (kind, label) => `<button type="button" class="attack-choice" data-act='${esc(JSON.stringify({ type: "attack", uid: card.uid, kind }))}'
+          title="${esc(attackPreviewTitle(card.uid, kind))}">⚔ ${label}${attackPreviewHtml(card.uid, kind)}</button>`;
         const bans = (board.attack_bans || {})[card.uid] || [];
         const allowed = (kind, label) => (bans.includes("all") || bans.includes(kind) ? "" : attack(kind, label));
         quick = board.opponent && board.opponent.stage[OPPOSITE[slot]]
@@ -1755,31 +1792,73 @@
     return quick || waiting ? `<div class="slot-actions">${quick}${waiting}</div>` : "";
   }
 
+  // What an attack would do, from the server's numbers (game.attack_previews): the battle's outcome for a front
+  // attack, and the damage. Triggers, counters and abilities can still change it.
+  const BATTLE_OUTCOMES = { win: "Wins", tie: "Both reversed", lose: "Loses" };
+  function attackPreview(uid, kind) {
+    const preview = ((board.attack_previews || {})[uid] || {})[kind];
+    if (!preview) return null;
+    const [mine, theirs] = preview.power || [];
+    const outcome = preview.power ? (mine > theirs ? "win" : mine === theirs ? "tie" : "lose") : null;
+    return { ...preview, outcome };
+  }
+
+  function attackPreviewHtml(uid, kind) {
+    const p = attackPreview(uid, kind);
+    if (!p) return "";
+    const battle = p.outcome ? `<span class="attack-outcome ${p.outcome}">${p.power[0]} vs ${p.power[1]} · ${BATTLE_OUTCOMES[p.outcome]}</span>` : "";
+    return `<span class="attack-preview">${battle}<span class="attack-damage">${p.damage} damage</span></span>`;
+  }
+
+  function attackPreviewTitle(uid, kind) {
+    const p = attackPreview(uid, kind);
+    if (!p) return "";
+    const battle = p.outcome ? `${p.power[0]} power against ${p.power[1]}: ${BATTLE_OUTCOMES[p.outcome].toLowerCase()} the battle. ` : "";
+    return `${battle}${p.damage} damage. Before trigger checks, counters and abilities.`;
+  }
+
   // Quick moves shown on a hand card while hovering it: where characters and climaxes usually go
   // (events go to the resolution zone to be played), then "More" for the full menu. A character's
   // stage slots are rows of boxes: L / M / R for the center stage, L / R under it for the back stage.
   // The clock (🕒) and waiting room (🪦) are symbol buttons side by side.
+  // Where a hand card can be played right now, and if it's the kind of card this phase plays but something is
+  // stopping it, what (the first thing to fix): {to: [zones], blocked: text or null, kind}.
+  function handPlays(card) {
+    const info = card.card ? cards[card.card] : null;
+    const type = info && info.type ? info.type.toLowerCase() : "";
+    const phase = type === "character" ? inPhase("main") : type === "climax" ? inPhase("main", "climax") : inPhase("main");
+    if (!phase) return { to: [], blocked: null, type };
+    const cost = info ? Number(handStat(card, info, "cost")) || 0 : 0;
+    const short = canPay(card, info) ? 0 : cost - board.me.zones.stock.count;
+    const blocked = levelMissing(card, info) ? `Needs level ${handStat(card, info, "level")}`
+      : colorMissing(card) ? `Needs ${colorMissing(card)}`
+      : (board.play_banned || []).includes(card.uid) ? "Can't be played yet" // its own text says so
+      : short > 0 ? `${short} more stock` : null;
+    if (blocked) return { to: [], blocked, type, short };
+    const to = type === "character" ? STAGE : type === "climax" ? ["climax"] : ["resolution"];
+    return { to, blocked: null, type, short: 0 };
+  }
+
   function handActionsHtml(card) {
     const move = (to, symbol) => iconButton({ type: "move", uid: card.uid, to }, symbol, LABELS[to]);
     const moveText = (to) => `<button type="button" data-act='${esc(JSON.stringify({ type: "move", uid: card.uid, to }))}'>→ ${cxHtml(LABELS[to])}</button>`;
     const info = card.card ? cards[card.card] : null;
-    const type = info && info.type ? info.type.toLowerCase() : "";
     const clockDraw = inPhase("clock") ? iconButton({ type: "clock_draw", uid: card.uid }, "🕒+2", "Clock and draw 2") : "";
     const clock = inPhase("clock") ? move("clock", "🕒") : "";
     const reveal = board.reveal ? "" : iconButton({ type: "reveal", uid: card.uid }, "👁", "Reveal to your opponent");
     const piles = `<div class="hand-center">${clock}${move("waiting", "🪦")}${clockDraw}${reveal}</div>`;
     const held = (board.play_banned || []).includes(card.uid); // its own text says it can't be played yet
-    const affordable = canPay(card, info) && !colorMissing(card) && !levelMissing(card, info) && !held;
+    const plays = handPlays(card);
     let rows = "";
-    if (type === "character" && affordable && inPhase("main")) {
+    if (plays.type === "character" && plays.to.length) {
       rows = `<div class="hand-center">${move("C1", "L")}${move("C2", "M")}${move("C3", "R")}</div>
         <div class="hand-center hand-back">${move("B1", "L")}${move("B2", "R")}</div>`;
-    } else if (type === "climax" && affordable && inPhase("climax")) {
+    } else if (plays.type === "climax" && plays.to.length && inPhase("climax")) {
       rows = moveText("climax");
-    } else if (type === "climax" && affordable && board.rules && inPhase("main")) {
+    } else if (plays.type === "climax" && plays.to.length && board.rules) {
       // Playing a climax from the main phase ends it: asks first (see renderClimaxConfirm).
       rows = `<button type="button" data-confirm-climax="${esc(card.uid)}">→ ${CX_HTML}</button>`;
-    } else if (type !== "character" && type !== "climax" && affordable && inPhase("main")) {
+    } else if (plays.to.length) {
       rows = moveText("resolution"); // events in our main phase
     }
     // Our counter step (the opponent is attacking): the counters we can play right now.
@@ -1791,11 +1870,33 @@
     if (needs) rows = `<span class="hand-needs">Needs ${esc(needs)}</span>` + rows;
     if (inPhase("main", "climax") && held) rows = `<span class="hand-needs">Can't be played yet</span>` + rows;
     if (inPhase("main", "climax") && levelMissing(card, info)) rows = `<span class="hand-needs">Needs level ${esc(handStat(card, info, "level"))}</span>` + rows;
+    if (plays.short > 0) rows = `<span class="hand-needs">Costs ${esc(handStat(card, info, "cost"))}: ${plays.short} more stock needed</span>` + rows;
     rows += piles;
     return `<div class="hand-actions">
       ${rows}
       <button type="button" data-more>More…</button>
     </div>`;
+  }
+
+  // A card in our hand, marked for what it can do now: a glow if it can be played (or played as a counter), a chip
+  // on it saying what's stopping it if it's this phase's kind of card, and a combo chip on a climax that would start one.
+  function handCardHtml(card) {
+    const plays = handPlays(card);
+    const attack = board.attack;
+    const counter = Boolean(attack && attack.step === "counter" && !board.my_turn && (attack.counters || []).includes(card.uid));
+    const combos = (board.hand_combos || {})[card.uid] || [];
+    const classes = ["hand-card"];
+    if (board.rules && !SPECTATING && (plays.to.length || counter)) classes.push("playable"); // with the rules off everything is
+    if (plays.short > 0) classes.push("cost-short");
+    let chip = "";
+    if (SPECTATING) chip = "";
+    else if (plays.blocked) chip = `<span class="hand-chip blocked">${esc(plays.blocked)}</span>`;
+    else if (counter) chip = '<span class="hand-chip ready">Counter</span>';
+    else if (combos.length && plays.to.length) {
+      const names = combos.map((uid) => { const c = Object.values(board.me.stage).find((s) => s && s.uid === uid); return c ? stageNameOf(c) : ""; }).filter(Boolean);
+      chip = `<span class="hand-chip combo" title="${esc(`Climax combo with ${names.join(", ")}`)}">${CX_HTML} Combo</span>`;
+    }
+    return `<div class="${classes.join(" ")}">${cardHtml(card, "me", "hand")}${chip}${handActionsHtml(card)}</div>`;
   }
 
   const canEncore = () => board.me.zones.stock.count >= ENCORE_COST;
@@ -1871,9 +1972,15 @@
     const card = side.stage[slot];
     const center = slot.startsWith("C");
     const label = `<span class="zone-label slot-label">${LABELS[slot]}</span>`;
+    // Glows: an ability of ours that can be activated now, and a climax combo that's live (either side's).
+    const ready = card && owner === "me" && !SPECTATING && ((board.acts || {})[card.uid] || []).some((row) => !row.why);
+    const combo = card && (board.combos || {})[card.uid];
+    const comboInfo = combo ? cards[combo] : null;
+    const glow = `${ready ? " can-act" : ""}${combo ? " combo-live" : ""}`;
+    const comboTag = combo ? `<span class="combo-tag" title="${esc(`Climax combo live with ${comboInfo ? comboInfo.name : "the climax"}`)}">${CX_HTML} Combo</span>` : "";
     return `<div class="slot-wrap ${center ? "slot-wrap-center" : "slot-wrap-back"}">
       ${center ? label : ""}
-      <div class="zone slot" data-slot="${slot}" data-drop="${owner === "me" ? slot : ""}" data-owner="${owner}">
+      <div class="zone slot${glow}" data-slot="${slot}" data-drop="${owner === "me" ? slot : ""}" data-owner="${owner}">${comboTag}
         ${cardHtml(card, owner, slot) || '<span class="zone-empty"></span>'}
         ${card && owner === "me" ? slotPosHtml(card, slot) + slotActionsHtml(card, slot) : ""}
         ${card && owner === "me" && board.acts && board.acts[card.uid] ? `<div class="slot-pos slot-pos-right slot-pos-bottom">${activateButtonHtml(card)}</div>` : ""}
@@ -1955,6 +2062,31 @@
     </div>`;
   }
 
+  // A climax in play fills its side's background: its picture, faint, washed in its colour and slowly glowing. It
+  // sits under the table's mood (the warmth as levels climb, match point's red), which shows over it. Each redraw
+  // makes it anew, so its fade-in carries on from where it was (a negative delay) rather than starting again.
+  const CX_BACKDROP_FADE_MS = 1400;
+  const backdropSeen = {}; // per side: {uid, at} of the climax whose backdrop is showing
+  function climaxBackdropHtml(side, owner) {
+    const zone = side.zones.climax;
+    const top = !board.game_over && Array.isArray(zone) && zone.length ? zone[zone.length - 1] : null;
+    const info = top && top.card ? cards[top.card] : null;
+    if (!info) {
+      delete backdropSeen[owner];
+      return "";
+    }
+    const now = performance.now();
+    if (!backdropSeen[owner] || backdropSeen[owner].uid !== top.uid) {
+      // A climax already down when the page opens is simply there; one played now fades in as its takeover (shown
+      // just after this redraw, in announce) fades out.
+      const lead = animations && !reducedMotion ? CLIMAX_SHOW_MS * 0.7 : 0;
+      backdropSeen[owner] = { uid: top.uid, at: heard ? now + lead : now - CX_BACKDROP_FADE_MS };
+    }
+    const delay = backdropSeen[owner].at - now; // positive: still waiting for the takeover; negative: part-way in
+    const style = `--cx-art: url('${esc(info.image)}'); --cx-color: ${climaxColor(info)}; animation-delay: ${Math.round(delay)}ms`;
+    return `<div class="cx-backdrop" style="${style}" aria-hidden="true"></div>`;
+  }
+
   function render() {
     if (!board) return;
     // Redrawing replaces the card being hovered: the zoom carries over to whatever card is under the pointer then.
@@ -1967,16 +2099,16 @@
     if (split) boardEl.dataset.view = boardView; else delete boardEl.dataset.view;
     boardEl.innerHTML = `
       ${split ? boardSwitchHtml(me, opp) : ""}
-      ${opp ? `<div class="table-side side-opponent">
+      ${opp ? `<div class="table-side side-opponent">${climaxBackdropHtml(opp, "opponent")}
         <div class="hand hand-opponent${avatars[opp.name] ? " has-portrait" : ""}">${handPortrait(opp.name)}<span class="zone-label">${avatars[opp.name] ? "Hand" : `${whose(opp.name)} hand`} <b>${oppHand}</b></span>
           <div class="hand-cards">${Array.from({ length: oppHand }, backHtml).join("")}</div></div>
         ${matHtml(opp, "opponent")}</div>` : ""}
       <div class="table-divider">${matchStarsHtml(0)}<span class="table-turn">${board.rps ? `Game ${gameNumber()} · rock, paper, scissors` : `${board.my_turn ? "Your turn" : `${opp ? whose(opp.name) : "Opponent's"} turn`} · game ${gameNumber()} · turn ${board.turn_number} · ${cxHtml(PHASES[board.phase])} phase`}</span>${matchStarsHtml(1)}</div>
-      <div class="table-side side-me">
+      <div class="table-side side-me">${climaxBackdropHtml(me, "me")}
         ${matHtml(me, "me")}
         ${activeColorsHtml(me)}
         <div class="hand hand-me zone${avatars[me.name] ? " has-portrait" : ""}" data-drop="hand" data-owner="me">${handPortrait(me.name)}<span class="zone-label">Your hand <b>${me.zones.hand.length}</b></span>
-          <div class="hand-cards">${me.zones.hand.map((c) => `<div class="hand-card">${cardHtml(c, "me", "hand")}${handActionsHtml(c)}</div>`).join("")}</div></div>
+          <div class="hand-cards">${me.zones.hand.map(handCardHtml).join("")}</div></div>
       </div>`;
 
     fx.setTableMood();
@@ -2564,18 +2696,23 @@
   // replaces named on its way to the waiting room, and the position it leaves if it's moving within the stage.
   // A stage drawn small in a prompt, as it sits on the board: the opponent's faces us, back row furthest
   // away and their left on our right. `cell` draws each position (stageSlotHtml).
-  // Our own stage comes with the opponent's center stage above it (`facing`, read only), each character
-  // over the one it faces, as on the board: what they're up against is part of the choice.
+  // Either stage comes with the other side's center stage across from it (`facing`, read only), each character
+  // opposite the one it faces, as on the board: what they're up against is part of the choice, and it tells apart
+  // two of the same card. Ours has theirs above it; theirs has ours below it.
   function stageBoardHtml(owner, cell, facing = null) {
+    const theirs = owner === "opponent";
+    const facingWhose = theirs ? "Your" : `${board.opponent.name}'s`;
     const facingCell = (slot) => {
       const card = facing.stage[slot];
       const note = card ? stageNameOf(card) : "Empty";
-      return `<div class="place-slot place-slot-facing" aria-label="${esc(`${board.opponent.name}'s ${LABELS[slot].toLowerCase()}: ${note}`)}">
+      return `<div class="place-slot place-slot-facing" aria-label="${esc(`${facingWhose} ${LABELS[slot].toLowerCase()}: ${note}`)}">
         <span class="place-slot-card">${card ? cardHtml(card, "view", slot).replace('tabindex="0"', 'tabindex="-1"') : '<span class="zone-empty"></span>'}</span>
         <span class="place-slot-note" title="${esc(note)}">${esc(note)}</span></div>`;
     };
-    const across = facing ? `<p class="place-facing-caption muted small">${esc(board.opponent.name)}'s center stage, facing yours</p>
-      <div class="place-row place-row-facing">${["C1", "C2", "C3"].map(facingCell).join("")}</div>` : "";
+    const row = facing ? `<div class="place-row place-row-facing">${["C1", "C2", "C3"].map(facingCell).join("")}</div>` : "";
+    const caption = facing ? `<p class="place-facing-caption muted small">${theirs ? "Your center stage, facing theirs" : `${esc(board.opponent.name)}'s center stage, facing yours`}</p>` : "";
+    // Their board is drawn bottom to top (column-reverse), so ours goes first to come out under it.
+    const across = theirs ? row + caption : caption + row;
     return `<div class="place-board${owner === "opponent" ? " place-board-opponent" : ""}" role="group" aria-label="${owner === "opponent" ? "Their" : "Your"} stage">
       ${across}
       <div class="place-row">${["C1", "C2", "C3"].map(cell).join("")}</div>
@@ -2594,22 +2731,26 @@
   // An ability choosing characters on the stage (a target, or a cost): each stage they're on, drawn as on
   // the board, each one that may be chosen a button. The usual picks (abilityPicks) and Confirm apply.
   function choiceBoardsHtml(prompt, options, ordered) {
-    const owners = ["me", "opponent"].filter((owner) => prompt.cards.some((c) => c.side === owner));
-    const facing = owners.includes("opponent") ? null : board.opponent; // their whole stage is drawn already otherwise
+    // Their stage first (it's across the table), then ours. Each has the other side's center stage across from it.
+    const owners = ["opponent", "me"].filter((owner) => prompt.cards.some((c) => c.side === owner));
     return owners.map((owner) => {
       const side = owner === "me" ? board.me : board.opponent;
+      const across = owner === "me" ? board.opponent : board.me;
       const cell = (slot) => {
         const card = side.stage[slot];
         const can = Boolean(card) && options.has(card.uid);
         const at = can ? abilityPicks.indexOf(card.uid) : -1;
-        const note = !card ? "Empty" : at >= 0 ? `${stageNameOf(card)} · chosen` : can ? stageNameOf(card) : `${stageNameOf(card)} · can't be chosen`;
+        // Which character it's facing, said too, for two of the same card (and for a screen reader).
+        const faced = slot.startsWith("C") && across ? across.stage[OPPOSITE[slot]] : null;
+        const facesNote = faced ? ` · facing ${owner === "me" ? "their" : "your"} ${stageNameOf(faced)}` : "";
+        const note = !card ? "Empty" : (at >= 0 ? `${stageNameOf(card)} · chosen` : can ? stageNameOf(card) : `${stageNameOf(card)} · can't be chosen`) + facesNote;
         return stageSlotHtml(slot, {
           card, can, picked: at >= 0, note, noteHtml: esc(card ? stageNameOf(card) : "Empty"),
           attrs: can ? `role="button" tabindex="0" aria-pressed="${at >= 0}" data-ability-pick="${esc(card.uid)}"` : "",
           badge: at >= 0 ? `<span class="ability-order">${ordered ? at + 1 : "✓"}</span>` : "",
         });
       };
-      return `<div><p class="muted small place-caption">${owner === "me" ? "Your stage" : `${esc(board.opponent.name)}'s stage`}</p>${stageBoardHtml(owner, cell, owner === "me" ? facing : null)}</div>`;
+      return `<div><p class="muted small place-caption">${owner === "me" ? "Your stage" : `${esc(board.opponent.name)}'s stage`}</p>${stageBoardHtml(owner, cell, across)}</div>`;
     }).join("");
   }
 
@@ -2638,7 +2779,7 @@
         attrs: `role="button" tabindex="0" aria-pressed="${picked === slot}" data-place-pick="${slot}"`,
       });
     };
-    return stageBoardHtml(owner, cell, owner === "me" ? board.opponent : null);
+    return stageBoardHtml(owner, cell, owner === "me" ? board.opponent : board.me);
   }
 
   const placeButtonLabel = (slot) => (slot ? `Put it on ${LABELS[slot].toLowerCase()}` : "Choose a position");
@@ -2652,7 +2793,12 @@
     abilityPicks = abilityPicks.filter((uid) => options.has(uid));
     // The other player's ability can't be stopped from here, though it may be asking us to choose.
     const stopButton = ability.can_stop ? '<button type="button" class="button-cancel" data-act=\'{"type":"ability_stop"}\' title="Leave the rest of this ability undone">Stop</button>' : "";
-    const label = (card) => (card.where && LABELS[card.where] ? `<span class="muted small">${esc(LABELS[card.where])}</span>` : "");
+    // Where a card is, and on whose side: "Their center stage (left)", "Your waiting room".
+    const label = (card) => {
+      if (!card.where || !LABELS[card.where]) return "";
+      const whose = card.side === "opponent" ? "Their" : card.side === "me" ? "Your" : "";
+      return `<span class="muted small">${esc(whose ? `${whose} ${LABELS[card.where].toLowerCase()}` : LABELS[card.where])}</span>`;
+    };
     let body;
     if (prompt.kind === "cards") {
       const count = abilityPicks.length;
@@ -3253,6 +3399,10 @@
     if (!show) selected = null;
     trayEl.hidden = !show || !modalEl.hidden; // a pop-up comes first; the tray is back once it's closed
     root.classList.toggle("tray-open", !trayEl.hidden);
+    // Where the card can go, lit up on the board: a picked hand card goes to one with a tap; a dragged one, dropped.
+    if (dragUid) showDropHints(dragUid);
+    else if (show && !trayEl.hidden && el.dataset.zone === "hand") showDropHints(el.dataset.uid);
+    else clearDropHints();
     if (!show) return;
     el.classList.add("selected");
 
@@ -3262,7 +3412,8 @@
     const mine = el.dataset.owner === "me" && !SPECTATING;
     const zoomAttrs = `data-zoom-card="${esc(pk)}" data-zoom-uid="${esc(el.dataset.uid)}" data-zoom-zone="${esc(zone)}"`;
     const [stats, where] = info ? trayStats(el, info) : ["", LABELS[zone] || ""];
-    const notes = [...holder.querySelectorAll(".hand-needs")].map((n) => `<p class="play-tray-note">${esc(n.textContent)}</p>`).join("");
+    const notes = [...holder.querySelectorAll(".hand-needs")].map((n) => `<p class="play-tray-note">${esc(n.textContent)}</p>`).join("")
+      + (zone === "hand" && boardEl.querySelector(".drop-hint") ? '<p class="play-tray-hint">Or tap a lit-up place on the board.</p>' : "");
     trayEl.innerHTML = `<div class="play-tray-head">
         ${info ? `<button type="button" class="play-tray-thumb" ${zoomAttrs} aria-label="Show ${esc(info.name)} full screen"><img src="${esc(info.image)}" alt=""></button>`
           : '<span class="play-tray-thumb"><span class="pcard-back"></span></span>'}
@@ -3766,6 +3917,14 @@
     // on the other side's card in a pop-up shows it; one on our deck opens its menu (there's no hovering to
     // find the [...] button). A tap anywhere else on the board puts the picked card down.
     if (touch) {
+      // A picked hand card, and a tap on a place it can go that's lit up for it: it goes there.
+      const spot = selected && event.target.closest(".mat-me .drop-hint[data-drop]");
+      if (spot && board.me.zones.hand.some((c) => c.uid === selected)) {
+        const uid = selected;
+        clearSelection();
+        playTo(uid, spot.dataset.drop);
+        return;
+      }
       const tapped = event.target.closest(".pcard[data-uid]");
       if (tapped && boardEl.contains(tapped) && (tapped.closest(".zone.slot") || tapped.closest(".hand-card"))) {
         select(tapped.dataset.uid);
@@ -3859,6 +4018,42 @@
 
   // --- Drag and drop ---------------------------------------------------------------------------
 
+  // Where the rules let a card of ours go right now (with them on; with them off it's anywhere): a hand card to
+  // where it can be played (handPlays), a character on the stage to another position in the main phase.
+  function dropTargets(uid) {
+    if (!board || !board.rules || SPECTATING) return [];
+    const inHand = board.me.zones.hand.find((c) => c.uid === uid);
+    if (inHand) return handPlays(inHand).to;
+    const slot = STAGE.find((s) => board.me.stage[s] && board.me.stage[s].uid === uid);
+    return slot && inPhase("main") ? STAGE.filter((s) => s !== slot) : [];
+  }
+
+  // The places a card can go, lit up on our side of the board (a stage position with a character on it says what
+  // happens to that character); the rest of our stage dims. Cleared once it's dropped, or put down.
+  function showDropHints(uid) {
+    clearDropHints();
+    const targets = dropTargets(uid);
+    if (!targets.length) return;
+    const fromHand = board.me.zones.hand.some((c) => c.uid === uid);
+    root.classList.add("drop-hinting");
+    for (const to of targets) {
+      const zone = boardEl.querySelector(`.mat-me [data-drop="${to}"]`);
+      if (!zone) continue;
+      zone.classList.add("drop-hint");
+      const here = STAGE.includes(to) ? board.me.stage[to] : null;
+      if (here) {
+        zone.classList.add("drop-replace");
+        zone.insertAdjacentHTML("beforeend", `<span class="drop-note"><b>${fromHand ? "Replaces" : "Swaps with"}</b> <span class="drop-note-name">${esc(stageNameOf(here))}</span></span>`);
+      }
+    }
+  }
+
+  function clearDropHints() {
+    root.classList.remove("drop-hinting");
+    boardEl.querySelectorAll(".drop-hint").forEach((el) => el.classList.remove("drop-hint", "drop-replace"));
+    boardEl.querySelectorAll(".drop-note").forEach((el) => el.remove());
+  }
+
   root.addEventListener("dragstart", (event) => {
     const card = event.target.closest(".pcard[data-uid][draggable]");
     if (SPECTATING) event.preventDefault();
@@ -3866,6 +4061,20 @@
     event.dataTransfer.setData("text/plain", card.dataset.uid);
     event.dataTransfer.effectAllowed = "move";
     hideMenu();
+    dragUid = card.dataset.uid;
+    // Painted after the browser has taken its picture of the card being dragged.
+    requestAnimationFrame(() => { if (dragUid) showDropHints(dragUid); });
+  });
+  root.addEventListener("dragend", () => {
+    dragUid = null;
+    clearDropHints();
+  });
+  // A redraw mid-drag can take the dragged card away before its dragend: the first move after the drop tidies up.
+  root.addEventListener("pointermove", (event) => {
+    if (dragUid && event.buttons === 0) {
+      dragUid = null;
+      clearDropHints();
+    }
   });
   root.addEventListener("dragover", (event) => {
     const zone = event.target.closest("[data-drop]");
@@ -3883,9 +4092,23 @@
     if (!zone || !zone.dataset.drop) return;
     event.preventDefault();
     zone.classList.remove("drop-over");
+    clearDropHints();
+    dragUid = null;
     const uid = event.dataTransfer.getData("text/plain");
-    if (uid) act({ type: "move", uid, to: zone.dataset.drop });
+    if (uid) playTo(uid, zone.dataset.drop);
   });
+
+  // A card of ours sent somewhere by dropping or tapping: a climax played in the main phase ends it, so that asks first,
+  // as its button does (renderClimaxConfirm).
+  function playTo(uid, to) {
+    const climax = to === "climax" && board.rules && board.phase === "main" && board.me.zones.hand.some((c) => c.uid === uid && isClimaxCard(c));
+    if (climax) {
+      modal = { confirmClimax: uid };
+      renderModal();
+      return;
+    }
+    act({ type: "move", uid, to });
+  }
 
   // --- Chat ------------------------------------------------------------------------------------
 
@@ -3925,7 +4148,11 @@
   fx = window.WeissTableFx ? window.WeissTableFx.create({
     boardEl, cards, STAGE, CLIMAX_SHOW_MS, SPECTATING, reducedMotion, esc, who, outOfSight, pileCount, musicTheme, atBrink,
     board: () => board, avatars: () => avatars, animations: () => animations, score: () => score, holdGameOver, climaxColor,
+    damageLead: (owner) => battle.damageLead(owner), battleClaim: (id) => battle.battleClaim(id),
   }) : { tableFx() {}, setTableMood() {}, negatedWait: () => 0, noteOwnDamage() {}, climaxSurge() {} };
+  if (window.WeissBattle) {
+    battle = window.WeissBattle.create({ root, cards, esc, climaxColor, reducedMotion, SOUL_ICON, board: () => board, animations: () => animations });
+  }
   recap = window.WeissRecap ? window.WeissRecap.create({
     controlsEl, esc, who, logHtml, gameNumber, board: () => board, avatars: () => avatars,
   }) : { render() {}, dismiss() {} };

@@ -83,7 +83,8 @@ FRONT_ONLY_TRIGGERS = {"reverse_self", "reverse_opponent", "attack", "attack_end
 SELF_ONLY = re.compile(r"\bthis card (?:in all of your zones )?(?:gets|cannot|can't|does not|doesn't|is)\b", re.I)  # a cont ability on itself
 FOR_OTHERS = re.compile(r"\bcharacters?(?: in [^,.]*)? gets?\b|in front of this card|\bassist\b|opponent|back stage", re.I)
 CHOICE_DESTINATIONS = ["hand", "stock", "deck", "deck_bottom", "waiting"]  # best first, for "where does it go?"
-WAITS = {"ability_show": 2, "combo_show": 1.6, "pending_climax": 2, "pending_damage": 2, "auto_next": .9}  # seconds to let these show; otherwise STEP_WAIT
+WAITS = {"ability_show": 2, "combo_show": 1.6, "pending_climax": 2, "pending_damage": 2, "auto_next": .9,  # seconds to let these show; otherwise STEP_WAIT
+         "attack_show": 3.4}  # an attack just ended: the pages' battle view plays its damage and clash
 STEP_WAIT = .8
 
 

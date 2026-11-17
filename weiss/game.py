@@ -658,7 +658,11 @@ def declare_attack(state, player, slot, kind, env):
     # The damage this attack will deal: soul, +1 if direct, or minus the defender's level for a side
     # attack (update_attack_soul keeps it up to date, with the trigger's soul in soul_extra).
     state["attack"] = {"step": "trigger", "slot": slot, "uid": card["uid"], "target": target, "kind": kind,
-                       "soul": 0, "soul_extra": 1 if kind == "direct" else 0, "backup": 0, "shot": False, "checking": True}
+                       "soul": 0, "soul_extra": 1 if kind == "direct" else 0, "backup": 0, "shot": False, "checking": True,
+                       # Who's in it, for the pages' battle view (record_attack), face-down cards left unnamed.
+                       "card": None if card["face_down"] else card["card"],
+                       "defender": opposing["uid"] if opposing else None,
+                       "defender_card": opposing["card"] if opposing and not opposing["face_down"] else None}
     fire(state, env, "attack", uid=card["uid"], card=card["card"], kind=kind, player=player, defender=defender, slot=slot,
          target=opposing["uid"] if opposing else None, target_card=opposing["card"] if opposing else None)
     if not abilities_busy(state):
@@ -795,7 +799,24 @@ def after_trigger(state, info, env=None):
             attack.update(step="counter", counters=counters)
 
 
+def record_attack(state):
+    """The attack in progress, as it went, kept once it's over as state["last_attack"]: the pages' battle view plays it
+    from this when a page saw little or none of it (a CPU's attack can go by between two polls), and a CPU waits a
+    moment (state["attack_show"], see cpu.WAITS) so it can be seen. Public: everything in it happened on the table."""
+    attack = state.get("attack") or {}
+    if not attack.get("uid"):
+        return
+    state["last_attack"] = {
+        "id": new_uid(), "turn": state.get("turn_number"), "number": state.get("attacks", 0), "attacker": attack["uid"], "card": attack.get("card"), "kind": attack.get("kind"),
+        "slot": attack.get("slot"), "target": attack.get("target"), "defender": attack.get("defender"), "defender_card": attack.get("defender_card"),
+        "checked": attack.get("checked_cards", []), "counter_cards": attack.get("counter_cards", []),
+        "damage": attack.get("soul", 0) if attack.get("dealt") else 0, "cancelled": bool(attack.get("cancelled")), "battle": attack.get("battle"),
+    }
+    state["attack_show"] = True
+
+
 def end_attack(state, env):
+    record_attack(state)
     uid = (state.get("attack") or {}).get("uid")
     state["attack"] = {"step": "declare"}
     if uid:
@@ -874,6 +895,7 @@ def advance_attack(state, env):
                 # For both pages to show the clash: who fought, at what power (the defender's with its backup), who lost.
                 state["last_battle"] = {"id": new_uid(), "player": player, "attacker": attacker["uid"], "defender": target["uid"],
                                         "power": [mine, theirs], "backup": attack["backup"], "reversed": [card["uid"] for card in losers]}
+                attack["battle"] = state["last_battle"]["id"]
                 add_log(state, player, f"battle: {env.name(attacker['card'])} ({mine}) against {env.name(target['card'])} ({theirs})"
                         + " — " + (", ".join(f"{env.name(c['card'])} reversed" for c in losers) or "neither reversed"))
                 for card in losers:
@@ -1039,6 +1061,7 @@ def end_game(state, loser, reason, said):
     record_turn(state, state.get("turn"))  # where it ended
     wins = state.setdefault("match_wins", {})
     wins[winner] = wins.get(winner, 0) + 1
+    record_attack(state)  # an attack's damage that ended the game is still shown
     for key in ("ability_queue", "resolving", "ability_show", "combo_show", "attack", "auto_next", "pending_end", "pending_damage", "pending_refresh",
                 "pending_climax", "pending_discard", "reveal", "rules_request", "undo"):
         state.pop(key, None)
@@ -1148,6 +1171,8 @@ def take_back(state, player):
 def apply_after(state, player, action, env):
     """apply's own work: the action, then everything that follows from it."""
     name, shuffle = env.name, env.shuffle
+    if action.get("type") not in ("chat", "ability_show_done", "combo_show_done"):
+        state.pop("attack_show", None)  # the next move is made: the last attack's show has had its time (cpu.WAITS)
     extra = apply_action(state, player, action, env)
     check_game_over(state)
     if state.get("game_over"):
@@ -1590,6 +1615,7 @@ def apply_action(state, player, action, env):
                 put(side, zones["stock"].pop(), "waiting")
             put(side, card, "waiting")
             attack["backup"] += power
+            attack.setdefault("counter_cards", []).append({"card": card["card"], "power": power})  # for both pages' battle view
             add_log(state, player, f"countered with {name(card['card'])}"
                     + (f" (+{power} power)" if power else "") + (f", paying {price} stock" if price else ""))
             fire(state, env, "backup", uid=card["uid"], source=card, source_owner=player)
@@ -2511,6 +2537,65 @@ def update_attack_soul(state, stats, env):
     attack["soul"] = soul
 
 
+def attack_previews(state, env):
+    """What each attack open to the turn player's standing center characters would do, before triggers, counters
+    and abilities, worked out as update_attack_soul and the battle do: {uid: {"front": {"damage", "power": [attacker's,
+    defender's]}, "side": {"damage"}} or {"direct": {"damage"}}}. Only in their attack phase."""
+    player = state.get("turn")
+    if not rules_on(state) or state.get("phase") != "attack" or player not in state["players"]:
+        return {}
+    stats = state.get("stats", {})
+    defender = state["players"][other_player(state, player)]
+    previews = {}
+    for slot in ("C1", "C2", "C3"):
+        card = state["players"][player]["stage"][slot]
+        if not card or card["pos"] != "stand" or card["uid"] not in stats:
+            continue
+        mine = stats[card["uid"]]
+        facing = defender["stage"].get(OPPOSITE[slot])
+        if not facing:
+            previews[card["uid"]] = {"direct": {"damage": mine["soul"] + 1}}
+            continue
+        loss = 0 if has_status(state, card["uid"], "no_side_loss") else number(details_of(facing, env).get("level"))
+        previews[card["uid"]] = {
+            "front": {"damage": mine["soul"], "power": [mine["power"], stats.get(facing["uid"], {}).get("power", 0)]},
+            "side": {"damage": max(0, mine["soul"] - loss)},
+        }
+    return previews
+
+
+ANY_CLIMAX_COMBO = re.compile(r"\b(?:if there is|when) an? climax (?:is )?(?:in|placed on|put on) your climax area", re.I)  # a combo with no climax named
+
+
+def combo_links(state, env):
+    """Climax combos, by the climax's name in a 【CXCOMBO】 line of the character's text (or any climax, as some say): the face-up characters whose
+    combo is live, as {uid: the climax's card pk} (both sides: it's all on the table), and, for each player, the climaxes
+    in their hand that would set one off, as {player: {hand uid: [stage uids]}}."""
+    live, in_hand = {}, {}
+    for player, side in state["players"].items():
+        names = {}
+        for card in stage_cards(side):
+            if not card["face_down"]:
+                lines = abilities.combo_lines(details_of(card, env).get("text") or "")
+                if lines:
+                    names[card["uid"]] = lines
+        if not names:
+            continue
+
+        def partners(climax):
+            name = f'"{abilities.plain_name(details_of(climax, env).get("name"))}"'
+            return [uid for uid, lines in names.items() if any(name in line or ANY_CLIMAX_COMBO.search(line) for line in lines)]
+
+        for climax in side["zones"]["climax"]:
+            for uid in partners(climax):
+                live[uid] = climax["card"]
+        mine = {card["uid"]: found for card in side["zones"]["hand"]
+                if (details_of(card, env).get("card_type") or "").lower() == "climax" and (found := partners(card))}
+        if mine:
+            in_hand[player] = mine
+    return live, in_hand
+
+
 def refresh_stats(state, env):
     on_stage = {card["uid"] for side in state["players"].values() for card in stage_cards(side)}
     if state.get("buffs"):
@@ -2519,6 +2604,8 @@ def refresh_stats(state, env):
     state["stats"], state["granted"] = compute_stats(state, env, credits)
     state["stat_sources"] = {uid: list(entries.values()) for uid, entries in credits.items()}
     update_attack_soul(state, state["stats"], env)
+    state["attack_previews"] = attack_previews(state, env)
+    state["combos"], state["hand_combos"] = combo_links(state, env)
     state["acts"] = {player: player_acts(state, player, env) for player in state["players"]}
     state["attack_bans"] = {player: {card["uid"]: sorted(bans) for card in stage_cards(side) if (bans := attack_bans(state, player, card, env))}
                             for player, side in state["players"].items()}
@@ -4643,9 +4730,10 @@ def ability_view(state, player):
         shown = prompt_view(state, prompt) if prompt and mine else None
         if shown and shown.get("for") == "place":  # whose stage the card goes on, to draw it
             shown["side"] = "me" if prompt.get("owner", answering) == player else "opponent"
-        for card in (shown or {}).get("cards", []):  # whose stage each card is on, to draw a choice among them there
-            if card.get("where") in STAGE_SLOTS:
-                card["side"] = "me" if locate(state, card["uid"])[0] == player else "opponent"
+        for card in (shown or {}).get("cards", []):  # whose side each card is on: a choice on the stage is drawn there
+            owner = locate(state, card["uid"])[0] if card.get("where") else None
+            if owner:
+                card["side"] = "me" if owner == player else "opponent"
         return {"resolving": True, "mine": mine, "card": res["card"], "uid": res["uid"], "text": res["text"],
                 "by": state["players"][answering]["name"],
                 "can_stop": res["player"] == player,
@@ -4729,7 +4817,7 @@ def attack_view(state, player):
     attack = state.get("attack")
     if not attack:
         return None
-    shown = {k: v for k, v in attack.items() if k not in ("counters", "dealt", "cancelled", "soul_extra", "cancel_fired", "checks", "check_pay")}
+    shown = {k: v for k, v in attack.items() if k not in ("counters", "soul_extra", "cancel_fired", "checks", "check_pay")}
     if player != state["turn"]:
         shown["counters"] = attack.get("counters", [])
     return shown
@@ -4788,6 +4876,8 @@ def view(state, player):
         # The attack in progress (step, kind, attacker's slot, target slot, soul) during the attack
         # phase; "counters" (the defender's playable counter cards) only goes to the defender.
         "attack": attack_view(state, player),
+        # The last attack, once it's over (see record_attack), for the battle view to play what it didn't see.
+        "last_attack": state.get("last_attack"),
         # A climax this player just played is showing; their page moves on to the attack phase shortly.
         "climax_pending": state.get("pending_climax") == player,
         # {"won": did this player win, "rematch": have they asked, "opponent_rematch": has the other player}
@@ -4814,6 +4904,11 @@ def view(state, player):
         "play_banned": state.get("play_banned", {}).get(player, []),
         "free_plays": state.get("free_plays", {}).get(player, {}),
         "attack_bans": state.get("attack_bans", {}).get(player, {}),
+        # On this player's attack phase, what each attack would do (see attack_previews).
+        "attack_previews": state.get("attack_previews", {}) if state["turn"] == player else {},
+        # Face-up characters whose climax combo is live (see combo_links), and this player's hand climaxes that would start one.
+        "combos": state.get("combos", {}),
+        "hand_combos": state.get("hand_combos", {}).get(player, {}),
         # Characters that can't be encored this turn.
         "no_encore": [b["uid"] for b in state.get("buffs", []) if b.get("status") == "no_encore"],
         "stats": stats_view(state, player),

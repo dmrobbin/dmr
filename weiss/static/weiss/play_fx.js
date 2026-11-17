@@ -61,9 +61,12 @@
       if (flipping && app.board().game_over) app.holdGameOver(flipping + 500);
       if (now.battle && now.battle !== before.battle) {
         const battle = app.board().battle;
-        // The board already has the loser reversed: it stays upright until the clash turns it over.
+        // The board already has the loser reversed: it stays upright until the clash turns it over. The battle view
+        // (play_battle.js) shows the clash itself, if it has it: the board's loser turns over as it's knocked back there.
         battle.reversed.map(visibleCard).filter(Boolean).forEach((el) => el.classList.add("battle-pending"));
-        setTimeout(() => showBattle(battle), flipping);
+        const claimed = app.battleClaim ? app.battleClaim(battle.id) : null;
+        if (claimed !== null) setTimeout(() => turnOver(battle), claimed);
+        else setTimeout(() => showBattle(battle), flipping);
       }
       const newTurn = app.board().turn_number !== last.turn_number || app.board().my_turn !== last.my_turn;
       // A climax just played: its side's stat changes come with its surge, once its takeover has shown
@@ -105,18 +108,20 @@
       // over in slow motion (on every third tick of the music, if it's playing).
       const lethal = pileCount(was.zones.level) >= 3 && was.zones.clock.length + fresh.length >= LOSING_CLOCK && fresh.length > 1;
       const step = lethal ? Math.max(fxStep() * 3, LETHAL_STEP_MS) : fxStep();
+      // An attack's damage: the cards wait for the battle view's souls to reach the clock (play_battle.js).
+      const lead = app.damageLead ? app.damageLead(owner) : 0;
       if (lethal) {
-        boardEl.dataset.lethal = owner;
-        setTimeout(() => { if (boardEl.dataset.lethal === owner) delete boardEl.dataset.lethal; }, (fresh.length - 1) * step + 900);
+        setTimeout(() => { boardEl.dataset.lethal = owner; }, lead);
+        setTimeout(() => { if (boardEl.dataset.lethal === owner) delete boardEl.dataset.lethal; }, lead + (fresh.length - 1) * step + 900);
       }
       fresh.forEach((el, n) => {
         el.classList.add("dmg-wait");
         setTimeout(() => {
           el.classList.remove("dmg-wait");
           pulse(el, n < fresh.length - 1 ? "dmg-flip" : negated ? "dmg-cancel" : "dmg-hit");
-        }, n * step);
+        }, lead + n * step);
       });
-      const end = (fresh.length - 1) * step;
+      const end = lead + (fresh.length - 1) * step;
       if (negated) negatedWait[owner] = end + 250;
       else setTimeout(() => shakeSide(mat, fresh.length), end);
       return end + 350;
@@ -160,15 +165,18 @@
         const one = attacker || defender;
         if (one) powerDuel(centerOf(one), battle, attacker, defender);
       }
-      setTimeout(() => {
-        for (const uid of battle.reversed) {
-          const el = visibleCard(uid);
-          if (!el) continue;
-          el.classList.remove("battle-pending");
-          if (!reducedMotion) el.animate([{ rotate: "-180deg" }, { rotate: "-200deg", offset: 0.2 }, { rotate: "0deg" }], { duration: 520, easing: "cubic-bezier(.3, .8, .3, 1.15)" });
-          pulse(el, "reverse-crack");
-        }
-      }, impact + 260);
+      setTimeout(() => turnOver(battle), impact + 260);
+    }
+
+    // The battle's loser turns over on the board, reversed, with a crack.
+    function turnOver(battle) {
+      for (const uid of battle.reversed) {
+        const el = visibleCard(uid);
+        if (!el) continue;
+        el.classList.remove("battle-pending");
+        if (!reducedMotion) el.animate([{ rotate: "-180deg" }, { rotate: "-200deg", offset: 0.2 }, { rotate: "0deg" }], { duration: 520, easing: "cubic-bezier(.3, .8, .3, 1.15)" });
+        pulse(el, "reverse-crack");
+      }
     }
 
     // The power duel: each side's number counting up from what's printed to what it battled at.

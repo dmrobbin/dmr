@@ -819,6 +819,56 @@ class AttackStepTests(TestCase):
         self.assertEqual(zones(self.state, 1)["hand"][-1]["uid"], waiting_uid)
         self.assertEqual(len(zones(self.state, 2)["clock"]), 2)
 
+    def test_a_finished_attack_is_recorded_for_the_battle_view(self):
+        from . import cpu
+        self.setup_battle()
+        attacker, defender = self.stage(1, "C2"), self.stage(2, "C2")
+        self.act(1, {"type": "attack", "uid": attacker["uid"], "kind": "front"})
+        self.assertEqual(game.view(self.state, 2)["attack"]["defender"], defender["uid"])  # who's in it, from the start
+        self.act(2, {"type": "counter", "uid": self.bob[0]["uid"]})
+        record = game.view(self.state, 1)["last_attack"]
+        self.assertEqual({k: record[k] for k in ("attacker", "card", "kind", "defender", "defender_card", "counter_cards", "damage", "cancelled", "checked")},
+                         {"attacker": attacker["uid"], "card": 20, "kind": "front", "defender": defender["uid"], "defender_card": 101,
+                          "counter_cards": [{"card": 120, "power": 3000}], "damage": 1, "cancelled": False, "checked": [14]})
+        self.assertEqual(record["battle"], self.state["last_battle"]["id"])
+        # A CPU waits for it to be shown, until the next move is made.
+        self.assertGreaterEqual(cpu.wait_seconds(self.state), cpu.WAITS["attack_show"])
+        self.act(1, {"type": "chat", "text": "nice"})
+        self.assertTrue(self.state.get("attack_show"))
+        self.act(1, {"type": "phase", "phase": "encore"})
+        self.assertFalse(self.state.get("attack_show"))
+
+    def test_the_attack_phase_previews_each_attack(self):
+        self.setup_battle()
+        attacker = self.stage(1, "C2")["uid"]
+        self.assertEqual(game.view(self.state, 1)["attack_previews"][attacker],
+                         {"front": {"damage": 1, "power": [5000, 3000]}, "side": {"damage": 0}})  # soul 1, less the defender's level 1
+        self.assertEqual(game.view(self.state, 2)["attack_previews"], {})  # only the attacker's
+        self.state["players"]["2"]["stage"]["C2"] = None
+        self.act(1, {"type": "chat", "text": "go"})
+        self.assertEqual(self.state["attack_previews"], {attacker: {"direct": {"damage": 2}}})
+
+    def test_a_climax_combo_shows_in_the_hand_and_once_its_live(self):
+        info = {20: {"name": "Hero", "card_type": "Character", "power": 5000, "soul": 1, "level": 0,
+                     "text": '【AUTO】 【CXCOMBO】 When this card attacks, if "Big Finish" is in your climax area, draw 1 card.'},
+                14: {"name": "Big Finish", "card_type": "Climax"}, 13: {"name": "Other", "card_type": "Climax"}}
+        env = game.SimpleNamespace(info=lambda pk: info.get(pk, {}))
+        hero = zones(self.state, 1)["hand"][0]  # card 20
+        self.state["players"]["1"]["stage"]["C1"] = zones(self.state, 1)["hand"].pop(0)
+        zones(self.state, 1)["hand"] += [{"uid": "cx", "card": 14, "pos": "stand", "face_down": False},
+                                         {"uid": "other", "card": 13, "pos": "stand", "face_down": False}]
+        game.refresh_stats(self.state, env)
+        self.assertEqual(game.view(self.state, 1)["hand_combos"], {"cx": [hero["uid"]]})
+        self.assertEqual(game.view(self.state, 1)["combos"], {})
+        zones(self.state, 1)["climax"].append(zones(self.state, 1)["hand"].pop(-2))
+        game.refresh_stats(self.state, env)
+        self.assertEqual(game.view(self.state, 2)["combos"], {hero["uid"]: 14})  # both players see it
+        self.assertEqual(game.view(self.state, 1)["hand_combos"], {})
+        info[20]["text"] = '【CONT】 【CXCOMBO】 If there is a climax in your climax area, this card gets +1000 power.'  # any climax will do
+        zones(self.state, 1)["climax"] = [{"uid": "o", "card": 13, "pos": "stand", "face_down": False}]
+        game.refresh_stats(self.state, env)
+        self.assertEqual(self.state["combos"], {hero["uid"]: 13})
+
     def test_a_comeback_trigger_with_no_character_to_return_says_so(self):
         self.setup_battle(defender=False)
         self.assertFalse(zones(self.state, 1)["waiting"])
