@@ -113,6 +113,15 @@ class FrontLineTests(TestCase):
         t.hand(t.card(1004, power=3000))
         self.assertEqual(t.next()["to"], "C3")
 
+    def test_fills_an_empty_lane_even_with_a_weak_character_facing_a_strong_one(self):
+        # An open lane is an attack given up (and a direct attack offered): worth more than the battle it would lose.
+        t = Table()
+        t.seat(t.me, "C2", t.card(1001, power=5000))
+        t.seat(t.me, "C3", t.card(1002, power=5000))
+        t.seat(t.them, game.OPPOSITE["C1"], t.card(1, power=9000))
+        weak = t.hand(t.card(1003, power=500))[0]
+        self.assertEqual(t.next(), {"type": "move", "uid": weak["uid"], "to": "C1"})
+
     def test_counts_what_a_back_row_assist_adds(self):
         t = Table()
         t.seat(t.me, "C1", t.card(1001, power=1000))
@@ -182,12 +191,33 @@ class IdleBackRowTests(TestCase):
         with mock.patch.object(cpu.Easy, "slip", return_value=False):
             self.assertNotEqual(self.act(t, "easy").get("uid"), back["uid"])
 
-    def test_one_with_something_to_do_there_stays(self):
-        for text in (BRAINSTORM_TEXT, "【CONT】 Assist All of your characters in front of this card get +500 power.",
+    def test_one_with_an_ability_it_uses_there_stays(self):
+        for model in ("standard", "strategic"):
+            with self.subTest(model=model):
+                t, back = self.table(BRAINSTORM_TEXT)
+                t.stock(1)
+                self.assertNotEqual(self.act(t, model).get("type"), "move")  # it brainstorms instead
+                t.state["acts"] = {}  # and once that's done (or with nothing to pay for it), it still stays
+                t.me["zones"]["stock"] = []
+                self.assertNotEqual(self.act(t, model).get("uid"), back["uid"])
+
+    def test_support_comes_up_rather_than_leave_a_lane_open(self):
+        # An extra attack is worth more than a small assist, or a boost that works from the front row as well.
+        for text in ("【CONT】 Assist All of your characters in front of this card get +500 power.",
                      "【AUTO】 When your other character attacks, choose 1 of your characters, and that character gets +500 power until end of turn."):
             with self.subTest(text=text):
                 t, back = self.table(text)
-                self.assertNotEqual(self.act(t, "standard").get("uid"), back["uid"])
+                self.assertEqual(self.act(t, "standard"), {"type": "move", "uid": back["uid"], "to": "C1"})
+
+    def test_an_ability_it_never_uses_doesnt_keep_it_there(self):
+        # Seen in self-play (cpu_selfplay): back row characters kept back for abilities the CPU never activates.
+        for text in ("【ACT】 [Put this card into your clock] Draw up to 2 cards, choose 1 card in your hand, and put it into your waiting room.",
+                     "【ACT】 [Put this 【STAND】 card at the bottom of your deck] Choose 1 of your characters, and that character gets +1500 power until end of turn.",
+                     "【CONT】 You can put any number of cards with the same card name as this card into your deck.",
+                     "【CONT】 If a climax with [choice] in its trigger icon is in your climax area, this card in all of your zones gets [choice] in the trigger icon."):
+            with self.subTest(text=text):
+                t, back = self.table(text)
+                self.assertEqual(self.act(t, "standard"), {"type": "move", "uid": back["uid"], "to": "C1"})
 
     def test_takes_the_place_of_one_better_used_in_the_back(self):
         t = Table()
@@ -381,7 +411,28 @@ class ClimaxChoiceTests(TestCase):
         self.assertFalse(self.played(self.next(self.table(mine=5000))))
         self.assertFalse(self.played(self.next(self.table(theirs=9000))))
         self.assertFalse(self.played(self.next(self.table(theirs=None))))  # a direct attack needs no power
-        self.assertFalse(self.played(self.next(self.table(text=self.SOUL))))
+
+    def test_for_the_soul_it_adds(self):
+        # Seen in self-play (cpu_selfplay): three climax phases in four ended with a climax held and attackers standing.
+        for theirs in (1000, 9000, None):
+            with self.subTest(theirs=theirs):
+                self.assertTrue(self.played(self.next(self.table(theirs=theirs, text=self.SOUL))))
+
+    def test_not_one_a_combo_in_hand_is_waiting_for(self):
+        t = self.table(text=self.SOUL)
+        t.hand(t.card(1004, level=0, text='【AUTO】 【CXCOMBO】 When this card attacks, if "CX" is in your climax area, draw 1 card.'))
+        self.assertFalse(self.played(self.next(t)))
+
+    def test_a_second_copy_isnt_kept_for_it(self):
+        t = self.table(text=self.SOUL)
+        t.hand(t.card(1004, level=0, text='【AUTO】 【CXCOMBO】 When this card attacks, if "CX" is in your climax area, draw 1 card.'))
+        t.hand(1003)
+        self.assertEqual(self.next(t)["to"], "climax")
+
+    def test_the_one_that_adds_the_most_soul(self):
+        t = self.table(text=self.SOUL)
+        two = t.hand(t.card(1005, card_type="Climax", name="TWO", power=None, level=None, text="【CONT】 All of your characters get +2 soul."))[0]
+        self.assertEqual(self.next(t), {"type": "move", "uid": two["uid"], "to": "climax"})
 
     def test_for_a_combo(self):
         t = self.table(mine=5000, text=self.SOUL)
@@ -431,7 +482,7 @@ class HardFinishTests(TestCase):
     def test_a_climax_that_makes_the_win_possible(self):
         t = self.table([1, 1], 5, cx_text=ClimaxChoiceTests.SOUL)  # 2 direct attacks: 2 + 2 without it, 3 + 3 with it
         self.assertEqual(self.next(t), {"type": "move", "uid": self.cx["uid"], "to": "climax"})
-        self.assertEqual(self.next(t, "strategic"), {"type": "phase", "phase": "attack"})  # it needs a battle to win
+        self.assertEqual(self.next(t, "strategic")["to"], "climax")  # for its soul, as any climax with nothing better to do
 
     def test_no_climax_that_would_only_go_further_over(self):
         t = self.table([2, 2], 3, cx_text=ClimaxChoiceTests.SOUL)  # direct 3 + 3: one attack is exact without it
@@ -517,9 +568,23 @@ class EncoreTests(TestCase):
         t.hand(*hand)
         return t, card
 
-    def test_low_levels_go_to_the_waiting_room(self):
-        t, card = self.encore_table(1, 9)
+    def test_low_levels_go_to_the_waiting_room_without_stock_to_spare(self):
+        t, card = self.encore_table(1, 5)
         self.assertEqual(t.next(), {"type": "move", "uid": card["uid"], "to": "waiting"})
+
+    def test_low_levels_are_encored_with_stock_to_spare(self):
+        # Seen in self-play (cpu_selfplay): it lost games with 5 or 6 stock it never spent.
+        for level in (0, 1):
+            with self.subTest(level=level):
+                t, card = self.encore_table(level, 6)
+                self.assertEqual(t.next(), {"type": "encore", "uid": card["uid"]})
+
+    def test_low_levels_not_with_the_stock_wanted_for_a_card_in_hand(self):
+        t, card = self.encore_table(1, 7, 2001)
+        t.card(2001, level=3, power=9000, cost=2)
+        self.assertEqual(t.next()["type"], "move")
+        t.stock(1)
+        self.assertEqual(t.next()["type"], "encore")
 
     def test_level_2_and_up_is_encored(self):
         t, card = self.encore_table(2, 9)

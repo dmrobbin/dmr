@@ -16,12 +16,14 @@ The "standard" model:
 - Clocks a card every turn to draw, and uses abilities that bring cards to its hand. Stock comes third,
   after reversing enemies and cards in hand.
 - Plays cards with a cx combo ahead of others when their climax is available, and that climax next.
-- Plays a climax only with a standing character in its front row to attack with, and only for a cx combo of a
-  character on its stage, or for the power to win a battle it otherwise wouldn't (it ignores possible backups).
+- Plays a climax only with a standing character in its front row to attack with: for a cx combo of a character on its
+  stage, or for the power to win a battle it otherwise wouldn't (it ignores possible backups), or else for the soul it
+  adds to its attackers, unless a cx combo of a character in its hand is waiting for it.
   Power that only turns a lost battle into a tie (both reversed) counts some of the time: never at the lowest
   aggression, more often the higher it is, always at the highest.
 - Plays a backup when that makes the defender at least as strong as the attacker.
-- Encores only level 2 and up, and not if that leaves too little stock for an equal or better card in hand.
+- Encores level 2 and up, but not if that leaves too little stock for an equal or better card in hand; lower levels
+  only with stock to spare (see Mind.worth_encore).
 
 Aggression weighs these against each other: at 1 (standard) as above, where a battle that would be a tie is a
 side attack instead. Each point more values reversing enemies more and its own characters less (see Temper).
@@ -65,15 +67,20 @@ PLAN_VALUE = 5  # what being part of a focused CPU's combo adds to a card's valu
 MIN_FRONT_LINE = 2  # a focused CPU saving stock still pays for characters up to this many at the front
 FILL_MIN_DECK = 8  # a strategic CPU won't mill a deck this small, since refreshing costs damage
 HAND_EFFECT = re.compile(r"\bdraw\b|into your hand|to your hand", re.I)
-IDLE_BONUS = 2500  # front line power that bringing up a back row character with nothing to do there is worth: more
-# than a lost battle costs (Temper.lose_penalty), so it fills an empty place rather than leave it open for direct attacks
+IDLE_BONUS = 2500  # front line power that bringing up a back row character with nothing to do there is worth, in
+# place of a front character that has something to do in the back row
+LANE_VALUE = 3000  # front line power a filled front place is worth: an attack (its damage and its trigger check's stock)
+# and no direct attack for the opponent. More than a lost battle (Temper.lose_penalty) and a small assist cost together,
+# so it fills an open place with any character it has rather than leave it open
+KEEP_BACK = LANE_VALUE  # what a back row character whose act it uses there loses by coming up: it stays
+DECK_RULE = re.compile(r"\bany number of cards\b.*\binto your deck\b", re.I)  # deck building, nothing in play
 # What triggers an auto ability only in battle, or when the card arrives, which has already happened by the time it's
 # on the back row: abilities triggered only by these don't make it worth keeping a character there.
 FRONT_ONLY_TRIGGERS = {"reverse_self", "reverse_opponent", "attack", "attack_end", "frontal", "frontal_self", "facing_attacks",
                        "being_attacked", "leave", "cancel", "cancel_facing", "no_cancel", "no_cancel_direct", "climax_self",
                        "play", "placed_by", "placed_self", "placed_from_deck", "placed_from_waiting", "placed_from_own_waiting",
                        "placed_from_marker"}
-SELF_ONLY = re.compile(r"\bthis card (?:gets|cannot|can't|does not|doesn't|is)\b", re.I)  # a cont ability on itself
+SELF_ONLY = re.compile(r"\bthis card (?:in all of your zones )?(?:gets|cannot|can't|does not|doesn't|is)\b", re.I)  # a cont ability on itself
 FOR_OTHERS = re.compile(r"\bcharacters?(?: in [^,.]*)? gets?\b|in front of this card|\bassist\b|opponent|back stage", re.I)
 CHOICE_DESTINATIONS = ["hand", "stock", "deck", "deck_bottom", "waiting"]  # best first, for "where does it go?"
 WAITS = {"ability_show": 2, "combo_show": 1.6, "pending_climax": 2, "pending_damage": 2, "auto_next": .9}  # seconds to let these show; otherwise STEP_WAIT
@@ -146,6 +153,8 @@ def fallback_action(state, me):
 
 
 class Mind:
+    lane_value = LANE_VALUE
+
     def __init__(self, state, me, info, temper, rng):
         self.state = state
         self.me = me
@@ -372,19 +381,27 @@ class Mind:
         return None
 
     def worth_encore(self, card):
+        """Level 2 and up, unless paying would cost it an equal or better card in hand. Lower than that only with stock to
+        spare: enough left after paying for another encore, and for the dearest card in hand it could play by next level."""
         stock = len(self.zones["stock"])
-        if stock < game.ENCORE_COST or game.number(self.details(card).get("level")) < ENCORE_MIN_LEVEL:
+        if stock < game.ENCORE_COST or game.has_status(self.state, card["uid"], "no_encore"):
             return False
-        if game.has_status(self.state, card["uid"], "no_encore"):
-            return False
-        power = game.number(self.details(card).get("power"))
         left = stock - game.ENCORE_COST
+        if game.number(self.details(card).get("level")) < ENCORE_MIN_LEVEL:
+            return left >= game.ENCORE_COST + self.stock_wanted()
+        power = game.number(self.details(card).get("power"))
         for other in self.zones["hand"]:
             details = self.details(other)
             if self.kind(other) == "character" and game.number(details.get("power")) >= power and self.can_play(other) \
                     and self.play_cost(other) > left:
                 return False  # paying would cost it a card at least this strong
         return True
+
+    def stock_wanted(self):
+        """The stock the dearest card in its hand that it could play by its next level would take."""
+        costs = [game.number(self.details(c).get("cost")) for c in self.zones["hand"]
+                 if self.kind(c) in ("character", "event") and game.number(self.details(c).get("level")) <= self.my_level() + 1]
+        return max(costs, default=0)
 
     def counter(self, attack):
         """A backup, if that's what it takes for the defender to at least match the attacker."""
@@ -421,7 +438,8 @@ class Mind:
         return {"type": "phase", "phase": "main"}
 
     def front_score(self, players=None):
-        """What the front line is worth: its power, more for facing what it can beat, less for what beats it."""
+        """What the front line is worth: a lane's worth for each place filled, its power, more for facing what it can
+        beat, less for what beats it."""
         state = {**self.state, "players": players} if players else self.state
         stats, _ = game.compute_stats(state, self.env)
         side = state["players"][self.me]
@@ -432,7 +450,7 @@ class Mind:
             if not card:
                 continue
             power = stats[card["uid"]]["power"]
-            score += power
+            score += self.lane_value + power
             enemy = them["stage"][facing]
             if enemy:
                 theirs = stats[enemy["uid"]]["power"]
@@ -484,24 +502,49 @@ class Mind:
         return best or self.useful_event() or self.back_row() or self.hand_ability()
 
     def move_bonus(self, card, src, slot):
-        """A back row character with nothing to do there comes up to the front: to an empty place, or in place of a
-        character that does have something to do in the back row."""
-        if src in game.OPPOSITE or slot not in game.OPPOSITE or not self.idle_in_back(card):
+        """A back row character comes up to the front, unless it has an act ability there that it uses. One with nothing
+        to do there at all also takes the place of a front character that does have something to do in the back row."""
+        if src in game.OPPOSITE or slot not in game.OPPOSITE:
+            return 0
+        if self.uses_in_back(card):
+            return -KEEP_BACK
+        if not self.idle_in_back(card):
             return 0
         there = self.side["stage"][slot]
         return IDLE_BONUS if not there or not self.idle_in_back(there) else 0
 
     def idle_in_back(self, card):
-        """Whether none of this character's abilities can do anything for it on the back row: it has no act abilities,
-        no cont abilities for other cards, and only auto abilities that need it in battle or that have already happened."""
+        """Whether none of this character's abilities can do anything for it on the back row: no act abilities it would
+        use (see back_act), no cont abilities for other cards, and only auto abilities that need it in battle or that
+        have already happened."""
         for ability in game.abilities_of(self.state, card, self.env):
             kind = ability["kind"]
             if kind == "cont":
+                if DECK_RULE.search(ability["text"]):
+                    continue
                 if not SELF_ONLY.search(ability["text"]) or FOR_OTHERS.search(ability["text"]):
+                    return False
+            elif kind == "act":
+                if self.back_act(ability):
                     return False
             elif kind != "auto" or not ability.get("when") or any(w["on"] not in FRONT_ONLY_TRIGGERS for w in ability["when"]):
                 return False
         return True
+
+    def uses_in_back(self, card):
+        """Whether this character has an act ability it would use on the back row (see back_act)."""
+        return any(a["kind"] == "act" and self.back_act(a) for a in game.abilities_of(self.state, card, self.env))
+
+    def act_it_can_use(self, ability):
+        """Whether this is the kind of act ability it uses on the back row (see usable_acts), whatever the stock now:
+        one it can carry out, that doesn't spend the hand, and that rests the character or is once a turn."""
+        parts = {part["part"] for part in ability.get("cost", [])}
+        return (ability["kind"] == "act" and not self.by_hand_only(ability) and not self.fatal(ability)
+                and "pick" not in parts and ("self_rest" in parts or bool(ability.get("once"))))
+
+    def back_act(self, ability):
+        """Whether it would use this act ability on the back row: one that brings cards to the hand (see hand_ability)."""
+        return self.act_it_can_use(ability) and bool(HAND_EFFECT.search(ability["text"]))
 
     def back_row(self):
         """An open back slot takes a card that pays nothing, to have more characters out."""
@@ -534,9 +577,7 @@ class Mind:
                 if row["why"]:
                     continue
                 ability = game.abilities_of(self.state, card, self.env)[row["index"]]
-                parts = {part["part"] for part in ability.get("cost", [])}
-                if (not self.by_hand_only(ability) and ability["kind"] == "act" and self.can_spend(stock_cost(ability))
-                        and not self.fatal(ability) and "pick" not in parts and ("self_rest" in parts or ability.get("once"))):
+                if self.act_it_can_use(ability) and self.can_spend(stock_cost(ability)):
                     yield {"type": "activate", "uid": card["uid"], "index": row["index"]}, ability
 
     def can_spend(self, stock):
@@ -548,12 +589,30 @@ class Mind:
 
     def play_climax(self):
         """A climax worth playing (see the module's notes): the one a character's cx combo wants first, then one whose
-        power wins a battle."""
+        power wins a battle, then the one that adds the most soul to its attackers."""
         if self.zones["climax"] or not self.attackers():
             return None
         climaxes = self.playable_climaxes()
-        wanted = [c for c in climaxes if self.for_combo(c)] or [c for c in self.spare_climaxes(climaxes) if self.wins_battle_with(c)]
+        spare = self.spare_climaxes(climaxes)
+        wanted = [c for c in climaxes if self.for_combo(c)] or [c for c in spare if self.wins_battle_with(c)]
+        if not wanted:
+            souls = sorted(((self.soul_added(c), c) for c in spare if not self.awaited(c)), key=lambda pair: -pair[0])
+            wanted = [souls[0][1]] if souls and souls[0][0] > 0 else []
         return {"type": "move", "uid": wanted[0]["uid"], "to": "climax"} if wanted else None
+
+    def awaited(self, climax):
+        """Whether a character in its hand that it could play by its next level has a cx combo with this climax, and
+        it's the only copy in hand: it's kept for that."""
+        if sum(c["card"] == climax["card"] for c in self.zones["hand"]) > 1:
+            return False
+        return any(self.kind(card) == "character" and game.number(self.details(card).get("level")) <= self.my_level() + 1
+                   and any(self.names_climax(line, climax) for line in self.combo_climaxes(card)) for card in self.zones["hand"])
+
+    def soul_added(self, climax):
+        """How much soul this climax would add to its attackers, all together."""
+        now, then = self.stats_now(), self.stats_with(climax)
+        soul = lambda stats, card: stats.get(card["uid"], {}).get("soul", game.number(self.details(card).get("soul")))
+        return sum(soul(then, card) - soul(now, card) for _, card in self.attackers())
 
     def spare_climaxes(self, climaxes):
         """The climaxes it's happy to play without a combo."""
@@ -888,6 +947,10 @@ class Strategic(Mind):
     def brings_cards(self, ability):
         return fills_waiting(ability) or takes_from_waiting(ability) or HAND_EFFECT.search(ability["text"])
 
+    def back_act(self, ability):
+        """Whether it would use this act ability on the back row: one that brings it cards (see prepare)."""
+        return self.act_it_can_use(ability) and bool(self.brings_cards(ability))
+
     def prepare(self):
         """Whatever brings it the most cards to work with, in the order that brings the most."""
         placed = self.set_out()
@@ -975,6 +1038,7 @@ class Hard(Strategic):
 
 class Easy(Mind):
     """Standard, played carelessly: every move is one the rules allow, just not a good one (see the module's notes)."""
+    lane_value = 0  # it doesn't count an open place as an attack given up
 
     def slip(self):
         """Whether it passes up a chance this time."""
