@@ -10,6 +10,19 @@
   <div class="challenge-event">
     <p class="challenge-event-head"><span class="deck-tag">A moment</span> {{ payload.title }}</p>
     <div class="challenge-event-stage" data-scene-root></div>
+    {% if rewards %}
+      {# Shown when the scene ends: what the visit gave (world_views.world_scene). #}
+      <section class="scene-rewards" data-scene-rewards hidden aria-labelledby="scene-rewards-title" tabindex="-1">
+        <h2 id="scene-rewards-title" class="scene-rewards-title">You got</h2>
+        <ul class="scene-rewards-list">
+          {% for reward in rewards %}<li>★ {{ reward.text }}</li>{% endfor %}
+        </ul>
+        <p class="scene-rewards-actions">
+          {% if reward_link %}<a class="button-small" href="{{ reward_link }}">See the cards</a>{% endif %}
+          <a class="button-small{% if reward_link %} secondary{% endif %}" href="{% url 'weiss:world_town' save.slot %}" data-rewards-town>Back to the town</a>
+        </p>
+      </section>
+    {% endif %}
     <p class="challenge-event-foot"><a class="link-button" href="{% url 'weiss:world_town' save.slot %}" data-town-url>Back to the town</a></p>
   </div>
   {{ payload|json_script:"scene-payload" }}
@@ -19,7 +32,14 @@
       const town = document.querySelector("[data-town-url]").href;
       const player = new ScenePlayer(document.querySelector("[data-scene-root]"), scene, {
         playerName: "{{ player_name|escapejs }}",
-        onEnd: () => setTimeout(() => location.assign(town), 600),
+        // A scene with rewards ends on them (the player goes on when ready); one without goes back to the town.
+        onEnd: () => {
+          const rewards = document.querySelector("[data-scene-rewards]");
+          if (!rewards) return setTimeout(() => location.assign(town), 600);
+          rewards.hidden = false;
+          rewards.focus({ preventScroll: true });
+          rewards.scrollIntoView({ block: "nearest" });
+        },
       });
       player.start();
     });

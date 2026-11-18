@@ -7,7 +7,7 @@ CHISATO_QUESTS = [
      "offer": ["them (pleased): Oh, hi! Have you tried the shortcake here? It's the best!",
                "them: I'm giving mornings a try. Want to come along?"],
      "stages": [
-         {"text": "Meet Chisato at the cafe in the morning", "objectives": [{"do": "visit", "place": "cafe", "times": [0], "scene": "World: Chisato, Cafe"}]},
+         {"text": "Meet Chisato at the cafe in the morning", "objectives": [{"do": "visit", "place": "cafe", "times": [0], "scene": "World: Chisato, Cafe", "rewards": [{"coins": 200}]}]},
          {"text": "Bring her a strawberry shortcake", "objectives": [{"do": "give_gift", "gift": "shortcake", "to": "Chisato Nishikigi"}]},
          {"text": "Tell her about your morning", "objectives": [{"do": "talk", "to": "Chisato Nishikigi", "script": ["them (pleased): Ahh, that's perfect. Let's do this again!", "player: I'd like that."]}]},
      ],
@@ -36,7 +36,7 @@ TAKINA_QUESTS = [
      "offer": ["them (dismayed): You're the one Chisato won't stop talking about. Stay out of my way.",
                "them: I have a job tonight, off the books. I could use a second pair of eyes."],
      "stages": [
-         {"text": "Watch the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Takina, Rooftop"}]},
+         {"text": "Watch the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Takina, Rooftop", "rewards": [{"pack": "climax_pack"}]}]},
          {"text": "Have Lycoris, Takina & Chisato", "objectives": [{"do": "have_card", "card": "LRC/W105-TE17"}]},
          {"text": "Report back to Takina", "objectives": [{"do": "talk", "to": "Takina Inoue", "script": ["them: You didn't get in the way. That's more than I expected.", "them (pleased): ...Thanks, I suppose."]}]},
      ],

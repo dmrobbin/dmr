@@ -497,8 +497,11 @@ def world_scene(request, slot):
     compiled, errors = scenes.compile_scene(scene.script) if scene else (None, True)
     if errors:
         return redirect("weiss:world_town", slot=slot)
+    # A quest visit's rewards, given on arrival: shown when the scene ends, so the moment ends with something gained.
+    rewards = [{"text": text, "link": link} for text, link in (pending or {}).get("rewards", [])]
     return render(request, "weiss/world_scene.html", {
         "save": save, "payload": scenes.scene_payload(compiled, scene.name, viewer=request.user), "player_name": request.user.username,
+        "rewards": rewards, "reward_link": next((reward["link"] for reward in rewards if reward["link"]), ""),
     })
 
 

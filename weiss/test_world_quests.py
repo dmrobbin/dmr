@@ -342,13 +342,15 @@ class ObjectiveTests(QuestBase):
 
     def test_going_somewhere_at_a_time(self):
         Scene.objects.create(name="Beach at night", script="background beach")
-        self.take("q", {"do": "visit", "place": "beach", "times": [3], "scene": "Beach at night"})
+        self.take("q", {"do": "visit", "place": "beach", "times": [3], "scene": "Beach at night", "rewards": [{"coins": 50}]})
         self.save.today.pop("engaged")  # taking it was time spent at the plaza: as if taken earlier
         world.travel(self.save, "beach")
         self.assertEqual(quests.status(self.fresh(), "q"), "active")
         for _ in range(3):
             world.engage(self.save)
             world.wait(self.save)
+            self.assertEqual(quests.status(self.fresh(), "q"), "active")  # not till they've said where to spend it
+            world.travel(self.save, "beach")  # the map after time passes: staying
         self.assertEqual(self.save.time_of_day, "Night")
         self.assertEqual(quests.status(self.fresh(), "q"), "settling")
 
@@ -447,6 +449,67 @@ class VisitAndCardTests(QuestBase):
                                     "stages": [{"text": "Go", "objectives": [{"do": "visit", "place": "beach"}]}],
                                     "endings": [{"key": "e", "title": "E"}]})
         self.assertTrue(any("name the scene" in problem for problem in problems), problems)
+
+    def test_a_visit_must_give_something(self):
+        Scene.objects.create(name="Beach", script="background beach")
+        _, problems = quests.check({"key": "q", "title": "Q", "giver": "Ruby", "about": "x", "offer": "",
+                                    "stages": [{"text": "Go", "objectives": [{"do": "visit", "place": "beach", "scene": "Beach"}]}],
+                                    "endings": [{"key": "e", "title": "E"}]})
+        self.assertTrue(any("give it a reward" in problem for problem in problems), problems)
+
+    def visit_quest(self, rewards):
+        script = "\n".join(["cast ruby as Ruby", "background beach", "ruby enters center with fade", "ruby: You came!"])
+        Scene.objects.create(name="Ruby at the beach", script=script)
+        make_quest("q", self.ruby, stages=[stage({"do": "visit", "place": "beach", "scene": "Ruby at the beach", "rewards": rewards})])
+        world.quest_act(self.save, self.ruby.pk, "accept", "q", {})
+        save = self.fresh()
+        save.today.pop("engaged", None)  # as if taken earlier: free to go
+        save.save()
+        return save
+
+    def test_arriving_plays_the_scene_gives_its_reward_and_brings_its_cast(self):
+        save = self.visit_quest([{"coins": 50}])
+        before = save.money
+        world.travel(save, "beach")
+        save = self.fresh()
+        self.assertEqual(save.money - before, 50)
+        self.assertTrue(save.flags["scene"]["auto"])
+        self.assertEqual(save.flags["scene"]["rewards"], [["50 coins", ""]])
+        town = world.town(save)
+        self.assertTrue(town["scene"]["auto"])  # the town goes straight to it
+        self.assertEqual(town["scene"]["who"], "Ruby")
+        self.assertIn(self.ruby.pk, [cpu.pk for cpu, _ in world.present(save)])  # Ruby is at the beach afterwards
+        self.assertNotIn(self.ruby.pk, [cpu.pk for cpu, _ in world.present(save, "plaza")])  # and only there
+
+    def test_the_cast_stays_only_for_that_time_of_day(self):
+        save = self.visit_quest([{"coins": 50}])
+        world.travel(save, "beach")
+        save = self.fresh()
+        world.engage(save)
+        world.wait(save)
+        world.travel(save, "beach")
+        self.assertNotIn(self.ruby.pk, [cpu.pk for cpu, _ in world.present(self.fresh())])
+
+    def test_the_scene_ends_on_what_it_gave(self):
+        save = self.visit_quest([{"coins": 50}])
+        world.travel(save, "beach")
+        self.client.force_login(self.user)
+        page = self.client.get(reverse("weiss:world_scene", args=[1]))
+        self.assertContains(page, "You got")
+        self.assertContains(page, "50 coins")
+        self.assertNotIn("scene", self.fresh().flags)  # played once
+
+    def test_after_time_passes_the_map_opens_even_in_test_mode(self):
+        self.save.flags["test_mode"] = True
+        world.engage(self.save)
+        world.wait(self.save, staff=True)
+        town = world.town(self.save)
+        self.assertTrue(town["choose"])  # the map opens
+        self.assertFalse(town["choose_required"])  # and in test mode can be closed (which is staying)
+        self.save.flags["test_mode"] = False
+        self.assertTrue(world.town(self.save)["choose_required"])
+        world.travel(self.save, world.place_of(self.save).key)  # staying is an answer
+        self.assertFalse(world.town(self.save)["choose"])
 
     def test_a_card_objective_carries_the_card_to_show(self):
         card = self.cards[0]

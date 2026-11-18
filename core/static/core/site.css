@@ -3277,3 +3277,9 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .quest-card-stats div { display: flex; gap: .3rem; }
 .quest-card-stats dt { color: var(--muted); }
 .quest-card-stats dd { margin: 0; font-variant-numeric: tabular-nums; }
+/* World mode: what a quest visit's scene gave, shown when it ends */
+.scene-rewards { margin: .8rem 0 0; padding: .8rem 1rem; border: 1px solid rgb(212 175 55 / .35); border-radius: .5rem; background: var(--accent-soft); }
+.scene-rewards:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+.scene-rewards-title { margin: 0 0 .4rem; font-size: 1rem; }
+.scene-rewards-list { margin: 0 0 .6rem; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .2rem; }
+.scene-rewards-actions { margin: 0; display: flex; flex-wrap: wrap; gap: .5rem; }

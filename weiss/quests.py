@@ -33,6 +33,7 @@ from types import SimpleNamespace
 from django.urls import reverse
 
 from . import buffs, chatter, packs, world
+from . import scenes as scene_language
 from .lists import is_climax
 from .models import Card, CpuProfile, GiftItem, Quest, Scene, WorldPlace
 
@@ -59,7 +60,8 @@ OBJECTIVES = {  # do: (fields it can have, what it's for: the reference's words)
     "stakes": ({"fee", "against"}, "Win a high-stakes duel with an entry fee of at least this."),
     "streak": ({"wins", "against"}, "Win so many duels in a row (a loss starts it again)."),
     "beat_different": ({"count", "temperament", "cpus"}, "Beat so many different CPUs (of a temperament, or among these)."),
-    "visit": ({"place", "days", "times", "scene"}, "Be at a place (on these days, at these times); its scene plays there, so something happens."),
+    "visit": ({"place", "days", "times", "scene", "rewards"}, "Be at a place (on these days, at these times): its scene plays there "
+              "straight away, with the CPUs it casts there afterwards, and its rewards (coins or a pack, usually) are given."),
     "give_card": ({"card", "copies", "to"}, "Hand a card over to a CPU, for good: it leaves the save's cards and decks."),
     "give_gift": ({"gift", "to"}, "Give a CPU this gift."),
     "rank": ({"cpu", "rank"}, "Reach this friendship rank with a CPU."),
@@ -157,6 +159,8 @@ def check(data, context=None, giver=None):
     if "rank" in requires and (not giver or not isinstance(requires["rank"], int) or not 0 <= requires["rank"] < len(context.ranks)):
         problems.append(f"{where} requires: rank is the friendship rank with the giver it needs, 0 to {len(context.ranks) - 1}.")
 
+    visit_rewards = []  # (where, as written, the objective): checked once rewards() is defined, below
+
     def objective(raw, at):
         if not isinstance(raw, dict) or raw.get("do") not in OBJECTIVES:
             said = f"there's no objective “{raw['do']}”" if isinstance(raw, dict) and raw.get("do") else "write it as {\"do\": ...}"
@@ -229,6 +233,9 @@ def check(data, context=None, giver=None):
                 problems.append(f"{at} (visit): name the scene that plays there (scene), so something happens when they arrive.")
             elif not context.scenes(str(raw["scene"])):
                 problems.append(f"{at} (visit): there's no scene called “{raw['scene']}”.")
+            if not raw.get("rewards"):
+                problems.append(f"{at} (visit): give it a reward (rewards: coins or a pack, usually), so the scene feels like progress.")
+            visit_rewards.append((at, raw.get("rewards"), obj))
         if do in ("give_card", "give_gift", "talk") and "to" not in raw:
             problems.append(f"{at} ({do}): name who it's for in to.")
         if do == "give_gift" and raw.get("gift") not in context.gifts:
@@ -296,6 +303,9 @@ def check(data, context=None, giver=None):
                 problems.append(f"{at} reward {i}: copies (1 to {MAX_COPIES}) go with a card.")
             given.append(dict(reward))
         return given
+
+    for at, raw, obj in visit_rewards:
+        obj["rewards"] = rewards(raw, f"{at} (visit)")
 
     endings, seen = [], set()
     raw_endings = data.get("endings")
@@ -713,8 +723,16 @@ def gift_given(save, cpu, item):
     advance(save)
 
 
+def scene_cast(scene):
+    """The CPUs a scene casts (their ids), from its cast lines."""
+    compiled, _ = scene_language.compile_scene(scene.script)
+    return sorted({profile.pk for profile in compiled["cast"].values()})
+
+
 def arrived(save):
-    """The save is somewhere, at some time (it went there, or time moved on): visits done there."""
+    """The save is somewhere at some time (it went there, or chose to stay when time moved on): visits done there. A
+    visit gives its rewards, puts the CPUs its scene casts at the place for this time of day (so the player isn't left
+    in an empty place after meeting them), and plays its scene straight away (the town goes to it)."""
     place = world.place_of(save)
     if not place:
         return
@@ -726,12 +744,17 @@ def arrived(save):
             if ("days" in obj and weekday not in obj["days"]) or ("times" in obj and time not in obj["times"]):
                 continue
             tick(save, quest, key)
+            given = give_rewards(save, quest, obj.get("rewards") or [])
             link = None
             scene = Scene.objects.filter(name__iexact=obj.get("scene") or "").first() if obj.get("scene") else None
+            cast = scene_cast(scene) if scene else []
+            world.meet(save, place.key, cast)
             if scene and not save.flags.get("scene"):
-                save.flags["scene"] = {"scene": scene.pk}
+                save.flags["scene"] = {"scene": scene.pk, "cpu": cast[0] if cast else None, "auto": True,
+                                       "rewards": [[text, reward_link] for text, reward_link in given]}
                 link = reverse("weiss:world_scene", args=[save.slot])
-            news(save, f"{describe(save, obj)}: done.", quest, link)
+            got = f" You got {', '.join(text for text, _ in given)}." if given else ""
+            news(save, f"{describe(save, obj)}: done.{got}", quest, link)
     advance(save)
 
 

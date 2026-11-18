@@ -379,7 +379,8 @@ on points alone, as before. World mode stays staff-only until the quests are in.
     `win_deck`, `stakes`, `streak` and `beat_different`. The engine keeps a whole-game record per player
     (`game.record`: `played` cards, and `combos` as [character, climax] when a combo ability starts).
     `win_deck` checks the deck as it was when the duel started.
-  - `visit` counts when the player travels, waits or finishes a duel. `give_gift` counts when a gift is given.
+  - `visit` counts when the player arrives somewhere, or chooses to stay on the map after time passes (so its scene plays
+    where they chose to be). `give_gift` counts when a gift is given.
   - `talk` and `give_card` are done from the talk box.
   - A card is any printing of its name.
 - **In the town:**
@@ -416,10 +417,15 @@ on points alone, as before. World mode stays staff-only until the quests are in.
 - Card serials are taken from each CPU's own finalized deck. The dev database holds only a few hundred cards, so the
   pack check ran offline and didn't confirm them; the server's import checks them against the real card table.
 - Not yet played in the browser.
-- **A visit always has something happening.** A visit objective must name its scene (`quests.check` refuses one without),
-  and the scene plays when the player arrives. The pilot's four visits have scenes that cast their CPU: Aang in the
-  forest, Azula and Takina on the rooftop, Chisato at the cafe. A scene casts its CPU whatever their schedule says, so
-  the meeting happens even when they aren't drawn to that place.
+- **A visit always has something happening, and always gives something.** A visit objective must name its scene and
+  its rewards (`quests.check` refuses one without either; coins or a pack, usually). On arriving:
+  - the rewards are given;
+  - the CPUs the scene casts are put at that place for that time of day (`world.meet`, read by `whereabouts`), whatever
+    the day's draw says, so the player isn't left in an empty place afterwards;
+  - the scene plays straight away (the town goes to it), and ends on what it gave, with "See the cards" for a pack.
+
+  The pilot's four visits: Aang in the forest (200 coins), Azula on the rooftop (a color pack), Takina on the rooftop
+  (a climax pack), Chisato at the cafe (200 coins).
 - **Card objectives show the card.** The objective reads "Have the card …", and the quest log and offer panel show the
   card's picture, colour, level, cost, rarity, type and set, with a note that any printing counts and where to look.
 
@@ -455,8 +461,8 @@ Time is the player's budget. Where to go and whom to see should be a choice.
   and nobody can be talked to or duelled until a place is chosen. It's kept on the save, so a reload brings it back.
 - **Staff test mode** (`world.test_mode`, `flags["test_mode"]`, staff only):
   - A "Test mode" toggle in the town's bar, dashed so it never looks like part of the game.
-  - When it's on: a "Wait (staff)" button passes time whenever, travel is free, and the map after time passes can be
-    skipped.
+  - When it's on: a "Wait (staff)" button passes time whenever and travel is free. The map still opens after time
+    passes, but can be closed, which is staying.
   - When it's off: staff play by the real rules.
 - **Hello and goodbye** (chatter contexts `hello` and `goodbye`, first line only, migration 0057):
   - What a CPU says when the player walks up and leaves, by rank, picked once per time of day.

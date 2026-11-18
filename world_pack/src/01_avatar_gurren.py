@@ -8,7 +8,7 @@ AANG_QUESTS = [
                "them: He was napping under a tree, and then he just wasn't there. Momo's no help at all.",
                "them: Could you check the forest? He likes to wander in the mornings."],
      "stages": [
-         {"text": "Search the forest in the morning or at noon", "objectives": [{"do": "visit", "place": "forest", "times": [0, 1], "scene": "World: Aang, Forest"}]},
+         {"text": "Search the forest in the morning or at noon", "objectives": [{"do": "visit", "place": "forest", "times": [0, 1], "scene": "World: Aang, Forest", "rewards": [{"coins": 200}]}]},
          {"text": "Win a duel with Aang: Master of All Elements in your deck", "objectives": [{"do": "win_with", "card": "ATLA/WX04-002"}]},
          {"text": "Tell Aang what you found", "objectives": [{"do": "talk", "to": "Aang", "script": ["them (pleased): You found Appa? Really?!", "them: Thank you, {player}. I owe you one."]}]},
      ],
@@ -51,7 +51,7 @@ AZULA_QUESTS = [
      "stages": [
          {"text": "Beat Aang in a duel", "objectives": [{"do": "defeat", "cpus": ["Aang"]}]},
          {"text": "Have Azula: Verge of Insanity", "objectives": [{"do": "have_card", "card": "ATLA/WX04-050S"}]},
-         {"text": "Watch the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Azula, Rooftop"}]},
+         {"text": "Watch the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Azula, Rooftop", "rewards": [{"pack": "color_pack"}]}]},
          {"text": "Give Azula your answer", "objectives": [{"do": "talk", "to": "Azula", "script": ["them: I've decided. Don't waste my time with sentiment.", "them (pleased): ...Good. Let's begin."]}]},
      ],
      "endings": [

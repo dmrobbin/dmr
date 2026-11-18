@@ -190,10 +190,10 @@
   const thisTime = () => ["this morning", "this afternoon", "this evening", "tonight"][town.time]; // as weiss.world.this_time
   function paintTime() {
     if (town.engaged && !map.hidden) closeMap(false);
-    mapButton.hidden = town.engaged || town.choose; // while choosing, the map is already open and has to be answered
-    // Time has just passed: where now? The map has to be answered (staying is a choice). Opened under the passage's
-    // cover, so it's there when the new time of day is shown.
-    if (town.choose && (map.hidden || !mapRequired)) openMap(true);
+    mapButton.hidden = town.engaged || town.choose; // while choosing, the map is already open
+    // Time has just passed: where now? The map opens under the passage's cover, so it's there when the new time of day
+    // is shown. It has to be answered (staying is a choice); in staff test mode it can be closed, which is staying.
+    if (town.choose && (map.hidden || (town.choose_required && !mapRequired))) openMap(town.choose_required);
     else if (!town.choose && mapRequired) closeMap(false);
     const staffWait = $("[data-staff-wait]");
     const testToggle = $("[data-test-mode]");
@@ -232,7 +232,7 @@
         passageEl.classList.remove("is-on");
         setTimeout(() => {
           passageEl.hidden = true;
-          if (mapRequired) $("[data-places] .town-place-here, [data-places] button:not(:disabled)")?.focus({ preventScroll: true });
+          if (town.choose) $("[data-places] .town-place-here, [data-places] button:not(:disabled)")?.focus({ preventScroll: true });
           resolve();
         }, reduced ? 0 : 450);
       };
@@ -310,6 +310,7 @@
     const staying = town.place && key === town.place.key;
     const data = await post(root.dataset.travelUrl, { place: key });
     if (!data) return;
+    if (playSceneNow()) return;
     mapRequired = false;
     closeMap(false);
     closeTalk(false);
@@ -849,17 +850,17 @@
       const button = document.createElement("button");
       button.type = "button";
       button.className = "town-place";
-      button.disabled = place.here && !mapRequired; // choosing where to spend a new time of day: staying is an answer
+      button.disabled = place.here && !town.choose; // choosing where to spend a new time of day: staying is an answer
       button.innerHTML = `<span class="town-place-art">${window.SceneBackdrops ? SceneBackdrops.draw(place.backdrop) : ""}</span>
         <span class="town-place-name"></span><span class="town-place-who small"></span>`;
       button.querySelector(".town-place-name").textContent = place.name;
-      const hereWords = mapRequired ? " (stay here)" : " (you're here)";
+      const hereWords = town.choose ? " (stay here)" : " (you're here)";
       if (place.here) {
         const note = document.createElement("span");
         note.className = "muted small";
         note.textContent = hereWords;
         button.querySelector(".town-place-name").append(note);
-        if (mapRequired) button.classList.add("town-place-here");
+        if (town.choose) button.classList.add("town-place-here");
       }
       button.querySelector(".town-place-who").append(...whoIsThere(place.who));
       button.setAttribute("aria-label", `${place.name}${place.here ? hereWords : ""}: ${place.who.length ? place.who.map((p) => p.name).join(", ") : "nobody right now"}`);
@@ -917,14 +918,28 @@
     closeTalk(false);
     mapRequired = required;
     $("[data-close-map]").hidden = required;
-    $("[data-map-title]").textContent = required ? "Where to now?" : "Where to?";
+    const choosingNow = required || Boolean(town.choose); // time has passed (closable only in staff test mode)
+    $("[data-map-title]").textContent = choosingNow ? "Where to now?" : "Where to?";
     const note = $("[data-map-note]");
-    note.hidden = !required;
-    note.textContent = required ? `It's ${town.weekday} ${town.time_name.toLowerCase()}. Choose where to spend it: staying here is fine too.` : "";
+    note.hidden = !choosingNow;
+    note.textContent = choosingNow ? `It's ${town.weekday} ${town.time_name.toLowerCase()}. Choose where to spend it: staying here is fine too.` : "";
     listPlaces();
     map.hidden = false;
     mapButton.setAttribute("aria-expanded", "true");
     if (!skipPassage) $("[data-places] button:not(:disabled)")?.focus({ preventScroll: true });
+  }
+
+  // Closing the map: after time passes (test mode, where it can be closed), that's staying where the player is.
+  function dismissMap() {
+    if (town.choose && town.place) return go(town.place.key);
+    closeMap();
+  }
+
+  // A quest's visit scene (weiss.quests.arrived) plays as soon as the player's there: off to it.
+  function playSceneNow() {
+    if (!town.scene || !town.scene.auto) return false;
+    window.location.assign(town.scene.url);
+    return true;
   }
 
   function closeMap(refocus = true) {
@@ -1186,9 +1201,9 @@
   stage.addEventListener("click", (event) => {
     if (advance && !event.target.closest("button, a, [data-box]")) advance();
   });
-  mapButton.addEventListener("click", () => (map.hidden ? openMap() : closeMap()));
+  mapButton.addEventListener("click", () => (map.hidden ? openMap() : dismissMap()));
   shopButton.addEventListener("click", () => (shop.hidden ? openShop() : closeShop()));
-  $("[data-close-map]").addEventListener("click", () => closeMap());
+  $("[data-close-map]").addEventListener("click", () => dismissMap());
   $("[data-close-shop]").addEventListener("click", () => closeShop());
   for (const tab of root.querySelectorAll("[data-shop-tab]")) tab.addEventListener("click", () => showTab(tab.dataset.shopTab));
   $("[role=tablist]").addEventListener("keydown", (event) => {
@@ -1231,10 +1246,10 @@
       event.preventDefault();
       advance();
     } else if (key === "escape") {
-      if (!map.hidden && !mapRequired) closeMap();
+      if (!map.hidden && !mapRequired) dismissMap();
       else if (!shop.hidden) closeShop();
       else if (talking && !advance) closeTalk();
-    } else if (key === "m" && !talking && !mapButton.hidden && !mapRequired) map.hidden ? openMap() : closeMap();
+    } else if (key === "m" && !talking && !mapButton.hidden && !mapRequired) map.hidden ? openMap() : dismissMap();
     else if (key === "w" && !talking && !mapRequired) wait(Boolean(town.test_mode && !town.can_wait));
   });
   // Coming back to the tab (from a duel, or another tab): catch up.
@@ -1252,6 +1267,7 @@
   });
 
   paint();
+  playSceneNow(); // one left waiting (a reload on arriving): it still plays
   if (result) {
     const banner = $("[data-result]");
     banner.querySelector("[data-result-text]").textContent = result.won

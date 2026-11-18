@@ -324,20 +324,25 @@ def set_test_mode(save, on):
     changed(save, "flags")
 
 
+def choice_pending(save):
+    """Whether time has just passed and the player hasn't yet said where to spend the new time of day: the town opens
+    the map (staying where they are is an answer too)."""
+    return save.flags.get("choose") == save.turn
+
+
 def choosing(save):
-    """Whether time has just passed and the player hasn't yet chosen where to spend the new time of day (the map, which
-    has to be answered: staying where they are is a choice too). Nobody can be talked to or duelled till then."""
-    return save.flags.get("choose") == save.turn and not test_mode(save)
+    """Whether the map has to be answered before anything else: nobody can be talked to or duelled till then. In staff
+    test mode it opens all the same, but can be closed (which is staying)."""
+    return choice_pending(save) and not test_mode(save)
 
 
 def time_passed(save):
-    """A new time of day (waited, or a duel's over): a new day clears what was done today, visits are checked, and
-    the player chooses where to go next."""
+    """A new time of day (waited, or a duel's over): a new day clears what was done today, and the player chooses where
+    to go next. Visits are checked once they have (travel), so a quest's scene plays where they chose to be."""
     save.turn += 1
     if save.turn % len(WorldSave.TIMES) == 0:
         save.today = {}
     save.flags["choose"] = save.turn
-    quests.arrived(save)
 
 
 def anyone_out(save):
@@ -363,12 +368,10 @@ def travel(save, key):
     if engaged(save) and place.key != save.place and not test_mode(save):
         raise ValueError(f"You've spent {this_time(save)} here: pass time before you go somewhere else.")
     chose = save.flags.pop("choose", None) is not None
-    if place.key != save.place:
+    if place.key != save.place or chose:  # arriving, or staying for a new time of day: visits done here
         save.place = place.key
         quests.arrived(save)
-        changed(save, "place", "quests", "flags")
-    elif chose:
-        changed(save, "flags")
+        changed(save, "place", *TALK_FIELDS, "rewards")
     return place
 
 
@@ -445,8 +448,23 @@ def whereabouts(save, turn=None):
     turn = save.turn if turn is None else turn
     cast = day_cast(save, turn // len(WorldSave.TIMES))[turn % len(WorldSave.TIMES)]
     away = quests.gone(save)  # sent away for good by a quest's ending: the day's draw keeps their place empty
-    return {cpu_id: rule for cpu_id, rule in cast.items()
-            if cpu_id not in away and (not rule.min_rank or rank_of(save, cpu_id) >= rule.min_rank)}
+    found = {cpu_id: rule for cpu_id, rule in cast.items()
+             if cpu_id not in away and (not rule.min_rank or rank_of(save, cpu_id) >= rule.min_rank)}
+    for meeting in save.today.get("meet", []):  # a quest's scene met them here: they stay for this time of day
+        place = WorldPlace.objects.filter(key=meeting.get("place")).first() if meeting.get("turn") == turn else None
+        for cpu_id in (meeting.get("cpus") or []) if place else []:
+            if cpu_id not in away:
+                found[cpu_id] = CpuSchedule(cpu_id=cpu_id, place=place, days=[], times=[], weight=0)
+    return found
+
+
+def meet(save, place_key, cpu_ids):
+    """Put these CPUs at a place for this time of day, whatever the day's draw says: a quest's scene there casts them,
+    and they're there to talk to once it's over (whereabouts). Kept for this turn only."""
+    if not cpu_ids:
+        return
+    meetings = [meeting for meeting in save.today.get("meet", []) if meeting.get("turn") == save.turn]
+    save.today["meet"] = meetings + [{"turn": save.turn, "place": place_key, "cpus": list(cpu_ids)}]
 
 
 def starter_rules(cpu_id, places, usage, villain=False, secluded=()):
@@ -1401,7 +1419,7 @@ def town(save):
         "deck_ready": deck_problem(save) is None,
         # Spending the time: once the player's spent it with someone here, they stay till they pass it.
         "engaged": engaged(save) and not test_mode(save), "can_wait": can_wait(save)[0], "wait_why": can_wait(save)[1],
-        "choose": choosing(save), "test_mode": test_mode(save), "staff": save.user.is_staff,
+        "choose": choice_pending(save), "choose_required": choosing(save), "test_mode": test_mode(save), "staff": save.user.is_staff,
         "next_time": WorldSave.TIMES[(save.turn + 1) % len(WorldSave.TIMES)],
         "duel": {"url": reverse("weiss:play_room", args=[duel.pk]), "cpu": duel.cpu_name} if duel else None,
         # A scene still to watch (a rank-up's, a quest's): kept until it's seen, wherever the player went in between.
@@ -1415,4 +1433,5 @@ def scene_waiting(save):
     if not pending:
         return None
     who = CpuProfile.objects.filter(pk=pending.get("cpu")).values_list("name", flat=True).first() if pending.get("cpu") else None
-    return {"url": reverse("weiss:world_scene", args=[save.slot]), "who": who or ""}
+    # "auto": a quest's visit scene, which the town goes to straight away rather than waiting to be clicked.
+    return {"url": reverse("weiss:world_scene", args=[save.slot]), "who": who or "", "auto": bool(pending.get("auto"))}

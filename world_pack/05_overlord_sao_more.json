@@ -1689,7 +1689,12 @@
           "times": [
            0
           ],
-          "scene": "World: Chisato, Cafe"
+          "scene": "World: Chisato, Cafe",
+          "rewards": [
+           {
+            "coins": 200
+           }
+          ]
          }
         ]
        },
@@ -2092,7 +2097,12 @@
           "times": [
            3
           ],
-          "scene": "World: Takina, Rooftop"
+          "scene": "World: Takina, Rooftop",
+          "rewards": [
+           {
+            "pack": "climax_pack"
+           }
+          ]
          }
         ]
        },
