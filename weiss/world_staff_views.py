@@ -1,18 +1,20 @@
 """World mode's staff pages, under the CPU tab's World mode section: the town's places, gift items (and what each CPU
 thinks of them), and chatter (what CPUs say in the town, written in the scene editor). The schedules and settings are
 in weiss.world_views."""
+import json
 import re
 
 from django.contrib import messages
 from django.db.models import Max
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.utils.text import slugify
 from django.views.decorators.http import require_POST
 
-from . import chatter, scenes, world
+from . import chatter, quests, scenes, world
 from .cpu_views import staff_required
-from .models import Chatter, CpuProfile, GiftItem, Scene, WorldPlace, WorldSave
+from .models import Chatter, CpuProfile, GiftItem, Quest, Scene, WorldPlace, WorldSave
 from .world_views import MAX_COINS
 
 MAX_TAGS = 10
@@ -316,3 +318,130 @@ def world_chatter_check(request):
     """The editor checks the script as it's typed: its mistakes and labels, without saving it."""
     compiled, errors = chatter.compile_chatter(request.POST.get("script", "")[:scenes.MAX_SCRIPT + 1])
     return JsonResponse({"errors": errors, "labels": sorted(compiled["labels"])})
+
+
+# ---------------------------------------------------------------- Quests (see weiss.quests)
+
+STARTER_QUEST = {
+    "key": "new-quest", "title": "A new quest", "giver": "", "gates": 2,
+    "about": "What the quest log says it's about.",
+    "offer": ["them: Can I ask you a favour?"],
+    "stages": [{"text": "The first step", "objectives": [{"do": "defeat", "cpus": [""]}]}],
+    "endings": [{"key": "done", "title": "Finish it", "script": ["them (pleased): Thank you."]}],
+    "rewards": [{"coins": 300}],
+}
+
+
+def quest_preview(fields):
+    """How a checked quest reads in the player's log: its stages' objectives and its endings, in words."""
+    sample = WorldSave(slot=0)
+    spec = fields["spec"]
+    return {
+        "title": fields["title"], "giver": fields["giver"] or "",
+        "gate": world.rank_names()[fields["gate_rank"]] if fields["gate_rank"] and fields["gate_rank"] < len(world.rank_names()) else "",
+        "about": spec["about"],
+        "stages": [{"text": stage["text"], "objectives": [quests.describe(sample, obj) for obj in stage["objectives"]]} for stage in spec["stages"]],
+        "endings": [{"title": ending["title"], "to": ending["to"], "locks": ending["locks"], "removes": ending["removes"],
+                     "requires": [quests.describe(sample, obj) for obj in ending["requires"]]} for ending in spec["endings"]],
+        "rewards": [quests.reward_text(sample, reward) for reward in spec["rewards"]],
+        "hidden": spec["hidden"],
+    }
+
+
+def read_quest(text, but=None):
+    """(fields, problems, preview, notes) for a quest's JSON as staff wrote it. `but`: the quest being edited, whose key
+    it may keep. Notes are quests it locks or requires that aren't written yet: it can be saved, and they're said."""
+    try:
+        data = json.loads(text)
+    except ValueError as error:
+        return None, [f"That isn't JSON yet: {error}."], None, []
+    keys = set(Quest.objects.exclude(pk=but.pk if but else None).values_list("key", flat=True))
+    if isinstance(data, dict) and data.get("key") in keys:
+        return None, [f"Another quest has the key “{data['key']}”."], None, []
+    context = quests.known_context(extra_keys=[data.get("key")] if isinstance(data, dict) else [], loose=True)
+    fields, problems = quests.check(data, context)
+    preview = quest_preview(fields) if fields and not problems else None
+    return fields, problems, preview, context.pending
+
+
+@staff_required
+def world_quest_list(request):
+    """Every quest: who gives it, the rank it gates, its endings and what they close (the web of choices), any that no
+    longer check out (a CPU renamed, a card gone), and which CPUs' big rank-ups have no gate quest yet."""
+    found = list(Quest.objects.select_related("giver"))
+    titles = {quest.key: quest.title for quest in found}
+    started = {}
+    for log in WorldSave.objects.exclude(quests={}).values_list("quests", flat=True):
+        for key in (log or {}).get("log", {}):
+            started[key] = started.get(key, 0) + 1
+    context = quests.known_context(loose=True)
+    names = world.rank_names()
+    for quest in found:
+        context.pending = []
+        _, quest.problems = quests.check(quests.as_file(quest), context)
+        quest.notes = context.pending
+        quest.gate_name = names[quest.gate_rank] if quest.gate_rank and quest.gate_rank < len(names) else ""
+        quest.endings = [{"title": e["title"], "to": e["to"], "locks": [titles.get(k, k) for k in e.get("locks", [])], "removes": e.get("removes", [])}
+                         for e in quest.spec.get("endings", [])]
+        quest.started = started.get(quest.key, 0)
+    gated = {}
+    for quest in found:
+        if quest.giver_id and quest.gate_rank:
+            gated.setdefault(quest.giver_id, set()).add(quest.gate_rank)
+    scene_ranks = {}
+    for cpu_id, rank in Chatter.objects.filter(context="rank_up", scene__isnull=False, cpu__isnull=False).values_list("cpu_id", "min_rank"):
+        scene_ranks.setdefault(cpu_id, set()).add(rank)
+    cpus = {cpu.pk: cpu.name for cpu in CpuProfile.objects.filter(pk__in=scene_ranks)}
+    ungated = sorted((cpus[cpu_id], ", ".join(names[r] if r < len(names) else str(r) for r in sorted(ranks - gated.get(cpu_id, set()))))
+                     for cpu_id, ranks in scene_ranks.items() if ranks - gated.get(cpu_id, set()))
+    return render(request, "weiss/world_quest_list.html", {
+        "quests": found, "ungated": ungated, "scene_cpus": len(scene_ranks), "broken": sum(1 for q in found if q.problems),
+    })
+
+
+@staff_required
+def world_quest_edit(request, pk=None):
+    """A quest as JSON, checked as it's typed, with how the player's log will read it. A quest with mistakes isn't saved
+    (a broken quest could strand a save), but what was written stays on the page to fix."""
+    quest = get_object_or_404(Quest.objects.select_related("giver"), pk=pk) if pk else None
+    text = json.dumps(quests.as_file(quest) if quest else STARTER_QUEST, indent=2, ensure_ascii=False)
+    problems, preview, notes = [], None, []
+    if request.method == "POST":
+        text = request.POST.get("quest", "")
+        fields, problems, preview, notes = read_quest(text, but=quest)
+        if not problems:
+            if quest and fields["key"] != quest.key:
+                quest.key = fields["key"]  # a new key for the same quest (saves that started it under the old one lose it)
+                quest.save(update_fields=["key"])
+            saved = quests.save_quest(fields)
+            messages.success(request, f"Saved “{saved.title}”.")
+            return redirect("weiss:world_quest_edit", pk=saved.pk)
+        messages.error(request, f"Not saved: {len(problems)} mistake{'s' if len(problems) != 1 else ''} to fix first.")
+    elif quest:
+        _, problems, preview, notes = read_quest(text, but=quest)
+    started = sum(1 for log in WorldSave.objects.exclude(quests={}).values_list("quests", flat=True) if quest and quest.key in (log or {}).get("log", {}))
+    return render(request, "weiss/world_quest_edit.html", {
+        "quest": quest, "text": text, "problems": problems, "preview": preview, "notes": notes, "started": started,
+        "objectives": [(do, sorted(fields), about) for do, (fields, about) in quests.OBJECTIVES.items()],
+        "ranks": list(enumerate(world.rank_names())), "places": WorldPlace.objects.all(), "gifts": GiftItem.objects.all(),
+        "packs": quests.PACKS,
+    })
+
+
+@staff_required
+@require_POST
+def world_quest_check(request):
+    """The editor checks the quest as it's typed: its mistakes, or how the log will read it."""
+    quest = Quest.objects.filter(pk=request.POST.get("pk") or None).first()
+    _, problems, preview, notes = read_quest(request.POST.get("quest", "")[:200_000], but=quest)
+    html = render_to_string("weiss/world_quest_preview.html", {"preview": preview}) if preview else ""
+    return JsonResponse({"problems": problems, "preview": html, "notes": notes})
+
+
+@staff_required
+@require_POST
+def world_quest_delete(request, pk):
+    quest = get_object_or_404(Quest, pk=pk)
+    quest.delete()
+    messages.success(request, f"Deleted “{quest.title}”. Saves that had started it no longer show it.")
+    return redirect("weiss:world_quest_list")

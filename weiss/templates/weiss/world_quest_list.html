@@ -1,0 +1,68 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Quests · World mode{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:cpu_home' %}?tab=world">← World mode settings</a></p>
+  <div class="challenge-head">
+    <div>
+      <h1>Quests</h1>
+      <p class="muted small">Stages of objectives, then a choice of endings. An ending can close other quests and send CPUs away for good:
+        the player is shown exactly what before they choose. A quest that gates a rank holds its giver's friendship below that rank until it's done.</p>
+    </div>
+    <a class="button-small" href="{% url 'weiss:world_quest_new' %}">New quest</a>
+  </div>
+
+  {% if broken %}
+    <p class="panel-error">{{ broken }} quest{{ broken|pluralize }} no longer check{{ broken|pluralize:"s," }} out (a CPU renamed, a card or quest gone).
+      Players can still be on {{ broken|pluralize:"it,them" }}: fix {{ broken|pluralize:"it,them" }} below.</p>
+  {% endif %}
+
+  {% if not quests %}
+    <div class="quest-empty">
+      <p>No quests yet.</p>
+      <p class="muted small">Until a CPU has gate quests, its friendship ranks up on points alone, as before. Write one here, or put them in a
+        world pack (<code>"quests"</code> in a CPU's <code>world</code> part).</p>
+    </div>
+  {% else %}
+    <div class="world-quest-scroll">
+      <table class="cpu-table world-quest-table">
+        <thead><tr><th scope="col">Quest</th><th scope="col">Giver</th><th scope="col">Gates</th><th scope="col">Endings, and what they close</th><th scope="col">Saves on it</th></tr></thead>
+        <tbody>
+          {% for quest in quests %}
+            <tr>
+              <td><a href="{% url 'weiss:world_quest_edit' quest.pk %}">{{ quest.title }}</a> <span class="muted small">{{ quest.key }}</span>
+                {% if quest.problems %}<span class="panel-error small" title="{{ quest.problems|join:' · ' }}"> {{ quest.problems|length }} problem{{ quest.problems|pluralize }}</span>{% endif %}
+                {% if quest.notes %}<br><span class="muted small">{{ quest.notes|join:" " }}</span>{% endif %}</td>
+              <td>{{ quest.giver.name|default:"—" }}</td>
+              <td>{{ quest.gate_name|default:"—" }}</td>
+              <td>
+                <ul class="world-quest-endings">
+                  {% for ending in quest.endings %}
+                    <li>{{ ending.title }} <span class="muted small">· with {{ ending.to }}</span>
+                      {% if ending.locks %}<br><span class="small">Closes: {{ ending.locks|join:", " }}</span>{% endif %}
+                      {% if ending.removes %}<br><span class="small panel-error">Sends away: {{ ending.removes|join:", " }}</span>{% endif %}</li>
+                  {% endfor %}
+                </ul>
+              </td>
+              <td>{{ quest.started }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  <section class="cpu-section">
+    <h2>Big rank-ups without a quest yet</h2>
+    {% if ungated %}
+      <p class="muted small">These CPUs have a scene for reaching a rank, but no quest gating it, so the scene plays on points alone.
+        {{ ungated|length }} of {{ scene_cpus }} CPUs with rank-up scenes.</p>
+      <ul class="world-quest-ungated small">
+        {% for name, ranks in ungated %}<li><strong>{{ name }}</strong>: {{ ranks }}</li>{% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted small">Every rank-up scene waits on a quest.</p>
+    {% endif %}
+  </section>
+{% endblock %}

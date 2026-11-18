@@ -15,7 +15,7 @@ from types import SimpleNamespace
 from django.db import transaction
 from django.urls import reverse
 
-from . import buffs, challenge, chatter, packs
+from . import buffs, challenge, chatter, packs, quests
 from .lists import CLIMAX_COUNT, COPY_LIMIT, DECK_SIZE, climax_problem, is_climax, unlimited, unplayable
 from .models import (Card, CardList, CardListEntry, CpuProfile, CpuSchedule, GameRoom, GiftItem, WorldPlace, WorldSave, WorldSettings,
                      default_ranks)
@@ -64,9 +64,12 @@ def save_in(user, slot):
 
 
 def changed(save, *fields):
-    """Save these fields, and the version that says something changed."""
+    """Save these fields, and the version that says something changed. Whatever changed, the quests under way are
+    checked again (a card opened, a rank reached, a flag set can each finish an objective)."""
+    if quests.advance(save):
+        fields = (*fields, "quests")
     save.version += 1
-    save.save(update_fields=[*fields, "version", "played"])
+    save.save(update_fields=list(dict.fromkeys([*fields, "version", "played"])))
 
 
 def start(user, slot, expansion_id, rng=random):
@@ -298,7 +301,8 @@ def travel(save, key):
         raise ValueError("You can't go there.")
     if place.key != save.place:
         save.place = place.key
-        changed(save, "place")
+        quests.arrived(save)
+        changed(save, "place", "quests", "flags")
     return place
 
 
@@ -310,7 +314,8 @@ def wait(save):
     save.turn += 1
     if save.turn % len(WorldSave.TIMES) == 0:
         save.today = {}
-    changed(save, "turn", "today")
+    quests.arrived(save)
+    changed(save, "turn", "today", "quests", "flags")
 
 
 # ---------------------------------------------------------------- Who's where (see CpuSchedule)
@@ -369,10 +374,12 @@ def day_cast(save, day, by_cpu=None):
 
 def whereabouts(save, turn=None):
     """{cpu id: the haunt it's at} now (or at this turn): the day's draw (day_cast), less any CPU there by a haunt the
-    player doesn't know it well enough for yet."""
+    player doesn't know it well enough for yet, and any a quest sent away."""
     turn = save.turn if turn is None else turn
     cast = day_cast(save, turn // len(WorldSave.TIMES))[turn % len(WorldSave.TIMES)]
-    return {cpu_id: rule for cpu_id, rule in cast.items() if not rule.min_rank or rank_of(save, cpu_id) >= rule.min_rank}
+    away = quests.gone(save)  # sent away for good by a quest's ending: the day's draw keeps their place empty
+    return {cpu_id: rule for cpu_id, rule in cast.items()
+            if cpu_id not in away and (not rule.min_rank or rank_of(save, cpu_id) >= rule.min_rank)}
 
 
 def starter_rules(cpu_id, places, usage, villain=False, secluded=()):
@@ -494,7 +501,8 @@ def start_duel(save, cpu_id, high_stakes=False):
     room = GameRoom(host=save.user, host_deck=save.deck, status=GameRoom.Status.PLAYING, world_save=save, world_stake=fee)
     seat_cpu(room, cpu)
     room.save()
-    changed(save, "money")
+    quests.duel_started(save, room)
+    changed(save, "money", "quests")
     return room
 
 
@@ -530,10 +538,12 @@ def game_finished(room, over):
                                    "first": first, "stake": room.world_stake, "seen": False, "points": points,
                                    "rank_up": rank_names()[after] if after > before else "", "rank_line": rank_line, "scene": scene,
                                    "rewards": rewards}
+        quests.duel_finished(save, room, won)
         save.turn += 1
         if save.turn % len(WorldSave.TIMES) == 0:
             save.today = {}
-        changed(save, "money", "today", "flags", "turn", "relations", "pool", "gifts", "last_opening")
+        quests.arrived(save)
+        changed(save, "money", "today", "flags", "turn", "relations", "pool", "gifts", "last_opening", "quests")
 
 
 def duel_result(save):
@@ -701,7 +711,7 @@ GIFTS_PER_DAY = 1  # gifts to each CPU a day
 GAIN = {"warm": 1.5, "friendly": 1.25, "neutral": 1.0, "aloof": 0.75, "villain": 0.6}  # by temperament: talk, gifts and duels
 MAX_GIFTS = 99  # of each item held
 RESERVED_FLAGS = {"last_duel", "set", "scene"}
-TALK_FIELDS = ("relations", "today", "flags", "money", "gifts", "pool", "last_opening")  # what talking can change
+TALK_FIELDS = ("relations", "today", "flags", "money", "gifts", "pool", "last_opening", "quests")  # what talking can change
 
 
 def ranks():
@@ -726,7 +736,10 @@ def rank_for(points):
 
 
 def rank_of(save, cpu_id):
-    return rank_for(save.relations.get(str(cpu_id), {}).get("points", 0))
+    """The rank with a CPU: by points, but never past a gate quest that isn't done (quests.cap)."""
+    rank = rank_for(save.relations.get(str(cpu_id), {}).get("points", 0))
+    held = quests.cap(save, cpu_id)
+    return rank if held is None else min(rank, held)
 
 
 def gain(cpu, n):
@@ -742,9 +755,9 @@ def gain(cpu, n):
 def add_points(save, cpu_id, n):
     """Change how much a CPU likes the player (never below 0): (rank before, rank after)."""
     rel = relation(save, cpu_id)
-    before = rank_for(rel["points"])
+    before = rank_of(save, cpu_id)
     rel["points"] = max(0, rel["points"] + n)
-    return before, rank_for(rel["points"])
+    return before, rank_of(save, cpu_id)
 
 
 def standing(save, cpu_id):
@@ -752,11 +765,16 @@ def standing(save, cpu_id):
     takes (None at the top), and whether they've been talked to and given a gift today."""
     rel = save.relations.get(str(cpu_id), {})
     points, rows = rel.get("points", 0), ranks()
-    rank = rank_for(points)
-    return {"rank": rank, "name": rows[rank]["name"], "ranks": len(rows), "points": points,
-            "next": rows[rank + 1]["points"] if rank + 1 < len(rows) else None,
-            "talked": rel.get("talked") == save.day, "gifted": rel.get("gifted") == save.day,
-            "next_rewards": rewards_for(rank + 1) if rank + 1 < len(rows) else []}
+    rank = rank_of(save, cpu_id)
+    found = {"rank": rank, "name": rows[rank]["name"], "ranks": len(rows), "points": points,
+             "next": rows[rank + 1]["points"] if rank + 1 < len(rows) else None,
+             "talked": rel.get("talked") == save.day, "gifted": rel.get("gifted") == save.day,
+             "next_rewards": rewards_for(rank + 1) if rank + 1 < len(rows) else []}
+    gate = quests.gate_quest(save, cpu_id)
+    if gate and found["next"] is not None:  # the next rank waits for a quest: say which, and how it stands
+        found["gate"] = {"title": gate.title, "status": quests.status(save, gate.key) or ("offered" if quests.offerable(save, gate) else ""),
+                         "ready": points >= found["next"]}
+    return found
 
 
 def has_flag(save, name):
@@ -916,12 +934,26 @@ def give_reward(save, cpu, kind, what, rng=random):
         pack = packs.open_pack(pool, rng, packs.BOOSTED_PACK if buff.pack == "lucky" else packs.PACK)
         for pull in pack:
             buffs.add_to_pool(save, pull.card.pk, 1)
-        save.last_opening = {**packs.opening(pool, [pack]), "set_id": expansion_id, "bought": True}
+        reward_opening(save, pool, pack, expansion_id)
         return f"A {buff.name.lower()} of {pool.set_name}", reverse("weiss:world_opened", args=[save.slot])
     if kind == "stakes":
         relation(save, cpu.pk)["stakes"] = what
         return f"High-stakes duels with {cpu.name}, for {what:,} coins", ""
     return None
+
+
+def reward_opening(save, pool, pack, expansion_id):
+    """A pack a reward opened, for the reveal: every pack given in one go (a quest's, then its rank's) is revealed
+    together, so "See the cards" shows them all, not only the last."""
+    opened = packs.opening(pool, [pack])
+    if getattr(save, "_rewards_opened", False) and save.last_opening.get("packs"):
+        merged = save.last_opening
+        merged["packs"] += opened["packs"]
+        if merged.get("set") != opened["set"]:
+            merged["set"] = "your rewards"
+    else:
+        save.last_opening = {**opened, "set_id": expansion_id, "bought": True}
+        save._rewards_opened = True
 
 
 def reward_ranks(save, cpu, rank):
@@ -980,7 +1012,10 @@ def carry_on(save, cpu, compiled, start, after=()):
     talk = save.today["talk"]
     world = Talk(save, cpu, talk["chatter"])
     events, waiting = chatter.play(compiled, start, world)
-    if waiting is None or "fight" in waiting:
+    if waiting is None and talk.get("then"):  # a quest's script is said: what it was leading to
+        more, waiting = quest_then(save, cpu, talk.pop("then"))
+        after = [*after, *more]
+    if waiting is None or "fight" in waiting or "quest_offer" in waiting or "endings" in waiting:
         events += after
         after = []
     talk["at"] = waiting["choice"] if waiting and "choice" in waiting else None
@@ -1014,12 +1049,13 @@ def talk(save, cpu_id):
     """Talk to someone here: the day's first talk with them brings points."""
     cpu = someone_here(save, cpu_id)
     rel = relation(save, cpu.pk)
+    cold = quests.estranged(save, cpu.pk)  # a choice closed this friendship: they say so (their own lines, or the built-in)
     if rel.get("talked") == save.day:
-        return converse(save, cpu, "again")
+        return converse(save, cpu, "estranged" if cold else "again")
     rel["talked"] = save.day
     world = Talk(save, cpu, "talk")
     gained = world.points(gain(cpu, TALK_POINTS))
-    found = converse(save, cpu, "greet", gained)
+    found = converse(save, cpu, "estranged" if cold else "greet", gained)
     if world.ranked_up is not None:
         save.today["talk"]["rank_up"] = world.ranked_up
         if found["talk"]["waiting"] is None or "fight" in found["talk"]["waiting"]:
@@ -1032,12 +1068,71 @@ def answer(save, cpu_id, option):
     """The player answers the choice they're on: the talk carries on."""
     cpu = someone_here(save, cpu_id)
     talk = save.today.get("talk") or {}
-    compiled = chatter.load(talk.get("chatter", "")) if talk.get("cpu") == cpu.pk and talk.get("at") is not None else None
+    key = talk.get("chatter", "")
+    load = quests.script_for if key.startswith("quest:") else chatter.load
+    compiled = load(key) if talk.get("cpu") == cpu.pk and talk.get("at") is not None else None
     if not compiled:
         raise ValueError("That conversation's over; talk to them again.")
     world = Talk(save, cpu, talk["chatter"])
     start = chatter.after_choice(compiled, talk["at"], option, world)
     return carry_on(save, cpu, compiled, start, talk.get("after", []))
+
+
+# ---------------------------------------------------------------- Quests in the talk box (see weiss.quests)
+
+def quest_script(save, cpu, key, part, then, after=()):
+    """Play one of a quest's scripts in the talk box ("offer", "talk:<objective>" or "end:<ending>"), and when it's
+    said, do `then` (quest_then). A quest with no script for it goes straight on."""
+    save.today["talk"] = {"cpu": cpu.pk, "chatter": f"quest:{key}:{part}", "at": None, "stake": offered_stake(save, cpu.pk), "then": then}
+    compiled = quests.script_for(f"quest:{key}:{part}") or {"labels": {}, "steps": []}
+    return carry_on(save, cpu, compiled, 0, list(after))
+
+
+def quest_then(save, cpu, then):
+    """What a quest script leads to once it's said: (events, what the box waits for next)."""
+    if then["do"] == "offer":
+        quest = quests.quests(save).get(then["quest"])
+        if quest and quests.offerable(save, quest):
+            return [], {"quest_offer": quests.offer_panel(save, quest)}
+        return [], None
+    if then["do"] == "talked":
+        return quests.talked(save, cpu, then["quest"], then["objective"]), None
+    return [], None
+
+
+def quest_act(save, cpu_id, act, key, data):
+    """Something the player does about a quest with someone here: hear its offer, take it, talk about it, hand a card
+    over, or choose how it ends. What the town gets: {"talk": {...}}, as converse."""
+    cpu = someone_here(save, cpu_id)
+    quest = quests.find_quest(save, key)
+    if act == "offer":
+        if quest.giver_id != cpu.pk or not quests.offerable(save, quest):
+            raise ValueError(f"{cpu.name} isn't offering that now.")
+        return quest_script(save, cpu, key, "offer", {"do": "offer", "quest": key})
+    if act == "accept":
+        events = quests.accept(save, cpu, key)
+        changed(save, *TALK_FIELDS)
+        return {"talk": {"cpu": cpu.pk, "events": events, "waiting": None, "relation": standing(save, cpu.pk)}}
+    if act == "talk":
+        objective = data.get("objective", "")
+        found = next((item for item in quests.actions(save, cpu)["talks"] if item["quest"] == key and item["objective"] == objective), None)
+        if not found:
+            raise ValueError("There's nothing to talk about there now.")
+        return quest_script(save, cpu, key, f"talk:{objective}", {"do": "talked", "quest": key, "objective": objective})
+    if act == "hand":
+        events = quests.hand_over(save, cpu, key, data.get("objective", ""))
+        changed(save, *TALK_FIELDS)
+        return {"talk": {"cpu": cpu.pk, "events": events, "waiting": None, "relation": standing(save, cpu.pk)}}
+    if act == "settle":
+        panel = quests.settle_panel(save, cpu, key)
+        if not panel["endings"]:
+            raise ValueError(f"This isn't one to finish with {cpu.name}.")
+        return {"talk": {"cpu": cpu.pk, "events": [], "waiting": {"endings": panel}, "relation": standing(save, cpu.pk)}}
+    if act == "choose":
+        ending, events = quests.choose(save, cpu, key, data.get("ending", ""), data.get("confirm") == "1")
+        # The ending's own script plays first; what it did (rewards, what closed, a rank reached) is shown after.
+        return quest_script(save, cpu, key, f"end:{ending['key']}", {"do": "ended"}, after=events)
+    raise ValueError("That can't be done here.")
 
 
 # ---------------------------------------------------------------- Gifts
@@ -1087,6 +1182,7 @@ def give(save, cpu_id, key):
     if not save.gifts[key]:
         del save.gifts[key]
     rel["gifted"] = save.day
+    quests.gift_given(save, cpu, item)
     reaction = taste(cpu, item)
     world = Talk(save, cpu, "gift")
     gained = world.points(gain(cpu, GIFT_POINTS[reaction]))
@@ -1127,6 +1223,14 @@ def give_tastes(cpus=None):
 
 # ---------------------------------------------------------------- The town, as the page shows it
 
+def town_news(save):
+    """What's happened to the save's quests since the page last heard (a duel won, somewhere reached): told once."""
+    found = save.quests.pop("news", None)
+    if found:
+        save.save(update_fields=["quests"])
+    return found or []
+
+
 def town(save):
     """The town as the page shows it: when and where it is, the save's coins, who's here, the shop and the map."""
     known = places(save)
@@ -1149,9 +1253,22 @@ def town(save):
         "people": [{"id": cpu.pk, "name": cpu.name, "portraits": cpu_portraits(cpu), "stake": stake_with(save, cpu.pk, rule),
                     "intro": chatter.first_line(cpu, "before_duel", rank_of(save, cpu.pk), filler(save, cpu)) or cpu.intro_text,
                     "duelled": cpu.pk in save.today.get("duelled", []), "relation": standing(save, cpu.pk),
-                    "offer": offered_stake(save, cpu.pk)} for cpu, rule in people],
+                    "offer": offered_stake(save, cpu.pk), "quests": quests.actions(save, cpu)} for cpu, rule in people],
+        "quests": {**quests.counts(save), "url": reverse("weiss:world_quests", args=[save.slot])},
+        "news": town_news(save),
         "gifts": inventory(save),
         "shop": shop(save) if here and here.shop else None,
         "deck_ready": deck_problem(save) is None,
         "duel": {"url": reverse("weiss:play_room", args=[duel.pk]), "cpu": duel.cpu_name} if duel else None,
+        # A scene still to watch (a rank-up's, a quest's): kept until it's seen, wherever the player went in between.
+        "scene": scene_waiting(save),
     }
+
+
+def scene_waiting(save):
+    """{"url", "who"} for a scene the save has waiting to be watched, or None."""
+    pending = save.flags.get("scene")
+    if not pending:
+        return None
+    who = CpuProfile.objects.filter(pk=pending.get("cpu")).values_list("name", flat=True).first() if pending.get("cpu") else None
+    return {"url": reverse("weiss:world_scene", args=[save.slot]), "who": who or ""}

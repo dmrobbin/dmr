@@ -1,0 +1,78 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}{% if quest %}{{ quest.title }}{% else %}New quest{% endif %} · quests{% endblock %}
+
+{% block head %}<script src="{% static 'weiss/quest_editor.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:world_quest_list' %}">&larr; Quests</a></p>
+  <h1>{% if quest %}{{ quest.title }}{% else %}New quest{% endif %}</h1>
+  {% if started %}<p class="small town-notice">{{ started }} save{{ started|pluralize }} {{ started|pluralize:"has,have" }} started this quest. Changes apply to {{ started|pluralize:"it,them" }} too:
+    adding or removing a stage or objective moves where they are, and changing the key loses it from {{ started|pluralize:"its,their" }} log.</p>{% endif %}
+
+  <form method="post" class="quest-editor" data-quest-editor data-check-url="{% url 'weiss:world_quest_check' %}" data-pk="{{ quest.pk|default:'' }}">
+    {% csrf_token %}
+    <div class="quest-editor-main">
+      <label for="quest-json" class="quest-editor-label">The quest, as JSON <span class="muted small">(the same as in a world pack; Ctrl+S saves)</span></label>
+      <textarea id="quest-json" name="quest" class="scene-script quest-json" spellcheck="false" rows="28" data-quest-text>{{ text }}</textarea>
+      <div class="quest-editor-actions">
+        <button type="submit" class="button-small">Save</button>
+        <span class="small" data-quest-state aria-live="polite">{% if problems %}{{ problems|length }} mistake{{ problems|length|pluralize }}{% else %}Checked{% endif %}</span>
+      </div>
+      <div class="scene-problems" data-quest-problems aria-live="polite">
+        {% if problems %}
+          <p class="small panel-error">{{ problems|length }} mistake{{ problems|length|pluralize }} to fix before it can be saved:</p>
+          <ul>{% for problem in problems %}<li>{{ problem }}</li>{% endfor %}</ul>
+        {% endif %}
+      </div>
+      <div class="scene-problems" data-quest-notes aria-live="polite">
+        {% if notes %}
+          <p class="small muted">It can be saved, but:</p>
+          <ul class="small">{% for note in notes %}<li>{{ note }}</li>{% endfor %}</ul>
+        {% endif %}
+      </div>
+    </div>
+
+    <aside class="quest-editor-side">
+      <section class="quest-preview" aria-labelledby="preview-title">
+        <h2 id="preview-title">As the quest log shows it</h2>
+        <div data-quest-preview>{% if preview %}{% include "weiss/world_quest_preview.html" %}{% else %}<p class="muted small">Fix the mistakes to see it.</p>{% endif %}</div>
+      </section>
+
+      <details class="quest-reference" open>
+        <summary>Objectives (<code>"do"</code>)</summary>
+        <p class="muted small">Every one can have a <code>"text"</code> to say it in your own words. CPUs go by name, cards by serial number
+          (any printing of the card's name counts).</p>
+        <dl>
+          {% for do, fields, about in objectives %}
+            <dt><code>{{ do }}</code> <span class="muted small">{{ fields|join:", " }}</span></dt>
+            <dd class="small">{{ about }}</dd>
+          {% endfor %}
+        </dl>
+      </details>
+      <details class="quest-reference">
+        <summary>The rest of a quest</summary>
+        <ul class="small">
+          <li><code>giver</code>: who offers it. <code>gates</code>: the rank it holds them below until it's done
+            ({% for index, name in ranks %}{{ index }} {{ name }}{% if not forloop.last %}, {% endif %}{% endfor %}).
+            A gate quest is offered once the player has that rank's points.</li>
+          <li><code>about</code>: what the log says it is. <code>offer</code>: chatter lines said before it's offered.</li>
+          <li><code>requires</code>: <code>{"quests": [keys done], "flags": [...], "rank": n}</code>, before it's offered.</li>
+          <li><code>stages</code>: in order, each <code>{"text", "objectives": [...]}</code>; every objective in a stage, then the next.</li>
+          <li><code>endings</code>: each <code>{"key", "title", "about", "to" (who it's turned in to: the giver unless it says),
+            "requires" (objectives of its own), "locks" (quest keys it closes), "removes" (CPUs it sends away for good), "flags", "rewards", "script"}</code>.
+            One ending if there's no choice.</li>
+          <li><code>rewards</code>: <code>{"coins": n}</code>, <code>{"card": serial, "copies": n}</code>, <code>{"pack": {{ packs|join:"|" }}}</code>,
+            <code>{"gift": key}</code>, <code>{"flag": name, "text": "what it means"}</code>. <code>"hidden": true</code> keeps them a surprise.</li>
+          <li>Places: {% for place in places %}<code>{{ place.key }}</code>{% if not forloop.last %}, {% endif %}{% endfor %}.
+            Gifts: {% for gift in gifts %}<code>{{ gift.key }}</code>{% if not forloop.last %}, {% endif %}{% endfor %}.</li>
+        </ul>
+      </details>
+    </aside>
+  </form>
+  {% if quest %}
+    <form method="post" action="{% url 'weiss:world_quest_delete' quest.pk %}" onsubmit="return confirm('Delete this quest? Saves that started it lose it from their log.')">{% csrf_token %}
+      <button type="submit" class="button-small danger">Delete quest</button></form>
+  {% endif %}
+{% endblock %}

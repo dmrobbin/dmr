@@ -11,6 +11,7 @@
        data-duel-url="{% url 'weiss:world_duel' save.slot %}" data-buy-card-url="{% url 'weiss:world_buy_card' save.slot %}"
        data-buy-gift-url="{% url 'weiss:world_buy_gift' save.slot %}" data-talk-url="{% url 'weiss:world_talk' save.slot %}"
        data-answer-url="{% url 'weiss:world_answer' save.slot %}" data-give-url="{% url 'weiss:world_give' save.slot %}" data-decks-url="{% url 'weiss:world_save' save.slot %}#decks"
+       data-quest-url="{% url 'weiss:world_quest' save.slot %}"
        data-portraits="{% static 'weiss/portraits/parts.json' %}" data-player="{{ request.user.username }}">
     {% csrf_token %}
     <div class="town-bar">
@@ -18,6 +19,7 @@
         <span class="muted" data-when>Day {{ town.day }} · {{ town.weekday }} {{ town.time_name|lower }}</span></p>
       <p class="town-coins" data-coins>{{ town.money }} coins</p>
       <div class="town-actions">
+        <a class="button-small secondary town-quests" href="{% url 'weiss:world_quests' save.slot %}" data-quests>Quests<span data-quests-count></span></a>
         <button type="button" class="button-small" data-open-shop aria-expanded="false" aria-controls="town-shop" hidden>Shop counter</button>
         <button type="button" class="button-small secondary" data-open-map aria-expanded="false" aria-controls="town-map">Map</button>
         <button type="button" class="button-small secondary" data-wait>Wait</button>
@@ -29,6 +31,12 @@
       <p class="town-result-line" data-result-line hidden></p>
       <div class="town-result-more" data-result-more></div>
       <button type="button" class="town-result-close" data-result-close aria-label="Dismiss">×</button>
+    </div>
+    <p class="small town-notice town-scene-waiting" data-scene-waiting hidden></p>
+    <div class="small town-notice town-result town-news" data-news hidden role="status">
+      <ul></ul>
+      <p><a href="{% url 'weiss:world_quests' save.slot %}">Open your quest log</a></p>
+      <button type="button" class="town-result-close" data-news-close aria-label="Dismiss quest news">×</button>
     </div>
     <p class="small town-notice" data-deck-notice{% if town.deck_ready %} hidden{% endif %}>Your equipped deck isn't ready to duel yet.
       <a href="{% url 'weiss:world_save' save.slot %}#decks">Finish it</a> before you challenge anyone.</p>
@@ -48,6 +56,7 @@
         <span class="vn-name" data-name></span>
         <p class="town-relation small" data-relation hidden></p>
         <p class="vn-text" data-text></p>
+        <div class="town-quest-panel" data-quest-panel hidden></div>
         <div class="town-menu" data-menu></div>
         <span class="vn-next" data-next aria-hidden="true">▼</span>
       </section>

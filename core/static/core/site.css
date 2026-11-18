@@ -3025,6 +3025,93 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .world-inline-form { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin: 0; }
 .world-inline-form input { min-width: 0; width: 12rem; }
 .town-notice { margin: 0 0 .6rem; padding: .45rem .8rem; border: 1px solid rgb(212 175 55 / .45); border-radius: .5rem; background: var(--accent-soft); }
+/* Quests in the town: a marker over someone with a quest, the talk box's quest options and panels, and the news. */
+.town-quest-mark { position: absolute; top: 4%; left: 50%; translate: -50% 0; display: grid; place-items: center; width: 1.8rem; height: 1.8rem;
+  font-weight: 800; font-size: 1.05rem; line-height: 1; color: #1b1508; background: linear-gradient(#f6dc8a, #d4a93a); border: 2px solid #fff4cf;
+  border-radius: 50%; box-shadow: 0 .2rem .7rem rgb(0 0 0 / .55), 0 0 .9rem rgb(255 214 110 / .55); pointer-events: none; }
+.town-quest-act { background: linear-gradient(#ffe7a6, #f0b84a); }
+@media (prefers-reduced-motion: no-preference) { .town-quest-offer { animation: town-quest-bob 1.6s ease-in-out infinite; } }
+@keyframes town-quest-bob { 50% { transform: translateY(-.3rem); } }
+.town-person.town-chosen .town-quest-mark, .town-person.town-away .town-quest-mark { opacity: 0; }
+.town-option-quest { border-color: var(--accent); background: rgb(48 40 16 / .95); }
+.town-option-danger { border-color: #e07a76; color: #ffd9d6; }
+.town-option-danger:hover:not(:disabled), .town-option-danger:focus-visible { border-color: #ff9a94; background: rgb(70 24 22 / .95); }
+.town-option-danger:focus-visible { box-shadow: 0 0 0 2px #ff9a94; }
+.town-quest-panel { max-height: min(15rem, 38vh); overflow-y: auto; margin-top: .5rem; padding: .6rem .8rem; font-size: .92rem; overscroll-behavior: contain;
+  background: rgb(8 8 12 / .55); border: 1px solid rgb(212 175 55 / .3); border-radius: .5rem; }
+.town-quest-panel[hidden] { display: none; }
+.town-quest-panel p { margin: 0 0 .35rem; }
+.town-quest-panel ul { margin: 0 0 .4rem; padding-left: 1.2rem; }
+.town-quest-first { margin-top: .4rem !important; }
+.town-quest-warn { color: #ffb4a8; }
+.town-endings { list-style: none; padding: 0 !important; display: flex; flex-direction: column; gap: .5rem; }
+.town-ending { padding: .45rem .6rem; border: 1px solid rgb(255 255 255 / .12); border-radius: .4rem; }
+.town-ending-title { font-weight: 700; }
+.town-news ul { margin: 0 0 .3rem; padding-left: 1.1rem; }
+.town-news p { margin: 0; }
+.town-quests-ready { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+/* Staff: the quest list and editor (weiss/world_quest_list.html, world_quest_edit.html). */
+.world-quest-scroll { overflow-x: auto; margin: 1rem 0 2rem; }
+.world-quest-table td { vertical-align: top; }
+.world-quest-endings { margin: 0; padding-left: 1rem; }
+.world-quest-ungated { columns: 16rem; margin: .4rem 0 0; padding-left: 1.1rem; }
+.quest-editor { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 1rem; align-items: start; margin-top: 1rem; }
+@media (max-width: 60rem) { .quest-editor { grid-template-columns: 1fr; } }
+.quest-editor-label { display: block; margin-bottom: .3rem; font-weight: 600; }
+.quest-json { width: 100%; min-height: 28rem; padding: .7rem .8rem; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .85rem;
+  line-height: 1.5; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: .5rem; resize: vertical; tab-size: 2; white-space: pre; }
+.quest-json:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.quest-editor-actions { display: flex; align-items: center; gap: .8rem; margin: .5rem 0; }
+.quest-editor-side { display: flex; flex-direction: column; gap: .8rem; }
+.quest-preview h2 { font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); margin: 0 0 .5rem; }
+.quest-reference { padding: .6rem .8rem; background: var(--surface); border: 1px solid var(--border); border-radius: .5rem; }
+.quest-reference summary { cursor: pointer; font-weight: 600; }
+.quest-reference dl { margin: .4rem 0 0; }
+.quest-reference dt { margin-top: .45rem; }
+.quest-reference dd { margin: .1rem 0 0; }
+.quest-reference ul { margin: .4rem 0 0; padding-left: 1.1rem; }
+/* The quest log (weiss/world_quests.html). */
+.quest-tabs { margin-top: 1rem; }
+.quest-tabs a { padding: .4rem .8rem; color: var(--muted); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.quest-tabs a:hover { color: var(--text); }
+.quest-tabs a[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); }
+.quest-tabs a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: .3rem .3rem 0 0; }
+.dashboard h2.quest-section, h2.quest-section { margin: 1.6rem 0 .6rem; }
+.quest-empty { margin: 1.2rem 0; padding: 1rem 1.2rem; background: var(--surface); border: 1px dashed var(--border); border-radius: .75rem; }
+.quest-empty p { margin: 0 0 .5rem; }
+.quest-empty p:last-child { margin: 0; }
+.quest-list { display: flex; flex-direction: column; gap: .8rem; margin: .5rem 0 0; padding: 0; list-style: none; }
+.quest { padding: .9rem 1.1rem; background: var(--surface); border: 1px solid var(--border); border-radius: .75rem; overflow-wrap: anywhere; }
+.quest-ready { border-color: rgb(212 175 55 / .6); box-shadow: inset 3px 0 0 var(--accent); }
+.quest-offered { border-style: dashed; }
+.quest-closed { opacity: .85; }
+.quest-head { display: flex; align-items: center; gap: .75rem; }
+.quest-head > div { flex: 1; min-width: 0; }
+.quest-head p { margin: 0; }
+.quest-face { width: 2.6rem; height: 2.6rem; font-size: 1.1rem; }
+.quest-title { margin: 0; font-size: 1.05rem; font-weight: 600; }
+.quest-tag { flex: none; align-self: flex-start; }
+.quest-about { margin: .6rem 0; }
+.quest p.small { margin: .5rem 0 0; }
+.quest-stages { margin: .4rem 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .35rem; }
+.quest-stage-text { margin: 0; font-weight: 600; }
+.quest-stage.done .quest-stage-text { font-weight: 400; color: var(--muted); }
+.quest-check { margin-right: .4rem; color: var(--accent); }
+.quest-objectives { margin: .3rem 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .3rem; }
+.quest-objective { display: grid; grid-template-columns: 1.3rem 1fr auto; align-items: center; gap: .1rem .5rem; }
+.quest-objective.done > span:nth-child(2) { color: var(--muted); text-decoration: line-through; text-decoration-color: rgb(212 175 55 / .5); }
+.quest-box { display: grid; place-items: center; width: 1.1rem; height: 1.1rem; font-size: .75rem; color: var(--on-accent); border: 1px solid var(--muted); border-radius: .25rem; }
+.quest-objective.done .quest-box { background: var(--accent); border-color: var(--accent); }
+.quest-count { color: var(--muted); font-variant-numeric: tabular-nums; }
+.quest-progress { grid-column: 2 / -1; width: 100%; height: .35rem; appearance: none; border: 0; border-radius: 1rem; background: var(--bg); overflow: hidden; }
+.quest-progress::-webkit-progress-bar { background: var(--bg); border-radius: 1rem; }
+.quest-progress::-webkit-progress-value { background: var(--accent); border-radius: 1rem; }
+.quest-progress::-moz-progress-bar { background: var(--accent); border-radius: 1rem; }
+.quest-later { padding-left: 1.8rem; }
+.quest-endings { margin-top: .7rem; padding: .6rem .8rem; border: 1px solid rgb(212 175 55 / .35); border-radius: .5rem; background: var(--accent-soft); }
+.quest-endings p { margin: 0; }
+.quest-endings ul { margin: .3rem 0 .2rem; padding-left: 1.2rem; }
+.quest-rewards { color: var(--text); }
 .world-inline-form input, .world-delete input { padding: .4rem .6rem; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: .5rem; }
 .world-inline-form input:focus-visible, .world-delete input:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 /* The town's card shop counter (weiss/world_town.html) and a duel's word on why it can't start. */

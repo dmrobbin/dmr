@@ -1,0 +1,24 @@
+<div class="quest">
+  <h3 class="quest-title">{{ preview.title }}</h3>
+  <p class="small muted">{% if preview.giver %}For {{ preview.giver }}{% else %}A story quest{% endif %}{% if preview.gate %} · Unlocks {{ preview.gate }}{% endif %}</p>
+  <p class="quest-about">{{ preview.about }}</p>
+  <ol class="quest-stages">
+    {% for stage in preview.stages %}
+      <li class="quest-stage"><p class="quest-stage-text">{{ forloop.counter }}. {{ stage.text }}</p>
+        <ul class="quest-objectives">{% for text in stage.objectives %}<li class="quest-objective"><span class="quest-box" aria-hidden="true"></span><span>{{ text }}</span></li>{% endfor %}</ul>
+      </li>
+    {% endfor %}
+  </ol>
+  <div class="quest-endings">
+    <p><strong>{% if preview.endings|length > 1 %}Endings{% else %}Ending{% endif %}</strong></p>
+    <ul>
+      {% for ending in preview.endings %}
+        <li>{{ ending.title }} <span class="muted small">· with {{ ending.to }}</span>
+          {% if ending.requires %}<br><span class="small muted">First: {{ ending.requires|join:"; " }}</span>{% endif %}
+          {% if ending.locks %}<br><span class="small">Closes: {{ ending.locks|join:", " }}</span>{% endif %}
+          {% if ending.removes %}<br><span class="small panel-error">Sends away: {{ ending.removes|join:", " }}</span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% if preview.rewards %}<p class="quest-rewards small"><span class="muted">Reward{% if preview.hidden %} (hidden from the player){% endif %}:</span> {{ preview.rewards|join:" · " }}</p>{% endif %}
+</div>

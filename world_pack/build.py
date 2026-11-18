@@ -13,6 +13,9 @@ A cast file has CAST = [cpu(...), ...]. In a CPU:
   wins), lost (after the player loses), r1, r3, r4 (what reaching ranks 1, 3 and 4 says).
 - friend, best: the scenes reaching Friend (rank 2) and Best friend (rank 5) play, as script lines; the cast line
   for the CPU (as `me`) is added at the top. "me (pleased):" and "me (dismayed):" become its screens.
+- quests (optional): the quests it gives, as weiss.quests writes them (without the giver: it's this CPU). The ones
+  with "gates": 2 and "gates": 5 hold those rank-ups (and their scenes) until they're done. Leave it out and an import
+  leaves the CPU's quests as they are.
 """
 import importlib.util
 import json
@@ -36,8 +39,9 @@ def staged(line):
     return line
 
 
-def cpu(name, temperament, haunts, tastes, lines, friend, best):
-    return {"name": name, "temperament": temperament, "haunts": haunts, "tastes": tastes, "lines": lines, "friend": friend, "best": best}
+def cpu(name, temperament, haunts, tastes, lines, friend, best, quests=None):
+    return {"name": name, "temperament": temperament, "haunts": haunts, "tastes": tastes, "lines": lines, "friend": friend, "best": best,
+            "quests": quests}
 
 
 def entry(spec):
@@ -58,9 +62,11 @@ def entry(spec):
         scene = f"World: {name}, {title}"
         chatter.append({"context": "rank_up", "min_rank": rank, "scene": scene})
         scenes.append({"name": scene, "script": [f"cast me as {name}", *(staged(line) for line in lines)]})
-    return {"name": name, "world": {"temperament": spec["temperament"], "schedule": schedule,
-                                    "gift_tastes": {"loves": loves, "likes": likes, "dislikes": dislikes}, "chatter": chatter},
-            "scenes": scenes}
+    world = {"temperament": spec["temperament"], "schedule": schedule,
+             "gift_tastes": {"loves": loves, "likes": likes, "dislikes": dislikes}, "chatter": chatter}
+    if spec.get("quests") is not None:
+        world["quests"] = spec["quests"]
+    return {"name": name, "world": world, "scenes": scenes}
 
 
 def main():

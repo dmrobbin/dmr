@@ -372,6 +372,71 @@ The town is written for the 75 CPUs there are now; no new ones are planned for a
 - **To put it live:** deploy (migrations 0052 to 0055 run), then upload the six `world_pack/*.json` files on the
   Import tab: Check, then Import.
 
+## Phase 6: quests — built
+
+The system is built; the quests themselves are written later. Until a CPU has gate quests, its friendship ranks up
+on points alone, as before. World mode stays staff-only until the quests are in.
+
+### Decisions
+
+| Topic | Decision |
+|---|---|
+| What they're for | For now, gating the big rank-ups: the ones with scenes (Friend and Best friend). The main story will use them too. |
+| Choices | Endings are a choice point, made by talking to whoever that ending's turned in to. An ending can close other quests for good (`locks`) and send CPUs away for good (`removes`). This is an RPG, not a sandbox: the three save slots are how a player tries the other road. |
+| A closed friendship | A hard cap: the CPU stays at the rank below the closed quest's, for that save. They're still in town to talk to, duel and give gifts to, and points still count, but they don't rank up. They speak coldly (`estranged` chatter). |
+| A CPU sent away | Gone from that save's town for good. Their quests close, and so does any quest that can't be done without them. |
+| Warnings | Taking a quest closes nothing. Before an ending is chosen, the player sees exactly what it closes: the quests (and why), who leaves, and who stays at what rank. An ending that closes anything is asked about a second time, with the focus on "Go back". |
+| Failing | Only by being closed. There are no deadlines and no giving up. |
+| How many | No limit on quests under way. Each is a small record on the save, and checking one is cheap. |
+
+### How it works (`weiss.quests`)
+
+- **`Quest`** (migration 0056): key, title, giver, `gate_rank`, and a `spec` (about, offer, requires, stages,
+  endings, rewards, hidden), all checked by `quests.check`. The staff editor and both importers use that same check.
+- **On the save** (`WorldSave.quests`): `log` {quest key: status, stage, progress, ending or what closed it},
+  `gone` (CPUs sent away) and `news`.
+- **Gating** (`quests.cap`): `world.rank_of` never passes one below a gate quest that isn't done. Points keep coming.
+  The gate quest is offered once the points are there, so finishing it jumps the rank, which plays its scene.
+- **Objectives:**
+  - `have_card`, `collect`, `rank` and `flag` are checked whenever the save changes. `world.changed` calls
+    `quests.advance`, so a card from any source counts.
+  - The duel objectives are counted from what the game recorded: `defeat`, `lose_to`, `combo`, `win_with`,
+    `win_deck`, `stakes`, `streak` and `beat_different`. The engine keeps a whole-game record per player
+    (`game.record`: `played` cards, and `combos` as [character, climax] when a combo ability starts).
+    `win_deck` checks the deck as it was when the duel started.
+  - `visit` counts when the player travels, waits or finishes a duel. `give_gift` counts when a gift is given.
+  - `talk` and `give_card` are done from the talk box.
+  - A card is any printing of its name.
+- **In the town:**
+  - Someone with a quest has "!" over them, and someone with something to do about one has "★".
+  - The talk menu lists quest options first: hear an offer, talk it through, hand a card over (asked about first,
+    with what it means for the decks) and finish it (the endings).
+  - Quest news from duels and travel stays above the stage until dismissed.
+  - The friendship badge says when the next rank waits on a quest, or is closed.
+  - A rank-up scene that's still to be watched waits in the town, so following "See the cards" never loses it. Packs
+    given together are revealed together.
+- **The quest log** (`world/<slot>/quests/`): under way (with what's offered, each stage, progress counts and the
+  endings once it's ready), finished (with the ending) and closed (by which choice, and the rank that stays). Hidden
+  rewards say "A surprise".
+- **Staff:**
+  - **The list** (`world/quests/`, on the World mode tab): each quest's endings and what they close or send away,
+    any that no longer check out, and which CPUs' rank-up scenes have no gate quest yet.
+  - **The editor:** the quest as JSON, checked as it's typed, with a preview as the log shows it. A quest with
+    mistakes isn't saved, but its text stays on the page. A quest can lock or require one that isn't written yet
+    (noted, not refused), so two quests that close each other can be written one at a time.
+- **Files:**
+  - A CPU's `world` part has `quests` (its own: no giver). Packs check that every quest key they name exists, in the
+    database or the pack.
+  - A pack import replaces a CPU's quests only if its entry has `quests`.
+  - `world_pack/build.py` takes `quests=` per CPU. The export writes them, and `reference.md` documents them.
+  - The `new-cpu` skill's STYLE.md says how to write them.
+
+### Not done
+
+- The quests themselves.
+- A `visit` objective's scene is skipped if another scene is already waiting to be watched when the player arrives.
+- Editing a quest that saves have started changes it under them. The editor warns, but nothing migrates their place.
+
 ## Testing
 
 - **Unit tests:** schedule resolving (the same for a seed, once-per-day, no double placement, priority), time

@@ -202,6 +202,9 @@ DEFAULTS = [  # (context, min rank, script)
     ("rank_up", 3, "them (pleased): It's always better when you're here. Don't tell anyone I said that."),
     ("rank_up", 4, "them (pleased): I trust you, {player}. That's not something I say lightly."),
     ("rank_up", 5, "them (pleased): Whatever happens out there, I'm on your side. Best friends, okay?"),
+    ("estranged", 0, "them (dismayed): …Oh. It's you."),
+    ("estranged", 0, "them: I haven't forgotten what you did. If you want a duel, fine. Don't expect more."),
+    ("estranged", 0, "them (dismayed): Say what you came to say, {player}."),
 ]
 
 

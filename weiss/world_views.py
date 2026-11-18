@@ -23,7 +23,7 @@ from django.utils import timezone
 from django.utils.timesince import timesince
 from django.views.decorators.http import require_POST
 
-from . import buffs, challenge, packs, portraits, scenes, world
+from . import buffs, challenge, packs, portraits, quests, scenes, world
 from .cpu_views import MAX_LOADOUT, MAX_START_PACKS, back_to, staff_required
 from .lists import CLIMAX_COUNT, COPY_LIMIT, DECK_GROUPS, DECK_SIZE, unlimited
 from .models import CardList, CpuProfile, CpuSchedule, PlayerProfile, Scene, WorldPlace, WorldSave, WorldSettings
@@ -442,6 +442,27 @@ def world_answer(request, save):
 def world_give(request, save):
     """Give someone here a gift."""
     return world.give(save, request.POST.get("cpu", ""), request.POST.get("gift", ""))
+
+
+@town_move
+def world_quest(request, save):
+    """Something about a quest, with someone here: its offer, taking it, talking it through, handing a card over, or
+    choosing how it ends (see world.quest_act)."""
+    return world.quest_act(save, request.POST.get("cpu", ""), request.POST.get("act", ""), request.POST.get("quest", ""), request.POST)
+
+
+@staff_required
+def world_quests(request, slot):
+    """The save's quest log: what's offered, under way (each stage and objective, how far along), finished and closed."""
+    save, away = save_or_home(request, slot)
+    if away:
+        return away
+    found = quests.journal(save)
+    tab = request.GET.get("show") if request.GET.get("show") in ("done", "failed") else "active"
+    return render(request, "weiss/world_quests.html", {"save": save, "journal": found, "tab": tab,
+                                                       "tabs": [("active", "Under way", len(found["active"]) + len(found["offered"])),
+                                                                ("done", "Finished", len(found["done"])),
+                                                                ("failed", "Closed", len(found["failed"]))]})
 
 
 @town_move

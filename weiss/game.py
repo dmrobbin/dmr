@@ -1084,6 +1084,7 @@ def auto_refresh(state, name, shuffle):
 def played(state, player, card, to, env):
     """A card just played from the hand: what that triggers."""
     state.setdefault("played_cards", {}).setdefault(player, []).append(card["card"])
+    record(state, player, "played", card["card"])
     fire(state, env, "played_card", player=player, card=card["card"])
     if to in STAGE_SLOTS:
         card["played_turn"] = state["turn_number"]
@@ -2964,6 +2965,14 @@ def tally(state, player, key, n=1):
     stats[key] = stats.get(key, 0) + n
 
 
+def record(state, player, key, value):
+    """What a player did over the whole game, for world mode's quests (see weiss.quests): state["records"][player][key]
+    is a list of what happened, each once (cards played, [character, climax] combos started)."""
+    seen = state.setdefault("records", {}).setdefault(str(player), {}).setdefault(key, [])
+    if value not in seen:
+        seen.append(value)
+
+
 def tally_knockout(state, event, data):
     """An opponent's character reversed, or sent to the waiting room by an effect, counts for the other player
     (once: one reversed and then put into the waiting room the same turn is the same knockout)."""
@@ -3145,6 +3154,9 @@ def start_resolving(state, entry, env):
     tally(state, entry["player"], "abilities")
     if entry.get("accepted", True):
         cut_in(state, entry)
+        climax = state["players"][entry["player"]]["zones"]["climax"]
+        if climax and abilities.combo_lines(ability.get("text") or ""):
+            record(state, entry["player"], "combos", [entry["card"], climax[-1]["card"]])
     state["resolving"] = {"player": entry["player"], "uid": entry["uid"], "card": entry["card"], "text": ability["text"],
                           "steps": steps, "ctx": entry.get("ctx", {}), "prompt": None, "event": entry.get("event", False)}
 

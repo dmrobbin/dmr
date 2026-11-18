@@ -62,6 +62,16 @@
     }
     waitButton.disabled = Boolean(town.duel);
     $("[data-deck-notice]").hidden = town.deck_ready;
+    paintQuests();
+    const waiting = $("[data-scene-waiting]");
+    const linked = result && result.scene; // the duel's result banner links to it already
+    waiting.hidden = !town.scene || Boolean(linked);
+    if (town.scene && !linked) {
+      waiting.replaceChildren(`♥ ${town.scene.who ? `A moment with ${town.scene.who}` : "A moment"} is waiting for you. `,
+        Object.assign(document.createElement("a"), { href: town.scene.url, textContent: "Watch it now" }));
+    }
+    showNews(town.news);
+    town.news = [];
     paintPeople();
     if (!map.hidden) listPlaces();
     if (!shop.hidden) listStock();
@@ -109,15 +119,64 @@
       button.dataset.cpu = person.id;
       button.style.left = `${spots[i]}%`;
       button.style.setProperty("--delay", `${i * 90}ms`);
-      button.setAttribute("aria-label", `Talk to ${person.name}`);
+      const marker = questMarker(person);
+      button.setAttribute("aria-label", `Talk to ${person.name}${marker ? `: ${marker.label}` : ""}`);
       const tag = document.createElement("span");
       tag.className = "town-tag";
       tag.textContent = person.name;
       button.append(picture(person), tag);
+      if (marker) {
+        const badge = document.createElement("span");
+        badge.className = `town-quest-mark town-quest-${marker.kind}`;
+        badge.setAttribute("aria-hidden", "true");
+        badge.textContent = marker.kind === "offer" ? "!" : "★";
+        badge.title = marker.label;
+        button.append(badge);
+      }
       button.addEventListener("click", () => meet(person));
       people.append(button);
     });
     empty.hidden = here.length > 0;
+  }
+
+  // Someone with a quest for the player ("!") or something to do about one ("★"): marked over their head.
+  function questMarker(person) {
+    const q = person.quests || {};
+    if ((q.settles || []).length) return { kind: "act", label: "a quest to finish" };
+    if ((q.talks || []).length || (q.hands || []).length) return { kind: "act", label: "something about a quest" };
+    if ((q.offers || []).length) return { kind: "offer", label: "has something to ask you" };
+    return null;
+  }
+
+  // Quest news (a duel won, somewhere reached): kept above the stage until dismissed, so nothing's missed.
+  function showNews(items) {
+    const box = $("[data-news]");
+    if (!items || !items.length) return;
+    const list = box.querySelector("ul");
+    for (const item of items) {
+      const li = document.createElement("li");
+      if (item.quest) {
+        const title = document.createElement("strong");
+        title.textContent = `${item.quest}: `;
+        li.append(title);
+      }
+      li.append(item.text);
+      if (item.link) {
+        li.append(" ");
+        li.append(Object.assign(document.createElement("a"), { href: item.link, textContent: "Watch" }));
+      }
+      list.append(li);
+    }
+    box.hidden = false;
+  }
+
+  function paintQuests() {
+    const link = $("[data-quests]");
+    const { active = 0, ready = 0 } = town.quests || {};
+    link.querySelector("[data-quests-count]").textContent = active ? ` (${active})` : "";
+    link.classList.toggle("town-quests-ready", ready > 0);
+    link.title = ready ? `${ready} ready to finish` : active ? `${active} under way` : "Your quest log";
+    link.setAttribute("aria-label", `Quests${active ? `: ${active} under way` : ""}${ready ? `, ${ready} ready to finish` : ""}`);
   }
 
   let toastTimer;
@@ -242,7 +301,7 @@
     for (const [label, act, extra = {}] of list) {
       const button = document.createElement("button");
       button.type = "button";
-      button.className = `town-option ${extra.quiet ? "town-option-quiet" : ""}`;
+      button.className = `town-option ${extra.quiet ? "town-option-quiet" : ""} ${extra.quest ? "town-option-quest" : ""} ${extra.danger ? "town-option-danger" : ""}`;
       button.textContent = label;
       if (extra.title) button.title = extra.title;
       button.disabled = Boolean(extra.disabled);
@@ -282,6 +341,20 @@
     relationEl.append(hearts, words, points);
     const next = relation.next_rewards && relation.next_rewards.length ? ` Next rank: ${relation.next_rewards.join(", ")}.` : "";
     relationEl.title = relation.next === null ? "The closest you can be." : `${relation.next - relation.points} more to the next rank.${next}`;
+    const gate = relation.gate;
+    if (gate && (gate.ready || gate.status === "failed")) {
+      // Points enough, but the next rank waits on a quest (or a choice closed it for good): say so instead of the points.
+      const why = {
+        failed: "closed for good",
+        offered: "they have a quest for you",
+        active: `quest: ${gate.title}`,
+        settling: `finish “${gate.title}”`,
+      }[gate.status] || `waits on a quest`;
+      points.textContent = ` · ${why}`;
+      relationEl.title = gate.status === "failed"
+        ? "A choice you made closed this friendship's next rank, in this save."
+        : `The next rank waits on “${gate.title}”.${next}`;
+    }
   }
 
   function floatPoints(n) {
@@ -335,6 +408,7 @@
 
   function choices() {
     if (!talking) return;
+    clearPanel();
     refreshTalking();
     const person = talking;
     speaker("them");
@@ -348,7 +422,17 @@
     const relation = person.relation || {};
     const held = (town.gifts || []).filter((item) => item.have > 0);
     const noGift = relation.gifted ? "You've given them something today." : !held.length ? "Buy gifts at the card shop." : "";
+    const q = person.quests || {};
     const list = [
+      // Quests first: they're what's new.
+      ...(q.offers || []).map((item) => [`❗ ${person.name} wants to ask you something`, () => questAct("offer", item.quest), { quest: true }]),
+      ...(q.settles || []).map((item) => [`★ Finish “${item.title}”`, () => questAct("settle", item.quest), { quest: true }]),
+      ...(q.talks || []).map((item) => [`★ About “${item.title}”`, () => questAct("talk", item.quest, { objective: item.objective }), { quest: true }]),
+      ...(q.hands || []).map((item) => {
+        const short = item.have < item.copies ? `You have ${item.have} of the ${item.copies} needed.` : "";
+        return [`★ Hand over ${item.card}${item.copies > 1 ? ` ×${item.copies}` : ""}`, () => confirmHand(item),
+          { quest: true, disabled: Boolean(short), title: short || item.title }];
+      }),
       ["Talk", talk, { title: relation.talked ? "" : "The day's first talk brings them closer." }],
       ["Give a gift", giftMenu, { disabled: Boolean(noGift), title: noGift }],
       ["Duel", () => duel(false), { disabled: Boolean(why), title: why }],
@@ -360,6 +444,129 @@
     list.push(["Leave", leave, { quiet: true }]);
     options(list);
     if (why) note(why, !town.deck_ready && !town.duel ? { href: root.dataset.decksUrl, text: "Your decks" } : null);
+  }
+
+  // ---- Quests in the talk box (weiss.world.quest_act): offers, talking them through, handing cards over, endings ----
+
+  async function questAct(act, quest, extra = {}) {
+    menu.replaceChildren();
+    clearPanel();
+    const data = await post(root.dataset.questUrl, { cpu: talking.id, act, quest, ...extra });
+    if (data && talking) play(data.talk);
+    else if (talking) choices();
+  }
+
+  // A panel under the words, for an offer or the endings: built from text nodes only (quest text is staff-written).
+  const panelEl = $("[data-quest-panel]");
+  function clearPanel() {
+    panelEl.replaceChildren();
+    panelEl.hidden = true;
+  }
+  function el(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+  function bullets(items, className = "") {
+    const ul = el("ul", className);
+    for (const item of items) ul.append(el("li", "", item));
+    return ul;
+  }
+
+  // A decision (an offer, the endings, a confirmation) is never left below the fold: the box's buttons come into view.
+  function reveal() {
+    requestAnimationFrame(() => box.scrollIntoView({ block: "nearest", behavior: reduced ? "auto" : "smooth" }));
+  }
+
+  // Handing a card over can't be undone: say so, and what it means for the decks, before it's done.
+  function confirmHand(item) {
+    speaker("");
+    textEl.textContent = `Give ${item.card}${item.copies > 1 ? ` ×${item.copies}` : ""} to ${talking.name}? It leaves your cards for good: `
+      + `you'll have ${item.have - item.copies} left, and any deck with more than that loses the rest.`;
+    options([
+      [`Hand it over`, () => questAct("hand", item.quest, { objective: item.objective })],
+      ["Not yet", choices, { quiet: true }],
+    ]);
+    reveal();
+  }
+
+  function offerPanel(offer) {
+    speaker("");
+    textEl.textContent = `Quest: ${offer.title}`;
+    clearPanel();
+    panelEl.append(el("p", "", offer.about));
+    const first = el("p", "town-quest-first");
+    first.append(el("strong", "", offer.stages > 1 ? `First, of ${offer.stages} steps: ` : "To do: "), offer.first);
+    panelEl.append(first, bullets(offer.objectives, "town-quest-objectives"));
+    if (offer.rewards.length) panelEl.append(el("p", "small", `Reward: ${offer.rewards.join(" · ")}`));
+    if (offer.gate) panelEl.append(el("p", "small muted", `Finishing it unlocks ${offer.gate} with ${offer.giver}.`));
+    if (offer.closes) {
+      panelEl.append(el("p", "small town-quest-warn", "It ends with a choice, and some endings close other quests for good. "
+        + "Taking it closes nothing: you'll see exactly what each ending closes before you choose."));
+    } else if (offer.choice) {
+      panelEl.append(el("p", "small muted", "It ends with a choice."));
+    }
+    panelEl.hidden = false;
+    options([
+      ["Take the quest", () => questAct("accept", offer.quest)],
+      ["Not now", () => { clearPanel(); choices(); }, { quiet: true }],
+    ]);
+    reveal();
+  }
+
+  function endingsPanel(found) {
+    speaker("");
+    textEl.textContent = found.endings.length > 1 ? `How does “${found.title}” end?` : `Finish “${found.title}”?`;
+    clearPanel();
+    const list = el("ul", "town-endings");
+    for (const ending of found.endings) {
+      const item = el("li", "town-ending");
+      item.append(el("p", "town-ending-title", ending.title));
+      if (ending.about) item.append(el("p", "small", ending.about));
+      if (ending.rewards.length) item.append(el("p", "small muted", `Reward: ${ending.rewards.join(" · ")}`));
+      const closes = closeWords(ending.fallout);
+      if (closes.length) {
+        item.append(el("p", "small town-quest-warn", "This closes, for good:"), bullets(closes, "town-quest-closes"));
+      } else {
+        item.append(el("p", "small muted", "It closes nothing else."));
+      }
+      if (ending.missing.length) item.append(el("p", "small muted", `First: ${ending.missing.join("; ")}.`));
+      list.append(item);
+    }
+    panelEl.append(list);
+    if (found.elsewhere.length) panelEl.append(el("p", "small muted", `Other endings are with ${found.elsewhere.join(", ")}.`));
+    panelEl.hidden = false;
+    options([
+      ...found.endings.map((ending) => [ending.title, () => pickEnding(found, ending),
+        { disabled: ending.missing.length > 0, title: ending.missing.length ? `First: ${ending.missing.join("; ")}` : "" }]),
+      ["Not yet", () => { clearPanel(); choices(); }, { quiet: true }],
+    ]);
+    reveal();
+  }
+
+  function closeWords(fallout) {
+    return [
+      ...fallout.leave.map((name) => `${name} leaves town, and you won't see them again in this save.`),
+      ...fallout.quests.map((q) => `“${q.title}”${q.giver ? ` (${q.giver})` : ""}: ${q.why}${q.held ? ` ${q.giver} stays at ${q.held} with you.` : ""}`),
+    ];
+  }
+
+  // An ending that closes anything is asked about once more, saying what, since it can't be undone.
+  function pickEnding(found, ending) {
+    const closes = closeWords(ending.fallout);
+    if (!closes.length) return questAct("choose", found.quest, { ending: ending.key });
+    textEl.textContent = `“${ending.title}”: this can't be undone.`;
+    clearPanel();
+    panelEl.append(el("p", "small town-quest-warn", "Choosing it closes, for good:"), bullets(closes, "town-quest-closes"),
+      el("p", "small muted", "Your other saves aren't touched."));
+    panelEl.hidden = false;
+    options([
+      [`Choose “${ending.title}”`, () => questAct("choose", found.quest, { ending: ending.key, confirm: "1" }), { danger: true }],
+      ["Go back", () => endingsPanel(found), { quiet: true }],
+    ]);
+    menu.querySelector(".town-option-quiet")?.focus({ preventScroll: true }); // the safe choice has the focus
+    reveal();
   }
 
   async function talk() {
@@ -427,9 +634,22 @@
         speaker("");
         $("[data-coins]").textContent = `${town.money.toLocaleString()} coins`;
         return lines([`★ ${event.reward}`], () => {
-          if (!event.link) return next();
+          // Packs given together are revealed together: offer to see them once, after the last.
+          if (!event.link || queue.some((later) => later.link)) return next();
           options([["See the cards", () => { window.location.href = event.link; }], ["Carry on", next, { quiet: true }]]);
         });
+      }
+      if (event.quest) {
+        speaker("");
+        if (event.done) myMood("happy");
+        paintQuests();
+        return lines([`★ ${event.quest}`], next);
+      }
+      if (event.rank_reached) {
+        speaker("");
+        myMood("happy");
+        if (event.relation && event.who === talking.name) showRelation(event.relation);
+        return lines([`♥ You and ${event.who} are now: ${event.rank_reached}.`], next);
       }
       if (event.money) say(`+${event.money.toLocaleString()} coins.`);
       if (event.gift) say(`${talking.name} gave you ${event.icon} ${event.gift}.`);
@@ -447,6 +667,8 @@
       return;
     }
     if (!waiting) return choices();
+    if (waiting.quest_offer) return offerPanel(waiting.quest_offer);
+    if (waiting.endings) return endingsPanel(waiting.endings);
     if (waiting.choice !== undefined) {
       if (waiting.prompt) {
         speaker("them");
@@ -492,6 +714,7 @@
     const person = talking;
     talking = null;
     advance = null;
+    clearPanel();
     box.hidden = true;
     relationEl.hidden = true;
     me.classList.remove("town-me-in");
@@ -860,6 +1083,11 @@
     });
   }
   waitButton.addEventListener("click", wait);
+  $("[data-news-close]").addEventListener("click", () => {
+    const box = $("[data-news]");
+    box.hidden = true;
+    box.querySelector("ul").replaceChildren();
+  });
   document.addEventListener("keydown", (event) => {
     if (event.ctrlKey || event.metaKey || event.altKey || event.target.matches("input, textarea, select")) return;
     const key = event.key.toLowerCase();

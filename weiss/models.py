@@ -738,6 +738,7 @@ class WorldSave(models.Model):
     relations = models.JSONField(default=dict, blank=True, help_text="How things stand with each CPU: {cpu id: {...}}")
     flags = models.JSONField(default=dict, blank=True)
     gifts = models.JSONField(default=dict, blank=True, help_text="Gifts bought and not yet given: {gift key: how many}")
+    quests = models.JSONField(default=dict, blank=True, help_text="Its quests (see weiss.quests): {log: {quest key: {...}}, gone: [cpu id], news: [...]}")
     today = models.JSONField(default=dict, blank=True, help_text="What's been done today (cleared each new day)")
     seed = models.PositiveIntegerField(default=0, help_text="Settles everything left to chance in this save, so a reload changes nothing")
     version = models.PositiveIntegerField(default=0, help_text="Goes up on every change")
@@ -822,6 +823,7 @@ class Chatter(models.Model):
         ("gift_neutral", "Given a gift it doesn't mind"), ("gift_disliked", "Given a gift it dislikes"),
         ("before_duel", "Before a duel (its first line)"), ("after_win", "After the player wins (its first line)"),
         ("after_loss", "After the player loses (its first line)"), ("rank_up", "Reaching its rank (min rank)"),
+        ("estranged", "Talking, once a quest choice has closed its friendship for good"),
     ]
 
     cpu = models.ForeignKey("CpuProfile", null=True, blank=True, on_delete=models.CASCADE, related_name="chatter",
@@ -848,6 +850,27 @@ class Chatter(models.Model):
             errors = compile_chatter(self.script)[1]
             if errors:
                 raise ValidationError({"script": [f"Line {line}: {problem}" for line, problem in errors[:10]]})
+
+
+class Quest(models.Model):
+    """A quest in world mode (see weiss.quests): stages of objectives, then a choice of endings, each of which can close
+    other quests for good. One with a `gate_rank` holds its giver's friendship below that rank until it's done: the
+    big rank-ups (the ones with scenes) wait for one. The rest of it is `spec`, checked by weiss.quests.check."""
+
+    key = models.SlugField(max_length=60, unique=True, help_text="How saves, files and other quests refer to it; never change it once played")
+    title = models.CharField(max_length=100)
+    giver = models.ForeignKey(CpuProfile, null=True, blank=True, on_delete=models.CASCADE, related_name="quests",
+                              help_text="Who offers it; none for a story quest")
+    gate_rank = models.PositiveSmallIntegerField(null=True, blank=True, help_text="The friendship rank with the giver that waits for this quest")
+    spec = models.JSONField(default=dict, blank=True, help_text="About, offer, requires, stages, endings, rewards, hidden (see weiss.quests)")
+    order = models.PositiveSmallIntegerField(default=0)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["order", "title"]
+
+    def __str__(self):
+        return self.title
 
 
 class CpuSchedule(models.Model):

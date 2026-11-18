@@ -13,7 +13,10 @@ A CPU's file, as both commands use it:
                              "once_per_day": false, "min_rank": 0, "stake": 0}],
                "gift_tastes": {"loves": ["sweet"], "likes": ["drink", "cards"], "dislikes": ["spicy"]},
                "chatter": [{"context": "greet", "min_rank": 0, "weight": 1, "script": "them: Oh, hi, {player}."},
-                           {"context": "rank_up", "min_rank": 3, "scene": "Rapi: First meeting"}]}}
+                           {"context": "rank_up", "min_rank": 3, "scene": "Rapi: First meeting"}],
+               "quests": [{"key": "rapi-orders", "title": "Orders", "gates": 2, "about": "...",
+                           "stages": [{"text": "...", "objectives": [{"do": "defeat", "cpus": ["Anis"]}]}],
+                           "endings": [{"key": "done", "title": "Report back"}]}]}}
 
 A deck is built by express building from its series and anchors, unless it lists its cards, which are then taken
 as they are. An export also writes "context" (the deck's key cards, where its scenes play), which an import ignores.
@@ -27,10 +30,10 @@ from types import SimpleNamespace
 
 from django.db import transaction
 
-from . import abilities, buffs, chatter, cpu, scenes
+from . import abilities, buffs, chatter, cpu, quests, scenes
 from .cpu_views import MAX_TEXT, TEXT_FIELDS, deck_problem, scene_uses
 from .express import ANCHORS, build_deck, cpu_anchor_choices, series_pool
-from .models import Card, CardList, CardListEntry, Chatter, CpuProfile, CpuSchedule, GiftItem, Scene, WorldPlace
+from .models import Card, CardList, CardListEntry, Chatter, CpuProfile, CpuSchedule, GiftItem, Quest, Scene, WorldPlace
 from .views import series_code
 
 PROFILE_FIELDS = ("name", "model", "aggression", "boss", *TEXT_FIELDS)
@@ -101,6 +104,8 @@ def world_record(profile):
         "chatter": [{"context": line.context, "min_rank": line.min_rank, "weight": line.weight, "script": line.script,
                      **({"scene": line.scene.name} if line.scene else {})}
                     for line in profile.chatter.select_related("scene").order_by("context", "min_rank", "pk")],
+        "quests": [{k: v for k, v in quests.as_file(quest).items() if k != "giver"}
+                   for quest in profile.quests.select_related("giver").order_by("order", "pk")],
     }
 
 
@@ -118,7 +123,9 @@ def world_info():
             "temperaments": dict(CpuProfile._meta.get_field("temperament").choices), "max_per_place": world.MAX_PER_PLACE,
             "max_on_stage": world.MAX_ON_STAGE,
             "gifts": gifts, "tags": sorted(tags), "contexts": dict(Chatter.CONTEXTS), "ranks": world.rank_names(),
-            "cpu_moods": list(chatter.CPU_MOODS), "player_moods": list(chatter.PLAYER_MOODS)}
+            "cpu_moods": list(chatter.CPU_MOODS), "player_moods": list(chatter.PLAYER_MOODS),
+            "quests": sorted(Quest.objects.values_list("key", flat=True)),
+            "objectives": {do: {"fields": sorted(fields), "about": about} for do, (fields, about) in quests.OBJECTIVES.items()}}
 
 
 def export_profile(profile, casts, uses):
@@ -199,6 +206,20 @@ def world_reference():
     lines += ["", "A script is the scene language's compact form: the CPU is `them`, and there's no stage.", ""]
     lines += [f"- `{example}`: {meaning}" for example, meaning, _ in chatter.REFERENCE]
     lines += ["", f"Gift keys for `give gift`: {', '.join(gift['key'] for gift in info['gifts'])}."]
+    lines += ["", "### `quests`: what it asks of the player", "",
+              "Each quest is given by this CPU. `gates` (a rank) holds its friendship below that rank until the quest is done: "
+              "the big rank-ups, the ones with scenes (Friend and Best friend), should each wait on one. A gate quest is offered "
+              "once the player has that rank's points. Quests are found by `key` (lowercase, - and _), so other quests can "
+              "require or lock them, including other CPUs' quests.", "",
+              "```", quests.__doc__.split("A quest is a Quest row: its key, title, giver and the friendship rank it gates, and a spec (checked by `check`):")[1]
+              .split("How it plays out")[0].strip("\n"), "```", "",
+              "Objectives (`do`), each with an optional `text` to say it in your own words; CPUs by name, cards by serial "
+              "number (any printing of the card's name counts):", ""]
+    lines += [f"- `{do}` ({', '.join(f'`{field}`' for field in sorted(fields))}): {about}" for do, (fields, about) in quests.OBJECTIVES.items()]
+    lines += ["", "An ending's `locks` closes other quests for good (by key), and `removes` sends CPUs away for good: the player "
+              "is shown exactly what before choosing. Closing a gate quest leaves its giver at the rank below, in that save.",
+              f"Rewards: `{{\"coins\": n}}`, `{{\"card\": serial, \"copies\": n}}`, `{{\"pack\": one of {', '.join(quests.PACKS)}}}`, "
+              "`{\"gift\": key}`, `{\"flag\": name, \"text\": what it means}`; `\"hidden\": true` keeps them a surprise."]
     return lines
 
 
@@ -355,14 +376,57 @@ def joined(script):
     return "\n".join(str(line) for line in script) if isinstance(script, list) else str(script or "")
 
 
-def read_world(data, problems, info, scene_names=()):
-    """(schedule rules, gift tastes, chatter lines), checked; info: world_info() (or world.json, offline); scene_names:
-    the scenes a rank-up can play (lowercase), besides those in the database when checking online."""
+def quest_context(info, scene_names=(), cpus=(), quest_keys=(), offline=False):
+    """What a CPU file's quests can name (see quests.check): the places, gifts and ranks in `info`, these CPUs (and the
+    database's, unless offline), these scenes and quests (and the database's), and cards (unchecked offline)."""
+    names = {} if offline else {name.lower(): name for name in CpuProfile.objects.values_list("name", flat=True)}
+    names.update({name.lower(): name for name in cpus})
+    scene_set = {name.lower() for name in scene_names}
+    return SimpleNamespace(
+        cpus=names, places={place["key"] for place in info["places"]}, gifts={gift["key"] for gift in info["gifts"]},
+        ranks=info["ranks"], quests={*info.get("quests", []), *quest_keys},
+        cards=None if offline else (lambda serial: Card.objects.filter(serial_number=serial).exists()),
+        scenes=(lambda name: name.lower() in scene_set) if offline else
+        (lambda name: name.lower() in scene_set or Scene.objects.filter(name__iexact=name).exists()))
+
+
+def read_quests(raw, giver, problems, context):
+    """The quests a CPU's world part gives, checked: [quests.check fields]."""
+    if raw is None:
+        return None
+    if not isinstance(raw, list):
+        problems.append("world quests: a list of quests.")
+        return []
+    found, keys = [], set()
+    for number, data in enumerate(raw, 1):
+        if isinstance(data, dict) and data.get("giver") and str(data["giver"]).lower() != giver.lower():
+            problems.append(f"world quest {number}: a CPU's quests are its own to give; leave out the giver.")
+        fields, errors = quests.check({**data, "giver": giver} if isinstance(data, dict) else data, context, giver=giver)
+        problems += [f"world quest {number}: {error}" for error in errors]
+        if fields:
+            if fields["key"] in keys:
+                problems.append(f"world quest {number}: another of its quests has the key “{fields['key']}”.")
+            keys.add(fields["key"])
+            found.append(fields)
+    return found
+
+
+def quest_keys(entries):
+    """Every quest key the world parts of these files or pack entries name, so one quest can lock another's."""
+    return {str(q.get("key")) for world_part in entries if isinstance(world_part, dict)
+            for q in (world_part.get("quests") or []) if isinstance(q, dict) and q.get("key")}
+
+
+def read_world(data, problems, info, scene_names=(), giver=None, names=None):
+    """(schedule rules, gift tastes, chatter lines, temperament, quests), checked; info: world_info() (or world.json,
+    offline); scene_names: the scenes a rank-up can play (lowercase), besides those in the database when checking
+    online. giver: the CPU's name, for its quests; names: what they can name (quest_context). Quests are None when
+    the part has none to say (so an import leaves the CPU's quests be)."""
     data = data or {}
     if not isinstance(data, dict):
         problems.append("world: write it as {\"schedule\": [...], \"gift_tastes\": {...}, \"chatter\": [...]}.")
-        return [], {}, []
-    unknown = sorted(set(data) - {"temperament", "schedule", "gift_tastes", "chatter"})
+        return [], {}, [], None, None
+    unknown = sorted(set(data) - {"temperament", "schedule", "gift_tastes", "chatter", "quests"})
     if unknown:
         problems.append(f"world: no such fields as {', '.join(unknown)}.")
     places = {place["key"] for place in info["places"]}
@@ -436,11 +500,16 @@ def read_world(data, problems, info, scene_names=()):
         elif script.strip():
             problems += [f"{where}, line {at}: {error}" for at, error in chatter.compile_chatter(script, gifts=gifts)[1]]
         lines.append({"context": context, "min_rank": min_rank, "weight": weight, "script": script, "scene": str(scene) if scene else None})
-    return rules, tastes, lines, temperament
+    found_quests = None
+    if data.get("quests") is not None:
+        found_quests = read_quests(data["quests"], giver or "", problems,
+                                   names or quest_context(info, scene_names, cpus=[giver] if giver else [], quest_keys=quest_keys([data])))
+    return rules, tastes, lines, temperament, found_quests
 
 
-def make_world(profile, rules, tastes, lines, temperament=None):
-    """Saves a CPU's world part, once the CPU (and the batch's scenes) exist."""
+def make_world(profile, rules, tastes, lines, temperament=None, found_quests=None):
+    """Saves a CPU's world part, once the CPU (and the batch's scenes) exist. Its quests (if the part had some to say)
+    replace the CPU's own; saves that started one keep their place in it, by its key."""
     if temperament:
         profile.temperament = temperament
         profile.save(update_fields=["temperament"])
@@ -454,6 +523,10 @@ def make_world(profile, rules, tastes, lines, temperament=None):
         scene = Scene.objects.filter(name__iexact=line["scene"]).first() if line["scene"] else None
         Chatter.objects.create(cpu=profile, context=line["context"], min_rank=line["min_rank"], weight=line["weight"],
                                script=line["script"], scene=scene)
+    if found_quests is not None:
+        for order, fields in enumerate(found_quests):
+            quests.save_quest({**fields, "giver": profile.name}, order=order)
+        profile.quests.exclude(key__in=[fields["key"] for fields in found_quests]).delete()
 
 
 class DryRun(Exception):
@@ -497,10 +570,12 @@ def import_cpus(files, user, seed=None, dry_run=False, rngs=None):
                     _, errors = scenes.compile_scene(script)
                     result.problems += [f"scene “{name}”, line {line}: {error}" for line, error in errors]
                     Scene.objects.create(name=name, script=script, infinite_event=infinite_event, created_by=user)
+            batch_keys = quest_keys([result.data.get("world") for result in results])
             for result in results:  # once every scene of the batch is made, for rank-ups to play
                 if not result.profile:
                     continue
-                result.world = read_world(result.data.get("world"), result.problems, info)
+                result.world = read_world(result.data.get("world"), result.problems, info, giver=result.profile.name,
+                                          names=quest_context(info, quest_keys=batch_keys))
                 if not result.problems:
                     make_world(result.profile, *result.world)
             if dry_run or any(result.problems for result in results):
@@ -565,7 +640,9 @@ def check_offline(data, cpus, scene_names, anchors, info=None):
         if info is None:
             problems.append("world: this export is from before world mode; export again to check it.")
         else:
-            read_world(data["world"], problems, info, scene_names={*scene_names, *(name.lower() for name, _, _ in wanted_scenes)})
+            known_scenes = {*scene_names, *(name.lower() for name, _, _ in wanted_scenes)}
+            read_world(data["world"], problems, info, scene_names=known_scenes, giver=fields["name"],
+                       names=quest_context(info, known_scenes, cpus=[*cpus, fields["name"] or ""], quest_keys=quest_keys([data["world"]]), offline=True))
     return problems
 
 
@@ -608,6 +685,7 @@ def import_world_pack(files, dry_run=False, user=None, known=None):
     for name, script, result in pack_scenes.values():
         result.problems += [f"scene “{name}”, line {line}: {error}" for line, error in scenes.compile_scene(script, find=find)[1]]
     wanted = []
+    pack_keys = quest_keys([entry.get("world") for data in files for entry in data.get("cpus") or []])
     for data, result in zip(files, results):
         for number, entry in enumerate(data.get("cpus") or [], 1):
             name = str(entry.get("name", "")).strip()
@@ -615,12 +693,13 @@ def import_world_pack(files, dry_run=False, user=None, known=None):
                 result.missing.append(name or f"CPU {number}")
                 continue
             before = len(result.problems)
-            found = read_world(entry.get("world"), result.problems, info, scene_names=set(pack_scenes))
+            found = read_world(entry.get("world"), result.problems, info, scene_names=set(pack_scenes), giver=names[name.lower()],
+                               names=quest_context(info, set(pack_scenes), cpus=names.values(), quest_keys=pack_keys, offline=known is not None))
             result.problems[before:] = [f"{names[name.lower()]}: {problem}" for problem in result.problems[before:]]
             wanted.append((names[name.lower()], found, result))
     if dry_run or known is not None or any(result.problems for result in results):
-        for name, (rules, tastes, lines, _), result in wanted:
-            result.done.append((name, f"{len(rules)} haunts, {len(lines)} lines"))
+        for name, (rules, tastes, lines, _, found_quests), result in wanted:
+            result.done.append((name, done_words(rules, lines, found_quests)))
         return results
     with transaction.atomic():
         for name, script, _ in pack_scenes.values():
@@ -630,10 +709,15 @@ def import_world_pack(files, dry_run=False, user=None, known=None):
                 scene.save(update_fields=["script", "updated"])
             else:
                 Scene.objects.create(name=name, script=script, created_by=user)
-        for name, (rules, tastes, lines, temperament), result in wanted:
+        for name, (rules, tastes, lines, temperament, found_quests), result in wanted:
             profile = CpuProfile.objects.get(name__iexact=name)
             profile.schedule.all().delete()
             profile.chatter.all().delete()
-            make_world(profile, rules, tastes, lines, temperament)
-            result.done.append((name, f"{len(rules)} haunts, {len(lines)} lines"))
+            make_world(profile, rules, tastes, lines, temperament, found_quests)
+            result.done.append((name, done_words(rules, lines, found_quests)))
     return results
+
+
+def done_words(rules, lines, found_quests):
+    words = f"{len(rules)} haunts, {len(lines)} lines"
+    return words + (f", {len(found_quests)} quest{'s' if len(found_quests) != 1 else ''}" if found_quests else "")
