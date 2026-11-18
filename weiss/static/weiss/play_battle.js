@@ -20,6 +20,7 @@
 
   function create(app) {
     const { root, cards, esc, climaxColor, reducedMotion, SOUL_ICON } = app;
+    const pinnacle = app.pinnacle || { power: Infinity, aura: () => "yellow", layers: () => "" };
 
     const band = document.createElement("div");
     band.className = "battle-band";
@@ -228,14 +229,36 @@
       }
       const face = info ? `<img src="${esc(info.image)}" alt="">` : '<span class="pcard-back"></span>';
       const side = kind === "side" && f.role === "defender";
+      const aura = atPinnacle(f) ? pinnacle.aura(info) : "";
+      const peak = aura ? ` pinnacle" data-aura="${aura}` : "";
       return `<div class="bv-fighter bv-${f.role}${side ? " bv-bystander" : ""}" data-side="${f.owner}">
-        <div class="bv-card-wrap"><div class="bv-card">${face}</div><div class="bv-backups"></div></div>
+        <div class="bv-card-wrap${peak}">${aura ? pinnacle.layers() : ""}<div class="bv-card">${face}</div><div class="bv-backups"></div></div>
         <div class="bv-stats">
-          <span class="bv-power" data-power="${f.power}">${f.power}</span>
+          <span class="bv-power${peak}" data-power="${f.power}">${f.power}</span>
           <span class="bv-souls">${soulsHtml(f.soul)}</span>
         </div>
         <p class="bv-role">${f.role === "attacker" ? "Attacking" : side ? `Level ${f.level}: −${f.level} soul` : "Defending"}</p>
       </div>`;
+    }
+
+    // A fighter at the pinnacle of strength wears its colour's aura, as it does on the board (play.js pinnacleHtml).
+    const atPinnacle = (f) => Boolean(f.pk && cards[f.pk]) && f.power >= pinnacle.power;
+
+    // Its power has changed (a backup, the clash): the aura comes or goes with it, flaring as it comes.
+    function markPinnacle(f) {
+      const el = fighterEl(f);
+      const wrap = el && el.querySelector(".bv-card-wrap");
+      if (!wrap || atPinnacle(f) === wrap.classList.contains("pinnacle")) return;
+      const power = el.querySelector(".bv-power");
+      wrap.querySelectorAll(".pinnacle-aura, .pinnacle-ring, .pinnacle-flare").forEach((layer) => layer.remove());
+      for (const node of [wrap, power]) {
+        node.classList.toggle("pinnacle", atPinnacle(f));
+        if (atPinnacle(f)) node.dataset.aura = pinnacle.aura(cards[f.pk]);
+        else delete node.dataset.aura;
+      }
+      if (atPinnacle(f)) {
+        wrap.insertAdjacentHTML("afterbegin", pinnacle.layers(reducedMotion ? "" : '<span class="pinnacle-flare" aria-hidden="true"></span>'));
+      }
     }
 
     // Each card's size from its power: its area in proportion (so the width goes with the square root), never
@@ -390,6 +413,7 @@
         setTimeout(() => {
           countTo(el.querySelector(".bv-power"), shown ? shown.defender.power : 0, ms * 0.4);
           sizeFighters();
+          if (shown) markPinnacle(shown.defender);
         }, ms * 0.35);
       }
     }
@@ -475,6 +499,8 @@
       shown.attacker.power = mine;
       shown.defender.power = theirs;
       sizeFighters();
+      markPinnacle(shown.attacker);
+      markPinnacle(shown.defender);
       const gap = Math.abs(mine - theirs) / Math.max(1, mine, theirs);
       const k = Math.min(1, gap * 2.2); // 0: evenly matched .. 1: a rout (45% apart or more)
       const reversed = new Set(battle.reversed || []);

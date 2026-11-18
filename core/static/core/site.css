@@ -2544,30 +2544,101 @@ button.spire-node-face:disabled { cursor: not-allowed; }
   border: 1px solid var(--cx-glow); box-shadow: 0 0 22px color-mix(in srgb, var(--cx-glow) 55%, transparent), inset 0 0 18px color-mix(in srgb, var(--cx-glow) 30%, transparent);
   animation: cx-zone-breathe 2.4s ease-in-out infinite; }
 @keyframes cx-zone-breathe { 50% { box-shadow: 0 0 34px color-mix(in srgb, var(--cx-glow) 75%, transparent), inset 0 0 24px color-mix(in srgb, var(--cx-glow) 45%, transparent); } }
-/* The pinnacle of strength (play.js pinnacleHtml, 10,000 power and up): a white-gold light running round the card's
-   edge with a soft breathing glow, the power gilded, and a single flare the moment it gets there. The ring is a
-   border cut out of a spinning square (transform only, so it costs the graphics card next to nothing). */
+/* The pinnacle of strength (play.js pinnacleHtml, 10,000 power and up; and the battle view's fighters, play_battle.js):
+   a light running round the card's edge with a breathing glow, the power gilded, and a single flare the moment it gets
+   there. The ring is a border cut out of a spinning square (transform only, so it costs the graphics card next to
+   nothing). Each colour has its own: its palette, how its ring turns and its glow breathes, and a motif of its own in
+   .pinnacle-aura: yellow's sun rays turning behind it, red's embers rising, blue's frost and a glint sweeping its face,
+   green's growth rings spreading out, purple's sigil turning behind it and its ring crackling. */
+.pinnacle { --pin-deep: #b8860b; --pin-mid: #ffe9a0; --pin-hi: #fff; --pin-glow: #ffd666; --pin-ink: #2a1a00;
+  --pin-spin: 3.2s; --pin-dir: normal; --pin-breathe: pinnacle-breathe 2.6s ease-in-out infinite; }
+.pinnacle[data-aura="red"] { --pin-deep: #a3200e; --pin-mid: #ff8a3d; --pin-hi: #ffe9b8; --pin-glow: #ff5a1f; --pin-ink: #2b0700;
+  --pin-spin: 1.7s; --pin-breathe: pinnacle-flicker 1.3s linear infinite; }
+.pinnacle[data-aura="blue"] { --pin-deep: #1a62a8; --pin-mid: #a6e6ff; --pin-hi: #f4feff; --pin-glow: #5ccbff; --pin-ink: #02192c;
+  --pin-spin: 6s; --pin-dir: reverse; --pin-breathe: pinnacle-breathe 4.2s ease-in-out infinite; }
+.pinnacle[data-aura="green"] { --pin-deep: #1b7536; --pin-mid: #95f5b0; --pin-hi: #effff3; --pin-glow: #3fe07a; --pin-ink: #032010;
+  --pin-spin: 4.4s; --pin-breathe: pinnacle-breathe 2.8s ease-in-out infinite; }
+.pinnacle[data-aura="purple"] { --pin-deep: #6020a0; --pin-mid: #d9a0ff; --pin-hi: #fcf2ff; --pin-glow: #b464ff; --pin-ink: #1e0636;
+  --pin-spin: 2.4s; --pin-dir: reverse; --pin-breathe: pinnacle-breathe 2s ease-in-out infinite; }
+.pcard.pinnacle, .bv-card-wrap.pinnacle { isolation: isolate; animation: var(--pin-breathe);
+  box-shadow: 0 0 10px 2px color-mix(in srgb, var(--pin-glow) 55%, transparent), 0 0 22px 4px color-mix(in srgb, var(--pin-glow) 25%, transparent); }
+.bv-card-wrap.pinnacle { border-radius: .45rem; }
 .pinnacle-ring { position: absolute; inset: -3px; z-index: 2; border-radius: .45rem; padding: 2px; overflow: hidden; pointer-events: none;
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+.bv-card-wrap .pinnacle-ring { inset: -4px; padding: 3px; border-radius: .6rem; }
 .pinnacle-ring::before { content: ""; position: absolute; left: 50%; top: 50%; width: 260%; aspect-ratio: 1; translate: -50% -50%;
-  background: conic-gradient(from 0deg, #b8860b, #ffe9a0 8%, #fff 12%, #ffe9a0 16%, #b8860b 30%, #6b4a08 50%, #b8860b 70%, #ffe9a0 84%, #fff 88%, #ffe9a0 92%, #b8860b);
-  animation: pinnacle-spin 3.2s linear infinite; }
-.pcard.pinnacle { box-shadow: 0 0 10px 2px rgb(255 214 102 / .55), 0 0 22px 4px rgb(255 190 60 / .25); animation: pinnacle-breathe 2.6s ease-in-out infinite; }
-.pcard.pinnacle .stat-power { color: #2a1a00; text-shadow: 0 1px 0 rgb(255 255 255 / .5);
-  background: linear-gradient(110deg, #c8951c 0%, #ffe38a 40%, #fffbe6 50%, #ffe38a 60%, #c8951c 100%) 0 0 / 250% 100%;
-  box-shadow: 0 0 0 1px #fff1b0, 0 0 10px rgb(255 214 102 / .85); animation: pinnacle-gild 3s linear infinite; }
+  background: conic-gradient(from 0deg, var(--pin-deep), var(--pin-mid) 8%, var(--pin-hi) 12%, var(--pin-mid) 16%, var(--pin-deep) 30%,
+    color-mix(in srgb, var(--pin-deep) 55%, #000) 50%, var(--pin-deep) 70%, var(--pin-mid) 84%, var(--pin-hi) 88%, var(--pin-mid) 92%, var(--pin-deep));
+  animation: pinnacle-spin var(--pin-spin) linear infinite var(--pin-dir); }
+[data-aura="purple"] > .pinnacle-ring { animation: pinnacle-crackle 1.9s steps(1) infinite; }
+.pcard.pinnacle .stat-power { color: var(--pin-ink); text-shadow: 0 1px 0 rgb(255 255 255 / .5);
+  background: linear-gradient(110deg, color-mix(in srgb, var(--pin-deep) 45%, var(--pin-mid)) 0%, var(--pin-mid) 40%, var(--pin-hi) 50%,
+    var(--pin-mid) 60%, color-mix(in srgb, var(--pin-deep) 45%, var(--pin-mid)) 100%) 0 0 / 250% 100%;
+  box-shadow: 0 0 0 1px var(--pin-hi), 0 0 10px color-mix(in srgb, var(--pin-glow) 85%, transparent); animation: pinnacle-gild 3s linear infinite; }
+.bv-power.pinnacle { color: transparent; text-shadow: none; -webkit-background-clip: text; background-clip: text;
+  background-image: linear-gradient(110deg, var(--pin-mid) 0%, var(--pin-hi) 42%, #fff 50%, var(--pin-hi) 58%, var(--pin-mid) 100%);
+  background-size: 250% 100%; filter: drop-shadow(0 0 6px var(--pin-glow)); animation: pinnacle-gild 3s linear infinite; }
 .pinnacle-flare { position: absolute; inset: -40%; z-index: 3; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle, rgb(255 250 220 / .95) 0%, rgb(255 214 102 / .6) 25%, rgb(255 180 40 / .2) 45%, transparent 65%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--pin-hi) 95%, transparent) 0%, color-mix(in srgb, var(--pin-glow) 60%, transparent) 25%,
+    color-mix(in srgb, var(--pin-glow) 20%, transparent) 45%, transparent 65%);
   animation: pinnacle-flare 1.3s ease-out both; }
+/* The motifs. Those behind the card sit under it in its own stacking context (isolation, above); those over its face
+   come before its stats, so the numbers stay on top. */
+.pinnacle-aura { position: absolute; inset: 0; pointer-events: none; }
+.pinnacle-aura::before, .pinnacle-aura::after { content: ""; position: absolute; }
+[data-aura="yellow"] > .pinnacle-aura { inset: auto; left: 50%; top: 50%; width: 175%; aspect-ratio: 1; translate: -50% -50%; z-index: -1;
+  background: repeating-conic-gradient(color-mix(in srgb, var(--pin-glow) 60%, transparent) 0 5deg, transparent 5deg 20deg);
+  -webkit-mask: radial-gradient(closest-side, transparent 38%, #000 52%, transparent 100%); mask: radial-gradient(closest-side, transparent 38%, #000 52%, transparent 100%);
+  animation: pinnacle-spin 18s linear infinite; }
+[data-aura="red"] > .pinnacle-aura { inset: -32% -8% 0; overflow: hidden;
+  -webkit-mask: linear-gradient(to top, #000 55%, transparent); mask: linear-gradient(to top, #000 55%, transparent); }
+[data-aura="red"] > .pinnacle-aura { --ember: radial-gradient(circle, var(--pin-hi) 0 1.3px, var(--pin-mid) 2px, color-mix(in srgb, var(--pin-glow) 70%, transparent) 2.8px, transparent 4.5px); }
+[data-aura="red"] > .pinnacle-aura::before, [data-aura="red"] > .pinnacle-aura::after { inset: 0; background-repeat: no-repeat; background-size: 10px 10px;
+  background-image: var(--ember), var(--ember), var(--ember), var(--ember), var(--ember), var(--ember), var(--ember);
+  background-position: 1% 96%, 14% 78%, 30% 100%, 52% 90%, 74% 100%, 88% 84%, 99% 70%; animation: pinnacle-embers 1.9s ease-in infinite; }
+[data-aura="red"] > .pinnacle-aura::after { background-position: 6% 68%, 22% 92%, 42% 74%, 62% 100%, 80% 66%, 94% 96%, 50% 60%;
+  animation-duration: 2.4s; animation-delay: -1.1s; }
+[data-aura="blue"] > .pinnacle-aura { overflow: hidden; border-radius: .35rem;
+  box-shadow: inset 0 0 12px color-mix(in srgb, var(--pin-glow) 60%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--pin-hi) 60%, transparent); }
+.bv-card-wrap[data-aura="blue"] > .pinnacle-aura { border-radius: .45rem; }
+[data-aura="blue"] > .pinnacle-aura::before { top: -40%; bottom: -40%; left: -45%; width: 30%; rotate: 18deg;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--pin-hi) 75%, transparent), transparent); animation: pinnacle-glint 3.8s ease-in-out infinite; }
+[data-aura="green"] > .pinnacle-aura { z-index: -1; border-radius: .45rem; }
+[data-aura="green"] > .pinnacle-aura::before, [data-aura="green"] > .pinnacle-aura::after { inset: 0; border-radius: inherit;
+  border: 2px solid var(--pin-mid); box-shadow: 0 0 8px var(--pin-glow); animation: pinnacle-ripple 2.8s ease-out infinite; }
+[data-aura="green"] > .pinnacle-aura::after { animation-delay: -1.4s; }
+[data-aura="purple"] > .pinnacle-aura { inset: auto; left: 50%; top: 50%; width: 150%; aspect-ratio: 1; translate: -50% -50%; z-index: -1; border-radius: 50%;
+  border: 2px dashed color-mix(in srgb, var(--pin-mid) 75%, transparent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--pin-glow) 60%, transparent), inset 0 0 14px color-mix(in srgb, var(--pin-glow) 45%, transparent);
+  animation: pinnacle-spin 10s linear infinite reverse; }
+[data-aura="purple"] > .pinnacle-aura::before { inset: 9%; border-radius: 50%; border: 1px dotted var(--pin-hi); animation: pinnacle-spin 5s linear infinite; }
 @keyframes pinnacle-spin { to { rotate: 360deg; } }
-@keyframes pinnacle-breathe { 50% { box-shadow: 0 0 16px 4px rgb(255 214 102 / .75), 0 0 34px 8px rgb(255 190 60 / .32); } }
+@keyframes pinnacle-breathe { 50% { box-shadow: 0 0 16px 4px color-mix(in srgb, var(--pin-glow) 75%, transparent), 0 0 34px 8px color-mix(in srgb, var(--pin-glow) 32%, transparent); } }
+@keyframes pinnacle-flicker {
+  0%, 100% { box-shadow: 0 0 10px 2px color-mix(in srgb, var(--pin-glow) 55%, transparent), 0 0 22px 4px color-mix(in srgb, var(--pin-glow) 25%, transparent); }
+  20% { box-shadow: 0 0 15px 4px color-mix(in srgb, var(--pin-glow) 80%, transparent), 0 0 30px 7px color-mix(in srgb, var(--pin-glow) 35%, transparent); }
+  35% { box-shadow: 0 0 9px 2px color-mix(in srgb, var(--pin-glow) 50%, transparent), 0 0 20px 4px color-mix(in srgb, var(--pin-glow) 22%, transparent); }
+  60% { box-shadow: 0 0 18px 5px color-mix(in srgb, var(--pin-glow) 85%, transparent), 0 0 36px 9px color-mix(in srgb, var(--pin-glow) 38%, transparent); }
+  80% { box-shadow: 0 0 12px 3px color-mix(in srgb, var(--pin-glow) 65%, transparent), 0 0 26px 5px color-mix(in srgb, var(--pin-glow) 28%, transparent); } }
+@keyframes pinnacle-crackle { 0%, 100% { opacity: 1; } 31% { opacity: .35; } 34% { opacity: 1; } 71% { opacity: .5; } 73% { opacity: 1; } 76% { opacity: .25; } 79% { opacity: 1; } }
+@keyframes pinnacle-embers { 0% { translate: 0 0; opacity: 0; } 15% { opacity: 1; } 100% { translate: 0 -45%; opacity: 0; } }
+@keyframes pinnacle-glint { 0%, 50% { translate: 0 0; } 100% { translate: 620% 0; } }
+@keyframes pinnacle-ripple { 0% { transform: scale(1); opacity: .85; } 100% { transform: scale(1.32, 1.24); opacity: 0; } }
 @keyframes pinnacle-gild { to { background-position: -250% 0; } }
 @keyframes pinnacle-flare { 0% { opacity: 0; transform: scale(.3); } 25% { opacity: 1; } 100% { opacity: 0; transform: scale(1.35); } }
-.play-board[data-still="1"] .pinnacle-ring::before, .play-board[data-still="1"] .pcard.pinnacle, .play-board[data-still="1"] .pcard.pinnacle .stat-power { animation: none; }
+/* Held still: the auras stay, unmoving; the motifs that are only motion (embers, the glint, ripples) and the flare go. */
+.play-board[data-still="1"] .pinnacle, .play-board[data-still="1"] .pinnacle *, .play-board[data-still="1"] .pinnacle *::before, .play-board[data-still="1"] .pinnacle *::after,
+.bv-still .pinnacle, .bv-still .pinnacle *, .bv-still .pinnacle *::before, .bv-still .pinnacle *::after { animation: none; }
+.play-board[data-still="1"] .pinnacle-flare, .bv-still .pinnacle-flare,
+.play-board[data-still="1"] :is([data-aura="red"], [data-aura="blue"], [data-aura="green"]) > .pinnacle-aura::before,
+.play-board[data-still="1"] :is([data-aura="red"], [data-aura="blue"], [data-aura="green"]) > .pinnacle-aura::after,
+.bv-still :is([data-aura="red"], [data-aura="blue"], [data-aura="green"]) > .pinnacle-aura::before,
+.bv-still :is([data-aura="red"], [data-aura="blue"], [data-aura="green"]) > .pinnacle-aura::after { display: none; }
 @media (prefers-reduced-motion: reduce) {
-  .pinnacle-ring::before, .pcard.pinnacle, .pcard.pinnacle .stat-power { animation: none; }
-  .pinnacle-flare { display: none; }
+  .pinnacle, .pinnacle *, .pinnacle *::before, .pinnacle *::after { animation: none; }
+  .pinnacle-flare, :is([data-aura="red"], [data-aura="blue"], [data-aura="green"]) > .pinnacle-aura::before,
+  :is([data-aura="red"], [data-aura="blue"], [data-aura="green"]) > .pinnacle-aura::after { display: none; }
 }
 
 /* A climax in play fills its side's background (play.js climaxBackdropHtml): its picture faint, washed in its colour,

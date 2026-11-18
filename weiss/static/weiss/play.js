@@ -1624,13 +1624,23 @@
       : "";
     const pinnacle = STAGE.includes(zone) && info && !card.face_down && !climax ? pinnacleHtml(card, info, owner) : "";
     if (pinnacle) classes.push("pinnacle");
-    return `<div class="${classes.join(" ")}" ${attrs} tabindex="0">${face}${pinnacle}${stats}${badge}</div>`;
+    const aura = pinnacle ? ` data-aura="${pinnacleAura(info)}"` : "";
+    return `<div class="${classes.join(" ")}" ${attrs}${aura} tabindex="0">${face}${pinnacle}${stats}${badge}</div>`;
   }
 
   // A character at 10,000 power or more has reached the pinnacle of strength: a ring of light runs round its edge,
   // its power is gilded, and the moment it gets there it flares once (on the board). Each redraw makes the card anew,
-  // so the flare carries on from where it was (a negative delay) rather than starting over.
+  // so the flare carries on from where it was (a negative delay) rather than starting over. Each colour has an aura
+  // of its own (site.css, "The pinnacle of strength"), here and in the battle view; one of no colour we know is gold.
   const PINNACLE_POWER = 10000;
+  const PINNACLE_AURAS = { yellow: "Radiant", red: "Blazing", blue: "Glacial", green: "Verdant", purple: "Arcane" };
+  function pinnacleAura(info) {
+    const color = String((info && info.color) || "").toLowerCase();
+    return color in PINNACLE_AURAS ? color : "yellow";
+  }
+  // The aura's layers: its colour's motif (rays, embers, frost, ripples, a sigil), the ring and, as it gets there, the flare.
+  const pinnacleLayers = (flare = "") =>
+    `<span class="pinnacle-aura" aria-hidden="true"></span><span class="pinnacle-ring" aria-hidden="true"></span>${flare}`;
   const PINNACLE_FLARE_MS = 1300;
   const pinnacleSince = {}; // uid -> when it reached the pinnacle (performance.now()), for the board's cards
   function pinnacleHtml(card, info, owner) {
@@ -1646,9 +1656,9 @@
       // On the first board seen, a card already there doesn't flare: it was there before we looked.
       if (!(card.uid in pinnacleSince)) pinnacleSince[card.uid] = heard ? performance.now() : -Infinity;
       const age = performance.now() - pinnacleSince[card.uid];
-      if (age < PINNACLE_FLARE_MS) flare = `<span class="pinnacle-flare" style="animation-delay: ${-Math.round(age)}ms"></span>`;
+      if (age < PINNACLE_FLARE_MS) flare = `<span class="pinnacle-flare" aria-hidden="true" style="animation-delay: ${-Math.round(age)}ms"></span>`;
     }
-    return `<span class="pinnacle-ring" aria-hidden="true"></span>${flare}`;
+    return pinnacleLayers(flare);
   }
 
   // The soul icon: a flame-like wisp, close to the one printed on Weiss Schwarz cards.
@@ -1682,7 +1692,7 @@
     let power = "";
     if (has(info.power)) {
       const { value, glow, note } = current(info.power, live ? live.power : undefined);
-      const peak = value >= PINNACLE_POWER ? " — the pinnacle of strength" : "";
+      const peak = value >= PINNACLE_POWER ? ` — the pinnacle of strength (${PINNACLE_AURAS[pinnacleAura(info)]})` : "";
       power = `<span class="stat stat-power${glow}" title="Power${note}${peak}">${esc(value)}</span>`;
     }
     let souls = "";
@@ -4159,7 +4169,8 @@
     damageLead: (owner) => battle.damageLead(owner), battleClaim: (id) => battle.battleClaim(id),
   }) : { tableFx() {}, setTableMood() {}, negatedWait: () => 0, noteOwnDamage() {}, climaxSurge() {} };
   if (window.WeissBattle) {
-    battle = window.WeissBattle.create({ root, cards, esc, climaxColor, reducedMotion, SOUL_ICON, board: () => board, animations: () => animations });
+    battle = window.WeissBattle.create({ root, cards, esc, climaxColor, reducedMotion, SOUL_ICON, board: () => board, animations: () => animations,
+      pinnacle: { power: PINNACLE_POWER, aura: pinnacleAura, layers: pinnacleLayers } });
   }
   recap = window.WeissRecap ? window.WeissRecap.create({
     controlsEl, esc, who, logHtml, gameNumber, board: () => board, avatars: () => avatars,
