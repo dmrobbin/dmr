@@ -1,0 +1,35 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}World mode{% endblock %}
+
+{% block content %}
+  <h1>World mode</h1>
+  <p class="muted">Three save slots. Each save starts with packs of a set you choose, and every card you duel with comes from what you open.</p>
+  <ul class="world-slots">
+    {% for slot, save, step, ago in slots %}
+      <li class="world-slot">
+        <h2>Slot {{ slot }}</h2>
+        {% if save %}
+          <p class="world-slot-set">{{ save.set_name }}</p>
+          <p class="muted small">Day {{ save.day }} · {{ save.weekday }} {{ save.time_of_day|lower }} · {{ save.money }} coins<br>
+            Last played {{ ago }}</p>
+          <p class="small">{% if step == "packs" %}Packs to open{% elif step == "deck" %}Deck to build{% else %}Ready for the town{% endif %}</p>
+          <a class="button-small" href="{% url 'weiss:world_save' slot %}">Continue</a>
+          <details class="world-delete">
+            <summary class="small">Delete this save</summary>
+            <form method="post" action="{% url 'weiss:world_delete' slot %}">
+              {% csrf_token %}
+              <p class="small">Its cards, deck and progress go for good. Type <strong>Slot {{ slot }}</strong> to delete it.</p>
+              <label class="visually-hidden" for="confirm-{{ slot }}">Type Slot {{ slot }} to confirm</label>
+              <input id="confirm-{{ slot }}" name="confirm" autocomplete="off" placeholder="Slot {{ slot }}" required>
+              <button type="submit" class="button-small secondary">Delete</button>
+            </form>
+          </details>
+        {% else %}
+          <p class="muted">Empty.</p>
+          <a class="button-small" href="{% url 'weiss:world_new' slot %}">New game</a>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}

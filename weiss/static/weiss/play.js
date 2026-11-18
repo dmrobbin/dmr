@@ -77,6 +77,7 @@
   let avatars = {}; // {player name: picture}, for those who have one
   let cpuInfo = null; // the CPU in a game against one: its images and what it says
   let arcade = null; // where an arcade run has got to
+  let world = null; // a town duel: where to go back to, and what it paid
   let prize = null; // an infinite challenge's prize for this win: what the Victory screen's slot machine lands on
   let duel = null; // a co-op challenge's vs. battle: the pair's rivalry, and the way to its curses
   let unlocked = null; // card sleeves this game unlocked for the player: [{name, css}], for the Victory or Defeat screen
@@ -613,6 +614,7 @@
     avatars = data.avatars || {};
     cpuInfo = data.cpu || null;
     arcade = data.arcade || null;
+    world = data.world || null;
     intro = Boolean(data.intro);
     sceneData = data.scene || null;
     prize = data.prize || null;
@@ -2414,6 +2416,12 @@
 
   function gameOverButtons(over) {
     if (SPECTATING) return `<a class="button" href="${esc(root.dataset.challengeUrl)}">Back to the challenge</a>`;
+    if (world) {
+      const result = world.result;
+      const paid = result && result.coins ? `<p class="game-over-world">+${result.coins} coins${result.first ? " (the day's first win)" : ""}${result.stake ? ", the stakes won" : ""}.</p>`
+        : result && result.stake ? `<p class="game-over-world">The ${result.stake}-coin entry fee is gone.</p>` : "";
+      return `${paid}<a class="button" href="${esc(world.town)}">Back to the town</a>`;
+    }
     if (duel) return `<a class="button" href="${esc(duel.url)}">On to the augments &amp; curses</a>`;
     if (!arcade) {
       return `<button type="button" data-act='{"type":"rematch"}'${over.rematch ? " disabled" : ""}>Rematch</button>

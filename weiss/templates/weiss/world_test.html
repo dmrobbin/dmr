@@ -1,0 +1,64 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Town test{% endblock %}
+
+{% block content %}
+  <h1>Town test</h1>
+  <p class="muted">A try-out of world mode: visit places, find who's there, and talk, give gifts or duel. The duel is a real
+    game; everything else here (the time, coins, friendship, who's where) is made up for the test and kept only in this tab.
+    {% if not world.portrait %}<a href="{% url 'weiss:profile_portrait' %}">Make your portrait</a> to appear in conversations too.{% endif %}
+    {% if count < 3 %}Only {{ count }} CPU{{ count|pluralize }} can appear here: finalized ones, and any with a picture uploaded.{% endif %}</p>
+
+  <div class="town" data-town data-portraits="{% static 'weiss/portraits/parts.json' %}">
+    <div class="town-bar">
+      <p class="town-where"><strong data-place-name>…</strong> <span class="muted" data-when></span></p>
+      <p class="town-coins" data-coins></p>
+      <div class="town-actions">
+        <button type="button" class="button-small secondary" data-open-map aria-expanded="false" aria-controls="town-map">Map</button>
+        <button type="button" class="button-small secondary" data-wait>Wait</button>
+      </div>
+    </div>
+
+    <div class="vn-stage town-stage" data-stage>
+      <div class="vn-bg" data-backdrop></div>
+      <div class="town-light" data-light></div>
+      <div class="town-people" data-people role="group" aria-label="Who's here"></div>
+      <div class="town-me" data-me hidden><div class="town-me-figure" data-me-figure role="img" aria-label="You"></div></div>
+      <div class="town-empty" data-empty hidden>
+        <p>Nobody's here right now.</p>
+        <p class="small">Try the map, or wait a while.</p>
+      </div>
+
+      {# Talking to someone: their words, and what you can do. #}
+      <section class="vn-box town-box" data-box hidden aria-live="polite">
+        <span class="vn-name" data-name></span>
+        <p class="town-bond" data-bond></p>
+        <p class="vn-text" data-text></p>
+        <div class="town-menu" data-menu></div>
+        <span class="vn-next" data-next aria-hidden="true">▼</span>
+      </section>
+
+      <section class="town-map" id="town-map" data-map hidden aria-label="Map">
+        <div class="town-map-head">
+          <h2>Where to?</h2>
+          <button type="button" class="button-small secondary" data-close-map>Close</button>
+        </div>
+        <ul class="town-places" data-places></ul>
+      </section>
+      <p class="town-toast" data-toast aria-live="polite"></p>
+    </div>
+    <p class="small muted town-help">Click someone to talk to them. Keys: Enter or Space goes on, Esc steps back, M opens the map.
+      <button type="button" class="town-reset" data-reset>Start the test over</button></p>
+  </div>
+
+  <form method="post" action="{% url 'weiss:play_vs_cpu' %}" data-duel-form hidden>
+    {% csrf_token %}
+    <input type="hidden" name="cpu" data-duel-cpu>
+    <input type="hidden" name="deck" data-duel-deck>
+  </form>
+  {{ world|json_script:"town-data" }}
+  <script src="{% static 'weiss/backdrops.js' %}" defer></script>
+  <script src="{% static 'weiss/portrait.js' %}" defer></script>
+  <script src="{% static 'weiss/world_test.js' %}" defer></script>
+{% endblock %}

@@ -189,7 +189,8 @@ def editable_lists(user):
     allowed = Q(user=user)
     if user.is_staff:
         allowed |= Q(reserved_for_cpu=True)
-    return CardList.objects.filter(allowed)
+    # A world save's deck is built only from its pool, on its own page (weiss.world): never edited freely here.
+    return CardList.objects.filter(allowed).filter(world_save=None)
 
 
 def editing_list(request):

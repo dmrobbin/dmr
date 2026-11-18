@@ -1,12 +1,13 @@
 ---
 name: new-cpu
-description: Write a new CPU opponent (profile, deck anchors and scenes) for the Weiss Schwarz site as a file that import_cpu checks and loads, using the exported CPUs in corpus/ as examples. Use when asked to make, generate or draft a CPU, a CPU profile, or scenes for a CPU.
+description: Write a new CPU opponent (profile, deck anchors, scenes and its part in world mode) for the Weiss Schwarz site as a file that import_cpu checks and loads, using the exported CPUs in corpus/ as examples. Use when asked to make, generate or draft a CPU, a CPU profile, or scenes for a CPU.
 ---
 
 # Making a new CPU
 
 You write one JSON file describing a CPU: its profile, the series and two anchor cards its deck is built
-around (express building makes the rest of the deck), and its scenes. `import_cpu` checks it and loads it.
+around (express building makes the rest of the deck), its scenes, and its part in world mode's town (where it's
+found, the gifts it likes, what it says). `import_cpu` checks it and loads it.
 Pictures are chosen by staff afterwards, and staff finalize it.
 
 ## Input
@@ -57,6 +58,18 @@ Write `corpus/new/<name>.json` in the format in `reference.md`. Leave out `deck.
   the scenes they're already in. Check STYLE.md's character notes. Write the version they show, and in your summary
   name the version you took each one to be.
 
+## World mode (`world`)
+
+Every new CPU gets a `world` part, as `reference.md`'s World mode section describes. `corpus/world.json` lists the
+places, gift tags and gift keys, chatter's moments and the friendship ranks; `corpus/chatter.json` has the built-in
+lines (and any for every CPU), which say what a CPU without its own lines says. Read STYLE.md's World mode section.
+- `schedule`: 3 or 4 rules putting the character where they'd be: a home on most weekdays, somewhere at weekends,
+  somewhere they wander. Look at where the other CPUs' rules put them (their files' `world.schedule`) so one place
+  isn't crowded and another empty. Never the card shop.
+- `gift_tastes`: tags from `world.json` that suit the character, a loved one, two or three liked, one or two disliked.
+- `chatter`: lines in the character's voice, for the moments STYLE.md asks for. A script is the compact language:
+  `them` is the CPU, no stage, no cast.
+
 ## Checking
 
 Run `.venv/Scripts/python.exe manage.py check_cpu_file corpus/new/<name>.json` and fix every problem it lists, then
@@ -71,8 +84,8 @@ production, from the CPU creation page's Import tab.
 
 ## Summary for the user
 
-Give the file's path, the CPU's name, model, anchors and why, each scene in a line (who it pairs with, and why), and
-anything you were unsure of. Then what's left for them:
+Give the file's path, the CPU's name, model, anchors and why, each scene in a line (who it pairs with, and why), where
+it's found in the town and what it loves, and anything you were unsure of. Then what's left for them:
 1. On production's CPU creation page, Import tab: choose the file (or every file of the batch) and Check. It's a dry
    run: the problems, express notes and the deck each would get. Express notes are worth a look; they aren't errors.
    Then Import, which builds the same decks.
@@ -83,4 +96,5 @@ anything you were unsure of. Then what's left for them:
    of them show the version of the character the CPU is. For a show too new for PNGitem, `find_card_images --series <SERIES>`
    on the instance instead.
 3. Download the export again from the Import tab before writing the next CPUs.
-4. Play the scenes on the scene page and a game against the CPU, then finalize it.
+4. Play the scenes on the scene page and a game against the CPU, then finalize it. Its chatter is under World mode →
+   Chatter, and where it's found under World mode → CPU schedules.

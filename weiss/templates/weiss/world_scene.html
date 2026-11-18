@@ -1,0 +1,27 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}{{ payload.title }} · slot {{ save.slot }}{% endblock %}
+
+{% block head %}<script src="{% static 'weiss/backdrops.js' %}" defer></script><script src="{% static 'weiss/scene.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+  {# A rank-up's scene (Chatter.scene, world_views.world_scene): played once, then back to the town. #}
+  <div class="challenge-event">
+    <p class="challenge-event-head"><span class="deck-tag">A moment</span> {{ payload.title }}</p>
+    <div class="challenge-event-stage" data-scene-root></div>
+    <p class="challenge-event-foot"><a class="link-button" href="{% url 'weiss:world_town' save.slot %}" data-town-url>Back to the town</a></p>
+  </div>
+  {{ payload|json_script:"scene-payload" }}
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      const scene = JSON.parse(document.getElementById("scene-payload").textContent);
+      const town = document.querySelector("[data-town-url]").href;
+      const player = new ScenePlayer(document.querySelector("[data-scene-root]"), scene, {
+        playerName: "{{ player_name|escapejs }}",
+        onEnd: () => setTimeout(() => location.assign(town), 600),
+      });
+      player.start();
+    });
+  </script>
+{% endblock %}

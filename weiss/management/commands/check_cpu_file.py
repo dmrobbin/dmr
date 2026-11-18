@@ -19,11 +19,11 @@ class Command(BaseCommand):
         folder = Path(options["corpus"])
         if not (folder / "scenes.json").exists():
             raise CommandError(f"There's no export in {folder.resolve()}: run export_cpu_corpus where the CPUs are.")
-        cpus, scene_names, anchors = load_corpus(folder)
+        corpus = load_corpus(folder)
         failed = 0
         for path in options["files"]:
             try:
-                problems = check_offline(json.loads(Path(path).read_text(encoding="utf-8")), cpus, scene_names, anchors)
+                problems = check_offline(json.loads(Path(path).read_text(encoding="utf-8")), *corpus)
             except (OSError, ValueError) as error:
                 problems = [f"couldn't be read: {error}"]
             if problems:

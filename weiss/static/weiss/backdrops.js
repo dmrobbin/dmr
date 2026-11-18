@@ -431,6 +431,41 @@
         ${tube(1000, "#5aff8a")}${tube(1200, "#5ad8ff")}${tube(1400, "#c87aff")}
         <rect y="610" width="${W}" height="290" fill="#060a14"/>${floor}`;
     } },
+
+    shop: { label: "Card shop", draw(k) {
+      // Shelves of booster packs (bright foil, a stripe across the top), each row a little different.
+      const FOILS = ["#d8344a", "#2a6ad8", "#e8b030", "#7a3ad0", "#20a888", "#e85aa0", "#3a3a48", "#f07a2a"];
+      const shelves = (x0, x1) => {
+        let out = `<rect x="${x0 - 14}" y="120" width="${x1 - x0 + 28}" height="540" rx="6" fill="#2a1c16"/>`;
+        for (let y = 150; y < 560; y += 116) {
+          for (let x = x0; x < x1 - 40; x += 46) {
+            const foil = FOILS[Math.floor(k.r() * FOILS.length)];
+            const lean = k.between(-3, 3).toFixed(1);
+            out += `<g transform="rotate(${lean} ${x + 19} ${y + 92})"><rect x="${x}" y="${y + 22}" width="38" height="70" rx="3" fill="${foil}"/>`
+              + `<rect x="${x}" y="${y + 22}" width="38" height="10" rx="2" fill="#fff" opacity=".35"/>`
+              + `<rect x="${x + 6}" y="${y + 44}" width="26" height="26" rx="13" fill="#fff" opacity=".18"/></g>`;
+          }
+          out += `<rect x="${x0 - 14}" y="${y + 92}" width="${x1 - x0 + 28}" height="14" fill="#5a3a26"/>`;
+        }
+        return out;
+      };
+      // The glass counter, with cards laid out under it.
+      let cards = "";
+      for (let x = 560; x < 1020; x += 52) {
+        cards += `<rect x="${x}" y="${k.between(688, 700).toFixed(0)}" width="40" height="56" rx="3" fill="${FOILS[Math.floor(k.r() * FOILS.length)]}" opacity=".85"/>`;
+      }
+      const lamp = (x) => `<line x1="${x}" y1="0" x2="${x}" y2="60" stroke="#1e140f" stroke-width="4"/>${k.glow(`shoplamp${x}`, x, 80, 200, "#ffe2a8", 0.45)}<rect x="${x - 40}" y="56" width="80" height="16" rx="8" fill="#fff4d8"/>`;
+      return `<defs>${k.linear("wall", [[0, "#6a4a36"], [1, "#3a281e"]])}${k.linear("glass", [[0, "#cfe8f0", 0.35], [1, "#8ab0c0", 0.18]])}</defs>${k.fill(k.url("wall"))}
+        ${shelves(70, 470)}${shelves(1130, 1530)}
+        ${k.glow("sign", 800, 190, 260, "#ff5a8a", 0.35)}
+        <rect x="610" y="140" width="380" height="104" rx="16" fill="#1a1016" stroke="#ff7aa8" stroke-width="5"/>
+        <text x="800" y="214" text-anchor="middle" font-family="Georgia, serif" font-size="70" font-weight="700" fill="#ffd2e2" letter-spacing="10">CARDS</text>
+        ${lamp(300)}${lamp(800)}${lamp(1300)}
+        <rect y="760" width="${W}" height="140" fill="#2e2018"/><rect y="760" width="${W}" height="14" fill="#5a3a26"/>
+        <rect x="520" y="660" width="560" height="110" rx="8" fill="#3a2a22"/>${cards}
+        <rect x="520" y="660" width="560" height="110" rx="8" fill="${k.url("glass")}" stroke="#d8e8f0" stroke-opacity=".5" stroke-width="3"/>
+        <rect x="500" y="650" width="600" height="16" rx="6" fill="#7a5238"/>`;
+    } },
   };
 
   window.SceneBackdrops = {

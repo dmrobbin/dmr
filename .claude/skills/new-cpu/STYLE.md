@@ -99,3 +99,24 @@ event spaces, not tied to a fight. The other two belong to an arcade list. A new
 - **Staging**: an animation now and then to show feeling (bounce for joy, tremble or shake for upset, wobble when
   flustered, nod, glow), not on every line. Pictures (`(win)`, `(lose)`) rarely.
 - `fight` is in only 7 scenes, and `offer` in 1: avoid them in events.
+
+## World mode
+
+What a CPU does in world mode's town, in its file's `world` part.
+
+- **Schedule**: 3 or 4 rules. A home place on 4 or 5 weekdays at 2 times (chance 80–90, priority 1); a weekend place
+  (Sat and Sun, 1–2 times, chance 70–80, priority 1); somewhere it wanders (2–3 days, 1 time, chance 50–60,
+  priority 0). Places that suit the character: a scholar at the library, a fighter at the arena, an idol at the
+  plaza. A stake (300–800) on one rule at most, for a character who'd gamble or a boss-like one.
+- **Gift tastes**: one tag loved, two or three liked, one or two disliked, all from `world.json`'s tags. A loved tag
+  should be one some gift has, or no gift is ever loved.
+- **Chatter**, in the character's voice, short (1–4 lines each; a choice at most in a greeting):
+  - `greet`: 3 lines: 2 for rank 0 (meeting a stranger), 1 for rank 2 or more (a friend).
+  - `again`: 1 line.
+  - `gift_loved`, `gift_disliked`: 1 line each (liked and neutral can use the built-in lines).
+  - `before_duel`, `after_win`, `after_loss`: 1 line each, one spoken line apiece (only the first line is said). The
+    profile's intro and win/lose texts are for games; these are the town's, shorter.
+  - `rank_up`: one for rank 2 and one for rank 4, warmer each time. Give `points` only in a choice's branch, sparingly
+    (+2 to +5); `give money` and `give gift` rarely, as thanks. `fight stake …` only for a character who'd bet.
+- **Moods**: `them (pleased)` for happy, `them (dismayed)` for put out; `player (smile)` and the like for the player's
+  replies, which are rare: chatter is mostly the CPU talking.

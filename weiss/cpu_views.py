@@ -21,7 +21,7 @@ from . import abilities, arcade, challenge, coop, cpu, packs, scenes
 from .lists import EXPRESS_PROMPT, SESSION_KEY, deck_checks, sorted_entries
 from .card_images import image_type
 from .event_scenes import STARTERS
-from .models import ArcadeEntry, ArcadeScenario, Card, CardList, ChallengeSettings, CpuImage, CpuProfile, NarrativeChallenge, Scene, Sleeve
+from .models import ArcadeEntry, ArcadeScenario, Card, CardList, ChallengeSettings, CpuImage, CpuProfile, NarrativeChallenge, Scene, Sleeve, WorldSettings
 from .profiles import avatar_picker
 
 
@@ -110,7 +110,7 @@ def read_profile_form(request):
 
 # The tab's own tabs: one at a time, each worked out only when it's open (?tab=...).
 TABS = {"profiles": "Profiles", "scenes": "Scenes", "decks": "Decks", "arcade": "Arcade lists", "challenges": "Narrative challenges",
-        "infinite": "Infinite challenge", "sleeves": "Card sleeves", "unplayable": "Unplayable cards", "import": "Import"}
+        "infinite": "Infinite challenge", "world": "World mode", "sleeves": "Card sleeves", "unplayable": "Unplayable cards", "import": "Import"}
 
 
 def back_to(tab):
@@ -193,6 +193,15 @@ def cpu_home(request):
         for scenario in scenarios:
             scenario.problem = arcade.scenario_problem(scenario)
         context.update(narratives=NarrativeChallenge.objects.select_related("scenario"), scenarios=scenarios, pack_sets=packs.pack_sets())
+    elif tab == "world":
+        from . import world  # weiss.world uses modules that use this one
+        from .buffs import BUFFS
+        settings = world.settings()
+        chosen = settings.loadout if settings else {}
+        context.update(world_settings=settings or WorldSettings(), world_ranks=(settings or WorldSettings()).ranks, max_start_packs=MAX_START_PACKS, max_loadout=MAX_LOADOUT,
+                       world_sets=len(world.offered_sets()), min_set_cards=world.MIN_SET_CARDS,
+                       world_loadout=[{"id": buff, "name": BUFFS[buff].name, "description": BUFFS[buff].description, "count": chosen.get(buff, 0)}
+                                      for buff in challenge.LOADOUT_BUFFS])
     elif tab == "sleeves":
         from .sleeve_views import staff_list  # weiss.sleeve_views uses this module
         context.update(sleeves=staff_list())
@@ -598,6 +607,11 @@ def cpu_profile_finalize(request, pk):
         return redirect("weiss:cpu_profile_update", pk=pk)
     profile.finalized = wanted
     profile.save(update_fields=["finalized", "updated"])
+    if wanted:
+        from . import world  # weiss.world uses modules that use this one
+        if world.starter_schedules([profile]):
+            messages.success(request, f"{profile.name} has a starting schedule in world mode's town; edit it under World mode → CPU schedules.")
+        world.give_tastes([profile])  # gifts it loves and hates, until staff say otherwise
     return redirect("weiss:cpu_profile_update", pk=pk)
 
 

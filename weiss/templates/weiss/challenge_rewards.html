@@ -1,17 +1,23 @@
-{# Buffs from scenes, waiting to be claimed (challenge_views.reward_context). #}
+{# Buffs waiting to be claimed (challenge_views.reward_context, world_views.save_page): claim_url is where a claim goes. #}
 <section class="challenge-rewards">
-  <h3>Rewards to claim</h3>
-  <p class="muted small">From your fights and the story so far. Claim them, then look at your deck before the next fight.</p>
+  <h3>{{ rewards_title|default:"Rewards to claim" }}</h3>
+  <p class="muted small">{{ rewards_note|default:"From your fights and the story so far. Claim them, then look at your deck before the next fight." }}</p>
   <ul class="reward-list">
     {% for reward in rewards %}
       <li class="reward">
         <p class="reward-name">✦ {{ reward.buff.name }}{% if reward.source %} <span class="muted small">from “{{ reward.source }}”</span>{% endif %}</p>
-        <p class="small">{{ reward.buff.description }}</p>
+        <p class="small">{{ reward.text|default:reward.buff.description }}</p>
         {% with kind=reward.buff.claim %}
-        <form method="{% if kind == 'exchange' %}get{% else %}post{% endif %}" action="{% if kind == 'exchange' %}{% url 'weiss:arcade_challenge_exchange' %}{% else %}{% url 'weiss:arcade_challenge_claim' %}{% endif %}" class="cpu-form reward-form">
+        <form method="{% if kind == 'exchange' %}get{% else %}post{% endif %}" action="{% if kind == 'exchange' %}{% url 'weiss:arcade_challenge_exchange' %}{% else %}{{ claim_url }}{% endif %}" class="cpu-form reward-form">
           {% if kind != "exchange" %}{% csrf_token %}{% endif %}
           <input type="hidden" name="key" value="{{ reward.key }}">
-          {% if kind == "pack" %}
+          {% if kind == "pack" and reward.buff.pack != "wild" and sets|length == 1 %}
+            <input type="hidden" name="set" value="{{ sets.0.id }}">
+            <span class="small muted">From {{ sets.0.name }}.</span>
+            {% if reward.buff.pack == "level" %}<label class="small">Level <select name="level">{% for level in levels %}<option value="{{ level }}">{{ level }}</option>{% endfor %}</select></label>{% endif %}
+            {% if reward.buff.pack == "color" %}<label class="small">Color <select name="color">{% for color in colors %}<option>{{ color }}</option>{% endfor %}</select></label>{% endif %}
+            <button type="submit" class="button-small">Open it</button>
+          {% elif kind == "pack" %}
             <label class="small">Set
               <select name="set" required data-searchable="sets">
                 {% if reward.buff.pack == "wild" %}{% for set in all_sets %}<option value="{{ set.id }}"{% if set.id == last_set %} selected{% endif %}>{{ set.name }}</option>{% endfor %}

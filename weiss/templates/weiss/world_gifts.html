@@ -1,0 +1,88 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Gifts · World mode{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:cpu_home' %}?tab=world">← World mode settings</a></p>
+  <h1>Gifts</h1>
+  <p class="muted">What the card shop sells to give CPUs, and what each CPU thinks of it. A gift's tags decide: a tag a CPU loves makes it
+    loved ({{ points.loved|stringformat:"+d" }} ♥), one it dislikes disliked ({{ points.disliked }} ♥), one it likes liked
+    ({{ points.liked|stringformat:"+d" }} ♥); otherwise it's neutral ({{ points.neutral|stringformat:"+d" }} ♥). Loved wins over disliked.
+    A player can give each CPU {{ per_day }} gift a day.</p>
+  <datalist id="gift-tags">{% for tag in tags %}<option value="{{ tag }}">{% endfor %}</datalist>
+
+  <section class="cpu-section">
+    <h2>Gift items</h2>
+    {% for item in items %}
+      <div class="world-card world-card-row" id="gift-{{ item.pk }}">
+        <form method="post" class="world-form">
+          {% csrf_token %}
+          <input type="hidden" name="gift" value="{{ item.pk }}">
+          <div class="schedule-row">
+            <label class="world-field world-field-icon">Icon <input type="text" name="icon" value="{{ item.icon }}" maxlength="8"></label>
+            <label class="world-field world-field-wide">Name <input type="text" name="name" value="{{ item.name }}" maxlength="60" required></label>
+            <label class="world-field">Price <input type="number" name="price" min="1" value="{{ item.price }}" required></label>
+            <label class="world-field world-field-small">Order <input type="number" name="order" min="0" max="999" value="{{ item.order }}"></label>
+          </div>
+          <div class="schedule-row">
+            <label class="world-field world-field-wide">About <input type="text" name="about" value="{{ item.about }}" maxlength="200"></label>
+            <label class="world-field world-field-wide">Tags <input type="text" name="tags" value="{{ item.tag_text }}" list="gift-tags" placeholder="sweet, drink"></label>
+          </div>
+          <div class="world-card-foot">
+            <button type="submit" class="button-small">Save</button>
+            <span class="muted small"><code>give gift {{ item.key }}</code> · loved by {{ item.loved }}, liked by {{ item.liked }}, disliked by {{ item.disliked }}</span>
+          </div>
+        </form>
+        <form method="post" class="world-delete-form" onsubmit="return confirm('Delete {{ item.name|escapejs }}?')">
+          {% csrf_token %}<button type="submit" name="delete" value="{{ item.pk }}" class="link-button small danger-link">Delete</button>
+        </form>
+      </div>
+    {% empty %}
+      <p class="empty">No gifts yet: the shop's gifts tab is empty, and the talk box's “Give a gift” is never on. Add one below.</p>
+    {% endfor %}
+    <h3>Add a gift</h3>
+    <form method="post" class="world-card world-form">
+      {% csrf_token %}
+      <div class="schedule-row">
+        <label class="world-field world-field-icon">Icon <input type="text" name="icon" maxlength="8" placeholder="🎁"></label>
+        <label class="world-field world-field-wide">Name <input type="text" name="name" maxlength="60" required></label>
+        <label class="world-field">Price <input type="number" name="price" min="1" value="150" required></label>
+        <label class="world-field">Key <input type="text" name="key" maxlength="40" placeholder="from the name"></label>
+      </div>
+      <div class="schedule-row">
+        <label class="world-field world-field-wide">About <input type="text" name="about" maxlength="200"></label>
+        <label class="world-field world-field-wide">Tags <input type="text" name="tags" list="gift-tags" placeholder="sweet, drink"></label>
+      </div>
+      <p><button type="submit" name="add" value="1" class="button-small">Add the gift</button></p>
+    </form>
+  </section>
+
+  <section class="cpu-section">
+    <h2>What each CPU thinks</h2>
+    <p class="muted small">Tags, separated by commas. A tag can only be in one of a CPU's lists.</p>
+    {% if untasted %}
+      <form method="post" class="schedule-starters">{% csrf_token %}
+        <p class="small">{{ untasted }} CPU{{ untasted|pluralize }} {{ untasted|pluralize:"has,have" }} no tastes, so every gift is neutral to {{ untasted|pluralize:"it,them" }}.
+          <button type="submit" name="fill" value="1" class="button-small secondary">Give {{ untasted|pluralize:"it,them" }} starter tastes</button></p>
+      </form>
+    {% endif %}
+    <div class="cpu-table-wrap">
+      <table class="cpu-table world-tastes">
+        <thead><tr><th scope="col">CPU</th><th scope="col">Loves</th><th scope="col">Likes</th><th scope="col">Dislikes</th><th scope="col"><span class="visually-hidden">Save</span></th></tr></thead>
+        <tbody>
+          {% for cpu in cpus %}
+            <tr id="cpu-{{ cpu.pk }}">
+              <th scope="row">{{ cpu.name }}</th>
+              <td><input type="text" name="loves" form="tastes-{{ cpu.pk }}" value="{{ cpu.taste_text.loves }}" list="gift-tags" aria-label="{{ cpu.name }} loves"></td>
+              <td><input type="text" name="likes" form="tastes-{{ cpu.pk }}" value="{{ cpu.taste_text.likes }}" list="gift-tags" aria-label="{{ cpu.name }} likes"></td>
+              <td><input type="text" name="dislikes" form="tastes-{{ cpu.pk }}" value="{{ cpu.taste_text.dislikes }}" list="gift-tags" aria-label="{{ cpu.name }} dislikes"></td>
+              <td><form method="post" id="tastes-{{ cpu.pk }}">{% csrf_token %}<button type="submit" name="tastes" value="{{ cpu.pk }}" class="button-small secondary">Save</button></form></td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="muted">No CPUs yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}

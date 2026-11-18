@@ -81,6 +81,11 @@ def cpu_payload(room):
                           "combo": profile.combo_text if said else ""}
     else:  # it was deleted during the game
         payload["cpu"] = {"name": room.cpu_name, "image": "", "images": {}, "picture": None, "intro": "", "win": "", "lose": "", "combo": ""}
+    if room.world_save_id:  # a town duel: back to the town after, and what it paid
+        save = room.world_save
+        result = (save.flags.get("last_duel") or {}) if save else {}
+        payload["world"] = {"town": reverse("weiss:world_town", args=[save.slot]) if save else reverse("weiss:world_home"),
+                            "stake": room.world_stake, "result": result if result.get("room") == room.pk else None}
     run = room.arcade_run
     if run:
         endless = challenge.infinite(run)
@@ -486,7 +491,7 @@ def room_deck(request, pk):
     room = my_room(request, pk)
     if not room:
         return HttpResponseForbidden()
-    if room.arcade_run_id or room.coop_duel_id:
+    if room.arcade_run_id or room.coop_duel_id or room.world_save_id:
         return not_for_a_run(request, room)
     deck = get_object_or_404(CardList.objects.players(request.user), pk=request.POST.get("deck"))
     if problem := lists.unplayable(deck):
@@ -695,7 +700,7 @@ def room_start(request, pk):
     room = my_room(request, pk)
     if not room:
         return HttpResponseForbidden()
-    if room.arcade_run_id or room.coop_duel_id:
+    if room.arcade_run_id or room.coop_duel_id or room.world_save_id:
         return not_for_a_run(request, room)
     with transaction.atomic():
         room = GameRoom.objects.select_for_update().select_related("host", "guest").get(pk=room.pk)
@@ -722,7 +727,7 @@ def room_reset(request, pk):
     room = my_room(request, pk)
     if not room:
         return HttpResponseForbidden()
-    if room.arcade_run_id or room.coop_duel_id:
+    if room.arcade_run_id or room.coop_duel_id or room.world_save_id:
         return not_for_a_run(request, room)
     with transaction.atomic():
         room = GameRoom.objects.select_for_update().get(pk=room.pk)
@@ -873,6 +878,8 @@ def room_action(request, pk):
             return arcade_action(request, room, action)
         if room.arcade_run_id and kind in ("rematch", "end_match"):
             return JsonResponse({"error": "An arcade run goes on with Continue or Retry.", **board_payload(room, request.user)}, status=400)
+        if room.world_save_id and kind in ("rematch", "end_match"):
+            return JsonResponse({"error": "A town duel is one game: back to the town.", **board_payload(room, request.user)}, status=400)
         if room.coop_duel_id and kind in ("rematch", "end_match"):
             return JsonResponse({"error": "A vs. battle is one game: on to the augments and curses.", **board_payload(room, request.user)}, status=400)
         if kind == "duel_concede":
@@ -971,6 +978,9 @@ def game_ended(room, over):
     sleeves.game_ended(room, over, run, trial)
     if room.coop_duel_id:
         coop.duel_finished(room, over)
+    if room.world_save_id:
+        from . import world  # weiss.world uses this module
+        world.game_finished(room, over)
 
 
 def cpu_step(room, wait=True):

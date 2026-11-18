@@ -1,0 +1,95 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Slot {{ save.slot }} · World mode{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:world_home' %}">← Saves</a></p>
+  <div class="challenge-head">
+    <div>
+      <h1>Slot {{ save.slot }}: {{ save.set_name }}</h1>
+      <p class="muted">Day {{ save.day }} · {{ save.weekday }} {{ save.time_of_day|lower }} · {{ save.money }} coins</p>
+    </div>
+  </div>
+
+  {# The way in: open the packs, build a deck, then the town. Each step says where it's at. #}
+  <ol class="world-steps">
+    <li class="world-step{% if step == 'packs' %} current{% else %} done{% endif %}">
+      <h2>Open your packs</h2>
+      {% if save.packs %}
+        <p>{{ save.packs }} pack{{ save.packs|pluralize }} of {{ save.set_name }} to open. You've opened {{ save.opened }} so far ({{ pool_count }} cards).</p>
+        <form method="post" action="{% url 'weiss:world_open' save.slot %}" class="cpu-form world-open">
+          {% csrf_token %}
+          <label class="small">Packs
+            <select name="count">
+              {% for count in pack_counts %}<option value="{{ count }}"{% if count == pack_default %} selected{% endif %}>{{ count }}{% if count == save.packs %} (all){% endif %}</option>{% endfor %}
+            </select>
+          </label>
+          <button type="submit" class="button-small">Open them</button>
+        </form>
+      {% else %}
+        <p class="muted">All {{ save.opened }} opened: {{ pool_count }} cards.</p>
+      {% endif %}
+      {% if rewards %}{% include "weiss/challenge_rewards.html" %}{% endif %}
+    </li>
+    <li class="world-step{% if step == 'deck' %} current{% elif step == 'ready' %} done{% endif %}" id="decks">
+      <h2>Build your decks</h2>
+      {% if shortfall %}
+        <p class="panel-error">{{ shortfall }} There are no more packs to open, so this save can't make a legal deck. Tell staff, or start another save.</p>
+      {% endif %}
+      <p class="muted small">Every deck builds from the same cards you've opened. The equipped one (★) is the one you duel with.</p>
+      {% if not pool_count %}<p class="muted small">Open some packs first.</p>{% endif %}
+      <ul class="world-decks">
+        {% for item in decks %}{% with deck=item.deck %}
+          <li class="world-deck{% if item.equipped %} equipped{% endif %}">
+            <div class="world-deck-head">
+              <p class="world-deck-name">{% if item.equipped %}<span class="world-star" title="Equipped" aria-label="Equipped">★</span> {% endif %}{{ deck.name }}</p>
+              <p class="small">{{ item.count }} / 50 cards.{% if not item.problem %} Ready to duel.{% elif item.count == 50 %} <span class="muted">{{ item.problem }}</span>{% endif %}</p>
+            </div>
+            <div class="world-deck-actions">
+              {% if pool_count %}<a class="button-small{% if not item.equipped or step != 'deck' %} secondary{% endif %}" href="{% url 'weiss:world_deck_edit' save.slot deck.pk %}">{% if item.count %}Change it{% else %}Build it{% endif %}</a>{% endif %}
+              {% if not item.equipped %}
+                <form method="post" action="{% url 'weiss:world_deck_equip' save.slot deck.pk %}">{% csrf_token %}<button type="submit" class="button-small secondary">Equip</button></form>
+              {% endif %}
+              <details class="world-deck-more">
+                <summary class="small">Rename{% if decks|length > 1 %} or delete{% endif %}</summary>
+                <form method="post" action="{% url 'weiss:world_deck_rename' save.slot deck.pk %}" class="world-inline-form">
+                  {% csrf_token %}
+                  <label class="visually-hidden" for="rename-{{ deck.pk }}">New name for {{ deck.name }}</label>
+                  <input id="rename-{{ deck.pk }}" name="name" value="{{ deck.name }}" maxlength="100" required>
+                  <button type="submit" class="button-small secondary">Rename</button>
+                </form>
+                {% if decks|length > 1 %}
+                  <form method="post" action="{% url 'weiss:world_deck_delete' save.slot deck.pk %}" onsubmit="return confirm('Delete “{{ deck.name|escapejs }}”? Its cards stay yours.')">
+                    {% csrf_token %}<button type="submit" class="button-small secondary">Delete it</button>
+                  </form>
+                {% endif %}
+              </details>
+            </div>
+          </li>
+        {% endwith %}{% endfor %}
+      </ul>
+      {% if decks|length < max_decks %}
+        <form method="post" action="{% url 'weiss:world_deck_new' save.slot %}" class="world-inline-form world-new-deck">
+          {% csrf_token %}
+          <label class="small" for="new-deck-name">New deck</label>
+          <input id="new-deck-name" name="name" placeholder="Deck {{ decks|length|add:1 }}" value="Deck {{ decks|length|add:1 }}" maxlength="100" required>
+          <label class="small" for="new-deck-copy">from</label>
+          <select id="new-deck-copy" name="copy">
+            <option value="">nothing (empty)</option>
+            {% for item in decks %}<option value="{{ item.deck.pk }}">a copy of {{ item.deck.name }}</option>{% endfor %}
+          </select>
+          <button type="submit" class="button-small secondary">Make it</button>
+        </form>
+      {% else %}<p class="muted small">A save can have {{ max_decks }} decks.</p>{% endif %}
+    </li>
+    <li class="world-step{% if step == 'ready' %} current{% endif %}">
+      <h2>Into the town</h2>
+      {% if step == "ready" %}
+        <p>Your deck's ready. It's {{ save.weekday }} {{ save.time_of_day|lower }}: see who's about.</p>
+      {% else %}
+        <p class="muted">You can look around now, but you'll need a deck that's ready to duel anyone.</p>
+      {% endif %}
+      <a class="button-small{% if step != 'ready' %} secondary{% endif %}" href="{% url 'weiss:world_town' save.slot %}">Go to the town</a>
+    </li>
+  </ol>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Places · World mode{% endblock %}
+
+{% block head %}<script src="{% static 'weiss/backdrops.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:cpu_home' %}?tab=world">← World mode settings</a></p>
+  <h1>Places</h1>
+  <p class="muted">The town's places, in map order. Each has a backdrop for each time of day (drawn by day or by night, so pick the right
+    one for the hour). A place with an unlock flag stays off the map until a save has that flag, set by chatter (“set beach_open”).
+    Who's at each place is up to the <a href="{% url 'weiss:world_schedules' %}">CPU schedules</a>.</p>
+
+  {% for place in places %}
+    <section class="world-card" id="place-{{ place.pk }}">
+      <form method="post" class="world-form">
+        {% csrf_token %}
+        <input type="hidden" name="place" value="{{ place.pk }}">
+        <div class="world-card-head">
+          <label class="world-field world-field-wide">Name <input type="text" name="name" value="{{ place.name }}" maxlength="100" required></label>
+          <span class="muted small">key <code>{{ place.key }}</code></span>
+        </div>
+        <div class="world-backdrops">
+          {% for time, backdrop, index in place.times %}
+            <label class="world-backdrop">
+              <span class="world-backdrop-art" data-backdrop-art="{{ backdrop }}" aria-hidden="true"></span>
+              <span class="small">{{ time }}</span>
+              <select name="backdrop_{{ index }}" data-backdrop-pick aria-label="{{ place.name }}, {{ time|lower }} backdrop">
+                {% for name in backgrounds %}<option value="{{ name }}"{% if name == backdrop %} selected{% endif %}>{{ name }}</option>{% endfor %}
+              </select>
+            </label>
+          {% endfor %}
+        </div>
+        <div class="schedule-row">
+          <label class="world-field">Map order <input type="number" name="order" min="0" max="999" value="{{ place.order }}"></label>
+          <label class="world-field">Unlock flag <input type="text" name="unlock_flag" value="{{ place.unlock_flag }}" maxlength="50" placeholder="open from the start"></label>
+          <label class="world-check"><input type="checkbox" name="shop"{% if place.shop %} checked{% endif %}> Has the card shop's counter</label>
+        </div>
+        <div class="world-card-foot">
+          <button type="submit" class="button-small">Save</button>
+          <span class="muted small">{{ place.rules }} schedule rule{{ place.rules|pluralize }} put{{ place.rules|pluralize:"s," }} CPUs here.</span>
+        </div>
+      </form>
+      <form method="post" class="world-delete-form" onsubmit="return confirm('Delete {{ place.name|escapejs }}{% if place.rules %} and its {{ place.rules }} schedule rule{{ place.rules|pluralize }}{% endif %}?')">
+        {% csrf_token %}<button type="submit" name="delete" value="{{ place.pk }}" class="link-button small danger-link">Delete</button>
+      </form>
+    </section>
+  {% endfor %}
+
+  <section class="cpu-section">
+    <h2>Add a place</h2>
+    <form method="post" class="cpu-form schedule-form">
+      {% csrf_token %}
+      <div class="schedule-row">
+        <label class="world-field">Name <input type="text" name="name" maxlength="100" required placeholder="The bar"></label>
+        <label class="world-field">Key <input type="text" name="key" maxlength="50" placeholder="from the name"></label>
+      </div>
+      <p class="muted small">The key is how chatter and CPU files name the place; it can't change later.</p>
+      <p><button type="submit" name="add" value="1" class="button-small">Add the place</button></p>
+    </form>
+  </section>
+  <script>
+    // Each backdrop's little picture, redrawn as it's changed.
+    window.addEventListener("DOMContentLoaded", () => {
+      const draw = (art, name) => { art.innerHTML = window.SceneBackdrops ? SceneBackdrops.draw(name) : ""; };
+      for (const art of document.querySelectorAll("[data-backdrop-art]")) draw(art, art.dataset.backdropArt);
+      for (const pick of document.querySelectorAll("[data-backdrop-pick]")) {
+        pick.addEventListener("change", () => draw(pick.closest("label").querySelector("[data-backdrop-art]"), pick.value));
+      }
+    });
+  </script>
+{% endblock %}

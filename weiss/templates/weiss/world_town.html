@@ -1,0 +1,111 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}{{ town.place.name|default:"Town" }} · slot {{ save.slot }}{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:world_save' save.slot %}">← Slot {{ save.slot }}: your packs and decks</a></p>
+
+  <div class="town" data-world-town data-state-url="{% url 'weiss:world_town_state' save.slot %}"
+       data-travel-url="{% url 'weiss:world_travel' save.slot %}" data-wait-url="{% url 'weiss:world_wait' save.slot %}"
+       data-duel-url="{% url 'weiss:world_duel' save.slot %}" data-buy-card-url="{% url 'weiss:world_buy_card' save.slot %}"
+       data-buy-gift-url="{% url 'weiss:world_buy_gift' save.slot %}" data-talk-url="{% url 'weiss:world_talk' save.slot %}"
+       data-answer-url="{% url 'weiss:world_answer' save.slot %}" data-give-url="{% url 'weiss:world_give' save.slot %}" data-decks-url="{% url 'weiss:world_save' save.slot %}#decks"
+       data-portraits="{% static 'weiss/portraits/parts.json' %}" data-player="{{ request.user.username }}">
+    {% csrf_token %}
+    <div class="town-bar">
+      <p class="town-where"><strong data-place-name>{{ town.place.name }}</strong>
+        <span class="muted" data-when>Day {{ town.day }} · {{ town.weekday }} {{ town.time_name|lower }}</span></p>
+      <p class="town-coins" data-coins>{{ town.money }} coins</p>
+      <div class="town-actions">
+        <button type="button" class="button-small" data-open-shop aria-expanded="false" aria-controls="town-shop" hidden>Shop counter</button>
+        <button type="button" class="button-small secondary" data-open-map aria-expanded="false" aria-controls="town-map">Map</button>
+        <button type="button" class="button-small secondary" data-wait>Wait</button>
+      </div>
+    </div>
+    <p class="small town-notice" data-duel-banner hidden></p>
+    <div class="small town-notice town-result" data-result hidden role="status">
+      <p><span data-result-text></span> <span class="town-result-points" data-result-points></span></p>
+      <p class="town-result-line" data-result-line hidden></p>
+      <button type="button" class="town-result-close" data-result-close aria-label="Dismiss">×</button>
+    </div>
+    <p class="small town-notice" data-deck-notice{% if town.deck_ready %} hidden{% endif %}>Your equipped deck isn't ready to duel yet.
+      <a href="{% url 'weiss:world_save' save.slot %}#decks">Finish it</a> before you challenge anyone.</p>
+
+    <div class="vn-stage town-stage" data-stage>
+      <div class="vn-bg" data-backdrop></div>
+      <div class="town-light" data-light></div>
+      <div class="town-people" data-people role="group" aria-label="Who's here"></div>
+      <div class="town-me" data-me hidden><div class="town-me-figure" data-me-figure role="img" aria-label="You"></div></div>
+      <div class="town-empty" data-empty hidden>
+        <p>Nobody's here right now.</p>
+        <p class="small">Try the map, or wait a while.</p>
+      </div>
+
+      {# Talking to someone: their words, and what you can do. #}
+      <section class="vn-box town-box" data-box hidden aria-live="polite">
+        <span class="vn-name" data-name></span>
+        <p class="town-relation small" data-relation hidden></p>
+        <p class="vn-text" data-text></p>
+        <div class="town-menu" data-menu></div>
+        <span class="vn-next" data-next aria-hidden="true">▼</span>
+      </section>
+
+      <section class="town-map" id="town-map" data-map hidden aria-label="Map">
+        <div class="town-map-head">
+          <h2>Where to?</h2>
+          <button type="button" class="button-small secondary" data-close-map>Close</button>
+        </div>
+        <ul class="town-places" data-places></ul>
+      </section>
+
+      <section class="town-map town-shop" id="town-shop" data-shop hidden aria-label="The card shop">
+        <div class="town-map-head">
+          <h2>The card shop</h2>
+          <button type="button" class="button-small secondary" data-close-shop>Close</button>
+        </div>
+        <div class="town-shop-tabs" role="tablist" aria-label="What the shop sells">
+          <button type="button" role="tab" id="shop-tab-packs" aria-controls="shop-packs" data-shop-tab="packs">Packs</button>
+          <button type="button" role="tab" id="shop-tab-specials" aria-controls="shop-specials" data-shop-tab="specials">Specialty packs</button>
+          <button type="button" role="tab" id="shop-tab-cards" aria-controls="shop-cards" data-shop-tab="cards">Single cards</button>
+          <button type="button" role="tab" id="shop-tab-gifts" aria-controls="shop-gifts" data-shop-tab="gifts">Gifts</button>
+        </div>
+        <div role="tabpanel" id="shop-packs" aria-labelledby="shop-tab-packs" data-shop-panel="packs">
+          <p class="small muted" data-shop-note></p>
+          <ul class="town-stock" data-stock></ul>
+        </div>
+        <div role="tabpanel" id="shop-specials" aria-labelledby="shop-tab-specials" data-shop-panel="specials" hidden>
+          <p class="small muted" data-specials-note></p>
+          <label class="town-shop-set">From
+            <select data-special-set></select>
+          </label>
+          <ul class="town-stock" data-specials></ul>
+        </div>
+        <div role="tabpanel" id="shop-cards" aria-labelledby="shop-tab-cards" data-shop-panel="cards" hidden>
+          <p class="small muted" data-cards-note></p>
+          <div class="town-cards">
+            <button type="button" class="town-cards-step" data-cards-step="-1" aria-label="Previous cards">‹</button>
+            <ul class="town-cards-row" data-cards tabindex="0" aria-label="Today's single cards"></ul>
+            <button type="button" class="town-cards-step" data-cards-step="1" aria-label="More cards">›</button>
+          </div>
+        </div>
+        <div role="tabpanel" id="shop-gifts" aria-labelledby="shop-tab-gifts" data-shop-panel="gifts" hidden>
+          <p class="small muted" data-gifts-note></p>
+          <ul class="town-stock" data-gift-stock></ul>
+        </div>
+      </section>
+      <p class="town-toast" data-toast aria-live="polite"></p>
+    </div>
+    <p class="small muted town-help">Click someone to talk to them. Travelling, talking and gifts are free; a duel or waiting moves the day on. Keys: M map, W wait, Esc back.</p>
+  </div>
+  <form method="post" action="{% url 'weiss:world_buy' save.slot %}" data-buy-form hidden>
+    {% csrf_token %}<input type="hidden" name="set"><input type="hidden" name="count">
+    <input type="hidden" name="special"><input type="hidden" name="level"><input type="hidden" name="color">
+  </form>
+  {{ town|json_script:"town-state" }}
+  {{ result|json_script:"town-result" }}
+  {{ portrait|json_script:"town-portrait" }}
+  <script src="{% static 'weiss/backdrops.js' %}" defer></script>
+  {% if portrait %}<script src="{% static 'weiss/portrait.js' %}" defer></script>{% endif %}
+  <script src="{% static 'weiss/world_town.js' %}" defer></script>
+{% endblock %}

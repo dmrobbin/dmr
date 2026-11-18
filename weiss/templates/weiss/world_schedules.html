@@ -1,0 +1,103 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Who's where · World mode{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:cpu_home' %}?tab=world">← World mode settings</a></p>
+  <h1>Who's where</h1>
+  <p class="muted">Where each CPU can be found in the town, and when. A CPU's rules are tried highest priority first; the first that holds
+    puts it there, so it's never in two places. Only finalized CPUs with a deck appear. Chances are rolled for each save, so the grid
+    shows one sample save: try another to see the chances work.</p>
+
+  <section class="cpu-section">
+    <div class="schedule-head">
+      <h2>{{ day_name }}</h2>
+      <nav class="arcade-tabs schedule-days" aria-label="Day">
+        {% for index, name in days %}<a href="?day={{ index }}&seed={{ seed }}"{% if index == day %} class="current" aria-current="page"{% endif %}>{{ name|slice:":3" }}</a>{% endfor %}
+      </nav>
+      <a class="small" href="?day={{ day }}&seed={{ other_seed }}">Try another save</a>
+    </div>
+    <div class="schedule-grid-wrap">
+      <table class="schedule-grid">
+        <caption class="visually-hidden">Who's where on {{ day_name }}, for a sample save</caption>
+        <thead><tr><th scope="col">Place</th>{% for time in times %}<th scope="col">{{ time }}</th>{% endfor %}</tr></thead>
+        <tbody>
+          {% for place, cells in grid %}
+            <tr>
+              <th scope="row">{{ place.name }}{% if place.shop %} <span class="muted small">(shop)</span>{% endif %}</th>
+              {% for cell in cells %}
+                <td>{% for who in cell %}<span class="schedule-who">{{ who.name }}{% if who.stake %} <span class="muted">· {{ who.stake }}</span>{% endif %}</span>{% empty %}<span class="muted">—</span>{% endfor %}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if unscheduled %}
+      <form method="post" class="schedule-starters">
+        {% csrf_token %}
+        <p class="small">{{ unscheduled|length }} CPU{{ unscheduled|length|pluralize }} never appear{{ unscheduled|length|pluralize:"s," }} as {{ unscheduled|length|pluralize:"it has,they have" }} no rules:
+          {% for cpu in unscheduled|slice:":12" %}{{ cpu.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% if unscheduled|length > 12 %} and {{ unscheduled|length|add:"-12" }} more{% endif %}.</p>
+        <button type="submit" name="starters" value="1" class="button-small secondary">Give them a starting schedule</button>
+      </form>
+    {% endif %}
+  </section>
+
+  <section class="cpu-section" id="rule-form">
+    <h2>{% if editing %}Edit {{ editing.cpu.name }} at {{ editing.place.name }}{% else %}Add a rule{% endif %}</h2>
+    <form method="post" class="cpu-form schedule-form">
+      {% csrf_token %}
+      {% if editing %}<input type="hidden" name="rule" value="{{ editing.pk }}">{% endif %}
+      <div class="schedule-row">
+        <label class="small">CPU
+          <select name="cpu" required data-searchable="cpus">
+            <option value="">Choose…</option>
+            {% for cpu in cpus %}<option value="{{ cpu.pk }}"{% if editing.cpu_id == cpu.pk %} selected{% endif %}>{{ cpu.name }}</option>{% endfor %}
+          </select>
+        </label>
+        <label class="small">Place
+          <select name="place" required>
+            {% for place in places %}<option value="{{ place.pk }}"{% if editing.place_id == place.pk %} selected{% endif %}>{{ place.name }}</option>{% endfor %}
+          </select>
+        </label>
+      </div>
+      <fieldset class="schedule-checks">
+        <legend class="small">Days</legend>
+        {% for index, name in day_letters %}<label class="small"><input type="checkbox" name="days" value="{{ index }}"{% if editing and index in editing.days %} checked{% endif %}> {{ name }}</label>{% endfor %}
+      </fieldset>
+      <fieldset class="schedule-checks">
+        <legend class="small">Times</legend>
+        {% for time in times %}<label class="small"><input type="checkbox" name="times" value="{{ forloop.counter0 }}"{% if editing and forloop.counter0 in editing.times %} checked{% endif %}> {{ time }}</label>{% endfor %}
+        <label class="small schedule-once"><input type="checkbox" name="once" value="1"{% if editing.once_per_day %} checked{% endif %}> At only one of these times each day</label>
+      </fieldset>
+      <div class="schedule-row">
+        <label class="small">Chance (%)<input type="number" name="chance" min="1" max="100" value="{{ editing.chance|default:100 }}" required></label>
+        <label class="small">Priority<input type="number" name="priority" min="-99" max="99" value="{{ editing.priority|default:0 }}"></label>
+        <label class="small">High-stakes entry fee<input type="number" name="stake" min="0" value="{{ editing.stake|default:0 }}"></label>
+      </div>
+      <p class="muted small">A high-stakes entry fee lets the player duel for stakes when the CPU's here by this rule: the fee is paid up front,
+        lost on a loss, and won back twice over on a win. 0 for none.</p>
+      <p><button type="submit" class="button-small">{% if editing %}Save the rule{% else %}Add the rule{% endif %}</button>
+        {% if editing %}<a class="small" href="{% url 'weiss:world_schedules' %}">Cancel</a>{% endif %}</p>
+    </form>
+  </section>
+
+  <section class="cpu-section">
+    <h2>Rules</h2>
+    {% regroup rules by cpu as by_cpu %}
+    {% for group in by_cpu %}
+      <h3 class="schedule-cpu">{{ group.grouper.name }}{% if not group.grouper.finalized or not group.grouper.deck_id %} <span class="muted small">(not finalized, or no deck: doesn't appear)</span>{% endif %}</h3>
+      <ul class="schedule-rules">
+        {% for rule in group.list %}
+          <li>
+            <span><strong>{{ rule.place.name }}</strong> · {{ rule.summary }}</span>
+            <a class="small" href="?edit={{ rule.pk }}#rule-form">Edit</a>
+            <form method="post">{% csrf_token %}<button type="submit" name="delete" value="{{ rule.pk }}" class="link-button small">Delete</button></form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% empty %}
+      <p class="empty">No rules yet: nobody appears in the town. Add one above{% if unscheduled %}, or give every CPU a starting schedule{% endif %}.</p>
+    {% endfor %}
+  </section>
+{% endblock %}

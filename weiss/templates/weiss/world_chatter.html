@@ -1,0 +1,77 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Chatter · World mode{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:cpu_home' %}?tab=world">← World mode settings</a></p>
+  <h1>Chatter</h1>
+  <p class="muted">What CPUs say in the town's talk box. For each moment, a CPU's own lines are used first, then the lines for any CPU, then
+    {{ defaults }} built-in ones, so nobody's ever silent. Of those that fit, the ones for the highest rank the player has reached win, picked
+    by weight. A line with mistakes is left out until they're fixed.</p>
+
+  <section class="cpu-section">
+    <h2>Write a line</h2>
+    <form method="post" action="{% url 'weiss:world_chatter_new' %}" class="cpu-form">
+      {% csrf_token %}
+      <label class="world-field">Who says it
+        <select name="cpu">
+          <option value="">Any CPU</option>
+          {% for cpu in cpus %}<option value="{{ cpu.pk }}"{% if who == cpu.pk|stringformat:"d" %} selected{% endif %}>{{ cpu.name }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="world-field">When
+        <select name="context">
+          {% for key, label in contexts %}<option value="{{ key }}"{% if context == key %} selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+      <button type="submit" class="button-small">Write it</button>
+    </form>
+  </section>
+
+  <section class="cpu-section">
+    <h2>Lines</h2>
+    <form method="get" class="cpu-form world-filter">
+      <label class="world-field">Who
+        <select name="cpu" onchange="this.form.requestSubmit()">
+          <option value="">Everyone</option>
+          <option value="any"{% if who == "any" %} selected{% endif %}>Any CPU's lines</option>
+          {% for cpu in cpus %}<option value="{{ cpu.pk }}"{% if who == cpu.pk|stringformat:"d" %} selected{% endif %}>{{ cpu.name }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="world-field">When
+        <select name="context" onchange="this.form.requestSubmit()">
+          <option value="">Any moment</option>
+          {% for key, label in contexts %}<option value="{{ key }}"{% if context == key %} selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+      <noscript><button type="submit" class="button-small secondary">Show</button></noscript>
+    </form>
+    <div class="cpu-table-wrap">
+      <table class="cpu-table">
+        <thead><tr><th scope="col">Who</th><th scope="col">When</th><th scope="col">Rank</th><th scope="col">Starts</th><th scope="col"><span class="visually-hidden">Edit</span></th></tr></thead>
+        <tbody>
+          {% for line in lines %}
+            <tr>
+              <td>{{ line.cpu.name|default:"Any CPU" }}</td>
+              <td>{{ line.get_context_display }}</td>
+              <td>{{ line.rank_name }}{% if line.weight != 1 %} <span class="muted small">· weight {{ line.weight }}</span>{% endif %}</td>
+              <td>{{ line.first|truncatechars:80 }}{% if line.mistakes %} <span class="panel-error small">{{ line.mistakes }} mistake{{ line.mistakes|pluralize }}</span>{% endif %}</td>
+              <td class="cpu-table-actions"><a href="{% url 'weiss:world_chatter_edit' line.pk %}">Edit</a></td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="muted">No lines{% if who or context %} like that{% endif %} yet: the built-in ones are said.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="cpu-section">
+    <h2>How many there are</h2>
+    <ul class="world-coverage">
+      {% for key, label, count in coverage %}
+        <li><a href="?context={{ key }}">{{ label }}</a> <span class="muted small">{{ count.own }} CPU's own, {{ count.any }} for any CPU</span></li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endblock %}

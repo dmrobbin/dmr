@@ -23,7 +23,7 @@ from .models import Card
 # How grand a rarity's reveal is: 0 plain, up to 5 for the rarest pulls. A rarity not listed is some special foil.
 GRADES = {
     "": 0, "PR": 0, "TD": 0, "TD+": 0,  # never in packs (see NOT_IN_PACKS), and shown plainly elsewhere
-    "C": 0, "CC": 0, "U": 0,
+    "C": 0, "CC": 0, "U": 0, "N": 0,  # N: an extra booster's plain print (its parallels are foils)
     "R": 1, "CR": 1,
     "RR": 2, "RR+": 2,
     "RRR": 3, "SR": 3,

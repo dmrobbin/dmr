@@ -1,0 +1,33 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}New game · slot {{ slot }}{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:world_home' %}">← Saves</a></p>
+  <h1>New game in slot {{ slot }}</h1>
+  <p>Choose your set. You'll start with {{ start_packs }} pack{{ start_packs|pluralize }} of it{% if loadout %} and {{ loadout }} specialty pack{{ loadout|pluralize }}{% endif %},
+    and {{ start_money }} coins. Your deck can only have cards you open, so choose a set you'd like to play.</p>
+  {% if sets %}
+    <form method="post" class="world-sets">
+      {% csrf_token %}
+      <fieldset>
+        <legend class="visually-hidden">Set</legend>
+        <ul class="world-set-list">
+          {% for set in sets %}
+            <li>
+              <label class="world-set">
+                <input type="radio" name="set" value="{{ set.id }}" required{% if forloop.first %} checked{% endif %}>
+                {% if set.cover.image_src %}<img src="{{ set.cover.image_src }}" alt="" loading="lazy">{% else %}<span class="set-cover-missing" aria-hidden="true"></span>{% endif %}
+                <span class="world-set-name">{{ set.name }}</span>
+                <span class="muted small">{{ set.cards }} cards in its packs</span>
+              </label>
+            </li>
+          {% endfor %}
+        </ul>
+      </fieldset>
+      <p><button type="submit" class="button-small">Start with this set</button></p>
+    </form>
+  {% else %}
+    <p class="empty">No set has the {{ min_cards }} cards in packs a new save needs yet.</p>
+  {% endif %}
+{% endblock %}

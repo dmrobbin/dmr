@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Card, CardList, CardListEntry, CardPrice, GameRoom
+from .models import Card, CardList, CardListEntry, CardPrice, Chatter, GameRoom, GiftItem
 
 
 class CardPriceInline(admin.TabularInline):
@@ -45,3 +45,19 @@ class GameRoomAdmin(admin.ModelAdmin):
     list_display = ("__str__", "status", "version", "updated")
     list_filter = ("status",)
     readonly_fields = ("invite_token", "version", "created", "updated")
+
+
+# World mode's gifts and chatter, until they have pages of their own (docs/world-mode.md, phase 5).
+@admin.register(GiftItem)
+class GiftItemAdmin(admin.ModelAdmin):
+    list_display = ("name", "icon", "price", "tags", "order")
+    list_editable = ("price", "order")
+    search_fields = ("name", "key")
+
+
+@admin.register(Chatter)
+class ChatterAdmin(admin.ModelAdmin):
+    list_display = ("__str__", "context", "min_rank", "weight")
+    list_filter = ("context", "min_rank")
+    search_fields = ("cpu__name", "script")
+    raw_id_fields = ("cpu", "scene")

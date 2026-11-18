@@ -1,0 +1,109 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}{{ line }} · chatter{% endblock %}
+
+{% block head %}<script src="{% static 'weiss/scene_editor.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:world_chatter' %}">&larr; Chatter</a></p>
+  {# The scene editor, for chatter's compact language (weiss.chatter): the reference, the script, and things to put in it. #}
+  <form method="post" class="scene-editor" data-scene-editor data-check-url="{% url 'weiss:world_chatter_check' %}" data-fix-before="before the town says it">
+    {% csrf_token %}
+    <aside class="scene-lines" aria-label="What chatter can say">
+      <h2>Lines</h2>
+      <input type="search" class="scene-lines-search" placeholder="Find a line… (e.g. choice, give)" aria-label="Find a line" data-lines-search>
+      <p class="muted small">Click one to put it in the script at the cursor. There's no stage: no cast, entrances or backgrounds.</p>
+      <dl class="scene-commands" data-lines>
+        {% for example, meaning, insert in reference %}
+          <div class="scene-command" data-search="{{ example|lower }} {{ meaning|lower }}">
+            <dt><button type="button" class="link-button scene-example" data-insert="{{ insert }}">{{ example }}</button></dt>
+            <dd class="muted small">{{ meaning }}</dd>
+          </div>
+        {% endfor %}
+      </dl>
+      <p class="muted small" data-lines-none hidden>No line matches.</p>
+    </aside>
+
+    <div class="scene-editor-main">
+      <div class="scene-editor-head world-chatter-head">
+        <label class="world-field">Who says it
+          <select name="cpu" data-dirty>
+            <option value="">Any CPU</option>
+            {% for cpu in cpus %}<option value="{{ cpu.pk }}"{% if line.cpu_id == cpu.pk %} selected{% endif %}>{{ cpu.name }}</option>{% endfor %}
+          </select>
+        </label>
+        <label class="world-field">When
+          <select name="context" data-dirty data-context>
+            {% for key, label in contexts %}<option value="{{ key }}"{% if line.context == key %} selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </label>
+        <label class="world-field" title="The friendship rank it needs; for a rank-up, the rank reached">Rank
+          <select name="min_rank" data-dirty>
+            {% for index, name in ranks %}<option value="{{ index }}"{% if line.min_rank == index %} selected{% endif %}>{{ index }} · {{ name }}</option>{% endfor %}
+          </select>
+        </label>
+        <label class="world-field world-field-small" title="How often it's picked against others that fit">Weight
+          <input type="number" name="weight" min="1" max="100" value="{{ line.weight }}" data-dirty></label>
+        <label class="world-field" data-scene-pick{% if line.context != "rank_up" %} hidden{% endif %}>Or play a scene
+          <select name="scene" data-dirty>
+            <option value="">No: say the script</option>
+            {% for scene in scenes %}<option value="{{ scene.pk }}"{% if line.scene_id == scene.pk %} selected{% endif %}>{{ scene.name }}</option>{% endfor %}
+          </select>
+        </label>
+        <div class="scene-editor-actions">
+          <span class="small scene-save-state" data-save-state aria-live="polite">Saved</span>
+          <button type="submit" class="button-small" title="Ctrl+S">Save</button>
+        </div>
+      </div>
+      <div class="scene-script-wrap">
+        <div class="scene-gutter" aria-hidden="true" data-scene-gutter></div>
+        <textarea name="script" class="scene-script" spellcheck="false" wrap="off" maxlength="{{ max_script }}" aria-label="Script" data-scene-script>{{ line.script }}</textarea>
+      </div>
+      <div class="scene-problems" aria-live="polite" data-scene-problems>
+        {% if errors %}
+          <p class="small panel-error">{{ errors|length }} mistake{{ errors|length|pluralize }} to fix before the town says it:</p>
+          <ul>{% for number, message in errors %}<li><button type="button" class="link-button" data-line="{{ number }}">Line {{ number }}</button> {{ message }}</li>{% endfor %}</ul>
+        {% else %}
+          <p class="small muted">No mistakes.</p>
+        {% endif %}
+      </div>
+      <div class="scene-editor-foot">
+        <span class="small" data-scene-labels data-labels="{{ labels|join:',' }}"></span>
+        <span class="muted small">Ctrl+S saves. Before a duel and after one, only the first line is said.</span>
+      </div>
+    </div>
+
+    <aside class="scene-palette" aria-label="Things to put in the script">
+      <details class="scene-palette-part" data-part="chatter-speakers" open>
+        <summary>Speakers <span class="muted small">and moods</span></summary>
+        <ul class="scene-chips">
+          <li><button type="button" class="scene-chip" data-insert="them: " data-whole-line>them</button></li>
+          {% for mood in cpu_moods %}<li><button type="button" class="scene-chip" data-insert="them ({{ mood }}): " data-whole-line>them ({{ mood }})</button></li>{% endfor %}
+          <li><button type="button" class="scene-chip" data-insert="player: " data-whole-line>player</button></li>
+          {% for mood in player_moods %}<li><button type="button" class="scene-chip" data-insert="player ({{ mood }}): " data-whole-line>player ({{ mood }})</button></li>{% endfor %}
+          <li><button type="button" class="scene-chip" data-insert="narrator: " data-whole-line>narrator</button></li>
+        </ul>
+      </details>
+      <details class="scene-palette-part" data-part="chatter-ranks" open>
+        <summary>Ranks <span class="muted small">by number</span></summary>
+        <ul class="scene-chips">{% for index, name in ranks %}<li><button type="button" class="scene-chip" data-insert="if rank >= {{ index }} goto " data-whole-line title="{{ name }}">{{ index }} · {{ name }}</button></li>{% endfor %}</ul>
+      </details>
+      <details class="scene-palette-part" data-part="chatter-gifts">
+        <summary>Gifts <span class="muted small">{{ gifts|length }}</span></summary>
+        <ul class="scene-chips">{% for gift in gifts %}<li><button type="button" class="scene-chip" data-insert="give gift {{ gift.key }}" data-whole-line title="{{ gift.name }}">{{ gift.icon }} {{ gift.key }}</button></li>
+          {% empty %}<li class="muted small">No gifts yet.</li>{% endfor %}</ul>
+      </details>
+    </aside>
+  </form>
+  <form method="post" action="{% url 'weiss:world_chatter_delete' line.pk %}" onsubmit="return confirm('Delete this line?')">{% csrf_token %}
+    <button type="submit" class="button-small danger">Delete line</button></form>
+  <script>
+    // The scene to play only means something for a rank-up.
+    window.addEventListener("DOMContentLoaded", () => {
+      const context = document.querySelector("[data-context]");
+      const pick = document.querySelector("[data-scene-pick]");
+      context.addEventListener("change", () => { pick.hidden = context.value !== "rank_up"; });
+    });
+  </script>
+{% endblock %}

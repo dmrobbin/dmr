@@ -76,8 +76,8 @@ class CardPrice(models.Model):
 
 class CardListQuerySet(models.QuerySet):
     def players(self, user):
-        """A player's own lists, to see and play with: not those reserved for CPUs, nor a challenge's deck."""
-        return self.filter(user=user, reserved_for_cpu=False, challenge=False)
+        """A player's own lists, to see and play with: not those reserved for CPUs, nor a challenge's or a world save's deck."""
+        return self.filter(user=user, reserved_for_cpu=False, challenge=False, world_save=None)
 
 
 class CardList(models.Model):
@@ -100,6 +100,8 @@ class CardList(models.Model):
     express = models.JSONField(default=dict, blank=True, help_text="How express building made this deck: series, anchors, required names")
     reserved_for_cpu = models.BooleanField(default=False, help_text="Made in the CPU creation tab; kept out of players' lists and deck choices")
     challenge = models.BooleanField(default=False, help_text="A challenge run's deck, built from its packs: kept out of the player's lists until they save it")
+    world_save = models.ForeignKey("WorldSave", null=True, blank=True, on_delete=models.CASCADE, related_name="decks",
+                                   help_text="A world mode save's deck, built from its packs: kept out of the player's lists, and gone with the save")
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -225,6 +227,7 @@ class PlayerProfile(Avatar):
     music_volume = models.PositiveSmallIntegerField(default=60, help_text="The battle music under the game's moments, 0 to 100")
     sleeve = models.ForeignKey(Sleeve, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", help_text="Their face-down cards' look; none for the default")
     progress = models.JSONField(default=dict, blank=True, help_text="What they've done towards card sleeves since those came in: {key: number} (see weiss.sleeves)")
+    portrait = models.JSONField(default=dict, blank=True, help_text="Their anime paper-doll portrait, as a recipe of parts (see weiss.portraits); empty for none yet")
 
     def __str__(self):
         return str(self.user)
@@ -268,6 +271,8 @@ class CpuProfile(Avatar):
     player_win_image = models.ForeignKey(CpuImage, null=True, blank=True, on_delete=models.SET_NULL, related_name="win_profiles")
     player_lose_image = models.ForeignKey(CpuImage, null=True, blank=True, on_delete=models.SET_NULL, related_name="lose_profiles")
     intro_text = models.TextField(blank=True, help_text="Shown on its screen before a match")
+    gift_tastes = models.JSONField(default=dict, blank=True, help_text="World mode: the gift tags it loves, likes and dislikes, "
+                                   "{\"loves\": [...], \"likes\": [...], \"dislikes\": [...]} (see GiftItem.tags)")
     player_win_text = models.TextField(blank=True, help_text="Shown on the victory screen, when the player beats it")
     player_lose_text = models.TextField(blank=True, help_text="Shown on the defeat screen, when the player loses to it")
     combo_text = models.TextField(blank=True, help_text="Said with its picture when it starts a CX combo of its deck's anchor cards, its first in a turn")
@@ -574,6 +579,9 @@ class GameRoom(models.Model):
     cpu_name = models.CharField(max_length=100, blank=True, help_text="The CPU in the guest seat, if it's a game against one")
     cpu_profile = models.ForeignKey(CpuProfile, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     arcade_run = models.ForeignKey(ArcadeRun, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    # A world mode duel (see weiss.world): which save it's for, and the entry fee paid for a high-stakes one.
+    world_save = models.ForeignKey("WorldSave", null=True, blank=True, on_delete=models.SET_NULL, related_name="rooms")
+    world_stake = models.PositiveIntegerField(default=0, help_text="A high-stakes duel's entry fee, already paid; 0 for an ordinary duel")
     # A co-op challenge's vs. battle after a boss: its two players against each other, in a game of its own (see weiss.coop).
     coop_duel = models.ForeignKey(CoopRun, null=True, blank=True, on_delete=models.CASCADE, related_name="duel_rooms")
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.SETUP)
@@ -671,3 +679,189 @@ class SetView(models.Model):
 
     def __str__(self):
         return f"{self.user} viewed {self.expansion_id}"
+
+
+def default_ranks():
+    """World mode's friendship ranks, from the first: each a name and the points it takes."""
+    return [{"name": "Stranger", "points": 0}, {"name": "Acquaintance", "points": 15}, {"name": "Friend", "points": 40},
+            {"name": "Good friend", "points": 80}, {"name": "Close friend", "points": 140}, {"name": "Best friend", "points": 220}]
+
+
+class WorldSettings(models.Model):
+    """How world mode is tuned, set by staff on the CPU tab's World section. There's only ever one row (see current)."""
+
+    start_packs = models.PositiveSmallIntegerField(default=20, help_text="Packs of the chosen set a new save starts with")
+    loadout = models.JSONField(default=dict, blank=True, help_text="Specialty packs a new save starts with, to claim: {buff id: how many} (see challenge.LOADOUT_BUFFS)")
+    start_money = models.PositiveIntegerField(default=1000, help_text="Coins a new save starts with")
+    pack_price = models.PositiveIntegerField(default=300, help_text="What a pack costs at the card shop")
+    specialty_price = models.PositiveIntegerField(default=600, help_text="What a specialty pack (lucky, climax, level, color) costs at the card shop")
+    card_price = models.PositiveIntegerField(default=3000, help_text="What a single card (a rare or better, from the day's selection) costs at the card shop")
+    win_payout = models.PositiveIntegerField(default=200, help_text="Coins for winning a duel")
+    first_win_bonus = models.PositiveIntegerField(default=100, help_text="More coins for the day's first win")
+    ranks = models.JSONField(default=default_ranks, help_text="Friendship ranks with each CPU: [{name, points}], from the first (0 points)")
+    updated = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey("auth.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+
+    @classmethod
+    def current(cls):
+        return cls.objects.filter(pk=1).first()
+
+    def __str__(self):
+        return "World mode settings"
+
+
+class WorldSave(models.Model):
+    """One of a player's world mode saves (see weiss.world): the time, the place, coins, the cards opened (`pool`, as a
+    challenge's) and the deck built from them, and how things stand with the CPUs. `turn` counts time slots from the
+    start: the day, weekday and time of day all follow from it."""
+
+    SLOTS = (1, 2, 3)
+    DAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+    TIMES = ("Morning", "Noon", "Evening", "Night")
+
+    user = models.ForeignKey("auth.User", on_delete=models.CASCADE, related_name="world_saves")
+    slot = models.PositiveSmallIntegerField()
+    expansion_id = models.PositiveIntegerField(help_text="The set it started with: its starting packs, and its specialty packs', come from it")
+    set_name = models.CharField(max_length=200)
+    turn = models.PositiveIntegerField(default=0)
+    place = models.CharField(max_length=50, blank=True)
+    money = models.PositiveIntegerField(default=0)
+    pool = models.JSONField(default=dict, blank=True, help_text="{card id: copies} opened")
+    packs = models.PositiveSmallIntegerField(default=0, help_text="Packs to open")
+    opened = models.PositiveIntegerField(default=0, help_text="Packs opened so far")
+    rewards = models.JSONField(default=list, blank=True, help_text="Specialty packs waiting to be claimed: [{key, buff, source}] (see weiss.buffs)")
+    last_opening = models.JSONField(default=dict, blank=True, help_text="The latest packs opened, to show them being revealed")
+    deck = models.ForeignKey("CardList", null=True, blank=True, on_delete=models.SET_NULL, related_name="+", help_text="The deck it duels with")
+    relations = models.JSONField(default=dict, blank=True, help_text="How things stand with each CPU: {cpu id: {...}}")
+    flags = models.JSONField(default=dict, blank=True)
+    gifts = models.JSONField(default=dict, blank=True, help_text="Gifts bought and not yet given: {gift key: how many}")
+    today = models.JSONField(default=dict, blank=True, help_text="What's been done today (cleared each new day)")
+    seed = models.PositiveIntegerField(default=0, help_text="Settles everything left to chance in this save, so a reload changes nothing")
+    version = models.PositiveIntegerField(default=0, help_text="Goes up on every change")
+    created = models.DateTimeField(auto_now_add=True)
+    played = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["slot"]
+        constraints = [models.UniqueConstraint(fields=["user", "slot"], name="one_world_save_per_slot")]
+
+    def __str__(self):
+        return f"{self.user}: slot {self.slot}"
+
+    @property
+    def sets(self):
+        """The sets its packs come from (what weiss.buffs asks a challenge for, as challenge.allowed_sets reads it)."""
+        return [self.expansion_id]
+
+    @property
+    def day(self):
+        return self.turn // 4 + 1
+
+    @property
+    def weekday(self):
+        return self.DAYS[(self.turn // 4) % 7]
+
+    @property
+    def time_of_day(self):
+        return self.TIMES[self.turn % 4]
+
+
+class WorldPlace(models.Model):
+    """A place in world mode's town (see weiss.world): a scene the player can go to, with a backdrop for each time of day
+    (from weiss.scenes.BACKGROUNDS: they're drawn at one time each, so the plaza by day isn't the plaza at night)."""
+
+    key = models.SlugField(max_length=50, unique=True)
+    name = models.CharField(max_length=100)
+    backdrops = models.JSONField(default=list, help_text="Four backdrops: morning, noon, evening, night")
+    order = models.PositiveSmallIntegerField(default=0, help_text="Its place on the map")
+    unlock_flag = models.CharField(max_length=50, blank=True, help_text="A flag a save must have to go there; empty for open from the start")
+    shop = models.BooleanField(default=False, help_text="Has the card shop's counter: packs to buy")
+
+    class Meta:
+        ordering = ["order", "name"]
+
+    def __str__(self):
+        return self.name
+
+    def backdrop(self, time):
+        """Its backdrop at a time of day (0 morning to 3 night)."""
+        return self.backdrops[time] if len(self.backdrops) == 4 else (self.backdrops or ["default"])[0]
+
+
+class GiftItem(models.Model):
+    """Something to give a CPU in world mode, sold at the card shop. Its tags decide how each CPU takes it
+    (CpuProfile.gift_tastes)."""
+
+    key = models.SlugField(max_length=40, unique=True)
+    name = models.CharField(max_length=60)
+    icon = models.CharField(max_length=8, blank=True, help_text="An emoji")
+    about = models.CharField(max_length=200, blank=True)
+    price = models.PositiveIntegerField(default=150)
+    tags = models.JSONField(default=list, blank=True, help_text="Words like sweet, drink, cute, cards: what CPUs love, like or dislike")
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "name"]
+
+    def __str__(self):
+        return self.name
+
+
+class Chatter(models.Model):
+    """Something a CPU says in world mode's town, in the talk box: a short script in the scene language's compact
+    form (see weiss.chatter). One fitting the moment (`context`) and how well the player knows the CPU (`min_rank`)
+    is picked; a CPU with none of its own uses the ones for any CPU, and those the built-in lines."""
+
+    CONTEXTS = [
+        ("greet", "Talking, the first time today"), ("again", "Talking again the same day"),
+        ("gift_loved", "Given a gift it loves"), ("gift_liked", "Given a gift it likes"),
+        ("gift_neutral", "Given a gift it doesn't mind"), ("gift_disliked", "Given a gift it dislikes"),
+        ("before_duel", "Before a duel (its first line)"), ("after_win", "After the player wins (its first line)"),
+        ("after_loss", "After the player loses (its first line)"), ("rank_up", "Reaching its rank (min rank)"),
+    ]
+
+    cpu = models.ForeignKey("CpuProfile", null=True, blank=True, on_delete=models.CASCADE, related_name="chatter",
+                            help_text="Leave empty for lines any CPU can say")
+    context = models.CharField(max_length=20, choices=CONTEXTS)
+    min_rank = models.PositiveSmallIntegerField(default=0, help_text="The friendship rank it needs (0 the first); for rank_up, the rank reached")
+    weight = models.PositiveSmallIntegerField(default=1, help_text="How often it's picked against others that fit")
+    script = models.TextField(blank=True)
+    scene = models.ForeignKey("Scene", null=True, blank=True, on_delete=models.SET_NULL, related_name="+",
+                              help_text="For rank_up: a full scene to play instead of the script")
+
+    class Meta:
+        ordering = ["cpu__name", "context", "min_rank", "pk"]
+        verbose_name_plural = "chatter"
+
+    def __str__(self):
+        return f"{self.cpu or 'Any CPU'}: {self.get_context_display()}"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        from .chatter import compile_chatter
+        if self.script.strip() or not self.scene_id:
+            errors = compile_chatter(self.script)[1]
+            if errors:
+                raise ValidationError({"script": [f"Line {line}: {problem}" for line, problem in errors[:10]]})
+
+
+class CpuSchedule(models.Model):
+    """Where a CPU can be found in world mode's town, and when (see world.whereabouts): on these days, at these times,
+    with this chance. A CPU's rules are tried highest priority first; the first that holds puts it there. A once-a-day
+    rule holds at only one of its times each day, picked by the save's seed."""
+
+    cpu = models.ForeignKey(CpuProfile, on_delete=models.CASCADE, related_name="schedule")
+    place = models.ForeignKey(WorldPlace, on_delete=models.CASCADE, related_name="schedule")
+    days = models.JSONField(default=list, help_text="0 Monday to 6 Sunday")
+    times = models.JSONField(default=list, help_text="0 morning, 1 noon, 2 evening, 3 night")
+    chance = models.PositiveSmallIntegerField(default=100, help_text="0 to 100: how likely it is to be there when the rule holds")
+    once_per_day = models.BooleanField(default=False, help_text="There at only one of these times each day")
+    priority = models.SmallIntegerField(default=0, help_text="Higher is tried first")
+    stake = models.PositiveIntegerField(default=0, help_text="A high-stakes duel's entry fee, offered when it's there by this rule; 0 for none")
+
+    class Meta:
+        ordering = ["cpu__name", "-priority", "pk"]
+
+    def __str__(self):
+        return f"{self.cpu} at {self.place}"

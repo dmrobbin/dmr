@@ -1,0 +1,76 @@
+{# The CPU tab's world mode settings (world_views.world_settings): what a new save starts with, and its coins. One form. #}
+<form method="post" action="{% url 'weiss:world_settings' %}" class="cpu-form infinite-form">
+  {% csrf_token %}
+  <section class="cpu-section">
+    <h2>A new save</h2>
+    <p class="muted small">A player starts a save by choosing a set with at least {{ min_set_cards }} cards in its packs
+      ({{ world_sets }} set{{ world_sets|pluralize }} can be chosen now). It starts with this many packs of that set, and the specialty packs
+      below to claim; every card in its deck comes from these. Make sure they're enough for a legal deck: 50 cards, 8 of them climaxes,
+      at most 4 copies of a card. Saves already started keep what they had.</p>
+    <label class="infinite-number">Starting packs
+      <input type="number" name="start_packs" min="0" max="{{ max_start_packs }}" value="{{ world_settings.start_packs }}" required>
+      <span class="muted small">Each has 8 cards, one of them a climax.</span>
+    </label>
+    <div class="infinite-loadout">
+      {% for buff in world_loadout %}
+        <label class="infinite-number" title="{{ buff.description }}">{{ buff.name }}
+          <input type="number" name="loadout_{{ buff.id }}" min="0" max="{{ max_loadout }}" value="{{ buff.count }}" required>
+          <span class="muted small">{{ buff.description }}</span>
+        </label>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="cpu-section">
+    <h2>Who's where</h2>
+    <p class="muted small">Where each CPU can be found in the town, and when: their schedules, and a week's grid of who's where.</p>
+    <p><a class="button-small secondary" href="{% url 'weiss:world_schedules' %}">CPU schedules</a></p>
+  </section>
+
+  <section class="cpu-section">
+    <h2>The town</h2>
+    <p class="muted small">Its places and their backdrops; the gifts the shop sells and what each CPU thinks of them; and what CPUs say when
+      they're talked to, given gifts, duelled and grown closer to.</p>
+    <p class="world-links">
+      <a class="button-small secondary" href="{% url 'weiss:world_places' %}">Places</a>
+      <a class="button-small secondary" href="{% url 'weiss:world_gifts' %}">Gifts</a>
+      <a class="button-small secondary" href="{% url 'weiss:world_chatter' %}">Chatter</a>
+    </p>
+  </section>
+
+  <section class="cpu-section">
+    <h2>Coins</h2>
+    <p class="muted small">What a save starts with, and what the town pays and charges. The card shop and payouts come with the town's duels.</p>
+    <div class="infinite-loadout">
+      <label class="infinite-number">Starting coins
+        <input type="number" name="start_money" min="0" max="1000000" value="{{ world_settings.start_money }}" required>
+      </label>
+      <label class="infinite-number">A pack at the shop
+        <input type="number" name="pack_price" min="1" max="1000000" value="{{ world_settings.pack_price }}" required>
+      </label>
+      <label class="infinite-number">A specialty pack
+        <input type="number" name="specialty_price" min="1" max="1000000" value="{{ world_settings.specialty_price }}" required>
+      </label>
+      <label class="infinite-number">A single card
+        <input type="number" name="card_price" min="1" max="1000000" value="{{ world_settings.card_price }}" required>
+      </label>
+      <label class="infinite-number">A win's payout
+        <input type="number" name="win_payout" min="0" max="1000000" value="{{ world_settings.win_payout }}" required>
+      </label>
+      <label class="infinite-number">The day's first win, more
+        <input type="number" name="first_win_bonus" min="0" max="1000000" value="{{ world_settings.first_win_bonus }}" required>
+      </label>
+    </div>
+  </section>
+  <section class="cpu-section">
+    <h2>Friendship</h2>
+    <p class="muted small">The ranks a player reaches with each CPU, one a line as “name: points”, from the first (at 0).
+      Talking (3 a day), duels (6 for a win, 2 for a loss) and gifts (12 loved, 6 liked, 2 neutral, −4 disliked) bring points.
+      <a href="{% url 'weiss:world_chatter' %}">Chatter</a> can ask for a rank by its number, the first being 0.</p>
+    <label class="world-ranks">Ranks
+      <textarea name="ranks" rows="7" required>{% for rank in world_ranks %}{{ rank.name }}: {{ rank.points }}
+{% endfor %}</textarea>
+    </label>
+  </section>
+  <p><button type="submit" class="button-small">Save</button>{% if world_settings.updated_by %} <span class="muted small">Last saved by {{ world_settings.updated_by }}, {{ world_settings.updated|timesince }} ago.</span>{% endif %}</p>
+</form>

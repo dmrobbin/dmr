@@ -104,7 +104,7 @@
       if (!response.ok) return;
       const data = await response.json();
       problems.innerHTML = data.errors.length
-        ? `<p class="small panel-error">${data.errors.length} mistake${data.errors.length === 1 ? "" : "s"} to fix before it can be played:</p>
+        ? `<p class="small panel-error">${data.errors.length} mistake${data.errors.length === 1 ? "" : "s"} to fix ${esc(form.dataset.fixBefore || "before it can be played")}:</p>
            <ul>${data.errors.map(([line, message]) => `<li><button type="button" class="link-button" data-line="${line}">Line ${line}</button> ${esc(message)}</li>`).join("")}</ul>`
         : '<p class="small muted">No mistakes.</p>';
       showLabels(data.labels);
@@ -145,7 +145,8 @@
     if (label && labelLine(label.dataset.label)) goToLine(labelLine(label.dataset.label));
   });
   form.addEventListener("submit", () => { dirty = false; });
-  form.querySelector("[name=name]").addEventListener("input", () => markDirty(true));
+  // Other fields (a scene's name; chatter's who and when) are changes to save too.
+  for (const field of form.querySelectorAll("[name=name], [data-dirty]")) field.addEventListener("input", () => markDirty(true));
   document.addEventListener("keydown", (event) => {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
       event.preventDefault();
@@ -153,7 +154,7 @@
     }
     if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
       event.preventDefault();
-      form.requestSubmit(form.querySelector("[data-save-play]"));
+      form.requestSubmit(form.querySelector("[data-save-play]") || undefined);
     }
   });
   window.addEventListener("beforeunload", (event) => { if (dirty) event.preventDefault(); });

@@ -184,7 +184,8 @@ def reward_context(run):
                 "curses": [curses.shown(c) for c in reward.get("options", []) if c in curses.CURSES] if reward["buff"] == "curse" else []}
                for reward in run.rewards if reward["buff"] in buffs.BUFFS]
     kinds = {reward["buff"].claim for reward in rewards}
-    context = {"rewards": rewards, "levels": buffs.LEVELS, "colors": buffs.COLORS, "trade_in": buffs.TRADE_IN}
+    context = {"rewards": rewards, "levels": buffs.LEVELS, "colors": buffs.COLORS, "trade_in": buffs.TRADE_IN,
+               "claim_url": reverse("weiss:arcade_challenge_claim")}
     if kinds & {"exchange", "trade_in"}:
         context["pool"] = [(card, pulled) for card, pulled, _ in challenge.pool_cards(run)]
     if "deck_card" in kinds and run.deck:
@@ -341,7 +342,8 @@ def challenge_deck(request):
     levels = (["climax"], ["0"], ["1"], ["2", "3"])
     groups = [{"label": label, "target": climaxes if required else target, "required": required, "levels": counted}
               for (label, target, required, _), counted in zip(DECK_GROUPS, levels)]
-    return render(request, "weiss/challenge_deck.html", {"run": run, "cards": cards, "deck_size": DECK_SIZE, "climax_target": climaxes, "climax_min": CLIMAX_COUNT,
+    return render(request, "weiss/challenge_deck.html", {"run": run, "cards": cards, "back_url": reverse("weiss:arcade_challenge"),
+                                                         "back_label": f"{run.name} challenge", "back_button": "Back to the challenge", "deck_size": DECK_SIZE, "climax_target": climaxes, "climax_min": CLIMAX_COUNT,
                                                          "copy_limit": augments.copy_limit(run), "over_size_ok": run.kind == ChallengeRun.Kind.INFINITE,
                                                          "options": options, "partner": partner, "deck_groups": groups,
                                                          "state_url": reverse("weiss:arcade_challenge_deck_state") if partner else ""})

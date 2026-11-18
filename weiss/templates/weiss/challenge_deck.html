@@ -1,13 +1,14 @@
 {% extends "core/dashboard_base.html" %}
 {% load static weiss_lists %}
 
-{% block title %}{{ run.name }} deck{% endblock %}
+{% block title %}{{ back_label }} deck{% endblock %}
 
 {% block head %}<script src="{% static 'weiss/challenge_deck.js' %}" defer></script>{% endblock %}
 
 {% block content %}
-  <p class="back"><a href="{% url 'weiss:arcade_challenge' %}">&larr; {{ run.name }} challenge</a></p>
-  <h1>Build your deck</h1>
+  <p class="back"><a href="{{ back_url }}">&larr; {{ back_label }}</a></p>
+  <h1>{{ heading|default:"Build your deck" }}</h1>
+  {% if equipped is not None %}<p class="small{% if not equipped %} muted{% endif %}">{% if equipped %}★ Equipped: the deck you duel with.{% else %}Not equipped: equip it on your save's page to duel with it.{% endif %}</p>{% endif %}
   {% if partner %}
     <p class="muted small">The pool is yours and {{ partner.username }}'s: every card either of you has pulled is here. A copy in one deck can't go in the other,
       so a card {{ partner.username }}'s deck has every copy of is greyed out until they take some out. <a href="{% url 'weiss:arcade_coop_partner_deck' %}">See {{ partner.username }}'s deck</a>.
@@ -16,7 +17,7 @@
     <p class="muted small">Only the cards you've pulled can go in, as many copies as you pulled. Click a card's picture to read it.</p>
   {% endif %}
   {% if not cards %}
-    <p class="empty">You haven't pulled any cards yet. <a href="{% url 'weiss:arcade_challenge' %}">Open some packs first.</a></p>
+    <p class="empty">You haven't pulled any cards yet. <a href="{{ back_url }}">Open some packs first.</a></p>
   {% else %}
   {# The partner's deck on the left (co-op), the pool in the middle, and this player's deck on the right, as the card lists' side panel shows a deck. #}
   <div class="deck-builder{% if partner %} with-partner{% endif %}">
@@ -108,7 +109,7 @@
         </div>
         <button type="button" class="button-small secondary" data-deck-clear>Empty the deck</button>
         {% if not partner %}<button type="submit" class="button-small">Save deck</button>{% endif %}
-        <a class="button-small secondary" href="{% url 'weiss:arcade_challenge' %}">Back to the challenge</a>
+        <a class="button-small secondary" href="{{ back_url }}">{{ back_button }}</a>
       </div>
       <ul class="pool-grid">
         {% for item in cards %}{% with card=item.card %}

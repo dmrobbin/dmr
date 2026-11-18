@@ -1,0 +1,344 @@
+# World mode: plan
+
+A single-player world. The player visits places around a town, each an illustrated scene, and meets the CPUs their
+schedules put there. They talk to them, give them gifts and duel them. Wins bring money, and money buys packs at the
+card shop. The player builds decks only from cards they've opened. Time moves through four slots a day, seven days a
+week, and each CPU has places it can be found at certain times.
+
+## Decisions
+
+| Topic | Decision |
+|---|---|
+| Time | 4 slots a day: morning, noon, evening, night. 7 days, Monday to Sunday, then the week repeats. |
+| Moving around | Places are scenes: an illustrated backdrop (one per time of day where it matters), with the CPUs who are there standing in it. The player travels by a map of places, not by walking. (A walking avatar was tried first; see "What's built".) |
+| How people look | CPUs appear as their own uploaded art (their card-art pictures where they have none). The player is an anime paper-doll portrait they make themselves. |
+| Talking | In a box over the scene, not a full visual novel scene: the player's portrait comes in on the left, the CPU moves right, and both react with expressions. Full scenes are kept for big moments. |
+| New game | The player picks a set; only sets with 100+ cards are offered. They get a number of packs from it plus specialty packs, both set by staff in the admin. Staff make sure that's always enough for a legal deck. |
+| Cards and decks | World mode has its own collection and decks, kept apart from the site's free deck building and from challenges. |
+| Saves | 3 save slots per player. |
+| Losing a duel | It uses up the time slot, and that's all. |
+| High-stakes duels | The player may pay to enter. A loss forfeits the fee; a win pays a larger prize. |
+
+### Choices I made where the design was silent
+
+These are noted here so they can be changed.
+
+- **What moves time on:** a duel (win or lose), and "wait", which skips to the next slot. Travelling between places,
+  talking, gifts and shopping are free, so looking around is never punished.
+- **The portrait belongs to the account, not to a save.** Every save shows the same player. Change to per-save if each
+  save should be a different character.
+- **The set must have 100+ cards that can come from packs.** Promos and trial deck cards (`packs.NOT_IN_PACKS`)
+  don't count, so the set can really fill packs.
+- **Several decks per save, one equipped.** Duels use the equipped deck. A duel can't start unless it's legal.
+- **Duels left unfinished:** the save stays in that time slot until the game ends; conceding counts as a loss.
+- **Only one save is played at a time.** Each save gets a `version` field, raised on every change, as on
+  `CoopRun`, so a second tab can't double-spend money or time.
+- **The server is the authority on time, place, money, cards and friendship.** The page only shows them. Whenever the
+  player acts on a CPU, the server checks that CPU is actually at that place in that slot.
+
+## What's built
+
+### The town test (`world/test/`, staff only)
+
+A try-out of how meeting CPUs should feel, with everything but the duel made up and kept in the browser tab.
+
+- **Places:** eight (plaza, café, library, duel arena, shrine, beach, forest, school), drawn with the scene backdrops
+  (`static/weiss/backdrops.js`). A place can change backdrop with the time of day (the plaza is under sakura by day and
+  a lit city at night), and daylit scenes are tinted for morning and evening.
+- **Who's where:** made-up schedule rules per CPU (days, times, a chance, "once a day"), resolved from the time alone,
+  so reloading never moves anyone.
+- **Talking:** click someone and the others clear; a box over the scene offers Talk, Give a gift, Duel and Leave, with
+  a friendship badge (hearts, rank, points to the next). Talk once a day for points; gifts are loved, liked or
+  disliked, with the CPU's pleased or dismayed picture and a floating "+8 ♥". **Duel** starts a real game against
+  that CPU with the player's deck. The player's portrait stands in the conversation and reacts.
+- **Map and time:** the map shows every place and who's there; "wait" moves time on and says who left and arrived.
+- **Fallbacks:** a CPU with no picture (or one that won't load) stands as a tinted silhouette with its initial.
+
+### Portraits (`profile/portrait/`)
+
+- **Art:** two artists' kits, each its own art style with a feminine and a masculine body:
+  - Sutemo's visual novel sprites: commercial use allowed, not to be resold on their own.
+  - Tainara-P's character sprite creators: CC0.
+  Parts can't cross styles (each is drawn to its own proportions); the editor credits both.
+- **Import:** `scripts/import_portraits.py` (needs psd-tools and numpy, which only it uses) cuts the kits into
+  cropped WebPs and a manifest, `static/weiss/portraits/parts.json`: about 470 parts, 8,000 images and 60 MB. Each
+  base is imported on its own and kept, so one artist's kit can be re-imported without the other.
+- **Skin tones:** 11, shared by every style: Tainara-P's five human and four fantasy tones, and two deeper ones made by
+  recolouring. Sutemo's skin is recoloured to all 11 by placing each skin pixel on its own light-to-shadow scale and
+  moving it to the same place on the target tone's.
+- **A portrait is a recipe:** `{base, choices, parts: {slot: {id, color}}}`, kept as `portrait` on `PlayerProfile`.
+  Choices are the base's own (skin, hair colour, and for Tainara-P eye colour, eye whites and the eye, brow and mouth
+  expressions); a part may also come in colours of its own. Each layer of a part picks its image by those choices,
+  and can show only in some states (an eyelid with closed eyes). `weiss.portraits.clean` checks a recipe before it's
+  saved; portraits saved in the first, Sutemo-only format are upgraded when they're drawn.
+- **Moods:** each base maps feelings (happy, sad, surprised, angry, smug...) to its own expressions, so a scene can ask
+  for "happy" without knowing the art. The editor previews them; the town test uses them.
+- **Drawing:** `static/weiss/portrait.js` stacks the images in a box the canvas's shape, so a portrait scales to any
+  size. A style drawn smaller in its canvas is zoomed to match, and a portrait can be cropped to its face (the profile does).
+- **The editor:** art style and body, then the choices and parts under Body, Hair, Face and expression, and Outfit and
+  accessories; previous/next buttons for browsing; undo/redo; randomise; a backdrop and mood preview. On a phone the
+  preview stays at the top.
+
+### The pixel-art character creator (removed)
+
+Built first, for the walking map, with LPC pixel art; removed once the world became scenes and portraits. Its
+`character` fields came and went in migrations 0042 and 0045.
+
+## Open decisions
+
+- **Portrait art size:** 60 MB of images is fine for deploying but a big addition to git. Options: smaller Tainara-P
+  images or lower quality (about half the size), or serving them from S3.
+- **Tainara-P's female kit licence:** the male kit's page says CC0; check the female kit's page says the same before release.
+- **An intermittent test:** `test_buffs.SceneBuffFlowTests.test_no_scene_and_so_no_buffs_outside_a_narrative_challenge`
+  failed once in a parallel run and passed on every rerun.
+
+## Phase 1: saves, new game and collection — built
+
+At `world/` (staff only while world mode is built), with the settings on the CPU creation page's **World mode** tab.
+Built as planned below, with these differences:
+
+- **Several decks per save** (up to 10), every one built from the same cards opened, so a card can be in all of them.
+  `WorldSave.deck` is the **equipped** one, which duels use. The save's page lists them: build, equip, rename, delete
+  (a save keeps at least one; deleting the equipped one equips the next), and a new deck, empty or a copy of another.
+  A deck's builder is at `world/<slot>/decks/<id>/`; `world/<slot>/deck/` opens the equipped one's.
+- **The challenge code isn't changed to take a save.** Its wrappers carry challenge-only things (co-op sharing,
+  augments, kinds), so `weiss/world.py` has small functions of its own on the layer underneath: `weiss.packs` for
+  pools and opening, `weiss.buffs` for the specialty packs (a save has the fields it reads: `pool`, `rewards`,
+  `last_opening`, `sets`) and `weiss.lists` for the deck rules. The challenge templates for the pack reveal, the
+  specialty packs and the deck builder take their links as context, so world mode uses them too.
+- **Duelling needs a full deck:** 50 cards, 8 climaxes, at most 4 of a card by name (`world.deck_problem`). While it's
+  built, a deck can be saved short, as a challenge's can.
+- **World decks can't be edited on the lists pages** (`lists.editable_lists` leaves them out), so the only way to change
+  one is the save's deck builder, which keeps to the cards opened.
+- **If the cards opened can't make a legal deck** once every pack's open, the save's page says what's missing.
+
+The plan as it was:
+
+- **`WorldSettings`** (one row, like `ChallengeSettings`) on a staff admin page:
+  starting packs, starting specialty packs (`{buff id: count}`, the same picker as the challenge loadout), and the
+  economy (starting money, pack price, win payout, payout per score point, first win of the day bonus).
+- **`WorldSave`**: `user`, `slot` (1–3, unique per user), `set` (the expansion it started with), `turn` (the slot of
+  time since it began: the day, weekday and time of day all follow from it), `place`, `money`, `pool`
+  (`{card id: copies}`, as in challenges), `packs`, `rewards`, `last_opening`, `equipped_deck`, `relations` (phase 4),
+  `flags`, `today` (per-day counters, cleared at day rollover), `seed`, `version`, and timestamps.
+- **World decks:** `CardList` gets a `world_save` foreign key. Lists that have one are hidden from the normal
+  list pages and challenge pickers, and deleting a save deletes them.
+- **Share the challenge code instead of copying it:** pack opening, the specialty pack buffs and the pool-limited
+  deck builder read and write fields on a `ChallengeRun`. Change them to work on anything that has `pool`, `packs`,
+  `rewards` and `last_opening`, and give `WorldSave` those same fields. Only the specialty packs staff can choose for
+  a loadout (`challenge.LOADOUT_BUFFS`) are allowed in world mode.
+- **Pages:**
+  - Save select: 3 slots, each showing the day and time, money, the set it started with, and when it was last
+    played. An empty slot offers a new game. Deleting a save asks the player to type its slot name, since it can't be undone.
+  - New game: choose the set (with the art of one of its cards, and its card count) → open the packs (reuses the
+    reveal) → claim the specialty packs → build the first deck → into the town.
+- **An empty state no one should hit:** if a starting pool still can't make a legal deck, say what's missing
+  instead of trapping the player. The staff settings page also warns when the counts look too low.
+
+**Done when:** a player can start a save in any of 3 slots, open their starting packs, build a legal deck, and
+find it again in that slot later. Their other decks and challenges are untouched.
+
+## Phase 2: places and time — built
+
+The town page is at `world/<slot>/town/`, linked from the save's page (any time: looking around needs no deck, and
+the town says when the equipped deck isn't ready to duel).
+
+- **`WorldPlace`**: key, name, four backdrops (morning to night), map order, and `unlock_flag` (empty for open from
+  the start). Migration 0047 adds the town test's eight places. Unlocks by rank or day can join the flag when
+  something needs them; staff editing of places comes with the World tab (phase 5).
+- **`weiss/world.py`** keeps the time and place: `places` (those the save can go), `travel` (free), `wait` (the next
+  part of the day; after night a new day, and `today` is cleared) and `town`, the state the page draws.
+- **The page** (`static/weiss/world_town.js`) draws what the server says and posts each move with the save's
+  `version`. A move from a tab that's behind is refused (409) with the town as it is now, so two tabs can't both
+  spend the same time; a tab coming back into view catches up by itself. Keys: M for the map, W to wait.
+- **Nobody's in the town yet:** people come with their schedules in phase 3. Until then the town test
+  (`world/test/`) still shows how meeting them will feel; it goes once phases 3 and 4 have brought that over.
+
+The plan as it was:
+
+- **`WorldPlace`** model: name, a backdrop for each time of day, whether it's a starting place, an unlock condition (a
+  flag, a rank, a day), and its order on the map. The town test's eight places become the first rows.
+- **The town page** for a save: the place, its scene, the day and time, money, the map and "wait", as in the test,
+  with every change posted to the server and the page redrawn from its answer.
+- **Endpoints:** travel, wait (advance the slot, rolling the day over after night), and the place as it is now.
+
+**Done when:** a save travels between places and waits, the time and money shown are the server's, and a reload
+puts the player back where they were.
+
+## Phase 3: schedules, duels and the shop — built
+
+- **Schedules:** `CpuSchedule` rules (a CPU, a place, days, times, a chance, once a day, a priority, and a high-stakes
+  entry fee). `world.whereabouts` works out who's where from the save's seed and the turn alone, so reloading never
+  moves anyone and two saves see different rolls. Only finalized CPUs with a deck appear.
+- **The staff's page** (`world/schedules/`, linked from the World mode tab): a grid of who's where for each day of a
+  sample save ("try another save" re-rolls it), the rules by CPU to edit or delete, and the form to add one (an exact
+  repeat is refused).
+- **Every CPU starts with a schedule:** migration 0050 gave each existing CPU that can duel one, and finalizing a CPU
+  with no rules gives it one (a CPU with rules keeps them as staff left them). `world.starter_rules` makes three: a
+  home most weekdays at two times, a weekend spot and somewhere it wanders on three days, each in whichever place has
+  the fewest rules so far, so the town fills evenly. Staff edit them from there; the page's button does the same for
+  any CPU still without rules.
+- **People in the town:** whoever's at the place stands in the scene; waiting says who left and who arrived. The map
+  shows who's at every place right now (their circle pictures and names, four at most and how many more), so the
+  player can go and find someone. Talking to
+  someone (the player's portrait comes in) offers **Duel**, a **high-stakes duel** where their rule has a fee, and
+  Leave. Talk and gifts come with phase 4.
+- **Duels:** a real game against the CPU with the equipped deck, linked to the save (`GameRoom.world_save`, and
+  `world_stake` for the fee, taken when it starts). When the game ends, `play.game_ended` hands it to
+  `world.game_finished`, once per game: a win pays `win_payout`, plus `first_win_bonus` for the day's first win, plus
+  twice a high-stakes fee; win or lose, the time slot's used up. The game-over screen says what it paid and goes
+  "Back to the town", where the result is said once. A town duel can't be rematched, reset or given another deck.
+- **An unfinished duel holds the time:** while it's under way, the town says so (with a link back to it), waiting is
+  refused and no other duel can start. Travelling and shopping still work.
+- **The card shop:** a place of its own (migration 0049) with a new backdrop, `shop`, drawn in `backdrops.js` (and
+  usable in scenes). Its counter sells packs at `pack_price`: the save's set always, and up to three other sets that
+  change each day. Bought packs open straight into the save's cards, with the reveal, then back to the town.
+- **The shop counter's three tabs** (`world.shop`):
+  - **Packs:** each set is shown with its cover card, the same rule as the set list (the lowest number of its main
+    print run, `world.set_cover`).
+  - **Specialty packs:** lucky, climax, level and color packs (`SHOP_SPECIALS`) at `specialty_price` (600 by
+    default). They're made from any of the day's sets by `buffs.reward_pack`, and opened with the reveal.
+  - **Single cards:** a row of ten rares and better (R/CR and up, never promos or trial deck cards) to scroll through.
+    They come from the day's sets, change each day, and are shown rarest first. Each costs a flat `card_price` (3,000
+    by default), and you can buy one of each a day. A card goes straight into the save's cards without leaving the
+    town (`world_buy_card`, a town move).
+  - Staff set both prices on the World mode tab (migration 0051).
+  - The grade table (`packs.GRADES`) learned "N", an extra booster's plain print. It had been graded as a special
+    foil, which skewed that set's packs and would have put plain cards among the shop's rares.
+
+The plan as it was:
+
+- **`CpuSchedule`** rows: `cpu`, `place`, `days` (a set of 0–6), `slots` (a set of 0–3), `chance` (0–100),
+  `once_per_day`, `priority`.
+- **Resolving who's where:** a function of (save seed, turn) only, as in the town test. Per CPU and slot: take the
+  rules that match, highest priority first; roll each one's chance. For a once-per-day rule, the seed picks one of its
+  slots for the day and the CPU appears only in that slot. A CPU is never in two places at once.
+  - Cinder: bar, Tue + Fri, night; forest, Sat + Sun, evening.
+  - Katara: plaza, Mon–Fri, noon, 80%.
+  - Mai: cafe, every day, morning/noon/night, once per day.
+- **Staff schedule grid:** a 7 × 4 table showing who's where for a given seed, with clashes and empty places
+  marked. It's both the writing tool and the debugging tool.
+- **Duels from the world:** `GameRoom` gets a `world_save` foreign key; the room is made with the existing
+  `seat_cpu`. When it's over, `play.game_ended` calls a new `world.game_finished(room, over, score)`:
+  - a win pays the base payout + score × rate (from `scoring.win_score`), plus the first win of the day bonus
+  - a loss or win uses up the slot
+  - the player goes back to the place they left from
+- **High-stakes duels:** an entry fee that is paid when the game starts and isn't refunded if it's lost, and a
+  prize for winning, offered from dialogue (phase 4) or on a schedule rule. The fee is taken in the same transaction
+  that makes the room, so it can't be paid twice or skipped.
+- **The card shop:** a place with a shop counter. Packs are priced per set, and the stock changes by day (from the
+  seed). Phase 4 adds gifts. Buying opens the packs into the pool with the reveal.
+
+**Done when:** CPUs appear by their schedules and stay put on reload; a duel started from a place pays out and
+moves time on; a high-stakes loss keeps the fee; the shop sells packs. The full loop works: visit, duel, earn, buy,
+build, duel again.
+
+## Phase 4: dialogue, relationships and gifts — built
+
+- **Talking:** clicking someone offers Talk, Give a gift, Duel (and a high-stakes duel where they play for stakes) and
+  Leave. Their lines play in the box, with the CPU's mood (its pleased and dismayed pictures) and the player's portrait
+  reacting. Friendship shows at the box's top right: hearts, the rank's name and points to the next.
+- **Chatter** (`weiss.chatter`, the `Chatter` model): a compact form of the scene language. `them`, `player` and
+  `narrator` speak (with moods), and there are choices, labels, flags, `if rank >= N goto`, `points ±N`,
+  `give money N`, `give gift <key>`, `fight` and `fight stake N`. Staging lines (cast, entrances, backgrounds and the
+  like) are refused, each with a message saying why.
+  - **The server runs the script** and the page only plays what it says happened, so points, coins and stakes can't be
+    forged. A choice posts the answer and the server carries on.
+  - **Coins, points and gifts a line gives come once a day per line**, so talking again can't farm them.
+  - **Flags a script sets belong to the save** and can open places (`WorldPlace.unlock_flag`). The save's own flags
+    (last_duel and so on) can't be set.
+- **Contexts:** greet (the day's first talk), again, four gift reactions (loved, liked, neutral, disliked),
+  before_duel, after_win, after_loss and rank_up.
+  - **Picking a line:** a CPU's own lines come first, then lines for any CPU (`cpu` left empty), then the built-in
+    `chatter.DEFAULTS`, so no CPU is ever silent. Within those, the highest `min_rank` the player has reached wins,
+    picked by `weight`. A line with mistakes is skipped, never shown.
+  - **One-line contexts:** before_duel, after_win and after_loss show their first line. The duel's line is said before
+    it starts, and the after-duel line goes in the result banner above the stage.
+  - **Stakes:** these are offered in talk, with `fight stake 500`. That replaces the planned "stake offer" context;
+    a schedule rule's stake still works as before.
+- **Friendship** (`save.relations`):
+  - **Points:** 3 for the day's first talk, 6 for a win and 2 for a loss. Gifts give 12 loved, 6 liked, 2 neutral and
+    −4 disliked; points never go below 0. You can give each CPU one gift a day.
+  - **Ranks:** set by staff on the World mode tab as "name: points" lines. The defaults are Stranger, Acquaintance,
+    Friend, Good friend, Close friend and Best friend.
+  - **Reaching a rank** plays that rank's rank_up line, or its full `Scene` if the Chatter row names one. The scene
+    plays once on its own page, then the player is back in the town.
+- **Gifts:**
+  - `GiftItem` (key, name, emoji, about, price, tags): 14 starter items (migration 0053), sold on the shop's Gifts tab.
+    The save keeps what's bought (`save.gifts`).
+  - Each CPU's `gift_tastes` lists the tags it loves, likes and dislikes; a loved tag wins over a disliked one.
+    Starter tastes are given to every CPU (by the migration, and on finalizing a new one), the same way starter
+    schedules are.
+- **Editing:** staff pages for all of it came with phase 5. The Django admin also lists gift items and chatter.
+- **Not done:**
+  - A rank reached through a duel shows in the result banner, but doesn't play its rank-up line or scene.
+  - The other unlocks the plan mentions (a stronger deck, a rank condition for sleeves) aren't built. Places can open
+    on a flag that chatter sets.
+
+The plan as it was:
+
+
+- **Dialogue in the box:** the town test's box, driven by the scene script language (`compile_scene`) in a "compact"
+  mode that allows speech, choices, `set`/`if`/`goto` and `fight`, and refuses staging lines (enters, moves,
+  background, screen) with a clear error. Staff keep one language. Lines can ask for a mood, for the CPU's picture and
+  the player's portrait.
+- **New script verbs:** `if rank >= 3 goto …`, `points +5`, `fight stake 500`, `give money 100`.
+- **`Chatter`** rows: `cpu`, `context`, `min_rank`, `weight`, `script`. Contexts: greet, already talked today, gift
+  (loved / liked / disliked), before a duel, after a win, after a loss, stake offer. One is picked at random from
+  those that fit. A CPU with none for a context falls back to a generic line, so new CPUs are never silent.
+- **Relationships:** `relations` on the save: `{cpu id: {points, rank, talked_day, gifts_today}}`.
+  - Points from the first talk of the day, a win, a loss (a little), and gifts.
+  - A cap on gifts per CPU per day.
+  - Rank thresholds and names in `WorldSettings`.
+  - Reaching a rank can play a full `Scene` and unlock dialogue, places, high-stakes duels, a stronger deck or a sleeve
+    (a new `rank` condition in `weiss.sleeves`).
+- **Gifts:** `GiftItem` (name, icon, price, tags), sold at the shop; an inventory on the save; each CPU has liked and
+  disliked tags.
+
+**Done when:** talking, gifts and wins raise a CPU's rank; dialogue changes with rank; the caps hold; and a rank-up
+can play its scene.
+
+## Phase 5: staff tools and CPU format — built
+
+- **The World mode tab** links to every world page: the settings (starting packs, coins, prices, friendship ranks) on
+  the tab itself, CPU schedules, and three new pages (`weiss.world_staff_views`):
+  - **Places:** each place's name, its backdrop for each time of day (with a picture of each), map order, unlock
+    flag and whether it has the shop counter. Places can be added, and deleted (with their schedule rules; the last
+    one stays).
+  - **Gifts:** gift items (icon, name, price, tags, order), with how many CPUs love, like and dislike each one, and a
+    table of every CPU's tastes to edit, plus a button to give starter tastes to CPUs that have none.
+  - **Chatter:** every line by CPU and moment, with any mistakes flagged, and how many lines each moment has. Lines
+    are written in the scene editor: same reference, palette, live checking and Ctrl+S. The palette has speakers and
+    moods, ranks and gift keys, and a rank-up can name a scene to play instead.
+- **CPU files** (`weiss.cpu_corpus`) gain a `world` part: schedule rules (places by key), gift tastes and chatter
+  (a rank-up's `scene` by name, from the same file or one that's there already).
+  - **Import** checks it all, with every problem listed, and makes it once the batch's scenes exist.
+  - **Export** writes it for each CPU, plus `world.json` (places, gifts, tags, contexts, ranks, moods), `chatter.json`
+    (the built-in lines and those for any CPU) and a World mode section in `reference.md`.
+  - **`check_cpu_file`** checks a file's world part against `world.json`. An export from before world mode says it
+    needs exporting again.
+- **The `new-cpu` skill** writes a world part for every new CPU. STYLE.md says how many rules, tastes and lines, and
+  in what voice.
+
+The plan as it was:
+
+
+- A **World** tab for staff: settings, places, the schedule grid, gift items, and chatter (in the scene editor, in
+  compact mode).
+- **CPU export and import** (`import_cpu`, the files in `corpus/`): add schedule rules, gift likes and chatter. Update
+  the `new-cpu` skill to write them, so new CPUs arrive ready for the world.
+
+## Testing
+
+- **Unit tests:** schedule resolving (the same for a seed, once-per-day, no double placement, priority), time
+  and day rollover, payouts, stake fees on a win, a loss and an unfinished game, save slot limits, keeping world
+  decks out of other lists, gift caps and rank thresholds, and the compact mode refusing staging lines.
+- **In the browser:** every page at phone width, by keyboard, with zoomed text and reduced motion, and on a slow
+  network (scene and portrait images loading). Headless browsers run with `--mute-audio`.
+
+## Risks
+
+- **CPU art:** a place looks best when its CPUs have uploaded art; ones without fall back to card art or a silhouette.
+- **Writing:** dialogue is what makes CPUs feel alive, and it's the slowest part to make. Generic lines cover the gaps.
+- **Scope:** phases 1–3 make a complete game. Relationships and staff tooling can land after players are already
+  playing it.
