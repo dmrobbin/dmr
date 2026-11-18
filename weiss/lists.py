@@ -22,7 +22,7 @@ from django.views.decorators.http import require_POST
 
 from core.access import weiss_access_required
 
-from . import abilities
+from . import abilities, game
 from .models import Card, CardList, CardListEntry
 from .views import with_image_urls
 
@@ -156,7 +156,7 @@ def deck_stats(entries):
         if not is_climax(card):
             levels[min(card.level or 0, 3)] += n
             costs[min(card.cost or 0, 3)] += n
-        icons = (card.trigger or "").split()
+        icons = game.trigger_icons(card.trigger).split()
         for icon in set(icons):
             if icon in TRIGGER_NAMES:
                 triggers[icon] += n

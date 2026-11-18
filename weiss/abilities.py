@@ -3320,7 +3320,18 @@ def parse_effect(text, cost=None, masked=None):
                 steps.append(step_manual(sentence, quotes))
             continue
         steps += parse_clauses(clauses(plain), quotes, cost)
+    show_a_bare_look(steps)
     return steps
+
+
+def show_a_bare_look(steps):
+    """"You may look at the top card of your deck. (Return the card you saw to its original place)": with nothing
+    after the look to do with them (the reminder is gone), the looker must still get to see the cards."""
+    last = steps
+    while last and last[-1]["do"] == "may" and last[-1].get("then") and not last[-1].get("otherwise"):
+        last = last[-1]["then"]
+    if last and last[-1]["do"] == "look":
+        last.append({"do": "show_looked"})
 
 
 # --- When an AUTO ability triggers -----------------------------------------------------------------------

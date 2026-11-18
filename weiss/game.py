@@ -91,8 +91,15 @@ NOTHING_TO_CHOOSE = {  # the log's word for a trigger whose choice had nothing i
     "bounce": "no character of their opponent's to return",
     "treasure": "their deck is empty", "draw": "their deck is empty", "pool": "their deck is empty",
 }
-# Other names a trigger icon goes by (the card data names them after the site's images).
-TRIGGER_ALIASES = {"book": "draw", "bag": "pool", "stock": "pool", "wind": "bounce", "return": "bounce"}
+# Other names a trigger icon goes by (the card data names them after the site's images): newer sets' comeback
+# icon is salvage.gif, and one set's soul icon is a blue one.
+TRIGGER_ALIASES = {"book": "draw", "bag": "pool", "stock": "pool", "wind": "bounce", "return": "bounce",
+                   "salvage": "comeback", "blue": "soul"}
+
+
+def trigger_icons(trigger):
+    """A card's trigger icons ("soul salvage") by the names the game goes by ("soul comeback")."""
+    return " ".join(TRIGGER_ALIASES.get(icon, icon) for icon in (trigger or "").split())
 OPPOSITE = {"C1": "C3", "C2": "C2", "C3": "C1"}  # the opponent's slot facing each center slot
 # "Backup 2000, Level 1 [(1) ...]": power, level, stock. Card texts vary ("Backup 2000 Level 1", "Level: 1", "Lv 1",
 # "[ (1)"), and a level it can't read must not let the card be played at level 0 (counter_play falls back on its own).
@@ -689,7 +696,7 @@ def trigger_check(state, env):
             break
         checked = zones["deck"].pop()
         shown.append(checked["card"])
-        found = [TRIGGER_ALIASES.get(icon, icon) for icon in (env.trigger(checked["card"]) or "").split()]
+        found = trigger_icons(env.trigger(checked["card"])).split()
         icons += found
         kinds += [icon for icon in found if icon in TRIGGER_CHOICES][:1]
         put(side, checked, "hand" if "treasure" in found else "stock")

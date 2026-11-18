@@ -2028,6 +2028,22 @@ class OpponentsDeckAndClockTests(TestCase):
         self.assertFalse(t.state.get("resolving"))
         self.assertEqual([c["uid"] for c in t.them["zones"]["deck"]], before)
 
+    def test_looking_at_the_top_of_your_deck_shows_it(self):
+        # The only word that the card goes back is in the reminder, which isn't read: the looker still sees it.
+        t = Table()
+        [card] = t.hand(t.card(2000, text="【AUTO】 When this card is placed on the stage from your hand, you may look at the top card of "
+                                          "your deck. (Return the card you saw to its original place)"))
+        before = [c["uid"] for c in t.me["zones"]["deck"]]
+        t.apply(2, {"type": "move", "uid": card["uid"], "to": "C2"})
+        t.apply(2, {"type": "ability_trigger", "id": t.state["ability_queue"][0]["id"], "accept": True})
+        if t.state["resolving"]["prompt"]["kind"] == "choice":  # the "you may"
+            t.apply(2, {"type": "ability_answer", "value": "yes"})
+        prompt = t.state["resolving"]["prompt"]
+        self.assertEqual((prompt["for"], [c["uid"] for c in prompt["cards"]]), ("look", before[-1:]))
+        t.apply(2, {"type": "ability_answer", "uids": []})
+        self.assertFalse(t.state.get("resolving"))
+        self.assertEqual([c["uid"] for c in t.me["zones"]["deck"]], before)
+
     def swap(self, clock):
         t = Table()
         t.level(1)

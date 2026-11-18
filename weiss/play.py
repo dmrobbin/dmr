@@ -45,7 +45,7 @@ def card_info(pks):
         info[str(card.pk)] = {
             "name": card.name, "serial": card.serial_number, "image": reverse("weiss:card_image", args=[card.pk]),
             "type": card.card_type, "rarity": card.rarity, "grade": packs.grade_of(packs.rarity_of(card)), "color": card.color, "level": card.level,
-            "cost": card.cost, "power": card.power, "soul": card.soul, "trigger": card.trigger,
+            "cost": card.cost, "power": card.power, "soul": card.soul, "trigger": game.trigger_icons(card.trigger),
             "traits": card.traits, "text": card.description,
         }
     return info
@@ -914,6 +914,7 @@ def card_lookups(state):
         for row in Card.objects.filter(pk__in=pks).values(
                 "pk", "name", "card_type", "color", "trigger", "cost", "level", "power", "soul", "traits", "description"):
             row["text"] = row["description"] or ""
+            row["trigger"] = game.trigger_icons(row["trigger"])
             details[row["pk"]] = row
 
     def lookup(card_pk):

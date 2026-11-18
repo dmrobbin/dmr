@@ -819,6 +819,21 @@ class AttackStepTests(TestCase):
         self.assertEqual(zones(self.state, 1)["hand"][-1]["uid"], waiting_uid)
         self.assertEqual(len(zones(self.state, 2)["clock"]), 2)
 
+    def test_the_salvage_icon_is_a_comeback_trigger(self):
+        # Newer sets' card data names the comeback icon after its image, salvage.gif.
+        self.setup_battle(defender=False)
+        self.act(1, {"type": "move", "uid": next(c["uid"] for c in self.alice if c["card"] == 16), "to": "waiting"})
+        waiting_uid = zones(self.state, 1)["waiting"][-1]["uid"]
+        self.act(1, {"type": "attack", "uid": self.stage(1, "C2")["uid"], "kind": "direct"},
+                 trigger=lambda pk: "salvage" if pk == 14 else "")
+        self.assertEqual(game.view(self.state, 1)["attack"]["prompt"], {"kind": "comeback", "options": [waiting_uid]})
+        self.assertIn("[comeback]", next(e["text"] for e in self.state["log"] if e["text"].startswith("trigger check")))
+
+    def test_trigger_icons_go_by_the_games_names(self):
+        self.assertEqual(game.trigger_icons("soul salvage"), "soul comeback")
+        self.assertEqual(game.trigger_icons("blue gate"), "soul gate")
+        self.assertEqual(game.trigger_icons(None), "")
+
     def test_a_finished_attack_is_recorded_for_the_battle_view(self):
         from . import cpu
         self.setup_battle()
