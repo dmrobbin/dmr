@@ -123,7 +123,7 @@ def world_info():
             "temperaments": dict(CpuProfile._meta.get_field("temperament").choices), "max_per_place": world.MAX_PER_PLACE,
             "max_on_stage": world.MAX_ON_STAGE,
             "gifts": gifts, "tags": sorted(tags), "contexts": dict(Chatter.CONTEXTS), "ranks": world.rank_names(),
-            "cpu_moods": list(chatter.CPU_MOODS), "player_moods": list(chatter.PLAYER_MOODS),
+            "cpu_moods": list(chatter.CPU_MOODS),
             "quests": sorted(Quest.objects.values_list("key", flat=True)),
             "objectives": {do: {"fields": sorted(fields), "about": about} for do, (fields, about) in quests.OBJECTIVES.items()}}
 

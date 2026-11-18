@@ -7,10 +7,9 @@
   <h1>Town test</h1>
   <p class="muted">A try-out of world mode: visit places, find who's there, and talk, give gifts or duel. The duel is a real
     game; everything else here (the time, coins, friendship, who's where) is made up for the test and kept only in this tab.
-    {% if not world.portrait %}<a href="{% url 'weiss:profile_portrait' %}">Make your portrait</a> to appear in conversations too.{% endif %}
     {% if count < 3 %}Only {{ count }} CPU{{ count|pluralize }} can appear here: finalized ones, and any with a picture uploaded.{% endif %}</p>
 
-  <div class="town" data-town data-portraits="{% static 'weiss/portraits/parts.json' %}">
+  <div class="town" data-town>
     <div class="town-bar">
       <p class="town-where"><strong data-place-name>…</strong> <span class="muted" data-when></span></p>
       <p class="town-coins" data-coins></p>
@@ -24,7 +23,6 @@
       <div class="vn-bg" data-backdrop></div>
       <div class="town-light" data-light></div>
       <div class="town-people" data-people role="group" aria-label="Who's here"></div>
-      <div class="town-me" data-me hidden><div class="town-me-figure" data-me-figure role="img" aria-label="You"></div></div>
       <div class="town-empty" data-empty hidden>
         <p>Nobody's here right now.</p>
         <p class="small">Try the map, or wait a while.</p>
@@ -59,6 +57,5 @@
   </form>
   {{ world|json_script:"town-data" }}
   <script src="{% static 'weiss/backdrops.js' %}" defer></script>
-  <script src="{% static 'weiss/portrait.js' %}" defer></script>
   <script src="{% static 'weiss/world_test.js' %}" defer></script>
 {% endblock %}

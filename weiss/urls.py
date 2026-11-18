@@ -16,7 +16,6 @@ urlpatterns = [
     path("cards/<int:pk>/image/",views.card_image, name="card_image"),
     path("profile/", profiles.profile, name="profile"),
     path("profile/picture/", profiles.profile_picture, name="profile_picture"),
-    path("profile/portrait/", profiles.profile_portrait, name="profile_portrait"),
     path("world/test/", world_views.world_test, name="world_test"),
     path("world/", world_views.world_home, name="world_home"),
     path("world/settings/", world_views.world_settings, name="world_settings"),

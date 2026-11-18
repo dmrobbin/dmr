@@ -227,7 +227,6 @@ class PlayerProfile(Avatar):
     music_volume = models.PositiveSmallIntegerField(default=60, help_text="The battle music under the game's moments, 0 to 100")
     sleeve = models.ForeignKey(Sleeve, null=True, blank=True, on_delete=models.SET_NULL, related_name="+", help_text="Their face-down cards' look; none for the default")
     progress = models.JSONField(default=dict, blank=True, help_text="What they've done towards card sleeves since those came in: {key: number} (see weiss.sleeves)")
-    portrait = models.JSONField(default=dict, blank=True, help_text="Their anime paper-doll portrait, as a recipe of parts (see weiss.portraits); empty for none yet")
 
     def __str__(self):
         return str(self.user)

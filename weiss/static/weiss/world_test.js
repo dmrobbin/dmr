@@ -282,44 +282,11 @@
     menu.querySelector("button:not(:disabled)")?.focus({ preventScroll: true });
   }
 
-  // ---- You, in a conversation: your portrait comes in on the left, and the one you're talking to moves right ----
-
-  const me = $("[data-me]");
-  const meFigure = $("[data-me-figure]");
-  let myKit = null;
-  if (world.portrait && window.Portrait) {
-    Portrait.load(root.dataset.portraits).then((kit) => { myKit = kit; }).catch(() => { myKit = null; });
-  }
-  // How you look: your saved expression, or one for a feeling (Portrait.MOODS) where your portrait has one.
-  function myMood(mood) {
-    if (myKit) myKit.draw(meFigure, world.portrait, mood ? { mood } : {});
-  }
-
-  function stageFor(cpu) {
-    const chosen = people.querySelector(`[data-cpu="${cpu.id}"]`);
-    if (!myKit || !chosen) return;
-    chosen.dataset.home = chosen.style.left;
-    chosen.style.left = "70%";
-    myMood("smile");
-    stage.classList.add("town-staged");
-    me.hidden = false;
-    requestAnimationFrame(() => me.classList.add("town-me-in"));
-  }
-
-  function unstage(cpu) {
-    me.classList.remove("town-me-in");
-    me.hidden = true;
-    stage.classList.remove("town-staged");
-    const chosen = cpu && people.querySelector(`[data-cpu="${cpu.id}"]`);
-    if (chosen && chosen.dataset.home) chosen.style.left = chosen.dataset.home;
-  }
-
   function meet(cpu) {
     if (talking) return;
     talking = cpu;
     for (const el of people.children) el.classList.toggle("town-away", Number(el.dataset.cpu) !== cpu.id);
     people.querySelector(`[data-cpu="${cpu.id}"]`)?.classList.add("town-chosen");
-    stageFor(cpu);
     box.hidden = false;
     nameEl.textContent = cpu.name;
     bondEl.innerHTML = bondText(cpu);
@@ -329,7 +296,6 @@
   function mainMenu() {
     const cpu = talking;
     setMood(cpu, "main");
-    myMood("smile");
     textEl.textContent = fill(`What would you like to do?`);
     options([
       ["Talk", talk],
@@ -378,7 +344,6 @@
     const [kind, points, mood] = gift.key === loved ? ["loved", 8, "pleased"] : gift.key === liked ? ["liked", 4, "pleased"]
       : gift.key === disliked ? ["disliked", -3, "dismayed"] : ["meh", 1, "main"];
     setMood(cpu, mood);
-    myMood({ loved: "happy", liked: "smile", disliked: "sad", meh: "neutral" }[kind]);
     lines([pick(LINES[kind], "gift")], () => {
       gain(cpu, points);
       mainMenu();
@@ -396,7 +361,6 @@
       return;
     }
     setMood(cpu, "pleased");
-    myMood("smug");
     lines([cpu.intro || "A duel? Sure. Show me what you've got."], () => {
       textEl.textContent = "Which deck? The duel uses up this part of the day.";
       const select = document.createElement("select");
@@ -432,7 +396,6 @@
     talking = null;
     advance = null;
     box.hidden = true;
-    unstage(cpu);
     for (const el of people.children) el.classList.remove("town-away", "town-chosen");
     if (cpu) {
       setMood(cpu, "main");

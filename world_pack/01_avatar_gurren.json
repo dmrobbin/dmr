@@ -151,7 +151,7 @@
       "min_rank": 1,
       "script": [
        "them (pleased): You know, you remind me of my friends back at the Southern Air Temple.",
-       "player (smile): Is that good?",
+       "player: Is that good?",
        "them (pleased): The best!"
       ]
      },

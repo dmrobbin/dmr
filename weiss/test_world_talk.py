@@ -56,7 +56,7 @@ class CompileChatterTests(TestCase):
         script = """# a note
 them: Hi, {player}.
 them (pleased): Good to see you.
-player (smile): You too.
+player: You too.
 narrator: A breeze.
 if rank >= 2 goto close
 choice Duel?
@@ -77,6 +77,12 @@ fight stake 500"""
                          ["say", "say", "say", "say", "if_rank", "choice", "end", "points", "money", "gift", "set", "if", "fight"])
         self.assertEqual(compiled["steps"][-1]["stake"], 500)
 
+    def test_a_mood_on_the_players_line_is_let_through_and_dropped(self):
+        # Scripts from when the player had a portrait still compile; with no face to show, the mood goes.
+        compiled, errors = chatter.compile_chatter("player (smile): Hi.\nplayer (whatever): Bye.")
+        self.assertEqual(errors, [])
+        self.assertEqual([step.get("mood") for step in compiled["steps"]], [None, None])
+
     def test_staging_and_the_wrong_speakers_are_refused_clearly(self):
         cases = {
             "cast rapi as Rapi\nthem: hi": "no stage",
@@ -85,7 +91,6 @@ fight stake 500"""
             "wait 2": "no stage",
             "rapi: hello": "the speakers are them",
             "them (win): hi": "moods are main, pleased, dismayed",
-            "player (pleased): hi": "moods are happy",
             "narrator (pleased): hi": "no face",
             "give lucky_pack": "buffs are for challenge scenes",
             "give gift caviar": "no gift called",

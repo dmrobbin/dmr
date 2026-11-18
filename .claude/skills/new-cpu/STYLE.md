@@ -120,8 +120,8 @@ What a CPU does in world mode's town, in its file's `world` part.
     profile's intro and win/lose texts are for games; these are the town's, shorter.
   - `rank_up`: one for rank 2 and one for rank 4, warmer each time. Give `points` only in a choice's branch, sparingly
     (+2 to +5); `give money` and `give gift` rarely, as thanks. `fight stake …` only for a character who'd bet.
-- **Moods**: `them (pleased)` for happy, `them (dismayed)` for put out; `player (smile)` and the like for the player's
-  replies, which are rare: chatter is mostly the CPU talking.
+- **Moods**: `them (pleased)` for happy, `them (dismayed)` for put out; the player's replies (`player:`,
+  with no mood: they have no face in the box) are rare: chatter is mostly the CPU talking.
 - **Quests** (`quests`, optional for now; reference.md has the format): when asked for them, two gate quests, one with
   `"gates": 2` (Friend) and one with `"gates": 5` (Best friend), since those rank-ups play scenes and should be
   earned. Each: an `about` in one or two sentences, an `offer` of 2–4 chatter lines in the character's voice, 1–3

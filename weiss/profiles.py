@@ -3,7 +3,6 @@
 A picture is a card and a circle on its image, kept as numbers and cropped by the browser. The same
 picker sets a CPU's picture, from the CPU creation tab.
 """
-import json
 import math
 from collections import Counter
 
@@ -17,7 +16,7 @@ from django.views.decorators.http import require_POST
 
 from core.access import weiss_access_required
 
-from . import portraits, sleeves
+from . import sleeves
 from .card_images import series_title
 from .models import ArcadeRun, Card, CardList, CpuProfile, GameRecord, PlayerProfile, SleeveUnlock
 from .views import summarize_sets
@@ -72,38 +71,6 @@ def avatar_picker(request, owner, name, back):
 
 
 @weiss_access_required
-def profile_portrait(request):
-    """The page for making the player's portrait (see weiss.portraits), and what it posts: a recipe, or none."""
-    owner, _ = PlayerProfile.objects.get_or_create(user=request.user)
-    back = reverse("weiss:profile")
-    if not portraits.is_ready():
-        messages.error(request, "Portraits aren't set up yet.")
-        return redirect(back)
-    if request.method == "POST":
-        if "remove" in request.POST:
-            owner.portrait = {}
-        else:
-            try:
-                recipe = json.loads(request.POST.get("recipe", ""))
-            except ValueError:
-                recipe = None
-            recipe, problem = portraits.clean(recipe)
-            if problem:
-                messages.error(request, problem)
-                return redirect(request.path)
-            owner.portrait = recipe
-        owner.save(update_fields=["portrait"])
-        messages.success(request, "Portrait removed." if "remove" in request.POST else "Portrait saved.")
-        return redirect(back)
-    return render(request, "weiss/portrait_editor.html", {
-        "back": back, "saved": bool(owner.portrait), "recipe": owner.portrait or portraits.default_recipe(),
-        "editor": portraits.editor_data(), "credits": portraits.credits(),
-        "scenes": (("classroom", "Classroom"), ("cafe", "Café"), ("sakura", "Outdoors"), ("city", "Night")),
-        "moods": (("", "As saved"), ("happy", "Happy"), ("sad", "Sad"), ("surprised", "Surprised"), ("angry", "Angry"), ("smug", "Smug")),
-    })
-
-
-@weiss_access_required
 def avatar_search(request):
     """Cards to choose a picture from. With a series chosen, no words are needed: its cards come up."""
     query = request.GET.get("q", "").strip()
@@ -151,8 +118,6 @@ def profile(request):
     shelf = sleeves.shelf(user, owner)
     return render(request, "weiss/profile.html", {
         "avatar": owner.avatar if owner else None, "shelf": shelf, "new_sleeves": new,
-        "portrait": owner.portrait if owner else None, "portrait_json": json.dumps(owner.portrait) if owner and owner.portrait else "",
-        "portraits_ready": portraits.is_ready(),
         "trophies": trophies(user, tally["played"], tally["won"], shelf),
         "lists": CardList.objects.players(user).annotate(total=Sum("entries__quantity")).order_by("-updated", "-pk").prefetch_related("arcade_clears"),
         "runs": ArcadeRun.objects.filter(user=user)[:RECORDS_PER_PAGE],

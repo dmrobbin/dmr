@@ -23,10 +23,10 @@ from django.utils import timezone
 from django.utils.timesince import timesince
 from django.views.decorators.http import require_POST
 
-from . import buffs, challenge, packs, portraits, quests, scenes, world
+from . import buffs, challenge, packs, quests, scenes, world
 from .cpu_views import MAX_LOADOUT, MAX_START_PACKS, back_to, staff_required
 from .lists import CLIMAX_COUNT, COPY_LIMIT, DECK_GROUPS, DECK_SIZE, unlimited
-from .models import CardList, CpuProfile, CpuSchedule, PlayerProfile, Scene, WorldPlace, WorldSave, WorldSettings
+from .models import CardList, CpuProfile, CpuSchedule, Scene, WorldPlace, WorldSave, WorldSettings
 from .views import attach_covers, card_types, summarize_sets
 
 MAX_COINS = 1_000_000
@@ -86,8 +86,6 @@ def world_test(request):
             } for cpu in cpus],
             "decks": [{"id": d.pk, "name": d.name} for d in decks],
             "player": request.user.username,
-            "portrait": (PlayerProfile.objects.filter(user=request.user).values_list("portrait", flat=True).first() or None)
-            if portraits.is_ready() else None,
         },
     })
 
@@ -347,8 +345,7 @@ def world_town(request, slot):
     save, away = save_or_home(request, slot)
     if away:
         return away
-    return render(request, "weiss/world_town.html", {"save": save, "town": world.town(save), "result": world.duel_result(save),
-                                                     "portrait": PlayerProfile.objects.filter(user=request.user).values_list("portrait", flat=True).first() or None})
+    return render(request, "weiss/world_town.html", {"save": save, "town": world.town(save), "result": world.duel_result(save)})
 
 
 @staff_required

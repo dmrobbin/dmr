@@ -11,8 +11,8 @@ week, and each CPU has places it can be found at certain times.
 |---|---|
 | Time | 4 slots a day: morning, noon, evening, night. 7 days, Monday to Sunday, then the week repeats. |
 | Moving around | Places are scenes: an illustrated backdrop (one per time of day where it matters), with the CPUs who are there standing in it. The player travels by a map of places, not by walking. (A walking avatar was tried first; see "What's built".) |
-| How people look | CPUs appear as their own uploaded art (their card-art pictures where they have none). The player is an anime paper-doll portrait they make themselves. |
-| Talking | In a box over the scene, not a full visual novel scene: the player's portrait comes in on the left, the CPU moves right, and both react with expressions. Full scenes are kept for big moments. |
+| How people look | CPUs appear as their own uploaded art (their card-art pictures where they have none). The player has no figure in the scene: they rarely speak, so they're just their name in the box. (A paper-doll portrait was tried; see "What's built".) |
+| Talking | In a box over the scene, not a full visual novel scene: the others clear and the CPU reacts with its pictures. Full scenes are kept for big moments. |
 | New game | The player picks a set; only sets with 100+ cards are offered. They get a number of packs from it plus specialty packs, both set by staff in the admin. Staff make sure that's always enough for a legal deck. |
 | Cards and decks | World mode has its own collection and decks, kept apart from the site's free deck building and from challenges. |
 | Saves | 3 save slots per player. |
@@ -25,8 +25,6 @@ These are noted here so they can be changed.
 
 - **What moves time on:** a duel (win or lose), and "pass time". Looking around (travelling, the map) and shopping
   are free. Since "Spending the time" (below), talking and gifts commit the player to the place until time passes.
-- **The portrait belongs to the account, not to a save.** Every save shows the same player. Change to per-save if each
-  save should be a different character.
 - **The set must have 100+ cards that can come from packs.** Promos and trial deck cards (`packs.NOT_IN_PACKS`)
   don't count, so the set can really fill packs.
 - **Several decks per save, one equipped.** Duels use the equipped deck. A duel can't start unless it's legal.
@@ -50,45 +48,24 @@ A try-out of how meeting CPUs should feel, with everything but the duel made up 
 - **Talking:** click someone and the others clear; a box over the scene offers Talk, Give a gift, Duel and Leave, with
   a friendship badge (hearts, rank, points to the next). Talk once a day for points; gifts are loved, liked or
   disliked, with the CPU's pleased or dismayed picture and a floating "+8 ♥". **Duel** starts a real game against
-  that CPU with the player's deck. The player's portrait stands in the conversation and reacts.
+  that CPU with the player's deck.
 - **Map and time:** the map shows every place and who's there; "wait" moves time on and says who left and arrived.
 - **Fallbacks:** a CPU with no picture (or one that won't load) stands as a tinted silhouette with its initial.
 
-### Portraits (`profile/portrait/`)
+### The paper-doll portrait (removed)
 
-- **Art:** two artists' kits, each its own art style with a feminine and a masculine body:
-  - Sutemo's visual novel sprites: commercial use allowed, not to be resold on their own.
-  - Tainara-P's character sprite creators: CC0.
-  Parts can't cross styles (each is drawn to its own proportions); the editor credits both.
-- **Import:** `scripts/import_portraits.py` (needs psd-tools and numpy, which only it uses) cuts the kits into
-  cropped WebPs and a manifest, `static/weiss/portraits/parts.json`: about 470 parts, 8,000 images and 60 MB. Each
-  base is imported on its own and kept, so one artist's kit can be re-imported without the other.
-- **Skin tones:** 11, shared by every style: Tainara-P's five human and four fantasy tones, and two deeper ones made by
-  recolouring. Sutemo's skin is recoloured to all 11 by placing each skin pixel on its own light-to-shadow scale and
-  moving it to the same place on the target tone's.
-- **A portrait is a recipe:** `{base, choices, parts: {slot: {id, color}}}`, kept as `portrait` on `PlayerProfile`.
-  Choices are the base's own (skin, hair colour, and for Tainara-P eye colour, eye whites and the eye, brow and mouth
-  expressions); a part may also come in colours of its own. Each layer of a part picks its image by those choices,
-  and can show only in some states (an eyelid with closed eyes). `weiss.portraits.clean` checks a recipe before it's
-  saved; portraits saved in the first, Sutemo-only format are upgraded when they're drawn.
-- **Moods:** each base maps feelings (happy, sad, surprised, angry, smug...) to its own expressions, so a scene can ask
-  for "happy" without knowing the art. The editor previews them; the town test uses them.
-- **Drawing:** `static/weiss/portrait.js` stacks the images in a box the canvas's shape, so a portrait scales to any
-  size. A style drawn smaller in its canvas is zoomed to match, and a portrait can be cropped to its face (the profile does).
-- **The editor:** art style and body, then the choices and parts under Body, Hair, Face and expression, and Outfit and
-  accessories; previous/next buttons for browsing; undo/redo; randomise; a backdrop and mood preview. On a phone the
-  preview stays at the top.
+The player's own anime portrait, layered from two artists' sprite kits (Sutemo's and Tainara-P's, about 60 MB of
+images), made in an editor on the profile and shown in town conversations, reacting with moods. Removed after
+testing: the player rarely speaks, so it added little. Its `portrait` field came and went in migrations 0043 and
+0059. Chatter still accepts a mood on a `player` line (`player (smile): …`) and drops it, so older scripts compile.
 
 ### The pixel-art character creator (removed)
 
-Built first, for the walking map, with LPC pixel art; removed once the world became scenes and portraits. Its
+Built first, for the walking map, with LPC pixel art; removed once the world became scenes. Its
 `character` fields came and went in migrations 0042 and 0045.
 
 ## Open decisions
 
-- **Portrait art size:** 60 MB of images is fine for deploying but a big addition to git. Options: smaller Tainara-P
-  images or lower quality (about half the size), or serving them from S3.
-- **Tainara-P's female kit licence:** the male kit's page says CC0; check the female kit's page says the same before release.
 - **An intermittent test:** `test_buffs.SceneBuffFlowTests.test_no_scene_and_so_no_buffs_outside_a_narrative_challenge`
   failed once in a parallel run and passed on every rerun.
 
@@ -181,7 +158,7 @@ puts the player back where they were.
 - **People in the town:** whoever's at the place stands in the scene; waiting says who left and who arrived. The map
   shows who's at every place right now (their circle pictures and names, four at most and how many more), so the
   player can go and find someone. Talking to
-  someone (the player's portrait comes in) offers **Duel**, a **high-stakes duel** where their rule has a fee, and
+  someone offers **Duel**, a **high-stakes duel** where their rule has a fee, and
   Leave. Talk and gifts come with phase 4.
 - **Duels:** a real game against the CPU with the equipped deck, linked to the save (`GameRoom.world_save`, and
   `world_stake` for the fee, taken when it starts). When the game ends, `play.game_ended` hands it to
@@ -236,10 +213,9 @@ build, duel again.
 ## Phase 4: dialogue, relationships and gifts — built
 
 - **Talking:** clicking someone offers Talk, Give a gift, Duel (and a high-stakes duel where they play for stakes) and
-  Leave. Their lines play in the box, with the CPU's mood (its pleased and dismayed pictures) and the player's portrait
-  reacting. Friendship shows at the box's top right: hearts, the rank's name and points to the next.
+  Leave. Their lines play in the box, with the CPU's mood (its pleased and dismayed pictures). Friendship shows at the box's top right: hearts, the rank's name and points to the next.
 - **Chatter** (`weiss.chatter`, the `Chatter` model): a compact form of the scene language. `them`, `player` and
-  `narrator` speak (with moods), and there are choices, labels, flags, `if rank >= N goto`, `points ±N`,
+  `narrator` speak (the CPU with moods), and there are choices, labels, flags, `if rank >= N goto`, `points ±N`,
   `give money N`, `give gift <key>`, `fight` and `fight stake N`. Staging lines (cast, entrances, backgrounds and the
   like) are refused, each with a message saying why.
   - **The server runs the script** and the page only plays what it says happened, so points, coins and stakes can't be
@@ -280,8 +256,7 @@ The plan as it was:
 
 - **Dialogue in the box:** the town test's box, driven by the scene script language (`compile_scene`) in a "compact"
   mode that allows speech, choices, `set`/`if`/`goto` and `fight`, and refuses staging lines (enters, moves,
-  background, screen) with a clear error. Staff keep one language. Lines can ask for a mood, for the CPU's picture and
-  the player's portrait.
+  background, screen) with a clear error. Staff keep one language. Lines can ask for a mood, for the CPU's picture.
 - **New script verbs:** `if rank >= 3 goto …`, `points +5`, `fight stake 500`, `give money 100`.
 - **`Chatter`** rows: `cpu`, `context`, `min_rank`, `weight`, `script`. Contexts: greet, already talked today, gift
   (loved / liked / disliked), before a duel, after a win, after a loss, stake offer. One is picked at random from
@@ -503,7 +478,7 @@ Checking a quest or a rank-up scene used to mean playing for days. Two quick rou
   and day rollover, payouts, stake fees on a win, a loss and an unfinished game, save slot limits, keeping world
   decks out of other lists, gift caps and rank thresholds, and the compact mode refusing staging lines.
 - **In the browser:** every page at phone width, by keyboard, with zoomed text and reduced motion, and on a slow
-  network (scene and portrait images loading). Headless browsers run with `--mute-audio`.
+  network (scene and CPU images loading). Headless browsers run with `--mute-audio`.
 
 ## Risks
 

@@ -1,19 +1,15 @@
 {% extends "weiss/base.html" %}
-{% load static %}
 
 {% block title %}Profile{% endblock %}
 
 {% block weiss_content %}
   <div class="profile-head">
     {% include "weiss/avatar.html" with avatar=avatar name=user.username size="avatar-large" %}
-    {% if portrait %}<span class="profile-portrait"><span role="img" aria-label="Your portrait" data-crop="face" data-portrait="{{ portrait_json }}" data-manifest="{% static 'weiss/portraits/parts.json' %}"></span></span>{% endif %}
     <div>
       <h1>{{ user.username }}</h1>
       <a class="button-small secondary" href="{% url 'weiss:profile_picture' %}">{% if avatar %}Change picture{% else %}Choose a picture{% endif %}</a>
-      {% if portraits_ready %}<a class="button-small secondary" href="{% url 'weiss:profile_portrait' %}">{% if portrait %}Change portrait{% else %}Make your portrait{% endif %}</a>{% endif %}
     </div>
   </div>
-  {% if portrait %}<script src="{% static 'weiss/portrait.js' %}" defer></script>{% endif %}
 
   {# What they've achieved, before the details below: profiles.trophies. #}
   <section class="trophy-room" aria-labelledby="trophy-title">

@@ -21,8 +21,6 @@
   const shopButton = $("[data-open-shop]");
   const waitButton = $("[data-wait]");
   const toast = $("[data-toast]");
-  const me = $("[data-me]");
-  const meFigure = $("[data-me-figure]");
   const csrf = root.querySelector("[name=csrfmiddlewaretoken]").value;
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const LIGHTS = ["town-morning", "town-noon", "town-evening", "town-night"];
@@ -31,7 +29,6 @@
 
   let town = JSON.parse(document.getElementById("town-state").textContent);
   const result = JSON.parse(document.getElementById("town-result").textContent);
-  const portrait = JSON.parse(document.getElementById("town-portrait").textContent);
   let busy = false;
   let talking = null; // the person being talked to
   let advance = null; // what a click or key does while a line is showing
@@ -339,9 +336,6 @@
   // Talk and gifts are played from what the server says happened (weiss.world.talk / give / answer): lines, points,
   // coins and gifts, then what it's waiting for (a choice, a duel on offer) or nothing (back to the menu).
 
-  let myKit = null;
-  if (portrait && window.Portrait) Portrait.load(root.dataset.portraits).then((kit) => { myKit = kit; }).catch(() => {});
-  const myMood = (mood) => myKit && myKit.draw(meFigure, portrait, mood ? { mood } : {});
   const nameEl = $("[data-name]");
   const relationEl = $("[data-relation]");
   let goScene = null; // a rank-up's full scene, gone to once the talk's done
@@ -471,16 +465,7 @@
     if (talking) return;
     talking = person;
     for (const el of people.children) el.classList.toggle("town-away", Number(el.dataset.cpu) !== person.id);
-    const chosen = people.querySelector(`[data-cpu="${person.id}"]`);
-    chosen?.classList.add("town-chosen");
-    if (myKit && chosen) {
-      chosen.dataset.home = chosen.style.left;
-      chosen.style.left = "70%";
-      myMood("smile");
-      stage.classList.add("town-staged");
-      me.hidden = false;
-      requestAnimationFrame(() => me.classList.add("town-me-in"));
-    }
+    people.querySelector(`[data-cpu="${person.id}"]`)?.classList.add("town-chosen");
     box.hidden = false;
     speaker("them");
     showRelation(person.relation);
@@ -500,7 +485,6 @@
     const person = talking;
     speaker("them");
     theirMood("main");
-    myMood("smile");
     const stake = person.offer || person.stake;
     textEl.textContent = stake
       ? `${person.name} plays for stakes: ${stake} coins to enter, ${stake * 2} back if you win.`
@@ -675,7 +659,6 @@
 
   function giftMenu() {
     speaker("player");
-    myMood("smile");
     textEl.textContent = "What will you give them?";
     const held = (town.gifts || []).filter((item) => item.have > 0);
     options([
@@ -717,12 +700,10 @@
       if (event.say !== undefined) {
         speaker(event.who);
         if (event.who === "them") theirMood(event.mood || "main");
-        if (event.who === "player") myMood(event.mood || "smile");
         return lines([event.say], next);
       }
       if (event.gave) {
         theirMood({ loved: "pleased", liked: "pleased", disliked: "dismayed" }[event.reaction] || "main");
-        myMood(event.reaction === "disliked" ? "surprised" : "happy");
         speaker("player");
         return lines([`You give ${talking.name} the ${event.icon} ${event.gave}.`], next);
       }
@@ -731,7 +712,6 @@
         showRelation(event.relation);
         if (event.rank_up) {
           speaker("");
-          myMood("happy");
           return lines([`♥ You and ${talking.name} are now: ${event.rank_up}.`], next);
         }
         return next();
@@ -747,13 +727,11 @@
       }
       if (event.quest) {
         speaker("");
-        if (event.done) myMood("happy");
         paintQuests();
         return lines([`★ ${event.quest}`], next);
       }
       if (event.rank_reached) {
         speaker("");
-        myMood("happy");
         if (event.relation && event.who === talking.name) showRelation(event.relation);
         return lines([`♥ You and ${event.who} are now: ${event.rank_reached}.`], next);
       }
@@ -799,7 +777,6 @@
     const person = talking;
     speaker("them");
     theirMood("main");
-    myMood("smug");
     const intro = person.intro || "Let's see what you've got.";
     lines([intro], async () => {
       const data = await post(root.dataset.duelUrl, { cpu: person.id, stakes: stakes ? "1" : "0" });
@@ -823,13 +800,7 @@
     clearPanel();
     box.hidden = true;
     relationEl.hidden = true;
-    me.classList.remove("town-me-in");
-    me.hidden = true;
-    stage.classList.remove("town-staged");
-    for (const el of people.children) {
-      el.classList.remove("town-away", "town-chosen");
-      if (el.dataset.home) el.style.left = el.dataset.home;
-    }
+    for (const el of people.children) el.classList.remove("town-away", "town-chosen");
     if (person && refocus) people.querySelector(`[data-cpu="${person.id}"]`)?.focus({ preventScroll: true });
   }
 

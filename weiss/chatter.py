@@ -3,7 +3,7 @@ scene language (weiss.scenes). The box has no stage, so there's no cast and no s
 `them`, with `player` and `narrator` as in a scene. What a script can do:
 
     them: Hello, {player}!         them (pleased): …   them (dismayed): …   (moods: CPU_MOODS)
-    player (smile): Hi!            narrator: …         (the player's moods: PLAYER_MOODS)
+    player: Hi!                    narrator: …
     choice What now?  /  - Option -> label (set flag)
     label x / goto x / end / set flag / unset flag / if flag goto x / if not flag goto x
     if rank >= 2 goto x            points +5           give money 100     give gift coffee
@@ -20,7 +20,6 @@ from .models import Chatter, GiftItem
 
 THEM = "them"
 CPU_MOODS = ("main", "pleased", "dismayed")
-PLAYER_MOODS = ("happy", "smile", "sad", "surprised", "angry", "smug", "neutral")
 CONTEXTS = dict(Chatter.CONTEXTS)
 FIRST_LINE_ONLY = {"before_duel", "after_win", "after_loss", "hello", "goodbye"}  # shown as one line, outside a conversation
 MAX_POINTS = 50  # one `points` line's most, either way
@@ -42,7 +41,7 @@ REFERENCE = [  # for staff, as scenes.REFERENCE: (what to write, what it does, w
     ("them: Hello, {player}!", "The CPU being talked to speaks. {player} is the player's name, {name} the CPU's, {rank} the "
      "player's rank with them. A click goes on to the next line.", "them: "),
     ("them (pleased): Really?", f"With a mood: {', '.join(CPU_MOODS)} (their pictures for when the player loses and wins).", "them (pleased): "),
-    ("player (smile): Hi!", f"The player speaks, and their portrait shows a mood: {', '.join(PLAYER_MOODS)}.", "player: "),
+    ("player: Hi!", "The player speaks.", "player: "),
     ("narrator: They wave.", "Words from nobody in particular.", "narrator: "),
     ("choice What do you say?", "Asks the player. The options follow, one a line.", "choice "),
     ("- Sure -> yes (set keen)", "An option, under a choice: “-> label” is optional, and so is “(set flag)” or “(unset flag)”.", "- "),
@@ -148,15 +147,16 @@ def compile_chatter(script, gifts=None):
             choice = step
         elif match := scenes.SAY.fullmatch(line):
             who, mood = match["who"].lower(), (match["expression"] or "").lower()
-            moods = PLAYER_MOODS if who == scenes.PLAYER else CPU_MOODS
             if who not in (THEM, scenes.PLAYER, scenes.NARRATOR):
                 problem = f"In chatter, the speakers are {THEM} (the CPU you're talking to), player and narrator."
             elif mood and who == scenes.NARRATOR:
                 problem = "The narrator has no face to show a mood with."
-            elif mood and mood not in moods:
-                problem = f"{'The player' if who == scenes.PLAYER else 'Their'} moods are {', '.join(moods)}."
+            elif mood and who == THEM and mood not in CPU_MOODS:
+                problem = f"Their moods are {', '.join(CPU_MOODS)}."
             step.update({"do": "say", "who": who, "text": match["text"]})
-            if mood:
+            # The player has no face here, so a mood on their line is let through and dropped: scripts written while
+            # they had a portrait still compile.
+            if mood and who == THEM:
                 step["mood"] = mood
         elif STAGED.match(line) or ((found := scenes.DIRECTION.fullmatch(line))
                                     and scenes.verb_of(found["verb"], scenes.DIRECTION_VERBS)):
@@ -180,7 +180,7 @@ def compile_chatter(script, gifts=None):
 # ---------------------------------------------------------------- Built-in lines: no CPU is ever silent
 
 DEFAULTS = [  # (context, min rank, script)
-    ("greet", 0, "them: Oh, hi. {player}, right?\nplayer (smile): That's me.\nthem: You play Weiss? We should duel sometime."),
+    ("greet", 0, "them: Oh, hi. {player}, right?\nplayer: That's me.\nthem: You play Weiss? We should duel sometime."),
     ("greet", 0, "them: Hey. Here for a game, or just looking around?"),
     ("greet", 0, "them: Hm? Oh. Hello."),
     ("greet", 2, "them (pleased): {player}! Good timing, I was getting bored."),

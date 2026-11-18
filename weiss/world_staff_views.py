@@ -194,7 +194,7 @@ def change_gifts(data):
 # ---------------------------------------------------------------- Chatter
 
 STARTERS = {  # a new line's script, by context
-    "greet": "them: Oh, hi, {player}.\nplayer (smile): Hey.",
+    "greet": "them: Oh, hi, {player}.\nplayer: Hey.",
     "again": "them: Back again?",
     "gift_loved": "them (pleased): For me? I love it!",
     "gift_liked": "them (pleased): Oh, thanks.",
@@ -282,7 +282,7 @@ def world_chatter_edit(request, pk):
         "line": line, "errors": errors, "labels": sorted(compiled["labels"]), "reference": chatter.REFERENCE,
         "max_script": scenes.MAX_SCRIPT, "cpus": CpuProfile.objects.order_by("name"), "contexts": Chatter.CONTEXTS,
         "ranks": list(enumerate(names)), "scenes": Scene.objects.order_by("name"), "gifts": GiftItem.objects.all(),
-        "cpu_moods": chatter.CPU_MOODS, "player_moods": chatter.PLAYER_MOODS,
+        "cpu_moods": chatter.CPU_MOODS,
     })
 
 

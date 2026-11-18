@@ -80,7 +80,7 @@ CAST = [
             "before": "them: Okay! Let's keep it light and fun. No hard feelings, whoever wins!",
             "won": "them (pleased): Ha! You got me! That was a really good move.",
             "lost": "them (pleased): Good game! Want me to show you where you went wrong? Airbender's honour.",
-            "r1": "them (pleased): You know, you remind me of my friends back at the Southern Air Temple.\nplayer (smile): Is that good?\nthem (pleased): The best!",
+            "r1": "them (pleased): You know, you remind me of my friends back at the Southern Air Temple.\nplayer: Is that good?\nthem (pleased): The best!",
             "r3": "them: Being the Avatar can feel lonely sometimes. It's nice having someone who just likes me for me.",
             "r4": "them (pleased): I'm going to tell everyone about you. Katara, Sokka, Toph... you're practically Team Avatar now!",
         },

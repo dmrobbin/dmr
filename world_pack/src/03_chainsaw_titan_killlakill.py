@@ -10,7 +10,7 @@ DENJI_QUESTS = [
      "stages": [
          {"text": "Bring Denji a snack for courage", "objectives": [{"do": "give_gift", "gift": "melon-bread", "to": "Denji"}]},
          {"text": "Win a duel with Devil Hunter, Denji in your deck, against Power", "objectives": [{"do": "win_with", "card": "CSM/S96-TE13", "against": ["Power"]}]},
-         {"text": "Tell Denji how it went", "objectives": [{"do": "talk", "to": "Denji", "script": ["them (pleased): Okay, I'm ready! You're coming with me, right?", "player (smile): I'll be there."]}]},
+         {"text": "Tell Denji how it went", "objectives": [{"do": "talk", "to": "Denji", "script": ["them (pleased): Okay, I'm ready! You're coming with me, right?", "player: I'll be there."]}]},
      ],
      "endings": [{"key": "date", "title": "Help him get ready", "about": "Denji heads off on his date, grinning. He has no idea what he's doing.",
                   "rewards": [{"coins": 300}, {"gift": "bouquet"}]}]},

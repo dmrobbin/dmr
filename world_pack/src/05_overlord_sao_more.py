@@ -9,7 +9,7 @@ CHISATO_QUESTS = [
      "stages": [
          {"text": "Meet Chisato at the cafe in the morning", "objectives": [{"do": "visit", "place": "cafe", "times": [0]}]},
          {"text": "Bring her a strawberry shortcake", "objectives": [{"do": "give_gift", "gift": "shortcake", "to": "Chisato Nishikigi"}]},
-         {"text": "Tell her about your morning", "objectives": [{"do": "talk", "to": "Chisato Nishikigi", "script": ["them (pleased): Ahh, that's perfect. Let's do this again!", "player (smile): I'd like that."]}]},
+         {"text": "Tell her about your morning", "objectives": [{"do": "talk", "to": "Chisato Nishikigi", "script": ["them (pleased): Ahh, that's perfect. Let's do this again!", "player: I'd like that."]}]},
      ],
      "endings": [{"key": "sweet", "title": "Share the cake", "about": "You and Chisato share the first slice. Takina pretends she isn't watching.",
                   "rewards": [{"coins": 300}, {"card": "LRC/WE47-E41"}]}]},

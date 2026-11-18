@@ -4,7 +4,7 @@ A quest is a Quest row: its key, title, giver and the friendship rank it gates, 
 
     {"key": "ember-and-rose", "title": "Ember and Rose", "giver": "Ruby Rose", "gates": 5,
      "about": "Ruby's mother's cloak has gone missing, and she thinks she knows who took it.",
-     "offer": ["them: Can I ask you something? It's important.", "player (surprised): Sure."],
+     "offer": ["them: Can I ask you something? It's important.", "player: Sure."],
      "requires": {"quests": ["first-steps"], "flags": ["met_ruby"], "rank": 2},
      "stages": [{"text": "Find out who took it",
                  "objectives": [{"do": "defeat", "cpus": ["Cinder Fall"]}, {"do": "have_card", "card": "RWBY/WX03-001"}]}],
