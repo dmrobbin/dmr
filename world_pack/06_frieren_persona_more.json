@@ -154,6 +154,48 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hm? Oh. Hello."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Oh, {player}. You came by. That's nice."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. I was thinking about you. That's new for me."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Bye."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): See you. In a few decades. ...Kidding. Tomorrow."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon. I'd like to remember today."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Frieren, Friend"
@@ -349,6 +391,48 @@
       "min_rank": 4,
       "script": [
        "them (pleased): I'd cast a barrier around you without thinking. That's what you are to me."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hello. Do you need something?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. Good afternoon. Have you seen Frieren?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. I'm glad you're here. Really."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Goodbye."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: See you. Please don't be late next time."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon. ...I'll be cross if you don't."
       ]
      },
      {
@@ -549,6 +633,48 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: ...Who're you?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}. Kanna's friend. Hi."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}! Kanna missed you. Play with Kanna."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Bye."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Bye bye. Come back with snacks."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon. Kanna will be sad if you don't."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Kanna, Friend"
@@ -743,6 +869,48 @@
       "min_rank": 4,
       "script": [
        "them (pleased): I'd burn down a city for you. ...Kidding! Mostly!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Oh. A human. What do you want?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Ah, {player}! Miss Kobayashi says you're nice, so hello!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}! Come in, I'm making dinner! You're staying!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Go on, human."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Bye bye! Come by for lunch sometime!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon! I'll set a place for you at the table!"
       ]
      },
      {
@@ -946,6 +1114,48 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: ..."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: ...Hey."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): ...You're here. Good."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: ...Later."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: ...See you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): ...Come back soon."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Protagonist, Friend"
@@ -1139,6 +1349,48 @@
       "min_rank": 4,
       "script": [
        "them (pleased): I'd draw my bow for you any day. Seriously!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Oh! Hi! Sorry, I didn't see you there!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! Hi! You're here!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}! Yay! My favourite person!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Okay, bye!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): See you! Text me, okay?"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon! I'll miss you! Really really!"
       ]
      },
      {
@@ -1340,6 +1592,48 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Good day. Is there something I can do for you?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Ah, {player}. Good timing."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. I don't have to put on a face for you. Good."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Good day."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Until next time. Stay safe."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon. That's not part of any plan. I just mean it."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Twilight, Friend"
@@ -1533,6 +1827,48 @@
       "min_rank": 4,
       "script": [
        "them (pleased): If anyone hurt you, I'd... take care of it. Ahaha! Never mind!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Oh! Excuse me! Can I help you?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! Oh, how lovely to see you!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}! Please, come here! I made you something!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Take care, now!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Goodbye! Please be careful out there!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon! I'll keep you safe. Somehow!"
       ]
      },
      {
@@ -1734,6 +2070,48 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hello. Can I assist you?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}. Good to see you."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. Seeing you is... a calm sea."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Farewell."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Fair winds, {player}."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon. I'll keep watch until you do."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Enterprise, Friend"
@@ -1927,6 +2305,48 @@
       "min_rank": 4,
       "script": [
        "them (pleased): I'd steal anyone's heart who hurt you. Literally."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: ...You've got a question?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}. Good timing. Got a minute?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. Glad it's you. Let's take the day."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Later."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): See you. Stay out of the Metaverse."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon. You're my favourite confidant."
       ]
      },
      {
@@ -2126,6 +2546,48 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Oh! A living person! Hiii!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}!! Ollie's bestie is here!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}!!! Ollie's heart is beating again! Kind of!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Byeee! Don't die! Unless you want to hang out!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): See you! Ollie will haunt you till you're back!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon or Ollie will cry! Zombie tears!"
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Kureiji Ollie, Friend"
@@ -2319,6 +2781,48 @@
       "min_rank": 4,
       "script": [
        "them (pleased): I'll never be invisible around you. That's a comfort."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Oh. You can see me?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Hey, {player}. You found me again."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. There you are. I was waiting, you know."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Bye."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): See you. Don't forget me."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon. I'll be easier to see when you do."
       ]
      },
      {
@@ -2519,6 +3023,48 @@
       "min_rank": 4,
       "script": [
        "them (pleased): I'd write a whole album about you. Some of it would even be nice."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Well, well. A mortal."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Hey, {player}. Wanna hear a song?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}! My favourite mortal. Pull up a cloud."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Later, mortal."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): See ya. Don't let the sun get you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon. Eternity's long without you."
       ]
      },
      {
@@ -2723,6 +3269,48 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: ...You've seen me. Interesting."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. You come to the shadows again."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. The shadows welcome you. As do I."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Fade into the night."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Go. The shadows will watch over you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Return to us. Shadow Garden waits."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Shadow, Friend"
@@ -2922,6 +3510,48 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Gimme a break..."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: Oh. You again. What."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Heh. Good to see ya, kid."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Yeah, yeah."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Get outta here."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Don't go dyin' on me, kid."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Sol Badguy, Friend"
@@ -3115,6 +3745,48 @@
       "min_rank": 4,
       "script": [
        "them (pleased): Our bond is strong. I can feel it. Like a Persona awakening."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hello. Can I help you?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}. Good timing. Want to grab something to eat?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. I was hoping I'd run into you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: See you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Later. Stay out of the TV."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon. We're a team now."
       ]
      },
      {

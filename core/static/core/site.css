@@ -2979,6 +2979,11 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .town-map[hidden] { display: none; }
 .town-map-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .75rem; }
 .town-map-head h2 { margin: 0; font-size: 1.2rem; }
+.town-map-note { margin: -.4rem 0 .75rem; }
+.town-place.town-place-here { border-color: rgb(212 175 55 / .6); }
+/* Staff testing controls in the town's bar: dashed, so they never look like part of the game. */
+.button-small.town-staff { border-style: dashed; color: var(--muted); }
+.button-small.town-staff[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
 .town-places { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: .6rem; margin: 0; padding: 0; list-style: none; }
 .town-place { display: flex; flex-direction: column; gap: .25rem; width: 100%; height: 100%; padding: .35rem .35rem .5rem; font: inherit; color: var(--text); text-align: left; cursor: pointer;
   background: var(--surface); border: 1px solid var(--border); border-radius: .5rem; }
@@ -3096,6 +3101,42 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .world-inline-form { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin: 0; }
 .world-inline-form input { min-width: 0; width: 12rem; }
 .town-notice { margin: 0 0 .6rem; padding: .45rem .8rem; border: 1px solid rgb(212 175 55 / .45); border-radius: .5rem; background: var(--accent-soft); }
+/* Time passing over the town's stage (world_town.js passage): the sky turns, the sun moves on, the new time is said. */
+.town-passage { position: absolute; inset: 0; z-index: 10; overflow: hidden; display: grid; place-items: center; cursor: pointer;
+  opacity: 0; transition: opacity .4s ease; }
+.town-passage[hidden] { display: none; }
+.town-passage.is-on { opacity: 1; }
+.town-passage-sky, .town-passage-sky span { position: absolute; inset: 0; }
+.town-passage-sky { background: #1d2440; } /* solid under the crossfading skies: the place never shows through */
+.town-passage-sky span { opacity: 0; transition: opacity .9s ease; }
+.town-passage-sky span:nth-child(1) { background: linear-gradient(#f7c9a8, #f3e1c7 55%, #c8d8e8); }
+.town-passage-sky span:nth-child(2) { background: linear-gradient(#5d9fe0, #a9d1f5 60%, #e4f0fb); }
+.town-passage-sky span:nth-child(3) { background: linear-gradient(#3b2a5c, #c4566a 55%, #f4a35c); }
+.town-passage-sky span:nth-child(4) { background: radial-gradient(1px 1px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 18%, #fff, transparent),
+  radial-gradient(1.5px 1.5px at 40% 12%, #fff, transparent), radial-gradient(1px 1px at 85% 40%, #fff, transparent),
+  radial-gradient(1px 1px at 10% 55%, #fff, transparent), linear-gradient(#050a24, #121a44 60%, #24305c); }
+.town-passage[data-time="0"] .town-passage-sky span:nth-child(1), .town-passage[data-time="1"] .town-passage-sky span:nth-child(2),
+.town-passage[data-time="2"] .town-passage-sky span:nth-child(3), .town-passage[data-time="3"] .town-passage-sky span:nth-child(4) { opacity: 1; }
+.town-passage-orb { position: absolute; width: clamp(3rem, 9vw, 5.5rem); aspect-ratio: 1; translate: -50% -50%; border-radius: 50%;
+  background: radial-gradient(circle at 40% 38%, #fffbe6, #ffd76a 55%, #f5a623); box-shadow: 0 0 3rem 1rem rgb(255 210 110 / .55);
+  transition: left 1.1s cubic-bezier(.45, 0, .3, 1), top 1.1s cubic-bezier(.45, 0, .3, 1), background .8s, box-shadow .8s, opacity .35s; }
+.town-passage[data-time="0"] .town-passage-orb { left: 16%; top: 62%; }
+.town-passage[data-time="1"] .town-passage-orb { left: 50%; top: 18%; }
+.town-passage[data-time="2"] .town-passage-orb { left: 84%; top: 62%; background: radial-gradient(circle at 40% 38%, #fff1d6, #ff9a4d 55%, #e2553a);
+  box-shadow: 0 0 3rem 1rem rgb(255 120 70 / .5); }
+.town-passage[data-time="3"] .town-passage-orb { left: 74%; top: 22%; background: radial-gradient(circle at 30% 62%, rgb(150 150 135 / .35) 0 9%, transparent 10%),
+  radial-gradient(circle at 62% 34%, rgb(150 150 135 / .3) 0 12%, transparent 13%), radial-gradient(circle at 40% 38%, #ffffff, #ebe8da 60%, #cfcab8);
+  box-shadow: 0 0 2.2rem .4rem rgb(220 230 255 / .35); }
+.town-passage.orb-out .town-passage-orb { opacity: 0; transition: opacity .35s; }
+.town-passage-words { position: relative; text-align: center; padding: 1.4rem 2.4rem; color: #fff; text-shadow: 0 2px 12px rgb(0 0 0 / .55);
+  background: radial-gradient(closest-side, rgb(8 10 24 / .5), transparent); }
+.town-passage-words p { margin: 0; }
+.town-passage-note { font-size: .8rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; opacity: .9; }
+.town-passage-when { margin-top: .35rem !important; font-family: var(--serif); font-size: clamp(1.6rem, 4.5vw, 2.8rem); line-height: 1.15; }
+.town-passage-skip { position: absolute; bottom: .8rem; left: 0; right: 0; margin: 0; text-align: center; color: rgb(255 255 255 / .7); text-shadow: 0 1px 4px rgb(0 0 0 / .6); }
+@media (prefers-reduced-motion: reduce) {
+  .town-passage, .town-passage-sky span, .town-passage-orb { transition: opacity .25s ease; }
+}
 /* Quests in the town: a marker over someone with a quest, the talk box's quest options and panels, and the news. */
 .town-quest-mark { position: absolute; top: 4%; left: 50%; translate: -50% 0; display: grid; place-items: center; width: 1.8rem; height: 1.8rem;
   font-weight: 800; font-size: 1.05rem; line-height: 1; color: #1b1508; background: linear-gradient(#f6dc8a, #d4a93a); border: 2px solid #fff4cf;

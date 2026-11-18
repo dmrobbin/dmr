@@ -9,6 +9,12 @@ from .test_world import SET, DuelTests, everywhere_rule, give_cpu, make_set, sta
 from .world_views import read_ranks
 
 
+def talk(save, cpu_id):
+    """Talk to someone, as if it were the first time this time of day (these tests are about what's said, not when)."""
+    world.relation(save, cpu_id).pop("talked_turn", None)
+    return world.talk(save, cpu_id)
+
+
 class Recorder:
     """Stands in for weiss.world.Talk, to run a script on its own."""
 
@@ -147,58 +153,58 @@ class TalkTests(TestCase):
         return self.save.relations.get(str(self.cinder.pk), {}).get("points", 0)
 
     def test_the_first_talk_of_the_day_brings_points_and_the_rest_dont(self):
-        said = world.talk(self.save, self.cinder.pk)["talk"]
+        said = talk(self.save, self.cinder.pk)["talk"]
         self.assertTrue(any(e.get("say") for e in said["events"]))
         self.assertIsNone(said["waiting"])  # the built-in first-rank greetings ask nothing
         self.assertEqual(said["events"][-1]["points"], world.TALK_POINTS)  # shown once they've said hello
         self.assertEqual(self.points(), world.TALK_POINTS)
-        world.talk(self.save, self.cinder.pk)
+        talk(self.save, self.cinder.pk)
         self.assertEqual(self.points(), world.TALK_POINTS)
         self.save.turn += 4  # tomorrow
-        world.talk(self.save, self.cinder.pk)
+        talk(self.save, self.cinder.pk)
         self.assertEqual(self.points(), world.TALK_POINTS * 2)
 
     def test_only_someone_here_can_be_talked_to(self):
         elsewhere = give_cpu("Katara", self.cards)
         everywhere_rule(elsewhere, "beach")
-        for move in (lambda: world.talk(self.save, elsewhere.pk), lambda: world.give(self.save, elsewhere.pk, "tea")):
+        for move in (lambda: talk(self.save, elsewhere.pk), lambda: world.give(self.save, elsewhere.pk, "tea")):
             with self.assertRaisesRegex(ValueError, "aren't here"):
                 move()
 
     def test_their_own_lines_come_first_then_any_cpus_then_the_built_in_ones(self):
-        self.assertTrue(world.talk(self.save, self.cinder.pk)["talk"]["events"])  # built in
+        self.assertTrue(talk(self.save, self.cinder.pk)["talk"]["events"])  # built in
         Chatter.objects.create(context="again", script="them: Anyone's line.")
-        self.assertEqual(world.talk(self.save, self.cinder.pk)["talk"]["events"][0]["say"], "Anyone's line.")
+        self.assertEqual(talk(self.save, self.cinder.pk)["talk"]["events"][0]["say"], "Anyone's line.")
         Chatter.objects.create(cpu=self.cinder, context="again", script="them: Mine, {player}.")
         Chatter.objects.create(cpu=self.cinder, context="again", script="them enters")  # a mistake: left out
-        self.assertEqual(world.talk(self.save, self.cinder.pk)["talk"]["events"][0]["say"], "Mine, staff.")
+        self.assertEqual(talk(self.save, self.cinder.pk)["talk"]["events"][0]["say"], "Mine, staff.")
 
     def test_lines_follow_rank(self):
         Chatter.objects.create(cpu=self.cinder, context="again", script="them: Who are you?")
         Chatter.objects.create(cpu=self.cinder, context="again", min_rank=2, script="them: Old friend!")
         self.save.relations[str(self.cinder.pk)] = {"points": 0, "talked": self.save.day}
-        self.assertEqual(world.talk(self.save, self.cinder.pk)["talk"]["events"][0]["say"], "Who are you?")
+        self.assertEqual(talk(self.save, self.cinder.pk)["talk"]["events"][0]["say"], "Who are you?")
         self.save.relations[str(self.cinder.pk)]["points"] = 45  # Friend: rank 2
-        self.assertEqual(world.talk(self.save, self.cinder.pk)["talk"]["events"][0]["say"], "Old friend!")
+        self.assertEqual(talk(self.save, self.cinder.pk)["talk"]["events"][0]["say"], "Old friend!")
 
     def test_a_scripts_coins_and_points_come_once_a_day(self):
         Chatter.objects.create(cpu=self.cinder, context="again", script="them: Here.\ngive money 100\npoints +5\ngive gift tea")
         self.save.relations[str(self.cinder.pk)] = {"points": 0, "talked": self.save.day}
         money = self.save.money
-        world.talk(self.save, self.cinder.pk)
-        world.talk(self.save, self.cinder.pk)
+        talk(self.save, self.cinder.pk)
+        talk(self.save, self.cinder.pk)
         self.assertEqual((self.save.money - money, self.points(), self.save.gifts), (100, 5, {"tea": 1}))
         self.save.turn += 4
         self.save.today = {}
         self.save.relations[str(self.cinder.pk)]["talked"] = self.save.day
-        world.talk(self.save, self.cinder.pk)
+        talk(self.save, self.cinder.pk)
         self.assertEqual(self.save.money - money, 200)
 
     def test_answering_a_choice(self):
         Chatter.objects.create(cpu=self.cinder, context="again", script="choice Coffee?\n- Yes -> yes\n- No\nthem: Suit yourself.\nend\n"
                                                                           "label yes\nthem (pleased): My treat.\nset coffee_date")
         self.save.relations[str(self.cinder.pk)] = {"points": 0, "talked": self.save.day}
-        said = world.talk(self.save, self.cinder.pk)["talk"]
+        said = talk(self.save, self.cinder.pk)["talk"]
         self.assertEqual(said["waiting"]["options"], ["Yes", "No"])
         said = world.answer(self.save, self.cinder.pk, 0)["talk"]
         self.assertEqual([e["say"] for e in said["events"]], ["My treat."])
@@ -212,13 +218,13 @@ class TalkTests(TestCase):
         self.assertNotIn("bar", [p.key for p in world.places(self.save)])
         Chatter.objects.create(cpu=self.cinder, context="again", script="them: Meet me at the bar.\nset bar_open")
         self.save.relations[str(self.cinder.pk)] = {"points": 0, "talked": self.save.day}
-        world.talk(self.save, self.cinder.pk)
+        talk(self.save, self.cinder.pk)
         self.assertIn("bar", [p.key for p in world.places(self.save)])
 
     def test_a_script_cant_set_the_saves_own_flags(self):
         Chatter.objects.create(cpu=self.cinder, context="again", script="them: Hm.\nset last_duel")
         self.save.relations[str(self.cinder.pk)] = {"points": 0, "talked": self.save.day}
-        world.talk(self.save, self.cinder.pk)
+        talk(self.save, self.cinder.pk)
         self.assertNotIn("last_duel", self.save.flags.get("set", []))
 
     def test_gifts(self):
@@ -255,7 +261,7 @@ class TalkTests(TestCase):
 
     def test_reaching_a_rank_plays_its_line(self):
         self.save.relations[str(self.cinder.pk)] = {"points": 13}  # Acquaintance is at 15
-        said = world.talk(self.save, self.cinder.pk)["talk"]
+        said = talk(self.save, self.cinder.pk)["talk"]
         ups = [e for e in said["events"] if e.get("rank_up")]
         self.assertEqual(ups[0]["rank_up"], "Acquaintance")
         says = [e["say"] for e in said["events"] if "say" in e]
@@ -265,7 +271,7 @@ class TalkTests(TestCase):
         scene = Scene.objects.create(name="Cinder opens up", script="cast c as Cinder\nc: I never told anyone this.")
         Chatter.objects.create(cpu=self.cinder, context="rank_up", min_rank=1, scene=scene)
         self.save.relations[str(self.cinder.pk)] = {"points": 13}
-        said = world.talk(self.save, self.cinder.pk)["talk"]
+        said = talk(self.save, self.cinder.pk)["talk"]
         self.assertIn({"scene": reverse("weiss:world_scene", args=[1])}, said["events"])
         self.save.save()
         page = self.client.get(reverse("weiss:world_scene", args=[1]))
@@ -292,7 +298,7 @@ class TalkAndDuelTests(DuelTests):
 
     def test_a_stake_offered_in_talk_is_the_fee(self):
         Chatter.objects.create(cpu=self.cinder, context="greet", script="them: Feeling lucky?\nfight stake 500")
-        said = world.talk(self.save, self.cinder.pk)["talk"]
+        said = talk(self.save, self.cinder.pk)["talk"]
         self.assertEqual(said["waiting"], {"fight": 500})
         self.save.money = 1000
         room = world.start_duel(self.save, self.cinder.pk, high_stakes=True)
@@ -338,13 +344,13 @@ class GainAndRewardTests(DuelTests):
             self.assertEqual(world.gain(self.cinder, world.TALK_POINTS), expected)
             self.assertEqual(world.gain(self.cinder, -4), -4)  # losing points is never scaled
         self.cinder.save()
-        world.talk(self.save, self.cinder.pk)
+        talk(self.save, self.cinder.pk)
         self.assertEqual(self.points(), 2)
 
     def test_each_rank_brings_its_rewards_once(self):
         money = self.save.money
         self.save.relations[str(self.cinder.pk)] = {"points": 14}
-        said = world.talk(self.save, self.cinder.pk)["talk"]  # +3: Acquaintance
+        said = talk(self.save, self.cinder.pk)["talk"]  # +3: Acquaintance
         rewards = [event["reward"] for event in said["events"] if "reward" in event]
         self.assertEqual(rewards[0], "200 coins")
         self.assertEqual(self.save.money - money, 200)
@@ -354,13 +360,13 @@ class GainAndRewardTests(DuelTests):
         self.save.relations[str(self.cinder.pk)]["points"] = 10  # fell back a rank, then climbs again
         for _ in range(2):
             self.save.turn += 4
-            world.talk(self.save, self.cinder.pk)
+            talk(self.save, self.cinder.pk)
         self.assertEqual(self.save.money - money, 200)  # not paid twice
 
     def test_signature_cards_packs_and_stakes(self):
         pool = sum(self.save.pool.values())
         self.save.relations[str(self.cinder.pk)] = {"points": 39, "rewarded": 1}
-        said = world.talk(self.save, self.cinder.pk)["talk"]  # Friend
+        said = talk(self.save, self.cinder.pk)["talk"]  # Friend
         events = said["events"]
         if said["waiting"]:  # a friend's greeting can ask something: the points and rewards come once it's answered
             events = events + world.answer(self.save, self.cinder.pk, 0)["talk"]["events"]
@@ -373,7 +379,7 @@ class GainAndRewardTests(DuelTests):
         self.assertEqual(sum(self.save.pool.values()) - pool, 2 + 8)
         self.save.relations[str(self.cinder.pk)].update(points=139, rewarded=3)
         self.save.turn += 4
-        world.talk(self.save, self.cinder.pk)  # Close friend: stakes
+        talk(self.save, self.cinder.pk)  # Close friend: stakes
         self.assertEqual(world.stake_with(self.save, self.cinder.pk), 500)
         self.save.money = 2000
         room = world.start_duel(self.save, self.cinder.pk, high_stakes=True)
@@ -452,3 +458,168 @@ class WorldPackTests(TestCase):
         page = self.client.post(reverse("weiss:world_pack_import"), {"step": "import", "packs": upload()})
         self.assertContains(page, "Imported")
         self.assertEqual(self.cinder.schedule.get().place.key, "alley")
+
+
+class SpendingTimeTests(TestCase):
+    """Once the player spends a time of day with someone, they stay where they are until it passes: and it only passes
+    once it's been spent (unless there's nobody out to spend it with)."""
+
+    def setUp(self):
+        self.cards = make_set()
+        self.user = staff_user()
+        self.save = world.start(self.user, 1, SET)
+        self.cinder = give_cpu("Cinder", self.cards)
+        everywhere_rule(self.cinder)
+        self.save.place = "plaza"
+        GiftItem.objects.get_or_create(key="tea", defaults={"name": "Tea"})
+
+    def test_looking_around_is_free_until_someone_is_talked_to(self):
+        world.travel(self.save, "cafe")
+        world.travel(self.save, "plaza")
+        world.talk(self.save, self.cinder.pk)
+        with self.assertRaisesRegex(ValueError, "pass time before you go"):
+            world.travel(self.save, "cafe")
+        world.travel(self.save, "plaza")  # staying put is fine
+        world.wait(self.save)
+        world.travel(self.save, "cafe")
+
+    def test_time_only_passes_once_its_spent_with_someone(self):
+        with self.assertRaisesRegex(ValueError, "Spend this time with someone first"):
+            world.wait(self.save)
+        town = world.town(self.save)
+        self.assertEqual((town["engaged"], town["can_wait"], town["next_time"]), (False, False, "Noon"))
+        world.give_tastes()
+        self.save.gifts = {"tea": 1}
+        world.give(self.save, self.cinder.pk, "tea")
+        self.assertTrue(world.town(self.save)["can_wait"])
+        world.wait(self.save)
+        self.assertEqual(self.save.time_of_day, "Noon")
+
+    def test_with_nobody_out_time_can_pass_anyway(self):
+        self.cinder.schedule.all().delete()
+        world.wait(self.save)
+        self.assertEqual(self.save.time_of_day, "Noon")
+
+    def test_the_shop_doesnt_count(self):
+        self.save.place = "shop"
+        self.save.money = 1000
+        world.buy_gift(self.save, "tea")
+        world.travel(self.save, "plaza")
+
+    def test_each_person_once_a_time_of_day(self):
+        world.talk(self.save, self.cinder.pk)
+        with self.assertRaisesRegex(ValueError, "talked with Cinder this morning already"):
+            world.talk(self.save, self.cinder.pk)
+        self.assertTrue(world.town(self.save)["people"][0]["talked_now"])
+        world.wait(self.save)
+        world.travel(self.save, "plaza")  # where now? staying
+        said = world.talk(self.save, self.cinder.pk)["talk"]  # later the same day: their "again" lines, no more points
+        self.assertFalse(any("points" in event for event in said["events"]))
+
+    def test_a_duel_spends_the_time_and_its_result_says_when_it_started(self):
+        self.save.pool = {str(c.pk): 4 for c in self.cards}
+        self.save.packs, self.save.rewards = 0, []
+        climaxes = [c for c in self.cards if c.card_type == "Climax"][:2]
+        others = [c for c in self.cards if c.card_type != "Climax"][:14]
+        world.save_deck(self.save, {c.pk: 4 for c in climaxes} | {c.pk: 3 for c in others})
+        room = world.start_duel(self.save, self.cinder.pk)
+        self.assertTrue(world.engaged(self.save))
+        over = {"winner": str(self.user.pk), "loser": "x", "reason": "level", "rematch": []}
+        room.state["game_over"] = over
+        room.save()
+        world.game_finished(room, over)
+        self.save.refresh_from_db()
+        self.assertEqual(self.save.flags["last_duel"]["before"], {"time": 0, "label": "Monday morning", "day": 1})
+        self.assertFalse(world.engaged(self.save))  # a new time of day: free to go
+
+
+class GreetingTests(TestCase):
+    def setUp(self):
+        self.cards = make_set()
+        self.user = staff_user()
+        self.save = world.start(self.user, 1, SET)
+        self.cinder = give_cpu("Cinder", self.cards)
+        everywhere_rule(self.cinder)
+        self.save.place = "plaza"
+
+    def person(self):
+        return world.town(self.save)["people"][0]
+
+    def test_everyone_has_a_hello_and_goodbye_that_warm_up_with_rank(self):
+        stranger = self.person()
+        self.assertTrue(stranger["hello"] and stranger["bye"])
+        self.assertNotIn(self.user.username, stranger["hello"])
+        world.relation(self.save, self.cinder.pk)["points"] = 500
+        close = self.person()
+        self.assertIn(close["hello"], [f"{self.user.username}! I was hoping you'd stop by."])
+
+    def test_a_cpus_own_lines_come_first_and_stay_the_same_all_through_a_time_of_day(self):
+        Chatter.objects.create(cpu=self.cinder, context="hello", script="them: Ah. The moth returns to the flame.")
+        Chatter.objects.create(cpu=self.cinder, context="goodbye", script="them: Run along.")
+        Chatter.objects.create(cpu=self.cinder, context="goodbye", script="them: Don't keep me waiting.")
+        first = self.person()
+        self.assertEqual(first["hello"], "Ah. The moth returns to the flame.")
+        self.assertEqual([self.person()["bye"] for _ in range(5)], [first["bye"]] * 5)
+
+    def test_someone_estranged_is_cold(self):
+        from .models import Quest
+        Quest.objects.create(key="q", title="Q", giver=self.cinder, gate_rank=2, spec={"stages": [], "endings": []})
+        self.save.quests = {"log": {"q": {"status": "failed"}}}
+        person = self.person()
+        self.assertIn(person["bye"], ["Fine. Go."])
+
+
+class ChoosingWhereTests(TestCase):
+    """When time passes, the player chooses where to spend the new time of day (staying is a choice); staff can turn
+    on test mode to skip the rules."""
+
+    def setUp(self):
+        self.cards = make_set()
+        self.user = staff_user()
+        self.save = world.start(self.user, 1, SET)
+        self.cinder = give_cpu("Cinder", self.cards)
+        everywhere_rule(self.cinder)
+        self.save.place = "plaza"
+        self.save.save()
+
+    def test_after_time_passes_nobody_can_be_talked_to_till_a_place_is_chosen(self):
+        world.talk(self.save, self.cinder.pk)
+        world.wait(self.save)
+        self.assertTrue(world.town(self.save)["choose"])
+        with self.assertRaisesRegex(ValueError, "choose where to go first"):
+            world.talk(self.save, self.cinder.pk)
+        world.travel(self.save, "plaza")
+        self.assertFalse(world.town(self.save)["choose"])
+        world.talk(self.save, self.cinder.pk)
+
+    def test_choosing_survives_a_reload(self):
+        world.talk(self.save, self.cinder.pk)
+        world.wait(self.save)
+        self.save.refresh_from_db()
+        self.assertTrue(world.choosing(self.save))
+
+    def test_staying_says_so(self):
+        from django.urls import reverse
+        world.talk(self.save, self.cinder.pk)
+        world.wait(self.save)
+        self.client.force_login(self.user)
+        said = self.client.post(reverse("weiss:world_travel", args=[1]), {"place": "plaza", "version": self.save.version}).json()
+        self.assertEqual(said["said"], "You stay at the Plaza.")
+
+    def test_test_mode_lets_staff_wait_and_travel_whenever(self):
+        with self.assertRaises(ValueError):
+            world.wait(self.save, staff=True)  # off: the real rules
+        world.set_test_mode(self.save, True)
+        world.wait(self.save, staff=True)
+        world.talk(self.save, self.cinder.pk)  # no map to answer in test mode
+        world.travel(self.save, "cafe")
+        self.assertEqual((self.save.time_of_day, self.save.place), ("Noon", "cafe"))
+        self.assertTrue(world.town(self.save)["test_mode"])
+
+    def test_test_mode_is_for_staff(self):
+        self.user.is_staff = False
+        self.user.save()
+        with self.assertRaisesRegex(ValueError, "for staff"):
+            world.set_test_mode(self.save, True)
+        self.save.flags["test_mode"] = True  # even if a flag says so
+        self.assertFalse(world.test_mode(self.save))

@@ -22,7 +22,7 @@ THEM = "them"
 CPU_MOODS = ("main", "pleased", "dismayed")
 PLAYER_MOODS = ("happy", "smile", "sad", "surprised", "angry", "smug", "neutral")
 CONTEXTS = dict(Chatter.CONTEXTS)
-FIRST_LINE_ONLY = {"before_duel", "after_win", "after_loss"}  # shown as one line, outside a conversation
+FIRST_LINE_ONLY = {"before_duel", "after_win", "after_loss", "hello", "goodbye"}  # shown as one line, outside a conversation
 MAX_POINTS = 50  # one `points` line's most, either way
 MAX_MONEY = 5000  # one `give money` line's most
 MAX_STAKE = 100_000
@@ -205,7 +205,18 @@ DEFAULTS = [  # (context, min rank, script)
     ("estranged", 0, "them (dismayed): …Oh. It's you."),
     ("estranged", 0, "them: I haven't forgotten what you did. If you want a duel, fine. Don't expect more."),
     ("estranged", 0, "them (dismayed): Say what you came to say, {player}."),
+    # Walking up to someone, and leaving them: by how well they know the player.
+    ("hello", 0, "them: Hm? Oh, hello."),
+    ("hello", 0, "them: Can I help you?"),
+    ("hello", 2, "them (pleased): Hey, {player}."),
+    ("hello", 2, "them (pleased): Oh, it's you! Hi."),
+    ("hello", 4, "them (pleased): {player}! I was hoping you'd stop by."),
+    ("goodbye", 0, "them: See you around."),
+    ("goodbye", 0, "them: Bye, then."),
+    ("goodbye", 2, "them (pleased): Catch you later, {player}."),
+    ("goodbye", 4, "them (pleased): Don't be a stranger, okay? See you soon."),
 ]
+COLD = {"hello": "them (dismayed): …What do you want?", "goodbye": "them: Fine. Go."}  # someone a quest choice estranged
 
 
 def candidates(cpu, context, rank):
@@ -254,9 +265,9 @@ def load(key):
     return None
 
 
-def first_line(cpu, context, rank, fill):
+def first_line(cpu, context, rank, fill, rng=random):
     """The first thing said in a line for this context, as text (`fill` fills in {player} and the like), or ""."""
-    found = pick(cpu, context, rank)
+    found = pick(cpu, context, rank, rng)
     if not found:
         return ""
     return next((fill(step["text"]) for step in found[1]["steps"] if step["do"] == "say"), "")

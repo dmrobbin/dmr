@@ -5,6 +5,8 @@ CAST = [
         haunts=[("library", "wk", "12", 60), ("school", "we", "01", 40), ("cafe", "135", "2", 35)],
         tastes=(["book"], ["calm", "drink"], ["cool"]),
         lines={
+            "hello": ["them: Oh! Sorry, I was miles away. Can I help you?", "them (pleased): {player}! Good, I could use a break from this script.", "them (pleased): {player}. You're exactly who I wanted to see."],
+            "bye": ["them: Ah, okay. Take care.", "them (pleased): See you, {player}. Wish me luck at rehearsal.", "them (pleased): Come back soon? I like who I am around you."],
             "hi": ["them: Oh, hello. I'm Akane. Sorry, I was studying a role. I sometimes forget where I am.",
                    "them: Are you here to duel? I've been reading up on it. Character analysis helps."],
             "hi2": "them (pleased): {player}! I've been thinking about how you'd play yourself in a drama. Is that strange?",
@@ -36,6 +38,8 @@ CAST = [
         haunts=[("school", "wk", "01", 55), ("cafe", "we", "12", 45), ("alley", "135", "3", 30)],
         tastes=(["drink"], ["book", "cool"], ["sweet"]),
         lines={
+            "hello": ["them: ...What.", "them: Oh. It's you. Fine. Sit.", "them (pleased): ...Hey. I was waiting. Don't make it weird."],
+            "bye": ["them: Right.", "them: See you.", "them (pleased): ...Come back tomorrow. If you want."],
             "hi": ["them: Aqua. I'm not interested in chatting, but I'll duel if that's why you're here.",
                    "them: You look like someone with too much free time. Lucky."],
             "hi2": "them: You again. Sit, if you want. I'm reading scripts.",
@@ -66,6 +70,8 @@ CAST = [
         haunts=[("school", "wk", "12", 55), ("plaza", "we", "12", 45), ("cafe", "024", "2", 30)],
         tastes=(["sweet"], ["music", "cute"], ["cool"]),
         lines={
+            "hello": ["them: Yes? Autographs are five hundred yen.", "them (pleased): Oh, it's you! Took you long enough to come say hi.", "them (pleased): Finally! Do you know how long I've been standing here?"],
+            "bye": ["them: Hmph. Bye.", "them (pleased): Fine, go. Not like I'll miss you or anything.", "them (pleased): You'd better come back. I mean it. Ten seconds to cry, remember?"],
             "hi": ["them: You know who I am, right? The genius child actor? Ten seconds to cry? No? Ugh.",
                    "them: If you're a fan, autographs are after the duel. If you're not, why not?"],
             "hi2": "them: Oh, it's you. I wasn't waiting or anything. I just happened to be here. For an hour.",
@@ -97,6 +103,8 @@ CAST = [
         haunts=[("school", "wk", "01", 55), ("plaza", "we", "12", 50), ("cafe", "135", "2", 35)],
         tastes=(["music"], ["cute", "sweet"], ["book"]),
         lines={
+            "hello": ["them (pleased): Oh, hi! Are you a fan? You can be a fan!", "them (pleased): {player}! My favourite fan is here!", "them (pleased): {player}! Yay! Okay, today's going to be great now."],
+            "bye": ["them (pleased): Byeee!", "them (pleased): See you! Come to my next show, okay?", "them (pleased): Come back soon! Front row seat's always yours!"],
             "hi": ["them (pleased): Hi hi! I'm Ruby! I'm going to be an idol like my mom! Want to be my first fan?",
                    "them: Ooh, a duel? I'm gonna win, and then I'm gonna do a little victory dance."],
             "hi2": "them (pleased): {player}! I learned a new dance! Wanna see? You have to say yes!",
@@ -127,6 +135,8 @@ CAST = [
         haunts=[("plaza", "wk", "12", 55), ("cafe", "we", "12", 45), ("rooftop", "135", "3", 30)],
         tastes=(["cute"], ["music", "sweet"], ["spicy"]),
         lines={
+            "hello": ["them (pleased): Hi there~! Did you come to see me?", "them (pleased): {player}! I saved my best smile for you.", "them (pleased): {player}... I'm really glad it's you. No acting."],
+            "bye": ["them (pleased): Bye-bye~! Love you!", "them (pleased): See you, {player}! Love you!", "them (pleased): See you soon. ...I think I really mean it, this time."],
             "hi": ["them (pleased): Hi there! It's me, Ai! You came to see me, didn't you?",
                    "them: A duel? Sure! Idols should be good at everything. Even cards."],
             "hi2": "them (pleased): {player}! You came back! I remembered your name, see?",
@@ -157,6 +167,8 @@ CAST = [
         haunts=[("school", "wk", "01", 60), ("cafe", "we", "12", 45), ("plaza", "135", "2", 35)],
         tastes=(["cute"], ["sweet", "flowers"], ["spicy"]),
         lines={
+            "hello": ["them: Oh, hello! Is everything okay?", "them (pleased): {player}! I was just thinking about you!", "them (pleased): {player}! Seeing you makes the whole day brighter."],
+            "bye": ["them: Okay! Take care!", "them (pleased): Bye, {player}! See you tomorrow?", "them (pleased): Come back soon, okay? I'll be right here."],
             "hi": ["them (pleased): Oh, hi! I'm Madoka Kaname. Are you new here? I can show you around!",
                    "them: Um, a duel? Okay! I'll do my best. Please go easy on me!"],
             "hi2": "them (pleased): {player}! I drew you a little picture. It's a magical girl version of you!",
@@ -187,6 +199,8 @@ CAST = [
         haunts=[("school", "wk", "01", 55), ("rooftop", "all", "23", 40), ("shrine", "135", "2", 30)],
         tastes=(["calm"], ["book", "cool"], ["cute"]),
         lines={
+            "hello": ["them: ...Do you need something?", "them: It's you. You're still here. Good.", "them (pleased): ...{player}. I'm glad this timeline has you in it."],
+            "bye": ["them: Be careful.", "them: Don't do anything foolish.", "them (pleased): Come back. Please. I want to remember this one."],
             "hi": ["them: ...Who are you? You weren't here in any of the other timelines.",
                    "them: Stay away from Madoka Kaname. That's all I have to say."],
             "hi2": "them: You again. ...You're harmless. I've decided.",
@@ -218,6 +232,8 @@ CAST = [
         haunts=[("alley", "all", "23", 55), ("shrine", "wk", "1", 45), ("plaza", "we", "12", 35)],
         tastes=(["food"], ["sweet", "spicy"], ["fancy"]),
         lines={
+            "hello": ["them: *crunch* Whaddaya want?", "them (pleased): Hey, it's you. Want a pocky? Kidding. Here.", "them (pleased): There ya are! Took ya long enough."],
+            "bye": ["them: Yeah, see ya.", "them (pleased): Later. Don't waste food while I'm gone.", "them (pleased): Come back, alright? It's boring without ya."],
             "hi": ["them: Want some? *crunch* No? More for me. Who're you?",
                    "them: Lookin' for a fight? I'm always up for one."],
             "hi2": "them: Oh. You. Here, have a pocky. Don't say I never gave you anything.",
@@ -247,6 +263,8 @@ CAST = [
         haunts=[("cafe", "wk", "12", 60), ("school", "we", "01", 40), ("rooftop", "024", "2", 30)],
         tastes=(["sweet"], ["drink", "fancy"], ["spicy"]),
         lines={
+            "hello": ["them: Oh, hello there. Can I help you?", "them (pleased): {player}! Perfect timing, the tea's just ready.", "them (pleased): {player}, welcome. I set out a cup for you, just in case."],
+            "bye": ["them: Take care, now.", "them (pleased): Do come by again. I'll have cake next time.", "them (pleased): Come back soon. The house is too quiet without you."],
             "hi": ["them (pleased): Oh, hello! I'm Mami Tomoe. Would you like some tea? I always make too much.",
                    "them: A duel? How lovely. Shall we begin? I'll show you how a senior fights."],
             "hi2": "them (pleased): {player}, I baked a cheesecake! You simply must try a slice.",
@@ -277,6 +295,8 @@ CAST = [
         haunts=[("school", "wk", "01", 55), ("beach", "we", "12", 45), ("plaza", "024", "2", 35)],
         tastes=(["music"], ["sweet", "sporty"], ["spicy"]),
         lines={
+            "hello": ["them: Yo! New face? Hi!", "them (pleased): {player}! Justice partner! What's the plan?", "them (pleased): THERE you are! I was about to send out a search party!"],
+            "bye": ["them: Okay, later!", "them (pleased): See ya! Stay heroic!", "them (pleased): Come back soon, partner! Justice waits for no one. Except you."],
             "hi": ["them: Yo! Sayaka Miki, magical girl of justice! Well, aspiring. Whatever!",
                    "them: Need someone to cheer you up? I'm great at that. Better at duels, though!"],
             "hi2": "them (pleased): {player}! I'm going to the hospital later to see Kyosuke. Wanna come?",

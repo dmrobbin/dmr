@@ -383,8 +383,17 @@ def town_move(move):
 
 @town_move
 def world_travel(request, save):
+    """Go somewhere (free until the time's spent), or choose where to spend a new time of day: staying is a choice."""
+    was = save.place
     place = world.travel(save, request.POST.get("place", ""))
-    return f"{place.name}."
+    return f"You stay at the {place.name}." if place.key == was else f"{place.name}."
+
+
+@town_move
+def world_test_mode(request, save):
+    """Staff testing: turn on (or off) the staff Wait and free travel."""
+    world.set_test_mode(save, request.POST.get("on") == "1")
+    return "Test mode on: Wait any time, go anywhere." if world.test_mode(save) else "Test mode off: the real rules."
 
 
 @town_move
@@ -492,7 +501,7 @@ def world_scene(request, slot):
 
 @town_move
 def world_wait(request, save):
-    world.wait(save)
+    world.wait(save, staff=request.POST.get("staff") == "1")
     return f"A new day: {save.weekday}." if save.turn % len(WorldSave.TIMES) == 0 else f"{save.time_of_day}."
 
 

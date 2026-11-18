@@ -5,6 +5,8 @@ CAST = [
         haunts=[("school", "wk", "01", 55), ("plaza", "we", "12", 45), ("cafe", "135", "2", 30)],
         tastes=(["cute"], ["fancy", "sweet"], ["spicy"]),
         lines={
+            "hello": ["them: Hm? A commoner seeks an audience with the chosen one?", "them (pleased): Oh, it's my follower! I-I mean, it's you!", "them (pleased): You came to see me! Of course you did. Obviously."],
+            "bye": ["them: You're dismissed!", "them (pleased): You may go! For now!", "them (pleased): Come back soon! Not that I'll be waiting! ...I'll be waiting."],
             "hi": ["them: Bow before me! I'm the chosen one! ...Why are you staring like that?",
                    "them: Ugh, a commoner. Fine, you may speak to me. Briefly."],
             "hi2": "them: Oh. It's you. I suppose I don't mind you being here. Don't get excited.",
@@ -33,6 +35,8 @@ CAST = [
         haunts=[("school", "wk", "01", 55), ("cafe", "we", "12", 45), ("plaza", "135", "2", 35), ("shrine", "024", "3", 25)],
         tastes=(["cool"], ["music", "food", "cute"], ["book"]),
         lines={
+            "hello": ["them: Hey. Need something?", "them (pleased): Oh, {player}! What's up?", "them (pleased): {player}! Get over here, you weirdo. Missed you."],
+            "bye": ["them: Later.", "them (pleased): See ya! Watch out for ghosts!", "them (pleased): Come back soon, okay? Weird stuff's more fun with you."],
             "hi": ["them: Momo Ayase. I don't care if you're a ghost or an alien. Just don't be a jerk.",
                    "them: You're new. Granny said I'd meet weird people this week."],
             "hi2": "them (pleased): {player}! Okarun's being weird again. Wanna help me bully him a little?",
@@ -61,6 +65,8 @@ CAST = [
         haunts=[("library", "wk", "12", 55), ("school", "we", "01", 40), ("alley", "135", "3", 30)],
         tastes=(["book"], ["game", "sweet", "cards"], ["sporty"]),
         lines={
+            "hello": ["them: Ah! S-sorry! Um, hello!", "them (pleased): {player}! Did you see the news about the UFO?!", "them (pleased): {player}! I-I'm really glad you're here!"],
+            "bye": ["them: B-bye!", "them (pleased): See you! Tell me if you see anything weird!", "them (pleased): Come back soon! I'll... I'll save you a seat!"],
             "hi": ["them: I-I'm Okarun! Do you believe in aliens? No? Ghosts? Both? Neither? Sorry!",
                    "them: Oh, a duel? I-I'm not scared! Okay, I'm a little scared."],
             "hi2": "them (pleased): {player}! I found a new UFO sighting report! Do you want to read it with me?",
@@ -89,6 +95,8 @@ CAST = [
         haunts=[("alley", "all", "23", 65), ("warehouse", "wk", "3", 45), ("arena", "135", "1", 30, 2)],
         tastes=(["fancy"], ["cool", "spicy"], ["cute"]),
         lines={
+            "hello": ["them: Can I help you?", "them (pleased): Ah, there you are. I wondered when you'd find me.", "them (pleased): My favourite. Come closer."],
+            "bye": ["them: Run along.", "them (pleased): Until next time.", "them (pleased): Come back soon. I have plans for us."],
             "hi": ["them: We have big plans for you. All we ask is... a little cooperation.",
                    "them: Out in the dark, all alone? How brave. How foolish."],
             "hi2": "them: You keep finding me. Persistent little moth.",
@@ -117,6 +125,8 @@ CAST = [
         haunts=[("cafe", "wk", "12", 55), ("arena", "we", "12", 45), ("plaza", "135", "0", 35)],
         tastes=(["sweet"], ["cool", "game"], ["fancy"]),
         lines={
+            "hello": ["them (pleased): Oh, hi! Are you here for weapons? Or cookies?", "them (pleased): {player}! Yay! Do you want to see my new upgrade?", "them (pleased): {player}!! Best day ever! Come here!"],
+            "bye": ["them (pleased): Bye! Stay sharp!", "them (pleased): See ya! Bring cookies next time!", "them (pleased): Come back soon, okay? Team RWBY plus one, remember!"],
             "hi": ["them (pleased): Hi! I'm Ruby! Do you like weapons? I love weapons! Crescent Rose is a sniper scythe!",
                    "them: Oh! Are you... robbing me? No? Okay! Let's duel, then!"],
             "hi2": "them (pleased): {player}! I saved you a cookie! Okay, I ate one. But I saved you two!",
@@ -145,6 +155,8 @@ CAST = [
         haunts=[("library", "wk", "12", 55), ("cafe", "we", "12", 45), ("arena", "135", "2", 30)],
         tastes=(["fancy"], ["music", "sweet"], ["food"]),
         lines={
+            "hello": ["them: Yes? Is there something you need?", "them: Oh. It's you. Hello, I suppose.", "them (pleased): {player}. Good, someone with manners has arrived."],
+            "bye": ["them: Goodbye.", "them: Do try to keep up next time.", "them (pleased): Don't be gone long. ...I'd notice."],
             "hi": ["them: I am Weiss Schnee, heiress to the Schnee Dust Company. Try to keep up.",
                    "them: If you're here to waste my time, please don't."],
             "hi2": "them: {player}. Your timing is... acceptable today.",
@@ -173,6 +185,8 @@ CAST = [
         haunts=[("warehouse", "all", "3", 70), ("alley", "wk", "23", 45), ("library", "135", "2", 30, 2)],
         tastes=(["fancy"], ["book", "drink"], ["sporty"]),
         lines={
+            "hello": ["them: Oh? You're approaching me?", "them (pleased): Ah, you again. You amuse me.", "them (pleased): You've come back to DIO. Wise."],
+            "bye": ["them: Leave my sight.", "them: Go, while DIO is in a good mood.", "them (pleased): Return to me. Your time is mine now."],
             "hi": ["them: Oh? You're approaching me?",
                    "them: Instead of running away, you come right to me? How bold."],
             "hi2": "them: You again. Few dare approach DIO twice.",
@@ -201,6 +215,8 @@ CAST = [
         haunts=[("cafe", "wk", "12", 55), ("plaza", "we", "01", 45), ("beach", "135", "2", 30)],
         tastes=(["fancy"], ["flowers", "sweet"], ["spicy"]),
         lines={
+            "hello": ["them: Hello. Did you need something?", "them (pleased): {player}. Good to see you. Shall we talk?", "them (pleased): {player}. I was hoping you'd come. Sit."],
+            "bye": ["them: Arrivederci.", "them (pleased): Arrivederci, {player}.", "them (pleased): Arrivederci. Come back soon. I mean it."],
             "hi": ["them: I, Giorno Giovanna, have a dream. And I'm happy to tell you about it.",
                    "them: You look like someone who's searching for something. So am I."],
             "hi2": "them: {player}. Good to see you. Coffee?",
@@ -229,6 +245,8 @@ CAST = [
         haunts=[("beach", "wk", "12", 55), ("arena", "we", "12", 45), ("plaza", "024", "2", 35)],
         tastes=(["cool"], ["music", "sporty"], ["fancy"]),
         lines={
+            "hello": ["them: You lookin' at something?", "them (pleased): Hey, {player}. Good. I need someone to talk to.", "them (pleased): There's my partner. C'mon, let's go cause trouble."],
+            "bye": ["them: Yeah, see ya.", "them (pleased): Later! Keep your guard up.", "them (pleased): Come back soon. I'm not done with you yet."],
             "hi": ["them: You want a fight? Quit talking and come at me.",
                    "them: Jolyne Cujoh. Don't call me Jojo. Okay, you can call me Jojo."],
             "hi2": "them (pleased): Yo, {player}! You look like you need someone to get into trouble with.",
@@ -257,6 +275,8 @@ CAST = [
         haunts=[("library", "wk", "12", 55), ("forest", "we", "23", 40), ("shrine", "135", "1", 30)],
         tastes=(["book"], ["drink", "calm"], ["sporty"]),
         lines={
+            "hello": ["them: Oh? A new visitor. How curious.", "them (pleased): Ah, {player}. Do sit. I have so many questions.", "them (pleased): My favourite subject. I've been longing to see you."],
+            "bye": ["them: Farewell, for now.", "them (pleased): Do come again. The tea will be waiting.", "them (pleased): Come back soon. I'd hate to have to come and find you."],
             "hi": ["them: Welcome to my tea party. I'd so love to know what you're made of.",
                    "them: A visitor. How delightful. Do you have any interesting knowledge to share?"],
             "hi2": "them (pleased): {player}. I've prepared tea. Bodily fluids not included, I promise.",
@@ -284,6 +304,8 @@ CAST = [
         haunts=[("forest", "wk", "01", 55), ("plaza", "we", "12", 45), ("shrine", "135", "2", 30)],
         tastes=(["cute"], ["flowers", "sweet"], ["spicy"]),
         lines={
+            "hello": ["them: Oh, hello. Are you alright?", "them (pleased): {player}! I'm so happy to see you.", "them (pleased): {player}! I was hoping today would be a you day."],
+            "bye": ["them: Okay. Take care.", "them (pleased): Bye bye! Let's talk again soon!", "them (pleased): Come back soon, okay? I'll miss you. Really!"],
             "hi": ["them (pleased): I'm Emilia. Just Emilia. Let's have a fair match, okay?",
                    "them: Oh, hello! You don't mind that I'm a half-elf? Most people do."],
             "hi2": "them (pleased): {player}! Puck says you're a good person. He's never wrong.",
@@ -312,6 +334,8 @@ CAST = [
         haunts=[("cafe", "wk", "01", 55), ("forest", "we", "12", 40), ("school", "135", "2", 30)],
         tastes=(["sweet"], ["calm", "cute"], ["spicy"]),
         lines={
+            "hello": ["them: Rem: 'Welcome.' Ram: 'Hmph. A visitor.'", "them (pleased): Rem: 'It's {player}!' Ram: 'Yes, yes, we see.'", "them (pleased): Rem: 'Welcome home, {player}.' Ram: '...Welcome.'"],
+            "bye": ["them: Rem: 'Goodbye.' Ram: 'Don't trip on the way out.'", "them (pleased): Rem: 'Please come again.' Ram: 'If you must.'", "them (pleased): Rem: 'We'll be waiting.' Ram: 'Rem will. I may be napping.'"],
             "hi": ["them: Rem: 'Sister, a guest.' Ram: 'A shabby one. Welcome, I suppose.'",
                    "them: Ram: 'You're blocking the path. Move.' Rem: 'Sister, be polite!'"],
             "hi2": "them (pleased): Rem: 'It's {player}!' Ram: 'Barely tolerable today. Good.'",

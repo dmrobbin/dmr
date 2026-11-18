@@ -23,8 +23,8 @@ week, and each CPU has places it can be found at certain times.
 
 These are noted here so they can be changed.
 
-- **What moves time on:** a duel (win or lose), and "wait", which skips to the next slot. Travelling between places,
-  talking, gifts and shopping are free, so looking around is never punished.
+- **What moves time on:** a duel (win or lose), and "pass time". Looking around (travelling, the map) and shopping
+  are free. Since "Spending the time" (below), talking and gifts commit the player to the place until time passes.
 - **The portrait belongs to the account, not to a save.** Every save shows the same player. Change to per-save if each
   save should be a different character.
 - **The set must have 100+ cards that can come from packs.** Promos and trial deck cards (`packs.NOT_IN_PACKS`)
@@ -150,7 +150,7 @@ the town says when the equipped deck isn't ready to duel).
   part of the day; after night a new day, and `today` is cleared) and `town`, the state the page draws.
 - **The page** (`static/weiss/world_town.js`) draws what the server says and posts each move with the save's
   `version`. A move from a tab that's behind is refused (409) with the town as it is now, so two tabs can't both
-  spend the same time; a tab coming back into view catches up by itself. Keys: M for the map, W to wait.
+  spend the same time; a tab coming back into view catches up by itself. Keys: M for the map, W to pass time.
 - **Nobody's in the town yet:** people come with their schedules in phase 3. Until then the town test
   (`world/test/`) still shows how meeting them will feel; it goes once phases 3 and 4 have brought that over.
 
@@ -436,6 +436,41 @@ on points alone, as before. World mode stays staff-only until the quests are in.
 - The quests themselves.
 - A `visit` objective's scene is skipped if another scene is already waiting to be watched when the player arrives.
 - Editing a quest that saves have started changes it under them. The editor warns, but nothing migrates their place.
+
+## Spending the time, and time passing — built
+
+Time is the player's budget. Where to go and whom to see should be a choice.
+
+- **Spending a time of day** (`world.engaged`):
+  - Looking around (travel, the map) and the shop are free.
+  - Talking to someone, giving a gift, anything about a quest, or starting a duel spends the time of day at that place.
+    The map gives way to "Pass time" until it passes, and travel is refused.
+  - Passing time needs the time to have been spent with someone, so the old Wait button is gone. The exception: with
+    nobody out anywhere in town, time can pass anyway, so a save can't get stuck.
+  - At most one talk with each person per time of day, plus one gift each a day as before. So at a place with two
+    people, the most a time of day holds is two talks, two gifts and a duel, and the duel passes the time itself.
+  - The first time the player spends a time of day, the town says so.
+- **Time passing** (`world_town.js` `passage`): over the stage, the sky turns and the sun moves along its arc. Into
+  the night, the moon fades in instead. The new day and time are shown, then the place as it is now. It runs:
+  - after "Pass time";
+  - when the player comes back from a duel. That page arrives with the transition already covering the place, so
+    nobody vanishes on screen. It starts from the duel's own time (`last_duel["before"]`), and if the CPU duelled has
+    moved on, the town says they've gone on their way.
+
+  A click or key skips it, and reduced motion gets a short fade.
+- **Where now?** (`world.choosing`): every time time passes, whether you waited or a duel ended, the map opens under
+  the transition and has to be answered. The place the player is at is offered as "Stay here". It can't be closed,
+  and nobody can be talked to or duelled until a place is chosen. It's kept on the save, so a reload brings it back.
+- **Staff test mode** (`world.test_mode`, `flags["test_mode"]`, staff only):
+  - A "Test mode" toggle in the town's bar, dashed so it never looks like part of the game.
+  - When it's on: a "Wait (staff)" button passes time whenever, travel is free, and the map after time passes can be
+    skipped.
+  - When it's off: staff play by the real rules.
+- **Hello and goodbye** (chatter contexts `hello` and `goodbye`, first line only, migration 0057):
+  - What a CPU says when the player walks up and leaves, by rank, picked once per time of day.
+  - Built-in lines cover a stranger, a friend and a close friend. An estranged CPU is cold.
+  - All 75 CPUs have their own: three of each in `world_pack/src` (`hello` and `bye`: a stranger's, a friend's
+    (rank 2) and a close friend's (rank 4)), built into the packs. Re-import the six packs to put them live.
 
 ## Testing
 

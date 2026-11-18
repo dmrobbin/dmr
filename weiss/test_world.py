@@ -510,6 +510,8 @@ class DuelTests(TestCase):
         room.save(update_fields=["state"])
         world.game_finished(room, over)
         self.save.refresh_from_db()
+        if world.choosing(self.save):  # back in town, the player answers the map: staying put
+            world.travel(self.save, world.place_of(self.save).key)
 
     def test_a_duel_is_a_game_against_someone_here(self):
         room = world.start_duel(self.save, self.cinder.pk)
@@ -799,6 +801,7 @@ class MapTests(TestCase):
         self.assertEqual((who["beach"], who["cafe"], who["plaza"]), (["Cinder", "Katara"], [], []))
         self.assertIn("avatar", town["places"][0]["who"][0] if town["places"][0]["who"] else {"avatar": None})
         for _ in range(3):
+            world.engage(save)  # time passes once it's spent with someone
             world.wait(save)
         who = {p["key"]: [person["name"] for person in p["who"]] for p in world.town(save)["places"]}
         self.assertEqual(who["cafe"], ["Mai"])

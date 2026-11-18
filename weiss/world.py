@@ -294,27 +294,94 @@ def place_of(save, known=None):
     return next((place for place in known if place.key == save.place), known[0] if known else None)
 
 
+THIS_TIME = ("this morning", "this afternoon", "this evening", "tonight")  # "You've spent this morning here"
+
+
+def this_time(save):
+    return THIS_TIME[save.turn % len(WorldSave.TIMES)]
+
+
+def engaged(save):
+    """Whether the player has spent this time of day with someone where they are (talked, given a gift, a quest, a
+    duel): they stay till it passes. The shop doesn't count."""
+    return save.today.get("engaged") == save.turn
+
+
+def engage(save):
+    save.today["engaged"] = save.turn
+
+
+def test_mode(save):
+    """Staff testing: time can be passed whenever (the staff Wait) and travel is free, so schedules and quests can be
+    checked quickly. Off, staff play by the same rules as everyone."""
+    return bool(save.flags.get("test_mode")) and save.user.is_staff
+
+
+def set_test_mode(save, on):
+    if not save.user.is_staff:
+        raise ValueError("Test mode is for staff.")
+    save.flags["test_mode"] = bool(on)
+    changed(save, "flags")
+
+
+def choosing(save):
+    """Whether time has just passed and the player hasn't yet chosen where to spend the new time of day (the map, which
+    has to be answered: staying where they are is a choice too). Nobody can be talked to or duelled till then."""
+    return save.flags.get("choose") == save.turn and not test_mode(save)
+
+
+def time_passed(save):
+    """A new time of day (waited, or a duel's over): a new day clears what was done today, visits are checked, and
+    the player chooses where to go next."""
+    save.turn += 1
+    if save.turn % len(WorldSave.TIMES) == 0:
+        save.today = {}
+    save.flags["choose"] = save.turn
+    quests.arrived(save)
+
+
+def anyone_out(save):
+    return bool(whereabouts(save))
+
+
+def can_wait(save):
+    """(whether time can be passed now, why not): once the player's spent the time with someone, or if there's nobody
+    in town to spend it with. Not while a duel's under way."""
+    if live_duel(save):
+        return False, "You're in a duel: finish it first."
+    if engaged(save) or not anyone_out(save):
+        return True, ""
+    return False, "Spend this time with someone first: talk, give a gift or duel. Or travel to find someone."
+
+
 def travel(save, key):
-    """Go to a place: free, any time. Raises ValueError if the save can't go there."""
+    """Go to a place (or stay where the player is, answering the map after time passes): free, until the player
+    spends the time with someone (engaged), and then not until it passes. Raises ValueError if they can't go there."""
     place = next((place for place in places(save) if place.key == key), None)
     if not place:
         raise ValueError("You can't go there.")
+    if engaged(save) and place.key != save.place and not test_mode(save):
+        raise ValueError(f"You've spent {this_time(save)} here: pass time before you go somewhere else.")
+    chose = save.flags.pop("choose", None) is not None
     if place.key != save.place:
         save.place = place.key
         quests.arrived(save)
         changed(save, "place", "quests", "flags")
+    elif chose:
+        changed(save, "flags")
     return place
 
 
-def wait(save):
+def wait(save, staff=False):
     """Let time pass to the next part of the day; after night comes a new day, and what was done today is forgotten.
-    Not while a duel's under way: it takes up the time it's in."""
-    if live_duel(save):
-        raise ValueError("You're in a duel: finish it first.")
-    save.turn += 1
-    if save.turn % len(WorldSave.TIMES) == 0:
-        save.today = {}
-    quests.arrived(save)
+    Only once the time's been spent with someone (can_wait), and not while a duel's under way; `staff`: the test
+    mode's Wait, any time."""
+    allowed, why = can_wait(save)
+    if staff and test_mode(save):
+        allowed, why = (False, "You're in a duel: finish it first.") if live_duel(save) else (True, "")
+    if not allowed:
+        raise ValueError(why)
+    time_passed(save)
     changed(save, "turn", "today", "quests", "flags")
 
 
@@ -483,6 +550,8 @@ def start_duel(save, cpu_id, high_stakes=False):
 
     if live_duel(save):
         raise ValueError("Finish the duel you're in first.")
+    if choosing(save):
+        raise ValueError("Time has moved on: choose where to go first.")
     if (problem := deck_problem(save)):
         raise ValueError(f"Your equipped deck can't duel yet: {problem[0].lower()}{problem[1:]}")
     found = next(((cpu, rule) for cpu, rule in present(save) if str(cpu.pk) == str(cpu_id)), None)
@@ -502,7 +571,8 @@ def start_duel(save, cpu_id, high_stakes=False):
     seat_cpu(room, cpu)
     room.save()
     quests.duel_started(save, room)
-    changed(save, "money", "quests")
+    engage(save)
+    changed(save, "money", "quests", "today")
     return room
 
 
@@ -537,12 +607,12 @@ def game_finished(room, over):
         save.flags["last_duel"] = {"room": room.pk, "cpu": room.cpu_name, "cpu_id": room.cpu_profile_id, "won": won, "coins": coins,
                                    "first": first, "stake": room.world_stake, "seen": False, "points": points,
                                    "rank_up": rank_names()[after] if after > before else "", "rank_line": rank_line, "scene": scene,
-                                   "rewards": rewards}
+                                   "rewards": rewards,
+                                   # When it started, for the town's time-passing to go from.
+                                   "before": {"time": save.turn % len(WorldSave.TIMES), "label": f"{save.weekday} {save.time_of_day.lower()}",
+                                              "day": save.day}}
         quests.duel_finished(save, room, won)
-        save.turn += 1
-        if save.turn % len(WorldSave.TIMES) == 0:
-            save.today = {}
-        quests.arrived(save)
+        time_passed(save)
         changed(save, "money", "today", "flags", "turn", "relations", "pool", "gifts", "last_opening", "quests")
 
 
@@ -710,7 +780,7 @@ GIFT_POINTS = {"loved": 12, "liked": 6, "neutral": 2, "disliked": -4}
 GIFTS_PER_DAY = 1  # gifts to each CPU a day
 GAIN = {"warm": 1.5, "friendly": 1.25, "neutral": 1.0, "aloof": 0.75, "villain": 0.6}  # by temperament: talk, gifts and duels
 MAX_GIFTS = 99  # of each item held
-RESERVED_FLAGS = {"last_duel", "set", "scene"}
+RESERVED_FLAGS = {"last_duel", "set", "scene", "choose", "test_mode"}
 TALK_FIELDS = ("relations", "today", "flags", "money", "gifts", "pool", "last_opening", "quests")  # what talking can change
 
 
@@ -986,7 +1056,10 @@ def stake_with(save, cpu_id, rule=None):
 
 
 def someone_here(save, cpu_id):
-    """The CPU (here now) the player's acting on. Raises ValueError if they aren't."""
+    """The CPU (here now) the player's acting on. Raises ValueError if they aren't, or if the player has yet to choose
+    where to spend this time of day."""
+    if choosing(save):
+        raise ValueError("Time has moved on: choose where to go first.")
     cpu = next((cpu for cpu, _ in present(save) if str(cpu.pk) == str(cpu_id)), None)
     if not cpu:
         raise ValueError("They aren't here now.")
@@ -1049,6 +1122,10 @@ def talk(save, cpu_id):
     """Talk to someone here: the day's first talk with them brings points."""
     cpu = someone_here(save, cpu_id)
     rel = relation(save, cpu.pk)
+    if rel.get("talked_turn") == save.turn:
+        raise ValueError(f"You've talked with {cpu.name} {this_time(save)} already.")
+    rel["talked_turn"] = save.turn
+    engage(save)
     cold = quests.estranged(save, cpu.pk)  # a choice closed this friendship: they say so (their own lines, or the built-in)
     if rel.get("talked") == save.day:
         return converse(save, cpu, "estranged" if cold else "again")
@@ -1105,6 +1182,7 @@ def quest_act(save, cpu_id, act, key, data):
     over, or choose how it ends. What the town gets: {"talk": {...}}, as converse."""
     cpu = someone_here(save, cpu_id)
     quest = quests.find_quest(save, key)
+    engage(save)
     if act == "offer":
         if quest.giver_id != cpu.pk or not quests.offerable(save, quest):
             raise ValueError(f"{cpu.name} isn't offering that now.")
@@ -1178,6 +1256,7 @@ def give(save, cpu_id, key):
     rel = relation(save, cpu.pk)
     if rel.get("gifted") == save.day:
         raise ValueError(f"You've given {cpu.name} something today already.")
+    engage(save)
     save.gifts[key] -= 1
     if not save.gifts[key]:
         del save.gifts[key]
@@ -1223,6 +1302,20 @@ def give_tastes(cpus=None):
 
 # ---------------------------------------------------------------- The town, as the page shows it
 
+def greetings(save, cpu):
+    """{"hello", "bye"}: what this CPU says when the player walks up and leaves, by how well they know each other
+    (its own lines, or the built-in ones), the same all through a time of day. Cold, if a choice estranged them."""
+    fill = filler(save, cpu)
+    if quests.estranged(save, cpu.pk):
+        own = chatter.first_line(cpu, "estranged", 0, fill, random.Random(f"{save.seed}:{save.turn}:{cpu.pk}:cold"))
+        return {"hello": own or fill(chatter.COLD["hello"].split(": ", 1)[1]), "bye": fill(chatter.COLD["goodbye"].split(": ", 1)[1])}
+    rank = rank_of(save, cpu.pk)
+    said = {}
+    for key, context in (("hello", "hello"), ("bye", "goodbye")):
+        said[key] = chatter.first_line(cpu, context, rank, fill, random.Random(f"{save.seed}:{save.turn}:{cpu.pk}:{context}"))
+    return said
+
+
 def town_news(save):
     """What's happened to the save's quests since the page last heard (a duel won, somewhere reached): told once."""
     found = save.quests.pop("news", None)
@@ -1251,6 +1344,7 @@ def town(save):
         "places": [{"key": p.key, "name": p.name, "backdrop": p.backdrop(time), "here": here is not None and p.key == here.key,
                     "who": by_place.get(p.key, [])} for p in known],
         "people": [{"id": cpu.pk, "name": cpu.name, "portraits": cpu_portraits(cpu), "stake": stake_with(save, cpu.pk, rule),
+                    **greetings(save, cpu), "talked_now": save.relations.get(str(cpu.pk), {}).get("talked_turn") == save.turn,
                     "intro": chatter.first_line(cpu, "before_duel", rank_of(save, cpu.pk), filler(save, cpu)) or cpu.intro_text,
                     "duelled": cpu.pk in save.today.get("duelled", []), "relation": standing(save, cpu.pk),
                     "offer": offered_stake(save, cpu.pk), "quests": quests.actions(save, cpu)} for cpu, rule in people],
@@ -1259,6 +1353,10 @@ def town(save):
         "gifts": inventory(save),
         "shop": shop(save) if here and here.shop else None,
         "deck_ready": deck_problem(save) is None,
+        # Spending the time: once the player's spent it with someone here, they stay till they pass it.
+        "engaged": engaged(save) and not test_mode(save), "can_wait": can_wait(save)[0], "wait_why": can_wait(save)[1],
+        "choose": choosing(save), "test_mode": test_mode(save), "staff": save.user.is_staff,
+        "next_time": WorldSave.TIMES[(save.turn + 1) % len(WorldSave.TIMES)],
         "duel": {"url": reverse("weiss:play_room", args=[duel.pk]), "cpu": duel.cpu_name} if duel else None,
         # A scene still to watch (a rank-up's, a quest's): kept until it's seen, wherever the player went in between.
         "scene": scene_waiting(save),

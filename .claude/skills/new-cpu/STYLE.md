@@ -113,6 +113,8 @@ What a CPU does in world mode's town, in its file's `world` part.
 - **Chatter**, in the character's voice, short (1–4 lines each; a choice at most in a greeting):
   - `greet`: 3 lines: 2 for rank 0 (meeting a stranger), 1 for rank 2 or more (a friend).
   - `again`: 1 line.
+  - `hello` and `goodbye`: 3 each, one spoken line apiece, for rank 0 (a stranger), rank 2 (a friend) and rank 4
+    (a close friend), warming up as they go: said when the player walks up and leaves, every time, so keep them short.
   - `gift_loved`, `gift_disliked`: 1 line each (liked and neutral can use the built-in lines).
   - `before_duel`, `after_win`, `after_loss`: 1 line each, one spoken line apiece (only the first line is said). The
     profile's intro and win/lose texts are for games; these are the town's, shorter.

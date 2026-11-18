@@ -204,6 +204,9 @@ STARTERS = {  # a new line's script, by context
     "after_win": "them (dismayed): Not bad.",
     "after_loss": "them (pleased): Good game.",
     "rank_up": "them (pleased): I'm glad we met, {player}.",
+    "estranged": "them (dismayed): …Oh. It's you.",
+    "hello": "them: Oh, hello.",
+    "goodbye": "them: See you around.",
 }
 
 

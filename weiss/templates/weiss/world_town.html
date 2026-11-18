@@ -11,7 +11,7 @@
        data-duel-url="{% url 'weiss:world_duel' save.slot %}" data-buy-card-url="{% url 'weiss:world_buy_card' save.slot %}"
        data-buy-gift-url="{% url 'weiss:world_buy_gift' save.slot %}" data-talk-url="{% url 'weiss:world_talk' save.slot %}"
        data-answer-url="{% url 'weiss:world_answer' save.slot %}" data-give-url="{% url 'weiss:world_give' save.slot %}" data-decks-url="{% url 'weiss:world_save' save.slot %}#decks"
-       data-quest-url="{% url 'weiss:world_quest' save.slot %}"
+       data-quest-url="{% url 'weiss:world_quest' save.slot %}" data-test-mode-url="{% url 'weiss:world_test_mode' save.slot %}"
        data-portraits="{% static 'weiss/portraits/parts.json' %}" data-player="{{ request.user.username }}">
     {% csrf_token %}
     <div class="town-bar">
@@ -21,8 +21,16 @@
       <div class="town-actions">
         <a class="button-small secondary town-quests" href="{% url 'weiss:world_quests' save.slot %}" data-quests>Quests<span data-quests-count></span></a>
         <button type="button" class="button-small" data-open-shop aria-expanded="false" aria-controls="town-shop" hidden>Shop counter</button>
-        <button type="button" class="button-small secondary" data-open-map aria-expanded="false" aria-controls="town-map">Map</button>
-        <button type="button" class="button-small secondary" data-wait>Wait</button>
+        <button type="button" class="button-small secondary" data-open-map aria-expanded="false" aria-controls="town-map"{% if town.engaged %} hidden{% endif %}>Map</button>
+        <button type="button" class="button-small" data-wait{% if not town.can_wait %} hidden{% endif %}>Pass time: {{ town.next_time|lower }}</button>
+        {% if town.staff %}
+          {# Staff testing (world.test_mode): Wait any time and go anywhere; off, staff play by the real rules. #}
+          <button type="button" class="button-small secondary town-staff" data-staff-wait{% if not town.test_mode %} hidden{% endif %}>Wait (staff)</button>
+          <button type="button" class="button-small secondary town-staff" data-test-mode aria-pressed="{% if town.test_mode %}true{% else %}false{% endif %}"
+                  title="Staff only: Wait any time and travel freely, for testing">{% if town.test_mode %}Test mode: on{% else %}Test mode{% endif %}</button>
+        {% else %}
+          <button type="button" data-staff-wait hidden></button><button type="button" data-test-mode hidden></button>
+        {% endif %}
       </div>
     </div>
     <p class="small town-notice" data-duel-banner hidden></p>
@@ -63,9 +71,10 @@
 
       <section class="town-map" id="town-map" data-map hidden aria-label="Map">
         <div class="town-map-head">
-          <h2>Where to?</h2>
+          <h2 data-map-title>Where to?</h2>
           <button type="button" class="button-small secondary" data-close-map>Close</button>
         </div>
+        <p class="small muted town-map-note" data-map-note hidden></p>
         <ul class="town-places" data-places></ul>
       </section>
 
@@ -105,8 +114,20 @@
         </div>
       </section>
       <p class="town-toast" data-toast aria-live="polite"></p>
+
+      {# Time passing (world_town.js passage): back from a duel, the page comes with it already covering the place. #}
+      <div class="town-passage{% if result.before %} is-on{% endif %}" data-passage data-time="{% if result.before %}{{ result.before.time }}{% else %}{{ town.time }}{% endif %}"{% if not result.before %} hidden{% endif %}>
+        <div class="town-passage-sky" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+        <span class="town-passage-orb" aria-hidden="true"></span>
+        <div class="town-passage-words" role="status">
+          <p class="town-passage-note" data-passage-note>{% if result.before %}After your duel with {{ result.cpu }}{% endif %}</p>
+          <p class="town-passage-when" data-passage-when>{% if result.before %}Day {{ result.before.day }} · {{ result.before.label }}{% endif %}</p>
+        </div>
+        <p class="town-passage-skip small" aria-hidden="true">Click to skip</p>
+      </div>
     </div>
-    <p class="small muted town-help">Click someone to talk to them. Travelling, talking and gifts are free; a duel or waiting moves the day on. Keys: M map, W wait, Esc back.</p>
+    <p class="small muted town-help">Look around and shop as much as you like. Once you talk to someone, give a gift or duel, you're spending this
+      time of day here: talk to and give gifts to whoever's around, then pass time (a duel passes it by itself). Keys: M map, W pass time, Esc back.</p>
   </div>
   <form method="post" action="{% url 'weiss:world_buy' save.slot %}" data-buy-form hidden>
     {% csrf_token %}<input type="hidden" name="set"><input type="hidden" name="count">

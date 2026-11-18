@@ -44,6 +44,7 @@ urlpatterns = [
     path("world/<int:slot>/town/answer/", world_views.world_answer, name="world_answer"),
     path("world/<int:slot>/town/give/", world_views.world_give, name="world_give"),
     path("world/<int:slot>/town/quest/", world_views.world_quest, name="world_quest"),
+    path("world/<int:slot>/town/test-mode/", world_views.world_test_mode, name="world_test_mode"),
     path("world/<int:slot>/quests/", world_views.world_quests, name="world_quests"),
     path("world/<int:slot>/scene/", world_views.world_scene, name="world_scene"),
     path("world/places/", world_staff_views.world_places, name="world_places"),

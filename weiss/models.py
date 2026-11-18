@@ -824,6 +824,7 @@ class Chatter(models.Model):
         ("before_duel", "Before a duel (its first line)"), ("after_win", "After the player wins (its first line)"),
         ("after_loss", "After the player loses (its first line)"), ("rank_up", "Reaching its rank (min rank)"),
         ("estranged", "Talking, once a quest choice has closed its friendship for good"),
+        ("hello", "Walking up to it (its first line)"), ("goodbye", "Leaving it (its first line)"),
     ]
 
     cpu = models.ForeignKey("CpuProfile", null=True, blank=True, on_delete=models.CASCADE, related_name="chatter",

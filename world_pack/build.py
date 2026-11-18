@@ -10,7 +10,9 @@ A cast file has CAST = [cpu(...), ...]. In a CPU:
 - tastes: (loves, likes, dislikes), lists of gift tags.
 - lines: chatter by moment, each a script (lines split on "\\n"): hi (a list: greetings for a stranger), hi2 (a
   friend's greeting, rank 2), hi4 (a close friend's, rank 4), again, loved, disliked, before, won (after the player
-  wins), lost (after the player loses), r1, r3, r4 (what reaching ranks 1, 3 and 4 says).
+  wins), lost (after the player loses), r1, r3, r4 (what reaching ranks 1, 3 and 4 says); hello and bye (each a list
+  of three one-line scripts: what it says when the player walks up and when they leave, to a stranger, a friend
+  (rank 2) and a close friend (rank 4)).
 - friend, best: the scenes reaching Friend (rank 2) and Best friend (rank 5) play, as script lines; the cast line
   for the CPU (as `me`) is added at the top. "me (pleased):" and "me (dismayed):" become its screens.
 - quests (optional): the quests it gives, as weiss.quests writes them (without the giver: it's this CPU). The ones
@@ -22,6 +24,7 @@ import json
 from pathlib import Path
 
 HERE = Path(__file__).parent
+GREETING_RANKS = (0, 2, 4)  # hello and bye: a stranger's, a friend's, a close friend's
 DAYS = {"wk": [0, 1, 2, 3, 4], "we": [5, 6], "all": list(range(7))}
 MOMENTS = {"again": ("again", 0), "loved": ("gift_loved", 0), "disliked": ("gift_disliked", 0), "before": ("before_duel", 0),
            "won": ("after_win", 0), "lost": ("after_loss", 0), "hi2": ("greet", 2), "hi4": ("greet", 4),
@@ -57,6 +60,9 @@ def entry(spec):
     for key, (context, rank) in MOMENTS.items():
         if key in spec["lines"]:
             chatter.append({"context": context, "min_rank": rank, "script": spec["lines"][key].split("\n")})
+    for key, context in (("hello", "hello"), ("bye", "goodbye")):
+        for rank, script in zip(GREETING_RANKS, spec["lines"].get(key, [])):
+            chatter.append({"context": context, "min_rank": rank, "script": [script]})
     scenes = []
     for rank, title, lines in ((2, "Friend", spec["friend"]), (5, "Best friend", spec["best"])):
         scene = f"World: {name}, {title}"

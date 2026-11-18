@@ -60,7 +60,7 @@
       back.textContent = "Back to the duel";
       banner.append(back);
     }
-    waitButton.disabled = Boolean(town.duel);
+    paintTime();
     $("[data-deck-notice]").hidden = town.deck_ready;
     paintQuests();
     const waiting = $("[data-scene-waiting]");
@@ -188,6 +188,85 @@
     toastTimer = setTimeout(() => toast.classList.remove("town-toast-on"), 4200);
   }
 
+  // Spending the time: free to look around until the player talks to someone, gives a gift or duels; then the map
+  // gives way to passing time (weiss.world.engaged). With nobody out anywhere, time can pass anyway.
+  const thisTime = () => ["this morning", "this afternoon", "this evening", "tonight"][town.time]; // as weiss.world.this_time
+  function paintTime() {
+    if (town.engaged && !map.hidden) closeMap(false);
+    mapButton.hidden = town.engaged || town.choose; // while choosing, the map is already open and has to be answered
+    // Time has just passed: where now? The map has to be answered (staying is a choice). Opened under the passage's
+    // cover, so it's there when the new time of day is shown.
+    if (town.choose && (map.hidden || !mapRequired)) openMap(true);
+    else if (!town.choose && mapRequired) closeMap(false);
+    const staffWait = $("[data-staff-wait]");
+    const testToggle = $("[data-test-mode]");
+    testToggle.hidden = !town.staff;
+    testToggle.setAttribute("aria-pressed", String(Boolean(town.test_mode)));
+    testToggle.textContent = town.test_mode ? "Test mode: on" : "Test mode";
+    staffWait.hidden = !town.test_mode;
+    staffWait.disabled = busy || Boolean(town.duel);
+    waitButton.hidden = !town.can_wait;
+    waitButton.textContent = `Pass time: ${town.next_time.toLowerCase()}`;
+    waitButton.title = town.engaged ? `You've spent ${thisTime()} here. Pass time to go somewhere else.` : "There's nobody out right now.";
+    waitButton.disabled = busy || Boolean(town.duel);
+  }
+
+  // Time passing, over the stage: the sky turns and the sun (or moon) moves on to the new time of day, then the place
+  // as it is now. `change` redraws underneath while it's covered. A click or key skips it; reduced motion just fades.
+  const passageEl = $("[data-passage]");
+  let skipPassage = null;
+  function passageWords(when, note) {
+    passageEl.querySelector("[data-passage-note]").textContent = note;
+    passageEl.querySelector("[data-passage-when]").textContent = when.day ? `Day ${when.day} · ${when.label}` : when.label;
+  }
+  function passage(from, to, note, change = () => {}) {
+    return new Promise((resolve) => {
+      const timers = [];
+      const at = (ms, fn) => timers.push(setTimeout(fn, ms));
+      let changed = false;
+      const doChange = () => { if (!changed) { changed = true; change(); } };
+      const newDay = to.day !== from.day;
+      const end = () => {
+        timers.forEach(clearTimeout);
+        skipPassage = null;
+        doChange();
+        passageEl.dataset.time = to.time;
+        passageWords(to, newDay ? "A new day" : note);
+        passageEl.classList.remove("is-on");
+        setTimeout(() => {
+          passageEl.hidden = true;
+          if (mapRequired) $("[data-places] .town-place-here, [data-places] button:not(:disabled)")?.focus({ preventScroll: true });
+          resolve();
+        }, reduced ? 0 : 450);
+      };
+      skipPassage = end;
+      passageEl.hidden = false;
+      passageEl.classList.remove("orb-out");
+      passageEl.dataset.time = from.time;
+      passageWords(from, note);
+      if (reduced) {
+        passageEl.classList.add("is-on");
+        doChange();
+        passageEl.dataset.time = to.time;
+        passageWords(to, newDay ? "A new day" : note);
+        at(900, end);
+        return;
+      }
+      requestAnimationFrame(() => passageEl.classList.add("is-on"));
+      if (to.time < from.time || to.time === 3) {
+        // Into the night, or night into morning: the sun (or moon) fades out, and the other fades in where it belongs.
+        at(450, () => passageEl.classList.add("orb-out"));
+        at(800, () => { passageEl.dataset.time = to.time; });
+        at(870, () => passageEl.classList.remove("orb-out"));
+      } else {
+        at(450, () => { passageEl.dataset.time = to.time; }); // the sun moves along its arc
+      }
+      at(850, () => { doChange(); passageWords(to, newDay ? "A new day" : note); }); // the place and the words move on together
+      at(2300, end);
+    });
+  }
+  const nowWhen = () => ({ time: town.time, label: `${town.weekday} ${town.time_name.toLowerCase()}`, day: town.day });
+
   // A soft fade over a change (none for anyone who's asked for less motion).
   function fade(change) {
     if (reduced) return Promise.resolve(change());
@@ -210,7 +289,11 @@
       const response = await fetch(url, { method: "POST", headers: { "X-CSRFToken": csrf }, body });
       const data = await response.json().catch(() => null);
       if (!data) throw new Error("bad answer");
+      const wasEngaged = town.engaged;
       if (data.town) town = data.town;
+      if (!wasEngaged && town.engaged && !data.go && town.place) {
+        say(`You're spending ${thisTime()} at the ${town.place.name}. When you're done here, pass time.`);
+      }
       if (data.error) {
         paint();
         say(data.error);
@@ -222,26 +305,30 @@
       return null;
     } finally {
       busy = false;
-      waitButton.disabled = Boolean(town.duel);
+      paintTime();
     }
   }
 
   async function go(key) {
-    closeMap(false);
-    closeTalk(false);
+    const staying = town.place && key === town.place.key;
     const data = await post(root.dataset.travelUrl, { place: key });
     if (!data) return;
-    await fade(paint);
+    mapRequired = false;
+    closeMap(false);
+    closeTalk(false);
+    if (staying) paint();
+    else await fade(paint);
     say(data.said);
   }
 
-  async function wait() {
-    if (town.duel) return say("You're in a duel: finish it first.");
+  async function wait(staff = false) {
+    if (!staff && !town.can_wait) return say(town.wait_why);
     closeTalk(false);
     const before = new Set(town.people.map((p) => p.name));
-    const data = await post(root.dataset.waitUrl, {});
+    const from = nowWhen();
+    const data = await post(root.dataset.waitUrl, staff ? { staff: "1" } : {});
     if (!data) return;
-    await fade(paint);
+    await passage(from, nowWhen(), "Time passes…", paint);
     const after = new Set(town.people.map((p) => p.name));
     const went = [...before].filter((n) => !after.has(n));
     const came = [...after].filter((n) => !before.has(n));
@@ -397,7 +484,7 @@
     box.hidden = false;
     speaker("them");
     showRelation(person.relation);
-    const hello = person.duelled ? "Back again?" : person.relation && person.relation.rank >= 2 ? `Hey, ${root.dataset.player || "you"}.` : "Hm? Oh, hello.";
+    const hello = person.hello || "Hm? Oh, hello.";
     lines([hello], choices);
   }
 
@@ -433,7 +520,9 @@
         return [`★ Hand over ${item.card}${item.copies > 1 ? ` ×${item.copies}` : ""}`, () => confirmHand(item),
           { quest: true, disabled: Boolean(short), title: short || item.title }];
       }),
-      ["Talk", talk, { title: relation.talked ? "" : "The day's first talk brings them closer." }],
+      ["Talk", talk, person.talked_now
+        ? { disabled: true, title: `You've talked ${thisTime()} already.` }
+        : { title: relation.talked ? "" : "The day's first talk brings them closer." }],
       ["Give a gift", giftMenu, { disabled: Boolean(noGift), title: noGift }],
       ["Duel", () => duel(false), { disabled: Boolean(why), title: why }],
     ];
@@ -707,7 +796,7 @@
 
   function leave() {
     speaker("them");
-    lines(["See you around."], () => closeTalk());
+    lines([talking.bye || "See you around."], () => closeTalk());
   }
 
   function closeTalk(refocus = true) {
@@ -737,18 +826,20 @@
       const button = document.createElement("button");
       button.type = "button";
       button.className = "town-place";
-      button.disabled = place.here;
+      button.disabled = place.here && !mapRequired; // choosing where to spend a new time of day: staying is an answer
       button.innerHTML = `<span class="town-place-art">${window.SceneBackdrops ? SceneBackdrops.draw(place.backdrop) : ""}</span>
         <span class="town-place-name"></span><span class="town-place-who small"></span>`;
       button.querySelector(".town-place-name").textContent = place.name;
+      const hereWords = mapRequired ? " (stay here)" : " (you're here)";
       if (place.here) {
         const note = document.createElement("span");
         note.className = "muted small";
-        note.textContent = " (you're here)";
+        note.textContent = hereWords;
         button.querySelector(".town-place-name").append(note);
+        if (mapRequired) button.classList.add("town-place-here");
       }
       button.querySelector(".town-place-who").append(...whoIsThere(place.who));
-      button.setAttribute("aria-label", `${place.name}${place.here ? " (you're here)" : ""}: ${place.who.length ? place.who.map((p) => p.name).join(", ") : "nobody right now"}`);
+      button.setAttribute("aria-label", `${place.name}${place.here ? hereWords : ""}: ${place.who.length ? place.who.map((p) => p.name).join(", ") : "nobody right now"}`);
       button.addEventListener("click", () => go(place.key));
       item.append(button);
       list.append(item);
@@ -796,16 +887,26 @@
     return items;
   }
 
-  function openMap() {
+  // The map; `required` after time passes: where to spend the new time of day, with no closing it.
+  let mapRequired = false;
+  function openMap(required = false) {
     closeShop(false);
     closeTalk(false);
+    mapRequired = required;
+    $("[data-close-map]").hidden = required;
+    $("[data-map-title]").textContent = required ? "Where to now?" : "Where to?";
+    const note = $("[data-map-note]");
+    note.hidden = !required;
+    note.textContent = required ? `It's ${town.weekday} ${town.time_name.toLowerCase()}. Choose where to spend it: staying here is fine too.` : "";
     listPlaces();
     map.hidden = false;
     mapButton.setAttribute("aria-expanded", "true");
-    $("[data-places] button:not(:disabled)")?.focus({ preventScroll: true });
+    if (!skipPassage) $("[data-places] button:not(:disabled)")?.focus({ preventScroll: true });
   }
 
   function closeMap(refocus = true) {
+    if (mapRequired && town.choose) return; // it has to be answered
+    mapRequired = false;
     map.hidden = true;
     mapButton.setAttribute("aria-expanded", "false");
     if (refocus) mapButton.focus({ preventScroll: true });
@@ -1083,23 +1184,35 @@
     });
   }
   waitButton.addEventListener("click", wait);
+  $("[data-staff-wait]").addEventListener("click", () => wait(true));
+  $("[data-test-mode]").addEventListener("click", async () => {
+    const data = await post(root.dataset.testModeUrl, { on: town.test_mode ? "0" : "1" });
+    if (!data) return;
+    paint();
+    say(data.said);
+  });
   $("[data-news-close]").addEventListener("click", () => {
     const box = $("[data-news]");
     box.hidden = true;
     box.querySelector("ul").replaceChildren();
   });
+  passageEl.addEventListener("click", () => skipPassage && skipPassage());
   document.addEventListener("keydown", (event) => {
+    if (skipPassage && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      event.preventDefault();
+      return skipPassage();
+    }
     if (event.ctrlKey || event.metaKey || event.altKey || event.target.matches("input, textarea, select")) return;
     const key = event.key.toLowerCase();
     if ((key === "enter" || key === " ") && advance && !event.target.closest("button, a")) {
       event.preventDefault();
       advance();
     } else if (key === "escape") {
-      if (!map.hidden) closeMap();
+      if (!map.hidden && !mapRequired) closeMap();
       else if (!shop.hidden) closeShop();
       else if (talking && !advance) closeTalk();
-    } else if (key === "m" && !talking) map.hidden ? openMap() : closeMap();
-    else if (key === "w" && !talking) wait();
+    } else if (key === "m" && !talking && !mapButton.hidden && !mapRequired) map.hidden ? openMap() : closeMap();
+    else if (key === "w" && !talking && !mapRequired) wait(Boolean(town.test_mode && !town.can_wait));
   });
   // Coming back to the tab (from a duel, or another tab): catch up.
   document.addEventListener("visibilitychange", async () => {
@@ -1136,5 +1249,12 @@
     }
     banner.hidden = false;
     banner.querySelector("[data-result-close]").addEventListener("click", () => (banner.hidden = true));
+    if (result.before) {
+      // Back from a duel: the time it took passes over the place (the page came with it covered), and if they've
+      // moved on, say so, so nobody seems to vanish.
+      passage(result.before, nowWhen(), `After your duel with ${result.cpu}`).then(() => {
+        if (!town.people.some((p) => p.id === result.cpu_id)) say(`${result.cpu} has gone on their way.`);
+      });
+    }
   }
 })();

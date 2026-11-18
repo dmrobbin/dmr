@@ -342,9 +342,11 @@ class ObjectiveTests(QuestBase):
 
     def test_going_somewhere_at_a_time(self):
         self.take("q", {"do": "visit", "place": "beach", "times": [3]})
+        self.save.today.pop("engaged")  # taking it was time spent at the plaza: as if taken earlier
         world.travel(self.save, "beach")
         self.assertEqual(quests.status(self.fresh(), "q"), "active")
         for _ in range(3):
+            world.engage(self.save)
             world.wait(self.save)
         self.assertEqual(self.save.time_of_day, "Night")
         self.assertEqual(quests.status(self.fresh(), "q"), "settling")
