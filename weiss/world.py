@@ -1297,10 +1297,17 @@ def level_up(save, cpu):
     rank = rank_of(save, cpu.pk)
     if rank + 1 >= len(rows):
         raise ValueError(f"{cpu.name} is {rows[rank]['name']} already.")
-    need = max(rows[rank + 1]["points"] - relation(save, cpu.pk)["points"], 0)
+    points = relation(save, cpu.pk)["points"]
+    threshold = rows[rank + 1]["points"]
+    gate = quests.gate_quest(save, cpu.pk)
+    gated = gate is not None and gate.gate_rank == rank + 1
+    # A gated rank stops one point short first, so the next press is the one that gives its quest (as points would).
+    target = threshold - 1 if gated and points < threshold - 1 else threshold
+    need = max(target - points, 0)
     if not need:  # the points are there: a gate quest is what holds the rank
-        gate = quests.gate_quest(save, cpu.pk)
-        raise ValueError(f"The next rank waits on “{gate.title}”." if gate else f"{cpu.name} is already at that rank.")
+        if gated:
+            raise ValueError(f"The next rank waits on “{gate.title}”.")
+        raise ValueError(f"{cpu.name} is already at that rank.")
     world = Talk(save, cpu, "staff")
     events = world.points(need)
     if world.ranked_up is not None:

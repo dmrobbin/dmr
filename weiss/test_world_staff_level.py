@@ -6,9 +6,10 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from . import world
+from . import quests, world
 from .models import GiftItem, WorldSave
 from .test_world import SET, everywhere_rule, give_cpu, make_set, staff_user
+from .test_world_quests import make_quest
 
 
 class StaffLevelTests(TestCase):
@@ -52,15 +53,35 @@ class StaffLevelTests(TestCase):
         with self.assertRaisesRegex(ValueError, "already"):
             world.level_up(self.save, self.cinder)
 
-    def test_a_rank_a_quest_holds_back_waits_and_says_what_it_waits_on(self):
-        self.save.relations[str(self.cinder.pk)] = {"points": world.ranks()[2]["points"]}  # the points for rank 2 are there
+    def test_a_gated_rank_stops_short_then_offers_its_quest_then_waits_on_it(self):
+        quest = make_quest("ember", self.cinder, gates=2)
+        world.level_up(self.save, self.cinder)  # rank 1 (Acquaintance): nothing gated yet
+        self.save.refresh_from_db()
+        threshold = world.ranks()[2]["points"]
+        world.level_up(self.save, self.cinder)  # one point short of Friend: the quest isn't offered yet
+        self.save.refresh_from_db()
+        self.assertEqual((self.points(), world.rank_of(self.save, self.cinder.pk)), (threshold - 1, 1))
+        self.assertFalse(quests.offerable(self.save, quest))
+        world.level_up(self.save, self.cinder)  # the next press gives the quest; the rank holds
+        self.save.refresh_from_db()
+        self.assertEqual((self.points(), world.rank_of(self.save, self.cinder.pk)), (threshold, 1))
+        self.assertTrue(quests.offerable(self.save, quest))
+        with self.assertRaisesRegex(ValueError, "Ember"):
+            world.level_up(self.save, self.cinder)  # blocked until the quest is done
+        self.save.quests = {"log": {"ember": {"status": "done"}}}
         self.save.save()
-        gate = SimpleNamespace(title="Ember", key="ember")
-        patches = [mock.patch.object(world.quests, "cap", return_value=1), mock.patch.object(world.quests, "gate_quest", return_value=gate),
-                   mock.patch.object(world.quests, "offerable", return_value=False), mock.patch.object(world.quests, "status", return_value="")]
-        with patches[0], patches[1], patches[2], patches[3]:
+        self.assertEqual(world.rank_of(self.save, self.cinder.pk), 2)  # done: the points are there, so Friend at once
+        world.level_up(self.save, self.cinder)  # and the next press carries on to Good friend
+        self.save.refresh_from_db()
+        self.assertEqual(world.rank_of(self.save, self.cinder.pk), 3)
+
+    def test_a_held_rank_says_which_quest_holds_it(self):
+        self.save.relations[str(self.cinder.pk)] = {"points": world.ranks()[2]["points"]}
+        self.save.save()
+        gate = SimpleNamespace(title="Ember", key="ember", gate_rank=2)
+        with mock.patch.object(world.quests, "gate_quest", return_value=gate),                 mock.patch.object(world.quests, "cap", return_value=1),                 mock.patch.object(world.quests, "offerable", return_value=False),                 mock.patch.object(world.quests, "status", return_value=""):
             with self.assertRaisesRegex(ValueError, "Ember"):
-                world.level_up(self.save, self.cinder)  # the points are there already; the quest holds the rank
+                world.level_up(self.save, self.cinder)
 
     def test_only_staff_in_test_mode_can_use_the_button(self):
         self.save.flags["test_mode"] = False

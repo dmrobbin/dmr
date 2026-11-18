@@ -534,7 +534,10 @@
     }
     if (town.staff && town.test_mode) {  // staff testing: a rank at once, no time spent
       const top = relation.rank + 1 >= relation.ranks;
-      list.push(["⬆ Raise a rank (staff)", raiseLevel, { disabled: top, title: top ? "Already at the top rank." : "Testing: a rank at once." }]);
+      const hint = top ? "Already at the top rank."
+        : relation.gate ? "Testing: stops one point short of the quest, then the next press offers it."
+        : "Testing: a rank at once.";
+      list.push(["⬆ Raise a rank (staff)", raiseLevel, { disabled: top, title: hint }]);
     }
     list.push(["Leave", leave, { quiet: true }]);
     options(list);

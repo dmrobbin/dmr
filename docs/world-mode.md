@@ -489,8 +489,10 @@ Checking a quest or a rank-up scene used to mean playing for days. Two quick rou
 
 - **The talk box's "Raise a rank (staff)" button** (test mode on): takes the person here up one rank at once, by the
   points that rank needs. No time is spent and the daily talk and gift limits don't apply. It plays what a rank reached
-  by points plays (the rank-up line or scene, and that rank's rewards, once). A rank that a gate quest holds back stays
-  put, and the button says which quest it waits on.
+  by points plays (the rank-up line or scene, and that rank's rewards, once).
+  - **A gated rank is tested in steps:** the first press stops one point short of the gate's rank, so the quest isn't
+    offered yet. The next press reaches the rank's points, which offers the quest, and the rank holds. Further presses
+    say which quest holds it. Finishing the quest then lets the rank go up.
 - **The staff token** (a `GiftItem`, migration 0058): 0 coins, sold at the card shop to staff only (players never see
   it, and rank rewards never give it). Giving it does the same as the button, without the day's gift limit or any time.
   It's bought at the shop as any gift is, so staff use the same flow to test.
