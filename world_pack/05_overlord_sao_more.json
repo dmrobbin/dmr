@@ -1688,7 +1688,8 @@
           "place": "cafe",
           "times": [
            0
-          ]
+          ],
+          "scene": "World: Chisato, Cafe"
          }
         ]
        },
@@ -1843,6 +1844,18 @@
       "- Every day with you counts.",
       "- Best friends, Chisato.",
       "me (lose): Best friends! Okay, now we have to do everything fun. Today. Let's go!"
+     ]
+    },
+    {
+     "name": "World: Chisato, Cafe",
+     "script": [
+      "cast me as Chisato Nishikigi",
+      "background cafe",
+      "me enters center with pop",
+      "me: Morning! You're early. Perfect, I haven't opened the shortcake yet.",
+      "player: Am I your first customer?",
+      "me (lose): First friend of the morning! Sit, sit. Takina says I'm too cheerful before noon. She's wrong, obviously.",
+      "me: I'll give you the good slice. Strawberry shortcake, my favourite."
      ]
     }
    ]
@@ -2078,7 +2091,8 @@
           "place": "rooftop",
           "times": [
            3
-          ]
+          ],
+          "scene": "World: Takina, Rooftop"
          }
         ]
        },
@@ -2230,6 +2244,19 @@
       "- Believe it.",
       "- Best friends, Takina.",
       "me (lose): Best friends. Mission parameters: indefinite."
+     ]
+    },
+    {
+     "name": "World: Takina, Rooftop",
+     "script": [
+      "cast me as Takina Inoue",
+      "background rooftop",
+      "me enters left with fade",
+      "me (win): You came. I was starting to think you'd sleep through the job.",
+      "player: You said off the books. This is the roof, so I'm guessing that's the job.",
+      "me: Off the books means nobody sees me up here. Keep low, and keep watch on the street.",
+      "narrator: Below, a figure in a long coat crosses the bridge and is gone between the lamps.",
+      "me: That's the one. Remember the face, and don't go after them. Not yet."
      ]
     }
    ]

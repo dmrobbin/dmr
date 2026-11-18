@@ -416,6 +416,12 @@ on points alone, as before. World mode stays staff-only until the quests are in.
 - Card serials are taken from each CPU's own finalized deck. The dev database holds only a few hundred cards, so the
   pack check ran offline and didn't confirm them; the server's import checks them against the real card table.
 - Not yet played in the browser.
+- **A visit always has something happening.** A visit objective must name its scene (`quests.check` refuses one without),
+  and the scene plays when the player arrives. The pilot's four visits have scenes that cast their CPU: Aang in the
+  forest, Azula and Takina on the rooftop, Chisato at the cafe. A scene casts its CPU whatever their schedule says, so
+  the meeting happens even when they aren't drawn to that place.
+- **Card objectives show the card.** The objective reads "Have the card …", and the quest log and offer panel show the
+  card's picture, colour, level, cost, rarity, type and set, with a note that any printing counts and where to look.
 
 ### Not done
 

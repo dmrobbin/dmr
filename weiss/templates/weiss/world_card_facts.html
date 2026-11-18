@@ -1,0 +1,16 @@
+{% comment %}A card an objective is about: its picture and the facts that say how to get it (see quests.card_facts).{% endcomment %}
+<div class="quest-card-facts">
+  <a class="quest-card-picture" href="{{ card.url }}"><img src="{{ card.image }}" alt="" loading="lazy" width="54" height="75"></a>
+  <div class="quest-card-text">
+    <p class="small"><strong>{{ card.name }}</strong> <span class="muted">{{ card.serial }}</span></p>
+    <dl class="quest-card-stats small">
+      {% if card.color %}<div><dt>Colour</dt><dd>{{ card.color }}</dd></div>{% endif %}
+      {% if card.level is not None %}<div><dt>Level</dt><dd>{{ card.level }}</dd></div>{% endif %}
+      {% if card.cost is not None %}<div><dt>Cost</dt><dd>{{ card.cost }}</dd></div>{% endif %}
+      {% if card.rarity %}<div><dt>Rarity</dt><dd>{{ card.rarity }}</dd></div>{% endif %}
+      {% if card.type %}<div><dt>Type</dt><dd>{{ card.type }}</dd></div>{% endif %}
+      {% if card.set %}<div><dt>Set</dt><dd>{{ card.set }}</dd></div>{% endif %}
+    </dl>
+    {% if card.set %}<p class="small muted">Any printing of it counts. Packs of {{ card.set }} are where to look.</p>{% endif %}
+  </div>
+</div>

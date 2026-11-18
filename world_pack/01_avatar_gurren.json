@@ -250,7 +250,8 @@
           "times": [
            0,
            1
-          ]
+          ],
+          "scene": "World: Aang, Forest"
          }
         ]
        },
@@ -413,6 +414,18 @@
       "me: So, best friends? Real ones. The kind who'd fly across the world for each other.",
       "player: Real ones.",
       "me (intro): Then let's go! There's a whole world to show you, and I'm buying the egg custard tarts!"
+     ]
+    },
+    {
+     "name": "World: Aang, Forest",
+     "script": [
+      "cast me as Aang",
+      "background forest",
+      "me enters left with slide",
+      "me: Appa! Okay, big guy, I know you're hiding somewhere. Momo already checked the treetops.",
+      "player: Any sign of him?",
+      "me (lose): Flattened grass and a lot of bison fur! He came through here. Come on!",
+      "me: Thanks for helping me look. Nobody else in this town even knows he's missing."
      ]
     }
    ]
@@ -1498,7 +1511,8 @@
           "place": "rooftop",
           "times": [
            3
-          ]
+          ],
+          "scene": "World: Azula, Rooftop"
          }
         ]
        },
@@ -1587,6 +1601,18 @@
       "- You're more than your father's daughter.",
       "me (intro): ...If you tell anyone I said this, I'll deny it. But you're my friend. My only real one.",
       "me (lose): Now go. Before I say anything else embarrassing."
+     ]
+    },
+    {
+     "name": "World: Azula, Rooftop",
+     "script": [
+      "cast me as Azula",
+      "background night",
+      "me enters center with rise",
+      "me: You're on time. Most people are late when I ask them to come somewhere at night.",
+      "player: What is this about?",
+      "me (lose): The Avatar is coming for me before my coronation. I want to see who he brings with him.",
+      "me: Watch the street. And try not to look impressed when I'm right."
      ]
     }
    ]

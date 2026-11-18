@@ -8,7 +8,7 @@ AANG_QUESTS = [
                "them: He was napping under a tree, and then he just wasn't there. Momo's no help at all.",
                "them: Could you check the forest? He likes to wander in the mornings."],
      "stages": [
-         {"text": "Search the forest in the morning or at noon", "objectives": [{"do": "visit", "place": "forest", "times": [0, 1]}]},
+         {"text": "Search the forest in the morning or at noon", "objectives": [{"do": "visit", "place": "forest", "times": [0, 1], "scene": "World: Aang, Forest"}]},
          {"text": "Win a duel with Aang: Master of All Elements in your deck", "objectives": [{"do": "win_with", "card": "ATLA/WX04-002"}]},
          {"text": "Tell Aang what you found", "objectives": [{"do": "talk", "to": "Aang", "script": ["them (pleased): You found Appa? Really?!", "them: Thank you, {player}. I owe you one."]}]},
      ],
@@ -51,7 +51,7 @@ AZULA_QUESTS = [
      "stages": [
          {"text": "Beat Aang in a duel", "objectives": [{"do": "defeat", "cpus": ["Aang"]}]},
          {"text": "Have Azula: Verge of Insanity", "objectives": [{"do": "have_card", "card": "ATLA/WX04-050S"}]},
-         {"text": "Watch the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3]}]},
+         {"text": "Watch the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Azula, Rooftop"}]},
          {"text": "Give Azula your answer", "objectives": [{"do": "talk", "to": "Azula", "script": ["them: I've decided. Don't waste my time with sentiment.", "them (pleased): ...Good. Let's begin."]}]},
      ],
      "endings": [
@@ -62,8 +62,26 @@ AZULA_QUESTS = [
      ]},
 ]
 
+# Scenes a quest's visit plays (the quests above name them).
+AANG_SCENES = [{"name": "World: Aang, Forest", "lines": [
+    "background forest",
+    "me enters left with slide",
+    "me: Appa! Okay, big guy, I know you're hiding somewhere. Momo already checked the treetops.",
+    "player: Any sign of him?",
+    "me (pleased): Flattened grass and a lot of bison fur! He came through here. Come on!",
+    "me: Thanks for helping me look. Nobody else in this town even knows he's missing.",
+]}]
+AZULA_SCENES = [{"name": "World: Azula, Rooftop", "lines": [
+    "background night",
+    "me enters center with rise",
+    "me: You're on time. Most people are late when I ask them to come somewhere at night.",
+    "player: What is this about?",
+    "me (pleased): The Avatar is coming for me before my coronation. I want to see who he brings with him.",
+    "me: Watch the street. And try not to look impressed when I'm right.",
+]}]
+
 CAST = [
-    cpu("Aang", "warm", quests=AANG_QUESTS,
+    cpu("Aang", "warm", quests=AANG_QUESTS, extra_scenes=AANG_SCENES,
         haunts=[("plaza", "wk", "01", 60), ("beach", "we", "12", 50), ("shrine", "035", "0", 35), ("cafe", "246", "2", 30)],
         tastes=(["cute"], ["sweet", "game", "calm"], ["spicy"]),
         lines={
@@ -202,7 +220,7 @@ CAST = [
               "me: You're my best friend, {player}. Say it back and I'll punch you. Gently.",
               "choice", "- Best friend.", "- I'll risk the punch.", "me shakes", "me (pleased): Ow, you're tougher than you look. Good."]),
 
-    cpu("Azula", "villain", quests=AZULA_QUESTS,
+    cpu("Azula", "villain", quests=AZULA_QUESTS, extra_scenes=AZULA_SCENES,
         haunts=[("rooftop", "all", "23", 70), ("warehouse", "1356", "3", 50), ("arena", "024", "1", 35, 2)],
         tastes=(["fancy"], ["cool", "spicy"], ["cute"]),
         lines={

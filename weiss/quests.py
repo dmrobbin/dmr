@@ -59,7 +59,7 @@ OBJECTIVES = {  # do: (fields it can have, what it's for: the reference's words)
     "stakes": ({"fee", "against"}, "Win a high-stakes duel with an entry fee of at least this."),
     "streak": ({"wins", "against"}, "Win so many duels in a row (a loss starts it again)."),
     "beat_different": ({"count", "temperament", "cpus"}, "Beat so many different CPUs (of a temperament, or among these)."),
-    "visit": ({"place", "days", "times", "scene"}, "Be at a place (on these days, at these times); a scene can play there."),
+    "visit": ({"place", "days", "times", "scene"}, "Be at a place (on these days, at these times); its scene plays there, so something happens."),
     "give_card": ({"card", "copies", "to"}, "Hand a card over to a CPU, for good: it leaves the save's cards and decks."),
     "give_gift": ({"gift", "to"}, "Give a CPU this gift."),
     "rank": ({"cpu", "rank"}, "Reach this friendship rank with a CPU."),
@@ -225,7 +225,9 @@ def check(data, context=None, giver=None):
                 problems.append(f"{at} (visit): days are a list of 0 (Monday) to 6 (Sunday).")
             if "times" in raw and (not isinstance(raw["times"], list) or any(t not in range(4) for t in raw["times"])):
                 problems.append(f"{at} (visit): times are a list of 0 (morning) to 3 (night).")
-            if raw.get("scene") and not context.scenes(str(raw["scene"])):
+            if not raw.get("scene"):
+                problems.append(f"{at} (visit): name the scene that plays there (scene), so something happens when they arrive.")
+            elif not context.scenes(str(raw["scene"])):
                 problems.append(f"{at} (visit): there's no scene called “{raw['scene']}”.")
         if do in ("give_card", "give_gift", "talk") and "to" not in raw:
             problems.append(f"{at} ({do}): name who it's for in to.")
@@ -805,7 +807,8 @@ def offer_panel(save, quest):
     endings = spec.get("endings", [])
     return {"quest": quest.key, "title": quest.title, "about": spec.get("about", ""), "giver": quest.giver.name if quest.giver else "",
             "first": spec["stages"][0]["text"] if spec.get("stages") else "",
-            "objectives": [describe(save, obj) for obj in spec["stages"][0]["objectives"]] if spec.get("stages") else [],
+            "objectives": [{"text": describe(save, obj), "card": objective_card(save, obj)} for obj in spec["stages"][0]["objectives"]]
+            if spec.get("stages") else [],
             "stages": len(spec.get("stages", [])), "rewards": reward_words(save, quest),
             "choice": len(endings) > 1, "closes": any(e.get("locks") or e.get("removes") for e in endings),
             "gate": world.rank_names()[quest.gate_rank] if quest.gate_rank else ""}
@@ -1077,6 +1080,25 @@ def names(items):
     return items[0] if len(items) == 1 else f"{', '.join(items[:-1])} and {items[-1]}" if items else ""
 
 
+CARD_OBJECTIVES = ("have_card", "give_card", "combo", "win_with")  # objectives about a card: shown with its facts
+
+
+def card_facts(card):
+    """What a player needs to find a card: its picture, colour, level, cost, type, rarity and set (any printing of its
+    name counts, so this is the printing the quest names)."""
+    return {"name": card.name, "serial": card.serial_number, "url": reverse("weiss:card", args=[card.pk]),
+            "image": reverse("weiss:card_image", args=[card.pk]), "color": card.color or "", "level": card.level,
+            "cost": card.cost, "type": card.card_type or "", "rarity": card.rarity or "", "set": card.expansion or ""}
+
+
+def objective_card(save, obj):
+    """The card facts an objective is about, or None."""
+    if obj.get("do") not in CARD_OBJECTIVES or not obj.get("card"):
+        return None
+    card = lookup(save).card(obj["card"])
+    return card_facts(card) if card else None
+
+
 def describe(save, obj):
     """An objective in words, for the quest log and the talk box."""
     if obj.get("text"):
@@ -1086,7 +1108,7 @@ def describe(save, obj):
     vs = f" against {names(obj['against']) if len(obj['against']) < 3 else 'one of ' + names(obj['against'])}" if obj.get("against") else ""
     card = found.card_name(obj["card"]) if obj.get("card") else ""
     if do == "have_card":
-        return f"Have {card}" + (f" ×{obj['copies']}" if obj.get("copies", 1) > 1 else "")
+        return f"Have the card {card}" + (f" ×{obj['copies']}" if obj.get("copies", 1) > 1 else "")
     if do == "collect":
         what = " ".join(filter(None, [obj.get("color")]))
         source = f" with the trait {obj['trait']}" if obj.get("trait") else ""
@@ -1136,7 +1158,7 @@ def describe(save, obj):
             when += " " + " or ".join(AT_TIME[t] for t in times)
         return f"Go to the {place}{when}"
     if do == "give_card":
-        return f"Give {card}" + (f" ×{obj['copies']}" if obj.get("copies", 1) > 1 else "") + f" to {obj['to']}"
+        return f"Give the card {card}" + (f" ×{obj['copies']}" if obj.get("copies", 1) > 1 else "") + f" to {obj['to']}"
     if do == "give_gift":
         item = GiftItem.objects.filter(key=obj["gift"]).first()
         return f"Give {obj['to']} {f'{item.icon} {item.name}'.strip() if item else obj['gift']}"
@@ -1171,7 +1193,8 @@ def journal(save):
                 objectives = []
                 for i, obj in enumerate(stage["objectives"]):
                     have, wanted = progress(save, quest, f"{n}.{i}", obj)
-                    objectives.append({"text": describe(save, obj), "have": have, "need": wanted, "done": have >= wanted})
+                    objectives.append({"text": describe(save, obj), "card": objective_card(save, obj), "have": have, "need": wanted,
+                                       "done": have >= wanted})
                 stages.append({"text": stage["text"], "done": n < entry.get("stage", 0), "objectives": objectives})
             endings = []
             if st == "settling":

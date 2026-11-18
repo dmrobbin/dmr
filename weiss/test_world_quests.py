@@ -341,7 +341,8 @@ class ObjectiveTests(QuestBase):
         self.assertEqual(quests.status(self.save, "q"), "settling")
 
     def test_going_somewhere_at_a_time(self):
-        self.take("q", {"do": "visit", "place": "beach", "times": [3]})
+        Scene.objects.create(name="Beach at night", script="background beach")
+        self.take("q", {"do": "visit", "place": "beach", "times": [3], "scene": "Beach at night"})
         self.save.today.pop("engaged")  # taking it was time spent at the plaza: as if taken earlier
         world.travel(self.save, "beach")
         self.assertEqual(quests.status(self.fresh(), "q"), "active")
@@ -438,6 +439,29 @@ class PageTests(QuestBase):
         self.assertEqual(answer.json()["town"]["quests"]["active"], 1)
         stale = self.client.post(reverse("weiss:world_quest", args=[1]), {"cpu": self.ruby.pk, "act": "accept", "quest": "q", "version": 0})
         self.assertEqual(stale.status_code, 409)
+
+
+class VisitAndCardTests(QuestBase):
+    def test_a_visit_must_name_the_scene_that_plays_there(self):
+        _, problems = quests.check({"key": "q", "title": "Q", "giver": "Ruby", "about": "x", "offer": "",
+                                    "stages": [{"text": "Go", "objectives": [{"do": "visit", "place": "beach"}]}],
+                                    "endings": [{"key": "e", "title": "E"}]})
+        self.assertTrue(any("name the scene" in problem for problem in problems), problems)
+
+    def test_a_card_objective_carries_the_card_to_show(self):
+        card = self.cards[0]
+        Scene.objects.create(name="Beach at night", script="background beach")
+        make_quest("q", self.ruby, stages=[stage({"do": "have_card", "card": card.serial_number}, text="Find the card")])
+        world.quest_act(self.save, self.ruby.pk, "accept", "q", {})
+        objective = quests.journal(self.fresh())["active"][0]["stages"][0]["objectives"][0]
+        self.assertTrue(objective["text"].startswith("Have the card "), objective["text"])
+        self.assertEqual(objective["card"]["serial"], card.serial_number)
+        self.assertEqual(objective["card"]["name"], card.name)
+        self.assertTrue(objective["card"]["image"].endswith("/image/"))
+        self.assertEqual(objective["card"]["set"], card.expansion)
+
+    def test_an_objective_without_a_card_has_no_card_to_show(self):
+        self.assertIsNone(quests.objective_card(self.save, {"do": "talk", "to": "Ruby", "script": ["them: Hi."]}))
 
 
 class RecordTests(TestCase):

@@ -550,6 +550,41 @@
     if (text !== undefined) node.textContent = text;
     return node;
   }
+  // A card an objective asks for, with what says how to get it (quests.card_facts, as the quest log shows it).
+  function cardFacts(card) {
+    const box = el("div", "quest-card-facts");
+    const link = el("a", "quest-card-picture");
+    link.href = card.url;
+    const img = document.createElement("img");
+    Object.assign(img, { src: card.image, alt: "", width: 54, height: 75, loading: "lazy" });
+    link.append(img);
+    const text = el("div", "quest-card-text");
+    const name = el("p", "small");
+    name.append(el("strong", "", card.name), " ", el("span", "muted", card.serial));
+    const stats = el("dl", "quest-card-stats small");
+    for (const [label, value] of [["Colour", card.color], ["Level", card.level], ["Cost", card.cost], ["Rarity", card.rarity], ["Type", card.type], ["Set", card.set]]) {
+      if (value === null || value === undefined || value === "") continue;
+      const row = el("div");
+      row.append(el("dt", "", label), el("dd", "", String(value)));
+      stats.append(row);
+    }
+    text.append(name, stats);
+    if (card.set) text.append(el("p", "small muted", `Any printing of it counts. Packs of ${card.set} are where to look.`));
+    box.append(link, text);
+    return box;
+  }
+
+  // Objectives as {text, card}: a card's facts sit under its line.
+  function objectiveItems(items, className = "") {
+    const ul = el("ul", className);
+    for (const item of items) {
+      const li = el("li", "", item.text);
+      if (item.card) li.append(cardFacts(item.card));
+      ul.append(li);
+    }
+    return ul;
+  }
+
   function bullets(items, className = "") {
     const ul = el("ul", className);
     for (const item of items) ul.append(el("li", "", item));
@@ -580,7 +615,7 @@
     panelEl.append(el("p", "", offer.about));
     const first = el("p", "town-quest-first");
     first.append(el("strong", "", offer.stages > 1 ? `First, of ${offer.stages} steps: ` : "To do: "), offer.first);
-    panelEl.append(first, bullets(offer.objectives, "town-quest-objectives"));
+    panelEl.append(first, objectiveItems(offer.objectives, "town-quest-objectives"));
     if (offer.rewards.length) panelEl.append(el("p", "small", `Reward: ${offer.rewards.join(" · ")}`));
     if (offer.gate) panelEl.append(el("p", "small muted", `Finishing it unlocks ${offer.gate} with ${offer.giver}.`));
     if (offer.closes) {

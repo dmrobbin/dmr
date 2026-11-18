@@ -42,9 +42,9 @@ def staged(line):
     return line
 
 
-def cpu(name, temperament, haunts, tastes, lines, friend, best, quests=None):
+def cpu(name, temperament, haunts, tastes, lines, friend, best, quests=None, extra_scenes=None):
     return {"name": name, "temperament": temperament, "haunts": haunts, "tastes": tastes, "lines": lines, "friend": friend, "best": best,
-            "quests": quests}
+            "quests": quests, "extra_scenes": extra_scenes or []}
 
 
 def entry(spec):
@@ -68,6 +68,9 @@ def entry(spec):
         scene = f"World: {name}, {title}"
         chatter.append({"context": "rank_up", "min_rank": rank, "scene": scene})
         scenes.append({"name": scene, "script": [f"cast me as {name}", *(staged(line) for line in lines)]})
+    # Scenes a quest's visit plays: {"name", "lines"}, cast the same way (a visit always has something happening).
+    for extra in spec.get("extra_scenes", []):
+        scenes.append({"name": extra["name"], "script": [f"cast me as {name}", *(staged(line) for line in extra["lines"])]})
     world = {"temperament": spec["temperament"], "schedule": schedule,
              "gift_tastes": {"loves": loves, "likes": likes, "dislikes": dislikes}, "chatter": chatter}
     if spec.get("quests") is not None:

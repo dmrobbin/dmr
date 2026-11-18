@@ -7,7 +7,7 @@ CHISATO_QUESTS = [
      "offer": ["them (pleased): Oh, hi! Have you tried the shortcake here? It's the best!",
                "them: I'm giving mornings a try. Want to come along?"],
      "stages": [
-         {"text": "Meet Chisato at the cafe in the morning", "objectives": [{"do": "visit", "place": "cafe", "times": [0]}]},
+         {"text": "Meet Chisato at the cafe in the morning", "objectives": [{"do": "visit", "place": "cafe", "times": [0], "scene": "World: Chisato, Cafe"}]},
          {"text": "Bring her a strawberry shortcake", "objectives": [{"do": "give_gift", "gift": "shortcake", "to": "Chisato Nishikigi"}]},
          {"text": "Tell her about your morning", "objectives": [{"do": "talk", "to": "Chisato Nishikigi", "script": ["them (pleased): Ahh, that's perfect. Let's do this again!", "player: I'd like that."]}]},
      ],
@@ -36,7 +36,7 @@ TAKINA_QUESTS = [
      "offer": ["them (dismayed): You're the one Chisato won't stop talking about. Stay out of my way.",
                "them: I have a job tonight, off the books. I could use a second pair of eyes."],
      "stages": [
-         {"text": "Watch the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3]}]},
+         {"text": "Watch the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Takina, Rooftop"}]},
          {"text": "Have Lycoris, Takina & Chisato", "objectives": [{"do": "have_card", "card": "LRC/W105-TE17"}]},
          {"text": "Report back to Takina", "objectives": [{"do": "talk", "to": "Takina Inoue", "script": ["them: You didn't get in the way. That's more than I expected.", "them (pleased): ...Thanks, I suppose."]}]},
      ],
@@ -58,6 +58,25 @@ TAKINA_QUESTS = [
           "rewards": [{"coins": 600}, {"gift": "bouquet"}]},
      ]},
 ]
+
+# Scenes a quest's visit plays (the quests above name them).
+CHISATO_SCENES = [{"name": "World: Chisato, Cafe", "lines": [
+    "background cafe",
+    "me enters center with pop",
+    "me: Morning! You're early. Perfect, I haven't opened the shortcake yet.",
+    "player: Am I your first customer?",
+    "me (pleased): First friend of the morning! Sit, sit. Takina says I'm too cheerful before noon. She's wrong, obviously.",
+    "me: I'll give you the good slice. Strawberry shortcake, my favourite.",
+]}]
+TAKINA_SCENES = [{"name": "World: Takina, Rooftop", "lines": [
+    "background rooftop",
+    "me enters left with fade",
+    "me (dismayed): You came. I was starting to think you'd sleep through the job.",
+    "player: You said off the books. This is the roof, so I'm guessing that's the job.",
+    "me: Off the books means nobody sees me up here. Keep low, and keep watch on the street.",
+    "narrator: Below, a figure in a long coat crosses the bridge and is gone between the lamps.",
+    "me: That's the one. Remember the face, and don't go after them. Not yet.",
+]}]
 
 CAST = [
     cpu("Ainz Ooal Gown", "villain",
@@ -242,7 +261,7 @@ CAST = [
               "choice", "- Best friends, clown.", "- I'll laugh at your worst jokes.",
               "me (pleased): Best friend! The punchline I never saw coming!"]),
 
-    cpu("Chisato Nishikigi", "warm", quests=CHISATO_QUESTS,
+    cpu("Chisato Nishikigi", "warm", quests=CHISATO_QUESTS, extra_scenes=CHISATO_SCENES,
         haunts=[("cafe", "wk", "12", 60), ("plaza", "we", "12", 45), ("arena", "135", "2", 30)],
         tastes=(["sweet"], ["cute", "game", "drink"], ["calm"]),
         lines={
@@ -273,7 +292,7 @@ CAST = [
               "choice", "- Every day with you counts.", "- Best friends, Chisato.",
               "me (pleased): Best friends! Okay, now we have to do everything fun. Today. Let's go!"]),
 
-    cpu("Takina Inoue", "aloof", quests=TAKINA_QUESTS,
+    cpu("Takina Inoue", "aloof", quests=TAKINA_QUESTS, extra_scenes=TAKINA_SCENES,
         haunts=[("cafe", "wk", "01", 55), ("arena", "we", "12", 45), ("rooftop", "135", "3", 30)],
         tastes=(["sweet"], ["book", "calm"], ["game"]),
         lines={
