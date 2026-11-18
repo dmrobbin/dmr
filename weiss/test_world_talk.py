@@ -5,7 +5,7 @@ from django.urls import reverse
 
 from . import chatter, world
 from .models import Chatter, GiftItem, Scene, WorldSave, WorldSettings
-from .test_world import SET, DuelTests, everywhere_rule, give_cpu, make_set, staff_user
+from .test_world import SET, DuelTests, everywhere_rule, give_cpu, make_set, staff_user  # noqa: F401
 from .world_views import read_ranks
 
 
@@ -324,3 +324,131 @@ class RankSettingsTests(TestCase):
         WorldSettings.objects.update_or_create(pk=1, defaults={"ranks": [{"name": "New", "points": 0}, {"name": "Pal", "points": 5}]})
         self.assertEqual(world.rank_names(), ["New", "Pal"])
         self.assertEqual(world.rank_for(7), 1)
+
+
+class GainAndRewardTests(DuelTests):
+    """Temperaments' gain rates, what each rank brings, and rank-ups from duels (the DuelTests setup)."""
+
+    def points(self):
+        return self.save.relations.get(str(self.cinder.pk), {}).get("points", 0)
+
+    def test_temperament_sets_how_fast_points_come(self):
+        for temperament, expected in (("warm", 4), ("neutral", 3), ("villain", 2)):
+            self.cinder.temperament = temperament
+            self.assertEqual(world.gain(self.cinder, world.TALK_POINTS), expected)
+            self.assertEqual(world.gain(self.cinder, -4), -4)  # losing points is never scaled
+        self.cinder.save()
+        world.talk(self.save, self.cinder.pk)
+        self.assertEqual(self.points(), 2)
+
+    def test_each_rank_brings_its_rewards_once(self):
+        money = self.save.money
+        self.save.relations[str(self.cinder.pk)] = {"points": 14}
+        said = world.talk(self.save, self.cinder.pk)["talk"]  # +3: Acquaintance
+        rewards = [event["reward"] for event in said["events"] if "reward" in event]
+        self.assertEqual(rewards[0], "200 coins")
+        self.assertEqual(self.save.money - money, 200)
+        self.assertEqual(sum(self.save.gifts.values()), 1)
+        from .models import PlayerProfile
+        self.assertEqual(PlayerProfile.objects.get(user=self.user).progress[f"world_rank:{self.cinder.pk}"], 1)
+        self.save.relations[str(self.cinder.pk)]["points"] = 10  # fell back a rank, then climbs again
+        for _ in range(2):
+            self.save.turn += 4
+            world.talk(self.save, self.cinder.pk)
+        self.assertEqual(self.save.money - money, 200)  # not paid twice
+
+    def test_signature_cards_packs_and_stakes(self):
+        pool = sum(self.save.pool.values())
+        self.save.relations[str(self.cinder.pk)] = {"points": 39, "rewarded": 1}
+        said = world.talk(self.save, self.cinder.pk)["talk"]  # Friend
+        events = said["events"]
+        if said["waiting"]:  # a friend's greeting can ask something: the points and rewards come once it's answered
+            events = events + world.answer(self.save, self.cinder.pk, 0)["talk"]["events"]
+        rewards = [event for event in events if "reward" in event]
+        signature = world.signature_cards(self.cinder, "signature")[0]
+        self.assertTrue(self.cinder.deck.entries.filter(card=signature).exists() and signature.card_type != "Climax")
+        self.assertEqual(rewards[0]["reward"], f"{signature.name} \u00d72")
+        self.assertIn("climax pack", rewards[1]["reward"])
+        self.assertEqual(rewards[1]["link"], reverse("weiss:world_opened", args=[1]))
+        self.assertEqual(sum(self.save.pool.values()) - pool, 2 + 8)
+        self.save.relations[str(self.cinder.pk)].update(points=139, rewarded=3)
+        self.save.turn += 4
+        world.talk(self.save, self.cinder.pk)  # Close friend: stakes
+        self.assertEqual(world.stake_with(self.save, self.cinder.pk), 500)
+        self.save.money = 2000
+        room = world.start_duel(self.save, self.cinder.pk, high_stakes=True)
+        self.assertEqual(room.world_stake, 500)
+
+    def test_the_town_says_what_the_next_rank_brings(self):
+        self.assertEqual(world.standing(self.save, self.cinder.pk)["next_rewards"], ["200 coins", "a gift"])
+
+    def test_a_rank_reached_in_a_duel_gives_its_rewards_and_says_its_line(self):
+        self.save.relations[str(self.cinder.pk)] = {"points": 12}
+        self.save.save()
+        self.finish(world.start_duel(self.save, self.cinder.pk), won=True)  # +6: Acquaintance
+        result = world.duel_result(self.save)
+        self.assertEqual(result["rank_up"], "Acquaintance")
+        self.assertEqual(result["rewards"][0], "200 coins")
+        self.assertEqual(result["rank_line"], "You know, you're not bad to have around.")
+
+    def test_a_rank_reached_in_a_duel_can_play_its_scene(self):
+        scene = Scene.objects.create(name="Cinder opens up", script="cast c as Cinder\nc: Hm.")
+        Chatter.objects.create(cpu=self.cinder, context="rank_up", min_rank=1, scene=scene)
+        self.save.relations[str(self.cinder.pk)] = {"points": 12}
+        self.save.save()
+        self.finish(world.start_duel(self.save, self.cinder.pk), won=True)
+        self.assertEqual(world.duel_result(self.save)["scene"], reverse("weiss:world_scene", args=[1]))
+        self.assertEqual(self.save.flags["scene"]["scene"], scene.pk)
+
+
+class WorldPackTests(TestCase):
+    def setUp(self):
+        self.cards = make_set()
+        self.cinder = give_cpu("Cinder", self.cards)
+        everywhere_rule(self.cinder, "plaza")
+        Chatter.objects.create(cpu=self.cinder, context="greet", script="them: Old line.")
+        self.pack = {"cpus": [
+            {"name": "cinder", "world": {"temperament": "villain",
+                                         "schedule": [{"place": "alley", "days": [0, 1, 2, 3, 4, 5, 6], "times": [2, 3], "weight": 70}],
+                                         "gift_tastes": {"loves": ["fancy"], "likes": [], "dislikes": ["cute"]},
+                                         "chatter": [{"context": "greet", "script": "them: You again."},
+                                                     {"context": "rank_up", "min_rank": 2, "scene": "World: Cinder, Friend"}]},
+             "scenes": [{"name": "World: Cinder, Friend", "script": "cast cinder as Cinder\nbackground night\ncinder enters\ncinder: Well."}]},
+            {"name": "Nobody Here", "world": {}},
+        ]}
+
+    def test_a_pack_gives_existing_cpus_their_world(self):
+        from .cpu_corpus import import_world_pack
+        result = import_world_pack([self.pack], dry_run=True)[0]
+        self.assertEqual((result.problems, result.missing), ([], ["Nobody Here"]))
+        self.assertEqual(self.cinder.schedule.get().place.key, "plaza")  # a dry run saves nothing
+        import_world_pack([self.pack])
+        self.cinder.refresh_from_db()
+        self.assertEqual((self.cinder.temperament, self.cinder.gift_tastes["loves"]), ("villain", ["fancy"]))
+        self.assertEqual([rule.place.key for rule in self.cinder.schedule.all()], ["alley"])  # replaced
+        self.assertEqual(sorted(line.script for line in self.cinder.chatter.all()), ["", "them: You again."])
+        self.assertEqual(self.cinder.chatter.get(context="rank_up").scene.name, "World: Cinder, Friend")
+        self.pack["cpus"][0]["scenes"][0]["script"] += "\ncinder: Again."
+        import_world_pack([self.pack])
+        self.assertEqual(Scene.objects.filter(name="World: Cinder, Friend").count(), 1)  # updated, not doubled
+        self.assertIn("Again.", Scene.objects.get(name="World: Cinder, Friend").script)
+
+    def test_problems_save_nothing(self):
+        from .cpu_corpus import import_world_pack
+        self.pack["cpus"][0]["world"]["schedule"][0]["place"] = "moon"
+        result = import_world_pack([self.pack])[0]
+        self.assertTrue(any("Cinder: world schedule rule 1" in problem for problem in result.problems), result.problems)
+        self.assertEqual(self.cinder.schedule.get().place.key, "plaza")
+        self.assertFalse(Scene.objects.exists())
+
+    def test_the_import_tab(self):
+        import json
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        self.client.force_login(staff_user())
+        upload = lambda: SimpleUploadedFile("cast.json", json.dumps(self.pack).encode(), content_type="application/json")
+        page = self.client.post(reverse("weiss:world_pack_import"), {"step": "check", "packs": upload()})
+        self.assertContains(page, "Ready to import")
+        self.assertContains(page, "Not here, so skipped: Nobody Here")
+        page = self.client.post(reverse("weiss:world_pack_import"), {"step": "import", "packs": upload()})
+        self.assertContains(page, "Imported")
+        self.assertEqual(self.cinder.schedule.get().place.key, "alley")

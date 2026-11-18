@@ -1,5 +1,6 @@
 import json
 import random
+from collections import Counter
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -346,7 +347,7 @@ class TownTests(TestCase):
             world.wait(self.save)  # night: the plaza is the city by night
         town = world.town(self.save)
         self.assertEqual((town["place"]["key"], town["place"]["backdrop"], town["time"], town["time_name"]), ("plaza", "city", 3, "Night"))
-        self.assertEqual(len(town["places"]), 9)  # the town test's eight, and the card shop
+        self.assertEqual(len(town["places"]), 12)  # the town test's eight, the card shop, and three secluded places
         self.assertEqual([p["key"] for p in town["places"] if p["here"]], ["plaza"])
         self.assertFalse(town["deck_ready"])
 
@@ -399,36 +400,67 @@ def everywhere_rule(cpu, place="plaza", **fields):
 
 
 class WhereaboutsTests(TestCase):
+    """Who's where: a fresh draw each day from the CPUs' haunts, within the town's caps."""
+
     def setUp(self):
         self.cards = make_set()
         self.user = staff_user()
         self.save = world.start(self.user, 1, SET)
         self.cinder = give_cpu("Cinder", self.cards)
 
-    def test_a_rule_holds_on_its_days_and_times(self):
+    def crowd(self, n, places=None):
+        """n more CPUs, each haunting these places (all but the shop) every day at every time."""
+        keys = places or list(WorldPlace.objects.filter(shop=False).values_list("key", flat=True))
+        made = []
+        for i in range(n):
+            cpu = give_cpu(f"Extra {i}", self.cards)
+            for key in keys:
+                everywhere_rule(cpu, key)
+            made.append(cpu)
+        return made
+
+    def test_a_haunt_holds_on_its_days_and_times(self):
         everywhere_rule(self.cinder, "beach", days=[1, 4], times=[3])  # Tue and Fri nights
         found = {turn for turn in range(28) if self.cinder.pk in world.whereabouts(self.save, turn)}
         self.assertEqual(found, {1 * 4 + 3, 4 * 4 + 3})
         self.assertEqual(world.whereabouts(self.save, 7)[self.cinder.pk].place.key, "beach")
 
-    def test_chance_is_settled_by_the_save_and_never_changes(self):
-        everywhere_rule(self.cinder, chance=50)
-        first = [self.cinder.pk in world.whereabouts(self.save, turn) for turn in range(56)]
-        self.assertEqual(first, [self.cinder.pk in world.whereabouts(self.save, turn) for turn in range(56)])
-        self.assertTrue(10 < sum(first) < 46)  # about half
+    def test_never_more_than_two_at_a_place_or_ten_in_town(self):
+        self.crowd(30)
+        for turn in range(28):
+            out = world.whereabouts(self.save, turn)
+            per_place = Counter(rule.place_id for rule in out.values())
+            self.assertLessEqual(max(per_place.values()), world.MAX_PER_PLACE)
+            self.assertTrue(world.MIN_ON_STAGE <= len(out) <= world.MAX_ON_STAGE, len(out))
+        self.crowd(5, ["plaza"])
+        self.assertLessEqual(sum(rule.place.key == "plaza" for rule in world.whereabouts(self.save, 0).values()), 2)
 
-    def test_once_a_day_holds_at_one_of_its_times(self):
+    def test_the_draw_is_settled_for_a_save_and_fresh_each_day(self):
+        self.crowd(30)
+        days = [[sorted(world.whereabouts(self.save, day * 4 + time)) for time in range(4)] for day in range(7)]
+        self.assertEqual(days, [[sorted(world.whereabouts(self.save, day * 4 + time)) for time in range(4)] for day in range(7)])
+        self.assertEqual(len({tuple(day[0]) for day in days}), 7)  # every morning a different crowd
+        other = world.start(staff_user("other"), 1, SET)
+        self.assertNotEqual(days[0], [sorted(world.whereabouts(other, time)) for time in range(4)])
+
+    def test_once_a_day_is_once_at_most(self):
         everywhere_rule(self.cinder, "cafe", times=[0, 1, 3], once_per_day=True)
         for day in range(7):
             times = [t for t in range(4) if self.cinder.pk in world.whereabouts(self.save, day * 4 + t)]
             self.assertEqual(len(times), 1)
             self.assertIn(times[0], [0, 1, 3])
 
-    def test_the_highest_priority_rule_that_holds_wins_and_one_place_at_a_time(self):
-        everywhere_rule(self.cinder, "plaza")
-        everywhere_rule(self.cinder, "forest", days=[5, 6], priority=5)
-        self.assertEqual(world.whereabouts(self.save, 0)[self.cinder.pk].place.key, "plaza")  # Monday
-        self.assertEqual(world.whereabouts(self.save, 5 * 4)[self.cinder.pk].place.key, "forest")  # Saturday
+    def test_a_haunt_can_wait_for_a_rank_without_moving_anyone_else(self):
+        everywhere_rule(self.cinder, "plaza", min_rank=2)
+        others = self.crowd(15, ["cafe"])  # two of them at the café at a time, and Cinder sure to be drawn
+        before = {turn: {cpu: rule.pk for cpu, rule in world.whereabouts(self.save, turn).items()} for turn in range(8)}
+        self.assertFalse(any(self.cinder.pk in out for out in before.values()))
+        self.save.relations[str(self.cinder.pk)] = {"points": 45}  # a Friend
+        after = {turn: {cpu: rule.pk for cpu, rule in world.whereabouts(self.save, turn).items()} for turn in range(8)}
+        self.assertTrue(any(self.cinder.pk in out for out in after.values()))
+        for turn in range(8):
+            self.assertEqual({k: v for k, v in after[turn].items() if k != self.cinder.pk}, before[turn])
+        self.assertTrue(others)
 
     def test_only_cpus_that_can_duel_appear(self):
         draft = give_cpu("Draft", self.cards, finalized=False)
@@ -444,6 +476,17 @@ class WhereaboutsTests(TestCase):
         self.assertEqual(CpuSchedule.objects.filter(cpu__name="Katara").count(), 3)
         self.assertFalse(CpuSchedule.objects.filter(cpu__name="Katara", place__shop=True).exists())
         self.assertEqual(world.starter_schedules(), 0)
+
+    def test_villains_keep_to_secluded_places_after_dark(self):
+        villain = give_cpu("Makima", self.cards)
+        villain.temperament = "villain"
+        villain.save()
+        world.starter_schedules([villain])
+        haunts = list(villain.schedule.select_related("place"))
+        dark = [rule for rule in haunts if not rule.min_rank]
+        self.assertTrue(dark and all(rule.place.secluded and set(rule.times) <= {2, 3} for rule in dark))
+        daytime = [rule for rule in haunts if rule.min_rank]
+        self.assertEqual([(rule.place.secluded, rule.min_rank) for rule in daytime], [(False, 2)])
 
 
 class DuelTests(TestCase):
@@ -682,28 +725,33 @@ class ScheduleStaffPageTests(TestCase):
         self.cinder = give_cpu("Cinder", self.cards)
         self.url = reverse("weiss:world_schedules")
 
-    def test_adding_editing_and_deleting_rules(self):
+    def test_adding_editing_and_deleting_haunts(self):
         plaza = WorldPlace.objects.get(key="plaza")
-        self.client.post(self.url, {"cpu": self.cinder.pk, "place": plaza.pk, "days": ["1", "4"], "times": ["3"], "chance": "80", "stake": "500"})
+        self.client.post(self.url, {"cpu": self.cinder.pk, "place": plaza.pk, "days": ["1", "4"], "times": ["3"], "weight": "80",
+                                    "min_rank": "2", "stake": "500"})
         rule = CpuSchedule.objects.get()
-        self.assertEqual((rule.days, rule.times, rule.chance, rule.stake, rule.once_per_day), ([1, 4], [3], 80, 500, False))
+        self.assertEqual((rule.days, rule.times, rule.weight, rule.min_rank, rule.stake, rule.once_per_day), ([1, 4], [3], 80, 2, 500, False))
         page = self.client.get(self.url + "?day=1&seed=1")
-        self.assertContains(page, "Tue, Fri, night, 80%, stakes 500 coins")
+        self.assertContains(page, "Tue, Fri, night, weight 80, from rank 2, stakes 500 coins")
+        self.assertContains(page, "rank 2+")  # in the grid, marked as waiting for a rank
         self.client.post(self.url, {"rule": rule.pk, "cpu": self.cinder.pk, "place": plaza.pk, "days": ["5", "6"], "times": ["2"], "once": "1"})
         rule.refresh_from_db()
-        self.assertEqual((rule.days, rule.once_per_day, rule.chance), ([5, 6], True, 100))
+        self.assertEqual((rule.days, rule.once_per_day, rule.weight, rule.min_rank), ([5, 6], True, 50, 0))
         self.client.post(self.url, {"cpu": self.cinder.pk, "place": plaza.pk, "times": ["2"]})  # no days: refused
         self.client.post(self.url, {"cpu": self.cinder.pk, "place": plaza.pk, "days": ["5", "6"], "times": ["2"], "once": "1"})  # the same again: refused
+        self.client.post(self.url, {"cpu": self.cinder.pk, "place": plaza.pk, "days": ["1"], "times": ["2"], "weight": "0"})  # too light: refused
         self.assertEqual(CpuSchedule.objects.count(), 1)
         self.client.post(self.url, {"delete": rule.pk})
         self.assertFalse(CpuSchedule.objects.exists())
 
-    def test_the_grid_and_starting_schedules(self):
+    def test_the_grid_and_starting_haunts(self):
         page = self.client.get(self.url)
         self.assertContains(page, "never appear")
         self.client.post(self.url, {"starters": "1"})
         self.assertEqual(CpuSchedule.objects.filter(cpu=self.cinder).count(), 3)
-        self.assertContains(self.client.get(self.url), "Cinder")
+        page = self.client.get(self.url)
+        self.assertContains(page, "Cinder")
+        self.assertContains(page, "Out in town")
 
 
 class StarterScheduleTests(TestCase):
@@ -712,14 +760,14 @@ class StarterScheduleTests(TestCase):
         self.client.force_login(staff_user())
 
     def test_cpus_are_spread_across_the_town(self):
-        for n in range(8):
+        for n in range(9):
             give_cpu(f"CPU {n}", self.cards)
-        self.assertEqual(world.starter_schedules(), 8)
-        per_place = {}
-        for key in CpuSchedule.objects.values_list("place__key", flat=True):
-            per_place[key] = per_place.get(key, 0) + 1
-        self.assertEqual(sorted(per_place.values()), [3] * 8)  # 24 rules, evenly over the eight places besides the shop
+        self.assertEqual(world.starter_schedules(), 9)
+        per_place = Counter(CpuSchedule.objects.filter(place__secluded=False).values_list("place__key", flat=True))
+        self.assertLessEqual(max(per_place.values()) - min(per_place.values()), 1, per_place)  # spread evenly over the open places
+        self.assertEqual(len(per_place), WorldPlace.objects.filter(shop=False, secluded=False).count())
         self.assertFalse(CpuSchedule.objects.filter(place__shop=True).exists())
+        self.assertFalse(CpuSchedule.objects.filter(days=[0, 1, 2, 3, 4], place__secluded=True).exists())  # villains' places
         for cpu in CpuProfile.objects.all():
             places = list(cpu.schedule.values_list("place__key", flat=True))
             self.assertEqual(len(set(places)), 3)  # home, weekend and wander are three places

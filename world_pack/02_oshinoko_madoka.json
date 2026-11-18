@@ -1,0 +1,2014 @@
+{
+ "pack": "02_oshinoko_madoka",
+ "cpus": [
+  {
+   "name": "Akane Kurokawa",
+   "world": {
+    "temperament": "friendly",
+    "schedule": [
+     {
+      "place": "library",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 60,
+      "min_rank": 0
+     },
+     {
+      "place": "school",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 40,
+      "min_rank": 0
+     },
+     {
+      "place": "cafe",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       2
+      ],
+      "weight": 35,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "book"
+     ],
+     "likes": [
+      "calm",
+      "drink"
+     ],
+     "dislikes": [
+      "cool"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Oh, hello. I'm Akane. Sorry, I was studying a role. I sometimes forget where I am."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Are you here to duel? I've been reading up on it. Character analysis helps."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back again? I'll take notes. You're interesting."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): A book! I'll read it tonight. And probably analyse every character."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): It's very... cool. I'm not sure it's me. Unless I'm playing someone else."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: I've studied your style. Let me show you what I've learned."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): I misread you. I'll do better research next time."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Preparation is everything, you know."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! I've been thinking about how you'd play yourself in a drama. Is that strange?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're the one person I don't have to perform for. It's such a relief."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You don't judge people for what the internet says about them. Thank you."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: Once, I was hated by a whole country for a single scene. I nearly... It doesn't matter. I'm glad I'm here now."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'd cast you as a lead. In my life, I mean. Sorry, that was a lot."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Akane Kurokawa, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Akane Kurokawa, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Akane Kurokawa, Friend",
+     "script": [
+      "cast me as Akane Kurokawa",
+      "background library",
+      "me enters left with fade",
+      "me: Can you help me with something? I'm building a character.",
+      "me: I need to understand what makes someone kind without trying to be.",
+      "player: And you picked me?",
+      "me (lose): You're my reference. I've been watching how you talk to people.",
+      "player: That's a little creepy.",
+      "me (win): I know! I'm sorry! It's how I learn!",
+      "me: But I also just... like spending time with you. That part isn't research.",
+      "me: Friends? Real ones, not scripted?",
+      "player: Not scripted."
+     ]
+    },
+    {
+     "name": "World: Akane Kurokawa, Best friend",
+     "script": [
+      "cast me as Akane Kurokawa",
+      "background rain",
+      "me enters center with fade",
+      "me: Do you remember when I told you about the reality show?",
+      "me: People said such cruel things. I believed every one of them.",
+      "player: They didn't know you.",
+      "me: You do. That's why it matters so much what you think.",
+      "me (lose): And you never once made me feel like a role.",
+      "choice",
+      "- You're more than any role.",
+      "- I'll always see the real you.",
+      "me (intro): Then I'll stop hiding behind characters around you. Best friends. No script."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Aqua Hoshino",
+   "world": {
+    "temperament": "aloof",
+    "schedule": [
+     {
+      "place": "school",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "cafe",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "alley",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       3
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "drink"
+     ],
+     "likes": [
+      "book",
+      "cool"
+     ],
+     "dislikes": [
+      "sweet"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Aqua. I'm not interested in chatting, but I'll duel if that's why you're here."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: You look like someone with too much free time. Lucky."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're persistent. I'll give you that."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Black coffee. You've been paying attention."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Too sweet. Give it to Ruby, she'll love it."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: I read people for a living. Let's see what you're hiding."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): ...I underestimated you. That won't happen again."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them: Predictable. Work on that."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: You again. Sit, if you want. I'm reading scripts."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): ...Hey. I saved you a coffee. Don't make it a thing."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You don't want anything from me. That's rarer than you'd think."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I have something I have to do. Something I can't talk about. But being around you makes me forget it, for a while."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): If I ever lose myself... drag me back, okay? I mean it."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Aqua Hoshino, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Aqua Hoshino, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Aqua Hoshino, Friend",
+     "script": [
+      "cast me as Aqua Hoshino",
+      "background night",
+      "me enters right with fade",
+      "me: You keep showing up. Why?",
+      "player: Because I like talking to you.",
+      "me (win): Nobody likes talking to me. I make sure of it.",
+      "me: Everyone I get close to ends up in danger. It's easier to keep people away.",
+      "player: You're not keeping me away.",
+      "me: ...No. I'm apparently terrible at it with you.",
+      "me (lose): Fine. Friends. Don't say I didn't warn you."
+     ]
+    },
+    {
+     "name": "World: Aqua Hoshino, Best friend",
+     "script": [
+      "cast me as Aqua Hoshino",
+      "background sakura",
+      "me enters center with fade",
+      "me: My mother used to say lies are a kind of love.",
+      "me: I've told so many. To everyone. Even to myself.",
+      "player: Do you lie to me?",
+      "me: Not once. That's the strange part. I can't, with you.",
+      "me (intro): I spent years thinking I'd never get to just be... a person. You let me.",
+      "choice",
+      "- You deserve to be happy, Aqua.",
+      "- No more lies between us.",
+      "me (lose): Best friend. Okay. Don't let me screw it up."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Kana Arima",
+   "world": {
+    "temperament": "aloof",
+    "schedule": [
+     {
+      "place": "school",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "plaza",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "cafe",
+      "days": [
+       0,
+       2,
+       4
+      ],
+      "times": [
+       2
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "sweet"
+     ],
+     "likes": [
+      "music",
+      "cute"
+     ],
+     "dislikes": [
+      "cool"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: You know who I am, right? The genius child actor? Ten seconds to cry? No? Ugh."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: If you're a fan, autographs are after the duel. If you're not, why not?"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Can't stay away from a star, huh? Understandable."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): S-sweets? For me? Well, I suppose I'll accept them. Graciously."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): This is way too edgy. Do I look like an edgy idol to you?"
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Watch closely. This is what a real performer looks like."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): That wasn't fair! I want a retake!"
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Hmph! Ten seconds to win. A natural."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: Oh, it's you. I wasn't waiting or anything. I just happened to be here. For an hour."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Took you long enough! Come on, I'll buy. Just this once! ...Again."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You're not bad. Don't let it go to your head. I mean it!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: Everyone forgot me when I stopped being a child star. You didn't even know who I was, and you stayed. That's... nice."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'm going to be the brightest idol ever. And you're going to be in the front row. That's an order."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Kana Arima, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Kana Arima, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Kana Arima, Friend",
+     "script": [
+      "cast me as Kana Arima",
+      "background city",
+      "me enters left with slide",
+      "me: Okay. I need an audience. Just one person.",
+      "me: I'm practising a song for the next show. Tell me honestly how it is.",
+      "me sways",
+      "narrator: She sings a verse, a little nervous, then not at all.",
+      "player: It was really good.",
+      "me (lose): R-really? You're not just saying that?",
+      "me: Everyone in the industry just says things. I can never tell what's true.",
+      "me: But you're a terrible liar. So I believe you.",
+      "me bounces",
+      "me: Fine! You can be my friend! My first-row, honest friend!"
+     ]
+    },
+    {
+     "name": "World: Kana Arima, Best friend",
+     "script": [
+      "cast me as Kana Arima",
+      "background dusk",
+      "me enters center with fade",
+      "me: Can I tell you something embarrassing?",
+      "me: When I was little, I was the best at everything. Then I wasn't. And everyone left.",
+      "me: I got so scared of being forgotten that I pushed everyone away first.",
+      "player: I'm not going anywhere, Kana.",
+      "me (win): You keep saying that. And you keep proving it.",
+      "choice",
+      "- I'll never forget you.",
+      "- Front row, every show.",
+      "me (lose): Then I'll shine so bright you'll never need to look anywhere else. Best friend. Got it?"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Ruby Hoshino",
+   "world": {
+    "temperament": "warm",
+    "schedule": [
+     {
+      "place": "school",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "plaza",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 50,
+      "min_rank": 0
+     },
+     {
+      "place": "cafe",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       2
+      ],
+      "weight": 35,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "music"
+     ],
+     "likes": [
+      "cute",
+      "sweet"
+     ],
+     "dislikes": [
+      "book"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Hi hi! I'm Ruby! I'm going to be an idol like my mom! Want to be my first fan?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Ooh, a duel? I'm gonna win, and then I'm gonna do a little victory dance."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back again? You must really like me! That's great idol energy!"
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Music! Oh, I'm going to listen to this every day! Thank you thank you!"
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): A book... with no pictures? I'll, um, try my best."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Shine like a star! That's my strategy!"
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Waaah, you're so strong! Teach me!"
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): I won! Idol power!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! I learned a new dance! Wanna see? You have to say yes!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): My number one fan! Okay, number two after Onii-chan. Okay, tied!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): You laughed at my jokes! You're officially my friend-in-training!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: Sometimes I miss my mom so much. Being around you makes it a little easier."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): When I'm on the big stage, I'll wave right at you. Promise!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Ruby Hoshino, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Ruby Hoshino, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Ruby Hoshino, Friend",
+     "script": [
+      "cast me as Ruby Hoshino",
+      "background sakura",
+      "me enters left with pop",
+      "me: {player}! Look! I got my first fan letter!",
+      "me: It's from a little girl. She says she wants to be an idol like me.",
+      "me bounces",
+      "player: That's amazing, Ruby.",
+      "me (lose): I used to be in a hospital bed, you know. A long time ago.",
+      "me: I watched idols on TV and dreamed. And now someone dreams about me!",
+      "me: I wanted to tell my best people first. You're one of them now!"
+     ]
+    },
+    {
+     "name": "World: Ruby Hoshino, Best friend",
+     "script": [
+      "cast me as Ruby Hoshino",
+      "background night",
+      "me enters center with fade",
+      "me: The stars are really bright tonight.",
+      "me: Mom used to be the brightest star. Everyone loved her. But she lied a lot, to keep shining.",
+      "me: I don't want to lie. I want to shine and be real. Is that silly?",
+      "player: It's the bravest thing I've heard.",
+      "me (lose): You always say exactly the right thing.",
+      "choice",
+      "- I'm your biggest fan.",
+      "- Shine as yourself, Ruby.",
+      "me (intro): Then I'll be the idol who's real. And you'll be my best friend forever. That's the dream!"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Legendary Idol Ai",
+   "world": {
+    "temperament": "neutral",
+    "schedule": [
+     {
+      "place": "plaza",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "cafe",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "rooftop",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       3
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "cute"
+     ],
+     "likes": [
+      "music",
+      "sweet"
+     ],
+     "dislikes": [
+      "spicy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Hi there! It's me, Ai! You came to see me, didn't you?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: A duel? Sure! Idols should be good at everything. Even cards."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Again? You're my most devoted fan today!"
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): So cute! I'll keep it on my dressing table."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Spicy food before a show? That's an idol's nightmare!"
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Eyes on me. That's the rule."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Oh! You beat the idol! That's going in my memory book."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Sorry~ The spotlight's mine."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! You came back! I remembered your name, see?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You know, I can just... talk with you. No smile needed. Isn't that funny?"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You don't treat me like a poster. That's kind of rare."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I've said 'I love you' so many times on stage. I never knew if I meant it. Isn't that sad?"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I think... I actually like you. Not idol-like. Real-like."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Legendary Idol Ai, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Legendary Idol Ai, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Legendary Idol Ai, Friend",
+     "script": [
+      "cast me as Legendary Idol Ai",
+      "background city",
+      "me enters center with pop",
+      "me: Ta-da! The legendary idol, all for you!",
+      "player: You don't have to perform for me.",
+      "me (win): ...Oh. Really?",
+      "me: I'm always performing. I don't know how to stop. Lies are kind of my thing.",
+      "me: But I think I like you. As a friend. That one's true, I'm almost sure.",
+      "me nods",
+      "me (lose): Let's find out together."
+     ]
+    },
+    {
+     "name": "World: Legendary Idol Ai, Best friend",
+     "script": [
+      "cast me as Legendary Idol Ai",
+      "background night",
+      "me enters center with fade",
+      "me: I have two kids, you know. A secret. Idols can't have kids.",
+      "me: I tell them I love them every day. I never knew if it was true.",
+      "player: It's true, Ai. You keep choosing them.",
+      "me (win): ...You think so?",
+      "me: I think I'm learning. From them. From you.",
+      "choice",
+      "- You're not lying now.",
+      "- Love can grow.",
+      "me (lose): I love you, {player}. As my best friend. ...Ah. That one was true. I could feel it."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Madoka",
+   "world": {
+    "temperament": "warm",
+    "schedule": [
+     {
+      "place": "school",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 60,
+      "min_rank": 0
+     },
+     {
+      "place": "cafe",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "plaza",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       2
+      ],
+      "weight": 35,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "cute"
+     ],
+     "likes": [
+      "sweet",
+      "flowers"
+     ],
+     "dislikes": [
+      "spicy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Oh, hi! I'm Madoka Kaname. Are you new here? I can show you around!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Um, a duel? Okay! I'll do my best. Please go easy on me!"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Hi again! I'm happy you came back."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): It's so cute! I'm going to put it on my bed with my other plushies!"
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Oh... spicy. That's okay! It's the thought that counts!"
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: I want everyone to have a happy ending. Even in a duel!"
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You're so strong! That was really fun though!"
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): I won? Wow! Thank you for playing with me!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! I drew you a little picture. It's a magical girl version of you!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Being with you makes me feel like everything will turn out okay."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): I'm really glad we met. You're easy to be around."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: Sometimes I feel useless. Everyone else has a power. But you make me feel like I matter just by being me."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): If I ever had one wish, I think I'd wish for everyone to be as kind as you."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Madoka, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Madoka, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Madoka, Friend",
+     "script": [
+      "cast me as Madoka",
+      "background sakura",
+      "me enters left with slide",
+      "me: I brought two bento today! My dad made extra.",
+      "me: I thought we could eat together. If you want! No pressure!",
+      "player: I'd love to.",
+      "me (lose): Yay!",
+      "me bounces",
+      "me: Mami-san says friends are what keep you going when things are hard.",
+      "me: So you're my friend now. That means I'll keep going for you too!"
+     ]
+    },
+    {
+     "name": "World: Madoka, Best friend",
+     "script": [
+      "cast me as Madoka",
+      "background space",
+      "me enters center with fade",
+      "me: Do you ever wonder what you'd wish for, if you could have anything?",
+      "player: What would you wish for?",
+      "me: To save everyone. All the magical girls who suffered. Every single one.",
+      "me (win): Even if it meant I disappeared.",
+      "player: Madoka, don't say that.",
+      "me (lose): It's okay. I'm still here. And you'd remember me. I know you would.",
+      "choice",
+      "- I'll always remember you.",
+      "- Stay with us, Madoka.",
+      "me (intro): Best friends, forever and ever. Across every timeline. That's my promise."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Homura Akemi",
+   "world": {
+    "temperament": "aloof",
+    "schedule": [
+     {
+      "place": "school",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "rooftop",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "times": [
+       2,
+       3
+      ],
+      "weight": 40,
+      "min_rank": 0
+     },
+     {
+      "place": "shrine",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       2
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "calm"
+     ],
+     "likes": [
+      "book",
+      "cool"
+     ],
+     "dislikes": [
+      "cute"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: ...Who are you? You weren't here in any of the other timelines."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Stay away from Madoka Kaname. That's all I have to say."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You keep coming back. Like a loop."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Quiet. Simple. ...Thank you."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Cute things remind me of someone. Please don't."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: I've seen this fight before. I know how it ends."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): ...Another variable I didn't account for."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them: As expected."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: You again. ...You're harmless. I've decided."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You remember things I've said. That matters more than you know."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You're an irregularity. I'm starting not to mind."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I've repeated the same month more times than I can count. You're the first new thing in a long time."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them: In every timeline I've seen, I was alone. Not this one. Not with you."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Homura Akemi, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Homura Akemi, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Homura Akemi, Friend",
+     "script": [
+      "cast me as Homura Akemi",
+      "background rooftop",
+      "me enters right with fade",
+      "me: You keep finding me up here.",
+      "player: You keep being up here.",
+      "me: I'm watching. Waiting. For something I can't stop.",
+      "me (win): I've tried hundreds of times. Every ending is the same.",
+      "player: Maybe this time is different.",
+      "me: ...You sound like her.",
+      "me (lose): Maybe it is. Friend. That word feels strange. I'll get used to it."
+     ]
+    },
+    {
+     "name": "World: Homura Akemi, Best friend",
+     "script": [
+      "cast me as Homura Akemi",
+      "background night",
+      "me enters center with fade",
+      "me: I'll tell you the truth. I'm a time traveller. I've lived this month again and again.",
+      "me: All to save one person. I forgot how to be anything else.",
+      "player: You're still you, Homura. Not just your mission.",
+      "me (win): Then who am I? Without the loop, without the gun, without her?",
+      "player: My best friend.",
+      "me (intro): ...",
+      "choice",
+      "- You don't have to fight alone.",
+      "- I'll remember every timeline with you.",
+      "me (lose): Then this is the one I want to keep. This one. With you in it."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Kyoko Sakura",
+   "world": {
+    "temperament": "aloof",
+    "schedule": [
+     {
+      "place": "alley",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "times": [
+       2,
+       3
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "shrine",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "plaza",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 35,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "food"
+     ],
+     "likes": [
+      "sweet",
+      "spicy"
+     ],
+     "dislikes": [
+      "fancy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Want some? *crunch* No? More for me. Who're you?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Lookin' for a fight? I'm always up for one."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back again? Bring snacks next time."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Now we're talkin'! You're alright, you know that?"
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): What am I supposed to do with this? It's frilly and useless."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: I fight for myself. Let's see what you fight for."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Tch. Fine. You earned it. Want a snack?"
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Ha! That's how it's done."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: Oh. You. Here, have a pocky. Don't say I never gave you anything."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Hey, it's my favourite pushover! Kidding. Mostly. C'mere."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You don't waste food, right? Good. Then we can be pals."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: My dad was a priest. Nobody listened to him, so I made 'em. With magic. It went real bad. Don't tell anyone."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You know what? You're the only person I'd share my last snack with."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Kyoko Sakura, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Kyoko Sakura, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Kyoko Sakura, Friend",
+     "script": [
+      "cast me as Kyoko Sakura",
+      "background shrine",
+      "me enters left with drop",
+      "me: This used to be my dad's church. Kinda. Different town.",
+      "me: I come to places like this when I don't wanna be around people.",
+      "player: But I'm here.",
+      "me (lose): Yeah. Weird, right? I don't mind it.",
+      "me: Here. Apple. Don't waste it.",
+      "me: Eating together means something. My family used to. So... friends. Whatever."
+     ]
+    },
+    {
+     "name": "World: Kyoko Sakura, Best friend",
+     "script": [
+      "cast me as Kyoko Sakura",
+      "background rain",
+      "me enters center with fade",
+      "me: I used to say I only fight for myself. Selfish magic.",
+      "me: 'Cause the one time I fought for someone else, I lost everything.",
+      "player: Sayaka?",
+      "me (win): ...Yeah. Her too.",
+      "me: But you showed up. And kept showing up. And I'd fight for you. Without thinking twice.",
+      "choice",
+      "- You don't have to be alone, Kyoko.",
+      "- I'd fight for you too.",
+      "me (lose): Best friend, huh. Okay. Then you're stuck with me. Take an apple."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Mami Tomoe",
+   "world": {
+    "temperament": "friendly",
+    "schedule": [
+     {
+      "place": "cafe",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 60,
+      "min_rank": 0
+     },
+     {
+      "place": "school",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 40,
+      "min_rank": 0
+     },
+     {
+      "place": "rooftop",
+      "days": [
+       0,
+       2,
+       4
+      ],
+      "times": [
+       2
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "sweet"
+     ],
+     "likes": [
+      "drink",
+      "fancy"
+     ],
+     "dislikes": [
+      "spicy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Oh, hello! I'm Mami Tomoe. Would you like some tea? I always make too much."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: A duel? How lovely. Shall we begin? I'll show you how a senior fights."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're back! Tea's still warm."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Sweets! Oh, you've made my whole week. Let's share them."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Spicy? Oh dear. Not with Earl Grey, I'm afraid."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Tiro... Finale! Ah, I'm sorry, I couldn't resist."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Splendid! You're becoming a fine duelist."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): A little more elegance, perhaps? You'll get there."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}, I baked a cheesecake! You simply must try a slice."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Having you over for tea is the best part of my week. Truly."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): It's so nice to have a guest. My apartment's too quiet, usually."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I live alone. Since the accident. I made my wish to survive... but I didn't have time to wish for them."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You've made me feel like I'm not alone anymore. That's the greatest magic I know."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Mami Tomoe, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Mami Tomoe, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Mami Tomoe, Friend",
+     "script": [
+      "cast me as Mami Tomoe",
+      "background cafe",
+      "me enters left with fade",
+      "me: Welcome to my little tea party. Just the two of us.",
+      "me: I set out two cups. I always set two. Old habit.",
+      "player: Who's the second cup for?",
+      "me (win): ...Someone I hope will come. Usually no one does.",
+      "me (lose): But today, you did.",
+      "me: So, friend, how do you take your tea?",
+      "choice",
+      "- With milk.",
+      "- With lots of sugar.",
+      "me (lose): Perfect. I'll remember that for next time."
+     ]
+    },
+    {
+     "name": "World: Mami Tomoe, Best friend",
+     "script": [
+      "cast me as Mami Tomoe",
+      "background night",
+      "me enters center with fade",
+      "me: Being a magical girl is lonely. You fight witches, smile, and go home to an empty room.",
+      "me: I pretended I was fine. A good senior has to be strong.",
+      "player: You don't have to be strong all the time.",
+      "me (win): ...I'm so tired, {player}.",
+      "me: But when you're here, I don't have to pretend.",
+      "choice",
+      "- Lean on me.",
+      "- You're never alone again.",
+      "me (lose): Then you're my dearest friend. My best friend. I'll set two cups for you, always."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Sayaka Miki",
+   "world": {
+    "temperament": "friendly",
+    "schedule": [
+     {
+      "place": "school",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "beach",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "plaza",
+      "days": [
+       0,
+       2,
+       4
+      ],
+      "times": [
+       2
+      ],
+      "weight": 35,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "music"
+     ],
+     "likes": [
+      "sweet",
+      "sporty"
+     ],
+     "dislikes": [
+      "spicy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Yo! Sayaka Miki, magical girl of justice! Well, aspiring. Whatever!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Need someone to cheer you up? I'm great at that. Better at duels, though!"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Hey again! Bored? I'm never bored."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Classical music! Kyosuke would love this. ...I mean, I love it!"
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Bleh, spicy. My justice can't handle that."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: For justice! Let's do this!"
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Argh! Okay, okay. You're good. I'll train harder!"
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Justice prevails!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! I'm going to the hospital later to see Kyosuke. Wanna come?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're my partner in justice. Don't argue, it's decided!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): You're fun! Way more fun than homework."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I wished for someone else to be happy. Not me. Sometimes I wonder if that was dumb."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'd make a wish for you, you know. Any time. That's how much you matter."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Sayaka Miki, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Sayaka Miki, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Sayaka Miki, Friend",
+     "script": [
+      "cast me as Sayaka Miki",
+      "background ocean",
+      "me enters left with slide",
+      "me: I come here when I'm thinking about stuff. Big stuff.",
+      "me: Like whether doing the right thing is worth it if nobody notices.",
+      "player: I'd notice.",
+      "me (lose): Ha. Yeah, you would.",
+      "me: That's the thing, isn't it? You don't need everyone. Just someone.",
+      "me bounces",
+      "me: Okay! Friendship justice alliance! You're in!"
+     ]
+    },
+    {
+     "name": "World: Sayaka Miki, Best friend",
+     "script": [
+      "cast me as Sayaka Miki",
+      "background rain",
+      "me enters center with fade",
+      "me: I made my wish for Kyosuke. And then he fell for someone else.",
+      "me (win): I felt so stupid. Like I threw everything away.",
+      "player: You didn't. You were kind.",
+      "me: Kind and alone.",
+      "player: Not alone.",
+      "me (win): ...No. You're right.",
+      "choice",
+      "- I see you, Sayaka.",
+      "- Your wish wasn't a waste.",
+      "me (lose): Best friend. That's my new wish. Except it already came true. Ha!"
+     ]
+    }
+   ]
+  }
+ ]
+}

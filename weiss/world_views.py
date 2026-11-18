@@ -557,7 +557,7 @@ DAY_LETTERS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
 
 def rule_summary(rule):
-    """A rule in words: "Mon-Fri, noon and evening, 80%, once a day"."""
+    """A haunt in words: "Weekdays, noon and evening, weight 80, once a day, from rank 2"."""
     days = sorted(rule.days)
     if days == list(range(7)):
         when = "Every day"
@@ -568,8 +568,8 @@ def rule_summary(rule):
     else:
         when = ", ".join(DAY_LETTERS[d] for d in days)
     times = " and ".join(WorldSave.TIMES[t].lower() for t in sorted(rule.times)) or "never"
-    extras = [f"{rule.chance}%" if rule.chance < 100 else "", "once a day" if rule.once_per_day else "",
-              f"priority {rule.priority}" if rule.priority else "", f"stakes {rule.stake} coins" if rule.stake else ""]
+    extras = [f"weight {rule.weight}", "once a day" if rule.once_per_day else "",
+              f"from rank {rule.min_rank}" if rule.min_rank else "", f"stakes {rule.stake} coins" if rule.stake else ""]
     return ", ".join([when, times, *[e for e in extras if e]])
 
 
@@ -590,8 +590,8 @@ def read_rule(post, rule):
             raise ValueError(f"{what} goes from {low} to {high}.")
         return int(value)
 
-    rule.chance = whole("chance", 1, 100, "The chance", 100)
-    rule.priority = whole("priority", -99, 99, "The priority", 0)
+    rule.weight = whole("weight", 1, 100, "The weight", 50)
+    rule.min_rank = whole("min_rank", 0, len(world.rank_names()) - 1, "The rank", 0)
     rule.stake = whole("stake", 0, MAX_COINS, "The stakes", 0)
     rule.once_per_day = post.get("once") == "1"
 
@@ -603,11 +603,11 @@ def world_schedules(request):
     if request.method == "POST":
         if "delete" in request.POST:
             CpuSchedule.objects.filter(pk=request.POST.get("delete") or None).delete()
-            messages.success(request, "Rule deleted.")
+            messages.success(request, "Haunt deleted.")
             return redirect("weiss:world_schedules")
         if "starters" in request.POST:
             made = world.starter_schedules()
-            messages.success(request, f"Gave {made} CPU{'s' if made != 1 else ''} a starting schedule: edit them as you like.")
+            messages.success(request, f"Gave {made} CPU{'s' if made != 1 else ''} starting haunts: edit them as you like.")
             return redirect("weiss:world_schedules")
         rule = CpuSchedule.objects.filter(pk=request.POST.get("rule") or None).first() or CpuSchedule()
         try:
@@ -615,10 +615,10 @@ def world_schedules(request):
         except ValueError as error:
             messages.error(request, str(error))
             return redirect(request.get_full_path())
-        same = CpuSchedule.objects.filter(cpu=rule.cpu, place=rule.place, days=rule.days, times=rule.times, chance=rule.chance,
-                                          once_per_day=rule.once_per_day, priority=rule.priority, stake=rule.stake).exclude(pk=rule.pk)
+        same = CpuSchedule.objects.filter(cpu=rule.cpu, place=rule.place, days=rule.days, times=rule.times, weight=rule.weight,
+                                          once_per_day=rule.once_per_day, min_rank=rule.min_rank, stake=rule.stake).exclude(pk=rule.pk)
         if same.exists():
-            messages.error(request, f"{rule.cpu.name} has that rule already.")
+            messages.error(request, f"{rule.cpu.name} has that haunt already.")
             return redirect("weiss:world_schedules")
         rule.save()
         messages.success(request, f"Saved: {rule.cpu.name} at {rule.place.name}, {rule_summary(rule)}.")
@@ -629,9 +629,10 @@ def world_schedules(request):
     places_list = list(WorldPlace.objects.all())
     grid = {place.pk: [[] for _ in WorldSave.TIMES] for place in places_list}
     names = dict(CpuProfile.objects.values_list("pk", "name"))
-    for time in range(4):
-        for cpu_id, rule in world.whereabouts(sample, turn=day * 4 + time).items():
-            grid[rule.place_id][time].append({"name": names.get(cpu_id, "?"), "stake": rule.stake})
+    cast = world.day_cast(sample, day)
+    for time, out in enumerate(cast):
+        for cpu_id, rule in out.items():
+            grid[rule.place_id][time].append({"name": names.get(cpu_id, "?"), "stake": rule.stake, "min_rank": rule.min_rank})
     rules = list(CpuSchedule.objects.select_related("cpu", "place"))
     for rule in rules:
         rule.summary = rule_summary(rule)
@@ -639,7 +640,8 @@ def world_schedules(request):
     scheduled = {rule.cpu_id for rule in rules}
     return render(request, "weiss/world_schedules.html", {
         "rules": rules, "cpus": cpus, "places": places_list, "unscheduled": [cpu for cpu in cpus if cpu.pk not in scheduled],
-        "grid": [(place, grid[place.pk]) for place in places_list], "times": WorldSave.TIMES, "days": list(enumerate(WorldSave.DAYS)),
+        "grid": [(place, grid[place.pk]) for place in places_list], "times": WorldSave.TIMES, "out": [len(c) for c in cast],
+        "max_per_place": world.MAX_PER_PLACE, "max_on_stage": world.MAX_ON_STAGE, "ranks": list(enumerate(world.rank_names())), "days": list(enumerate(WorldSave.DAYS)),
         "day": day, "day_name": WorldSave.DAYS[day], "seed": seed, "editing": editing, "day_letters": list(enumerate(DAY_LETTERS)),
         "other_seed": seed + 1,
     })

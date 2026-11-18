@@ -12,7 +12,7 @@ from django.shortcuts import render
 from django.views.decorators.http import require_POST
 
 from .card_images import series_title
-from .cpu_corpus import export_corpus, import_cpus
+from .cpu_corpus import export_corpus, import_cpus, import_world_pack
 from .cpu_views import back_to, home_context, staff_required
 from .models import Card
 
@@ -99,3 +99,42 @@ def cpu_import(request):
     return render(request, "weiss/cpu_home.html", {**home_context("import"), "batch": batch, "seed": seed,
                                                    "ready": ready, "imported": importing and ready,
                                                    "shortlists": sorted(shows.items())})
+
+
+MAX_PACK_BYTES = 2 * 1024 * 1024  # a world pack holds many CPUs' chatter and scenes
+
+
+@staff_required
+@require_POST
+def world_pack_import(request):
+    """Check world pack files (corpus/world/, the CPUs' part in world mode) or import them: the import checks first and
+    saves only if nothing's wrong. CPUs are found by name; ones that aren't here are skipped and listed."""
+    uploads = request.FILES.getlist("packs")
+    if not uploads:
+        messages.error(request, "Choose the world pack files.")
+        return back_to("import")
+    files, unreadable = [], []
+    for upload in uploads[:MAX_FILES]:
+        if upload.size > MAX_PACK_BYTES:
+            unreadable.append(f"{upload.name} is too big for a world pack.")
+            continue
+        try:
+            data = json.loads(upload.read().decode("utf-8-sig", errors="replace"))
+        except ValueError as exc:
+            unreadable.append(f"{upload.name}: not JSON ({exc}).")
+            continue
+        if not isinstance(data, dict) or not isinstance(data.get("cpus", []), list):
+            unreadable.append(f"{upload.name}: not a world pack.")
+            continue
+        files.append((upload.name, data))
+    if unreadable:
+        messages.error(request, " ".join(unreadable))
+        return back_to("import")
+    importing = request.POST.get("step") == "import"
+    results = import_world_pack([data for _, data in files], dry_run=not importing, user=request.user)
+    ready = not any(result.problems for result in results)
+    if importing and ready:
+        made = sum(len(result.done) for result in results)
+        messages.success(request, f"Gave {made} CPU{'s' if made != 1 else ''} their world mode haunts, chatter and scenes.")
+    return render(request, "weiss/cpu_home.html", {**home_context("import"), "pack": list(zip([name for name, _ in files], results)),
+                                                   "pack_ready": ready, "pack_imported": importing and ready})

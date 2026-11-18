@@ -1,0 +1,2417 @@
+{
+ "pack": "03_chainsaw_titan_killlakill",
+ "cpus": [
+  {
+   "name": "Aki Hayakawa",
+   "world": {
+    "temperament": "aloof",
+    "schedule": [
+     {
+      "place": "rooftop",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       2,
+       3
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "cafe",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "arena",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       1
+      ],
+      "weight": 35,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "drink"
+     ],
+     "likes": [
+      "calm",
+      "food"
+     ],
+     "dislikes": [
+      "cute"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Public Safety. If you're not a devil, we don't have a problem."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Smoke break. Make it quick."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back again. Don't get attached to me. It's bad luck."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Coffee. Good. Thanks."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): ...A plushie. Give it to Power. She'll break it in an hour."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Let's make this clean. I've got paperwork after."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Good. Don't get cocky. Cocky people die first."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them: Work on your fundamentals."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. You're on time. That's more than I can say for Denji."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You remind me of normal days. Before all this. Sit down."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You're not annoying. That's high praise from me."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: A devil killed my family. I live for revenge. I don't usually tell people that. I don't know why I told you."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): If I'm not around someday... look after those two idiots for me. And yourself."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Aki Hayakawa, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Aki Hayakawa, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Aki Hayakawa, Friend",
+     "script": [
+      "cast me as Aki Hayakawa",
+      "background rooftop",
+      "me enters right with fade",
+      "me: You followed me up here. Bold.",
+      "me: This is where I come to think about my family. Snow, that day. The gun devil.",
+      "player: You don't have to carry it alone.",
+      "me (win): Everyone who gets close to me dies.",
+      "player: I'm still here.",
+      "me: ...For now.",
+      "me (lose): Fine. Friends. But you look both ways when you cross the street. Promise me."
+     ]
+    },
+    {
+     "name": "World: Aki Hayakawa, Best friend",
+     "script": [
+      "cast me as Aki Hayakawa",
+      "background snow",
+      "me enters center with fade",
+      "me: It snowed the day my family died. I hate snow.",
+      "me: But today, standing here with you... it's just snow.",
+      "player: Maybe that's a start.",
+      "me: My contract with the Future Devil showed me how I die. I've stopped fighting it.",
+      "player: Then live the time you've got. With us.",
+      "me (win): ...",
+      "choice",
+      "- I'm not losing you, Aki.",
+      "- Let's make good memories.",
+      "me (lose): Best friend. Yeah. I'd like that to be the last thing I think about. A long time from now."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Denji",
+   "world": {
+    "temperament": "warm",
+    "schedule": [
+     {
+      "place": "plaza",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "cafe",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 50,
+      "min_rank": 0
+     },
+     {
+      "place": "school",
+      "days": [
+       0,
+       2,
+       4
+      ],
+      "times": [
+       0
+      ],
+      "weight": 30,
+      "min_rank": 0
+     },
+     {
+      "place": "alley",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       3
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "food"
+     ],
+     "likes": [
+      "sweet",
+      "game"
+     ],
+     "dislikes": [
+      "book"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Yo! Got any food? Bread? Jam? Anything? I'll duel ya for it."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Name's Denji. Devil hunter. Chainsaw guy. You prob'ly heard."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back again? You got snacks this time?"
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): FOOD! Real food! I could cry! I'm gonna cry!"
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): A book? Like, with words? Man, I can barely read the menu."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: VRRRRMMM! That's my chainsaw noise. Let's go!"
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Dang! You're good! Wanna get food after?"
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Hell yeah! I'm the best! ...Wanna get food after?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! Dude! I found a place that does free refills! Life's good!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): My best bud! You're like, way better than a dog. And dogs are great."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): You're nice to me. Like, for no reason. That's crazy."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I used to eat one slice of bread a day. Now I have friends. You're one. That's like a hundred slices."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'd split my last sandwich with you. That's, like, the biggest deal ever."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Denji, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Denji, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Denji, Friend",
+     "script": [
+      "cast me as Denji",
+      "background city",
+      "me enters left with slide",
+      "me: Okay, okay! I got us breakfast! Bread AND jam!",
+      "me: I never had jam 'til a few months ago. It's insane. Try it!",
+      "player: It's... really good, Denji.",
+      "me (lose): RIGHT?!",
+      "me bounces",
+      "me: Pochita said he wanted me to have a normal life. Normal people eat breakfast with friends.",
+      "me: So you're my friend. That's normal. I'm doin' it!"
+     ]
+    },
+    {
+     "name": "World: Denji, Best friend",
+     "script": [
+      "cast me as Denji",
+      "background night",
+      "me enters center with fade",
+      "me: Can I tell ya somethin' weird?",
+      "me: I don't really know what I want. Everyone keeps tellin' me what I want.",
+      "me (win): Makima says one thing, Aki says another. I just wanted bread and a girlfriend.",
+      "player: What do you want right now?",
+      "me: ...Right now? I want this. Hangin' out. Nobody tellin' me anything.",
+      "choice",
+      "- That's enough, Denji.",
+      "- You can want whatever you want.",
+      "me (lose): Best friends! Dude! I got a best friend! Pochita, ya seein' this?!"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Makima",
+   "world": {
+    "temperament": "villain",
+    "schedule": [
+     {
+      "place": "rooftop",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "times": [
+       2,
+       3
+      ],
+      "weight": 70,
+      "min_rank": 0
+     },
+     {
+      "place": "shrine",
+      "days": [
+       0,
+       2,
+       4
+      ],
+      "times": [
+       3
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "cafe",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       1
+      ],
+      "weight": 35,
+      "min_rank": 2
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "fancy"
+     ],
+     "likes": [
+      "food",
+      "calm"
+     ],
+     "dislikes": [
+      "sporty"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Hello. I've heard good things about you. Let's see if you're worth keeping."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: You're out late. Are you lost? Or are you looking for me?"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You came back. Good. I like obedient people."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): How thoughtful. You understand what I like. That's useful."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Exercise equipment? No. I prefer others to do the running."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Bang."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Interesting. I'll remember this."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Good dog. Try again later."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}. I was just thinking about you. Isn't that a coincidence?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You don't flinch when I look at you. I find that... refreshing."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You're not afraid of me. Or you're hiding it very well. Either way, I'm curious."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: People are either above me or below me. Nobody's ever been beside me. You keep trying to stand there."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them: I've never wanted an equal. I'm starting to understand why people do."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Makima, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Makima, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Makima, Friend",
+     "script": [
+      "cast me as Makima",
+      "background rooftop",
+      "me enters right with fade",
+      "me: Do you like movies? I watch them all day, sometimes.",
+      "me: Most are terrible. But in one out of ten, there's a scene that changes something in you.",
+      "player: Which one changed you?",
+      "me (win): ...I don't know. I've never been sure I could change.",
+      "me: Will you watch one with me? Just one.",
+      "player: Sure. As friends.",
+      "me (lose): Friends. Hm. I'll allow it."
+     ]
+    },
+    {
+     "name": "World: Makima, Best friend",
+     "script": [
+      "cast me as Makima",
+      "background night",
+      "me enters center with fade",
+      "me: Everyone obeys me, in the end. It's what I am. Control.",
+      "me: I wanted an equal relationship once. I didn't know how to have one.",
+      "player: You're having one right now.",
+      "me (win): ...Am I?",
+      "me: You've never once done what I wanted because I wanted it.",
+      "choice",
+      "- That's what friends are.",
+      "- You don't have to control me.",
+      "me (lose): Best friend. An equal. ...How strange. How nice."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Power",
+   "world": {
+    "temperament": "neutral",
+    "schedule": [
+     {
+      "place": "plaza",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "alley",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "times": [
+       3
+      ],
+      "weight": 35,
+      "min_rank": 0
+     },
+     {
+      "place": "cafe",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 40,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "food"
+     ],
+     "likes": [
+      "sweet",
+      "game"
+     ],
+     "dislikes": [
+      "calm"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: GROVEL, HUMAN! I am Power! The Blood Fiend! Worship me!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: You! You look like you have food. Give it to me and I'll let you live."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You again! You must be obsessed with me. I understand."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): MEAT! Hahaha! You are a good human! The best human!"
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Calm? Tea? Disgusting! Where's the blood? The meat?!"
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: I am the strongest! The ultimate! Prepare to lose, human!"
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): CHEATING! You cheated! I demand a rematch!"
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): HAHAHA! As expected of me, the greatest!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Ah! My servant has returned! You may sit near me. Not too near."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You are my number one human! After me. I am number zero!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: Hmm. You're not completely worthless. I'll remember your face. Maybe."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I had a cat once. Meowy. I'd do anything for Meowy. You're... almost as good as Meowy."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): If you ever get kidnapped, I'll come save you. Probably. If I'm not busy."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Power, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Power, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Power, Friend",
+     "script": [
+      "cast me as Power",
+      "background city",
+      "me enters left with pop",
+      "me: HUMAN! I have decided you are my friend.",
+      "player: Thanks, Power.",
+      "me: It's an honour. Few receive it. Denji. Meowy. Now you.",
+      "me (win): Friends have to share food, though. That's the rule.",
+      "player: Even your food?",
+      "me: ...Especially yours.",
+      "me (lose): Hahaha! Friendship!",
+      "me bounces"
+     ]
+    },
+    {
+     "name": "World: Power, Best friend",
+     "script": [
+      "cast me as Power",
+      "background rain",
+      "me enters center with fade",
+      "me: Human. I'm going to say something and you won't laugh.",
+      "me: When I was scared before, I lied and blamed others. I still do. A lot.",
+      "me (win): But I don't want to lie to you. You're too... You stay.",
+      "player: I'll always stay, Power.",
+      "me: Even when I'm awful?",
+      "player: Even then.",
+      "choice",
+      "- You're my best friend.",
+      "- I'd save you too.",
+      "me (lose): ...Best friend. Fine! But I'm still the greatest! Hahaha!"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Beast Titan",
+   "world": {
+    "temperament": "villain",
+    "schedule": [
+     {
+      "place": "forest",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "times": [
+       2,
+       3
+      ],
+      "weight": 65,
+      "min_rank": 0
+     },
+     {
+      "place": "warehouse",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       3
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "arena",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       1
+      ],
+      "weight": 30,
+      "min_rank": 2
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "sporty"
+     ],
+     "likes": [
+      "book",
+      "calm"
+     ],
+     "dislikes": [
+      "cute"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Ah. A visitor. Mind the trees. They might fall on you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Do you play catch? No? Pity. I'm quite good."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Again? You're braver than you look."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): A ball. Oh. That brings back memories. Thank you."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Cute things. Children's things. I'm not fond of those memories."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Let's see if you can catch a fastball."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): A home run. ...Fine. Well hit."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Strike three."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: You came back. Most people run from me. I suppose that's worth something."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Sit. I'll tell you about my grandfather. He taught me to throw."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You don't hate me. Curious. You must not know much about me."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: My father used me as a tool. Only one person ever played with me. He's gone. You remind me of him."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them: I have a plan to end suffering. You make me wonder if there's another way."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Beast Titan, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Beast Titan, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Beast Titan, Friend",
+     "script": [
+      "cast me as Beast Titan",
+      "background forest",
+      "me enters right with drop",
+      "screen shake",
+      "me: Don't be frightened. I'm only big when I want to be.",
+      "me: Catch!",
+      "player: Is that... a baseball?",
+      "me (lose): Good catch. Very good.",
+      "me: Mr. Ksaver used to play catch with me. He's the only one who saw me as a person.",
+      "me: You see me as a person too. That's... more than I expected. Again?"
+     ]
+    },
+    {
+     "name": "World: Beast Titan, Best friend",
+     "script": [
+      "cast me as Beast Titan",
+      "background dusk",
+      "me enters center with fade",
+      "me: I believe the world would be kinder if no one was ever born into it.",
+      "me: No more suffering. No more children used as weapons.",
+      "player: You'd erase everything good too.",
+      "me (win): ...Like this. Like playing catch with a friend.",
+      "player: Like this.",
+      "me: My grandfather said life is worth it for these moments. I didn't believe him.",
+      "choice",
+      "- Believe him now.",
+      "- Stay and play.",
+      "me (lose): Best friend. One more throw, then. And another after that."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Eren",
+   "world": {
+    "temperament": "aloof",
+    "schedule": [
+     {
+      "place": "arena",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "beach",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       2,
+       3
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "forest",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       2
+      ],
+      "weight": 35,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "sporty"
+     ],
+     "likes": [
+      "food"
+     ],
+     "dislikes": [
+      "fancy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Get out of my way, or get ready to fight."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: I don't have time for chatting. I have to keep moving forward."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Again? You don't give up. I respect that."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Training gear. Useful. Thanks."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): This is pointless. What would I do with it?"
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: I'll keep fighting. Until the very end."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): I'll get stronger. I have to."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them: Freedom is earned. Remember that."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. You're still here. ...Good."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Hey. Sit. I just want to see the ocean with someone for a bit."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You don't flinch. Most people do, around me."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I saw my mother eaten in front of me. Everything since has been about that day. You make it quieter."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): If the world was just you, me, and the ocean... I think I'd be free."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Eren, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Eren, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Eren, Friend",
+     "script": [
+      "cast me as Eren",
+      "background ocean",
+      "me enters left with fade",
+      "me: Armin said there's an ocean beyond the walls. He was right.",
+      "me: I thought seeing it would make me feel free.",
+      "player: Does it?",
+      "me (win): No. There's more on the other side. More enemies. More walls.",
+      "player: Then let's look at it together for now.",
+      "me: ...Fine.",
+      "me (lose): Friends, then. Stand with me."
+     ]
+    },
+    {
+     "name": "World: Eren, Best friend",
+     "script": [
+      "cast me as Eren",
+      "background dusk",
+      "me enters center with fade",
+      "me: I've seen the future. Things I'll do. Things I can't stop.",
+      "me: Everyone will hate me. Maybe they should.",
+      "player: I won't.",
+      "me (win): You don't know what I'm going to do.",
+      "player: I know who you are now.",
+      "me: ...Mikasa says that too.",
+      "choice",
+      "- You can still choose, Eren.",
+      "- I'm with you.",
+      "me (lose): Best friend. Then... remember me like this. Looking at the ocean. Free."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Levi",
+   "world": {
+    "temperament": "aloof",
+    "schedule": [
+     {
+      "place": "cafe",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "arena",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "school",
+      "days": [
+       0,
+       2,
+       4
+      ],
+      "times": [
+       2
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "drink"
+     ],
+     "likes": [
+      "calm"
+     ],
+     "dislikes": [
+      "food"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: You're tracking mud in here. Wipe your feet."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Tch. Another rookie. Fine. Let's see what you've got."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Again. Make it quick."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Good tea. Black. You have taste. Rare."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Instant noodles? Do you want me to die of disgust?"
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Give up on your dream and die. ...Or fight me properly."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them: Not bad. Keep that up and you might survive."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them: Too slow. Again."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: You again. You're clean, at least. Sit."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): ...I made two cups of tea. Don't read into it."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You're not useless. That's something."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I've lost every squad I've ever led. I don't make friends because they die. You're making that hard."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): If you die, I'll be very annoyed. So don't."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Levi, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Levi, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Levi, Friend",
+     "script": [
+      "cast me as Levi",
+      "background cafe",
+      "me enters right with fade",
+      "me: Sit. I'm teaching you to make tea properly.",
+      "me: Hold the cup by the rim. Like this.",
+      "player: Why by the rim?",
+      "me (win): ...Someone I trusted taught me that. A long time ago.",
+      "me: Doesn't matter. It's the right way.",
+      "me (lose): You're a fast learner. Fine. You can be my friend. Don't make it weird."
+     ]
+    },
+    {
+     "name": "World: Levi, Best friend",
+     "script": [
+      "cast me as Levi",
+      "background rain",
+      "me enters center with fade",
+      "me: I've buried more comrades than I can count.",
+      "me: Erwin. Hange. Everyone. I always thought I'd be next.",
+      "player: You're still here.",
+      "me (win): That's the problem. Everyone else isn't.",
+      "player: Then live for them. And a little for yourself.",
+      "me: ...You sound like Erwin.",
+      "choice",
+      "- I'm not going anywhere.",
+      "- Let's have tea tomorrow.",
+      "me (lose): Best friend. Tch. Fine. Tomorrow. Don't be late."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Mikasa",
+   "world": {
+    "temperament": "aloof",
+    "schedule": [
+     {
+      "place": "arena",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "forest",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "plaza",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       2
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "calm"
+     ],
+     "likes": [
+      "sporty",
+      "food"
+     ],
+     "dislikes": [
+      "fancy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Have you seen Eren? ...No? Then I'll go."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Don't get in my way."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're back."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): It's warm. Like a scarf. Thank you."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): This is too much. I don't need fancy things."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: I'll win. I have to."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): ...You're strong. I'll train harder."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them: I won't lose. Not while there's someone to protect."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. You're here. I was... looking for you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're family now. I protect my family."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You're kind. I don't meet many kind people."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: Eren gave me this scarf when I had nothing. You've been giving me something too. Time."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): If anyone hurts you, I'll find them. That's a promise."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Mikasa, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Mikasa, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Mikasa, Friend",
+     "script": [
+      "cast me as Mikasa",
+      "background forest",
+      "me enters left with fade",
+      "me: The world is cruel. But it's also beautiful.",
+      "me: I forget the second part, sometimes.",
+      "player: What reminds you?",
+      "me (lose): Eren. Armin. ...You, a little.",
+      "me: I don't say it easily. I'm saying it now.",
+      "me: We're friends. I'll protect you."
+     ]
+    },
+    {
+     "name": "World: Mikasa, Best friend",
+     "script": [
+      "cast me as Mikasa",
+      "background dusk",
+      "me enters center with fade",
+      "me: Can I tell you something I've never told anyone?",
+      "me: I'm afraid. All the time. Of losing them. Of losing myself.",
+      "player: You don't have to be strong for me.",
+      "me (win): ...I've never let anyone see me scared.",
+      "player: You can, with me.",
+      "me: Thank you.",
+      "choice",
+      "- I'll protect you too.",
+      "- You're my family too.",
+      "me (lose): Best friend. Family. I'll wrap my scarf around both of us, then."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Nui Harime",
+   "world": {
+    "temperament": "villain",
+    "schedule": [
+     {
+      "place": "warehouse",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "times": [
+       2,
+       3
+      ],
+      "weight": 65,
+      "min_rank": 0
+     },
+     {
+      "place": "alley",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       3
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "plaza",
+      "days": [
+       0,
+       2,
+       4
+      ],
+      "times": [
+       1
+      ],
+      "weight": 35,
+      "min_rank": 2
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "cute"
+     ],
+     "likes": [
+      "sweet",
+      "fancy"
+     ],
+     "dislikes": [
+      "calm"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Hiii~! I'm Nui Harime! Let's play, okay? Nui promises to be gentle! ...Maybe!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Ooh, a new friend! Can I sew a little bow on you? Pretty please?"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Back again~! You must really like Nui!"
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Kyaa~! So cute! Just like Nui!"
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Calm? Boring! Nui hates boring! Booooring!"
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Let's play dress-up! You're the doll!"
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Aww! You're no fun! ...Again! Again again again!"
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Hehe~! Snip snip!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}~! Nui missed you! Did you miss Nui? You did! Yay!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're Nui's favourite! Nui won't even cut you to ribbons! Isn't that sweet?"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): You didn't run away! Nui likes that! Most people run!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: Nui was made by Lady Ragyo. Nui can't close her eye. Nui doesn't feel things like people. Is that weird?"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Nui wants to keep you forever! In a nice way! Probably!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Nui Harime, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Nui Harime, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Nui Harime, Friend",
+     "script": [
+      "cast me as Nui Harime",
+      "background crimson",
+      "me enters right with pop",
+      "me: Ta-da! Nui made you a present!",
+      "player: A... ribbon?",
+      "me (lose): A friendship ribbon! Nui sewed it herself!",
+      "me: Nui doesn't have friends. Nui has toys. You're not a toy, though. You talk back!",
+      "me: So you're a friend! Nui decided!",
+      "me spins"
+     ]
+    },
+    {
+     "name": "World: Nui Harime, Best friend",
+     "script": [
+      "cast me as Nui Harime",
+      "background night",
+      "me enters center with fade",
+      "me: Nui was made, not born. Lady Ragyo made Nui to be perfect.",
+      "me: Perfect dolls don't need anyone.",
+      "me (win): But Nui keeps coming to find you.",
+      "player: Maybe you're more than a doll, Nui.",
+      "me: ...More than a doll?",
+      "choice",
+      "- You're my friend, Nui.",
+      "- You can choose who you are.",
+      "me (lose): Best friend! Nui will sew it into her heart! Ehehe~! Don't tell Lady Ragyo!"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Ragyo Kiryuin",
+   "world": {
+    "temperament": "villain",
+    "schedule": [
+     {
+      "place": "warehouse",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       2,
+       3
+      ],
+      "weight": 65,
+      "min_rank": 0
+     },
+     {
+      "place": "rooftop",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       3
+      ],
+      "weight": 50,
+      "min_rank": 0
+     },
+     {
+      "place": "library",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       1
+      ],
+      "weight": 30,
+      "min_rank": 2
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "fancy"
+     ],
+     "likes": [
+      "flowers"
+     ],
+     "dislikes": [
+      "sporty"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Welcome, little one. Clothes are what make you human. Let me look at you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Ah, a stray. How charming. Do you know whom you address?"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Again? Your devotion is noted."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Exquisite. You have an eye for luxury."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Sportswear. How utterly common."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Life Fibers sync! ...Or cards. It matters not. You will lose."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Insolent. ...Impressive. Insolent."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Naked before me, as all humans are."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): You return to my presence. How delightfully foolish."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come, sit beside me. I permit it. Few are permitted."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You do not grovel. How unusual. How interesting."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I gave my body to the Life Fibers long ago. Humanity is a garment I wear. Do you understand?"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them: Even I can learn, it seems. You have taught me something. I do not enjoy admitting it."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Ragyo Kiryuin, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Ragyo Kiryuin, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Ragyo Kiryuin, Friend",
+     "script": [
+      "cast me as Ragyo Kiryuin",
+      "background castle",
+      "me enters center with fade",
+      "me: Do you know why I wear these clothes? To show I am above you.",
+      "me: Yet you speak to me as if we were the same.",
+      "player: Aren't we?",
+      "me (win): ...No one has ever dared suggest it.",
+      "me: Perhaps that is why I let you stay.",
+      "me (lose): You may call yourself my friend. Do not abuse it."
+     ]
+    },
+    {
+     "name": "World: Ragyo Kiryuin, Best friend",
+     "script": [
+      "cast me as Ragyo Kiryuin",
+      "background crimson",
+      "me enters center with fade",
+      "me: My daughters despise me. Rightly, perhaps.",
+      "me: I chose the Life Fibers over them. Over humanity. Over myself.",
+      "player: You can still choose something else.",
+      "me (win): After all I've done?",
+      "player: After all you've done.",
+      "me: ...You are a strange child.",
+      "choice",
+      "- I'm your friend, Ragyo.",
+      "- It's not too late.",
+      "me (lose): Best friend. How... human of me. I find I don't hate it."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Ryuko Matoi",
+   "world": {
+    "temperament": "friendly",
+    "schedule": [
+     {
+      "place": "arena",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "alley",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       2,
+       3
+      ],
+      "weight": 40,
+      "min_rank": 0
+     },
+     {
+      "place": "plaza",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       1
+      ],
+      "weight": 35,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "food"
+     ],
+     "likes": [
+      "cool",
+      "sporty"
+     ],
+     "dislikes": [
+      "fancy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Ryuko Matoi. I'm lookin' for whoever killed my dad. Seen anyone with half a scissor blade?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: You wanna fight? Senketsu's itchin' for it."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back again? Cool."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Croquettes! Mystery croquettes! Just like Mako's mom makes!"
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): A fancy dress? Senketsu's gonna be jealous. And I'm gonna be itchy."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Senketsu! Let's show 'em what we've got!"
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Damn. Okay. You got me. One more?"
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Hell yeah!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Yo, {player}! Mako's family made too many croquettes. Want some?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're the real deal. Don't let anyone tell you different."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You're alright. Not a jerk. I can work with that."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I found out I'm not even fully human. Freaked me out. You didn't even blink."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You and Mako. My people. Nobody touches my people."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Ryuko Matoi, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Ryuko Matoi, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Ryuko Matoi, Friend",
+     "script": [
+      "cast me as Ryuko Matoi",
+      "background city",
+      "me enters left with slide",
+      "me: Senketsu says you're alright. He doesn't say that about anyone.",
+      "player: Your uniform talks?",
+      "me: Yeah. Long story. Don't make it weird.",
+      "me (lose): Look, I don't have a lot of friends. Mako, Senketsu. Now you.",
+      "me: So let's get some food. Friend stuff."
+     ]
+    },
+    {
+     "name": "World: Ryuko Matoi, Best friend",
+     "script": [
+      "cast me as Ryuko Matoi",
+      "background crimson",
+      "me enters center with fade",
+      "me: You know I'm part Life Fiber, right? Made by the same stuff as Ragyo.",
+      "me (win): Sometimes I wonder if I'm a person at all.",
+      "player: You're the most real person I know, Ryuko.",
+      "me: ...Yeah?",
+      "player: Yeah.",
+      "me: Mako said that too. She screamed it, actually.",
+      "choice",
+      "- You're human where it counts.",
+      "- I'm proud of you.",
+      "me (lose): Best friend. Heh. Senketsu, you hear that? We've got another one."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Satsuki Kiryuin",
+   "world": {
+    "temperament": "aloof",
+    "schedule": [
+     {
+      "place": "school",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 60,
+      "min_rank": 0
+     },
+     {
+      "place": "rooftop",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       2,
+       3
+      ],
+      "weight": 40,
+      "min_rank": 0
+     },
+     {
+      "place": "arena",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       2
+      ],
+      "weight": 35,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "calm"
+     ],
+     "likes": [
+      "fancy",
+      "book"
+     ],
+     "dislikes": [
+      "cute"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: I am Satsuki Kiryuin. Show me whether you are human, or a pig in human clothing."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: You stand before the president of Honnouji Academy. Stand straight."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Again. Your resolve is noted."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): A fine tea set. You understand discipline."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): ...A plushie. I see. Iori would find this amusing."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Fear is freedom! Subjugation is liberation! Contradiction is truth! Begin."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You've shown me you're human. Well done."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them: You have potential. You simply haven't earned it yet."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. You've returned. Your posture's improved."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Sit. We'll have tea. I insist."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You don't kneel, and you don't run. Good."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I've plotted against my mother since I was a child. Every word, every move. I've never had a friend. Only allies."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): When this war ends, I'd like to learn what friendship is. With you, if you'd allow it."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Satsuki Kiryuin, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Satsuki Kiryuin, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Satsuki Kiryuin, Friend",
+     "script": [
+      "cast me as Satsuki Kiryuin",
+      "background castle",
+      "me enters right with fade",
+      "me: Every person in this academy serves a purpose. Even me.",
+      "me: You serve no purpose here. And yet I keep finding time for you.",
+      "player: Maybe that's the purpose.",
+      "me (lose): ...Perhaps.",
+      "me: You've earned my respect. More than that. Friendship.",
+      "me: I don't offer it lightly. Accept it properly."
+     ]
+    },
+    {
+     "name": "World: Satsuki Kiryuin, Best friend",
+     "script": [
+      "cast me as Satsuki Kiryuin",
+      "background night",
+      "me enters center with fade",
+      "me: My whole life has been a plan to defeat my mother.",
+      "me: I sacrificed my childhood. My sister. My heart.",
+      "player: You're more than a plan, Satsuki.",
+      "me (win): I'm not sure I know who I am without it.",
+      "player: Then let's find out together.",
+      "me: ...Together.",
+      "choice",
+      "- You're my best friend.",
+      "- You don't have to carry it alone.",
+      "me (lose): Best friend. I accept. And I'll guard it with everything I have."
+     ]
+    }
+   ]
+  }
+ ]
+}

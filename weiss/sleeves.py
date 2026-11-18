@@ -47,6 +47,8 @@ KINDS = {
     "infinite_score": Kind("Score in one infinite challenge", lambda n, t: f"Score {n} in one infinite challenge", best=True),
     "bosses": Kind("Infinite challenge bosses beaten (solo or co-op)", lambda n, t: f"Beat {'an infinite challenge boss' if n == 1 else f'{n} infinite challenge bosses'}"),
     "coop_floors": Kind("Floors climbed in one co-op challenge", lambda n, t: f"Climb {plural(n, 'floor')} in one co-op challenge", best=True),
+    "world_rank": Kind("Friendship rank reached in world mode (0 the first)",
+                       lambda n, t: f"Reach friendship rank {n} with {t or 'a CPU'} in world mode", target="cpu", best=True),
 }
 
 TARGETS = {"cpu": CpuProfile, "scenario": ArcadeScenario, "narrative": NarrativeChallenge}

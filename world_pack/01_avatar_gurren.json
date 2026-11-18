@@ -1,0 +1,2302 @@
+{
+ "pack": "01_avatar_gurren",
+ "cpus": [
+  {
+   "name": "Aang",
+   "world": {
+    "temperament": "warm",
+    "schedule": [
+     {
+      "place": "plaza",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 60,
+      "min_rank": 0
+     },
+     {
+      "place": "beach",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 50,
+      "min_rank": 0
+     },
+     {
+      "place": "shrine",
+      "days": [
+       0,
+       3,
+       5
+      ],
+      "times": [
+       0
+      ],
+      "weight": 35,
+      "min_rank": 0
+     },
+     {
+      "place": "cafe",
+      "days": [
+       2,
+       4,
+       6
+      ],
+      "times": [
+       2
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "cute"
+     ],
+     "likes": [
+      "sweet",
+      "game",
+      "calm"
+     ],
+     "dislikes": [
+      "spicy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Hi! I'm Aang. Want to see an air scooter? ...Okay, maybe after a duel."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Oh, hey! Have you seen a big flying bison around here? No? He'll turn up."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back already? Monk Gyatso always said the best lessons come twice."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Whoa, this is so cute! Can I show it to Katara? She'll love it too!"
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Oh... spicy? I'll, um, save it for Sokka."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Okay! Let's keep it light and fun. No hard feelings, whoever wins!"
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Ha! You got me! That was a really good move."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Good game! Want me to show you where you went wrong? Airbender's honour."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! I was hoping you'd come by. Momo's been asking about you. Well, chirping."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): There's my favourite duelist! Come on, let's do something fun today."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): You know, you remind me of my friends back at the Southern Air Temple.",
+       "player (smile): Is that good?",
+       "them (pleased): The best!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: Being the Avatar can feel lonely sometimes. It's nice having someone who just likes me for me."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'm going to tell everyone about you. Katara, Sokka, Toph... you're practically Team Avatar now!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Aang, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Aang, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Aang, Friend",
+     "script": [
+      "cast me as Aang",
+      "background sakura",
+      "me enters left with pop",
+      "me: Hey, {player}! Come here, look!",
+      "me jumps",
+      "me: I've been practising a new trick with the leaves. Watch this.",
+      "screen flash",
+      "player: You made them spin into a little cyclone!",
+      "me: Monks used to do this for the children at the temple. I haven't shown anyone in a long time.",
+      "me: A hundred years, technically.",
+      "player: Then I'm honoured.",
+      "me: You should be! It's very advanced. ...Okay, it's mostly for fun.",
+      "me bounces",
+      "me: Friends share fun stuff. That's what we are now, right?",
+      "choice",
+      "- Definitely.",
+      "- Only if you teach me the leaf trick.",
+      "me: Deal! Friends forever. Airbender's promise."
+     ]
+    },
+    {
+     "name": "World: Aang, Best friend",
+     "script": [
+      "cast me as Aang",
+      "background dusk",
+      "me enters center with rise",
+      "me: Can I tell you something? I don't tell many people this.",
+      "me: When I woke up from the iceberg, everyone I knew was gone. I kept smiling so nobody would worry.",
+      "player: You don't have to smile around me.",
+      "me (win): ...Thanks. That means a lot.",
+      "me: Gyatso used to say you can find family anywhere, if you keep your heart open.",
+      "me: I think I found some of it here.",
+      "me glows",
+      "me: So, best friends? Real ones. The kind who'd fly across the world for each other.",
+      "player: Real ones.",
+      "me (intro): Then let's go! There's a whole world to show you, and I'm buying the egg custard tarts!"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Katara",
+   "world": {
+    "temperament": "warm",
+    "schedule": [
+     {
+      "place": "beach",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 60,
+      "min_rank": 0
+     },
+     {
+      "place": "plaza",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "shrine",
+      "days": [
+       2,
+       4
+      ],
+      "times": [
+       2
+      ],
+      "weight": 30,
+      "min_rank": 0
+     },
+     {
+      "place": "cafe",
+      "days": [
+       0,
+       1,
+       3
+      ],
+      "times": [
+       0
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "calm"
+     ],
+     "likes": [
+      "flowers",
+      "food",
+      "cute"
+     ],
+     "dislikes": [
+      "spicy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Hi, I'm Katara, from the Southern Water Tribe. You look like you could use a friendly face."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Oh, are you here for a duel? Just so you know, I don't hold back."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Still here? Don't forget to rest. Even waterbenders need a break."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): This is so thoughtful. It reminds me of the quiet nights back home."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Oh. That's... spicy. Sokka would eat it. Probably."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Let's see how you flow. Watch the tides, not the waves."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Hmph. Fine, that was good. Don't let it go to your head."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You'll get better. I had to learn the hard way too, you know."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! Have you been eating properly? You look tired."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I saved you a seat. Sit, tell me everything about your week."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): You're easy to talk to. Most people just want to know about the Avatar."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: My mother gave me this necklace. I don't talk about her much... but I wanted you to know."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): If anyone gives you trouble, they'll answer to me. And a lot of water."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Katara, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Katara, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Katara, Friend",
+     "script": [
+      "cast me as Katara",
+      "background ocean",
+      "me enters left with slide",
+      "me: There you are. I was practising forms by the water.",
+      "me: Want to try? Feet planted. Arms soft. Push, then pull.",
+      "player: Like this?",
+      "me (lose): Not bad! You've got a gentle touch. That's harder to teach than strength.",
+      "me: Back home, the women of the tribe weren't allowed to fight. I had to fight just to learn.",
+      "player: You did it anyway.",
+      "me: I did. And now I get to teach whoever I want.",
+      "me: So, friend, same time next week?",
+      "player: Same time next week."
+     ]
+    },
+    {
+     "name": "World: Katara, Best friend",
+     "script": [
+      "cast me as Katara",
+      "background night",
+      "me enters center with fade",
+      "me: The moon's full tonight. It always makes me think of Yue.",
+      "me: She gave everything to protect the Northern Water Tribe. I think about what it means to protect someone.",
+      "player: You protect everyone. Who protects you?",
+      "me (win): ...Nobody's asked me that before.",
+      "me: Maybe that's what you've been doing. Just by being here.",
+      "me nods",
+      "choice",
+      "- I'll always be here.",
+      "- That's what best friends do.",
+      "me (lose): Then it's settled. You're family now. Water Tribe family.",
+      "me: And Water Tribe family gets the good stew. Come on."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Sokka",
+   "world": {
+    "temperament": "warm",
+    "schedule": [
+     {
+      "place": "cafe",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 60,
+      "min_rank": 0
+     },
+     {
+      "place": "beach",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 50,
+      "min_rank": 0
+     },
+     {
+      "place": "plaza",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       2
+      ],
+      "weight": 35,
+      "min_rank": 0
+     },
+     {
+      "place": "arena",
+      "days": [
+       0,
+       2,
+       4
+      ],
+      "times": [
+       1
+      ],
+      "weight": 25,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "food"
+     ],
+     "likes": [
+      "game",
+      "cool",
+      "spicy"
+     ],
+     "dislikes": [
+      "calm"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Sokka. Warrior. Strategist. Meat and sarcasm guy. You've probably heard of me."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Hey, do you know where I can get good jerky around here? It's for strategy. Morale strategy."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back for more Sokka wisdom? It's free. For now."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): FOOD! Real food! You get me. You truly, deeply get me."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Is this... meditation incense? Did Aang put you up to this?"
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: I've already calculated three ways to beat you. Four if you count boomerang."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): That was not in the plan. I need a new plan. And a snack."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): And that's how the Water Tribe does it! Boomerang!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! Buddy! I've got a new plan. It's got boomerangs in it."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): My best strategist and second-best warrior! After me, obviously."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You laugh at my jokes. Like, actually laugh. Nobody does that."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I'm the only one in my group who can't bend. Sometimes that's hard. You never make me feel like that, though."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'm writing you into my battle plans. As a key asset. Very high honour."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Sokka, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Sokka, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Sokka, Friend",
+     "script": [
+      "cast me as Sokka",
+      "background city",
+      "me enters left with slide",
+      "me: Okay, okay. Big moment. I wrote you a haiku.",
+      "player: You... wrote me a haiku?",
+      "me: Don't sound so surprised! I won a haiku battle once. Mostly.",
+      "me: 'A friend in the town. / Duels, snacks, and good company. / Sokka approves this.'",
+      "player: That last line is six syllables.",
+      "me (win): It's experimental!",
+      "me: Point is, you're my friend now. Official. I've got a sash for it somewhere.",
+      "me bounces",
+      "me: Don't laugh! ...Okay, you can laugh a little."
+     ]
+    },
+    {
+     "name": "World: Sokka, Best friend",
+     "script": [
+      "cast me as Sokka",
+      "background dusk",
+      "me enters center with fade",
+      "me: Can I be serious for a second? It doesn't happen often.",
+      "me: When my dad left for the war, I had to be the man of the tribe. I was a kid. I made it up as I went.",
+      "me: I still kind of do. Everyone thinks the plan guy knows what he's doing.",
+      "player: You do know. You care. That's the whole plan.",
+      "me (win): ...Yeah. Yeah, maybe.",
+      "me: You're my best friend, {player}. Don't tell Aang, he'll get jealous.",
+      "choice",
+      "- Your secret's safe.",
+      "- I'm telling Aang immediately.",
+      "me (intro): Okay, best friend celebration. I know a place with the best sea prunes. Kidding! It's meat."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Toph",
+   "world": {
+    "temperament": "aloof",
+    "schedule": [
+     {
+      "place": "arena",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 65,
+      "min_rank": 0
+     },
+     {
+      "place": "forest",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 40,
+      "min_rank": 0
+     },
+     {
+      "place": "plaza",
+      "days": [
+       2,
+       4,
+       6
+      ],
+      "times": [
+       2
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "sporty"
+     ],
+     "likes": [
+      "food",
+      "spicy",
+      "cool"
+     ],
+     "dislikes": [
+      "fancy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: You walk like a pushover. Your heartbeat says you're nervous. Relax, I don't bite. Much."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: The greatest earthbender in the world, right here. You're welcome."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back again? I can feel you pacing, you know."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Now THAT'S a gift. None of that frilly stuff. You're alright."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): This feels fancy. Did my parents send you?"
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: I'm gonna bury you. Figuratively. Maybe literally."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Lucky shot. I'll feel you coming next time."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Told you. Greatest in the world. Come back when you've got some rock in your bones."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: Oh, it's you. Your footsteps are getting less annoying. That's a compliment."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Hey, Twinkletoes number two. Wanna go throw rocks at things?"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: Fine, you're not totally boring. Don't make it weird."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: My parents kept me locked up like a fragile doll. You treat me like a fighter. I like that."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): If anyone messes with you, tell me. I'll make the ground eat 'em."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Toph, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Toph, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Toph, Friend",
+     "script": [
+      "cast me as Toph",
+      "background ruins",
+      "me enters right with drop",
+      "screen shake",
+      "me: Gotcha. You jumped, didn't you? I felt it.",
+      "player: You made the ground move under me!",
+      "me (lose): Yeah. Rite of passage.",
+      "me: Anyone I let close gets tested. Most people whine. You laughed.",
+      "me: That's how I know you're one of us.",
+      "player: One of who?",
+      "me: The people I don't mind. It's a short list. Don't get cocky."
+     ]
+    },
+    {
+     "name": "World: Toph, Best friend",
+     "script": [
+      "cast me as Toph",
+      "background night",
+      "me enters center with fade",
+      "me: Sit down. No, on the ground. Feel that?",
+      "player: It's... humming?",
+      "me: That's the earth. It's how I see the world. Through vibrations.",
+      "me: People think I'm missing something because I'm blind. I'm not missing anything. I see everything.",
+      "me: Including how you've stuck around. Every week. Even when I was a pain.",
+      "player: Especially then.",
+      "me (lose): Heh. Sap.",
+      "me: You're my best friend, {player}. Say it back and I'll punch you. Gently.",
+      "choice",
+      "- Best friend.",
+      "- I'll risk the punch.",
+      "me shakes",
+      "me (lose): Ow, you're tougher than you look. Good."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Azula",
+   "world": {
+    "temperament": "villain",
+    "schedule": [
+     {
+      "place": "rooftop",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "times": [
+       2,
+       3
+      ],
+      "weight": 70,
+      "min_rank": 0
+     },
+     {
+      "place": "warehouse",
+      "days": [
+       1,
+       3,
+       5,
+       6
+      ],
+      "times": [
+       3
+      ],
+      "weight": 50,
+      "min_rank": 0
+     },
+     {
+      "place": "arena",
+      "days": [
+       0,
+       2,
+       4
+      ],
+      "times": [
+       1
+      ],
+      "weight": 35,
+      "min_rank": 2
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "fancy"
+     ],
+     "likes": [
+      "cool",
+      "spicy"
+     ],
+     "dislikes": [
+      "cute"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: You're standing in the presence of royalty. A bow would be appropriate."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Out after dark? How bold. Or how foolish."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Twice in one day? Persistence. Father would approve. I'm undecided."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Finally, someone with taste. Most peasants bring trinkets."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Is this a joke? Do I look like I play with plushies?"
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Lightning doesn't miss. Neither do I."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Impossible. ...Again. Right now. That was a fluke."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Almost isn't good enough. It never is."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: You again. I suppose you're useful company. Don't let it go to your head."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Ah, my most loyal... acquaintance. Walk with me. Not behind. Beside."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: Most people fear me or flatter me. You do neither. It's... unsettling."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: Mother thought I was a monster. Maybe she was right. You keep coming back anyway. Why?"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them: I don't trust anyone. I'm considering an exception. Don't make me regret it."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Azula, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Azula, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Azula, Friend",
+     "script": [
+      "cast me as Azula",
+      "background crimson",
+      "me enters right with fade",
+      "me: I've been watching your duels. You hesitate.",
+      "me: Hesitation is weakness. But you also don't break. Curious.",
+      "player: Is that a compliment?",
+      "me: It's an observation. Compliments are earned.",
+      "me: ...You've earned a small one.",
+      "me (lose): You're not afraid of me. Everyone is. Even my friends were.",
+      "player: Were?",
+      "me (win): They chose someone else. In the end, they always do.",
+      "me: Don't look at me like that. I don't need pity. I need someone who'll stay.",
+      "me: Stay, then. Consider it a royal decree."
+     ]
+    },
+    {
+     "name": "World: Azula, Best friend",
+     "script": [
+      "cast me as Azula",
+      "background night",
+      "me enters center with fade",
+      "me: I perfected my lightning tonight. Alone. As always.",
+      "me: Except you're here. You're always here.",
+      "player: You don't have to do everything alone.",
+      "me (win): I was raised to believe I did. That love was weakness and fear was power.",
+      "me: Fear kept people close. It also kept them far away.",
+      "me: You never feared me. And you never left.",
+      "choice",
+      "- I'm not going anywhere.",
+      "- You're more than your father's daughter.",
+      "me (intro): ...If you tell anyone I said this, I'll deny it. But you're my friend. My only real one.",
+      "me (lose): Now go. Before I say anything else embarrassing."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Simon the digger",
+   "world": {
+    "temperament": "warm",
+    "schedule": [
+     {
+      "place": "plaza",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "beach",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "warehouse",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       1
+      ],
+      "weight": 30,
+      "min_rank": 0
+     },
+     {
+      "place": "school",
+      "days": [
+       0,
+       2,
+       4
+      ],
+      "times": [
+       0
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "food"
+     ],
+     "likes": [
+      "cool",
+      "game",
+      "cards"
+     ],
+     "dislikes": [
+      "fancy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Oh! Hi. I'm Simon. I dig. Holes, mostly. Sorry, that sounded weird."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Have you seen Kamina? He's my bro. He's... loud. You'd know."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You came back. People don't usually come back for me."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Food! Thank you! We never had much of this underground."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): It's very pretty. I don't think I'm fancy enough for it."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: My drill is the drill that'll pierce the heavens! ...I'll try my best."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You're really strong. I'll keep digging. I'll get better."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): I did it? I did it! Bro, did you see?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! I found something shiny in the ground today. Want to see?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Who the hell do you think we are? ...Kamina says that. I'm practising. With you."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You talk to me like I matter. Thanks. That's new."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: Kamina believes in me. Now you do too. That's two. That's a lot!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Believe in the you that believes in yourself. I think I finally get it."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Simon the digger, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Simon the digger, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Simon the digger, Friend",
+     "script": [
+      "cast me as Simon the digger",
+      "background cave",
+      "me enters left with rise",
+      "me: This is where I grew up. Underground. It's not much.",
+      "me: Everyone used to call me a coward. Just a digger.",
+      "player: Digging got you here, didn't it?",
+      "me (lose): ...Yeah. It did.",
+      "me: I found the core drill by digging. Kamina found me.",
+      "me: Now I found you too. A friend.",
+      "me bounces",
+      "me: I'm going to dig a tunnel straight to your place. Kidding! Mostly."
+     ]
+    },
+    {
+     "name": "World: Simon the digger, Best friend",
+     "script": [
+      "cast me as Simon the digger",
+      "background space",
+      "me enters center with fade",
+      "me: Look up. The stars. I never saw them until I left the village.",
+      "me: The sky felt so big. I was scared of it. Of everything.",
+      "player: And now?",
+      "me (intro): Now I want to pierce it. With you watching.",
+      "me: You never laughed at me. Not once.",
+      "me: Kamina's my bro. You're my best friend. That's different, and just as big.",
+      "choice",
+      "- Let's pierce the heavens together.",
+      "- Who the hell do you think we are?",
+      "me (lose): ...Yeah! Team Dai-Gurren's newest member! Official!"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Simon",
+   "world": {
+    "temperament": "friendly",
+    "schedule": [
+     {
+      "place": "arena",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "rooftop",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       2,
+       3
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "plaza",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       1
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "cool"
+     ],
+     "likes": [
+      "calm",
+      "food"
+     ],
+     "dislikes": [
+      "fancy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Simon. Leader of Team Dai-Gurren. I've fought gods. A duel is fine."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: You've got a good look in your eyes. Like you're about to dig through something."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Still here? Good. I like people who don't quit."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): That's cool. Really cool. Thanks."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): I'm not really one for fancy stuff. I spent a decade in a cell, remember."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Your drill against mine. Let's see whose pierces deeper."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Ha. You've grown. I can feel it."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them: Not yet. Keep spinning. You'll break through."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}. I was hoping I'd see you. Walk with me."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): My partner. Kamina would've liked you. Loud enough? Almost."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You remind me of the kid I used to be. Before the sky got big."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I lost Nia. I lost Kamina. I keep moving forward because of them. And now because of you, a little."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're someone I'd trust with Gurren Lagann. That's the highest thing I can say."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Simon, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Simon, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Simon, Friend",
+     "script": [
+      "cast me as Simon",
+      "background rooftop",
+      "me enters right with slide",
+      "me: I come up here to think. The sky's quieter up close.",
+      "me: You know what spiral power is? It's the power to keep going. To grow.",
+      "player: Everyone has it?",
+      "me: Everyone who refuses to stop.",
+      "me (lose): You've got it. I've watched you lose and come back.",
+      "me: That's what Team Dai-Gurren's made of. Welcome, friend."
+     ]
+    },
+    {
+     "name": "World: Simon, Best friend",
+     "script": [
+      "cast me as Simon",
+      "background space",
+      "me enters center with fade",
+      "me: Nia used to say the world is beautiful because it ends.",
+      "me: I didn't understand until I lost her.",
+      "player: I'm sorry, Simon.",
+      "me: Don't be. She taught me to treasure every moment. Like this one.",
+      "me: You're my best friend. Not because we fought together. Because you stayed when it was quiet.",
+      "choice",
+      "- Always.",
+      "- Let's keep moving forward.",
+      "me (intro): Then let's dig. Up, this time. All the way to the stars."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Kittan",
+   "world": {
+    "temperament": "friendly",
+    "schedule": [
+     {
+      "place": "arena",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "plaza",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "warehouse",
+      "days": [
+       0,
+       2,
+       4
+      ],
+      "times": [
+       3
+      ],
+      "weight": 25,
+      "min_rank": 0
+     },
+     {
+      "place": "beach",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       1
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "cool"
+     ],
+     "likes": [
+      "sporty",
+      "drink"
+     ],
+     "dislikes": [
+      "calm"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Kittan! Leader of the Black Siblings! Pilot of King Kittan! You might've heard of 'em!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: You look like you need a fight. Lucky you, so do I!"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Can't keep away? Ha! I get it, I'm great company."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Now that's what I'm talking about! You've got style!"
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Tea? Calm? Do I look calm to you?!"
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: KING KITTAN... DUELING MODE! Let's go!"
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Argh! Kamina would never let me hear the end of this!"
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Ha! That's the Kittan Kick for ya!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Hey hey, {player}! My sisters were asking about you. I told 'em you're tough."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): My right-hand man! ...Or whatever. You know what I mean!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: Alright, you're not bad. I'll let you hang around."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I was jealous of Kamina, you know. Always the leader. You make me feel like I'm somebody too."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You've got guts. Real guts. I'd ride into the heavens with you."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Kittan, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Kittan, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Kittan, Friend",
+     "script": [
+      "cast me as Kittan",
+      "background city",
+      "me enters left with slide",
+      "me: Yo! Got a gift for ya. It's a drill. From my mech.",
+      "player: You took a drill off your mech?",
+      "me: Just a little one! For luck!",
+      "me: Kamina gave me one of these once. Said I'd need it.",
+      "me: Now you need it.",
+      "me (lose): That makes us friends. Drill-bound. That's a thing now.",
+      "me bounces"
+     ]
+    },
+    {
+     "name": "World: Kittan, Best friend",
+     "script": [
+      "cast me as Kittan",
+      "background space",
+      "me enters center with fade",
+      "me: You ever think about what you'd do at the end?",
+      "me: Like, if it all came down to one big charge.",
+      "player: Kittan...",
+      "me: I'd want to go out swinging. Laughing. With someone watching who knew who I was.",
+      "me: That's you, by the way. You know who I am.",
+      "me (intro): A guy who's grateful as hell to have a best friend.",
+      "choice",
+      "- No charging off alone.",
+      "- I'll be watching.",
+      "me (lose): Ha! Then let's charge together. KING KITTAN, DOUBLE-TEAM!"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Yoko",
+   "world": {
+    "temperament": "friendly",
+    "schedule": [
+     {
+      "place": "beach",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 60,
+      "min_rank": 0
+     },
+     {
+      "place": "arena",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "plaza",
+      "days": [
+       0,
+       2,
+       4
+      ],
+      "times": [
+       2
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "cool"
+     ],
+     "likes": [
+      "sporty",
+      "drink"
+     ],
+     "dislikes": [
+      "calm"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Yoko. Sniper. And yes, I'm a girl, before you ask. Everybody asks."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: You look jumpy. Don't worry, I only shoot at Gunmen."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back already? Keep your eyes sharp."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Oh, nice. This is totally my style."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Herbal tea... thanks. I'll find someone who likes this."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: One shot. One kill. Okay, one duel. Same energy."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Tch. Nice aim. I'll be watching you now."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Bullseye."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Hey, {player}. Saved you a spot. The view's better from here."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Look who it is. My favourite person who isn't constantly shouting."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You don't stare. Weirdly rare. I like you already."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I used to look after kids in a village school. You've got the same honest eyes they had."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You know, I trust you to have my back. That's not a small thing for a sniper."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Yoko, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Yoko, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Yoko, Friend",
+     "script": [
+      "cast me as Yoko",
+      "background beach",
+      "me enters right with slide",
+      "me: Ever shot a rifle? No? Good, you're not starting now.",
+      "me: But you can spot for me. Tell me where the cans are.",
+      "player: Left. Three o'clock. Two cans.",
+      "screen flash",
+      "me (lose): Two for two. You've got good eyes.",
+      "me: Everyone in Dai-Gurren had a role. Looks like you just got one. Friend and spotter."
+     ]
+    },
+    {
+     "name": "World: Yoko, Best friend",
+     "script": [
+      "cast me as Yoko",
+      "background dusk",
+      "me enters center with fade",
+      "me: Kamina... I loved him, you know. He never knew.",
+      "me: After he was gone, I kept everyone at arm's length. Easier that way.",
+      "player: You don't have to.",
+      "me (win): I know. That's the scary part. You made me know.",
+      "me: You're my best friend, {player}. The one person I don't aim past.",
+      "choice",
+      "- I'm right here.",
+      "- I'll spot for you anytime.",
+      "me (lose): Then let's watch the sunset. Together, for once."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Lord Genome",
+   "world": {
+    "temperament": "villain",
+    "schedule": [
+     {
+      "place": "warehouse",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "times": [
+       2,
+       3
+      ],
+      "weight": 70,
+      "min_rank": 0
+     },
+     {
+      "place": "shrine",
+      "days": [
+       0,
+       2,
+       4,
+       6
+      ],
+      "times": [
+       3
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "library",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       1
+      ],
+      "weight": 30,
+      "min_rank": 2
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "fancy"
+     ],
+     "likes": [
+      "calm",
+      "book"
+     ],
+     "dislikes": [
+      "sporty"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Kneel, child. You stand before the Spiral King."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Humans scurry above ground. You scurried here. Interesting."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Again? Your persistence is almost spiral."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): A worthy offering. You know how to address a king."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Sport? I ruled for a thousand years. I do not jog."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Show me your spiral, child. If you have one."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): ...The spiral grows in you. As it once did in me."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Kneel. The surface belongs to me a little longer."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: You return. Few seek the Spiral King twice."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Ah. The one who does not fear the surface. Sit."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You do not tremble. Perhaps you are a fool. Perhaps not."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I once fought for humanity. I chose to cage it instead. Do you think me a monster?"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them: You have shown me something I had forgotten. Hope. It is... uncomfortable."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Lord Genome, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Lord Genome, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Lord Genome, Friend",
+     "script": [
+      "cast me as Lord Genome",
+      "background castle",
+      "me enters center with fade",
+      "me: You wish to know why I keep humanity underground.",
+      "me: Spiral power is limitless. Limitless power invites annihilation. I chose survival over growth.",
+      "player: Survival in a cage isn't living.",
+      "me (win): So said my comrades. So said Simon.",
+      "me: Perhaps you are all right. Perhaps I have been afraid for a thousand years.",
+      "me: You may visit the king again. Consider it an honour few receive."
+     ]
+    },
+    {
+     "name": "World: Lord Genome, Best friend",
+     "script": [
+      "cast me as Lord Genome",
+      "background space",
+      "me enters center with fade",
+      "me: The Anti-Spirals erased worlds. I saw them. I made a choice.",
+      "me: Everyone hated me for it. I let them. Hatred was easier than explaining.",
+      "player: I don't hate you.",
+      "me (intro): No. You don't. Remarkable.",
+      "me: A thousand years, and a child on the surface calls the Spiral King a friend.",
+      "choice",
+      "- You're not alone anymore.",
+      "- The surface is big enough for both of us.",
+      "me (lose): Then let the spiral turn. I will watch it with you."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Anti Spiral",
+   "world": {
+    "temperament": "villain",
+    "schedule": [
+     {
+      "place": "rooftop",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "times": [
+       3
+      ],
+      "weight": 65,
+      "min_rank": 0
+     },
+     {
+      "place": "warehouse",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       2,
+       3
+      ],
+      "weight": 50,
+      "min_rank": 0
+     },
+     {
+      "place": "library",
+      "days": [
+       0,
+       3,
+       5
+      ],
+      "times": [
+       2
+      ],
+      "weight": 30,
+      "min_rank": 2
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "calm"
+     ],
+     "likes": [
+      "book"
+     ],
+     "dislikes": [
+      "sporty",
+      "music"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Spiral life form. Your existence accelerates the end of the universe."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Why do you persist? Why do you grow? It is pointless."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Repetition. A spiral trait."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Stillness. Quiet. You understand restraint. Rare."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Noise. Motion. Evolution. You test my patience."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Despair is the only certainty. I will demonstrate."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): ...Calculations incorrect. The spiral... exceeds parameters."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): As predicted. Accept stagnation."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: You return. Again. Your behaviour is... statistically anomalous."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them: Spiral life form designate: {player}. Tolerated. Observed. Perhaps... valued."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You do not despair. Analysis inconclusive."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: We were once like you. We chose to stop. We sealed ourselves away to save the universe."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them: If all spiral life were like you... perhaps the end would not come. A dangerous hypothesis."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Anti Spiral, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Anti Spiral, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Anti Spiral, Friend",
+     "script": [
+      "cast me as Anti Spiral",
+      "background void",
+      "me enters center with fade",
+      "me: Observe. The universe. Finite. Fragile.",
+      "me: Every spiral that grows draws it closer to collapse. Spiral Nemesis.",
+      "player: So you stopped everyone growing?",
+      "me: We stopped ourselves first. Then everyone else.",
+      "me: You find this cruel.",
+      "player: I find it lonely.",
+      "me (win): ...Lonely. A spiral concept. We abandoned it with our forms.",
+      "me: Return. I will observe you further. Designate: acquaintance... no. Friend."
+     ]
+    },
+    {
+     "name": "World: Anti Spiral, Best friend",
+     "script": [
+      "cast me as Anti Spiral",
+      "background space",
+      "me enters center with fade",
+      "me: We have watched countless spirals. They burn out.",
+      "me: You did not. You grew without destroying. You grew toward us.",
+      "player: Maybe growth doesn't have to end everything.",
+      "me (intro): A hypothesis we never permitted ourselves to test.",
+      "me: You have tested it. Result: we feel something. Designated: warmth.",
+      "choice",
+      "- That's friendship.",
+      "- Welcome back to feeling.",
+      "me (lose): Friendship. Logged. Retained. Permanently."
+     ]
+    }
+   ]
+  }
+ ]
+}

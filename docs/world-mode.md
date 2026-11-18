@@ -328,6 +328,50 @@ The plan as it was:
 - **CPU export and import** (`import_cpu`, the files in `corpus/`): add schedule rules, gift likes and chatter. Update
   the `new-cpu` skill to write them, so new CPUs arrive ready for the world.
 
+## After phase 5: the cast, haunts and rank rewards — built
+
+The town is written for the 75 CPUs there are now; no new ones are planned for a while.
+
+- **Who's where is drawn fresh each day** (`world.day_cast`).
+  - **What a haunt is:** a CPU's schedule rows are now haunts (migration 0054). Each has a place, days, times, a
+    `weight` (the old chance), an optional `min_rank`, and a stake.
+  - **How the draw works:** each save draws each day's cast from its seed, so a reload never moves anyone. Every
+    time of day puts 6 to 10 CPUs out in the town, never more than 2 at a place. Someone out already that day is less
+    likely to turn up again.
+  - **Rank-gated haunts:** a haunt with a `min_rank` is drawn like the rest but left out until the player knows that
+    CPU well enough, so getting closer to one CPU never moves another.
+  - **The staff grid** shows the draw for a sample save, with how many are out at each time and rank-gated haunts
+    marked.
+- **Villains keep to the dark.** Three secluded places (back alley, old warehouse, rooftop; migration 0055) join the
+  shrine and the forest. The twelve villains haunt them in the evening and at night, and each has one daytime haunt
+  somewhere busy that opens at Friend (rank 2).
+- **Temperament** (`CpuProfile.temperament`): warm, friendly, neutral, aloof or villain. It scales the points from
+  talk, gifts and duels (×1.5, ×1.25, ×1, ×0.75, ×0.6). Lost points and a script's own points aren't scaled.
+- **Rank rewards** (`world.RANK_REWARDS`), each given once per save and CPU, however the rank was reached:
+
+  | Rank | Rewards |
+  |---|---|
+  | 1 Acquaintance | 200 coins, and a gift they love |
+  | 2 Friend | 2 copies of a signature card from their deck, and a climax pack of their set |
+  | 3 Good friend | a color pack in their deck's main color, and 400 coins |
+  | 4 Close friend | high-stakes duels with them for 500 coins wherever they are, and 2 copies of their ace |
+  | 5 Best friend | 2 copies each of their key cards and their climax, a lucky pack, and 1,000 coins |
+
+  The talk box plays each reward as it comes, with "See the cards" for a pack. The friendship badge says what the
+  next rank brings. A rank reached in a duel gives its rewards in the result banner, along with the rank-up line or
+  a link to its scene (this closes the earlier gap). Every rank reached also counts for card sleeves, through a new
+  condition: "Friendship rank reached in world mode", optionally with a particular CPU.
+- **The cast pack** (`world_pack/`):
+  - **What it holds:** every CPU's temperament, 3–4 haunts, gift tastes, 13 lines of chatter (greetings for a
+    stranger, a friend and a close friend, talking again, gifts, duels, and rank-ups 1, 3 and 4), and two full scenes:
+    "World: <name>, Friend" and "World: <name>, Best friend".
+  - **Sources:** written in `world_pack/src/` and built with `python world_pack/build.py`.
+  - **Checking:** `python manage.py check_world_pack world_pack/*.json` checks them against the export's CPUs.
+  - **Loading:** staff upload the JSON files on the Import tab's new "World mode packs" section, which checks first
+    and replaces each named CPU's haunts and chatter. CPUs it can't find are skipped and listed.
+- **To put it live:** deploy (migrations 0052 to 0055 run), then upload the six `world_pack/*.json` files on the
+  Import tab: Check, then Import.
+
 ## Testing
 
 - **Unit tests:** schedule resolving (the same for a seed, once-per-day, no double placement, priority), time

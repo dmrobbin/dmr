@@ -1,0 +1,3166 @@
+{
+ "pack": "06_frieren_persona_more",
+ "cpus": [
+  {
+   "name": "Frieren",
+   "world": {
+    "temperament": "aloof",
+    "schedule": [
+     {
+      "place": "library",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "forest",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "shrine",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       3
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "book"
+     ],
+     "likes": [
+      "calm",
+      "sweet"
+     ],
+     "dislikes": [
+      "sporty"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: I once knew Himmel the hero. Let's see how the champions of today measure up."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: ...Oh. Hello. I was reading a grimoire. It turns flowers into slightly different flowers."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back already? Humans move so fast."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): A grimoire. Oh. Oh, this is wonderful."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Exercise? I'm a thousand years old. I'll pass."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: I'll show you what a thousand years of magic looks like."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them: Impressive. Himmel would've been proud of you."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them: You'll understand more in a few decades."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. You've come again. Time feels shorter with you around. That's strange."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Sit. I found a spell for warm tea. It's useless and I love it."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You remind me of someone. In a good way."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I didn't understand Himmel until after he died. I don't want to make that mistake again."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'm trying to know people properly this time. You're the one I'm trying hardest with."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Frieren, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Frieren, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Frieren, Friend",
+     "script": [
+      "cast me as Frieren",
+      "background forest",
+      "me enters left with fade",
+      "me: Hold out your hand.",
+      "narrator: A small field of blue flowers opens around your feet.",
+      "me: Himmel's favourite spell. I used to think it was useless.",
+      "player: It's beautiful.",
+      "me (lose): That's what he said.",
+      "me: I want to remember the people I travel with. You're one of them now. A friend."
+     ]
+    },
+    {
+     "name": "World: Frieren, Best friend",
+     "script": [
+      "cast me as Frieren",
+      "background night",
+      "me enters center with fade",
+      "me: Fifty years with my party felt like a moment.",
+      "me: I didn't cry when Himmel died. Then I couldn't stop.",
+      "player: Because you loved them.",
+      "me (win): I didn't know it at the time.",
+      "me: I know it now. With you, I know it right away.",
+      "choice",
+      "- Best friends, Frieren.",
+      "- I'll make the moments count.",
+      "me (lose): Best friend. I'll remember this for a thousand more years. I promise."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Fern",
+   "world": {
+    "temperament": "neutral",
+    "schedule": [
+     {
+      "place": "library",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "cafe",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "forest",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       2
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "sweet"
+     ],
+     "likes": [
+      "book",
+      "calm"
+     ],
+     "dislikes": [
+      "spicy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: My master says defeating you will make me a better mage."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Have you seen Frieren-sama? She was supposed to be up an hour ago."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back again? Please don't be late next time either."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Sweets. ...Thank you. I'll eat these slowly."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Spicy. Stark eats these. Not me."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Zoltraak."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): ...I'll study more."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them: As expected."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. Good morning. You're more punctual than Frieren-sama."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): ...I'm happy you're here. That's all."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You're polite. I appreciate that."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: Heiter-sama raised me. When he died, Frieren-sama took me in. I've been lucky. You're part of that luck now."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'd cast a barrier around you without thinking. That's what you are to me."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Fern, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Fern, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Fern, Friend",
+     "script": [
+      "cast me as Fern",
+      "background library",
+      "me enters right with fade",
+      "me: Frieren-sama overslept again. So it's just us today.",
+      "me: I brought extra sweets. In case.",
+      "player: In case of what?",
+      "me (lose): In case you came.",
+      "me: I don't say things like this often. We're friends. Please accept it."
+     ]
+    },
+    {
+     "name": "World: Fern, Best friend",
+     "script": [
+      "cast me as Fern",
+      "background dusk",
+      "me enters center with fade",
+      "me: I wanted to die once. Before Heiter-sama found me.",
+      "me: He gave me a reason to live. Then Frieren-sama did.",
+      "player: And now?",
+      "me (win): ...And now you, too.",
+      "me: I have more reasons than I ever thought I'd have.",
+      "choice",
+      "- Best friends, Fern.",
+      "- You'll always have a reason.",
+      "me (lose): Best friend. I'll protect it. Like a barrier spell."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Kanna",
+   "world": {
+    "temperament": "friendly",
+    "schedule": [
+     {
+      "place": "school",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "plaza",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "beach",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       1
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "sweet"
+     ],
+     "likes": [
+      "cute",
+      "game"
+     ],
+     "dislikes": [
+      "book"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Kanna Kamui. ...You look fun to prank."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Are you a human? Kobayashi is a human. Humans are interesting."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back. Good."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Sweet. ...Kanna loves this. Kanna loves you. A little."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): A book with no pictures? ...Kanna sleeps now."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Kanna will zap you. Gently."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): ...Kanna will pout now."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Kanna wins. Kanna is strong."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}. Saikawa says you're nice. I agree."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're Kanna's friend. Kanna doesn't share friends."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You don't treat Kanna like a little kid. Kanna likes that."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: Kanna got exiled from the dragon world for pranks. Kanna was lonely. Not anymore."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Kanna would fly you anywhere. Even to the moon."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Kanna, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Kanna, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Kanna, Friend",
+     "script": [
+      "cast me as Kanna",
+      "background sakura",
+      "me enters left with pop",
+      "me: Kanna has a present.",
+      "player: A... bug?",
+      "me (lose): A cool bug. Kanna's favourite kind.",
+      "me: Kanna only gives bugs to friends.",
+      "me bounces",
+      "me: So you're a friend."
+     ]
+    },
+    {
+     "name": "World: Kanna, Best friend",
+     "script": [
+      "cast me as Kanna",
+      "background space",
+      "me enters center with fade",
+      "me: Kanna's parents don't want Kanna back.",
+      "me (win): Kanna pretends it doesn't hurt.",
+      "player: You have a family here.",
+      "me: Kobayashi. Tohru. Saikawa. ...You.",
+      "choice",
+      "- Best friends, Kanna.",
+      "- You'll never be lonely.",
+      "me (lose): Best friend. Kanna will remember for a thousand years. Dragons live long."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Tohru",
+   "world": {
+    "temperament": "friendly",
+    "schedule": [
+     {
+      "place": "cafe",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "plaza",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "beach",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       2
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "food"
+     ],
+     "likes": [
+      "cute",
+      "calm"
+     ],
+     "dislikes": [
+      "fancy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: I'm Tohru, Miss Kobayashi's maid! Let's make this quick, human. I have dinner to make."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: A human! Hmph. Well, you're polite. I'll allow it."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back again? Want me to cook for you?"
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Ingredients! Oh, I'll make Miss Kobayashi's favourite! And yours!"
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Too fancy. Miss Kobayashi prefers simple things."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: I'll go easy on you. Dragon's honour."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): A human beat a dragon?! ...Good job."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): That's dragon power!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Oh, {player}! You're one of the good humans. I've decided."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're family now! Miss Kobayashi says so, so it's true!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You're not bad, for a human."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I hated humans before Miss Kobayashi. I almost died in the war. Now I live among you. It's nice."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'd burn down a city for you. ...Kidding! Mostly!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Tohru, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Tohru, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Tohru, Friend",
+     "script": [
+      "cast me as Tohru",
+      "background cafe",
+      "me enters left with slide",
+      "me: I made you an omelette! Dragon-made!",
+      "player: There's a heart drawn on it.",
+      "me (lose): Ketchup heart! For friends!",
+      "me: Miss Kobayashi gets one every day. Now you get one too.",
+      "me: That makes you special. Eat!"
+     ]
+    },
+    {
+     "name": "World: Tohru, Best friend",
+     "script": [
+      "cast me as Tohru",
+      "background dusk",
+      "me enters center with fade",
+      "me: I came to this world to die. I was so tired of fighting.",
+      "me: Miss Kobayashi saved me. Then everyone else made me want to stay.",
+      "player: I'm glad you stayed.",
+      "me (win): ...So am I. More than I can say.",
+      "choice",
+      "- Best friends, Tohru.",
+      "- You found your family.",
+      "me (lose): Best friend! I'll make you an omelette every day! With two hearts!"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Protagonist",
+   "world": {
+    "temperament": "neutral",
+    "schedule": [
+     {
+      "place": "school",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "rooftop",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "times": [
+       3
+      ],
+      "weight": 35,
+      "min_rank": 0
+     },
+     {
+      "place": "library",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 40,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "music"
+     ],
+     "likes": [
+      "calm",
+      "food"
+     ],
+     "dislikes": [
+      "fancy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: ...If I have to."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: *takes out one earbud* ...Hm?"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: ...Again? ...Okay."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Music. ...Thanks. Really."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): ...Too much. I'm not a fancy guy."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: PERSONA!"
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them: ...Nice."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them: ...Hm."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. ...Hey."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): ...You're here. Good."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: ...You're easy to be around. Quiet."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I used to think it didn't matter. Living, dying. ...Now I want more days like this."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): ...My social link with you is maxed. That's a joke. ...Mostly."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Protagonist, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Protagonist, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Protagonist, Friend",
+     "script": [
+      "cast me as Protagonist",
+      "background rooftop",
+      "me enters right with fade",
+      "me: ...Want to listen?",
+      "narrator: He offers you one earbud. The song is soft and bright.",
+      "player: It's good.",
+      "me (lose): ...Yeah.",
+      "me: ...Friends. That's what this is, right?"
+     ]
+    },
+    {
+     "name": "World: Protagonist, Best friend",
+     "script": [
+      "cast me as Protagonist",
+      "background night",
+      "me enters center with fade",
+      "me: ...There's an hour between days. The Dark Hour.",
+      "me: Most people don't feel it. I do. Every night.",
+      "player: That sounds lonely.",
+      "me (win): ...It was. Then I made friends. Then I made you.",
+      "choice",
+      "- Best friends.",
+      "- I'll share the Dark Hour with you.",
+      "me (lose): ...Best friend. Memento mori. ...But let's live first."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Yukari",
+   "world": {
+    "temperament": "friendly",
+    "schedule": [
+     {
+      "place": "school",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "beach",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "plaza",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       2
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "sporty"
+     ],
+     "likes": [
+      "sweet",
+      "cute"
+     ],
+     "dislikes": [
+      "spicy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: I can do this... I can do this! Oh! Hi! Sorry, pep talk."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Yukari Takeba! Archery club. Want to duel? Don't go easy!"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You came back! Yay!"
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): New archery gear! Oh, you're the best!"
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Spicy food? Ugh, my tongue."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Bullseye time!"
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Argh! Okay, okay, you got me!"
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Yes! I did it!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! Archery practice later? You can watch!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're like my best friend! Like, really really!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You're fun! And easy to talk to!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: My dad died in an accident when I was little. I've been trying to find the truth ever since. Thanks for listening."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'd draw my bow for you any day. Seriously!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Yukari, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Yukari, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Yukari, Friend",
+     "script": [
+      "cast me as Yukari",
+      "background sakura",
+      "me enters left with slide",
+      "me: Okay, watch this! Perfect shot!",
+      "screen flash",
+      "player: Bullseye!",
+      "me (lose): Yes! You're my lucky charm!",
+      "me: So, um, wanna be friends? Like, officially?",
+      "player: Officially.",
+      "me bounces"
+     ]
+    },
+    {
+     "name": "World: Yukari, Best friend",
+     "script": [
+      "cast me as Yukari",
+      "background night",
+      "me enters center with fade",
+      "me: I found out the truth about my dad. It wasn't what I hoped.",
+      "me (win): I was so angry. I still am, sometimes.",
+      "player: That's okay.",
+      "me: You never told me to just get over it. Everyone else did.",
+      "choice",
+      "- Best friends, Yukari.",
+      "- I'll always listen.",
+      "me (lose): Best friend! You hit the bullseye on my heart. Ugh, that was cheesy!"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Twilight",
+   "world": {
+    "temperament": "neutral",
+    "schedule": [
+     {
+      "place": "cafe",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "library",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "plaza",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       2
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "drink"
+     ],
+     "likes": [
+      "book",
+      "calm"
+     ],
+     "dislikes": [
+      "game"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Every move you make, I've already planned for."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Loid Forger. Psychiatrist. A pleasure. ...Shall we duel?"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're back. Good."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Good coffee. You've done your research."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): A video game. Anya would love this. I'll give it to her."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Operation Strix. Commencing."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them: Unexpected. I'll adjust."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them: Mission accomplished."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. Good to see you. Coffee? I know a quiet place."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I don't have to perform around you. That's... unusual for me."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You're honest. In my line of work, that's rare."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I grew up in a war. I became someone else to stop it happening to other children. I've forgotten who I was."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'd trust you with my real name. If I remembered it."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Twilight, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Twilight, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Twilight, Friend",
+     "script": [
+      "cast me as Twilight",
+      "background cafe",
+      "me enters right with fade",
+      "me: Two coffees. Black. I noticed you take it black.",
+      "player: You notice everything.",
+      "me: Occupational habit.",
+      "me (lose): I'd like to call you a friend. I don't have many I can be honest with.",
+      "me: Shall we?"
+     ]
+    },
+    {
+     "name": "World: Twilight, Best friend",
+     "script": [
+      "cast me as Twilight",
+      "background rain",
+      "me enters center with fade",
+      "me: I have a fake family. A cover. It was supposed to be temporary.",
+      "me (win): It's become the most real thing in my life. That scares me.",
+      "player: Real things can be scary.",
+      "me: You're real too. That doesn't scare me.",
+      "choice",
+      "- Best friends, Twilight.",
+      "- You're allowed to be happy.",
+      "me (lose): Best friend. No cover. No mission. Just this."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Yor Forger",
+   "world": {
+    "temperament": "warm",
+    "schedule": [
+     {
+      "place": "plaza",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "cafe",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "alley",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       3
+      ],
+      "weight": 25,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "cute"
+     ],
+     "likes": [
+      "drink",
+      "flowers"
+     ],
+     "dislikes": [
+      "game"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Excuse me, may I have the honour of taking your life? Oh! I mean, a match!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Oh, hello! I'm Yor! I work at City Hall! Nothing else! Just City Hall!"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Oh! Hello again!"
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): It's so cute! Anya will love it! I love it!"
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): A video game? I'm not very good with technology."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: I'll do my best! Gently! I promise!"
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Oh my! You're wonderful!"
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Oh! I won! Sorry! Was that too strong?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! I'm so happy to see you! Would you like some... I can't cook. Tea?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're like family! I'd protect you. With... my City Hall skills."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): You're very kind. I don't have many friends."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I have a... second job. I can't tell anyone. But I want to be a good person. Do you think I can be?"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): If anyone hurt you, I'd... take care of it. Ahaha! Never mind!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Yor Forger, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Yor Forger, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Yor Forger, Friend",
+     "script": [
+      "cast me as Yor Forger",
+      "background city",
+      "me enters left with slide",
+      "me: I've never had a friend before. Not really.",
+      "me: Everyone at work gossips about me.",
+      "player: I'd be your friend.",
+      "me (lose): Really?! Oh, oh, I'm so happy!",
+      "me bounces",
+      "me: I'll make you dinner! ...Actually, Loid should make dinner."
+     ]
+    },
+    {
+     "name": "World: Yor Forger, Best friend",
+     "script": [
+      "cast me as Yor Forger",
+      "background night",
+      "me enters center with fade",
+      "me: I'm not really just a City Hall worker.",
+      "me (win): I do terrible things at night. For my brother. For money.",
+      "player: You're still kind, Yor.",
+      "me: You... you still think so?",
+      "player: I know so.",
+      "choice",
+      "- Best friends, Yor.",
+      "- You're a good person.",
+      "me (lose): Best friend! Oh, I'm crying. Is this normal? Is this what friends do?"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Enterprise",
+   "world": {
+    "temperament": "neutral",
+    "schedule": [
+     {
+      "place": "beach",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "arena",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "rooftop",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       3
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "calm"
+     ],
+     "likes": [
+      "cool",
+      "drink"
+     ],
+     "dislikes": [
+      "game"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: I am Enterprise. I'll fight for as long as there is something to protect."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: The sea's calm today. Good day for a duel."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back again. Good."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Peaceful. Thank you."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): A game? Laffey might like it."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Launching aircraft."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them: Well fought."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them: The sea is vast. Keep sailing."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. You're here. The sea feels quieter with you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I fought for so long without knowing why. Now I think it was for moments like this."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You're steady. Like a good ship."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I was made for war. I don't know what I am in peace. You're helping me find out."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'd sail through any storm for you."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Enterprise, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Enterprise, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Enterprise, Friend",
+     "script": [
+      "cast me as Enterprise",
+      "background ocean",
+      "me enters right with fade",
+      "me: Do you hear it? The waves.",
+      "me: I used to only hear the war in them.",
+      "player: What do you hear now?",
+      "me (lose): Peace. Friendship. Strange words for a warship.",
+      "me: But true."
+     ]
+    },
+    {
+     "name": "World: Enterprise, Best friend",
+     "script": [
+      "cast me as Enterprise",
+      "background dusk",
+      "me enters center with fade",
+      "me: I asked myself once what I'd do when the war ended.",
+      "me (win): I had no answer. I was afraid there'd be nothing left of me.",
+      "player: There's plenty of you.",
+      "me: ...Because of people like you.",
+      "choice",
+      "- Best friends, Enterprise.",
+      "- Let's find out together.",
+      "me (lose): Best friend. My new heading."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Joker (P5)",
+   "world": {
+    "temperament": "friendly",
+    "schedule": [
+     {
+      "place": "cafe",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       2,
+       3
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "alley",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       3
+      ],
+      "weight": 40,
+      "min_rank": 0
+     },
+     {
+      "place": "library",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       1
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "drink"
+     ],
+     "likes": [
+      "cool",
+      "book",
+      "game"
+     ],
+     "dislikes": [
+      "fancy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Your heart is distorted. Consider this your calling card."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: ...Leblanc's coffee is good. You should try it."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back. Coffee's still hot."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Good beans. You have taste."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Too flashy. Morgana would say I'm a sellout."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: It's showtime."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Not bad. You'd make a good Phantom Thief."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Looking cool, Joker."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}. I brewed an extra cup. Sit."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're in my confidant list. Max rank."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You don't judge me. People usually do."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I got framed for assault. I'm on probation. Most people avoid me. You didn't."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'd steal anyone's heart who hurt you. Literally."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Joker (P5), Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Joker (P5), Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Joker (P5), Friend",
+     "script": [
+      "cast me as Joker (P5)",
+      "background cafe",
+      "me enters left with fade",
+      "me: Here. Leblanc house blend.",
+      "player: It's amazing.",
+      "me (lose): Sojiro taught me.",
+      "me: You've been coming around a lot. I like it.",
+      "me: Bond strengthened. ...That's a Persona joke. We're friends."
+     ]
+    },
+    {
+     "name": "World: Joker (P5), Best friend",
+     "script": [
+      "cast me as Joker (P5)",
+      "background night",
+      "me enters center with fade",
+      "me: I've fought gods. Corrupt adults. A whole society.",
+      "me: The hardest part was admitting I needed people.",
+      "player: You've got me.",
+      "me (win): ...I know. That still surprises me.",
+      "choice",
+      "- Best friends, Joker.",
+      "- Take my heart. As a friend.",
+      "me (lose): Best friend. Thou art I. And I art thou. Something like that."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Kureiji Ollie",
+   "world": {
+    "temperament": "warm",
+    "schedule": [
+     {
+      "place": "plaza",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "school",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 40,
+      "min_rank": 0
+     },
+     {
+      "place": "shrine",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       3
+      ],
+      "weight": 35,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "music"
+     ],
+     "likes": [
+      "cute",
+      "game"
+     ],
+     "dislikes": [
+      "calm"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Zombie idol Kureiji Ollie is here! Let's have a fight that's to die for!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Zombieeee! Hi hi! Are you a zomrade? You are now!"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back again?! Ollie loves it!"
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Music! Ollie's gonna sing this all day! KYAAA!"
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Calm? Ollie doesn't do calm! Ollie's a zombie!"
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Zombie power! Brrraaaains!"
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Waaah! You beat Ollie! Ollie's crying! Zombie tears!"
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Ollie wins! Zombie supremacy!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! My favourite zomrade! Ollie's so happy!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're Ollie's bestie! Ollie would come back from the dead for you! Again!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): You're not scared of zombies! You're so cool!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: Ollie doesn't remember her life before. Being a zombie's lonely sometimes. But not with you!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Ollie would share her last brain with you! That's love!"
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Kureiji Ollie, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Kureiji Ollie, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Kureiji Ollie, Friend",
+     "script": [
+      "cast me as Kureiji Ollie",
+      "background shrine",
+      "me enters left with pop",
+      "me: Ollie made you a friendship bracelet!",
+      "player: Is that... a stitch?",
+      "me (lose): Zombie stitch! Very trendy!",
+      "me bounces",
+      "me: Now we match! Zomrades forever!"
+     ]
+    },
+    {
+     "name": "World: Kureiji Ollie, Best friend",
+     "script": [
+      "cast me as Kureiji Ollie",
+      "background night",
+      "me enters center with fade",
+      "me: Ollie's been dead a long time. Everyone she knew is gone.",
+      "me (win): Ollie acts happy so nobody worries.",
+      "player: You don't have to act with me.",
+      "me: ...Ollie's not acting now. Ollie's really happy. With you.",
+      "choice",
+      "- Best friends, Ollie.",
+      "- My favourite zombie.",
+      "me (lose): Best friend! Ollie's undead heart is beating! Kind of! Ahahaha!"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Mai Sakurajima",
+   "world": {
+    "temperament": "aloof",
+    "schedule": [
+     {
+      "place": "library",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "beach",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "school",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       0
+      ],
+      "weight": 30,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "book"
+     ],
+     "likes": [
+      "calm",
+      "fancy"
+     ],
+     "dislikes": [
+      "cute"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Oh, you can see me? Good. Then let's play, and don't go easy on me."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: You're staring. ...It's fine. Most people can't see me at all lately."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back again? You're as stubborn as Sakuta."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): A good book. You know me well."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): A plushie. ...I'm not a child."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Don't hold back. I won't."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Hmph. Not bad."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You'll have to do better than that."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. You came. ...I'm glad. Don't make a fuss about it."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're one of the few people I don't have to be an actress for."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You remember me. That matters more than you know."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I disappeared once. People forgot I existed. Sakuta didn't. You haven't either."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'll never be invisible around you. That's a comfort."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Mai Sakurajima, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Mai Sakurajima, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Mai Sakurajima, Friend",
+     "script": [
+      "cast me as Mai Sakurajima",
+      "background library",
+      "me enters right with fade",
+      "me: Do you remember my name?",
+      "player: Mai Sakurajima.",
+      "me (lose): Good. Say it again sometimes.",
+      "me: People forgetting you is lonelier than you'd think.",
+      "me: Friends remember. That's what we are."
+     ]
+    },
+    {
+     "name": "World: Mai Sakurajima, Best friend",
+     "script": [
+      "cast me as Mai Sakurajima",
+      "background ocean",
+      "me enters center with fade",
+      "me: My mother managed my career. My life. Everything.",
+      "me (win): I quit to find out who I was. And then I started disappearing.",
+      "player: I see you, Mai.",
+      "me: I know. You always have.",
+      "choice",
+      "- Best friends, Mai.",
+      "- I'll never forget you.",
+      "me (lose): Best friend. That's one thing I'm sure of, at least."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Marceline",
+   "world": {
+    "temperament": "neutral",
+    "schedule": [
+     {
+      "place": "rooftop",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "times": [
+       3
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "forest",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       2,
+       3
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "alley",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       2,
+       3
+      ],
+      "weight": 35,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "music"
+     ],
+     "likes": [
+      "cool",
+      "spicy"
+     ],
+     "dislikes": [
+      "calm"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: I've been around for a thousand years. You really think you can surprise me?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Boo! Ha, gotcha. Marceline. Vampire Queen. Bass player."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back for more? I'll write you a song."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Oh, this rocks. Literally. Thanks!"
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Calming tea? Do I look like I need calming?"
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Let's rock and roll!"
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Huh. You're good. I'll write a sad song about it."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Vampire Queen wins! Woo!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! Wanna hear a song I wrote? It's about fries. And loss."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're my favourite mortal. Don't spread that around."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You don't run from vampires. That's cool."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I lost everyone in the Mushroom War. Simon. My mom. I've been alone for centuries. Not tonight, though."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'd write a whole album about you. Some of it would even be nice."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Marceline, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Marceline, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Marceline, Friend",
+     "script": [
+      "cast me as Marceline",
+      "background night",
+      "me enters left with fade",
+      "me: Hey. Sit. I wrote you something.",
+      "me sways",
+      "narrator: She plucks a slow, warm bass line that sounds like a heartbeat.",
+      "player: That was beautiful.",
+      "me (lose): Shh. It's a secret.",
+      "me: Friends get secret songs."
+     ]
+    },
+    {
+     "name": "World: Marceline, Best friend",
+     "script": [
+      "cast me as Marceline",
+      "background space",
+      "me enters center with fade",
+      "me: Simon looked after me when the world ended.",
+      "me (win): He forgot me. The crown took his mind.",
+      "player: I won't forget you.",
+      "me: Everyone says that. Mortals don't live long, you know.",
+      "player: Then let's make it count.",
+      "choice",
+      "- Best friends, Marceline.",
+      "- Play me another song.",
+      "me (lose): Best friend. I'll write one for every year. Even after."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Shadow",
+   "world": {
+    "temperament": "aloof",
+    "schedule": [
+     {
+      "place": "rooftop",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "times": [
+       3
+      ],
+      "weight": 60,
+      "min_rank": 0
+     },
+     {
+      "place": "alley",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       2,
+       3
+      ],
+      "weight": 40,
+      "min_rank": 0
+     },
+     {
+      "place": "library",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1
+      ],
+      "weight": 35,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "cool"
+     ],
+     "likes": [
+      "book",
+      "music"
+     ],
+     "dislikes": [
+      "cute"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: We lurk in the shadows, and hunt the shadows. Now... you've seen too much."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: *dramatic cape swish* ...Did that look cool? It looked cool."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You keep finding me. Impressive. I'm very hard to find. On purpose."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): This is... incredibly cool. Fitting for the Eminence."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): A plushie. The Eminence does not do plushies. In public."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: I... am atomic."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): A setback. All according to plan. ...It was not according to plan."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): As expected of a shadow."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. You've returned to the Eminence. As foretold."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're part of Shadow Garden now. Unofficially. Officially. Whichever's cooler."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You don't laugh at my monologues. That's rare."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I just wanted to be a cool mastermind. Then everything I made up turned out to be real. It's a lot."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): In every cool story, the hero has a loyal friend. You're mine."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Shadow, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Shadow, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Shadow, Friend",
+     "script": [
+      "cast me as Shadow",
+      "background night",
+      "me enters right with fade",
+      "me: I've been preparing a speech. For when someone finally understood me.",
+      "player: Go on.",
+      "me (lose): '...' I forgot it. You're the first to actually ask.",
+      "me: Fine. You're my friend. That's cooler than any speech."
+     ]
+    },
+    {
+     "name": "World: Shadow, Best friend",
+     "script": [
+      "cast me as Shadow",
+      "background void",
+      "me enters center with fade",
+      "me: I wanted to be the eminence in shadow. Powerful. Mysterious.",
+      "me (win): Turns out it's lonely in the shadows.",
+      "player: Not with me there.",
+      "me: ...That's the coolest thing anyone's ever said to me.",
+      "choice",
+      "- Best friends, Shadow.",
+      "- I'll stand in the shadows with you.",
+      "me (lose): Best friend. I am atomic. And grateful."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Sol Badguy",
+   "world": {
+    "temperament": "aloof",
+    "schedule": [
+     {
+      "place": "alley",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "times": [
+       3
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "arena",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 45,
+      "min_rank": 0
+     },
+     {
+      "place": "rooftop",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       2,
+       3
+      ],
+      "weight": 35,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "music"
+     ],
+     "likes": [
+      "drink",
+      "cool"
+     ],
+     "dislikes": [
+      "fancy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: Gimme a break..."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: You want something? Make it fast."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You don't quit, do ya."
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Queen? ...Good taste."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Fancy junk. Gimme a break."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Heaven or Hell. Let's rock."
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them: Not bad. ...Don't let it go to your head."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them: Too slow."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them: You again. ...Fine. Sit."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Heh. Good to see ya, kid."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You're not as annoying as most."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I was the first Gear. I made the monsters that ended the world. Been tryin' to fix it ever since."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're one of the few people I'd fight a god for. Don't make it weird."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Sol Badguy, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Sol Badguy, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Sol Badguy, Friend",
+     "script": [
+      "cast me as Sol Badguy",
+      "background ruins",
+      "me enters right with fade",
+      "me: You keep showin' up. Why?",
+      "player: I like your company.",
+      "me (win): ...Nobody likes my company.",
+      "me: Fine. You're weird. Friends, I guess.",
+      "me (lose): Don't tell Ky."
+     ]
+    },
+    {
+     "name": "World: Sol Badguy, Best friend",
+     "script": [
+      "cast me as Sol Badguy",
+      "background night",
+      "me enters center with fade",
+      "me: I was human once. Frederick. A scientist with a girlfriend and a future.",
+      "me (win): Then I became this. A weapon.",
+      "player: You're still Frederick to me.",
+      "me: ...Nobody's called me that in a long time.",
+      "choice",
+      "- Best friends, Sol.",
+      "- Best friends, Frederick.",
+      "me (lose): Heh. Best friend. Gimme a break... no, really. This is a good one."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Yu Narukami",
+   "world": {
+    "temperament": "friendly",
+    "schedule": [
+     {
+      "place": "school",
+      "days": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ],
+      "times": [
+       0,
+       1
+      ],
+      "weight": 55,
+      "min_rank": 0
+     },
+     {
+      "place": "library",
+      "days": [
+       5,
+       6
+      ],
+      "times": [
+       1,
+       2
+      ],
+      "weight": 40,
+      "min_rank": 0
+     },
+     {
+      "place": "cafe",
+      "days": [
+       1,
+       3,
+       5
+      ],
+      "times": [
+       2
+      ],
+      "weight": 35,
+      "min_rank": 0
+     }
+    ],
+    "gift_tastes": {
+     "loves": [
+      "food"
+     ],
+     "likes": [
+      "book",
+      "game"
+     ],
+     "dislikes": [
+      "spicy"
+     ]
+    },
+    "chatter": [
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: I'm Yu Narukami. I'm here to find the truth, wherever it's hiding."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 0,
+      "script": [
+       "them: You look like you've got a story. Want to share it over lunch?"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Back again. Want to talk?"
+      ]
+     },
+     {
+      "context": "gift_loved",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Fresh ingredients. I'll make something good. You're invited."
+      ]
+     },
+     {
+      "context": "gift_disliked",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): ...Spicy. This reminds me of mystery food X. I'll pass."
+      ]
+     },
+     {
+      "context": "before_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Persona!"
+      ]
+     },
+     {
+      "context": "after_win",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Nice. You've grown."
+      ]
+     },
+     {
+      "context": "after_loss",
+      "min_rank": 0,
+      "script": [
+       "them: The truth is out there. Keep looking."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}. I made bento. Want some?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're part of the Investigation Team now. Honorary member."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 1,
+      "script": [
+       "them: You're easy to talk to. I like that."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 3,
+      "script": [
+       "them: I moved to Inaba for a year. I didn't think I'd make friends. I made the best ones. Now you too."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Our bond is strong. I can feel it. Like a Persona awakening."
+      ]
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 2,
+      "scene": "World: Yu Narukami, Friend"
+     },
+     {
+      "context": "rank_up",
+      "min_rank": 5,
+      "scene": "World: Yu Narukami, Best friend"
+     }
+    ]
+   },
+   "scenes": [
+    {
+     "name": "World: Yu Narukami, Friend",
+     "script": [
+      "cast me as Yu Narukami",
+      "background classroom",
+      "me enters left with fade",
+      "me: Here. Bento. I made it this morning.",
+      "player: You cook?",
+      "me (lose): Nanako likes it.",
+      "me: My friends and I solved mysteries over lunch. It's tradition.",
+      "me: Friends share food. That's a fact. You're my friend."
+     ]
+    },
+    {
+     "name": "World: Yu Narukami, Best friend",
+     "script": [
+      "cast me as Yu Narukami",
+      "background rain",
+      "me enters center with fade",
+      "me: The Midnight Channel showed people their true selves. Not everyone liked what they saw.",
+      "me: I learned that accepting yourself is the hardest thing.",
+      "player: Have you accepted yourself?",
+      "me (win): ...Mostly. With help.",
+      "player: Then I'll help too.",
+      "choice",
+      "- Best friends, Yu.",
+      "- I'll face the truth with you.",
+      "me (lose): Best friend. I am thou. Thou art I. Something like that."
+     ]
+    }
+   ]
+  }
+ ]
+}

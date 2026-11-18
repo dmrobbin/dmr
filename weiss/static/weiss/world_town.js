@@ -280,7 +280,8 @@
     points.className = "muted";
     points.textContent = relation.next === null ? ` · ${relation.points} ♥` : ` · ${relation.points}/${relation.next} ♥`;
     relationEl.append(hearts, words, points);
-    relationEl.title = relation.next === null ? "The closest you can be." : `${relation.next - relation.points} more to the next rank.`;
+    const next = relation.next_rewards && relation.next_rewards.length ? ` Next rank: ${relation.next_rewards.join(", ")}.` : "";
+    relationEl.title = relation.next === null ? "The closest you can be." : `${relation.next - relation.points} more to the next rank.${next}`;
   }
 
   function floatPoints(n) {
@@ -421,6 +422,14 @@
           return lines([`♥ You and ${talking.name} are now: ${event.rank_up}.`], next);
         }
         return next();
+      }
+      if (event.reward) {
+        speaker("");
+        $("[data-coins]").textContent = `${town.money.toLocaleString()} coins`;
+        return lines([`★ ${event.reward}`], () => {
+          if (!event.link) return next();
+          options([["See the cards", () => { window.location.href = event.link; }], ["Carry on", next, { quiet: true }]]);
+        });
       }
       if (event.money) say(`+${event.money.toLocaleString()} coins.`);
       if (event.gift) say(`${talking.name} gave you ${event.icon} ${event.gift}.`);
@@ -889,6 +898,14 @@
     quote.textContent = result.line ? `${result.cpu}: “${result.line}”` : "";
     const points = banner.querySelector("[data-result-points]");
     points.textContent = result.points ? `+${result.points} ♥${result.rank_up ? ` · You and ${result.cpu} are now: ${result.rank_up}` : ""}` : "";
+    const more = banner.querySelector("[data-result-more]");
+    more.replaceChildren();
+    if (result.rank_line) more.append(Object.assign(document.createElement("p"), { className: "town-result-line", textContent: `${result.cpu}: “${result.rank_line}”` }));
+    if (result.rewards && result.rewards.length) more.append(Object.assign(document.createElement("p"), { textContent: `★ ${result.rewards.join(" · ")}` }));
+    if (result.scene) {
+      const link = Object.assign(document.createElement("a"), { href: result.scene, className: "button-small", textContent: `A moment with ${result.cpu}` });
+      more.append(Object.assign(document.createElement("p"), {}), link);
+    }
     banner.hidden = false;
     banner.querySelector("[data-result-close]").addEventListener("click", () => (banner.hidden = true));
   }

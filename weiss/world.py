@@ -6,7 +6,6 @@ specialty packs staff set (WorldSettings), and nothing else: every card in its d
 challenge. The pack opening, the specialty packs and the deck rules are the challenges' (weiss.packs, weiss.buffs,
 weiss.challenge); a save has the fields they read (pool, packs, rewards, last_opening, sets).
 """
-import hashlib
 import random
 import re
 import secrets
@@ -316,71 +315,107 @@ def wait(save):
 
 # ---------------------------------------------------------------- Who's where (see CpuSchedule)
 
-def chance(*parts):
-    """A number from 0 to 1 that's always the same for the same parts: who's where never changes on a reload."""
-    digest = hashlib.sha256(":".join(str(part) for part in parts).encode()).digest()
-    return int.from_bytes(digest[:8], "big") / 2 ** 64
+MAX_PER_PLACE = 2  # CPUs at one place at once
+MAX_ON_STAGE = 10  # CPUs out in the whole town at once
+MIN_ON_STAGE = 6  # the fewest a time of day draws, when there are CPUs enough
+SEEN_AGAIN = 0.35  # how much less likely a CPU is to turn up again, for each time it's been out already that day
 
 
-def where_rule(save, rules, turn=None):
-    """The rule (of one CPU's, highest priority first) that puts it somewhere at this turn, or None. A rule holds on its
-    days and times, if its roll comes up; a once-a-day rule holds at only one of its times each day."""
-    turn = save.turn if turn is None else turn
-    day, time = turn // 4, turn % 4
-    for rule in rules:
-        if day % 7 not in rule.days or time not in rule.times:
-            continue
-        if rule.once_per_day:
-            times = sorted(rule.times)
-            if times[int(chance(save.seed, rule.cpu_id, day, rule.pk, "once") * len(times))] != time:
+def haunts():
+    """{cpu id: [its haunts]} for every CPU that can duel (finalized, with a deck)."""
+    by_cpu = {}
+    for rule in CpuSchedule.objects.filter(cpu__finalized=True, cpu__deck__isnull=False).select_related("place").order_by("cpu_id", "pk"):
+        by_cpu.setdefault(rule.cpu_id, []).append(rule)
+    return by_cpu
+
+
+def day_cast(save, day, by_cpu=None):
+    """[{cpu id: the haunt it's at} for each time of day 0 to 3]: who's out on this day (counting from 0), drawn fresh
+    for each save and day from the seed, so a reload never moves anyone. For each time, CPUs whose haunts fit the
+    weekday and time are shuffled, the heavier first and those out already today less likely, and placed until the
+    time's draw (MIN_ON_STAGE to MAX_ON_STAGE) is out, never more than MAX_PER_PLACE at a place. A once-a-day haunt is
+    used once at most. Rank-gated haunts are drawn like the rest (whereabouts leaves those out), so getting to know one
+    CPU never moves another."""
+    by_cpu = haunts() if by_cpu is None else by_cpu
+    rng = random.Random(f"{save.seed}:{day}:cast")
+    weekday = day % 7
+    seen, used_once, plan = Counter(), set(), []
+    for time in range(len(WorldSave.TIMES)):
+        options = {}
+        for cpu_id in sorted(by_cpu):
+            fits = [rule for rule in by_cpu[cpu_id] if weekday in rule.days and time in rule.times and rule.pk not in used_once]
+            if fits:
+                options[cpu_id] = fits
+        wanted = min(rng.randint(MIN_ON_STAGE, MAX_ON_STAGE), len(options))
+        # A weighted shuffle (each a random key, raised to 1 / its weight): the heaviest tend to come first.
+        order = sorted(((rng.random() ** (1 / max(sum(rule.weight for rule in fits) * SEEN_AGAIN ** seen[cpu_id], 0.01)), cpu_id)
+                        for cpu_id, fits in options.items()), reverse=True)
+        filled, cast = Counter(), {}
+        for _, cpu_id in order:
+            if len(cast) >= wanted:
+                break
+            free = [rule for rule in options[cpu_id] if filled[rule.place_id] < MAX_PER_PLACE]
+            if not free:
                 continue
-        if chance(save.seed, rule.cpu_id, turn, rule.pk) * 100 < rule.chance:
-            return rule
-    return None
+            rule = rng.choices(free, weights=[max(rule.weight, 1) for rule in free])[0]
+            cast[cpu_id] = rule
+            filled[rule.place_id] += 1
+            seen[cpu_id] += 1
+            if rule.once_per_day:
+                used_once.add(rule.pk)
+        plan.append(cast)
+    return plan
 
 
 def whereabouts(save, turn=None):
-    """{cpu id: the rule that puts it somewhere} at this turn, for every CPU that can duel (finalized, with a deck). A
-    CPU is in one place at most: its first rule that holds."""
-    by_cpu = {}
-    for rule in CpuSchedule.objects.filter(cpu__finalized=True, cpu__deck__isnull=False).select_related("place").order_by("-priority", "pk"):
-        by_cpu.setdefault(rule.cpu_id, []).append(rule)
-    found = {}
-    for cpu_id, rules in by_cpu.items():
-        if (rule := where_rule(save, rules, turn)):
-            found[cpu_id] = rule
-    return found
+    """{cpu id: the haunt it's at} now (or at this turn): the day's draw (day_cast), less any CPU there by a haunt the
+    player doesn't know it well enough for yet."""
+    turn = save.turn if turn is None else turn
+    cast = day_cast(save, turn // len(WorldSave.TIMES))[turn % len(WorldSave.TIMES)]
+    return {cpu_id: rule for cpu_id, rule in cast.items() if not rule.min_rank or rank_of(save, cpu_id) >= rule.min_rank}
 
 
-def starter_rules(cpu_id, places, usage):
-    """A first schedule for one CPU, as CpuSchedule fields: a home it's at most weekdays, a weekend spot and somewhere it
-    wanders to now and then. Each goes to whichever of `places` (keys) has the fewest rules so far (`usage`, updated
-    here), so CPUs spread across the town; the rest is rolled from the CPU, the same every time."""
+def starter_rules(cpu_id, places, usage, villain=False, secluded=()):
+    """First haunts for one CPU, as CpuSchedule fields, rolled from the CPU so they're the same every time. Most CPUs
+    get a home most weekdays, a weekend spot and somewhere to wander, each at whichever of `places` (keys) has the
+    fewest haunts so far (`usage`, updated here), so CPUs spread across the town. A villain keeps to the `secluded`
+    places, mostly at evening and night, and turns up somewhere busy by day only once the player's a friend."""
     rng = random.Random(cpu_id * 7919)
 
-    def pick(but=()):
-        choices = [key for key in places if key not in but] or list(places)
+    def pick(among, but=()):
+        choices = [key for key in among if key not in but] or list(among)
         least = min(usage.get(key, 0) for key in choices)
         key = rng.choice([key for key in choices if usage.get(key, 0) == least])
         usage[key] = usage.get(key, 0) + 1
         return key
 
-    home = pick()
-    weekend = pick((home,))
-    wander = pick((home, weekend))
+    if villain and secluded:
+        lair = pick(secluded)
+        prowl = pick(secluded, (lair,))
+        daytime = pick([key for key in places if key not in secluded] or places)
+        return [
+            {"place": lair, "days": sorted(rng.sample(range(7), 5)), "times": [2, 3], "weight": 70},
+            {"place": prowl, "days": sorted(rng.sample(range(7), 3)), "times": [3], "weight": 50},
+            {"place": daytime, "days": sorted(rng.sample(range(7), 3)), "times": [rng.choice((0, 1))], "weight": 30, "min_rank": 2},
+        ]
+    open_places = [key for key in places if key not in secluded] or list(places)
+    home = pick(open_places)
+    weekend = pick(open_places, (home,))
+    wander = pick(places, (home, weekend))
     return [
-        {"place": home, "days": [0, 1, 2, 3, 4], "times": sorted(rng.sample(range(4), 2)), "chance": 90, "priority": 1},
-        {"place": weekend, "days": [5, 6], "times": sorted(rng.sample(range(4), rng.randint(1, 2))), "chance": 80, "priority": 1},
-        {"place": wander, "days": sorted(rng.sample(range(7), 3)), "times": [rng.randrange(4)], "chance": 60, "priority": 0},
+        {"place": home, "days": [0, 1, 2, 3, 4], "times": sorted(rng.sample(range(4), 2)), "weight": 60},
+        {"place": weekend, "days": [5, 6], "times": sorted(rng.sample(range(4), rng.randint(1, 2))), "weight": 50},
+        {"place": wander, "days": sorted(rng.sample(range(7), 3)), "times": [rng.randrange(4)], "weight": 30},
     ]
 
 
 def starter_schedules(cpus=None):
-    """A first schedule (starter_rules) for each CPU that can duel and has none, or for these CPUs; staff edit them
-    from there. Returns how many CPUs got one."""
+    """First haunts (starter_rules) for each CPU that can duel and has none, or for these CPUs; staff edit them from
+    there. Returns how many CPUs got some."""
     places = {place.key: place for place in WorldPlace.objects.filter(shop=False)}
     if not places:
         return 0
+    secluded = sorted(key for key, place in places.items() if place.secluded)
     usage = {}
     for rule in CpuSchedule.objects.select_related("place"):
         usage[rule.place.key] = usage.get(rule.place.key, 0) + 1
@@ -389,7 +424,7 @@ def starter_schedules(cpus=None):
         found = found.filter(pk__in=[cpu.pk for cpu in cpus])
     made = 0
     for cpu in found:
-        for rule in starter_rules(cpu.pk, sorted(places), usage):
+        for rule in starter_rules(cpu.pk, sorted(places), usage, villain=cpu.temperament == "villain", secluded=secluded):
             CpuSchedule.objects.create(cpu=cpu, **{**rule, "place": places[rule["place"]]})
         made += 1
     return made
@@ -448,7 +483,7 @@ def start_duel(save, cpu_id, high_stakes=False):
         raise ValueError("They aren't here now.")
     cpu, rule = found
     offered = offered_stake(save, cpu.pk)
-    fee = (offered or rule.stake) if high_stakes else 0
+    fee = (offered or stake_with(save, cpu.pk, rule)) if high_stakes else 0
     if high_stakes and not fee:
         raise ValueError(f"{cpu.name} isn't playing for stakes here.")
     if GameRoom.objects.filter(host=save.user).count() >= GameRoom.MAX_OPEN_ROOMS:
@@ -479,14 +514,26 @@ def game_finished(room, over):
         if won:
             save.today["won"] = True
         save.today.setdefault("duelled", []).append(room.cpu_profile_id)
-        before, after = add_points(save, room.cpu_profile_id, WIN_POINTS if won else LOSS_POINTS) if room.cpu_profile_id else (0, 0)
+        cpu = CpuProfile.objects.filter(pk=room.cpu_profile_id).first()
+        points = gain(cpu, WIN_POINTS if won else LOSS_POINTS) if cpu else 0
+        before, after = add_points(save, cpu.pk, points) if cpu else (0, 0)
+        rewards = [text for text, _ in reward_ranks(save, cpu, after)] if cpu and after > before else []
+        rank_line, scene = "", ""
+        if cpu and after > before:  # what reaching the rank plays: its line in the result, or its scene to watch
+            found = chatter.pick(cpu, "rank_up", after)
+            if found and found[2]:
+                save.flags["scene"] = {"scene": found[2].pk, "cpu": cpu.pk}
+                scene = reverse("weiss:world_scene", args=[save.slot])
+            elif found:
+                rank_line = next((filler(save, cpu)(step["text"]) for step in found[1]["steps"] if step["do"] == "say"), "")
         save.flags["last_duel"] = {"room": room.pk, "cpu": room.cpu_name, "cpu_id": room.cpu_profile_id, "won": won, "coins": coins,
-                                   "first": first, "stake": room.world_stake, "seen": False,
-                                   "points": WIN_POINTS if won else LOSS_POINTS, "rank_up": rank_names()[after] if after > before else ""}
+                                   "first": first, "stake": room.world_stake, "seen": False, "points": points,
+                                   "rank_up": rank_names()[after] if after > before else "", "rank_line": rank_line, "scene": scene,
+                                   "rewards": rewards}
         save.turn += 1
         if save.turn % len(WorldSave.TIMES) == 0:
             save.today = {}
-        changed(save, "money", "today", "flags", "turn", "relations")
+        changed(save, "money", "today", "flags", "turn", "relations", "pool", "gifts", "last_opening")
 
 
 def duel_result(save):
@@ -651,8 +698,10 @@ WIN_POINTS = 6
 LOSS_POINTS = 2
 GIFT_POINTS = {"loved": 12, "liked": 6, "neutral": 2, "disliked": -4}
 GIFTS_PER_DAY = 1  # gifts to each CPU a day
+GAIN = {"warm": 1.5, "friendly": 1.25, "neutral": 1.0, "aloof": 0.75, "villain": 0.6}  # by temperament: talk, gifts and duels
 MAX_GIFTS = 99  # of each item held
 RESERVED_FLAGS = {"last_duel", "set", "scene"}
+TALK_FIELDS = ("relations", "today", "flags", "money", "gifts", "pool", "last_opening")  # what talking can change
 
 
 def ranks():
@@ -680,6 +729,16 @@ def rank_of(save, cpu_id):
     return rank_for(save.relations.get(str(cpu_id), {}).get("points", 0))
 
 
+def gain(cpu, n):
+    """The points a talk, gift or duel brings with this CPU (`cpu`, or its id): more for a warm one, fewer for an aloof
+    one or a villain. Losing points isn't softened or sharpened, nor are a script's own."""
+    if n <= 0:
+        return n
+    temperament = cpu.temperament if hasattr(cpu, "temperament") else \
+        CpuProfile.objects.filter(pk=cpu).values_list("temperament", flat=True).first()
+    return max(1, round(n * GAIN.get(temperament, 1.0)))
+
+
 def add_points(save, cpu_id, n):
     """Change how much a CPU likes the player (never below 0): (rank before, rank after)."""
     rel = relation(save, cpu_id)
@@ -696,7 +755,8 @@ def standing(save, cpu_id):
     rank = rank_for(points)
     return {"rank": rank, "name": rows[rank]["name"], "ranks": len(rows), "points": points,
             "next": rows[rank + 1]["points"] if rank + 1 < len(rows) else None,
-            "talked": rel.get("talked") == save.day, "gifted": rel.get("gifted") == save.day}
+            "talked": rel.get("talked") == save.day, "gifted": rel.get("gifted") == save.day,
+            "next_rewards": rewards_for(rank + 1) if rank + 1 < len(rows) else []}
 
 
 def has_flag(save, name):
@@ -748,7 +808,8 @@ class Talk:
         before, after = add_points(self.save, self.cpu.pk, n)
         if after > before:
             self.ranked_up = after
-        return [{"points": n, "relation": standing(self.save, self.cpu.pk), "rank_up": rank_names()[after] if after > before else ""}]
+        events = [{"points": n, "relation": standing(self.save, self.cpu.pk), "rank_up": rank_names()[after] if after > before else ""}]
+        return events + [{"reward": text, **({"link": link} if link else {})} for text, link in reward_ranks(self.save, self.cpu, after)]
 
     def money(self, n, at):
         if not self.once(at):
@@ -762,6 +823,134 @@ class Talk:
             return []
         self.save.gifts[key] = min(self.save.gifts.get(key, 0) + 1, MAX_GIFTS)
         return [{"gift": item.name, "icon": item.icon}]
+
+
+# ---------------------------------------------------------------- What reaching a rank brings
+
+# By rank reached (1 the first after Stranger): what it gives. Cards come from the CPU's own deck: "signature" a rare
+# from its lower levels, "ace" its highest-level card, "anchors" the cards its deck is built around (with its climax).
+# Packs are opened from the CPU's own set straight away. "stakes" lets the player duel it for that fee wherever it is.
+# Every rank reached also counts for card sleeves ("world_rank").
+RANK_REWARDS = {
+    1: [("coins", 200), ("gift", "loved")],
+    2: [("cards", "signature"), ("pack", "climax_pack")],
+    3: [("pack", "color_pack"), ("coins", 400)],
+    4: [("stakes", 500), ("cards", "ace")],
+    5: [("cards", "anchors"), ("pack", "lucky_pack"), ("coins", 1000)],
+}
+REWARD_COPIES = 2
+
+
+def deck_cards(cpu):
+    """[(card, copies)] in the CPU's deck."""
+    if not cpu.deck_id:
+        return []
+    return [(entry.card, entry.quantity) for entry in CardListEntry.objects.filter(card_list_id=cpu.deck_id).select_related("card")]
+
+
+def signature_cards(cpu, which):
+    """The cards of the CPU's deck a reward gives: [card]."""
+    cards = deck_cards(cpu)
+    if not cards:
+        return []
+    anchors = set((cpu.deck.express or {}).get("anchors", ())) if cpu.deck_id else set()
+    climaxes = [(card, n) for card, n in cards if is_climax(card)]
+    characters = [card for card, _ in cards if not is_climax(card) and card.pk not in anchors]
+    grade = lambda card: packs.grade_of(packs.rarity_of(card))
+    if which == "anchors":
+        chosen = [card for card, _ in cards if card.pk in anchors]
+        if not chosen:  # a deck express didn't build: its cx combo cards
+            from . import abilities
+            chosen = [card for card, _ in cards if not is_climax(card) and abilities.has_combo(card.description)][:2]
+        top_climax = max(climaxes, key=lambda pair: (pair[1], pair[0].serial_number), default=None)
+        return chosen + ([top_climax[0]] if top_climax else [])
+    if which == "ace":
+        pool = sorted(characters, key=lambda card: (-(card.level or 0), -grade(card), card.serial_number))
+        return pool[:1]
+    pool = sorted([card for card in characters if (card.level or 0) <= 2] or characters,
+                  key=lambda card: (-grade(card), -(card.level or 0), card.serial_number))
+    return pool[:1]
+
+
+def cpu_set(cpu):
+    """The set most of the CPU's deck comes from, and its main color: (expansion id, color), or (None, None)."""
+    cards = deck_cards(cpu)
+    sets, colors = Counter(), Counter()
+    for card, n in cards:
+        if card.expansion_id:
+            sets[card.expansion_id] += n
+        if card.color and not is_climax(card):
+            colors[card.color] += n
+    return (sets.most_common(1)[0][0] if sets else None), (colors.most_common(1)[0][0] if colors else None)
+
+
+def give_reward(save, cpu, kind, what, rng=random):
+    """Give one reward: (what it says, a link to see it or ""), or None if there's nothing to give."""
+    if kind == "coins":
+        save.money += what
+        return f"{what:,} coins", ""
+    if kind == "gift":
+        loved = set((cpu.gift_tastes or {}).get("loves", []))
+        items = list(GiftItem.objects.all())
+        item = next((item for item in items if loved & set(item.tags or [])), None) or (rng.choice(items) if items else None)
+        if not item:
+            return None
+        save.gifts[item.key] = min(save.gifts.get(item.key, 0) + 1, MAX_GIFTS)
+        return f"{item.icon} {item.name}".strip(), ""
+    if kind == "cards":
+        cards = signature_cards(cpu, what)
+        for card in cards:
+            buffs.add_to_pool(save, card.pk, REWARD_COPIES)
+        return (f"{', '.join(card.name for card in cards)} ×{REWARD_COPIES}", "") if cards else None
+    if kind == "pack":
+        expansion_id, color = cpu_set(cpu)
+        if not expansion_id:
+            return None
+        buff = buffs.BUFFS[what]
+        try:
+            pool, _ = buffs.reward_pack(SimpleNamespace(sets=[expansion_id]), buff, {"set": str(expansion_id), "color": color or ""})
+        except ValueError:
+            pool = packs.Pool.for_set(expansion_id)  # their set has no cards like that: a plain pack of it
+            if not pool:
+                return None
+        pack = packs.open_pack(pool, rng, packs.BOOSTED_PACK if buff.pack == "lucky" else packs.PACK)
+        for pull in pack:
+            buffs.add_to_pool(save, pull.card.pk, 1)
+        save.last_opening = {**packs.opening(pool, [pack]), "set_id": expansion_id, "bought": True}
+        return f"A {buff.name.lower()} of {pool.set_name}", reverse("weiss:world_opened", args=[save.slot])
+    if kind == "stakes":
+        relation(save, cpu.pk)["stakes"] = what
+        return f"High-stakes duels with {cpu.name}, for {what:,} coins", ""
+    return None
+
+
+def reward_ranks(save, cpu, rank):
+    """Give what every rank up to this one brings that this save hasn't had from this CPU yet: [(text, link)]. Each
+    rank's rewards come once, whatever brought the rank; the sleeves' world_rank progress is counted too."""
+    rel = relation(save, cpu.pk)
+    given = []
+    for reached in range(rel.get("rewarded", 0) + 1, rank + 1):
+        for kind, what in RANK_REWARDS.get(reached, []):
+            if (found := give_reward(save, cpu, kind, what)):
+                given.append(found)
+        rel["rewarded"] = reached
+    if rank > 0:
+        from . import sleeves
+        sleeves.record(save.user_id, bests={"world_rank": rank, f"world_rank:{cpu.pk}": rank})
+    return given
+
+
+def rewards_for(rank):
+    """What reaching a rank brings, as the town tells the player before they get there."""
+    words = {"coins": lambda n: f"{n:,} coins", "gift": lambda _: "a gift", "pack": lambda b: f"a {buffs.BUFFS[b].name.lower()}",
+             "stakes": lambda n: "high-stakes duels", "cards": lambda which: {"signature": "a signature card", "ace": "their ace card",
+                                                                               "anchors": "their key cards"}[which]}
+    return [words[kind](what) for kind, what in RANK_REWARDS.get(rank, [])]
+
+
+def stake_with(save, cpu_id, rule=None):
+    """The entry fee for a high-stakes duel with this CPU now: its haunt's, or the one earned with it, whichever's more."""
+    return max(rule.stake if rule else 0, save.relations.get(str(cpu_id), {}).get("stakes", 0))
 
 
 def someone_here(save, cpu_id):
@@ -804,7 +993,7 @@ def carry_on(save, cpu, compiled, start, after=()):
             talk["rank_up"] = reached  # after the conversation
         else:
             events += rank_up(save, cpu, reached)
-    changed(save, "relations", "today", "flags", "money", "gifts")
+    changed(save, *TALK_FIELDS)
     return {"talk": {"cpu": cpu.pk, "events": events, "waiting": waiting, "relation": standing(save, cpu.pk)}}
 
 
@@ -829,13 +1018,13 @@ def talk(save, cpu_id):
         return converse(save, cpu, "again")
     rel["talked"] = save.day
     world = Talk(save, cpu, "talk")
-    gained = world.points(TALK_POINTS)
+    gained = world.points(gain(cpu, TALK_POINTS))
     found = converse(save, cpu, "greet", gained)
     if world.ranked_up is not None:
         save.today["talk"]["rank_up"] = world.ranked_up
         if found["talk"]["waiting"] is None or "fight" in found["talk"]["waiting"]:
             found["talk"]["events"] += rank_up(save, cpu, save.today["talk"].pop("rank_up"))
-            changed(save, "flags", "relations", "today", "money", "gifts")
+            changed(save, *TALK_FIELDS)
     return found
 
 
@@ -900,13 +1089,13 @@ def give(save, cpu_id, key):
     rel["gifted"] = save.day
     reaction = taste(cpu, item)
     world = Talk(save, cpu, "gift")
-    gained = world.points(GIFT_POINTS[reaction])
+    gained = world.points(gain(cpu, GIFT_POINTS[reaction]))
     found = converse(save, cpu, f"gift_{reaction}", gained)
     found["talk"]["events"].insert(0, {"gave": item.name, "icon": item.icon, "reaction": reaction})  # handed over, then their answer
     if world.ranked_up is not None:
         if found["talk"]["waiting"] is None or "fight" in found["talk"]["waiting"]:
             found["talk"]["events"] += rank_up(save, cpu, world.ranked_up)
-            changed(save, "flags", "relations", "today", "money", "gifts")
+            changed(save, *TALK_FIELDS)
         else:
             save.today["talk"]["rank_up"] = world.ranked_up
             changed(save, "today")
@@ -957,7 +1146,7 @@ def town(save):
         "place": {"key": here.key, "name": here.name, "backdrop": here.backdrop(time), "shop": here.shop} if here else None,
         "places": [{"key": p.key, "name": p.name, "backdrop": p.backdrop(time), "here": here is not None and p.key == here.key,
                     "who": by_place.get(p.key, [])} for p in known],
-        "people": [{"id": cpu.pk, "name": cpu.name, "portraits": cpu_portraits(cpu), "stake": rule.stake,
+        "people": [{"id": cpu.pk, "name": cpu.name, "portraits": cpu_portraits(cpu), "stake": stake_with(save, cpu.pk, rule),
                     "intro": chatter.first_line(cpu, "before_duel", rank_of(save, cpu.pk), filler(save, cpu)) or cpu.intro_text,
                     "duelled": cpu.pk in save.today.get("duelled", []), "relation": standing(save, cpu.pk),
                     "offer": offered_stake(save, cpu.pk)} for cpu, rule in people],

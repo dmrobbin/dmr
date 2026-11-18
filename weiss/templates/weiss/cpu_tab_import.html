@@ -66,3 +66,34 @@
     {% endif %}
   {% endif %}
 </section>
+
+<section class="cpu-section" id="world-pack">
+  <h2>3. World mode packs</h2>
+  <p class="muted small">The CPUs' part in world mode's town: their haunts, gift tastes, temperament, chatter, and the scenes their rank-ups play.
+    Choose the files in <code>corpus/world/</code>. CPUs are found by name; each one's haunts and chatter are replaced by the pack's, and the pack's
+    scenes made (or their scripts updated). Check first: nothing's saved. Import checks again and saves only if nothing's wrong.</p>
+  <form method="post" action="{% url 'weiss:world_pack_import' %}" enctype="multipart/form-data" class="panel-row cpu-form">
+    {% csrf_token %}
+    <input type="file" name="packs" accept=".json,application/json" multiple required aria-label="World pack files">
+    <button type="submit" name="step" value="check" class="button-small secondary">Check</button>
+    <button type="submit" name="step" value="import" class="button-small">Import</button>
+  </form>
+  {% if pack %}
+    <h3>{% if pack_imported %}Imported{% elif pack_ready %}Ready to import{% else %}Not ready{% endif %}</h3>
+    <ul class="cpu-list cpu-rows">
+      {% for name, result in pack %}
+        <li>
+          <strong>{{ name }}</strong> <span class="muted small">{{ result.done|length }} CPU{{ result.done|length|pluralize }}</span>
+          {% if result.problems %}<ul class="small panel-error">{% for problem in result.problems %}<li>{{ problem }}</li>{% endfor %}</ul>{% endif %}
+          {% if result.missing %}<p class="small muted">Not here, so skipped: {{ result.missing|join:", " }}.</p>{% endif %}
+          {% if result.done and not result.problems %}
+            <details class="small"><summary>What each gets</summary>
+              <ul class="cpu-list small">{% for cpu, what in result.done %}<li>{{ cpu }} <span class="muted">· {{ what }}</span></li>{% endfor %}</ul>
+            </details>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+    {% if not pack_ready %}<p class="small panel-error">Nothing was saved. Fix the packs and check them again.</p>{% endif %}
+  {% endif %}
+</section>

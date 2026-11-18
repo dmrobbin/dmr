@@ -114,6 +114,7 @@ urlpatterns = [
     path("cpu/challenges/<int:pk>/delete/", cpu_views.narrative_delete, name="cpu_narrative_delete"),
     path("cpu/", cpu_views.cpu_home, name="cpu_home"),
     path("cpu/import/", cpu_import_views.cpu_import, name="cpu_import"),
+    path("cpu/import/world/", cpu_import_views.world_pack_import, name="world_pack_import"),
     path("cpu/corpus.zip", cpu_import_views.corpus_download, name="cpu_corpus_download"),
     path("cpu/scenes/new/", scene_views.scene_create, name="cpu_scene_create"),
     path("cpu/scenes/<int:pk>/", scene_views.scene_edit, name="cpu_scene_edit"),

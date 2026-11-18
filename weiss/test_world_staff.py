@@ -135,8 +135,9 @@ class WorldInCpuFilesTests(TestCase):
                 "scenes": [{"name": f"{name}: Hello", "script": SCRIPT}] if name == "Rapi" else [],
                 **({"world": world_part} if world_part is not None else {})}
 
-    WORLD = {"schedule": [{"place": "cafe", "days": [0, 1, 2], "times": [1, 2], "chance": 90, "priority": 1},
-                          {"place": "beach", "days": [5, 6], "times": [2], "stake": 400}],
+    WORLD = {"temperament": "warm",
+             "schedule": [{"place": "cafe", "days": [0, 1, 2], "times": [1, 2], "weight": 90},
+                          {"place": "beach", "days": [5, 6], "times": [2], "stake": 400, "min_rank": 2}],
              "gift_tastes": {"loves": ["sweet"], "likes": ["drink"], "dislikes": ["spicy"]},
              "chatter": [{"context": "greet", "script": "them: Hi, {player}.\ngive gift iced-coffee"},
                          {"context": "rank_up", "min_rank": 2, "scene": "Rapi: Hello"}]}
@@ -144,9 +145,10 @@ class WorldInCpuFilesTests(TestCase):
     def test_a_cpu_files_world_is_made(self):
         profile, _ = cpu_corpus.import_cpu(self.cpu_file(self.WORLD), self.user, rng=random.Random(1))
         profile.refresh_from_db()
-        rules = list(profile.schedule.order_by("-priority"))
-        self.assertEqual([(r.place.key, r.days, r.times, r.chance, r.stake) for r in rules],
-                         [("cafe", [0, 1, 2], [1, 2], 90, 0), ("beach", [5, 6], [2], 100, 400)])
+        rules = list(profile.schedule.order_by("-weight"))
+        self.assertEqual([(r.place.key, r.days, r.times, r.weight, r.min_rank, r.stake) for r in rules],
+                         [("cafe", [0, 1, 2], [1, 2], 90, 0, 0), ("beach", [5, 6], [2], 50, 2, 400)])
+        self.assertEqual(profile.temperament, "warm")
         self.assertEqual(profile.gift_tastes, self.WORLD["gift_tastes"])
         lines = {line.context: line for line in profile.chatter.all()}
         self.assertEqual(lines["rank_up"].scene.name, "Rapi: Hello")  # a scene from the same file
@@ -156,12 +158,13 @@ class WorldInCpuFilesTests(TestCase):
         profile, _ = cpu_corpus.import_cpu(self.cpu_file(self.WORLD), self.user, rng=random.Random(1))
         record = cpu_corpus.export_profile(profile, cpu_corpus.scene_casts(), {})
         self.assertEqual(record["world"]["gift_tastes"], self.WORLD["gift_tastes"])
-        self.assertEqual(record["world"]["schedule"][1], {"place": "beach", "days": [5, 6], "times": [2], "chance": 100,
-                                                          "once_per_day": False, "priority": 0, "stake": 400})
+        self.assertEqual(record["world"]["schedule"][1], {"place": "beach", "days": [5, 6], "times": [2], "weight": 50,
+                                                          "once_per_day": False, "min_rank": 2, "stake": 400})
+        self.assertEqual(record["world"]["temperament"], "warm")
         self.assertIn({"context": "rank_up", "min_rank": 2, "weight": 1, "script": "", "scene": "Rapi: Hello"}, record["world"]["chatter"])
 
     def test_everything_wrong_with_a_world_is_said(self):
-        wrong = {"schedule": [{"place": "moon", "days": [7], "times": [], "chance": 0, "colour": "red"}],
+        wrong = {"temperament": "grumpy", "schedule": [{"place": "moon", "days": [7], "times": [], "weight": 0, "colour": "red"}],
                  "gift_tastes": {"loves": ["sweet"], "dislikes": ["sweet"]},
                  "chatter": [{"context": "brunch", "script": "them: Hi."}, {"context": "greet", "script": "them enters\ngive gift caviar"},
                              {"context": "greet", "scene": "Rapi: Hello"}, {"context": "again", "min_rank": 99, "script": "them: Hi."}],
@@ -169,7 +172,7 @@ class WorldInCpuFilesTests(TestCase):
         with self.assertRaises(cpu_corpus.CorpusError) as caught:
             cpu_corpus.import_cpu(self.cpu_file(wrong), self.user, rng=random.Random(1))
         text = "\n".join(caught.exception.problems)
-        for expected in ("no such fields as weather", "no place “moon”", "days are", "times are", "chance goes", "no such fields as colour",
+        for expected in ("no such fields as weather", "no place “moon”", "days are", "times are", "weight goes", "no such fields as colour", "temperament must be",
                          "sweet can only be in one list", "context must be one of", "no stage", "no gift called “caviar”",
                          "only a rank_up line can play a scene", "min_rank goes from"):
             self.assertIn(expected, text)

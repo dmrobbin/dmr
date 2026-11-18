@@ -1,0 +1,81 @@
+"""Builds world mode's packs (world_pack/*.json, uploaded on the CPU creation page's Import tab) from the cast files in
+world_pack/src/: each CPU's temperament, haunts, gift tastes, chatter and its two rank-up scenes, written compactly.
+
+    python world_pack/build.py           # writes world_pack/<cast file>.json
+    python manage.py check_world_pack world_pack/*.json
+
+A cast file has CAST = [cpu(...), ...]. In a CPU:
+- haunts: (place, days, times, weight[, min_rank]): days "wk" (Mon-Fri), "we" (Sat, Sun), "all", or a string of
+  day numbers ("135": Tue, Thu, Sat); times a string of 0 morning, 1 noon, 2 evening, 3 night ("23").
+- tastes: (loves, likes, dislikes), lists of gift tags.
+- lines: chatter by moment, each a script (lines split on "\\n"): hi (a list: greetings for a stranger), hi2 (a
+  friend's greeting, rank 2), hi4 (a close friend's, rank 4), again, loved, disliked, before, won (after the player
+  wins), lost (after the player loses), r1, r3, r4 (what reaching ranks 1, 3 and 4 says).
+- friend, best: the scenes reaching Friend (rank 2) and Best friend (rank 5) play, as script lines; the cast line
+  for the CPU (as `me`) is added at the top. "me (pleased):" and "me (dismayed):" become its screens.
+"""
+import importlib.util
+import json
+from pathlib import Path
+
+HERE = Path(__file__).parent
+DAYS = {"wk": [0, 1, 2, 3, 4], "we": [5, 6], "all": list(range(7))}
+MOMENTS = {"again": ("again", 0), "loved": ("gift_loved", 0), "disliked": ("gift_disliked", 0), "before": ("before_duel", 0),
+           "won": ("after_win", 0), "lost": ("after_loss", 0), "hi2": ("greet", 2), "hi4": ("greet", 4),
+           "r1": ("rank_up", 1), "r3": ("rank_up", 3), "r4": ("rank_up", 4)}
+
+
+# In a scene, a CPU's pictures are its screens: "lose" (the player lost) is it pleased, "win" (the player won) dismayed.
+SCENE_MOODS = {"(pleased)": "(lose)", "(dismayed)": "(win)"}
+
+
+def staged(line):
+    """A scene line with the chatter-style moods turned into the CPU's screens."""
+    for mood, screen in SCENE_MOODS.items():
+        line = line.replace(f"me {mood}:", f"me {screen}:")
+    return line
+
+
+def cpu(name, temperament, haunts, tastes, lines, friend, best):
+    return {"name": name, "temperament": temperament, "haunts": haunts, "tastes": tastes, "lines": lines, "friend": friend, "best": best}
+
+
+def entry(spec):
+    """A CPU's pack entry from its spec."""
+    name = spec["name"]
+    schedule = []
+    for haunt in spec["haunts"]:
+        place, days, times, weight, *rank = haunt
+        schedule.append({"place": place, "days": DAYS.get(days) or sorted(int(d) for d in days),
+                         "times": sorted(int(t) for t in times), "weight": weight, "min_rank": rank[0] if rank else 0})
+    loves, likes, dislikes = spec["tastes"]
+    chatter = [{"context": "greet", "min_rank": 0, "script": script.split("\n")} for script in spec["lines"]["hi"]]
+    for key, (context, rank) in MOMENTS.items():
+        if key in spec["lines"]:
+            chatter.append({"context": context, "min_rank": rank, "script": spec["lines"][key].split("\n")})
+    scenes = []
+    for rank, title, lines in ((2, "Friend", spec["friend"]), (5, "Best friend", spec["best"])):
+        scene = f"World: {name}, {title}"
+        chatter.append({"context": "rank_up", "min_rank": rank, "scene": scene})
+        scenes.append({"name": scene, "script": [f"cast me as {name}", *(staged(line) for line in lines)]})
+    return {"name": name, "world": {"temperament": spec["temperament"], "schedule": schedule,
+                                    "gift_tastes": {"loves": loves, "likes": likes, "dislikes": dislikes}, "chatter": chatter},
+            "scenes": scenes}
+
+
+def main():
+    built = 0
+    for source in sorted((HERE / "src").glob("*.py")):
+        module_spec = importlib.util.spec_from_file_location(source.stem, source)
+        module = importlib.util.module_from_spec(module_spec)
+        module.cpu = cpu
+        module_spec.loader.exec_module(module)
+        pack = {"pack": source.stem, "cpus": [entry(spec) for spec in module.CAST]}
+        (HERE / f"{source.stem}.json").write_text(json.dumps(pack, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+        print(f"{source.stem}.json: {len(pack['cpus'])} CPUs")
+        built += len(pack["cpus"])
+    print(f"{built} CPUs in all")
+
+
+if __name__ == "__main__":
+    main()

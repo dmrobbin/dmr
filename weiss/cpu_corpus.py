@@ -8,8 +8,9 @@ A CPU's file, as both commands use it:
      "deck": {"name": "Rapi's deck", "series": "NIK", "anchors": ["NIK/S117-E001", "NIK/S117-E020"], "focus": false,
               "cards": [["NIK/S117-E001", 4], ...]},
      "scenes": [{"name": "Rapi: First meeting", "script": "cast rapi as Rapi\\n...", "infinite_event": false}],
-     "world": {"schedule": [{"place": "cafe", "days": [0, 1, 2, 3, 4], "times": [1, 2], "chance": 90,
-                             "once_per_day": false, "priority": 1, "stake": 0}],
+     "world": {"temperament": "friendly",
+               "schedule": [{"place": "cafe", "days": [0, 1, 2, 3, 4], "times": [1, 2], "weight": 60,
+                             "once_per_day": false, "min_rank": 0, "stake": 0}],
                "gift_tastes": {"loves": ["sweet"], "likes": ["drink", "cards"], "dislikes": ["spicy"]},
                "chatter": [{"context": "greet", "min_rank": 0, "weight": 1, "script": "them: Oh, hi, {player}."},
                            {"context": "rank_up", "min_rank": 3, "scene": "Rapi: First meeting"}]}}
@@ -33,7 +34,8 @@ from .models import Card, CardList, CardListEntry, Chatter, CpuProfile, CpuSched
 from .views import series_code
 
 PROFILE_FIELDS = ("name", "model", "aggression", "boss", *TEXT_FIELDS)
-RULE_FIELDS = ("place", "days", "times", "chance", "once_per_day", "priority", "stake")
+RULE_FIELDS = ("place", "days", "times", "weight", "once_per_day", "min_rank", "stake")
+TEMPERAMENTS = [key for key, _ in CpuProfile._meta.get_field("temperament").choices]
 CHATTER_FIELDS = ("context", "min_rank", "weight", "script", "scene")
 TASTES = ("loves", "likes", "dislikes")
 MAX_STAKE = 1_000_000
@@ -91,9 +93,10 @@ def scene_record(scene):
 def world_record(profile):
     """A CPU's part in world mode: where it's found, what gifts it likes, and what it says."""
     return {
-        "schedule": [{"place": rule.place.key, "days": rule.days, "times": rule.times, "chance": rule.chance,
-                      "once_per_day": rule.once_per_day, "priority": rule.priority, "stake": rule.stake}
-                     for rule in profile.schedule.select_related("place").order_by("-priority", "pk")],
+        "temperament": profile.temperament,
+        "schedule": [{"place": rule.place.key, "days": rule.days, "times": rule.times, "weight": rule.weight,
+                      "once_per_day": rule.once_per_day, "min_rank": rule.min_rank, "stake": rule.stake}
+                     for rule in profile.schedule.select_related("place").order_by("-weight", "pk")],
         "gift_tastes": {kind: list((profile.gift_tastes or {}).get(kind, [])) for kind in TASTES} if profile.gift_tastes else {},
         "chatter": [{"context": line.context, "min_rank": line.min_rank, "weight": line.weight, "script": line.script,
                      **({"scene": line.scene.name} if line.scene else {})}
@@ -110,7 +113,10 @@ def world_info():
     for item in GiftItem.objects.all():
         tags.update(item.tags or [])
         gifts.append({"key": item.key, "name": item.name, "tags": item.tags})
-    return {"places": [{"key": place.key, "name": place.name, "shop": place.shop} for place in WorldPlace.objects.all()],
+    return {"places": [{"key": place.key, "name": place.name, "shop": place.shop, "secluded": place.secluded}
+                       for place in WorldPlace.objects.all()],
+            "temperaments": dict(CpuProfile._meta.get_field("temperament").choices), "max_per_place": world.MAX_PER_PLACE,
+            "max_on_stage": world.MAX_ON_STAGE,
             "gifts": gifts, "tags": sorted(tags), "contexts": dict(Chatter.CONTEXTS), "ranks": world.rank_names(),
             "cpu_moods": list(chatter.CPU_MOODS), "player_moods": list(chatter.PLAYER_MOODS)}
 
@@ -169,14 +175,18 @@ def world_reference():
     lines = ["", "## World mode (`world`)", "",
              "All optional. A CPU with no schedule gets a starting one when it's finalized, and one with no gift tastes "
              "gets starter tastes; one with no chatter says the built-in lines (chatter.json) and any written for every CPU.", "",
-             "### `schedule`: where it's found", "",
-             f"- `place`: one of {', '.join(f'`{place['key']}`' for place in info['places'])} (world.json has their names). "
-             "The card shop is for shopping: better not to put a CPU there.",
+             "### `temperament`", "",
+             "How fast it comes to like the player: " + ", ".join(f"`{key}` ({label})" for key, label in info["temperaments"].items()) + ".", "",
+             "### `schedule`: its haunts", "",
+             f"Each save draws who's out fresh every day: at most {info['max_per_place']} CPUs at a place and {info['max_on_stage']} in "
+             "town at once. A haunt says where the CPU can turn up, and when; the heavier, the likelier.",
+             f"- `place`: one of {', '.join(f'`{place['key']}`' for place in info['places'])} (world.json has their names; "
+             "the secluded ones are where villains keep to). The card shop is for shopping: better not to put a CPU there.",
              "- `days`: 0 (Monday) to 6 (Sunday). `times`: 0 morning, 1 noon, 2 evening, 3 night.",
-             "- `chance`: 1 to 100, rolled for each save and day. `once_per_day`: at only one of its times each day.",
-             "- `priority`: rules are tried highest first, and the first that holds puts the CPU there, so it's never in two places.",
-             f"- `stake`: a high-stakes entry fee when it's there by this rule (0 for none, at most {MAX_STAKE:,}); a win pays it back twice.",
-             "", "A CPU should have a home most days, somewhere at weekends, and somewhere it wanders: three or four rules.", "",
+             "- `weight`: 1 to 100. `once_per_day`: there at most once a day.",
+             "- `min_rank`: the friendship rank the player needs for this haunt (0: always). A villain's daytime haunts wait for a friend.",
+             f"- `stake`: a high-stakes entry fee when it's there by this haunt (0 for none, at most {MAX_STAKE:,}); a win pays it back twice.",
+             "", "A CPU should have a home most days, somewhere at weekends, and somewhere it wanders: three or four haunts.", "",
              "### `gift_tastes`", "",
              f"Tags it `loves`, `likes` and `dislikes`, each in only one list. Tags gifts have: {', '.join(info['tags'])}. "
              "A gift with a loved tag is loved (even if it also has a disliked one), then disliked, then liked, else neutral.", "",
@@ -340,6 +350,11 @@ def read_scenes(data, problems, taken=None):
     return found
 
 
+def joined(script):
+    """A script as text: a pack can write one as a list of lines, which reads (and diffs) better."""
+    return "\n".join(str(line) for line in script) if isinstance(script, list) else str(script or "")
+
+
 def read_world(data, problems, info, scene_names=()):
     """(schedule rules, gift tastes, chatter lines), checked; info: world_info() (or world.json, offline); scene_names:
     the scenes a rank-up can play (lowercase), besides those in the database when checking online."""
@@ -347,7 +362,7 @@ def read_world(data, problems, info, scene_names=()):
     if not isinstance(data, dict):
         problems.append("world: write it as {\"schedule\": [...], \"gift_tastes\": {...}, \"chatter\": [...]}.")
         return [], {}, []
-    unknown = sorted(set(data) - {"schedule", "gift_tastes", "chatter"})
+    unknown = sorted(set(data) - {"temperament", "schedule", "gift_tastes", "chatter"})
     if unknown:
         problems.append(f"world: no such fields as {', '.join(unknown)}.")
     places = {place["key"] for place in info["places"]}
@@ -360,7 +375,7 @@ def read_world(data, problems, info, scene_names=()):
         if extra := sorted(set(rule) - set(RULE_FIELDS)):
             problems.append(f"{where}: no such fields as {', '.join(extra)}.")
         days, times = rule.get("days"), rule.get("times")
-        fields = {"place": rule.get("place"), "chance": rule.get("chance", 100), "priority": rule.get("priority", 0),
+        fields = {"place": rule.get("place"), "weight": rule.get("weight", 50), "min_rank": rule.get("min_rank", 0),
                   "stake": rule.get("stake", 0), "once_per_day": bool(rule.get("once_per_day", False))}
         if fields["place"] not in places:
             problems.append(f"{where}: there's no place “{fields['place']}”; places are {', '.join(sorted(places))}.")
@@ -368,14 +383,17 @@ def read_world(data, problems, info, scene_names=()):
             problems.append(f"{where}: days are a list of 0 (Monday) to 6 (Sunday).")
         if not isinstance(times, list) or not times or any(not isinstance(t, int) or not 0 <= t <= 3 for t in times):
             problems.append(f"{where}: times are a list of 0 (morning) to 3 (night).")
-        if not isinstance(fields["chance"], int) or not 1 <= fields["chance"] <= 100:
-            problems.append(f"{where}: the chance goes from 1 to 100.")
-        if not isinstance(fields["priority"], int) or not -99 <= fields["priority"] <= 99:
-            problems.append(f"{where}: the priority goes from -99 to 99.")
+        if not isinstance(fields["weight"], int) or not 1 <= fields["weight"] <= 100:
+            problems.append(f"{where}: the weight goes from 1 to 100.")
+        if not isinstance(fields["min_rank"], int) or not 0 <= fields["min_rank"] < len(info["ranks"]):
+            problems.append(f"{where}: min_rank goes from 0 to {len(info['ranks']) - 1}.")
         if not isinstance(fields["stake"], int) or not 0 <= fields["stake"] <= MAX_STAKE:
             problems.append(f"{where}: the stake goes from 0 to {MAX_STAKE:,}.")
         rules.append({**fields, "days": sorted(set(days)) if isinstance(days, list) else [],
                       "times": sorted(set(times)) if isinstance(times, list) else []})
+    temperament = data.get("temperament")
+    if temperament is not None and temperament not in info.get("temperaments", TEMPERAMENTS):
+        problems.append(f"world: the temperament must be one of {', '.join(info.get('temperaments', TEMPERAMENTS))}.")
     tastes = {}
     raw = data.get("gift_tastes") or {}
     if not isinstance(raw, dict) or set(raw) - set(TASTES):
@@ -408,7 +426,7 @@ def read_world(data, problems, info, scene_names=()):
             problems.append(f"{where}: min_rank goes from 0 to {len(info['ranks']) - 1}.")
         if not isinstance(weight, int) or not 1 <= weight <= 100:
             problems.append(f"{where}: the weight goes from 1 to 100.")
-        script, scene = str(line.get("script") or ""), line.get("scene")
+        script, scene = joined(line.get("script")), line.get("scene")
         if scene and context != "rank_up":
             problems.append(f"{where}: only a rank_up line can play a scene.")
         elif scene and str(scene).lower() not in scene_names and not Scene.objects.filter(name__iexact=str(scene)).exists():
@@ -418,11 +436,14 @@ def read_world(data, problems, info, scene_names=()):
         elif script.strip():
             problems += [f"{where}, line {at}: {error}" for at, error in chatter.compile_chatter(script, gifts=gifts)[1]]
         lines.append({"context": context, "min_rank": min_rank, "weight": weight, "script": script, "scene": str(scene) if scene else None})
-    return rules, tastes, lines
+    return rules, tastes, lines, temperament
 
 
-def make_world(profile, rules, tastes, lines):
+def make_world(profile, rules, tastes, lines, temperament=None):
     """Saves a CPU's world part, once the CPU (and the batch's scenes) exist."""
+    if temperament:
+        profile.temperament = temperament
+        profile.save(update_fields=["temperament"])
     places = {place.key: place for place in WorldPlace.objects.all()}
     CpuSchedule.objects.bulk_create(CpuSchedule(cpu=profile, place=places[rule["place"]], **{k: v for k, v in rule.items() if k != "place"})
                                     for rule in rules)
@@ -546,3 +567,73 @@ def check_offline(data, cpus, scene_names, anchors, info=None):
         else:
             read_world(data["world"], problems, info, scene_names={*scene_names, *(name.lower() for name, _, _ in wanted_scenes)})
     return problems
+
+
+# --- World packs: world mode for CPUs that exist already ------------------------------------------------------
+
+def import_world_pack(files, dry_run=False, user=None, known=None):
+    """Give existing CPUs their part in world mode from pack files: [{"cpus": [{"name", "world", "scenes"}]}]. A CPU is
+    found by name; its haunts and chatter are replaced by the pack's, and its tastes and temperament set. A pack's
+    scenes (a rank-up's, say) are made, or their scripts updated if a scene has that name already. A result for each
+    file, in order, with .problems (nothing's saved if any file has one, or for a dry run), .missing (CPUs the pack
+    names that aren't here: skipped) and .done ([(CPU name, what it got)]). known: CPU names to check against instead
+    of the database, with nothing made (an offline check against an export)."""
+    results = [SimpleNamespace(problems=[], missing=[], done=[]) for _ in files]
+    info = world_info()
+    pack_scenes = {}
+    for data, result in zip(files, results):
+        for number, scene in enumerate(data.get("scenes") or [], 1):
+            name = str(scene.get("name", "")).strip()
+            if not name or len(name) > 100:
+                result.problems.append(f"scene {number}: a name, at most 100 characters, is needed.")
+            elif name.lower() in pack_scenes:
+                result.problems.append(f"scene “{name}”: the pack has two scenes called that.")
+            pack_scenes[name.lower()] = (name, joined(scene.get("script")), result)
+        for entry in data.get("cpus") or []:
+            for number, scene in enumerate(entry.get("scenes") or [], 1):
+                name = str(scene.get("name", "")).strip()
+                if not name or len(name) > 100:
+                    result.problems.append(f"{entry.get('name')}: scene {number} needs a name, at most 100 characters.")
+                elif name.lower() in pack_scenes:
+                    result.problems.append(f"scene “{name}”: the pack has two scenes called that.")
+                pack_scenes[name.lower()] = (name, joined(scene.get("script")), result)
+    names = {name.lower(): name for name in (known if known is not None else CpuProfile.objects.values_list("name", flat=True))}
+
+    def find(who):
+        who = who.strip().strip('"“”').strip()
+        if known is not None:
+            return (SimpleNamespace(name=names[who.lower()]), None) if who.lower() in names else (None, f"There's no CPU called “{who}”.")
+        return scenes.find_cpu(who)
+
+    for name, script, result in pack_scenes.values():
+        result.problems += [f"scene “{name}”, line {line}: {error}" for line, error in scenes.compile_scene(script, find=find)[1]]
+    wanted = []
+    for data, result in zip(files, results):
+        for number, entry in enumerate(data.get("cpus") or [], 1):
+            name = str(entry.get("name", "")).strip()
+            if name.lower() not in names:
+                result.missing.append(name or f"CPU {number}")
+                continue
+            before = len(result.problems)
+            found = read_world(entry.get("world"), result.problems, info, scene_names=set(pack_scenes))
+            result.problems[before:] = [f"{names[name.lower()]}: {problem}" for problem in result.problems[before:]]
+            wanted.append((names[name.lower()], found, result))
+    if dry_run or known is not None or any(result.problems for result in results):
+        for name, (rules, tastes, lines, _), result in wanted:
+            result.done.append((name, f"{len(rules)} haunts, {len(lines)} lines"))
+        return results
+    with transaction.atomic():
+        for name, script, _ in pack_scenes.values():
+            scene = Scene.objects.filter(name__iexact=name).first()
+            if scene:
+                scene.script = script
+                scene.save(update_fields=["script", "updated"])
+            else:
+                Scene.objects.create(name=name, script=script, created_by=user)
+        for name, (rules, tastes, lines, temperament), result in wanted:
+            profile = CpuProfile.objects.get(name__iexact=name)
+            profile.schedule.all().delete()
+            profile.chatter.all().delete()
+            make_world(profile, rules, tastes, lines, temperament)
+            result.done.append((name, f"{len(rules)} haunts, {len(lines)} lines"))
+    return results

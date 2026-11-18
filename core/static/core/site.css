@@ -2874,6 +2874,10 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .town-result p { margin: 0; }
 .town-result-points { color: #ff8fab; font-weight: 600; }
 .town-result-line { margin-top: .25rem !important; font-style: italic; color: #e4dccb; }
+.town-result-more:empty { display: none; }
+.town-result-more { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .8rem; margin-top: .3rem; }
+.town-result-more > p { margin: 0; flex-basis: 100%; }
+.town-result-more > p:empty { display: none; }
 .town-result-close { position: absolute; top: .2rem; right: .3rem; width: 2rem; height: 2rem; font-size: 1.2rem; line-height: 1; color: var(--muted);
   background: none; border: 0; border-radius: .4rem; cursor: pointer; }
 .town-result-close:hover { color: var(--text); }
@@ -3126,6 +3130,8 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .schedule-row { display: flex; flex-wrap: wrap; gap: .5rem 1rem; }
 .schedule-row label { display: flex; flex-direction: column; gap: .2rem; }
 .schedule-row input[type="number"] { width: 8rem; padding: .35rem .5rem; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: .5rem; }
+.schedule-row select { padding: .35rem .5rem; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: .5rem; }
+.schedule-grid tfoot th, .schedule-grid tfoot td { border-bottom: 0; color: var(--muted); font-weight: 600; }
 .schedule-checks { display: flex; flex-wrap: wrap; gap: .3rem .9rem; margin: 0; padding: 0; border: 0; }
 .schedule-checks legend { margin-bottom: .2rem; }
 .schedule-once { flex-basis: 100%; }

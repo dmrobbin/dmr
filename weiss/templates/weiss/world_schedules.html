@@ -5,9 +5,10 @@
 {% block content %}
   <p class="back"><a href="{% url 'weiss:cpu_home' %}?tab=world">← World mode settings</a></p>
   <h1>Who's where</h1>
-  <p class="muted">Where each CPU can be found in the town, and when. A CPU's rules are tried highest priority first; the first that holds
-    puts it there, so it's never in two places. Only finalized CPUs with a deck appear. Chances are rolled for each save, so the grid
-    shows one sample save: try another to see the chances work.</p>
+  <p class="muted">Where each CPU can turn up in the town: its haunts. Each save draws who's out fresh every day, from the haunts that fit
+    the day and time, the heavier more likely: at most {{ max_per_place }} at a place and {{ max_on_stage }} in the whole town at once, and someone
+    out already that day is less likely to turn up again. A haunt with a rank needs the player to know the CPU that well (a villain's daytime
+    haunts, say). Only finalized CPUs with a deck appear. The grid shows one sample save: try another to see the draw change.</p>
 
   <section class="cpu-section">
     <div class="schedule-head">
@@ -21,12 +22,13 @@
       <table class="schedule-grid">
         <caption class="visually-hidden">Who's where on {{ day_name }}, for a sample save</caption>
         <thead><tr><th scope="col">Place</th>{% for time in times %}<th scope="col">{{ time }}</th>{% endfor %}</tr></thead>
+        <tfoot><tr><th scope="row">Out in town</th>{% for count in out %}<td>{{ count }} <span class="muted">/ {{ max_on_stage }}</span></td>{% endfor %}</tr></tfoot>
         <tbody>
           {% for place, cells in grid %}
             <tr>
               <th scope="row">{{ place.name }}{% if place.shop %} <span class="muted small">(shop)</span>{% endif %}</th>
               {% for cell in cells %}
-                <td>{% for who in cell %}<span class="schedule-who">{{ who.name }}{% if who.stake %} <span class="muted">· {{ who.stake }}</span>{% endif %}</span>{% empty %}<span class="muted">—</span>{% endfor %}</td>
+                <td>{% for who in cell %}<span class="schedule-who">{{ who.name }}{% if who.stake %} <span class="muted">· {{ who.stake }}</span>{% endif %}{% if who.min_rank %} <span class="muted" title="Only once the player's at rank {{ who.min_rank }} with them">· rank {{ who.min_rank }}+</span>{% endif %}</span>{% empty %}<span class="muted">—</span>{% endfor %}</td>
               {% endfor %}
             </tr>
           {% endfor %}
@@ -36,15 +38,15 @@
     {% if unscheduled %}
       <form method="post" class="schedule-starters">
         {% csrf_token %}
-        <p class="small">{{ unscheduled|length }} CPU{{ unscheduled|length|pluralize }} never appear{{ unscheduled|length|pluralize:"s," }} as {{ unscheduled|length|pluralize:"it has,they have" }} no rules:
+        <p class="small">{{ unscheduled|length }} CPU{{ unscheduled|length|pluralize }} never appear{{ unscheduled|length|pluralize:"s," }} as {{ unscheduled|length|pluralize:"it has,they have" }} no haunts:
           {% for cpu in unscheduled|slice:":12" %}{{ cpu.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% if unscheduled|length > 12 %} and {{ unscheduled|length|add:"-12" }} more{% endif %}.</p>
-        <button type="submit" name="starters" value="1" class="button-small secondary">Give them a starting schedule</button>
+        <button type="submit" name="starters" value="1" class="button-small secondary">Give them starting haunts</button>
       </form>
     {% endif %}
   </section>
 
   <section class="cpu-section" id="rule-form">
-    <h2>{% if editing %}Edit {{ editing.cpu.name }} at {{ editing.place.name }}{% else %}Add a rule{% endif %}</h2>
+    <h2>{% if editing %}Edit {{ editing.cpu.name }} at {{ editing.place.name }}{% else %}Add a haunt{% endif %}</h2>
     <form method="post" class="cpu-form schedule-form">
       {% csrf_token %}
       {% if editing %}<input type="hidden" name="rule" value="{{ editing.pk }}">{% endif %}
@@ -68,22 +70,23 @@
       <fieldset class="schedule-checks">
         <legend class="small">Times</legend>
         {% for time in times %}<label class="small"><input type="checkbox" name="times" value="{{ forloop.counter0 }}"{% if editing and forloop.counter0 in editing.times %} checked{% endif %}> {{ time }}</label>{% endfor %}
-        <label class="small schedule-once"><input type="checkbox" name="once" value="1"{% if editing.once_per_day %} checked{% endif %}> At only one of these times each day</label>
+        <label class="small schedule-once"><input type="checkbox" name="once" value="1"{% if editing.once_per_day %} checked{% endif %}> Here at most once a day</label>
       </fieldset>
       <div class="schedule-row">
-        <label class="small">Chance (%)<input type="number" name="chance" min="1" max="100" value="{{ editing.chance|default:100 }}" required></label>
-        <label class="small">Priority<input type="number" name="priority" min="-99" max="99" value="{{ editing.priority|default:0 }}"></label>
+        <label class="small">Weight (1–100)<input type="number" name="weight" min="1" max="100" value="{{ editing.weight|default:50 }}" required></label>
+        <label class="small">From rank
+          <select name="min_rank">{% for index, name in ranks %}<option value="{{ index }}"{% if editing.min_rank == index %} selected{% endif %}>{{ index }} · {{ name }}</option>{% endfor %}</select></label>
         <label class="small">High-stakes entry fee<input type="number" name="stake" min="0" value="{{ editing.stake|default:0 }}"></label>
       </div>
-      <p class="muted small">A high-stakes entry fee lets the player duel for stakes when the CPU's here by this rule: the fee is paid up front,
+      <p class="muted small">A high-stakes entry fee lets the player duel for stakes when the CPU's here by this haunt: the fee is paid up front,
         lost on a loss, and won back twice over on a win. 0 for none.</p>
-      <p><button type="submit" class="button-small">{% if editing %}Save the rule{% else %}Add the rule{% endif %}</button>
+      <p><button type="submit" class="button-small">{% if editing %}Save the haunt{% else %}Add the haunt{% endif %}</button>
         {% if editing %}<a class="small" href="{% url 'weiss:world_schedules' %}">Cancel</a>{% endif %}</p>
     </form>
   </section>
 
   <section class="cpu-section">
-    <h2>Rules</h2>
+    <h2>Haunts</h2>
     {% regroup rules by cpu as by_cpu %}
     {% for group in by_cpu %}
       <h3 class="schedule-cpu">{{ group.grouper.name }}{% if not group.grouper.finalized or not group.grouper.deck_id %} <span class="muted small">(not finalized, or no deck: doesn't appear)</span>{% endif %}</h3>
@@ -97,7 +100,7 @@
         {% endfor %}
       </ul>
     {% empty %}
-      <p class="empty">No rules yet: nobody appears in the town. Add one above{% if unscheduled %}, or give every CPU a starting schedule{% endif %}.</p>
+      <p class="empty">No haunts yet: nobody appears in the town. Add one above{% if unscheduled %}, or give every CPU starting haunts{% endif %}.</p>
     {% endfor %}
   </section>
 {% endblock %}

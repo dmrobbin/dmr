@@ -271,6 +271,9 @@ class CpuProfile(Avatar):
     player_win_image = models.ForeignKey(CpuImage, null=True, blank=True, on_delete=models.SET_NULL, related_name="win_profiles")
     player_lose_image = models.ForeignKey(CpuImage, null=True, blank=True, on_delete=models.SET_NULL, related_name="lose_profiles")
     intro_text = models.TextField(blank=True, help_text="Shown on its screen before a match")
+    temperament = models.CharField(max_length=10, default="neutral", choices=[
+        ("warm", "Warm: warms up fast"), ("friendly", "Friendly"), ("neutral", "Neutral"), ("aloof", "Aloof: slow to warm up"),
+        ("villain", "Villain: slowest, and keeps to the dark")], help_text="World mode: how fast it comes to like the player")
     gift_tastes = models.JSONField(default=dict, blank=True, help_text="World mode: the gift tags it loves, likes and dislikes, "
                                    "{\"loves\": [...], \"likes\": [...], \"dislikes\": [...]} (see GiftItem.tags)")
     player_win_text = models.TextField(blank=True, help_text="Shown on the victory screen, when the player beats it")
@@ -776,6 +779,7 @@ class WorldPlace(models.Model):
     order = models.PositiveSmallIntegerField(default=0, help_text="Its place on the map")
     unlock_flag = models.CharField(max_length=50, blank=True, help_text="A flag a save must have to go there; empty for open from the start")
     shop = models.BooleanField(default=False, help_text="Has the card shop's counter: packs to buy")
+    secluded = models.BooleanField(default=False, help_text="Out of the way: where villains keep to")
 
     class Meta:
         ordering = ["order", "name"]
@@ -847,21 +851,21 @@ class Chatter(models.Model):
 
 
 class CpuSchedule(models.Model):
-    """Where a CPU can be found in world mode's town, and when (see world.whereabouts): on these days, at these times,
-    with this chance. A CPU's rules are tried highest priority first; the first that holds puts it there. A once-a-day
-    rule holds at only one of its times each day, picked by the save's seed."""
+    """A haunt: somewhere a CPU can turn up in world mode's town, and when (see world.whereabouts). Each save draws who's
+    out fresh every day, within the town's caps; a CPU's haunts that fit the day and time are where it can be, the
+    heavier more likely. A haunt can wait for the player to know the CPU well (min_rank): a villain's daytime ones."""
 
     cpu = models.ForeignKey(CpuProfile, on_delete=models.CASCADE, related_name="schedule")
     place = models.ForeignKey(WorldPlace, on_delete=models.CASCADE, related_name="schedule")
     days = models.JSONField(default=list, help_text="0 Monday to 6 Sunday")
     times = models.JSONField(default=list, help_text="0 morning, 1 noon, 2 evening, 3 night")
-    chance = models.PositiveSmallIntegerField(default=100, help_text="0 to 100: how likely it is to be there when the rule holds")
-    once_per_day = models.BooleanField(default=False, help_text="There at only one of these times each day")
-    priority = models.SmallIntegerField(default=0, help_text="Higher is tried first")
+    weight = models.PositiveSmallIntegerField(default=50, help_text="1 to 100: how likely it is to be here, against its other haunts and other CPUs")
+    once_per_day = models.BooleanField(default=False, help_text="Here at most once a day")
+    min_rank = models.PositiveSmallIntegerField(default=0, help_text="The friendship rank the player needs with it for this haunt (0: always)")
     stake = models.PositiveIntegerField(default=0, help_text="A high-stakes duel's entry fee, offered when it's there by this rule; 0 for none")
 
     class Meta:
-        ordering = ["cpu__name", "-priority", "pk"]
+        ordering = ["cpu__name", "-weight", "pk"]
 
     def __str__(self):
         return f"{self.cpu} at {self.place}"
