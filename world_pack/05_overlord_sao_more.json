@@ -1610,6 +1610,13 @@
       ]
      },
      {
+      "context": "estranged",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Takina's gone, and you let it happen. I hope it was worth it."
+      ]
+     },
+     {
       "context": "hello",
       "min_rank": 0,
       "script": [
@@ -1660,6 +1667,149 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Chisato Nishikigi, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "chisato-cafe-lycoris",
+      "title": "Cafe Lycoris",
+      "gates": 2,
+      "about": "Chisato wants to show you LycoReco's favourite cake, and she's hoping for company over a morning coffee.",
+      "offer": [
+       "them (pleased): Oh, hi! Have you tried the shortcake here? It's the best!",
+       "them: I'm giving mornings a try. Want to come along?"
+      ],
+      "stages": [
+       {
+        "text": "Meet Chisato at the cafe in the morning",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "cafe",
+          "times": [
+           0
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Bring her a strawberry shortcake",
+        "objectives": [
+         {
+          "do": "give_gift",
+          "gift": "shortcake",
+          "to": "Chisato Nishikigi"
+         }
+        ]
+       },
+       {
+        "text": "Tell her about your morning",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Chisato Nishikigi",
+          "script": [
+           "them (pleased): Ahh, that's perfect. Let's do this again!",
+           "player (smile): I'd like that."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "sweet",
+        "title": "Share the cake",
+        "about": "You and Chisato share the first slice. Takina pretends she isn't watching.",
+        "rewards": [
+         {
+          "coins": 300
+         },
+         {
+          "card": "LRC/WE47-E41"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "chisato-rescue",
+      "title": "Bring Takina Back",
+      "gates": 5,
+      "about": "Takina has gone off on a mission alone. Chisato wants her back, and how that happens is Chisato's choice.",
+      "offer": [
+       "them (dismayed): Takina went out without telling anyone. Again.",
+       "them: I need someone to help me catch up with her. Please."
+      ],
+      "stages": [
+       {
+        "text": "Beat Takina in a duel",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Takina Inoue"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Play Autumn Dyed in Red with Perfect Day for Camping",
+        "objectives": [
+         {
+          "do": "combo",
+          "card": "LRC/WE47-E41",
+          "climax": "LRC/WE47-E53",
+          "win": true
+         }
+        ]
+       },
+       {
+        "text": "Talk to Chisato about it",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Chisato Nishikigi",
+          "script": [
+           "them: Okay. I know what I need to do now.",
+           "them (pleased): Thanks for being on my side, {player}."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "rescue",
+        "title": "Drag her back to LycoReco",
+        "about": "Chisato brings Takina home. The mission is shelved for good, and Takina won't forgive the interruption.",
+        "locks": [
+         "takina-apart"
+        ],
+        "rewards": [
+         {
+          "coins": 1000
+         },
+         {
+          "pack": "climax_pack"
+         }
+        ]
+       },
+       {
+        "key": "trust",
+        "title": "Let her go",
+        "about": "Chisato trusts Takina to find her own way, and leaves her to it.",
+        "rewards": [
+         {
+          "coins": 500
+         },
+         {
+          "card": "LRC/W105-TE17",
+          "copies": 2
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -1850,6 +2000,13 @@
       ]
      },
      {
+      "context": "estranged",
+      "min_rank": 0,
+      "script": [
+       "them: You dragged me back here. Don't expect me to thank you."
+      ]
+     },
+     {
       "context": "hello",
       "min_rank": 0,
       "script": [
@@ -1900,6 +2057,147 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Takina Inoue, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "takina-off-the-books",
+      "title": "Off the Books",
+      "gates": 2,
+      "about": "Takina has an errand LycoReco doesn't know about, and she needs someone to watch her back.",
+      "offer": [
+       "them (dismayed): You're the one Chisato won't stop talking about. Stay out of my way.",
+       "them: I have a job tonight, off the books. I could use a second pair of eyes."
+      ],
+      "stages": [
+       {
+        "text": "Watch the rooftop at night",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "rooftop",
+          "times": [
+           3
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Have Lycoris, Takina & Chisato",
+        "objectives": [
+         {
+          "do": "have_card",
+          "card": "LRC/W105-TE17"
+         }
+        ]
+       },
+       {
+        "text": "Report back to Takina",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Takina Inoue",
+          "script": [
+           "them: You didn't get in the way. That's more than I expected.",
+           "them (pleased): ...Thanks, I suppose."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "trust",
+        "title": "Cover her back",
+        "about": "Takina gives you a small nod. For her, that's a lot.",
+        "rewards": [
+         {
+          "coins": 300
+         },
+         {
+          "gift": "iced-coffee"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "takina-apart",
+      "title": "Lycoris, Apart",
+      "gates": 5,
+      "about": "Takina's mission is at odds with LycoReco. She has to choose between the job and Chisato, and whichever she picks, someone is left behind.",
+      "offer": [
+       "them: I need to ask you something. It's about Chisato, and about the mission.",
+       "them (dismayed): I don't want to talk about this where she can hear."
+      ],
+      "stages": [
+       {
+        "text": "Beat Chisato in a duel",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Chisato Nishikigi"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Play Lycoris, Takina & Chisato with Combining Strengths",
+        "objectives": [
+         {
+          "do": "combo",
+          "card": "LRC/W105-TE17",
+          "climax": "LRC/W105-TE19",
+          "win": true
+         }
+        ]
+       },
+       {
+        "text": "Tell Takina your answer",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Takina Inoue",
+          "script": [
+           "them: So that's your answer. Fine.",
+           "them (dismayed): ...Thank you for not making me say it twice."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "mission",
+        "title": "Go on the mission",
+        "about": "Takina goes alone. Her friendship with Chisato is closed for good, and Chisato keeps her distance.",
+        "locks": [
+         "chisato-rescue"
+        ],
+        "rewards": [
+         {
+          "coins": 1000
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ]
+       },
+       {
+        "key": "stay",
+        "title": "Stay with Chisato",
+        "about": "Takina stays at LycoReco and sends word that the mission goes on without her.",
+        "rewards": [
+         {
+          "coins": 600
+         },
+         {
+          "gift": "bouquet"
+         }
+        ]
+       }
+      ]
      }
     ]
    },

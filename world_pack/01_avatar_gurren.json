@@ -170,6 +170,13 @@
       ]
      },
      {
+      "context": "estranged",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You let her take the throne. I can't pretend that's okay."
+      ]
+     },
+     {
       "context": "hello",
       "min_rank": 0,
       "script": [
@@ -220,6 +227,149 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Aang, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "aang-lost-bison",
+      "title": "Where's Appa?",
+      "gates": 2,
+      "about": "Aang's flying bison has wandered off, and Aang needs a hand finding him.",
+      "offer": [
+       "them (pleased): Hey, {player}! Have you seen a huge, fluffy flying bison? His name's Appa.",
+       "them: He was napping under a tree, and then he just wasn't there. Momo's no help at all.",
+       "them: Could you check the forest? He likes to wander in the mornings."
+      ],
+      "stages": [
+       {
+        "text": "Search the forest in the morning or at noon",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "forest",
+          "times": [
+           0,
+           1
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Win a duel with Aang: Master of All Elements in your deck",
+        "objectives": [
+         {
+          "do": "win_with",
+          "card": "ATLA/WX04-002"
+         }
+        ]
+       },
+       {
+        "text": "Tell Aang what you found",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Aang",
+          "script": [
+           "them (pleased): You found Appa? Really?!",
+           "them: Thank you, {player}. I owe you one."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "home",
+        "title": "Bring Appa home",
+        "about": "Appa is back, and Aang isn't letting him out of his sight again.",
+        "rewards": [
+         {
+          "coins": 400
+         },
+         {
+          "gift": "plushie"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "aang-avatar-state",
+      "title": "The Avatar State",
+      "gates": 5,
+      "about": "Aang has to reach the Avatar State to stop Azula's war, and the road there is dangerous. How it ends is his choice.",
+      "offer": [
+       "them: I can feel the Avatar State getting closer. It's dangerous, though.",
+       "them (pleased): Will you help keep me grounded? Just stay with me while I try."
+      ],
+      "stages": [
+       {
+        "text": "Beat Azula in a duel",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Azula"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Play Aang: Avatar State with Fury of the Ocean Spirit",
+        "objectives": [
+         {
+          "do": "combo",
+          "card": "ATLA/WX04-T16",
+          "climax": "ATLA/WX04-T19",
+          "win": true
+         }
+        ]
+       },
+       {
+        "text": "Talk Aang through it",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Aang",
+          "script": [
+           "them: I did it. I could feel Azula's anger the whole time.",
+           "them (pleased): Thanks for staying with me, {player}."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "reach",
+        "title": "Reach out to Azula",
+        "about": "Aang offers Azula a hand. She refuses it, and her road to the throne closes for good.",
+        "locks": [
+         "azula-heir"
+        ],
+        "rewards": [
+         {
+          "coins": 800
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ]
+       },
+       {
+        "key": "stand",
+        "title": "Stand against her",
+        "about": "Aang holds the line. Azula's road to the throne stays open.",
+        "rewards": [
+         {
+          "coins": 600
+         },
+         {
+          "gift": "sunglasses"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -1186,6 +1336,13 @@
       ]
      },
      {
+      "context": "estranged",
+      "min_rank": 0,
+      "script": [
+       "them: You picked the Avatar's peace over me. Fine. I never needed your approval."
+      ]
+     },
+     {
       "context": "hello",
       "min_rank": 0,
       "script": [
@@ -1236,6 +1393,161 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Azula, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "azula-prodigy",
+      "title": "The Prodigy's Test",
+      "gates": 2,
+      "about": "Azula wants a worthy opponent, and she'll only train with someone who can beat her in a Red deck.",
+      "offer": [
+       "them (dismayed): You again. Do you always stare at people like that?",
+       "them: I'm about to be crowned, and I need someone to test my new form on. You'll do.",
+       "them: Beat me with a Red deck and I'll consider you worth my time."
+      ],
+      "stages": [
+       {
+        "text": "Win a duel against Azula with a Red deck",
+        "objectives": [
+         {
+          "do": "win_deck",
+          "colors": [
+           "Red"
+          ],
+          "against": [
+           "Azula"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Have Ty Lee: Popular",
+        "objectives": [
+         {
+          "do": "have_card",
+          "card": "ATLA/WX04-057"
+         }
+        ]
+       },
+       {
+        "text": "Go back and tell Azula",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Azula",
+          "script": [
+           "them (pleased): Hm. You're not as dull as you look.",
+           "them: Keep your deck tight. I'll be watching."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "impressed",
+        "title": "Earn her respect",
+        "about": "Azula admits you're worth her time. From her, that's rare.",
+        "rewards": [
+         {
+          "coins": 300
+         },
+         {
+          "gift": "sunglasses"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "azula-heir",
+      "title": "Heir of Fire",
+      "gates": 5,
+      "about": "Azula's coronation is near, and the Avatar stands in her way. What she does next depends on who she trusts.",
+      "offer": [
+       "them: The Avatar is out there, pretending he can make peace. He's an obstacle.",
+       "them (dismayed): Don't look at me like that. I was born for this."
+      ],
+      "stages": [
+       {
+        "text": "Beat Aang in a duel",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Aang"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Have Azula: Verge of Insanity",
+        "objectives": [
+         {
+          "do": "have_card",
+          "card": "ATLA/WX04-050S"
+         }
+        ]
+       },
+       {
+        "text": "Watch the rooftop at night",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "rooftop",
+          "times": [
+           3
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Give Azula your answer",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Azula",
+          "script": [
+           "them: I've decided. Don't waste my time with sentiment.",
+           "them (pleased): ...Good. Let's begin."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "crown",
+        "title": "Take the crown",
+        "about": "Azula takes the throne. Aang's road to peace closes for good, and so does his friendship.",
+        "locks": [
+         "aang-avatar-state"
+        ],
+        "rewards": [
+         {
+          "coins": 1000
+         },
+         {
+          "card": "ATLA/WX04-050S",
+          "copies": 2
+         }
+        ]
+       },
+       {
+        "key": "walk-away",
+        "title": "Walk away from the throne",
+        "about": "Azula turns her back on the crown and leaves the Avatar alone.",
+        "rewards": [
+         {
+          "coins": 500
+         },
+         {
+          "gift": "handheld"
+         }
+        ]
+       }
+      ]
      }
     ]
    },

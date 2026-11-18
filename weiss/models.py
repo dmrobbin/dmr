@@ -804,6 +804,8 @@ class GiftItem(models.Model):
     price = models.PositiveIntegerField(default=150)
     tags = models.JSONField(default=list, blank=True, help_text="Words like sweet, drink, cute, cards: what CPUs love, like or dislike")
     order = models.PositiveSmallIntegerField(default=0)
+    staff_only = models.BooleanField(default=False, help_text="Staff testing: only staff see it in the shop, and giving it "
+                                                              "raises the CPU a rank at once")
 
     class Meta:
         ordering = ["order", "name"]

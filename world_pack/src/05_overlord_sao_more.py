@@ -1,5 +1,64 @@
 """World mode cast: Overlord, Sword Art Online, Batman Ninja, Lycoris Recoil, NIKKE, KonoSuba and Fairy Tail."""
 
+# Quests: Chisato and Takina lock each other. Takina's "mission" ending closes Chisato's rescue quest, and Chisato's "rescue" ending closes Takina's.
+CHISATO_QUESTS = [
+    {"key": "chisato-cafe-lycoris", "title": "Cafe Lycoris", "gates": 2,
+     "about": "Chisato wants to show you LycoReco's favourite cake, and she's hoping for company over a morning coffee.",
+     "offer": ["them (pleased): Oh, hi! Have you tried the shortcake here? It's the best!",
+               "them: I'm giving mornings a try. Want to come along?"],
+     "stages": [
+         {"text": "Meet Chisato at the cafe in the morning", "objectives": [{"do": "visit", "place": "cafe", "times": [0]}]},
+         {"text": "Bring her a strawberry shortcake", "objectives": [{"do": "give_gift", "gift": "shortcake", "to": "Chisato Nishikigi"}]},
+         {"text": "Tell her about your morning", "objectives": [{"do": "talk", "to": "Chisato Nishikigi", "script": ["them (pleased): Ahh, that's perfect. Let's do this again!", "player (smile): I'd like that."]}]},
+     ],
+     "endings": [{"key": "sweet", "title": "Share the cake", "about": "You and Chisato share the first slice. Takina pretends she isn't watching.",
+                  "rewards": [{"coins": 300}, {"card": "LRC/WE47-E41"}]}]},
+    {"key": "chisato-rescue", "title": "Bring Takina Back", "gates": 5,
+     "about": "Takina has gone off on a mission alone. Chisato wants her back, and how that happens is Chisato's choice.",
+     "offer": ["them (dismayed): Takina went out without telling anyone. Again.",
+               "them: I need someone to help me catch up with her. Please."],
+     "stages": [
+         {"text": "Beat Takina in a duel", "objectives": [{"do": "defeat", "cpus": ["Takina Inoue"]}]},
+         {"text": "Play Autumn Dyed in Red with Perfect Day for Camping", "objectives": [{"do": "combo", "card": "LRC/WE47-E41", "climax": "LRC/WE47-E53", "win": True}]},
+         {"text": "Talk to Chisato about it", "objectives": [{"do": "talk", "to": "Chisato Nishikigi", "script": ["them: Okay. I know what I need to do now.", "them (pleased): Thanks for being on my side, {player}."]}]},
+     ],
+     "endings": [
+         {"key": "rescue", "title": "Drag her back to LycoReco", "about": "Chisato brings Takina home. The mission is shelved for good, and Takina won't forgive the interruption.",
+          "locks": ["takina-apart"], "rewards": [{"coins": 1000}, {"pack": "climax_pack"}]},
+         {"key": "trust", "title": "Let her go", "about": "Chisato trusts Takina to find her own way, and leaves her to it.",
+          "rewards": [{"coins": 500}, {"card": "LRC/W105-TE17", "copies": 2}]},
+     ]},
+]
+
+TAKINA_QUESTS = [
+    {"key": "takina-off-the-books", "title": "Off the Books", "gates": 2,
+     "about": "Takina has an errand LycoReco doesn't know about, and she needs someone to watch her back.",
+     "offer": ["them (dismayed): You're the one Chisato won't stop talking about. Stay out of my way.",
+               "them: I have a job tonight, off the books. I could use a second pair of eyes."],
+     "stages": [
+         {"text": "Watch the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3]}]},
+         {"text": "Have Lycoris, Takina & Chisato", "objectives": [{"do": "have_card", "card": "LRC/W105-TE17"}]},
+         {"text": "Report back to Takina", "objectives": [{"do": "talk", "to": "Takina Inoue", "script": ["them: You didn't get in the way. That's more than I expected.", "them (pleased): ...Thanks, I suppose."]}]},
+     ],
+     "endings": [{"key": "trust", "title": "Cover her back", "about": "Takina gives you a small nod. For her, that's a lot.",
+                  "rewards": [{"coins": 300}, {"gift": "iced-coffee"}]}]},
+    {"key": "takina-apart", "title": "Lycoris, Apart", "gates": 5,
+     "about": "Takina's mission is at odds with LycoReco. She has to choose between the job and Chisato, and whichever she picks, someone is left behind.",
+     "offer": ["them: I need to ask you something. It's about Chisato, and about the mission.",
+               "them (dismayed): I don't want to talk about this where she can hear."],
+     "stages": [
+         {"text": "Beat Chisato in a duel", "objectives": [{"do": "defeat", "cpus": ["Chisato Nishikigi"]}]},
+         {"text": "Play Lycoris, Takina & Chisato with Combining Strengths", "objectives": [{"do": "combo", "card": "LRC/W105-TE17", "climax": "LRC/W105-TE19", "win": True}]},
+         {"text": "Tell Takina your answer", "objectives": [{"do": "talk", "to": "Takina Inoue", "script": ["them: So that's your answer. Fine.", "them (dismayed): ...Thank you for not making me say it twice."]}]},
+     ],
+     "endings": [
+         {"key": "mission", "title": "Go on the mission", "about": "Takina goes alone. Her friendship with Chisato is closed for good, and Chisato keeps her distance.",
+          "locks": ["chisato-rescue"], "rewards": [{"coins": 1000}, {"pack": "lucky_pack"}]},
+         {"key": "stay", "title": "Stay with Chisato", "about": "Takina stays at LycoReco and sends word that the mission goes on without her.",
+          "rewards": [{"coins": 600}, {"gift": "bouquet"}]},
+     ]},
+]
+
 CAST = [
     cpu("Ainz Ooal Gown", "villain",
         haunts=[("warehouse", "all", "23", 65), ("shrine", "wk", "3", 45), ("library", "135", "1", 35, 2)],
@@ -183,7 +242,7 @@ CAST = [
               "choice", "- Best friends, clown.", "- I'll laugh at your worst jokes.",
               "me (pleased): Best friend! The punchline I never saw coming!"]),
 
-    cpu("Chisato Nishikigi", "warm",
+    cpu("Chisato Nishikigi", "warm", quests=CHISATO_QUESTS,
         haunts=[("cafe", "wk", "12", 60), ("plaza", "we", "12", 45), ("arena", "135", "2", 30)],
         tastes=(["sweet"], ["cute", "game", "drink"], ["calm"]),
         lines={
@@ -194,6 +253,7 @@ CAST = [
             "hi2": "them (pleased): {player}! Perfect timing! I made a new dessert!",
             "hi4": "them (pleased): My bestie! Let's go to the aquarium! And then karaoke! And then...!",
             "again": "them: Back again? I knew you couldn't stay away!",
+            "cold": "them (dismayed): Takina's gone, and you let it happen. I hope it was worth it.",
             "loved": "them (pleased): Sweets! Oh, you're the best! Takina, look!",
             "disliked": "them (dismayed): Meditation stuff? Hmm, I like being noisy, though!",
             "before": "them: Don't worry, I never aim to kill! Just to win!",
@@ -213,7 +273,7 @@ CAST = [
               "choice", "- Every day with you counts.", "- Best friends, Chisato.",
               "me (pleased): Best friends! Okay, now we have to do everything fun. Today. Let's go!"]),
 
-    cpu("Takina Inoue", "aloof",
+    cpu("Takina Inoue", "aloof", quests=TAKINA_QUESTS,
         haunts=[("cafe", "wk", "01", 55), ("arena", "we", "12", 45), ("rooftop", "135", "3", 30)],
         tastes=(["sweet"], ["book", "calm"], ["game"]),
         lines={
@@ -224,6 +284,7 @@ CAST = [
             "hi2": "them: {player}. Chisato's been asking about you. Too often.",
             "hi4": "them (pleased): ...I saved you a seat. It was efficient.",
             "again": "them: You're back. Noted.",
+            "cold": "them: You dragged me back here. Don't expect me to thank you.",
             "loved": "them (pleased): Sweets. I don't... I like these. Thank you.",
             "disliked": "them (dismayed): A video game? Is this Chisato's idea?",
             "before": "them: Target acquired.",

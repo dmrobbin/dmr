@@ -28,7 +28,7 @@ GREETING_RANKS = (0, 2, 4)  # hello and bye: a stranger's, a friend's, a close f
 DAYS = {"wk": [0, 1, 2, 3, 4], "we": [5, 6], "all": list(range(7))}
 MOMENTS = {"again": ("again", 0), "loved": ("gift_loved", 0), "disliked": ("gift_disliked", 0), "before": ("before_duel", 0),
            "won": ("after_win", 0), "lost": ("after_loss", 0), "hi2": ("greet", 2), "hi4": ("greet", 4),
-           "r1": ("rank_up", 1), "r3": ("rank_up", 3), "r4": ("rank_up", 4)}
+           "r1": ("rank_up", 1), "r3": ("rank_up", 3), "r4": ("rank_up", 4), "cold": ("estranged", 0)}
 
 
 # In a scene, a CPU's pictures are its screens: "lose" (the player lost) is it pleased, "win" (the player won) dismayed.

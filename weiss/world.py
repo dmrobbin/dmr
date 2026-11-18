@@ -979,7 +979,7 @@ def give_reward(save, cpu, kind, what, rng=random):
         return f"{what:,} coins", ""
     if kind == "gift":
         loved = set((cpu.gift_tastes or {}).get("loves", []))
-        items = list(GiftItem.objects.all())
+        items = list(GiftItem.objects.filter(staff_only=False))  # never the staff token
         item = next((item for item in items if loved & set(item.tags or [])), None) or (rng.choice(items) if items else None)
         if not item:
             return None
@@ -1224,17 +1224,23 @@ def taste(cpu, item):
     return "neutral"
 
 
+def gift_items(save):
+    """The gift items this player can see and buy: staff-only ones (staff testing) only for staff."""
+    items = GiftItem.objects.all()
+    return items if save.user.is_staff else items.filter(staff_only=False)
+
+
 def inventory(save):
-    """[{key, name, icon, about, price, have}] for every gift item, as the shop and the talk box show them."""
+    """[{key, name, icon, about, price, have, staff}] for every gift item, as the shop and the talk box show them."""
     return [{"key": item.key, "name": item.name, "icon": item.icon, "about": item.about, "price": item.price,
-             "have": save.gifts.get(item.key, 0)} for item in GiftItem.objects.all()]
+             "have": save.gifts.get(item.key, 0), "staff": item.staff_only} for item in gift_items(save)]
 
 
 def buy_gift(save, key):
     here = place_of(save)
     if not here or not here.shop:
         raise ValueError("You need to be at the card shop.")
-    item = GiftItem.objects.filter(key=key).first()
+    item = gift_items(save).filter(key=key).first()
     if not item:
         raise ValueError("The shop doesn't sell that.")
     if save.gifts.get(key, 0) >= MAX_GIFTS:
@@ -1250,9 +1256,15 @@ def buy_gift(save, key):
 def give(save, cpu_id, key):
     """Give someone here a gift: once a day each. Their points change by how they take it, and they say so."""
     cpu = someone_here(save, cpu_id)
-    item = GiftItem.objects.filter(key=key).first()
+    item = gift_items(save).filter(key=key).first()
     if not item or save.gifts.get(key, 0) < 1:
         raise ValueError("You don't have that to give.")
+    if item.staff_only:  # a staff token: a rank at once, and it costs no time or daily gift
+        save.gifts[key] -= 1
+        if not save.gifts[key]:
+            del save.gifts[key]
+        changed(save, "gifts")
+        return level_up(save, cpu)
     rel = relation(save, cpu.pk)
     if rel.get("gifted") == save.day:
         raise ValueError(f"You've given {cpu.name} something today already.")
@@ -1275,6 +1287,33 @@ def give(save, cpu_id, key):
             save.today["talk"]["rank_up"] = world.ranked_up
             changed(save, "today")
     return found
+
+
+def level_up(save, cpu):
+    """Staff testing: take someone up one friendship rank at once, by the points that rank needs. It plays what a rank
+    reached by points plays (the rank-up line or scene, and the rank's rewards, once). A rank a quest holds back stays
+    where it is, as points do; the badge says what it waits on."""
+    rows = ranks()
+    rank = rank_of(save, cpu.pk)
+    if rank + 1 >= len(rows):
+        raise ValueError(f"{cpu.name} is {rows[rank]['name']} already.")
+    need = max(rows[rank + 1]["points"] - relation(save, cpu.pk)["points"], 0)
+    if not need:  # the points are there: a gate quest is what holds the rank
+        gate = quests.gate_quest(save, cpu.pk)
+        raise ValueError(f"The next rank waits on “{gate.title}”." if gate else f"{cpu.name} is already at that rank.")
+    world = Talk(save, cpu, "staff")
+    events = world.points(need)
+    if world.ranked_up is not None:
+        events += rank_up(save, cpu, world.ranked_up)
+    changed(save, *TALK_FIELDS)
+    return {"talk": {"cpu": cpu.pk, "events": events, "waiting": None, "relation": standing(save, cpu.pk)}}
+
+
+def staff_level(save, cpu_id):
+    """The talk box's staff button: raise someone here a rank. Staff in test mode only."""
+    if not save.user.is_staff or not test_mode(save):
+        raise ValueError("Raising a rank is for staff in test mode.")
+    return level_up(save, someone_here(save, cpu_id))
 
 
 TASTE_TAGS = ("sweet", "drink", "food", "spicy", "fancy", "cute", "cool", "flowers", "cards", "book", "music", "sporty", "game", "calm")

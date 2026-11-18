@@ -10,7 +10,7 @@
        data-travel-url="{% url 'weiss:world_travel' save.slot %}" data-wait-url="{% url 'weiss:world_wait' save.slot %}"
        data-duel-url="{% url 'weiss:world_duel' save.slot %}" data-buy-card-url="{% url 'weiss:world_buy_card' save.slot %}"
        data-buy-gift-url="{% url 'weiss:world_buy_gift' save.slot %}" data-talk-url="{% url 'weiss:world_talk' save.slot %}"
-       data-answer-url="{% url 'weiss:world_answer' save.slot %}" data-give-url="{% url 'weiss:world_give' save.slot %}" data-decks-url="{% url 'weiss:world_save' save.slot %}#decks"
+       data-answer-url="{% url 'weiss:world_answer' save.slot %}" data-give-url="{% url 'weiss:world_give' save.slot %}" data-level-url="{% url 'weiss:world_level' save.slot %}" data-decks-url="{% url 'weiss:world_save' save.slot %}#decks"
        data-quest-url="{% url 'weiss:world_quest' save.slot %}" data-test-mode-url="{% url 'weiss:world_test_mode' save.slot %}"
        data-portraits="{% static 'weiss/portraits/parts.json' %}" data-player="{{ request.user.username }}">
     {% csrf_token %}

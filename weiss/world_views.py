@@ -454,6 +454,12 @@ def world_give(request, save):
 
 
 @town_move
+def world_level(request, save):
+    """Staff testing (test mode): raise the person here a friendship rank at once."""
+    return world.staff_level(save, request.POST.get("cpu", ""))
+
+
+@town_move
 def world_quest(request, save):
     """Something about a quest, with someone here: its offer, taking it, talking it through, handing a card over, or
     choosing how it ends (see world.quest_act)."""

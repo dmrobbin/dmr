@@ -508,7 +508,9 @@
     const why = town.duel ? "You're in a duel already." : !town.deck_ready ? "Your equipped deck isn't ready." : "";
     const relation = person.relation || {};
     const held = (town.gifts || []).filter((item) => item.have > 0);
-    const noGift = relation.gifted ? "You've given them something today." : !held.length ? "Buy gifts at the card shop." : "";
+    // A staff token isn't limited to one gift a day, so it stays available after the day's gift.
+    const hasToken = held.some((item) => item.staff);
+    const noGift = relation.gifted && !hasToken ? "You've given them something today." : !held.length ? "Buy gifts at the card shop." : "";
     const q = person.quests || {};
     const list = [
       // Quests first: they're what's new.
@@ -529,6 +531,10 @@
     if (stake) {
       const short = town.money < stake ? `You have ${town.money} coins.` : "";
       list.push([`High-stakes duel (${stake} coins)`, () => duel(true), { disabled: Boolean(why || short), title: why || short }]);
+    }
+    if (town.staff && town.test_mode) {  // staff testing: a rank at once, no time spent
+      const top = relation.rank + 1 >= relation.ranks;
+      list.push(["⬆ Raise a rank (staff)", raiseLevel, { disabled: top, title: top ? "Already at the top rank." : "Testing: a rank at once." }]);
     }
     list.push(["Leave", leave, { quiet: true }]);
     options(list);
@@ -678,6 +684,14 @@
   async function give(item) {
     menu.replaceChildren();
     const data = await post(root.dataset.giveUrl, { cpu: talking.id, gift: item.key });
+    if (data && talking) play(data.talk);
+    else if (talking) choices();
+  }
+
+  // Staff testing: the same playing-out as a gift that raised them (weiss.world.level_up).
+  async function raiseLevel() {
+    menu.replaceChildren();
+    const data = await post(root.dataset.levelUrl, { cpu: talking.id });
     if (data && talking) play(data.talk);
     else if (talking) choices();
   }

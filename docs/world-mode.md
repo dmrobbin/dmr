@@ -431,9 +431,20 @@ on points alone, as before. World mode stays staff-only until the quests are in.
   - `world_pack/build.py` takes `quests=` per CPU. The export writes them, and `reference.md` documents them.
   - The `new-cpu` skill's STYLE.md says how to write them.
 
+### Written so far
+
+- **Pilot (six CPUs, each with a Friend and a Best friend gate quest):** Aang and Azula (`01_avatar_gurren.py`),
+  Denji and Power (`03_chainsaw_titan_killlakill.py`), Chisato and Takina (`05_overlord_sao_more.py`). Two pairs lock
+  each other: Aang's "reach" ending closes Azula's "Heir of Fire", and her "crown" closes his "Avatar State";
+  Takina's "mission" closes Chisato's "Bring Takina Back", and Chisato's "rescue" closes Takina's "Lycoris, Apart".
+  Each CPU that a quest can close has a `cold` line (the new `estranged` context, in `build.py`).
+- Card serials are taken from each CPU's own finalized deck. The dev database holds only a few hundred cards, so the
+  pack check ran offline and didn't confirm them; the server's import checks them against the real card table.
+- Not yet played in the browser.
+
 ### Not done
 
-- The quests themselves.
+- The quests for the other 69 CPUs.
 - A `visit` objective's scene is skipped if another scene is already waiting to be watched when the player arrives.
 - Editing a quest that saves have started changes it under them. The editor warns, but nothing migrates their place.
 
@@ -471,6 +482,18 @@ Time is the player's budget. Where to go and whom to see should be a choice.
   - Built-in lines cover a stranger, a friend and a close friend. An estranged CPU is cold.
   - All 75 CPUs have their own: three of each in `world_pack/src` (`hello` and `bye`: a stranger's, a friend's
     (rank 2) and a close friend's (rank 4)), built into the packs. Re-import the six packs to put them live.
+
+## Staff testing: raising a rank — built
+
+Checking a quest or a rank-up scene used to mean playing for days. Two quick routes, both staff only:
+
+- **The talk box's "Raise a rank (staff)" button** (test mode on): takes the person here up one rank at once, by the
+  points that rank needs. No time is spent and the daily talk and gift limits don't apply. It plays what a rank reached
+  by points plays (the rank-up line or scene, and that rank's rewards, once). A rank that a gate quest holds back stays
+  put, and the button says which quest it waits on.
+- **The staff token** (a `GiftItem`, migration 0058): 0 coins, sold at the card shop to staff only (players never see
+  it, and rank rewards never give it). Giving it does the same as the button, without the day's gift limit or any time.
+  It's bought at the shop as any gift is, so staff use the same flow to test.
 
 ## Testing
 

@@ -1,5 +1,57 @@
 """World mode cast: Chainsaw Man, Attack on Titan and Kill la Kill."""
 
+# Quests: Denji and Power. No endings lock anything here.
+DENJI_QUESTS = [
+    {"key": "denji-first-date", "title": "A Date, Maybe", "gates": 2,
+     "about": "Denji wants a date, and he needs a little help with the basics.",
+     "offer": ["them: Hey, {player}! I'm gonna get a date. A real one, with a girl!",
+               "them (dismayed): Power says I'm hopeless. Maybe she's right.",
+               "them (pleased): You're the expert, right? Teach me something!"],
+     "stages": [
+         {"text": "Bring Denji a snack for courage", "objectives": [{"do": "give_gift", "gift": "melon-bread", "to": "Denji"}]},
+         {"text": "Win a duel with Devil Hunter, Denji in your deck, against Power", "objectives": [{"do": "win_with", "card": "CSM/S96-TE13", "against": ["Power"]}]},
+         {"text": "Tell Denji how it went", "objectives": [{"do": "talk", "to": "Denji", "script": ["them (pleased): Okay, I'm ready! You're coming with me, right?", "player (smile): I'll be there."]}]},
+     ],
+     "endings": [{"key": "date", "title": "Help him get ready", "about": "Denji heads off on his date, grinning. He has no idea what he's doing.",
+                  "rewards": [{"coins": 300}, {"gift": "bouquet"}]}]},
+    {"key": "denji-contract", "title": "The Contract", "gates": 5,
+     "about": "Denji is tangled up in a devil's contract, and the price is coming due. He wants a friend with him when it does.",
+     "offer": ["them: I've got a contract with a devil. Don't ask. It's complicated.",
+               "them (dismayed): I just don't want to be alone when it's time to pay up."],
+     "stages": [
+         {"text": "Beat Power in a duel", "objectives": [{"do": "defeat", "cpus": ["Power"]}]},
+         {"text": "Play Devil Hunter Feared by Devils with Blood-Soaked Declaration of War", "objectives": [{"do": "combo", "card": "CSM/S96-E003", "climax": "CSM/S96-E025", "count": 2}]},
+         {"text": "Talk Denji through it", "objectives": [{"do": "talk", "to": "Denji", "script": ["them: Thanks for hanging out. Seriously.", "them (pleased): You're not so bad, you know."]}]},
+     ],
+     "endings": [{"key": "sealed", "title": "Stand by him", "about": "The contract is still there, but Denji has a friend standing with him now.",
+                  "rewards": [{"coins": 1000}, {"pack": "lucky_pack"}, {"card": "CSM/S96-E003", "copies": 2}]}]},
+]
+
+POWER_QUESTS = [
+    {"key": "power-battle-of-wits", "title": "Battle of Wits", "gates": 2,
+     "about": "Power insists nobody is smarter than her, and she won't waste time on anyone who can't prove otherwise.",
+     "offer": ["them: GROVEL, HUMAN! ...Hm. Wait. You're the one who keeps coming back, aren't you?",
+               "them (pleased): Prove you're worth my time. Show me you have a card worthy of the great Power."],
+     "stages": [
+         {"text": "Beat Denji in a duel", "objectives": [{"do": "defeat", "cpus": ["Denji"]}]},
+         {"text": "Have Blood Fiend, Power", "objectives": [{"do": "have_card", "card": "CSM/S96-E001"}]},
+         {"text": "Report to Power", "objectives": [{"do": "talk", "to": "Power", "script": ["them (pleased): Hah! Your brain isn't totally useless.", "them: Don't get used to it, human."]}]},
+     ],
+     "endings": [{"key": "respect", "title": "Earn her grudging respect", "about": "Power admits, in her own way, that you're clever. She'll never say it twice.",
+                  "rewards": [{"coins": 300}, {"gift": "energy-drink"}]}]},
+    {"key": "power-fiend-life", "title": "A Fiend's Everyday Life", "gates": 5,
+     "about": "Power's life as a blood fiend is harder than she lets on. She'll only tell someone she trusts.",
+     "offer": ["them (dismayed): ...Don't look at me like that. I have a life, too.",
+               "them: I'll show you. But not in front of the others."],
+     "stages": [
+         {"text": "Play Battle of Wits, Power with Fiend's Everyday Life", "objectives": [{"do": "combo", "card": "CSM/S96-E016", "climax": "CSM/S96-E026", "win": True}]},
+         {"text": "Win a Yellow deck duel against Denji", "objectives": [{"do": "win_deck", "colors": ["Yellow"], "against": ["Denji"]}]},
+         {"text": "Listen to Power", "objectives": [{"do": "talk", "to": "Power", "script": ["them (dismayed): I used to be lonely, you know. Before I met the Devil Hunter.", "them (pleased): Thanks for listening. Don't tell anyone."]}]},
+     ],
+     "endings": [{"key": "told", "title": "Keep her secret", "about": "Power trusts you with it. She's still Power, but she's less alone now.",
+                  "rewards": [{"coins": 1000}, {"pack": "color_pack"}, {"card": "CSM/S96-E001", "copies": 2}]}]},
+]
+
 CAST = [
     cpu("Aki Hayakawa", "aloof",
         haunts=[("rooftop", "wk", "23", 55), ("cafe", "we", "01", 45), ("arena", "135", "1", 35)],
@@ -33,7 +85,7 @@ CAST = [
               "choice", "- I'm not losing you, Aki.", "- Let's make good memories.",
               "me (pleased): Best friend. Yeah. I'd like that to be the last thing I think about. A long time from now."]),
 
-    cpu("Denji", "warm",
+    cpu("Denji", "warm", quests=DENJI_QUESTS,
         haunts=[("plaza", "wk", "12", 55), ("cafe", "we", "12", 50), ("school", "024", "0", 30), ("alley", "135", "3", 30)],
         tastes=(["food"], ["sweet", "game"], ["book"]),
         lines={
@@ -97,7 +149,7 @@ CAST = [
               "choice", "- That's what friends are.", "- You don't have to control me.",
               "me (pleased): Best friend. An equal. ...How strange. How nice."]),
 
-    cpu("Power", "neutral",
+    cpu("Power", "neutral", quests=POWER_QUESTS,
         haunts=[("plaza", "wk", "12", 55), ("alley", "all", "3", 35), ("cafe", "we", "01", 40)],
         tastes=(["food"], ["sweet", "game"], ["calm"]),
         lines={
