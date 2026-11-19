@@ -11,29 +11,38 @@
        data-duel-url="{% url 'weiss:world_duel' save.slot %}" data-buy-card-url="{% url 'weiss:world_buy_card' save.slot %}" data-request-set-url="{% url 'weiss:world_request_set' save.slot %}"
        data-buy-gift-url="{% url 'weiss:world_buy_gift' save.slot %}" data-talk-url="{% url 'weiss:world_talk' save.slot %}"
        data-answer-url="{% url 'weiss:world_answer' save.slot %}" data-give-url="{% url 'weiss:world_give' save.slot %}" data-level-url="{% url 'weiss:world_level' save.slot %}" data-decks-url="{% url 'weiss:world_save' save.slot %}#decks"
-       data-quest-url="{% url 'weiss:world_quest' save.slot %}" data-test-mode-url="{% url 'weiss:world_test_mode' save.slot %}"
+       data-quest-url="{% url 'weiss:world_quest' save.slot %}" data-jump-url="{% url 'weiss:world_jump' save.slot %}" data-test-mode-url="{% url 'weiss:world_test_mode' save.slot %}"
        data-player="{{ request.user.username }}">
     {% csrf_token %}
     <div class="town-bar">
       <p class="town-where"><strong data-place-name>{{ town.place.name }}</strong>
-        <span class="muted" data-when>Day {{ town.day }} · {{ town.weekday }} {{ town.time_name|lower }}</span></p>
+        <span class="muted" data-when>{{ town.date }} · {{ town.time_name|lower }}</span></p>
       <p class="town-coins" data-coins>{{ town.money }} coins</p>
       <div class="town-actions">
         <a class="button-small secondary town-quests" href="{% url 'weiss:world_quests' save.slot %}" data-quests>Quests<span data-quests-count></span></a>
+        <a class="button-small secondary" href="{% url 'weiss:world_events' save.slot %}">This week</a>
         <button type="button" class="button-small" data-open-shop aria-expanded="false" aria-controls="town-shop" hidden>Shop counter</button>
         <button type="button" class="button-small secondary" data-open-map aria-expanded="false" aria-controls="town-map"{% if town.engaged %} hidden{% endif %}>Map</button>
         <button type="button" class="button-small" data-wait{% if not town.can_wait %} hidden{% endif %}>Pass time: {{ town.next_time|lower }}</button>
         {% if town.staff %}
           {# Staff testing (world.test_mode): Wait any time and go anywhere; off, staff play by the real rules. #}
           <button type="button" class="button-small secondary town-staff" data-staff-wait{% if not town.test_mode %} hidden{% endif %}>Wait (staff)</button>
+          <span class="town-staff town-jump" data-jump{% if not town.test_mode %} hidden{% endif %}>
+            <label>Jump to <select data-jump-day>
+              {% for day in weekdays %}<option value="{{ forloop.counter0 }}">{{ day }}</option>{% endfor %}
+            </select></label>
+            <button type="button" class="button-small secondary" data-jump-go>Go</button>
+          </span>
           <button type="button" class="button-small secondary town-staff" data-test-mode aria-pressed="{% if town.test_mode %}true{% else %}false{% endif %}"
                   title="Staff only: Wait any time and travel freely, for testing">{% if town.test_mode %}Test mode: on{% else %}Test mode{% endif %}</button>
         {% else %}
           <button type="button" data-staff-wait hidden></button><button type="button" data-test-mode hidden></button>
+          <span data-jump hidden><select data-jump-day></select><button type="button" data-jump-go></button></span>
         {% endif %}
       </div>
     </div>
     <p class="small town-notice" data-duel-banner hidden></p>
+    <p class="small town-notice town-events" data-events hidden></p>
     <div class="small town-notice town-result" data-result hidden role="status">
       <p><span data-result-text></span> <span class="town-result-points" data-result-points></span></p>
       <p class="town-result-line" data-result-line hidden></p>
@@ -130,7 +139,7 @@
         <span class="town-passage-orb" aria-hidden="true"></span>
         <div class="town-passage-words" role="status">
           <p class="town-passage-note" data-passage-note>{% if result.before %}After your duel with {{ result.cpu }}{% endif %}</p>
-          <p class="town-passage-when" data-passage-when>{% if result.before %}Day {{ result.before.day }} · {{ result.before.label }}{% endif %}</p>
+          <p class="town-passage-when" data-passage-when>{% if result.before %}{{ result.before.label }}{% endif %}</p>
         </div>
         <p class="town-passage-skip small" aria-hidden="true">Click to skip</p>
       </div>

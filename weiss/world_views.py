@@ -24,6 +24,8 @@ from django.utils.timesince import timesince
 from django.views.decorators.http import require_POST
 
 from . import buffs, challenge, packs, quests, scenes, world
+from . import world_calendar
+from . import world_events as events
 from .cpu_views import MAX_LOADOUT, MAX_START_PACKS, back_to, staff_required
 from .lists import CLIMAX_COUNT, COPY_LIMIT, DECK_GROUPS, DECK_SIZE, unlimited
 from .models import CardList, CpuProfile, CpuSchedule, Scene, WorldPlace, WorldSave, WorldSettings
@@ -345,7 +347,8 @@ def world_town(request, slot):
     save, away = save_or_home(request, slot)
     if away:
         return away
-    return render(request, "weiss/world_town.html", {"save": save, "town": world.town(save), "result": world.duel_result(save)})
+    return render(request, "weiss/world_town.html", {"save": save, "town": world.town(save), "result": world.duel_result(save),
+                                                     "weekdays": world_calendar.DAYS})
 
 
 @staff_required
@@ -486,6 +489,75 @@ def world_quests(request, slot):
                                                        "tabs": [("active", "Under way", len(found["active"]) + len(found["offered"])),
                                                                 ("done", "Finished", len(found["done"])),
                                                                 ("failed", "Closed", len(found["failed"]))]})
+
+
+@staff_required
+def world_events(request, slot):
+    """The notice board: the week's calendar (weiss.world_events), what's on today, and the weekly tournament (entry,
+    and the bracket so far)."""
+    save, away = save_or_home(request, slot)
+    if away:
+        return away
+    return render(request, "weiss/world_events.html", {
+        "save": save, "week": events.week(save), "sales": events.sales_now(save), "tournament": events.board(save),
+        "notices": quests.board(save),
+        "date": world_calendar.full_label(save.turn), "season": world_calendar.season_of(save.turn),
+    })
+
+
+@staff_required
+@require_POST
+def world_event_enter(request, slot):
+    """Enter this week's tournament (at its place, on Saturday or first thing Sunday): the fee's taken."""
+    save, away = save_or_home(request, slot)
+    if away:
+        return away
+    try:
+        with transaction.atomic():
+            save = WorldSave.objects.select_for_update().get(pk=save.pk)
+            events.enter(save)
+    except ValueError as error:
+        messages.error(request, str(error))
+    else:
+        messages.success(request, "You're in. Round 1 is Sunday morning, here at the arena. Your bracket's below.")
+    return redirect("weiss:world_events", slot=slot)
+
+
+@staff_required
+@require_POST
+def world_board(request, slot):
+    """The notice board's quests (weiss.quests.board): take one, or claim one that's done."""
+    save, away = save_or_home(request, slot)
+    if away:
+        return away
+    key = request.POST.get("quest", "")
+    try:
+        with transaction.atomic():
+            save = WorldSave.objects.select_for_update().get(pk=save.pk)
+            if request.POST.get("act") == "take":
+                quests.accept(save, None, key)
+                said = "Taken. It's in your quest log, and here on the board."
+            else:
+                _, given = quests.choose(save, None, key, request.POST.get("ending", ""), confirmed=True)
+                rewards = [event["reward"] for event in given if event.get("reward")]
+                said = "Claimed" + (f": {', '.join(rewards)}." if rewards else ".")
+            world.changed(save, *world.TALK_FIELDS)
+    except ValueError as error:
+        messages.error(request, str(error))
+    else:
+        messages.success(request, said)
+    return redirect("weiss:world_events", slot=slot)
+
+
+@town_move
+def world_jump(request, save):
+    """Staff testing (test mode): let time pass to the next morning of a weekday."""
+    try:
+        weekday = int(request.POST.get("weekday", ""))
+    except ValueError:
+        raise ValueError("Choose a day to jump to.")
+    world.jump(save, weekday)
+    return f"It's {save.date_label}, morning."
 
 
 @town_move

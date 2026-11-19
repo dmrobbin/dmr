@@ -11,7 +11,7 @@
         <h2>Slot {{ slot }}</h2>
         {% if save %}
           <p class="world-slot-set">{{ save.set_name }}</p>
-          <p class="muted small">Day {{ save.day }} · {{ save.weekday }} {{ save.time_of_day|lower }} · {{ save.money }} coins<br>
+          <p class="muted small">{{ save.full_date }} · {{ save.time_of_day|lower }} · {{ save.money }} coins<br>
             Last played {{ ago }}</p>
           <p class="small">{% if step == "packs" %}Packs to open{% elif step == "deck" %}Deck to build{% else %}Ready for the town{% endif %}</p>
           <a class="button-small" href="{% url 'weiss:world_save' slot %}">Continue</a>

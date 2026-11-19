@@ -16,6 +16,8 @@ from django.db import transaction
 from django.urls import reverse
 
 from . import buffs, challenge, chatter, packs, quests
+from . import world_calendar as calendar
+from . import world_events as events
 from .lists import CLIMAX_COUNT, COPY_LIMIT, DECK_SIZE, climax_problem, is_climax, unlimited, unplayable
 from .models import (Card, CardList, CardListEntry, CpuProfile, CpuSchedule, GameRoom, GiftItem, WorldPlace, WorldSave, WorldSettings,
                      default_ranks)
@@ -339,10 +341,12 @@ def choosing(save):
 def time_passed(save):
     """A new time of day (waited, or a duel's over): a new day clears what was done today, and the player chooses where
     to go next. Visits are checked once they have (travel), so a quest's scene plays where they chose to be."""
+    events.time_passing(save)  # a tournament round not turned up for is a forfeit
     save.turn += 1
     if save.turn % len(WorldSave.TIMES) == 0:
         save.today = {}
     save.flags["choose"] = save.turn
+    quests.expire(save)  # timed quests whose window has closed
 
 
 def anyone_out(save):
@@ -385,7 +389,26 @@ def wait(save, staff=False):
     if not allowed:
         raise ValueError(why)
     time_passed(save)
-    changed(save, "turn", "today", "quests", "flags")
+    changed(save, "turn", "today", "quests", "flags", "events", "money")
+
+
+WEEKDAYS = calendar.DAYS
+
+
+def jump(save, weekday):
+    """Staff testing: let time pass to the next morning of this weekday (0 Monday to 6 Sunday), with everything time
+    passing does on the way (a tournament forfeit, a new day's clearing). Test mode only, and not during a duel."""
+    if not test_mode(save):
+        raise ValueError("Jumping ahead is for staff in test mode.")
+    if live_duel(save):
+        raise ValueError("You're in a duel: finish it first.")
+    if weekday not in range(7):
+        raise ValueError("Choose a day to jump to.")
+    for _ in range(len(WorldSave.TIMES) * 7):
+        time_passed(save)
+        if calendar.weekday_of(save.turn) == weekday and save.turn % len(WorldSave.TIMES) == 0:
+            break
+    changed(save, "turn", "today", "quests", "flags", "events", "money")
 
 
 # ---------------------------------------------------------------- Who's where (see CpuSchedule)
@@ -450,6 +473,10 @@ def whereabouts(save, turn=None):
     away = quests.gone(save)  # sent away for good by a quest's ending: the day's draw keeps their place empty
     found = {cpu_id: rule for cpu_id, rule in cast.items()
              if cpu_id not in away and (not rule.min_rank or rank_of(save, cpu_id) >= rule.min_rank)}
+    for cpu_id, place_key in events.presence(save, turn).items():  # an event puts them somewhere (a tournament round)
+        place = WorldPlace.objects.filter(key=place_key).first()
+        if place and cpu_id not in away:
+            found[cpu_id] = CpuSchedule(cpu_id=cpu_id, place=place, days=[], times=[], weight=0)
     for meeting in save.today.get("meet", []):  # a quest's scene met them here: they stay for this time of day
         place = WorldPlace.objects.filter(key=meeting.get("place")).first() if meeting.get("turn") == turn else None
         for cpu_id in (meeting.get("cpus") or []) if place else []:
@@ -576,6 +603,8 @@ def start_duel(save, cpu_id, high_stakes=False):
     if not found:
         raise ValueError("They aren't here now.")
     cpu, rule = found
+    if high_stakes and events.opponent(save) == cpu.pk:
+        raise ValueError("A tournament round isn't played for stakes.")
     offered = offered_stake(save, cpu.pk)
     fee = (offered or stake_with(save, cpu.pk, rule)) if high_stakes else 0
     if high_stakes and not fee:
@@ -588,9 +617,10 @@ def start_duel(save, cpu_id, high_stakes=False):
     room = GameRoom(host=save.user, host_deck=save.deck, status=GameRoom.Status.PLAYING, world_save=save, world_stake=fee)
     seat_cpu(room, cpu)
     room.save()
+    events.round_started(save, room)  # the player's tournament opponent, at their round's time: it's that round
     quests.duel_started(save, room)
     engage(save)
-    changed(save, "money", "quests", "today")
+    changed(save, "money", "quests", "today", "events")
     return room
 
 
@@ -603,17 +633,24 @@ def game_finished(room, over):
         if not save or (save.flags.get("last_duel") or {}).get("room") == room.pk:
             return
         won = over["winner"] == str(room.host_id)
-        payout, bonus = payouts()
-        first = won and not save.today.get("won")
-        coins = (payout + (bonus if first else 0) + room.world_stake * STAKE_PRIZE) if won else 0
-        save.money += coins
+        cpu = CpuProfile.objects.filter(pk=room.cpu_profile_id).first()
+        event_words, event_rewards = "", []
+        if events.is_round(save, room):
+            # A tournament round: its prize instead of a duel's payout, and only a CPU the player beats gets to know them.
+            coins, event_words, event_rewards = events.finish_round(save, room, won)
+            first = False
+            points = gain(cpu, events.points(events.tournament(save))) if cpu and won else 0
+        else:
+            payout, bonus = payouts()
+            first = won and not save.today.get("won")
+            coins = (payout + (bonus if first else 0) + room.world_stake * STAKE_PRIZE) if won else 0
+            save.money += coins
+            points = gain(cpu, WIN_POINTS if won else LOSS_POINTS) if cpu else 0
         if won:
             save.today["won"] = True
         save.today.setdefault("duelled", []).append(room.cpu_profile_id)
-        cpu = CpuProfile.objects.filter(pk=room.cpu_profile_id).first()
-        points = gain(cpu, WIN_POINTS if won else LOSS_POINTS) if cpu else 0
         before, after = add_points(save, cpu.pk, points) if cpu else (0, 0)
-        rewards = [text for text, _ in reward_ranks(save, cpu, after)] if cpu and after > before else []
+        rewards = event_rewards + ([text for text, _ in reward_ranks(save, cpu, after)] if cpu and after > before else [])
         rank_line, scene = "", ""
         if cpu and after > before:  # what reaching the rank plays: its line in the result, or its scene to watch
             found = chatter.pick(cpu, "rank_up", after)
@@ -625,13 +662,13 @@ def game_finished(room, over):
         save.flags["last_duel"] = {"room": room.pk, "cpu": room.cpu_name, "cpu_id": room.cpu_profile_id, "won": won, "coins": coins,
                                    "first": first, "stake": room.world_stake, "seen": False, "points": points,
                                    "rank_up": rank_names()[after] if after > before else "", "rank_line": rank_line, "scene": scene,
-                                   "rewards": rewards,
+                                   "rewards": rewards, "event": event_words,
                                    # When it started, for the town's time-passing to go from.
-                                   "before": {"time": save.turn % len(WorldSave.TIMES), "label": f"{save.weekday} {save.time_of_day.lower()}",
+                                   "before": {"time": save.turn % len(WorldSave.TIMES), "label": f"{calendar.date_label(save.turn)}, {save.time_of_day.lower()}",
                                               "day": save.day}}
         quests.duel_finished(save, room, won)
         time_passed(save)
-        changed(save, "money", "today", "flags", "turn", "relations", "pool", "gifts", "last_opening", "quests")
+        changed(save, "money", "today", "flags", "turn", "relations", "pool", "gifts", "last_opening", "quests", "events", "rewards")
 
 
 def duel_result(save):
@@ -669,6 +706,9 @@ def shop_stock(save):
     if asked and asked["from"] <= shop_day(save) <= asked["until"]:
         stock = [entry for entry in stock if entry["id"] != asked["id"]]
         stock.insert(1, {"id": asked["id"], "name": asked["name"], "requested": True})
+    featured = events.featured_set(save) if (sale := events.sale(save, "packs")) and sale.settings.get("featured") else None
+    if featured and not any(entry["id"] == featured["id"] for entry in stock):  # a featured-set sale puts it on the shelves
+        stock.insert(2 if len(stock) > 1 and stock[1]["requested"] else 1, {**featured, "requested": False})  # after a requested set
     return stock
 
 
@@ -770,7 +810,7 @@ def shop_cards(save):
     cards = [card for card in Card.objects.filter(expansion_id__in=stocked).order_by("serial_number")
              if packs.rarity_of(card) not in packs.NOT_IN_PACKS and packs.grade_of(packs.rarity_of(card)) >= 1]
     rng = random.Random(f"{save.seed}:{save.turn // 4}:cards")
-    picked = rng.sample(cards, min(SHOP_CARDS, len(cards)))
+    picked = rng.sample(cards, min(SHOP_CARDS + events.extra_cards(save), len(cards)))
     return sorted(picked, key=lambda card: (-packs.grade_of(packs.rarity_of(card)), card.serial_number))
 
 
@@ -784,7 +824,7 @@ def buy_card(save, card_id):
         raise ValueError("The shop doesn't have that card today.")
     if card.pk in save.today.get("bought_cards", []):
         raise ValueError(f"You've bought today's {card.name} already.")
-    price = card_price()
+    price, _ = events.card_cost(save)
     if price > save.money:
         raise ValueError(f"{card.name} costs {price} coins, and you have {save.money}.")
     save.money -= price
@@ -803,7 +843,7 @@ def buy_specialty(save, buff_id, data, rng=random):
     if buff_id not in SHOP_SPECIALS:
         raise ValueError("The shop doesn't sell that.")
     buff = buffs.BUFFS[buff_id]
-    price = specialty_price()
+    price, _ = events.specialty_cost(save)
     if price > save.money:
         raise ValueError(f"A {buff.name.lower()} costs {price} coins, and you have {save.money}.")
     # weiss.buffs builds the pack, from the sets it's told this "run" has: the day's shelves.
@@ -823,9 +863,21 @@ def shop(save):
     stock = shop_stock(save)
     bought = set(save.today.get("bought_cards", []))
     cover = lambda expansion_id: (pk := set_cover(expansion_id)) and reverse("weiss:card_image", args=[pk])
+    specialty, specialty_was = events.specialty_cost(save)
+    card, card_was = events.card_cost(save)
+
+    def priced(entry):
+        """A set on the shelves, with what 1 and 5 packs cost now, and the sale's, if one's on."""
+        one, cheap, sale = events.pack_cost(save, entry["id"], 1)
+        five, _, _ = events.pack_cost(save, entry["id"], 5)
+        return {**entry, "cover": cover(entry["id"]), "price": one, "price_5": five, "was": pack_price() if cheap else None,
+                "sale": sale.name if sale else "", "sale_left": events.sale_left(save, sale) if sale else None}
+
     return {
-        "price": pack_price(), "specialty_price": specialty_price(), "card_price": card_price(),
-        "stock": [{**entry, "cover": cover(entry["id"])} for entry in stock],
+        "price": pack_price(), "specialty_price": specialty, "card_price": card,
+        "specialty_was": specialty_was if specialty != specialty_was else None, "card_was": card_was if card != card_was else None,
+        "sales": events.sales_now(save),
+        "stock": [priced(entry) for entry in stock],
         "specials": [{"key": key, "name": buffs.BUFFS[key].name, "about": buffs.BUFFS[key].description,
                       "asks": buffs.BUFFS[key].pack if buffs.BUFFS[key].pack in ("level", "color") else ""} for key in SHOP_SPECIALS],
         "levels": list(buffs.LEVELS), "colors": list(buffs.COLORS),
@@ -846,7 +898,7 @@ def buy_packs(save, expansion_id, count, rng=random):
         raise ValueError("The shop doesn't have that set today.")
     if not 1 <= count <= 10:
         raise ValueError("Buy 1 to 10 packs at a time.")
-    cost = pack_price() * count
+    cost, cheap, sale = events.pack_cost(save, expansion_id, count)
     if cost > save.money:
         raise ValueError(f"{count} pack{'s' if count != 1 else ''} cost {cost} coins, and you have {save.money}.")
     pool = packs.Pool.for_set(expansion_id)
@@ -857,8 +909,10 @@ def buy_packs(save, expansion_id, count, rng=random):
         for pull in pack:
             buffs.add_to_pool(save, pull.card.pk, 1)
     save.money -= cost
+    if cheap:
+        events.used_sale(save, sale, cheap)
     save.last_opening = {**packs.opening(pool, opened), "set_id": expansion_id, "bought": True}
-    changed(save, "pool", "money", "last_opening")
+    changed(save, "pool", "money", "last_opening", "events")
     return save.last_opening
 
 
@@ -872,7 +926,7 @@ GIFTS_PER_DAY = 1  # gifts to each CPU a day
 GAIN = {"warm": 1.5, "friendly": 1.25, "neutral": 1.0, "aloof": 0.75, "villain": 0.6}  # by temperament: talk, gifts and duels
 MAX_GIFTS = 99  # of each item held
 RESERVED_FLAGS = {"last_duel", "set", "scene", "choose", "test_mode", "request"}
-TALK_FIELDS = ("relations", "today", "flags", "money", "gifts", "pool", "last_opening", "quests")  # what talking can change
+TALK_FIELDS = ("relations", "today", "flags", "money", "gifts", "pool", "last_opening", "quests", "events")  # what talking can change
 
 
 def ranks():
@@ -1209,6 +1263,24 @@ def rank_up(save, cpu, rank):
     return events
 
 
+def talk_line(save, cpu_id, cold, first):
+    """The context a talk plays: a cold CPU says its cold lines; on the tournament's days, its tournament lines;
+    otherwise the day's first greeting or the one after."""
+    if cold:
+        return "estranged"
+    return events.talk_context(save, cpu_id) or ("greet" if first else "again")
+
+
+def duel_intro(save, cpu):
+    """What a CPU says before a duel: its tournament line when the duel is the player's round, else its own."""
+    rank, fill = rank_of(save, cpu.pk), filler(save, cpu)
+    if events.round_label(save, cpu.pk):
+        line = chatter.first_line(cpu, "tournament_duel", rank, fill)
+        if line:
+            return line
+    return chatter.first_line(cpu, "before_duel", rank, fill) or cpu.intro_text
+
+
 def talk(save, cpu_id):
     """Talk to someone here: the day's first talk with them brings points."""
     cpu = someone_here(save, cpu_id)
@@ -1219,11 +1291,11 @@ def talk(save, cpu_id):
     engage(save)
     cold = quests.estranged(save, cpu.pk)  # a choice closed this friendship: they say so (their own lines, or the built-in)
     if rel.get("talked") == save.day:
-        return converse(save, cpu, "estranged" if cold else "again")
+        return converse(save, cpu, talk_line(save, cpu.pk, cold, first=False))
     rel["talked"] = save.day
     world = Talk(save, cpu, "talk")
     gained = world.points(gain(cpu, TALK_POINTS))
-    found = converse(save, cpu, "estranged" if cold else "greet", gained)
+    found = converse(save, cpu, talk_line(save, cpu.pk, cold, first=True), gained)
     if world.ranked_up is not None:
         save.today["talk"]["rank_up"] = world.ranked_up
         if found["talk"]["waiting"] is None or "fight" in found["talk"]["waiting"]:
@@ -1469,6 +1541,7 @@ def town(save):
     duel = live_duel(save)
     found = whereabouts(save)
     people = present(save, here.key, found) if here else []
+    happening = events.at_places(save)
     # Who's where, for the map: each place's people by name, with their circle pictures.
     names = {cpu.pk: cpu for cpu in CpuProfile.objects.filter(pk__in=found).select_related("avatar_card").order_by("name")}
     by_place = {}
@@ -1476,15 +1549,17 @@ def town(save):
         by_place.setdefault(found[cpu.pk].place.key, []).append({"name": cpu.name, "avatar": cpu.avatar})
     return {
         "version": save.version, "day": save.day, "weekday": save.weekday, "time": time, "time_name": save.time_of_day,
+        "date": calendar.date_label(save.turn), "full_date": calendar.full_label(save.turn), "events": events.town_view(save),
         "money": save.money,
         "place": {"key": here.key, "name": here.name, "backdrop": here.backdrop(time), "shop": here.shop} if here else None,
         "places": [{"key": p.key, "name": p.name, "backdrop": p.backdrop(time), "here": here is not None and p.key == here.key,
-                    "who": by_place.get(p.key, [])} for p in known],
+                    "who": by_place.get(p.key, []), "events": happening.get(p.key, [])} for p in known],
         "people": [{"id": cpu.pk, "name": cpu.name, "portraits": cpu_portraits(cpu), "stake": stake_with(save, cpu.pk, rule),
                     **greetings(save, cpu), "talked_now": save.relations.get(str(cpu.pk), {}).get("talked_turn") == save.turn,
-                    "intro": chatter.first_line(cpu, "before_duel", rank_of(save, cpu.pk), filler(save, cpu)) or cpu.intro_text,
+                    "intro": duel_intro(save, cpu),
                     "duelled": cpu.pk in save.today.get("duelled", []), "relation": standing(save, cpu.pk),
-                    "offer": offered_stake(save, cpu.pk), "quests": quests.actions(save, cpu)} for cpu, rule in people],
+                    "offer": offered_stake(save, cpu.pk), "quests": quests.actions(save, cpu),
+                    "tournament": events.round_label(save, cpu.pk)} for cpu, rule in people],
         "quests": {**quests.counts(save), "url": reverse("weiss:world_quests", args=[save.slot])},
         "news": town_news(save),
         "gifts": inventory(save),

@@ -469,6 +469,223 @@
       ]
      },
      {
+      "context": "tournament_spectator",
+      "min_rank": 0,
+      "script": [
+       "them: A tournament. Humans make such a fuss about winning."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 2,
+      "script": [
+       "them: I'm not entering. I'd rather watch the flowers grow."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'm not in it. Win the final, and I'll show you a spell for the trophy."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'm in the bracket. I'll try, though I don't see the point."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: Don't mind me. I'm curious how you fight."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them: We're both in it. Hm. Interesting, a fight worth watching."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Let's see what your magic can do."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You and me in the same bracket. I'd like to remember this match."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 0,
+      "script": [
+       "them: You lost. Humans lose so quickly, don't they?"
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 2,
+      "script": [
+       "them: You're out. Still, you fought well. Himmel would have said so too."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're out. Come see the field with me. It's blooming."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You won. Congratulations. Really, I mean it."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Champion. I'll remember the day you won."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Champion, {player}. I'm glad I was here to see it."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: The round begins. I'll be brief, if you let me."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Show me something worth the trip."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them: Round time. Let's see what humans can do."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Do not hold back. I want to see it."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Our round, {player}. I'd rather not fight you, but I'll try."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Next I'll wander the forest and look for new flowers."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Earlier I talked to a tree. It's a very good listener."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're nothing like Himmel. He'd have made me laugh by now."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're so much like the Demon King. Cold, and all about power."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Tomorrow I'll cast the flower spell. You can watch it bloom."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): This morning I visited an old grave. Himmel's, in a way."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: You're a bit like Himmel. Kind, I think, in your own way."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: There's a trace of the Demon King in you. Hm, I'll be watching."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Tonight I'll sit by the field. Come and keep me company."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Earlier I tried to remember a face. I couldn't, quite."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're like Himmel, {player}. Kind, and someone I'd want to remember."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're nothing like the Demon King, {player}. That's a relief."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Frieren, Friend"
@@ -1145,6 +1362,216 @@
       ]
      },
      {
+      "context": "tournament_spectator",
+      "min_rank": 0,
+      "script": [
+       "them: The tournament isn't for me. I'm here to read."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 2,
+      "script": [
+       "them: I'm not entering. I'll stay in the library, if you don't mind."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'm not in it. Win the final, and I'll write a thank-you note."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'm in the bracket. Please don't take it personally."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'll do my best. I always do."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them: We're both in it. Hm. You're a good mage, I think."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Let's make this match count."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You and me in the same bracket. Win it, and I'll thank you properly."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 0,
+      "script": [
+       "them: You're out. I'm sorry. Thank you for fighting."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 2,
+      "script": [
+       "them: You lost, but you were brave. Thank you, really."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're out. Come to the forest. I'll show you a spell I learned."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You won. Thank you for the fight, and for the win."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Champion. Thank you. I mean it, truly."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Champion, {player}. Thank you for being here. Always."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: It's our round. Please forgive me if I'm too strong."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: I'll try to be gentle."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them: Round time. I'll do my best. Thank you for the match."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Our round, {player}. Thank you for playing with me. I hope you win."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Next I'll practise my spells. The new one is tricky."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Earlier I got a book stuck on my head. Don't laugh."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're nothing like Heiter. He'd have been much more patient."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're so much like a demon. Cruel, and always taking things."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Tomorrow I'll go to the library. Would you like to come?"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): This morning I thanked Frieren for the tea. She didn't notice."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: You're a bit like Heiter. Gentle, if a little unsure."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: There's a bit of demon in your smile. Stop it."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Tonight I'll rest by the forest. Stay, if you're not too busy."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Earlier I remembered Heiter's words. They were kind."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're like Heiter, {player}. Gentle, and I'd trust you with my training."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're nothing like a demon, {player}. Good."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Fern, Friend"
@@ -1817,6 +2244,223 @@
       "min_rank": 5,
       "script": [
        "them (pleased): Best friend! Don't ever leave Kanna alone with the dragons."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 0,
+      "script": [
+       "them: Tournament. I'm not in it. Kanna watches."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 2,
+      "script": [
+       "them: Not entering. Kanna likes the crowd, it's loud."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'm not in it. Win the final, and Kanna will share snacks."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: Kanna's in the bracket. Don't cry if Kanna wins."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: Kanna will try to win. Kanna is tricky."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them: We're both in it. Hm. Kanna likes that."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Let's make a big spark in the arena!"
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You and Kanna in the bracket! Win it, and we'll have a party!"
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 0,
+      "script": [
+       "them: You're out. Kanna is sorry. Here, have a snack."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 2,
+      "script": [
+       "them: You lost. Kanna still thinks you're cool."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're out. Come to the beach with Kanna. It's better than the arena."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You won! Kanna is so happy! Lightning!"
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Champion! Kanna wants to spark the whole arena for you!"
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Champion, {player}! Kanna's best friend wins everything!"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: It's Kanna's round. Don't cry when Kanna sparks!"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: No holding back. Kanna won't either."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Round time! Lightning!"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them: Let's see who's the best prankster!"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Our round, {player}. Kanna would rather share a snack, but a round is a round."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Next Kanna will prank the teacher. Watch."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Earlier Kanna got a whole class to laugh. It was loud."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're nothing like Tohru. She's always cooking, you're not."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're so much like Kobayashi. Always so serious."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Tomorrow Kanna goes to the beach. You can come, if you're quick."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): This morning Kanna ate three lunches. Very good."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: You're a bit like Tohru. Kind, a little. Kanna approves."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: There's a bit of Kobayashi in you. Be less serious."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Tonight Kanna will sleep in the sun. Keep the lightning away."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Earlier Kanna shared a snack with Tohru. She was surprised."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're like Tohru, {player}. Kind, and you share your food. Kanna likes you a lot."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're nothing like Kobayashi, {player}. Kanna's glad."
       ]
      },
      {
@@ -2496,6 +3140,223 @@
       ]
      },
      {
+      "context": "tournament_spectator",
+      "min_rank": 0,
+      "script": [
+       "them: The tournament is a human event. I'm here to watch and cook."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 2,
+      "script": [
+       "them: Not entering. I'll make food for the crowd at the arena, though."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'm not in it. Win the final, and I'll make you a feast."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'm in the bracket. Please don't break the dragon in me, okay?"
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'll win and then we'll have dinner."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them: We're both in it. Hm. Good, I like a worthy match."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Let's make it a fair fight."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You and me in the same bracket! Win it, and I'll make you my best dish."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 0,
+      "script": [
+       "them: You're out. Come home, I'll make you dinner."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 2,
+      "script": [
+       "them: You lost. Dragons don't like losing, but humans are fine."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're out. Come to the beach. I'll make something special."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You won! Miss Kobayashi says congratulations!"
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Champion! I'll cook you a victory dinner, right now!"
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Champion, {player}! You're always welcome at my table."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: It's our round. Don't worry, I'll be careful with my dragon."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Let's have a good fight, human."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Round time! I'll fight with honour."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them: No holding back. That's the dragon way."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Our round, {player}. I'd rather share dinner than fight, but here we are."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Next I'm making dinner. It's a surprise, don't ask."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Earlier I broke a plate. I'm sorry. Please don't tell Kobayashi."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're nothing like Kanna. She'd have eaten the whole dinner by now."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're so much like Lucoa. Always so bossy about my dragon bits."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Tomorrow I'll go to the market. Come and help carry bags!"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): This morning I made breakfast for the whole house. Kanna ate it all."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: You're a bit like Kanna. Playful, sometimes, I think."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: There's a bit of Lucoa in you. Please stop."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Tonight I'll sit on the beach with Kanna. Join us for dessert."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Earlier I talked about my dragon past. It felt good to share."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're like Kanna, {player}. Playful, and always welcome at the table."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're nothing like Lucoa, {player}. I'm glad. She's a lot."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Tohru, Friend"
@@ -3169,6 +4030,223 @@
       "min_rank": 5,
       "script": [
        "them (pleased): ...Best friend. Thank you for the year. It was good."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 0,
+      "script": [
+       "them: ...Tournament. I'm not in it."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 2,
+      "script": [
+       "them: ...Not entering. I'll watch from the back."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): ...I'm not in it. Win the final, okay?"
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: ...I'm in the bracket. I'll try."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: ...Don't expect much from me."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them: ...We're both in it. Okay."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): ...Let's see how it goes."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): ...You and me in the same bracket. I'd like that."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 0,
+      "script": [
+       "them: ...You're out. It happens."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 2,
+      "script": [
+       "them: ...You lost. It's fine. Come sit."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): ...You're out. Come walk the streets with me."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): ...You won. Good."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): ...Champion. I'm glad."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): ...Champion, {player}. Thank you for being here."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: ...It's our round. Okay."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: ...No mercy, I guess."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them: ...Round time."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): ...Let's do this, together."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): ...Our round, {player}. I'd rather not, but I will."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: ...Next I'll walk around the city. Need to clear my head."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: ...Earlier I watched the sunrise. It was just a sunrise."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: ...You're nothing like Yukari. She'd have been louder."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: ...You're so much like Dojima. Always making rules."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: ...Tomorrow I'll go to the library. Quiet there."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: ...This morning I saw Yukari at school. She waved, I think."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: ...You're a bit like Yukari. Brave, I'd guess."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: ...There's a trace of Dojima in you. Please don't."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): ...Tonight I'll go up to the roof. Come, if you want."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): ...Earlier I thought about the choice again. Still thinking."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): ...You're like Yukari, {player}. Brave, and I'm glad you're here."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): ...You're nothing like Dojima, {player}. Thanks."
       ]
      },
      {
@@ -3846,6 +4924,223 @@
       ]
      },
      {
+      "context": "tournament_spectator",
+      "min_rank": 0,
+      "script": [
+       "them: The tournament? I'm not in it, but I'll cheer from the stands!"
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 2,
+      "script": [
+       "them: Not in the bracket. I'll bring you a drink later!"
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'm not in it! Win the final, and I'll shoot a cheer arrow for you!"
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'm in the bracket! Don't laugh if I miss!"
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'll try my best! Okay, maybe my second best."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them: We're both in it! This is so exciting!"
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Let's make the arena look awesome!"
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You and me in the bracket, {player}! Win it, and we'll celebrate at the beach!"
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 0,
+      "script": [
+       "them: You're out? Aw. Come on, let's go to the beach."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 2,
+      "script": [
+       "them: You lost, but you looked so cool doing it!"
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're out. Come shoot cans with me, it'll cheer you up!"
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You won! Yay! I'm so happy!"
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Champion! Dad would have loved to see that!"
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Champion, {player}! My best archery partner, the champion!"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: It's our round! Don't be scared, I won't shoot too hard!"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Let's do this! My bow is ready!"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Round time! Show me your aim!"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them: No holding back, okay?"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Our round, {player}! I'd rather practise with you than beat you!"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Next I'll go to the archery range. My form's been off."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Earlier I missed the target three times. Terrible."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're nothing like Mitsuru. She'd have given me a lecture by now."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're so much like Akihiko. Always lifting weights and not listening."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Tomorrow I'll visit the beach. Come, I'll buy you lunch."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): This morning I helped with the school newsletter. It was boring."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: You're a bit like Mitsuru. Organised, I'd guess, and a bit proud."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: There's a bit of Akihiko in you. Please, I'm trying to shoot!"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Tonight I'll look at Dad's video again. Stay, if you want."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Earlier I talked with Mitsuru about the club. She's so intense."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're like Mitsuru, {player}. Strong, and a real leader. I'm glad."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're nothing like Akihiko, {player}. Thank goodness."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Yukari, Friend"
@@ -4517,6 +5812,223 @@
       "min_rank": 5,
       "script": [
        "them (pleased): Best friend. Stay safe, and keep the secret with me."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 0,
+      "script": [
+       "them: The tournament is a public event. Good cover, for someone."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 2,
+      "script": [
+       "them: Not entering. I'll watch the crowd for threats."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'm not in it. Win the final. You'll make a good story for my report."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'm in the bracket. Play it straight. Don't reveal anything."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: Keep your face neutral. Everyone's watching."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them: We're both in it. Hm. Acceptable cover."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Let's make the match look natural."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You and me in the same bracket. Win it, and we'll have dinner after as a family."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 0,
+      "script": [
+       "them: You're out. The mission is still on. Come to the café."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 2,
+      "script": [
+       "them: You lost. It's fine. Nobody noticed your cover slip."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're out. Come to the plaza, we'll pretend it's a family outing."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Champion. That's a strong cover, and a stronger result."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): You won. My family is proud."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Champion, {player}. My partner, my family, my champion."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: It's our round. Play it straight, please."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Don't give anything away."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them: Round time. Show me your best poker face."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Let's make it look good."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Our round, {player}. I'd rather keep the family together, but the bracket decides."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Next I'll review the file. Keep your questions short."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Earlier I shook a man's hand. A useful contact, I think."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're nothing like Yor. She'd have taken my cover story apart."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're so much like Donovan. Always lying to everyone."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Tomorrow I'll need you at the café. Be a good cousin."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): This morning I made a fake breakfast for Anya. She ate it all."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: You're a bit like Yor. Efficient, but with more heart."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: There's a trace of Donovan in your story. I don't like it."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Tonight I'll check the family's routine. Join me for dinner."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Earlier I thought about what makes a family real. It's complicated."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're like Yor, {player}. Dependable, and you'd never sell out a friend."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're nothing like Donovan, {player}. Good. I trust you."
       ]
      },
      {
@@ -5194,6 +6706,223 @@
       ]
      },
      {
+      "context": "tournament_spectator",
+      "min_rank": 0,
+      "script": [
+       "them: Oh! The tournament? I'm not in it, but I'll cheer!"
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 2,
+      "script": [
+       "them: Not entering. Too many people. I'll watch from here."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'm not in it. Win the final, and I'll make you a lovely dinner!"
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'm in the bracket! I'm a bit nervous, sorry!"
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: Please don't be angry if I win!"
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them: We're both in it! Oh, this is so exciting!"
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Let's make a good match, please!"
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You and me in the bracket! Win it, and I'll cook for you!"
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 0,
+      "script": [
+       "them: You're out? Oh, I'm sorry! Come and sit, please."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 2,
+      "script": [
+       "them: You lost, but you were lovely to watch!"
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're out. Come to the plaza. We'll have a nice walk, just like normal people."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You won! Oh, you're so amazing!"
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Champion! I'm so proud of you!"
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Champion, {player}! I'll make you the best dinner ever, I promise!"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: It's our round! Please, go easy on me!"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: I'll try my best!"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Round time! Let's have a nice match!"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them: I'm not going to be too strong, I promise."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Our round, {player}! I'd rather have a nice walk with you than duel, but let's do it!"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Next I'll go to the market. Need to buy the good bread."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Earlier I cut a whole carrot the wrong way. Don't look at me."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're nothing like Twilight. He'd have given me a lecture."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're so much like Anya! Always asking questions I can't answer!"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Tomorrow I'll cook breakfast for Anya. You're invited, please!"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): This morning I forgot my keys. Silly, I know."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: You're a bit like Twilight. Calm, sometimes, I think."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: There's a bit of Anya in your smile. Please don't do that."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Tonight I'll practise my small talk. Come help me, please?"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Earlier I thought about the job. I hope I can keep it quiet."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're like Twilight, {player}. Calm, and I'd feel safe with you around."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're nothing like Anya, {player}. Good, I'd need a break from her!"
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Yor Forger, Friend"
@@ -5865,6 +7594,223 @@
       "min_rank": 5,
       "script": [
        "them (pleased): Best friend. We'll find out who we are together, right?"
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 0,
+      "script": [
+       "them: The tournament. A good drill for the crowd, I suppose."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 2,
+      "script": [
+       "them: Not entering. I'll watch the sea instead."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'm not in it. Win the final. I'll be on the beach after."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'm in the bracket. Drill like it's real."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: No surrender, even in a friendly match."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them: We're both in it. Good. A real challenge."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Let's see whose drill is sharper."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You and me in the same bracket. Win it, and we'll look at the sea together."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 0,
+      "script": [
+       "them: You're out. Good drill. Now, what's next?"
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 2,
+      "script": [
+       "them: You lost. A sea of lessons. Learn from them."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're out. Come to the beach. The waves are calm today."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Champion. The fleet salutes you."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): You won. Good. I'm glad."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Champion, {player}. My closest friend, and a true champion."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: It's our round. Drill like it's real."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: No surrender. Not even in friendship."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them: Round time. Show me what you've got."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Let's keep it steady, both of us."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Our round, {player}. I don't know who I'd be without a war. But I'll still fight."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Next I'll run the drill ground at dawn. No excuses."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Earlier I trained until my arms ached. It was necessary."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're nothing like Akagi. She'd have been far more reckless."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're so much like Kaga. Always bristling at everyone."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Tomorrow I'll look out at the sea. You can join me, if you like."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): This morning I watched the waves. They were calm, for once."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: You're a bit like Akagi. Steady, though less proud."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: There's a bit of Kaga in you. Please don't."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Tonight I'll stand on the beach. Stay until the stars are out."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Earlier I thought about the fleet. They're waiting for me."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're like Akagi, {player}, but warmer. A fine carrier of a friend."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're nothing like Kaga, {player}. Good, I like you calm."
       ]
      },
      {
@@ -6542,6 +8488,202 @@
       ]
      },
      {
+      "context": "tournament_spectator",
+      "min_rank": 0,
+      "script": [
+       "them: The tournament. Hm. Not my kind of thing."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 2,
+      "script": [
+       "them: Not entering. Too much spotlight for me."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'm not in it. Win the final. I'll buy the curry."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'm in the bracket. Don't expect me to show my hand."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them: We're both in it. Interesting. Let's see how it goes."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You and me in the same bracket. Win it, and we'll celebrate at Leblanc."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 0,
+      "script": [
+       "them: You're out. It's a setback. Come to the café."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 2,
+      "script": [
+       "them: You lost. Get your head back in the game."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're out. Come to the alley. Let's talk about the next target."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Champion. Good job. You've earned the curry."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): You won. Ha, I didn't expect it. Good."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Champion, {player}. The team's best, and mine."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: It's our round. Don't hold back, or I'll get suspicious."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Let's see whose plan works."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them: Round time. Show me your best."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Our round, {player}. I'd rather be on your side, but the bracket's the bracket."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Next I'll make a fresh pot of coffee. Don't touch it."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Earlier I dropped a mug. Morgana laughed at me."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're nothing like Ryuji. He'd have shouted the place down by now."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're so much like Akechi. Always hiding the real plan."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Tomorrow I'll plan the next heist. Come, I need a second opinion."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): This morning I cooked curry for everyone. They ate it all."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: You're a bit like Ryuji. Loud sometimes, and loyal, I'd guess."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: There's a trace of Akechi in you. Please be straight with me."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Tonight I'll close the café late. Stay and help me clean up."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Earlier I talked to Akechi. He's trouble, but I'm watching."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're like Ryuji, {player}. Brave, and the team needs you."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're nothing like Akechi, {player}. Good. I'd rather trust you."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Joker (P5), Friend"
@@ -7211,6 +9353,223 @@
       "min_rank": 5,
       "script": [
        "them (pleased): Best friend! Let's make the next concert the loudest ever!"
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 0,
+      "script": [
+       "them: A tournament! I'm not in it, but I'll sing for the crowd!"
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 2,
+      "script": [
+       "them: Not entering. Being dead has its limits, you know."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'm not in it! Win the final, and I'll sing a victory song!"
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'm in the bracket! Watch out, I'm louder than the crowd!"
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: Don't be scared if my arm falls off during the match."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them: We're both in it! Hiii! This is gonna be fun!"
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Let's make the arena sing!"
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You and me in the same bracket! Win it, and we'll sing together!"
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 0,
+      "script": [
+       "them: Aww, you're out? Ollie will cry zombie tears!"
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 2,
+      "script": [
+       "them: You lost, but you were so cool! Ollie loved it!"
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're out. Come to the shrine. The lanterns will cheer you up!"
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You won! Ollie is so happy she's crying again!"
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Champion! Ollie's best friend, the champion!"
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Champion, {player}! Ollie's favourite living person!"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: It's our round! Ollie's ready, watch out!"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Don't be scared if I'm too loud!"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Round time! Let's rock!"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them: No holding back! Ollie loves a good fight!"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Our round, {player}! I'd rather sing with you than fight, but Ollie's ready!"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Next I'll practise the new song. Loudly, obviously."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Earlier I lost my arm again. It's back now."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're nothing like Chloe. She's way more chaotic than you."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're so much like La+ Darknesss. Too much of a show."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Tomorrow I'll take a walk in the plaza. You can come, if you're brave."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): This morning I tried to eat a sandwich. It didn't go well."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: You're a bit like Chloe. Playful, when you're not scared."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: There's a trace of La+ in you. Hm, a bit too smug."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Tonight I'll sit at the shrine. Come and listen to the lanterns."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Earlier I talked about being dead. It was fine, I think."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're like Chloe, {player}! Hiii! We'd make a great duo!"
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're nothing like La+, {player}! Ollie likes you more for it!"
       ]
      },
      {
@@ -7885,6 +10244,216 @@
       "min_rank": 5,
       "script": [
        "them (pleased): Best friend. Promise you'll never stop seeing me."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 0,
+      "script": [
+       "them: The tournament. I'm not in it. People can barely see me here, anyway."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 2,
+      "script": [
+       "them: Not entering. I'll sit at the back where nobody notices."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'm not in it. Win the final, and I'll make sure you see me in the crowd."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'm in the bracket. Can you see me, playing?"
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: Please say my name if I start fading."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them: We're both in it. Hm. Good, someone to notice me."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Let's make the match count."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You and me in the same bracket. Win it, and say my name in front of everyone."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 0,
+      "script": [
+       "them: You're out. Keep your eyes on the arena. I'm still here."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 2,
+      "script": [
+       "them: You lost. You can still see me, that's what matters."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're out. Come to the beach. I'll be easier to see there."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You won. I'm glad you could see me the whole time."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Champion. Say my name, please. I'd like to be seen."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Champion, {player}. Thank you for keeping me here."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: It's our round. Can you still see me?"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Don't lose sight of me, please."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them: Round time. Look at me while you fight."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Our round, {player}. I'd rather you didn't forget me, even if you win."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Next I'll read in the library. It's quiet there."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Earlier I sat next to a stranger. They didn't see me."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're nothing like Kaede. She'd have dragged me outside by now."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're so much like Sakuta. Always teasing me."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Tomorrow I'll walk on the beach. Come and see me clearly."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): This morning I cooked dinner for the family. Only I was there."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: You're a bit like Kaede. Caring, but quieter, I think."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: There's a trace of Sakuta in you. Stop it."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Tonight I'll sit at the window. Stay, if you can see me."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Earlier I thought about Kaede. She's so worried about me."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're like Kaede, {player}. Caring, and you never make me feel invisible."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're nothing like Sakuta, {player}. Good, you're honest."
       ]
      },
      {
@@ -8563,6 +11132,223 @@
       "min_rank": 5,
       "script": [
        "them (pleased): Best friend. Let's keep playing forever, together."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 0,
+      "script": [
+       "them: A tournament? Lame. I'll watch from the rooftop."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 2,
+      "script": [
+       "them: Not entering. I'm bored of tournaments, honestly."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'm not in it. Win the final, and I'll play a victory song."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'm in the bracket. Don't cry, mortal."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'll float through this one."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them: We're both in it. Hm. Good. Let's make it a show."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Let's see who plays the better riff."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You and me in the same bracket. Win it, and I'll sing you a song after."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 0,
+      "script": [
+       "them: You're out, mortal. Come sit on the rooftop."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 2,
+      "script": [
+       "them: You lost. Hey, it's just a game. Stop worrying."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're out. Come to the forest. I'll play by the river."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Champion! Okay, that's a pretty cool win, mortal."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): You won. Pull up a cloud, I'll play your song."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Champion, {player}! My favourite mortal, the champion!"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: It's our round. Don't cry, okay?"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Let's float through this one."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them: Round time. Let's see if you can keep up."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Don't hold back, or it's no fun."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Our round, {player}. I'd rather play a song with you than beat you."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Next I'm floating above the forest. Don't look up."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Earlier I scared a hiker. He ran straight into a tree."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're nothing like Finn. He'd have been way more annoying."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're so much like the Ice King. Obsessed with the wrong things."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Tomorrow I'll play the bass by the river. Come listen."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): This morning I ate a whole pizza. Don't judge me."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: You're a bit like Finn. Brave, but you're less shouty."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: There's a trace of the Ice King in you. Please, not that."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Tonight I'll go up to the roof and play the sad one. Stay for it."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Earlier I sang the Simon song. I didn't finish it, again."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're like Finn, {player}. Brave, and fun to hang out with."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're nothing like the Ice King, {player}. Thank goodness."
       ]
      },
      {
@@ -9245,6 +12031,223 @@
       ]
      },
      {
+      "context": "tournament_spectator",
+      "min_rank": 0,
+      "script": [
+       "them: The tournament. I'm not in it. I prefer the shadows."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 2,
+      "script": [
+       "them: Not entering. I'll watch from the dark corner."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'm not in it. Win the final. I'll be watching from the shadows."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'm in the bracket. Don't underestimate the dark."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'll stay in the shadows until the match."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them: We're both in it. Interesting. Keep your guard up."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Let's see what you can do in the light."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You and me in the same bracket. Win it, and walk the rooftop with me."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 0,
+      "script": [
+       "them: You're out. The shadows will welcome you back."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 2,
+      "script": [
+       "them: You lost. The light always wins, sometimes. It's fine."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're out. Come to the alley. The night is quiet."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Champion. Good. You've chosen the light, and I respect that."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): You won. The shadows bow to you."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Champion, {player}. A friend of the shadows, and of the light."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: It's our round. Don't turn away from the dark."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Keep your guard up. I'll be in the shadows."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them: Round time. Show me your strength."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): I won't hold back. The shadows never do."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Our round, {player}. I'd rather walk the shadows with you than fight you."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Next I'll watch the city from the rooftop. The night is calm."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Earlier I stared at the stars. I remembered a name."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're nothing like Maria. She believed in everyone, even me."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're so much like Gero. Using people for a plan."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Tomorrow I'll go to the library. Come if you want to read."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): This morning I sparred with a stray dog. It won."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: You're a bit like Maria. Hopeful, maybe, when you don't hide it."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: There's a trace of Gero in you. I'm watching you."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Tonight I'll stay in the alley. Stay, if you're not afraid of the dark."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Earlier I thought about Maria. The promise still matters."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're like Maria, {player}. You believe in people, and in me."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're nothing like Gero, {player}. Thank you."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Shadow, Friend"
@@ -9922,6 +12925,223 @@
       ]
      },
      {
+      "context": "tournament_spectator",
+      "min_rank": 0,
+      "script": [
+       "them: Tournament? Hmph. I don't need a bracket to prove myself."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 2,
+      "script": [
+       "them: Not in it. Too many people trying to look tough."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'm not in it. Win the final. Show 'em how it's done."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'm in the bracket. Don't expect me to take it easy."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: Let's see what you've got, rookie."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them: We're both in it. Hmph. Fine. Let's go."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Don't get eaten alive in the arena."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You and me in the same bracket. Win it, and I'll buy you a drink."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 0,
+      "script": [
+       "them: You're out. Don't sulk. Get back up."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 2,
+      "script": [
+       "them: You lost. Hmph. You fought well, I guess."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're out. Come to the rooftop. I'll tell you about the old days."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Champion. Heh. You earned that one."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): You won. I'd have won it too, but whatever."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Champion, {player}. Don't go gettin' soft on me now."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: It's our round. Don't waste my time."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Let's see if you're worth the fight."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them: Round time. Hit me like you mean it."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Don't go easy. I hate that."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Our round, {player}. Hmph. I'd rather you won. But I'll fight you anyway."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Next I'll train on the rooftop. Don't come up unless you're serious."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Earlier I knocked out a bouncer. He had it coming."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're nothing like Ky. He'd have lectured me before the fight."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're so much like Justice. Cold, and too sure of yourself."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Tomorrow I'll fight at the arena. You can watch, if you're smart."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): This morning I fixed my gear. It's still a mess."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: You're a bit like Ky. Serious, and not bad in a fight."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: There's a trace of Justice in your voice. Don't."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Tonight I'll drink at the cafe. Sit with me, if you're not a bore."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Earlier I thought about the old days. I'm not sure they were better."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're like Ky, {player}. Honest, and a good partner when it counts."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're nothing like Justice, {player}. Good. I'd hate to fight you for that."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Sol Badguy, Friend"
@@ -10593,6 +13813,223 @@
       "min_rank": 5,
       "script": [
        "them (pleased): Best friend. Let's go in together. Always."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 0,
+      "script": [
+       "them: The tournament? I'm not in it. I'm a bit tired from the TV world."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 2,
+      "script": [
+       "them: Not entering. I'll watch and take notes."
+      ]
+     },
+     {
+      "context": "tournament_spectator",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): I'm not in it. Win the final, and I'll cook you a victory dinner."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'm in the bracket. Don't be too hard on me, okay?"
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 0,
+      "script": [
+       "them: I'll do my best. I always do."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them: We're both in it. Good. I like a challenge."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Let's see who has better instincts."
+      ]
+     },
+     {
+      "context": "tournament_entrant",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You and me in the same bracket. Win it, and we'll go to the TV world together after."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 0,
+      "script": [
+       "them: You're out. Hey, it's okay. Come eat something."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 2,
+      "script": [
+       "them: You lost. You'll get the next one, I'm sure."
+      ]
+     },
+     {
+      "context": "tournament_out",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're out. Come to the library. We'll look through the old records."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You won! Okay, that's awesome. I'm cooking you a feast."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Champion! Good instincts. Really good."
+      ]
+     },
+     {
+      "context": "tournament_champion",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Champion, {player}. My partner, the best duelist in town."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: It's our round. Trust your gut. Mine's telling me it's going to be close."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 0,
+      "script": [
+       "them: Let's do this, okay?"
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Round time. Let's see what the TV says about this match."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 2,
+      "script": [
+       "them: No hard feelings, whatever happens."
+      ]
+     },
+     {
+      "context": "tournament_duel",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Our round, {player}. I'd rather team up with you, but we're both here for the bracket."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Next I'll go to the shop for groceries. Need curry stuff."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: Earlier I got lost in the fog. It was annoying."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're nothing like Naoto. She'd have solved the case already."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 0,
+      "script": [
+       "them: You're so much like Adachi. Always hiding things."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Tomorrow I'll cook at the café. Come and taste my new dish."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): This morning I took a nap at school. Don't tell Chie."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: You're a bit like Naoto. Sharp, I think, when you're focused."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 2,
+      "script": [
+       "them: There's a trace of Adachi in you. I don't like it."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Tonight I'll look at the TV. Stay, if you want to see what's on."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Earlier I talked to Naoto about a case. She's sharp."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're like Naoto, {player}. Sharp, honest, and a good partner."
+      ]
+     },
+     {
+      "context": "again",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): You're nothing like Adachi, {player}. Good. I'd trust you."
       ]
      },
      {

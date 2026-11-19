@@ -1,0 +1,44 @@
+{# One event's form on the staff events page (world_staff_views.world_events_staff); `event` None for a new one. #}
+<section class="world-card"{% if event %} id="event-{{ event.pk }}"{% endif %}>
+  <form method="post" class="world-form">
+    {% csrf_token %}
+    {% if event %}<input type="hidden" name="event" value="{{ event.pk }}">{% else %}<input type="hidden" name="add" value="1">{% endif %}
+    <div class="world-card-head">
+      <label class="world-field">Icon <input type="text" name="icon" value="{{ event.icon|default:'' }}" maxlength="8" size="3"></label>
+      <label class="world-field world-field-wide">Name <input type="text" name="name" value="{{ event.name|default:'' }}" maxlength="80" required></label>
+      {% if event %}<span class="muted small">key <code>{{ event.key }}</code></span>
+      {% else %}<label class="world-field">Key <input type="text" name="key" maxlength="40" placeholder="from the name"></label>{% endif %}
+    </div>
+    <label class="world-field world-field-wide">What the notice board says <input type="text" name="about" value="{{ event.about|default:'' }}" maxlength="300"></label>
+    <div class="world-card-head">
+      <label class="world-field">Kind
+        <select name="kind">{% for value, label in kinds %}<option value="{{ value }}"{% if event.kind == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      </label>
+      <label class="world-field">Place
+        <select name="place"><option value="">Anywhere</option>
+          {% for place in places %}<option value="{{ place.key }}"{% if event.place_id == place.pk %} selected{% endif %}>{{ place.name }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="world-field"><input type="checkbox" name="enabled"{% if not event or event.enabled %} checked{% endif %}> On</label>
+    </div>
+    <fieldset class="world-field">
+      <legend>Weekdays <span class="muted small">(none: every day)</span></legend>
+      {% for index, day in weekdays %}<label><input type="checkbox" name="weekdays" value="{{ index }}"{% if index in event.weekdays %} checked{% endif %}> {{ day|slice:":3" }}</label> {% endfor %}
+    </fieldset>
+    <fieldset class="world-field">
+      <legend>Times <span class="muted small">(none: all day)</span></legend>
+      {% for index, time in times %}<label><input type="checkbox" name="times" value="{{ index }}"{% if index in event.times %} checked{% endif %}> {{ time }}</label> {% endfor %}
+    </fieldset>
+    <div class="world-card-head">
+      <label class="world-field">Every <input type="number" name="every" min="1" max="52" value="{{ event.every|default:1 }}"> weeks</label>
+      <label class="world-field">Offset <input type="number" name="offset" min="0" max="51" value="{{ event.offset|default:0 }}"></label>
+      <label class="world-field">From week <input type="number" name="first_week" min="0" max="520" value="{{ event.first_week|default:0 }}"></label>
+      <label class="world-field">Months <input type="text" name="months" value="{{ event.months_text|default:'' }}" placeholder="12, 1, 2"></label>
+      <label class="world-field">Dates <input type="text" name="dates" value="{{ event.dates_text|default:'' }}" placeholder="12-25, 01-01"></label>
+    </div>
+    <label class="world-field world-field-wide">Settings (JSON)
+      <textarea name="settings" rows="4" spellcheck="false">{{ event.settings_text|default:"{}" }}</textarea>
+    </label>
+    <p><button type="submit" class="button-small">{% if event %}Save{% else %}Add the event{% endif %}</button></p>
+  </form>
+</section>

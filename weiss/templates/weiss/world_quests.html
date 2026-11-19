@@ -7,7 +7,7 @@
   <div class="challenge-head">
     <div>
       <h1>Quests</h1>
-      <p class="muted">Slot {{ save.slot }} · Day {{ save.day }} · {{ save.weekday }} {{ save.time_of_day|lower }}</p>
+      <p class="muted">Slot {{ save.slot }} · {{ save.date_label }} · {{ save.time_of_day|lower }}</p>
     </div>
   </div>
 
@@ -57,6 +57,7 @@
                 <p class="small muted">{% if quest.giver %}For {{ quest.giver }}{% endif %}{% if quest.gate %} · Unlocks {{ quest.gate }}{% endif %}</p>
               </div>
               {% if quest.settling %}<span class="deck-tag quest-tag">Ready to finish</span>{% endif %}
+              {% if quest.ends %}<span class="deck-tag quest-tag quest-timed">Ends {{ quest.ends }}</span>{% endif %}
             </div>
             <p class="quest-about">{{ quest.about }}</p>
 
@@ -123,6 +124,7 @@
             </div>
           </div>
           <p class="small"><span class="muted">How it ended:</span> {{ quest.ending }}{% if quest.ending_about %}. {{ quest.ending_about }}{% endif %}</p>
+          {% if quest.count > 1 %}<p class="small muted">Done {{ quest.count }} times.</p>{% endif %}
         </li>
       {% endfor %}
     </ul>

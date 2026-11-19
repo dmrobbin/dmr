@@ -44,7 +44,8 @@
       $("[data-place-name]").textContent = place.name;
       document.title = `${place.name} · ${document.title.split(" · ").slice(1).join(" · ")}`;
     }
-    $("[data-when]").textContent = `Day ${town.day} · ${town.weekday} ${town.time_name.toLowerCase()}`;
+    $("[data-when]").textContent = `${town.date} · ${town.time_name.toLowerCase()}`;
+    paintEvents();
     $("[data-coins]").textContent = `${town.money.toLocaleString()} coins`;
     shopButton.hidden = !town.shop;
     const banner = $("[data-duel-banner]");
@@ -201,6 +202,7 @@
     testToggle.setAttribute("aria-pressed", String(Boolean(town.test_mode)));
     testToggle.textContent = town.test_mode ? "Test mode: on" : "Test mode";
     staffWait.hidden = !town.test_mode;
+    $("[data-jump]").hidden = !town.test_mode;
     staffWait.disabled = busy || Boolean(town.duel);
     waitButton.hidden = !town.can_wait;
     waitButton.textContent = `Pass time: ${town.next_time.toLowerCase()}`;
@@ -214,7 +216,7 @@
   let skipPassage = null;
   function passageWords(when, note) {
     passageEl.querySelector("[data-passage-note]").textContent = note;
-    passageEl.querySelector("[data-passage-when]").textContent = when.day ? `Day ${when.day} · ${when.label}` : when.label;
+    passageEl.querySelector("[data-passage-when]").textContent = when.label;
   }
   function passage(from, to, note, change = () => {}) {
     return new Promise((resolve) => {
@@ -262,7 +264,21 @@
       at(2300, end);
     });
   }
-  const nowWhen = () => ({ time: town.time, label: `${town.weekday} ${town.time_name.toLowerCase()}`, day: town.day });
+  const nowWhen = () => ({ time: town.time, label: `${town.date}, ${town.time_name.toLowerCase()}`, day: town.day });
+
+  // What's on now, for the passage of time to name as the new time of day comes in: "🏆 The weekly tournament".
+  const eventsNow = () => ((town.events && town.events.today) || []).filter((event) => event.now).map((event) => `${event.icon} ${event.name}`).join(" · ");
+
+  // Today's events (weiss.world_events), in a line above the stage, with the notice board for the rest of the week.
+  function paintEvents() {
+    const line = $("[data-events]");
+    const today = (town.events && town.events.today) || [];
+    line.hidden = !today.length;
+    if (!today.length) return;
+    const words = today.map((event) => `${event.icon} ${event.name}${event.now ? "" : ` (${event.when})`}${event.place ? ` at the ${event.place}` : ""}`);
+    line.replaceChildren(`Today: ${words.join(" · ")}.`,
+      Object.assign(document.createElement("a"), { href: town.events.url, textContent: "Notice board" }));
+  }
 
   // A soft fade over a change (none for anyone who's asked for less motion).
   function fade(change) {
@@ -326,7 +342,7 @@
     const from = nowWhen();
     const data = await post(root.dataset.waitUrl, staff ? { staff: "1" } : {});
     if (!data) return;
-    await passage(from, nowWhen(), "Time passes…", paint);
+    await passage(from, nowWhen(), eventsNow() || "Time passes…", paint);
     const after = new Set(town.people.map((p) => p.name));
     const went = [...before].filter((n) => !after.has(n));
     const came = [...after].filter((n) => !before.has(n));
@@ -511,9 +527,9 @@
         ? { disabled: true, title: `You've talked ${thisTime()} already.` }
         : { title: relation.talked ? "" : "The day's first talk brings them closer." }],
       ["Give a gift", giftMenu, { disabled: Boolean(noGift), title: noGift }],
-      ["Duel", () => duel(false), { disabled: Boolean(why), title: why }],
+      [person.tournament ? `🏆 Duel: tournament ${person.tournament}` : "Duel", () => duel(false), { disabled: Boolean(why), title: why }],
     ];
-    if (stake) {
+    if (stake && !person.tournament) {
       const short = town.money < stake ? `You have ${town.money} coins.` : "";
       list.push([`High-stakes duel (${stake} coins)`, () => duel(true), { disabled: Boolean(why || short), title: why || short }]);
     }
@@ -854,6 +870,11 @@
       button.innerHTML = `<span class="town-place-art">${window.SceneBackdrops ? SceneBackdrops.draw(place.backdrop) : ""}</span>
         <span class="town-place-name"></span><span class="town-place-who small"></span>`;
       button.querySelector(".town-place-name").textContent = place.name;
+      if (place.events && place.events.length) {  // an event on there now (weiss.world_events.at_places)
+        const mark = el("span", "town-place-event", ` ${place.events.map((event) => event.icon).join("")}`);
+        mark.title = place.events.map((event) => event.name).join(", ");
+        button.querySelector(".town-place-name").append(mark, el("span", "visually-hidden", `: ${mark.title} on now`));
+      }
       const hereWords = town.choose ? " (stay here)" : " (you're here)";
       if (place.here) {
         const note = document.createElement("span");
@@ -957,11 +978,18 @@
 
   const coins = (n) => n.toLocaleString();
 
-  function buyButton(label, cost, onBuy, secondary = false) {
+  // `was`: the usual price, when a sale has cut it (shown struck through, and said in full to screen readers).
+  function buyButton(label, cost, onBuy, secondary = false, was = null) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = secondary ? "button-small secondary" : "button-small";
-    button.textContent = `${label} · ${coins(cost)}`;
+    button.textContent = `${label} · `;
+    if (was && was > cost) {
+      const old = el("s", "town-was", coins(was));
+      old.setAttribute("aria-label", `usually ${coins(was)}`);
+      button.append(old, " ");
+    }
+    button.append(coins(cost));
     button.disabled = town.money < cost;
     if (button.disabled) button.title = `You have ${coins(town.money)} coins.`;
     button.addEventListener("click", onBuy);
@@ -1048,8 +1076,9 @@
   function listPacks() {
     const list = $("[data-stock]");
     list.replaceChildren();
-    const { price, stock } = town.shop;
-    $("[data-shop-note]").textContent = `Packs are ${coins(price)} coins each. They open straight into your cards. The shelves change every day.`;
+    const { price, stock, sales } = town.shop;
+    const onSale = (sales || []).map((sale) => `${sale.icon} ${sale.name}: ${sale.about}`).join(" ");
+    $("[data-shop-note]").textContent = `${onSale ? `${onSale} ` : ""}Packs are ${coins(price)} coins each. They open straight into your cards. The shelves change every day.`;
     for (const set of stock) {
       const item = document.createElement("li");
       item.className = "town-stock-item";
@@ -1057,11 +1086,13 @@
       name.className = "town-stock-name";
       name.textContent = set.name;
       if (set.requested) name.append(" ", el("span", "town-stock-tag", "Requested"));
+      if (set.sale) name.append(" ", el("span", "town-stock-tag town-sale-tag", set.sale_left === null || set.sale_left === undefined
+        ? "Sale" : set.sale_left ? `Sale: ${set.sale_left} left today` : "Sale: sold out today"));
       const buttons = document.createElement("div");
       buttons.className = "town-stock-buy";
       buttons.append(
-        buyButton("1 pack", price, () => buy({ set: set.id, count: 1 })),
-        buyButton("5 packs", price * 5, () => buy({ set: set.id, count: 5 }), true),
+        buyButton("1 pack", set.price, () => buy({ set: set.id, count: 1 }), false, set.was),
+        buyButton("5 packs", set.price_5, () => buy({ set: set.id, count: 5 }), true, set.price_5 < price * 5 ? price * 5 : null),
       );
       item.append(cover(set, "town-stock-cover"), name, buttons);
       list.append(item);
@@ -1103,7 +1134,8 @@
 
   function listSpecials() {
     const { specialty_price: price, stock, specials, levels, colors } = town.shop;
-    $("[data-specials-note]").textContent = `Specialty packs are ${coins(price)} coins each: a pack made to order from one of today's sets.`;
+    const specialSale = town.shop.specialty_was ? ` On sale now: usually ${coins(town.shop.specialty_was)}.` : "";
+    $("[data-specials-note]").textContent = `Specialty packs are ${coins(price)} coins each: a pack made to order from one of today's sets.${specialSale}`;
     const setSelect = $("[data-special-set]");
     if (!stock.some((set) => set.id === specialSet)) specialSet = stock[0]?.id ?? null;
     setSelect.replaceChildren(...stock.map((set) => new Option(set.name, set.id, false, set.id === specialSet)));
@@ -1131,7 +1163,7 @@
         choice.append(...options);
         buttons.append(choice);
       }
-      buttons.append(buyButton("Buy", price, () => buy({ special: special.key, set: specialSet, [special.asks || "none"]: choice?.value ?? "" })));
+      buttons.append(buyButton("Buy", price, () => buy({ special: special.key, set: specialSet, [special.asks || "none"]: choice?.value ?? "" }), false, town.shop.specialty_was));
       item.append(text, buttons);
       list.append(item);
     }
@@ -1142,7 +1174,7 @@
     const row = $("[data-cards]");
     const scrolled = row.scrollLeft;
     $("[data-cards-note]").textContent = cards.length
-      ? `Today's rares, ${coins(price)} coins each, one of each a day. A new selection comes in tomorrow.`
+      ? `Today's rares, ${coins(price)} coins each${town.shop.card_was ? ` (on sale: usually ${coins(town.shop.card_was)})` : ""}, one of each a day. A new selection comes in tomorrow.`
       : "No single cards today. A new selection comes in tomorrow.";
     row.replaceChildren();
     for (const card of cards) {
@@ -1182,7 +1214,7 @@
         button.textContent = "Bought today";
         button.disabled = true;
       } else {
-        button = buyButton("Buy", price, () => buyCard(card));
+        button = buyButton("Buy", price, () => buyCard(card), false, town.shop.card_was);
         button.setAttribute("aria-label", `Buy ${card.name} for ${coins(price)} coins`);
       }
       item.append(link, name, set, button);
@@ -1258,6 +1290,14 @@
   }
   waitButton.addEventListener("click", wait);
   $("[data-staff-wait]").addEventListener("click", () => wait(true));
+  $("[data-jump-go]").addEventListener("click", async () => {
+    closeTalk(false);
+    const from = nowWhen();
+    const data = await post(root.dataset.jumpUrl, { weekday: $("[data-jump-day]").value });
+    if (!data) return;
+    await passage(from, nowWhen(), eventsNow() || "Time passes…", paint);
+    say(data.said);
+  });
   $("[data-test-mode]").addEventListener("click", async () => {
     const data = await post(root.dataset.testModeUrl, { on: town.test_mode ? "0" : "1" });
     if (!data) return;
@@ -1305,7 +1345,7 @@
   playSceneNow(); // one left waiting (a reload on arriving): it still plays
   if (result) {
     const banner = $("[data-result]");
-    banner.querySelector("[data-result-text]").textContent = result.won
+    banner.querySelector("[data-result-text]").textContent = result.event ? result.event : result.won
       ? `You beat ${result.cpu}: +${result.coins} coins${result.first ? " (with the day's first-win bonus)" : ""}.`
       : `${result.cpu} won this time${result.stake ? `; the ${result.stake}-coin entry fee is gone` : ""}. Time moved on.`;
     const quote = banner.querySelector("[data-result-line]");

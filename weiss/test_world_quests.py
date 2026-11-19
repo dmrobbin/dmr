@@ -557,7 +557,7 @@ class StaffPageTests(QuestBase):
         text = '{"key": "q", "title": "Q", "giver": "Ruby", "about": "x", "stages": [], "endings": []}'
         page = self.client.post(reverse("weiss:world_quest_new"), {"quest": text})
         self.assertEqual(page.status_code, 200)
-        self.assertFalse(Quest.objects.exists())
+        self.assertFalse(Quest.objects.filter(key="q").exists())
         self.assertContains(page, "1 to 12 stages")
         self.assertContains(page, "&quot;key&quot;: &quot;q&quot;")
 
@@ -603,7 +603,7 @@ class FileTests(QuestBase):
         result = import_world_pack([self.pack([bad])])[0]
         self.assertTrue(any(problem.startswith("Ruby: world quest 1") and "Nobody" in problem for problem in result.problems))
         self.assertTrue(any("locks “ashes”" in problem for problem in result.problems))
-        self.assertFalse(Quest.objects.exists())
+        self.assertFalse(Quest.objects.filter(giver__isnull=False).exists())  # none of the pack's (the board's own are there)
 
     def test_importing_again_replaces_the_cpus_quests_and_a_pack_without_any_leaves_them(self):
         from .cpu_corpus import import_world_pack

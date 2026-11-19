@@ -13,6 +13,10 @@ A cast file has CAST = [cpu(...), ...]. In a CPU:
   wins), lost (after the player loses), r1, r3, r4 (what reaching ranks 1, 3 and 4 says); hello and bye (each a list
   of three one-line scripts: what it says when the player walks up and when they leave, to a stranger, a friend
   (rank 2) and a close friend (rank 4)).
+- repeat (optional): lines for talking again, at each tier: "future" and "past" (lists of three), and "like" and
+  "dislike" (each {"with", "lines"}: three comparisons, unfavourable to favourable).
+- tournament (optional): lines for the tournament week, by spectator, entrant, out, champion and duel, each three
+  lists (ranks 0, 2, 4).
 - mid (optional): first-talk lines for the in-between ranks, a dict of rank ("1", "3", "5") to lines.
 - hello_steps and bye_steps (optional): two lines of greeting and two of goodbye for each of the six relationship steps,
   a list of six pairs, rank 0 (Stranger) first. They come on top of hello and bye.
@@ -75,6 +79,20 @@ def entry(spec):
     for rank, scripts in spec["lines"].get("mid", {}).items():
         for script in scripts:
             chatter.append({"context": "greet", "min_rank": int(rank), "script": [script]})
+    # tournament: lines for the tournament week, by context (spectator, entrant, out, champion, duel); each a list of
+    # three lists of lines, for ranks 0, 2 and 4.
+    for key, tiers in spec["lines"].get("tournament", {}).items():
+        for rank, scripts in zip((0, 2, 4), tiers):
+            for script in scripts:
+                chatter.append({"context": f"tournament_{key}", "min_rank": rank, "script": [script]})
+    # repeat: lines for talking again (the again context), at each of the three tiers (ranks 0, 2, 4): a future and a past
+    # line, and comparisons with a liked and a disliked character (each a list of three, unfavourable to favourable).
+    repeat = spec["lines"].get("repeat")
+    if repeat:
+        for index, rank in enumerate((0, 2, 4)):
+            scripts = [repeat["future"][index], repeat["past"][index], repeat["like"]["lines"][index], repeat["dislike"]["lines"][index]]
+            for script in scripts:
+                chatter.append({"context": "again", "min_rank": rank, "script": [script]})
     scenes = []
     for rank, title, lines in ((2, "Friend", spec["friend"]), (5, "Best friend", spec["best"])):
         scene = f"World: {name}, {title}"

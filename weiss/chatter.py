@@ -215,6 +215,11 @@ DEFAULTS = [  # (context, min rank, script)
     ("goodbye", 0, "them: Bye, then."),
     ("goodbye", 2, "them (pleased): Catch you later, {player}."),
     ("goodbye", 4, "them (pleased): Don't be a stranger, okay? See you soon."),
+    ("tournament_spectator", 0, "them: The tournament's on at the arena. Good luck to the ones who are in it."),
+    ("tournament_entrant", 0, "them: I'm in this week's bracket. May the best duelist win."),
+    ("tournament_out", 0, "them: Tough luck out there. The bracket's not over for everyone."),
+    ("tournament_champion", 0, "them (pleased): Champion! Well played. I mean it."),
+    ("tournament_duel", 0, "them: Tournament round. No holding back, okay?"),
 ]
 COLD = {"hello": "them (dismayed): …What do you want?", "goodbye": "them: Fine. Go."}  # someone a quest choice estranged
 

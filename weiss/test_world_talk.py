@@ -534,7 +534,7 @@ class SpendingTimeTests(TestCase):
         room.save()
         world.game_finished(room, over)
         self.save.refresh_from_db()
-        self.assertEqual(self.save.flags["last_duel"]["before"], {"time": 0, "label": "Monday morning", "day": 1})
+        self.assertEqual(self.save.flags["last_duel"]["before"], {"time": 0, "label": "Monday 18 November, morning", "day": 1})
         self.assertFalse(world.engaged(self.save))  # a new time of day: free to go
 
 

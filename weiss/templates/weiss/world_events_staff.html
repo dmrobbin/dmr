@@ -1,0 +1,31 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Events · World mode{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:cpu_home' %}?tab=world">← World mode settings</a></p>
+  <h1>Events</h1>
+  <p class="muted">Things on in the town at set times (weiss.world_events). Every rule given must hold, and an empty one means any:
+    no weekdays is every day, no times is all day. Dates are a save's calendar (every save starts on Monday 18 November).
+    A sale's settings: <code>{"what": "packs", "discount": 50, "featured": true, "limit": 5}</code> (what is packs, specials or cards;
+    cards can add <code>"extra": 2</code> rares). A tournament's: <code>{"fee": 500, "prizes": {"champion": 3000, "final": 1500, "semi": 600},
+    "champion_pack": "lucky_pack", "points": 8}</code>, on Saturday (entry) and Sunday (the rounds).</p>
+
+  <section class="world-card" aria-labelledby="events-preview-title">
+    <h2 id="events-preview-title" class="world-card-title">A save's first four weeks</h2>
+    <ol class="notice-week events-preview">
+      {% for day in preview %}
+        <li class="notice-day"><strong>{{ day.label }}</strong>
+          {% for event in day.events %}<span class="town-stock-tag">{{ event.icon }} {{ event.name }}</span> {% empty %}<span class="muted small">nothing on</span>{% endfor %}
+        </li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  {% for event in events %}
+    {% include "weiss/world_event_form.html" with event=event %}
+  {% endfor %}
+
+  <h2>Add an event</h2>
+  {% include "weiss/world_event_form.html" with event=None %}
+{% endblock %}

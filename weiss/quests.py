@@ -33,6 +33,7 @@ from types import SimpleNamespace
 from django.urls import reverse
 
 from . import buffs, chatter, packs, world
+from . import world_calendar as calendar
 from . import scenes as scene_language
 from .lists import is_climax
 from .models import Card, CpuProfile, GiftItem, Quest, Scene, WorldPlace
@@ -67,6 +68,8 @@ OBJECTIVES = {  # do: (fields it can have, what it's for: the reference's words)
     "rank": ({"cpu", "rank"}, "Reach this friendship rank with a CPU."),
     "talk": ({"to", "script"}, "Talk to a CPU: its script plays (chatter, with choices that can set flags)."),
     "flag": ({"flag", "text"}, "Have a flag (a chatter choice or an ending sets them): say what it means in `text`."),
+    "event": ({"event", "result", "count"}, "Take part in an event (WorldEvent, by key): `result` is enter (the default), round "
+              "(win a tournament round) or win (win it); `count` times."),
 }
 COMMON = {"do", "text"}
 AT_TIME = ("in the morning", "at noon", "in the evening", "at night")  # "Go to the Beach at night"
@@ -95,6 +98,81 @@ def known_context(extra_keys=(), loose=False):
     )
 
 
+EVENT_RESULTS = ("enter", "round", "win")
+WINDOW_FIELDS = {"weekdays", "times", "every", "offset", "event"}
+
+
+def read_window(raw, where, problems):
+    """A timed quest's window, checked: when it's on offer and can be done, written as an event's calendar is
+    ({"weekdays": [5, 6], "times": [2, 3], "every": 1, "offset": 0}, every part optional: {} is all week), or tied to an
+    event ({"event": "weekly-tournament"}). It comes back every week the window opens again."""
+    if not isinstance(raw, dict) or set(raw) - WINDOW_FIELDS:
+        problems.append(f"{where}: write the window as {{\"weekdays\": [...], \"times\": [...]}} or {{\"event\": key}}.")
+        return {}
+    found = {}
+    for field, top in (("weekdays", 6), ("times", 3)):
+        values = raw.get(field, [])
+        if not isinstance(values, list) or any(not isinstance(v, int) or not 0 <= v <= top for v in values):
+            problems.append(f"{where} window: {field} are a list of 0 to {top}.")
+        elif values:
+            found[field] = sorted(set(values))
+    for field, low in (("every", 1), ("offset", 0)):
+        if field in raw:
+            if not isinstance(raw[field], int) or raw[field] < low:
+                problems.append(f"{where} window: {field} is a whole number from {low}.")
+            else:
+                found[field] = raw[field]
+    if "event" in raw:
+        if not NAME.fullmatch(str(raw["event"] or "")):
+            problems.append(f"{where} window: event is an event's key.")
+        else:
+            found["event"] = raw["event"]
+    return found
+
+
+def timed(quest):
+    return (quest.spec or {}).get("window") is not None
+
+
+def week_now(save):
+    return calendar.week_of(save.turn)
+
+
+def in_window(quest, turn):
+    """Whether a timed quest's window is open at this turn."""
+    from . import world_events
+    return world_events.window_runs(quest.spec["window"], turn)
+
+
+def window_turns(quest, turn):
+    """The turns from this one to the end of its week that the quest's window is open."""
+    from . import world_events
+    end = (calendar.week_of(turn) + 1) * 7 * len(world.WorldSave.TIMES)
+    return world_events.window_turns(quest.spec["window"], turn, end)
+
+
+def ends_words(quest, turn):
+    """When a timed quest's window closes this week, in words: "Sunday night"."""
+    open_turns = window_turns(quest, turn)
+    if not open_turns:
+        return ""
+    last = open_turns[-1]
+    return f"{calendar.DAYS[calendar.weekday_of(last)]} {world.WorldSave.TIMES[last % len(world.WorldSave.TIMES)].lower()}"
+
+
+def expire(save):
+    """Time has passed: a timed quest that's under way when its window closes (or its week ends) expires. It closes
+    nothing, and it's offered again when its window next opens."""
+    for quest in quests(save).values():
+        entry = log(save).get(quest.key)
+        if not timed(quest) or not entry or entry.get("status") not in ("active", "settling"):
+            continue
+        if entry.get("week") == week_now(save) and window_turns(quest, save.turn):
+            continue
+        entry.update(status="expired", finished=save.turn)
+        news(save, f"Out of time: {quest.title}. It'll be back.", quest)
+
+
 def check(data, context=None, giver=None):
     """({key, title, giver (a name or None), gate_rank, spec}, [problems]) for a quest as written. `giver`: the CPU a
     pack entry gives it to (it needn't name one then). context: what it can name (known_context; offline, a namespace
@@ -103,7 +181,7 @@ def check(data, context=None, giver=None):
     problems = []
     if not isinstance(data, dict):
         return None, ["A quest is written as {\"key\": ..., \"title\": ..., \"stages\": [...], \"endings\": [...]}."]
-    allowed = {"key", "title", "giver", "gates", "about", "offer", "requires", "stages", "endings", "rewards", "hidden"}
+    allowed = {"key", "title", "giver", "gates", "about", "offer", "requires", "stages", "endings", "rewards", "hidden", "window", "board"}
     if extra := sorted(set(data) - allowed):
         problems.append(f"No such fields as {', '.join(extra)}.")
     key = str(data.get("key") or "")
@@ -123,6 +201,16 @@ def check(data, context=None, giver=None):
     giver = giver or data.get("giver")
     giver = cpu_name(giver, f"{where} giver") if giver else None
     gate = data.get("gates")
+    board = bool(data.get("board"))
+    if board and giver:
+        problems.append(f"{where}: a board quest is the notice board's: it has no giver.")
+    window = data.get("window")
+    if window is not None:
+        window = read_window(window, where, problems)
+        if gate is not None:
+            problems.append(f"{where}: a timed quest (window) can't gate a friendship rank: it comes and goes.")
+    elif board:
+        problems.append(f"{where}: a board quest is a timed one: give it a window (an empty one is all week).")
     if gate is not None:
         if not giver:
             problems.append(f"{where}: only a quest with a giver can gate a friendship rank.")
@@ -244,6 +332,12 @@ def check(data, context=None, giver=None):
             if "cpu" not in raw:
                 problems.append(f"{at} (rank): name the CPU in cpu.")
             whole("rank", 1, len(context.ranks) - 1)
+        if do == "event":
+            if not NAME.fullmatch(str(raw.get("event") or "")):
+                problems.append(f"{at} (event): event is an event's key (see the Events page).")
+            if raw.get("result", "enter") not in EVENT_RESULTS:
+                problems.append(f"{at} (event): result is one of {', '.join(EVENT_RESULTS)}.")
+            whole("count", 1, 20, 1)
         if do == "talk":
             if not joined(raw.get("script")).strip():
                 problems.append(f"{at} (talk): it needs a script, what's said.")
@@ -328,10 +422,14 @@ def check(data, context=None, giver=None):
         if not etitle or len(etitle) > 100:
             problems.append(f"{at}: it needs a title, what the player chooses, at most 100 characters.")
         to = ending.get("to") or giver
-        if not to:
+        if board and not ending.get("to"):
+            to = ""  # claimed at the notice board
+        elif not to:
             problems.append(f"{at}: say who it's turned in to (to), since the quest has no giver.")
         else:
             to = cpu_name(to, at)
+        if window is not None and (ending.get("locks") or ending.get("removes")):
+            problems.append(f"{at}: a timed quest's ending can't close quests or send anyone away: it comes back every week.")
         locks = ending.get("locks") or []
         if not isinstance(locks, list) or key in locks:
             problems.append(f"{at}: locks is a list of other quests' keys.")
@@ -357,6 +455,10 @@ def check(data, context=None, giver=None):
                         "rewards": rewards(ending.get("rewards"), at), "script": script(ending.get("script"), f"{at} script")})
     spec = {"about": about, "offer": offer, "requires": requires, "stages": stages, "endings": endings,
             "rewards": rewards(data.get("rewards"), where), "hidden": bool(data.get("hidden", False))}
+    if window is not None:
+        spec["window"] = window
+    if board:
+        spec["board"] = True
     return {"key": key, "title": title, "giver": giver, "gate_rank": gate, "spec": spec}, problems
 
 
@@ -388,6 +490,10 @@ def as_file(quest):
         data["rewards"] = spec["rewards"]
     if spec.get("hidden"):
         data["hidden"] = True
+    if spec.get("window") is not None:
+        data["window"] = spec["window"]
+    if spec.get("board"):
+        data["board"] = True
     return data
 
 
@@ -490,13 +596,23 @@ def estranged(save, cpu_id):
 def offerable(save, quest):
     """Whether the quest's giver would offer it now: not taken or closed, its giver here to stay, what it requires
     done, and for a gate quest, the points its rank takes with every earlier gate passed."""
-    if quest.key in log(save) or not quest.giver_id or quest.giver_id in gone(save):
+    spec = quest.spec or {}
+    if (not quest.giver_id and not spec.get("board")) or (quest.giver_id and quest.giver_id in gone(save)):
         return False
-    requires = (quest.spec or {}).get("requires") or {}
+    entry = log(save).get(quest.key)
+    if timed(quest):  # on offer while its window's open, once a week, and again once it's done or expired
+        if not in_window(quest, save.turn) or (entry and (entry.get("status") in ("active", "settling", "failed")
+                                                          or entry.get("week") == week_now(save))):
+            return False
+    elif entry:
+        return False
+    requires = spec.get("requires") or {}
     if any(status(save, key) != "done" for key in requires.get("quests", [])):
         return False
     if any(not world.has_flag(save, flag) for flag in requires.get("flags", [])):
         return False
+    if not quest.giver_id:
+        return True
     rank = world.rank_of(save, quest.giver_id)
     if rank < requires.get("rank", 0):
         return False
@@ -528,7 +644,7 @@ def need(obj):
     """How many of something an objective counts to."""
     return {"defeat": len(obj.get("cpus", [])), "combo": obj.get("count", 1), "streak": obj.get("wins", 1),
             "beat_different": obj.get("count", 1), "have_card": obj.get("copies", 1), "give_card": 1,
-            "collect": obj.get("count", 1), "rank": obj.get("rank", 1)}.get(obj["do"], 1)
+            "collect": obj.get("count", 1), "rank": obj.get("rank", 1), "event": obj.get("count", 1)}.get(obj["do"], 1)
 
 
 def held(save, obj):
@@ -626,7 +742,10 @@ def advance(save):
 def settle_hint(save, quest):
     """Who to see to finish a quest."""
     found = lookup(save)
-    names = list(dict.fromkeys(ending["to"] for ending in quest.spec.get("endings", []) if found.cpu_id(ending["to"]) not in gone(save)))
+    if quest.spec.get("board"):
+        return "Claim it at the notice board."
+    names = list(dict.fromkeys(ending["to"] for ending in quest.spec.get("endings", [])
+                               if ending["to"] and found.cpu_id(ending["to"]) not in gone(save)))
     if not names:
         return ""
     if len(names) == 1:
@@ -838,10 +957,14 @@ def offer_panel(save, quest):
 
 
 def accept(save, cpu, key):
+    """Take a quest a CPU offers (or, with no CPU, one on the notice board)."""
     quest = find_quest(save, key)
-    if quest.giver_id != cpu.pk or not offerable(save, quest):
-        raise ValueError(f"{cpu.name} isn't offering that now.")
-    log(save)[key] = {"status": "active", "stage": 0, "since": save.turn, "progress": {}, "done": []}
+    giving = quest.giver_id == cpu.pk if cpu else bool(quest.spec.get("board"))
+    if not giving or not offerable(save, quest):
+        raise ValueError(f"{cpu.name} isn't offering that now." if cpu else "That isn't on the notice board now.")
+    count = (log(save).get(key) or {}).get("count", 0)  # a timed quest done before, in an earlier week
+    log(save)[key] = {"status": "active", "stage": 0, "since": save.turn, "progress": {}, "done": [],
+                      **({"week": week_now(save)} if timed(quest) else {}), **({"count": count} if count else {})}
     first = quest.spec["stages"][0]["text"]
     events = [{"quest": f"Quest taken: {quest.title}. First: {first}."}]
     advance(save)
@@ -988,7 +1111,8 @@ def choose(save, cpu, key, ending_key, confirmed):
     script)."""
     quest = find_quest(save, key)
     ending = ending_of(quest, ending_key)
-    if status(save, key) != "settling" or not ending or ending["to"].lower() != cpu.name.lower():
+    here = cpu.name.lower() if cpu else ""  # no CPU: claimed at the notice board
+    if status(save, key) != "settling" or not ending or (ending["to"] or "").lower() != here:
         raise ValueError("That isn't a way this quest can end here.")
     for i, obj in enumerate(ending.get("requires", [])):
         if not met(save, quest, f"e.{ending_key}.{i}", obj):
@@ -999,6 +1123,8 @@ def choose(save, cpu, key, ending_key, confirmed):
     before = world.rank_of(save, quest.giver_id) if quest.giver_id else 0
     entry = log(save)[key]
     entry.update(status="done", ending=ending_key, finished=save.turn)
+    if timed(quest):
+        entry["count"] = entry.get("count", 0) + 1
     events = [{"quest": f"Quest complete: {quest.title}.", "done": True}]
     for text, link in give_rewards(save, quest, [*quest.spec.get("rewards", []), *ending.get("rewards", [])]):
         events.append({"reward": text, **({"link": link} if link else {})})
@@ -1189,7 +1315,23 @@ def describe(save, obj):
         return f"Become {world.rank_names()[obj['rank']]} with {obj['cpu']}"
     if do == "talk":
         return f"Talk to {obj['to']}"
+    if do == "event":
+        from .models import WorldEvent
+        name = WorldEvent.objects.filter(key=obj["event"]).values_list("name", flat=True).first() or obj["event"]
+        times = f" {obj['count']} times" if obj.get("count", 1) > 1 else ""
+        return {"enter": f"Enter {name}", "round": f"Win a round at {name}", "win": f"Win {name}"}[obj.get("result", "enter")] + times
     return obj.get("flag", "")
+
+
+def event_done(save, event_key, result):
+    """Something happened at an event (entered, a round won, won it): event objectives count it."""
+    for quest in quests(save).values():
+        for key, obj in current(save, quest):
+            if obj["do"] == "event" and obj["event"] == event_key and obj.get("result", "enter") == result and not met(save, quest, key, obj):
+                tick(save, quest, key)
+                if met(save, quest, key, obj):
+                    news(save, f"{describe(save, obj)}: done.", quest)
+    advance(save)
 
 
 def journal(save):
@@ -1203,10 +1345,14 @@ def journal(save):
         giver = quest.giver if quest.giver_id else None
         base = {"key": quest.key, "title": quest.title, "about": spec.get("about", ""), "giver": giver.name if giver else "",
                 "avatar": giver.avatar if giver else None, "gate": ranks[quest.gate_rank] if quest.gate_rank else ""}
-        if not entry:
+        again = timed(quest) and entry and entry.get("status") in ("done", "expired") and offerable(save, quest)
+        if not entry or again:
             if offerable(save, quest):
-                sections["offered"].append({**base, "about": f"{giver.name} has something to ask you. Find them in town and talk to them."})
-            continue
+                where = "It's on the notice board this week." if spec.get("board") else \
+                    f"{giver.name} has something to ask you. Find them in town and talk to them."
+                sections["offered"].append({**base, "about": where})
+            if not entry or entry.get("status") == "expired":
+                continue
         st = entry["status"]
         if st in ("active", "settling"):
             stages = []
@@ -1227,10 +1373,12 @@ def journal(save):
                     endings.append({"title": ending["title"], "to": ending["to"], "missing": missing,
                                     "away": found.cpu_id(ending["to"]) in gone(save)})
             sections["active"].append({**base, "settling": st == "settling", "stages": stages, "endings": endings,
-                                       "rewards": reward_words(save, quest), "left": len(spec.get("stages", [])) - entry.get("stage", 0) - 1})
+                                       "rewards": reward_words(save, quest), "left": len(spec.get("stages", [])) - entry.get("stage", 0) - 1,
+                                       "ends": ends_words(quest, save.turn) if timed(quest) else "", "board": bool(spec.get("board"))})
         elif st == "done":
             ending = ending_of(quest, entry.get("ending")) or {}
-            sections["done"].append({**base, "ending": ending.get("title", ""), "ending_about": ending.get("about", "")})
+            sections["done"].append({**base, "ending": ending.get("title", ""), "ending_about": ending.get("about", ""),
+                                     "count": entry.get("count", 0)})
         elif st == "failed":
             by = entry.get("closed_by") or {}
             closer = quests(save).get(by.get("quest"))
@@ -1246,3 +1394,37 @@ def counts(save):
     entries = save.quests.get("log", {}).values()
     return {"active": sum(entry.get("status") in ("active", "settling") for entry in entries),
             "ready": sum(entry.get("status") == "settling" for entry in entries)}
+
+
+def board(save):
+    """The notice board's quests this week: [{key, title, about, state, objectives, rewards, ends, endings, count}] where
+    state is "offered", "active", "settling" or "done" (this week)."""
+    found = []
+    for quest in quests(save).values():
+        spec = quest.spec or {}
+        if not spec.get("board"):
+            continue
+        entry = log(save).get(quest.key) or {}
+        this_week = entry.get("week") == week_now(save)
+        if offerable(save, quest):
+            state = "offered"
+        elif entry.get("status") in ("active", "settling") or (entry.get("status") == "done" and this_week):
+            state = entry["status"]
+        else:
+            continue
+        objectives = []
+        if state == "offered":
+            objectives = [{"text": describe(save, obj), "card": objective_card(save, obj), "have": 0, "need": need(obj), "done": False}
+                          for obj in spec["stages"][0]["objectives"]]
+        elif state == "active":
+            stage = entry.get("stage", 0)
+            for i, obj in enumerate(spec["stages"][stage]["objectives"]):
+                have, wanted = progress(save, quest, f"{stage}.{i}", obj)
+                objectives.append({"text": describe(save, obj), "card": objective_card(save, obj), "have": have, "need": wanted,
+                                   "done": have >= wanted})
+        found.append({"key": quest.key, "title": quest.title, "about": spec.get("about", ""), "state": state, "objectives": objectives,
+                      "stage": spec["stages"][entry.get("stage", 0)]["text"] if state == "active" else spec["stages"][0]["text"],
+                      "rewards": reward_words(save, quest), "ends": ends_words(quest, save.turn), "count": entry.get("count", 0),
+                      "endings": [{"key": e["key"], "title": e["title"]} for e in spec.get("endings", []) if not e["to"]]
+                      if state == "settling" else []})
+    return found

@@ -47,6 +47,8 @@ KINDS = {
     "infinite_score": Kind("Score in one infinite challenge", lambda n, t: f"Score {n} in one infinite challenge", best=True),
     "bosses": Kind("Infinite challenge bosses beaten (solo or co-op)", lambda n, t: f"Beat {'an infinite challenge boss' if n == 1 else f'{n} infinite challenge bosses'}"),
     "coop_floors": Kind("Floors climbed in one co-op challenge", lambda n, t: f"Climb {plural(n, 'floor')} in one co-op challenge", best=True),
+    "world_events": Kind("World mode events won (the weekly tournament)",
+                         lambda n, t: f"Win {'a world mode tournament' if n == 1 else f'{n} world mode tournaments'}"),
     "world_rank": Kind("Friendship rank reached in world mode (0 the first)",
                        lambda n, t: f"Reach friendship rank {n} with {t or 'a CPU'} in world mode", target="cpu", best=True),
 }

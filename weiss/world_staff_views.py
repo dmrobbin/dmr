@@ -12,9 +12,11 @@ from django.template.loader import render_to_string
 from django.utils.text import slugify
 from django.views.decorators.http import require_POST
 
-from . import chatter, quests, scenes, world
+import datetime
+
+from . import chatter, quests, scenes, world, world_calendar, world_events
 from .cpu_views import staff_required
-from .models import Chatter, CpuProfile, GiftItem, Quest, Scene, WorldPlace, WorldSave
+from .models import Chatter, CpuProfile, GiftItem, Quest, Scene, WorldEvent, WorldPlace, WorldSave
 from .world_views import MAX_COINS
 
 MAX_TAGS = 10
@@ -448,3 +450,120 @@ def world_quest_delete(request, pk):
     quest.delete()
     messages.success(request, f"Deleted “{quest.title}”. Saves that had started it no longer show it.")
     return redirect("weiss:world_quest_list")
+
+
+# ---------------------------------------------------------------- Events (weiss.world_events)
+
+SALE_WHATS = ("packs", "specials", "cards")
+PREVIEW_DAYS = 28
+
+
+@staff_required
+def world_events_staff(request):
+    """The town's events: when each is on (weekdays, times, every few weeks, months, dates), where, its own numbers,
+    and whether it's on at all; with the next four weeks of a save's calendar, from its first day."""
+    if request.method == "POST":
+        try:
+            said = change_event(request.POST)
+        except ValueError as error:
+            messages.error(request, str(error))
+        else:
+            messages.success(request, said)
+        return redirect("weiss:world_events_staff")
+    events = list(WorldEvent.objects.select_related("place"))
+    for event in events:
+        event.settings_text = json.dumps(event.settings, indent=2)
+        event.months_text = ", ".join(str(month) for month in event.months)
+        event.dates_text = ", ".join(event.dates)
+    live = [event for event in events if event.enabled]
+    preview = [{"label": world_calendar.date_label(day * 4), "events": [event for event in live if world_events.runs(event, day * 4, all_day=True)]}
+               for day in range(PREVIEW_DAYS)]
+    return render(request, "weiss/world_events_staff.html", {
+        "events": events, "places": WorldPlace.objects.all(), "kinds": WorldEvent.KINDS, "preview": preview,
+        "weekdays": list(enumerate(world_calendar.DAYS)), "times": list(enumerate(WorldSave.TIMES)),
+    })
+
+
+def read_numbers(values, low, high, what):
+    try:
+        numbers = sorted({int(value) for value in values if str(value).strip()})
+    except ValueError:
+        raise ValueError(f"{what} are whole numbers.")
+    if any(not low <= number <= high for number in numbers):
+        raise ValueError(f"{what} go from {low} to {high}.")
+    return numbers
+
+
+def read_dates(text):
+    """["12-25", "01-01"] from "12-25, 1-1": real calendar dates (29 February too). Raises ValueError."""
+    dates = []
+    for raw in str(text or "").split(","):
+        raw = raw.strip()
+        if not raw:
+            continue
+        try:
+            month, day = (int(part) for part in raw.split("-"))
+            datetime.date(2024, month, day)  # a leap year: 29 February is a date
+        except ValueError:
+            raise ValueError(f"“{raw}” isn't a date: write month-day, like 12-25.")
+        dates.append(f"{month:02}-{day:02}")
+    return sorted(set(dates))
+
+
+def read_settings(kind, text):
+    """An event's own numbers, as JSON, checked for its kind. Raises ValueError."""
+    try:
+        found = json.loads(text or "{}")
+    except json.JSONDecodeError as error:
+        raise ValueError(f"The settings aren't JSON: {error.msg} (line {error.lineno}).")
+    if not isinstance(found, dict):
+        raise ValueError('The settings are written as {"name": value, ...}.')
+    if kind == "sale":
+        if found.get("what") not in SALE_WHATS:
+            raise ValueError(f"A sale's settings say what's on sale: \"what\" is one of {', '.join(SALE_WHATS)}.")
+        if not isinstance(found.get("discount"), int) or not 1 <= found["discount"] <= 90:
+            raise ValueError("A sale's \"discount\" is a percentage from 1 to 90.")
+    if kind == "tournament":
+        prizes = found.get("prizes")
+        if not isinstance(found.get("fee"), int) or found["fee"] < 0:
+            raise ValueError("A tournament's \"fee\" is a whole number of coins.")
+        if not isinstance(prizes, dict) or any(not isinstance(prizes.get(key), int) for key in ("champion", "final", "semi")):
+            raise ValueError("A tournament's \"prizes\" give coins for \"champion\", \"final\" and \"semi\".")
+    return found
+
+
+def change_event(data):
+    """Add or change an event from a posted form. Returns what was done; raises ValueError."""
+    name = str(data.get("name", "")).strip()[:80]
+    if not name:
+        raise ValueError("An event needs a name.")
+    kind = data.get("kind", "")
+    if kind not in dict(WorldEvent.KINDS):
+        raise ValueError("Choose what kind of event it is.")
+    fields = {
+        "name": name, "kind": kind, "about": str(data.get("about", "")).strip()[:300], "icon": str(data.get("icon", "")).strip()[:8],
+        "weekdays": read_numbers(data.getlist("weekdays"), 0, 6, "Weekdays"),
+        "times": read_numbers(data.getlist("times"), 0, 3, "Times"),
+        "every": (read_numbers([data.get("every") or 1], 1, 52, "Every so many weeks") or [1])[0],
+        "offset": (read_numbers([data.get("offset") or 0], 0, 51, "The offset") or [0])[0],
+        "first_week": (read_numbers([data.get("first_week") or 0], 0, 520, "The first week") or [0])[0],
+        "months": read_numbers(str(data.get("months", "")).split(","), 1, 12, "Months"),
+        "dates": read_dates(data.get("dates")),
+        "place": WorldPlace.objects.filter(key=data.get("place") or "").first(),
+        "settings": read_settings(kind, data.get("settings")),
+        "enabled": data.get("enabled") == "on",
+    }
+    if "add" in data:
+        key = slugify(data.get("key") or name)[:40]
+        if not key or WorldEvent.objects.filter(key=key).exists():
+            raise ValueError("Give it a key no other event has: letters, numbers and dashes.")
+        order = (WorldEvent.objects.aggregate(top=Max("order"))["top"] or 0) + 1
+        WorldEvent.objects.create(key=key, order=order, **fields)
+        return f"Added {name}."
+    event = WorldEvent.objects.filter(pk=data.get("event") or None).first()
+    if not event:
+        raise ValueError("That event has gone.")
+    for field, value in fields.items():
+        setattr(event, field, value)
+    event.save()
+    return f"Saved {name}." + ("" if event.enabled else " It's switched off.")

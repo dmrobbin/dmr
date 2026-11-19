@@ -1,0 +1,134 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Notice board · slot {{ save.slot }}{% endblock %}
+
+{% block content %}
+  {# The notice board (world_views.world_events): this week's events, today's sales, and the weekly tournament. #}
+  <p class="back"><a href="{% url 'weiss:world_town' save.slot %}">← Back to the town</a></p>
+  <div class="challenge-head">
+    <div>
+      <h1>Notice board</h1>
+      <p class="muted">Slot {{ save.slot }} · {{ date }} · {{ season }} · {{ save.time_of_day|lower }}</p>
+    </div>
+  </div>
+
+  {% if sales %}
+    <section class="notice-card notice-sales" aria-labelledby="notice-sales-title">
+      <h2 id="notice-sales-title" class="notice-title">On sale now, at the card shop</h2>
+      <ul class="notice-list">
+        {% for sale in sales %}<li><span aria-hidden="true">{{ sale.icon }}</span> <strong>{{ sale.name }}</strong>: {{ sale.about }}</li>{% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  <section class="notice-card" aria-labelledby="notice-board-title">
+    <h2 id="notice-board-title" class="notice-title">Pinned to the board</h2>
+    {% if notices %}
+      <ul class="notice-quests">
+        {% for notice in notices %}
+          <li class="notice-quest">
+            <p class="notice-quest-title"><strong>{{ notice.title }}</strong>
+              {% if notice.state == "done" %}<span class="town-stock-tag">Done this week</span>{% endif %}
+              {% if notice.count %}<span class="muted small">· done {{ notice.count }} time{{ notice.count|pluralize }}</span>{% endif %}</p>
+            <p class="small">{{ notice.about }}</p>
+            {% if notice.state != "done" %}
+              <p class="small"><strong>{{ notice.stage }}</strong>{% if notice.ends %} <span class="muted">· ends {{ notice.ends }}</span>{% endif %}</p>
+              <ul class="quest-objectives">
+                {% for obj in notice.objectives %}
+                  <li class="quest-objective{% if obj.done %} done{% endif %}">
+                    <span class="quest-box" aria-hidden="true">{% if obj.done %}✓{% endif %}</span>
+                    <span>{{ obj.text }}</span>
+                    {% if notice.state == "active" and obj.need > 1 %}<span class="quest-count small">{{ obj.have }}/{{ obj.need }}</span>{% endif %}
+                    {% if obj.card %}{% include "weiss/world_card_facts.html" with card=obj.card %}{% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+              {% if notice.rewards %}<p class="small muted">Reward: {{ notice.rewards|join:" · " }}</p>{% endif %}
+            {% endif %}
+            {% if notice.state == "offered" %}
+              <form method="post" action="{% url 'weiss:world_board' save.slot %}">{% csrf_token %}
+                <input type="hidden" name="act" value="take"><input type="hidden" name="quest" value="{{ notice.key }}">
+                <button type="submit" class="button-small">Take it</button>
+              </form>
+            {% elif notice.state == "settling" %}
+              {% for ending in notice.endings %}
+                <form method="post" action="{% url 'weiss:world_board' save.slot %}" class="notice-enter">{% csrf_token %}
+                  <input type="hidden" name="act" value="claim"><input type="hidden" name="quest" value="{{ notice.key }}">
+                  <input type="hidden" name="ending" value="{{ ending.key }}">
+                  <button type="submit" class="button-small">{{ ending.title }}</button>
+                </form>
+              {% endfor %}
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="small muted">Nothing pinned up right now. New notices go up each week.</p>
+    {% endif %}
+  </section>
+
+  {% if tournament %}
+    <section class="notice-card notice-tournament" aria-labelledby="notice-tournament-title">
+      <h2 id="notice-tournament-title" class="notice-title"><span aria-hidden="true">{{ tournament.icon }}</span> {{ tournament.name }}</h2>
+      <p>{{ tournament.about }}</p>
+      <p class="small muted">Entry {{ tournament.fee }} coins at the {{ tournament.place }}.
+        Prizes: {{ tournament.prizes.champion }} coins and a lucky pack for the champion, {{ tournament.prizes.final }} for reaching the final,
+        {{ tournament.prizes.semi }} for the semi-final.</p>
+
+      {% if not tournament.entered %}
+        {% if tournament.can_enter %}
+          <form method="post" action="{% url 'weiss:world_event_enter' save.slot %}" class="notice-enter">
+            {% csrf_token %}
+            <button type="submit" class="button-small"{% if save.money < tournament.fee %} disabled title="You have {{ save.money }} coins."{% endif %}>Enter · {{ tournament.fee }} coins</button>
+          </form>
+        {% else %}
+          <p class="small notice-why">{{ tournament.why }}</p>
+        {% endif %}
+      {% else %}
+        <p class="notice-status" role="status">
+          {% if tournament.champion %}<strong>You're this week's champion!</strong> You won {{ tournament.prize }} coins.
+          {% elif tournament.out is not None %}You're out. {% if tournament.prize %}You won {{ tournament.prize }} coins for getting that far.{% else %}Better luck next week.{% endif %}
+          {% else %}Next: <strong>{{ tournament.next }}</strong> on Sunday {{ tournament.next_time }}, at the {{ tournament.place }}{% if tournament.opponent != "…" %}, against <strong>{{ tournament.opponent }}</strong>{% endif %}.
+            Be there at that time, or it's a forfeit.{% endif %}
+        </p>
+        <div class="notice-bracket">
+          {% for round in tournament.rounds %}
+            <section class="notice-round" aria-label="{{ round.title }}, Sunday {{ round.time|lower }}">
+              <h3 class="notice-round-title">{{ round.title }} <span class="muted small">Sunday {{ round.time|lower }}</span></h3>
+              <ul class="notice-matches">
+                {% for match in round.matches %}
+                  <li class="notice-match{% if match.player %} is-player{% endif %}">
+                    <span class="{% if match.winner and match.winner == match.a %}is-winner{% elif match.winner %}is-loser{% endif %}">{{ match.a }}</span>
+                    <span class="muted small">v</span>
+                    <span class="{% if match.winner and match.winner == match.b %}is-winner{% elif match.winner %}is-loser{% endif %}">{{ match.b }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            </section>
+          {% endfor %}
+        </div>
+        <p class="small muted">The other matches are settled as the day goes on. Results show once each round's time has passed.</p>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  <section class="notice-card" aria-labelledby="notice-week-title">
+    <h2 id="notice-week-title" class="notice-title">This week</h2>
+    <ol class="notice-week">
+      {% for day in week %}
+        <li class="notice-day{% if day.today %} is-today{% elif day.past %} is-past{% endif %}">
+          <p class="notice-day-name"><strong>{{ day.weekday }}</strong> <span class="muted small">{{ day.label }}</span>{% if day.today %} <span class="town-stock-tag">Today</span>{% endif %}</p>
+          {% if day.events %}
+            <ul class="notice-list">
+              {% for event in day.events %}
+                <li><span aria-hidden="true">{{ event.icon }}</span> {{ event.name }} <span class="muted small">· {{ event.when }}{% if event.place %} · {{ event.place }}{% endif %}</span></li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="small muted">Nothing on.</p>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  </section>
+{% endblock %}

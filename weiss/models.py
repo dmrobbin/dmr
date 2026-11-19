@@ -740,6 +740,7 @@ class WorldSave(models.Model):
     gifts = models.JSONField(default=dict, blank=True, help_text="Gifts bought and not yet given: {gift key: how many}")
     quests = models.JSONField(default=dict, blank=True, help_text="Its quests (see weiss.quests): {log: {quest key: {...}}, gone: [cpu id], news: [...]}")
     today = models.JSONField(default=dict, blank=True, help_text="What's been done today (cleared each new day)")
+    events = models.JSONField(default=dict, blank=True, help_text="What it did at each event (see weiss.world_events): {event key: {week, ...}}")
     seed = models.PositiveIntegerField(default=0, help_text="Settles everything left to chance in this save, so a reload changes nothing")
     version = models.PositiveIntegerField(default=0, help_text="Goes up on every change")
     created = models.DateTimeField(auto_now_add=True)
@@ -769,6 +770,18 @@ class WorldSave(models.Model):
     def time_of_day(self):
         return self.TIMES[self.turn % 4]
 
+    @property
+    def date_label(self):
+        """"Monday 18 November" (weiss.world_calendar: every save starts on 18 November)."""
+        from . import world_calendar
+        return world_calendar.date_label(self.turn)
+
+    @property
+    def full_date(self):
+        """"Monday 18 November, Year 1"."""
+        from . import world_calendar
+        return world_calendar.full_label(self.turn)
+
 
 class WorldPlace(models.Model):
     """A place in world mode's town (see weiss.world): a scene the player can go to, with a backdrop for each time of day
@@ -791,6 +804,38 @@ class WorldPlace(models.Model):
     def backdrop(self, time):
         """Its backdrop at a time of day (0 morning to 3 night)."""
         return self.backdrops[time] if len(self.backdrops) == 4 else (self.backdrops or ["default"])[0]
+
+
+class WorldEvent(models.Model):
+    """Something on in world mode at set times (see weiss.world_events): a sale at the card shop, the weekly
+    tournament. When it's on is worked out from a save's calendar date: every rule given must hold, and an empty one
+    means any (no weekdays: every day; no times: all day)."""
+
+    KINDS = [("sale", "A sale at the card shop"), ("tournament", "The weekly tournament")]
+
+    key = models.SlugField(max_length=40, unique=True)
+    name = models.CharField(max_length=80)
+    about = models.CharField(max_length=300, blank=True, help_text="What the notice board says it is")
+    icon = models.CharField(max_length=8, blank=True, help_text="An emoji")
+    kind = models.CharField(max_length=20, choices=KINDS)
+    weekdays = models.JSONField(default=list, blank=True, help_text="0 Monday to 6 Sunday; empty for any day")
+    times = models.JSONField(default=list, blank=True, help_text="0 morning, 1 noon, 2 evening, 3 night; empty for all day")
+    every = models.PositiveSmallIntegerField(default=1, help_text="Every week (1), every other week (2), ...")
+    offset = models.PositiveSmallIntegerField(default=0, help_text="Which weeks, when it isn't every week: 0 the first")
+    first_week = models.PositiveSmallIntegerField(default=0, help_text="Not before this week of a save (0 the first)")
+    months = models.JSONField(default=list, blank=True, help_text="1 January to 12 December; empty for any month")
+    dates = models.JSONField(default=list, blank=True, help_text='Calendar dates, "MM-DD" ("12-25"); empty for any date')
+    place = models.ForeignKey(WorldPlace, null=True, blank=True, on_delete=models.SET_NULL, related_name="events",
+                              help_text="Where it happens, if anywhere (a tournament's arena)")
+    settings = models.JSONField(default=dict, blank=True, help_text="The kind's own numbers (see weiss.world_events)")
+    enabled = models.BooleanField(default=True)
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "name"]
+
+    def __str__(self):
+        return self.name
 
 
 class GiftItem(models.Model):
@@ -827,6 +872,11 @@ class Chatter(models.Model):
         ("after_loss", "After the player loses (its first line)"), ("rank_up", "Reaching its rank (min rank)"),
         ("estranged", "Talking, once a quest choice has closed its friendship for good"),
         ("hello", "Walking up to it (its first line)"), ("goodbye", "Leaving it (its first line)"),
+        ("tournament_spectator", "Talking in tournament week, to a CPU not in the bracket"),
+        ("tournament_entrant", "Talking in tournament week, to a CPU in the bracket"),
+        ("tournament_out", "Talking in tournament week, once the player is out"),
+        ("tournament_champion", "Talking in tournament week, once the player is champion"),
+        ("tournament_duel", "Before its tournament round duel (its first line)"),
     ]
 
     cpu = models.ForeignKey("CpuProfile", null=True, blank=True, on_delete=models.CASCADE, related_name="chatter",
