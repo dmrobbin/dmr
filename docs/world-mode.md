@@ -180,6 +180,14 @@ puts the player back where they were.
     by default), and you can buy one of each a day. A card goes straight into the save's cards without leaving the
     town (`world_buy_card`, a town move).
   - Staff set both prices on the World mode tab (migration 0051).
+  - **The basket** (`world.checkout`): every tab's "Add" puts things in a basket at the top of the counter:
+    packs (any number of a set), specialty packs, single cards and gifts. "Check out" buys them all at once, and every
+    pack is opened and revealed together ("Your purchases" when they're from more than one set).
+    - **How it's priced:** the server prices the basket again, sales and their limits included, and refuses if that
+      isn't the total the page showed.
+    - **All or nothing:** if anything can't be bought, nothing is.
+    - **Keeping it:** the basket lives in the tab's session storage, so leaving the shop or reloading keeps it.
+    - **Limits:** 30 packs and 20 lines.
   - **Asking for a set** (`world.request_set`, under the Packs tab): the player picks any set the shop can get (all but
     the save's own) and pays `request_price` (300 by default; staff set it on the World mode tab, migration 0060). It's on
     the shelves from the next day for 3 days (`REQUEST_DAYS`), next to the save's own set and tagged "Requested", so its

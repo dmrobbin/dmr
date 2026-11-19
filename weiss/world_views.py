@@ -425,6 +425,21 @@ def world_buy(request, slot):
 
 
 @town_move
+def world_checkout(request, save):
+    """Buy everything in the basket (the page keeps it, and posts it as JSON) at once: one payment, and the packs
+    revealed together. `expected` is the total the page showed, so a price that's moved is said, not charged."""
+    try:
+        items = json.loads(request.POST.get("basket") or "[]")
+        expected = int(request.POST["expected"]) if request.POST.get("expected") else None
+    except (ValueError, TypeError):
+        raise ValueError("Your basket couldn't be read. Try again.")
+    done = world.checkout(save, items, expected)
+    if done["packs"]:
+        return {"go": reverse("weiss:world_opened", args=[save.slot])}
+    return f"Bought {', '.join(done['bought'])}."
+
+
+@town_move
 def world_buy_card(request, save):
     """Buy one of the shop's single cards: it goes straight into the save's cards."""
     card = world.buy_card(save, request.POST.get("card", ""))

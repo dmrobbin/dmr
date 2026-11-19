@@ -39,6 +39,7 @@ urlpatterns = [
     path("world/<int:slot>/town/buy/", world_views.world_buy, name="world_buy"),
     path("world/<int:slot>/town/buy-card/", world_views.world_buy_card, name="world_buy_card"),
     path("world/<int:slot>/town/buy-gift/", world_views.world_buy_gift, name="world_buy_gift"),
+    path("world/<int:slot>/town/checkout/", world_views.world_checkout, name="world_checkout"),
     path("world/<int:slot>/town/request-set/", world_views.world_request_set, name="world_request_set"),
     path("world/<int:slot>/town/talk/", world_views.world_talk, name="world_talk"),
     path("world/<int:slot>/town/answer/", world_views.world_answer, name="world_answer"),

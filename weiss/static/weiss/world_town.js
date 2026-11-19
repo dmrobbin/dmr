@@ -996,6 +996,145 @@
     return button;
   }
 
+  // ---- The basket: things are added from every tab and bought at once (weiss.world.checkout), so packs open
+  // together. It's kept in this tab's session storage, so leaving the shop (or reloading) doesn't lose it; the server
+  // prices it again and is the one that's right.
+
+  const basketKey = `world-basket-${root.dataset.slot}`;
+  let basket = (() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(basketKey) || "[]");
+      return Array.isArray(saved) ? saved : [];
+    } catch {
+      return [];
+    }
+  })();
+
+  function keepBasket() {
+    try {
+      if (basket.length) sessionStorage.setItem(basketKey, JSON.stringify(basket));
+      else sessionStorage.removeItem(basketKey);
+    } catch { /* the basket lasts this page, then */ }
+  }
+
+  const sameLine = (a, b) => a.kind === b.kind && ["set", "special", "level", "color", "card", "gift"].every((field) => (a[field] ?? "") === (b[field] ?? ""));
+  const PACK_KINDS = ["pack", "special"];
+  const MAX_BASKET_PACKS = 30;
+
+  // An "Add" button: like a buy button, but never disabled for money (the basket says if it's over).
+  function addButton(label, cost, onAdd, secondary = false, was = null) {
+    const button = buyButton(label, cost, onAdd, secondary, was);
+    button.disabled = false;
+    button.removeAttribute("title");
+    return button;
+  }
+
+  function addToBasket(line, label) {
+    const packs = basket.filter((item) => PACK_KINDS.includes(item.kind)).reduce((n, item) => n + item.count, 0);
+    if (PACK_KINDS.includes(line.kind) && packs + line.count > MAX_BASKET_PACKS) return say(`A basket holds ${MAX_BASKET_PACKS} packs at most.`);
+    const found = basket.find((item) => sameLine(item, line));
+    if (found && line.kind === "card") return say(`${label} is in your basket already: one of each a day.`);
+    if (found) found.count += line.count;
+    else basket.push({ ...line, label });
+    keepBasket();
+    paintBasket();
+    if (line.kind === "card") listCards();
+    say(`Added ${line.count > 1 ? `${line.count} × ` : ""}${label} to your basket.`);
+  }
+
+  function setCount(line, count) {
+    if (count < 1) basket = basket.filter((item) => item !== line);
+    else line.count = Math.min(count, MAX_BASKET_PACKS);
+    keepBasket();
+    paintBasket();
+    if (line.kind === "card") listCards();
+  }
+
+  // What a line costs now, as the server works it out (weiss.world.basket_cost); null if the shop no longer has it.
+  function lineCost(line) {
+    const shopNow = town.shop;
+    if (line.kind === "pack") {
+      const set = shopNow.stock.find((entry) => entry.id === line.set);
+      if (!set) return null;
+      if (!set.was) return set.price * line.count;
+      const cheap = set.sale_left === null || set.sale_left === undefined ? line.count : Math.min(line.count, set.sale_left);
+      return set.price * cheap + shopNow.price * (line.count - cheap);
+    }
+    if (line.kind === "special") return shopNow.stock.some((entry) => entry.id === line.set) ? shopNow.specialty_price * line.count : null;
+    if (line.kind === "card") {
+      const card = shopNow.cards.find((entry) => entry.id === line.card);
+      return card && !card.sold ? shopNow.card_price : null;
+    }
+    const item = (shopNow.gifts || []).find((entry) => entry.key === line.gift);
+    return item ? item.price * line.count : null;
+  }
+
+  function basketTotal() {
+    return basket.reduce((sum, line) => sum + (lineCost(line) ?? 0), 0);
+  }
+
+  function paintBasket() {
+    if (!town.shop) return;
+    const lines = $("[data-basket-lines]");
+    lines.replaceChildren();
+    for (const line of basket) {
+      const cost = lineCost(line);
+      const row = el("li", `town-basket-line${cost === null ? " is-gone" : ""}`);
+      const name = el("span", "town-basket-name", line.label);
+      if (cost === null) name.append(" ", el("span", "small muted", "(not in the shop today)"));
+      row.append(name);
+      if (line.kind !== "card" && cost !== null) {
+        const stepper = el("span", "town-basket-stepper");
+        const less = el("button", "button-small secondary", "−");
+        less.type = "button";
+        less.setAttribute("aria-label", `One fewer ${line.label}`);
+        less.addEventListener("click", () => setCount(line, line.count - 1));
+        const more = el("button", "button-small secondary", "+");
+        more.type = "button";
+        more.setAttribute("aria-label", `One more ${line.label}`);
+        more.addEventListener("click", () => setCount(line, line.count + 1));
+        stepper.append(less, el("span", "town-basket-count", `× ${line.count}`), more);
+        row.append(stepper);
+      }
+      row.append(el("span", "town-basket-cost", cost === null ? "" : coins(cost)));
+      const remove = el("button", "town-basket-remove", "×");
+      remove.type = "button";
+      remove.setAttribute("aria-label", `Take ${line.label} out of the basket`);
+      remove.addEventListener("click", () => setCount(line, 0));
+      row.append(remove);
+      lines.append(row);
+    }
+    const total = basketTotal();
+    const gone = basket.some((line) => lineCost(line) === null);
+    const units = basket.reduce((n, line) => n + line.count, 0);
+    $("[data-basket-count]").textContent = units ? `(${units})` : "";
+    $("[data-basket-none]").hidden = Boolean(basket.length);
+    $("[data-basket-empty]").hidden = !basket.length;
+    $("[data-basket-foot]").hidden = !basket.length;
+    const short = total > town.money;
+    $("[data-basket-total]").textContent = gone
+      ? "Take out what the shop doesn't have today to check out."
+      : `Total ${coins(total)} coins. You have ${coins(town.money)}${short ? `: ${coins(total - town.money)} short.` : "."}`;
+    const checkout = $("[data-checkout]");
+    checkout.disabled = !basket.length || gone || short;
+    checkout.textContent = `Check out · ${coins(total)}`;
+  }
+
+  async function checkOut() {
+    const total = basketTotal();
+    const items = basket.map(({ label, ...line }) => line);
+    const data = await post(root.dataset.checkoutUrl, { basket: JSON.stringify(items), expected: total });
+    if (!data) return; // said why (post); the basket's kept
+    basket = [];
+    keepBasket();
+    if (data.go) {
+      window.location.assign(data.go); // the packs, revealed together
+      return;
+    }
+    listStock();
+    say(data.said);
+  }
+
   function cover(set, className) {
     const img = document.createElement("img");
     img.className = className;
@@ -1026,6 +1165,7 @@
     listSpecials();
     listCards();
     listGifts();
+    paintBasket();
   }
 
   function listGifts() {
@@ -1056,21 +1196,13 @@
       text.append(name, about);
       const buttons = document.createElement("div");
       buttons.className = "town-stock-buy";
-      const button = buyButton("Buy", item.price, () => buyGift(item));
-      button.setAttribute("aria-label", `Buy ${item.name} for ${coins(item.price)} coins`);
+      const button = addButton("Add", item.price, () => addToBasket({ kind: "gift", gift: item.key, count: 1 }, `${item.icon} ${item.name}`.trim()));
+      button.setAttribute("aria-label", `Add ${item.name} to your basket, ${coins(item.price)} coins`);
       button.dataset.gift = item.key;
       buttons.append(button);
       row.append(icon, text, buttons);
       list.append(row);
     }
-  }
-
-  async function buyGift(item) {
-    const data = await post(root.dataset.buyGiftUrl, { gift: item.key });
-    if (!data) return;
-    paint();
-    say(data.said);
-    $(`[data-gift-stock] [data-gift="${item.key}"]`)?.focus({ preventScroll: true });
   }
 
   function listPacks() {
@@ -1091,8 +1223,9 @@
       const buttons = document.createElement("div");
       buttons.className = "town-stock-buy";
       buttons.append(
-        buyButton("1 pack", set.price, () => buy({ set: set.id, count: 1 }), false, set.was),
-        buyButton("5 packs", set.price_5, () => buy({ set: set.id, count: 5 }), true, set.price_5 < price * 5 ? price * 5 : null),
+        addButton("Add 1", set.price, () => addToBasket({ kind: "pack", set: set.id, count: 1 }, `${set.name} pack`), false, set.was),
+        addButton("Add 5", set.price_5, () => addToBasket({ kind: "pack", set: set.id, count: 5 }, `${set.name} pack`), true,
+          set.price_5 < price * 5 ? price * 5 : null),
       );
       item.append(cover(set, "town-stock-cover"), name, buttons);
       list.append(item);
@@ -1163,7 +1296,12 @@
         choice.append(...options);
         buttons.append(choice);
       }
-      buttons.append(buyButton("Buy", price, () => buy({ special: special.key, set: specialSet, [special.asks || "none"]: choice?.value ?? "" }), false, town.shop.specialty_was));
+      buttons.append(addButton("Add", price, () => {
+        const setName = stock.find((set) => set.id === specialSet)?.name || "";
+        const picked = special.asks ? { [special.asks]: choice.value } : {};
+        const what = special.asks === "level" ? `, level ${choice.value}` : special.asks === "color" ? `, ${choice.value}` : "";
+        addToBasket({ kind: "special", special: special.key, set: specialSet, ...picked, count: 1 }, `${special.name} (${setName}${what})`);
+      }, false, town.shop.specialty_was));
       item.append(text, buttons);
       list.append(item);
     }
@@ -1213,9 +1351,15 @@
         button.className = "button-small secondary";
         button.textContent = "Bought today";
         button.disabled = true;
+      } else if (basket.some((line) => line.kind === "card" && line.card === card.id)) {
+        button = document.createElement("button");
+        button.type = "button";
+        button.className = "button-small secondary";
+        button.textContent = "In your basket";
+        button.disabled = true;
       } else {
-        button = buyButton("Buy", price, () => buyCard(card), false, town.shop.card_was);
-        button.setAttribute("aria-label", `Buy ${card.name} for ${coins(price)} coins`);
+        button = addButton("Add", price, () => addToBasket({ kind: "card", card: card.id, count: 1 }, card.name), false, town.shop.card_was);
+        button.setAttribute("aria-label", `Add ${card.name} to your basket, ${coins(price)} coins`);
       }
       item.append(link, name, set, button);
       row.append(item);
@@ -1229,19 +1373,6 @@
     const [back, more] = root.querySelectorAll("[data-cards-step]");
     back.disabled = row.scrollLeft <= 2;
     more.disabled = row.scrollLeft + row.clientWidth >= row.scrollWidth - 2;
-  }
-
-  async function buyCard(card) {
-    const data = await post(root.dataset.buyCardUrl, { card: card.id });
-    if (!data) return;
-    paint();
-    say(data.said);
-  }
-
-  function buy(fields) {
-    const form = document.querySelector("[data-buy-form]");
-    for (const input of form.querySelectorAll("input[type=hidden]:not([name=csrfmiddlewaretoken])")) input.value = fields[input.name] ?? "";
-    form.submit();
   }
 
   function openShop() {
@@ -1270,6 +1401,14 @@
   });
   mapButton.addEventListener("click", () => (map.hidden ? openMap() : dismissMap()));
   shopButton.addEventListener("click", () => (shop.hidden ? openShop() : closeShop()));
+  $("[data-checkout]").addEventListener("click", checkOut);
+  $("[data-basket-empty]").addEventListener("click", () => {
+    const had = basket.length;
+    basket = [];
+    keepBasket();
+    listStock();
+    if (had) say("Your basket's empty.");
+  });
   $("[data-close-map]").addEventListener("click", () => dismissMap());
   $("[data-close-shop]").addEventListener("click", () => closeShop());
   for (const tab of root.querySelectorAll("[data-shop-tab]")) tab.addEventListener("click", () => showTab(tab.dataset.shopTab));

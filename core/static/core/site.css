@@ -3327,3 +3327,24 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .notice-quest-title { margin: 0 0 .25rem; }
 .notice-quest p { margin: 0 0 .35rem; }
 .quest-timed { background: var(--accent-soft); }
+/* World mode, the card shop: the basket */
+.town-basket { margin: 0 0 .8rem; padding: .7rem .8rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--bg); }
+.town-basket-head { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
+.town-basket-title { margin: 0 0 .3rem; font-size: .95rem; }
+.town-basket [data-basket-none] { margin: 0; }
+.town-basket-lines { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .35rem; }
+.town-basket-line { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; align-items: center; gap: .5rem; font-size: .9rem; }
+.town-basket-line.is-gone .town-basket-name { color: var(--muted); text-decoration: line-through; }
+.town-basket-name { min-width: 0; overflow-wrap: anywhere; }
+.town-basket-stepper { display: inline-flex; align-items: center; gap: .25rem; }
+.town-basket-stepper .button-small { min-width: 2rem; min-height: 2rem; padding: 0 .4rem; }
+.town-basket-count { min-width: 2.2rem; text-align: center; font-variant-numeric: tabular-nums; }
+.town-basket-cost { font-variant-numeric: tabular-nums; text-align: right; min-width: 3.5rem; }
+.town-basket-remove { min-width: 2rem; min-height: 2rem; border: 0; background: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; border-radius: .3rem; }
+.town-basket-remove:hover, .town-basket-remove:focus-visible { color: var(--text); background: var(--accent-soft); }
+.town-basket-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; margin-top: .6rem; padding-top: .5rem; border-top: 1px solid var(--border); }
+.town-basket-total { margin: 0; font-size: .9rem; }
+@media (max-width: 480px) {
+  .town-basket-line { grid-template-columns: minmax(0, 1fr) auto auto; }
+  .town-basket-stepper { grid-column: 1 / 2; grid-row: 2; }
+}

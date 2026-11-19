@@ -8,7 +8,7 @@
 
   <div class="town" data-world-town data-state-url="{% url 'weiss:world_town_state' save.slot %}"
        data-travel-url="{% url 'weiss:world_travel' save.slot %}" data-wait-url="{% url 'weiss:world_wait' save.slot %}"
-       data-duel-url="{% url 'weiss:world_duel' save.slot %}" data-buy-card-url="{% url 'weiss:world_buy_card' save.slot %}" data-request-set-url="{% url 'weiss:world_request_set' save.slot %}"
+       data-duel-url="{% url 'weiss:world_duel' save.slot %}" data-buy-card-url="{% url 'weiss:world_buy_card' save.slot %}" data-request-set-url="{% url 'weiss:world_request_set' save.slot %}" data-checkout-url="{% url 'weiss:world_checkout' save.slot %}" data-slot="{{ save.slot }}"
        data-buy-gift-url="{% url 'weiss:world_buy_gift' save.slot %}" data-talk-url="{% url 'weiss:world_talk' save.slot %}"
        data-answer-url="{% url 'weiss:world_answer' save.slot %}" data-give-url="{% url 'weiss:world_give' save.slot %}" data-level-url="{% url 'weiss:world_level' save.slot %}" data-decks-url="{% url 'weiss:world_save' save.slot %}#decks"
        data-quest-url="{% url 'weiss:world_quest' save.slot %}" data-jump-url="{% url 'weiss:world_jump' save.slot %}" data-test-mode-url="{% url 'weiss:world_test_mode' save.slot %}"
@@ -91,6 +91,19 @@
           <h2>The card shop</h2>
           <button type="button" class="button-small secondary" data-close-shop>Close</button>
         </div>
+        {# The basket (world_town.js): things are added from every tab, then bought at once (world_views.world_checkout). #}
+        <section class="town-basket" data-basket aria-labelledby="town-basket-title">
+          <div class="town-basket-head">
+            <h3 class="town-basket-title" id="town-basket-title">Your basket <span class="muted small" data-basket-count></span></h3>
+            <button type="button" class="link-button small" data-basket-empty hidden>Empty it</button>
+          </div>
+          <p class="small muted" data-basket-none>Nothing yet. Add packs, cards or gifts from the tabs below, then check out once: packs open together.</p>
+          <ul class="town-basket-lines" data-basket-lines></ul>
+          <div class="town-basket-foot" data-basket-foot hidden>
+            <p class="town-basket-total" data-basket-total aria-live="polite"></p>
+            <button type="button" class="button-small" data-checkout>Check out</button>
+          </div>
+        </section>
         <div class="town-shop-tabs" role="tablist" aria-label="What the shop sells">
           <button type="button" role="tab" id="shop-tab-packs" aria-controls="shop-packs" data-shop-tab="packs">Packs</button>
           <button type="button" role="tab" id="shop-tab-specials" aria-controls="shop-specials" data-shop-tab="specials">Specialty packs</button>
@@ -147,10 +160,6 @@
     <p class="small muted town-help">Look around and shop as much as you like. Once you talk to someone, give a gift or duel, you're spending this
       time of day here: talk to and give gifts to whoever's around, then pass time (a duel passes it by itself). Keys: M map, W pass time, Esc back.</p>
   </div>
-  <form method="post" action="{% url 'weiss:world_buy' save.slot %}" data-buy-form hidden>
-    {% csrf_token %}<input type="hidden" name="set"><input type="hidden" name="count">
-    <input type="hidden" name="special"><input type="hidden" name="level"><input type="hidden" name="color">
-  </form>
   {{ town|json_script:"town-state" }}
   {{ result|json_script:"town-result" }}
   <script src="{% static 'weiss/backdrops.js' %}" defer></script>

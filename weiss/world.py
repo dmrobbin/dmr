@@ -857,6 +857,144 @@ def buy_specialty(save, buff_id, data, rng=random):
     return save.last_opening
 
 
+# ---------------------------------------------------------------- The basket: buying several things at once
+
+MAX_BASKET_LINES = 20
+MAX_BASKET_PACKS = 30  # packs (and specialty packs) in one checkout
+BASKET_KINDS = ("pack", "special", "card", "gift")
+
+
+def read_basket(save, items):
+    """The basket as posted, checked against what the shop has now: [{"kind", ..., "count"}], same lines merged.
+    Raises ValueError saying what's wrong."""
+    if not isinstance(items, list) or not items:
+        raise ValueError("Your basket's empty.")
+    if len(items) > MAX_BASKET_LINES:
+        raise ValueError(f"A basket holds {MAX_BASKET_LINES} different things at most.")
+    stocked = {entry["id"]: entry["name"] for entry in shop_stock(save)}
+    cards = {card.pk: card for card in shop_cards(save)}
+    bought = set(save.today.get("bought_cards", []))
+    gifts = {item.key: item for item in gift_items(save)}
+    lines = {}
+    for raw in items:
+        if not isinstance(raw, dict) or raw.get("kind") not in BASKET_KINDS:
+            raise ValueError("Something in your basket isn't sold here.")
+        kind = raw["kind"]
+        try:
+            count = int(raw.get("count") or 1)
+        except (TypeError, ValueError):
+            raise ValueError("Each line of the basket needs a number of how many.")
+        if not 1 <= count <= MAX_BASKET_PACKS:
+            raise ValueError(f"Buy 1 to {MAX_BASKET_PACKS} of anything at a time.")
+        if kind == "pack":
+            expansion_id = int(raw.get("set") or 0)
+            if expansion_id not in stocked:
+                raise ValueError("A set in your basket isn't on the shelves today.")
+            key = ("pack", expansion_id)
+            line = {"kind": "pack", "set": expansion_id, "name": f"{stocked[expansion_id]} pack"}
+        elif kind == "special":
+            expansion_id = int(raw.get("set") or 0)
+            if raw.get("special") not in SHOP_SPECIALS or expansion_id not in stocked:
+                raise ValueError("A specialty pack in your basket can't be made from today's sets.")
+            buff = buffs.BUFFS[raw["special"]]
+            choice = {"level": str(raw.get("level", "")), "color": str(raw.get("color", ""))}
+            if buff.pack == "level" and choice["level"] not in {str(level) for level in buffs.LEVELS}:
+                raise ValueError(f"Choose a level for the {buff.name.lower()}.")
+            if buff.pack == "color" and choice["color"] not in buffs.COLORS:
+                raise ValueError(f"Choose a color for the {buff.name.lower()}.")
+            key = ("special", raw["special"], expansion_id, choice["level"], choice["color"])
+            line = {"kind": "special", "special": raw["special"], "set": expansion_id, **choice, "name": buff.name}
+        elif kind == "card":
+            card = cards.get(int(raw.get("card") or 0))
+            if not card:
+                raise ValueError("A card in your basket isn't on the rack today.")
+            if card.pk in bought:
+                raise ValueError(f"You've bought today's {card.name} already.")
+            key, count = ("card", card.pk), 1  # one of each a day
+            line = {"kind": "card", "card": card.pk, "name": card.name}
+        else:
+            item = gifts.get(str(raw.get("gift") or ""))
+            if not item:
+                raise ValueError("A gift in your basket isn't sold here.")
+            if save.gifts.get(item.key, 0) + count > MAX_GIFTS:
+                raise ValueError(f"You can carry {MAX_GIFTS} {item.name.lower()} at most.")
+            key = ("gift", item.key)
+            line = {"kind": "gift", "gift": item.key, "name": item.name, "price": item.price}
+        if key in lines:
+            if kind == "card":
+                continue
+            lines[key]["count"] += count
+        else:
+            lines[key] = {**line, "count": count}
+    found = list(lines.values())
+    if sum(line["count"] for line in found if line["kind"] in ("pack", "special")) > MAX_BASKET_PACKS:
+        raise ValueError(f"A basket holds {MAX_BASKET_PACKS} packs at most.")
+    return found
+
+
+def basket_cost(save, lines):
+    """What the basket comes to now, sales and their limits included: (total, [each line's cost])."""
+    specialty, _ = events.specialty_cost(save)
+    card, _ = events.card_cost(save)
+    costs = []
+    for line in lines:
+        if line["kind"] == "pack":
+            costs.append(events.pack_cost(save, line["set"], line["count"])[0])
+        elif line["kind"] == "special":
+            costs.append(specialty * line["count"])
+        elif line["kind"] == "card":
+            costs.append(card)
+        else:
+            costs.append(line["price"] * line["count"])
+    return sum(costs), costs
+
+
+def checkout(save, items, expected=None, rng=random):
+    """Buy everything in the basket at once: it's all paid for and opened together, or (if anything can't be bought)
+    nothing is, since the caller's transaction is undone. `expected`: the total the page showed; if prices have moved
+    since (a sale ended), nothing's bought and the player's told. The packs opened are revealed together.
+    Returns {"packs": how many packs were opened, "bought": [what was bought, in words]}."""
+    here = place_of(save)
+    if not here or not here.shop:
+        raise ValueError("You need to be at the card shop.")
+    lines = read_basket(save, items)
+    total, _ = basket_cost(save, lines)
+    if expected is not None and int(expected) != total:
+        raise ValueError(f"Prices have changed since you filled your basket: it comes to {total:,} coins now. Check it and try again.")
+    if total > save.money:
+        raise ValueError(f"Your basket comes to {total:,} coins, and you have {save.money:,}.")
+    opened, set_ids, names, bought = [], [], set(), []
+
+    def took_opening():
+        opened.extend(save.last_opening.get("packs", []))
+        set_ids.append(save.last_opening.get("set_id"))
+        names.add(save.last_opening.get("set", ""))
+
+    for line in lines:
+        if line["kind"] == "pack":
+            left = line["count"]
+            while left:
+                chunk = min(left, 10)
+                buy_packs(save, line["set"], chunk, rng)
+                took_opening()
+                left -= chunk
+        elif line["kind"] == "special":
+            for _ in range(line["count"]):
+                buy_specialty(save, line["special"], line, rng)
+                took_opening()
+        elif line["kind"] == "card":
+            buy_card(save, line["card"])
+        else:
+            for _ in range(line["count"]):
+                buy_gift(save, line["gift"])
+        bought.append(f"{line['name']}" + (f" ×{line['count']}" if line["count"] > 1 else ""))
+    if opened:  # every pack, revealed together
+        save.last_opening = {"set": names.pop() if len(names) == 1 else "Your purchases", "grades": packs.GRADE_NAMES,
+                             "packs": opened, "set_id": set_ids[0], "bought": True}
+        changed(save, "last_opening")
+    return {"packs": len(opened), "bought": bought}
+
+
 def shop(save):
     """The card shop's counter as the town shows it: today's sets (with their covers), the specialty packs, and the
     single cards (with their pictures, and whether they're bought today)."""
