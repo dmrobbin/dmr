@@ -2239,3 +2239,594 @@ CAST = [
               "choice", "- You're my best friend.", "- You don't have to carry it alone.",
               "me (pleased): Best friend. I accept. And I'll guard it with everything I have."]),
 ]
+
+ARRIVALS = [
+  {
+    "newcomer": "Denji",
+    "name": "World: Arrival, Denji",
+    "lines": [
+      "background sakura",
+      "me enters left with slide",
+      "me: Yo. Is anyone giving out free food? Anyone at all?",
+      "me (dismayed): ...Okay, no free food. That's fine. I'll find some. I always do.",
+      "me: You look like someone with a sandwich. Just saying.",
+      "player: Do you give him something to eat?",
+      "choice What do you do?",
+      "- Tell Denji the sandwich is his, and he owes you a favour. (set side_me)",
+      "- Tell him the free food's in the cafe, and he should follow you. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Power",
+    "name": "World: Arrival, Power",
+    "lines": [
+      "background sakura",
+      "me enters center with zoom",
+      "me: Hah! This town is Power's now! Power claims it, from the plaza to the sky!",
+      "me (dismayed): ...Power is not impressed by the sky. Power is impressed by you. A little.",
+      "me: Bow, human. Power has arrived.",
+      "player: Power wants the whole town. Do you let her have it?",
+      "choice How do you answer?",
+      "- Tell Power the town is shared, and she should stop shouting. (set side_me)",
+      "- Tell Power you'll bow, if she shares the snacks. (set side_me, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Aki Hayakawa",
+    "name": "World: Arrival, Aki Hayakawa",
+    "lines": [
+      "background rooftop",
+      "me enters right with fade",
+      "me: I'm not going to say anything. Just sit down and smoke with me, or don't.",
+      "me (dismayed): ...You're staring. It's okay. I'm not used to people watching me.",
+      "me: The Fox Devil's price is not something I talk about. Not yet.",
+      "player: He hasn't said a word for a while. Do you break the silence?",
+      "choice What do you say?",
+      "- Tell Aki he's bad company, and go back to the stairs. (set side_me)",
+      "- Tell Aki you'll sit quietly, as long as he likes. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Makima",
+    "name": "World: Arrival, Makima",
+    "lines": [
+      "background rooftop",
+      "me enters center with fade",
+      "me: Hello. I know your name. I've been waiting for you to arrive.",
+      "me (pleased): Don't be frightened. I only want to help you be a good dog.",
+      "me: Sit. There, that's better. Now, what would you like to talk about?",
+      "player: She already knows your name. Are you comfortable with that?",
+      "choice What's your response?",
+      "- Tell Makima you'd rather she didn't use your name, and walk away. (set side_me)",
+      "- Tell Makima you're happy to talk, and see where it goes. (set side_me, give climax_pack)"
+    ]
+  },
+  {
+    "newcomer": "Beast Titan",
+    "name": "World: Arrival, Beast Titan",
+    "lines": [
+      "background forest",
+      "me enters left with drop",
+      "me: Oh, sorry. Did my ball go over the trees? Would you mind fetching it?",
+      "me (pleased): Thank you! You're very polite. That's a good quality in a person.",
+      "me: Tom Ksaver used to fetch for me. I miss those afternoons.",
+      "player: He wants you to fetch the ball. Do you go?",
+      "choice How do you respond?",
+      "- Tell him the ball is his problem, and walk off. (set side_me)",
+      "- Go and fetch the ball, and bring it back to him with a smile. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Eren",
+    "name": "World: Arrival, Eren",
+    "lines": [
+      "background arena",
+      "me enters right with slide",
+      "me: I've been training since dawn. My hands are bleeding, but I don't care.",
+      "me (dismayed): Don't look at my hands. They'll heal. They always do.",
+      "me: If you want to fight, do it now. I'm not stopping until the sun goes down.",
+      "player: His hands are bleeding. Do you bandage them, or let him keep going?",
+      "choice What do you do?",
+      "- Tell Eren to stop, because his hands are a mess. (set side_me)",
+      "- Bandage his hands, and tell him he can keep training after. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Levi",
+    "name": "World: Arrival, Levi",
+    "lines": [
+      "background cafe",
+      "me enters center with fade",
+      "me: Hm. Dust on the windowsill. Who runs this place?",
+      "me (dismayed): Tch. Fine. I'll sit, as long as nobody touches my cup.",
+      "me: You wiped your table, I hope? Good. Keep it that way.",
+      "player: He's inspecting the cafe before sitting. Do you wipe the table for him?",
+      "choice What do you say?",
+      "- Tell Levi the cafe's dirty, and he can clean it himself. (set side_me)",
+      "- Wipe the table for him, and pour him a fresh cup. (set side_me, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Mikasa",
+    "name": "World: Arrival, Mikasa",
+    "lines": [
+      "background arena",
+      "me enters left with fade",
+      "me: Excuse me. Have you seen a boy with green eyes? He's around here somewhere.",
+      "me (dismayed): He's not a threat. Just tell me if you've seen him. Please.",
+      "me: I'll look for him in the arena. He's always training there.",
+      "player: She's looking for a boy with green eyes. Do you help her search?",
+      "choice What's your response?",
+      "- Tell Mikasa you haven't seen anyone, and let her keep looking alone. (set side_me)",
+      "- Tell Mikasa you'll help her search, and check the arena with her. (set side_me, give climax_pack)"
+    ]
+  },
+  {
+    "newcomer": "Nui Harime",
+    "name": "World: Arrival, Nui Harime",
+    "lines": [
+      "background ruins",
+      "me enters right with pop",
+      "me: Hi! I'm sewing a doll of someone you know. Who? That's a surprise, teehee!",
+      "me (pleased): Do you want to be measured? You'd make a lovely doll, probably.",
+      "me: Hold still, I'll just take a little measurement. It won't hurt. Much.",
+      "player: A doll of someone you know. Do you let her measure you?",
+      "choice What do you say?",
+      "- Tell Nui you'd rather not be measured, and walk out. (set side_me)",
+      "- Let Nui measure you, and tell her the doll will be beautiful. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Ragyo Kiryuin",
+    "name": "World: Arrival, Ragyo Kiryuin",
+    "lines": [
+      "background ruins",
+      "me enters center with fade",
+      "me: The lights are dimming. That's just me. I'm glowing, a little, for the family.",
+      "me (pleased): Come closer. Let me see your clothing. It's a family matter.",
+      "me: Satsuki is becoming difficult. I'll need your help with her, in time.",
+      "player: The lights go out when she enters. Do you come closer?",
+      "choice What's your response?",
+      "- Tell Ragyo the lights are a bit much, and she should turn them on. (set side_me)",
+      "- Step closer, and offer to help the family, in time. (set side_me, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Ryuko Matoi",
+    "name": "World: Arrival, Ryuko Matoi",
+    "lines": [
+      "background arena",
+      "me enters center with pop",
+      "me: Senketsu, stop it! Okay, I'm talking to my uniform. Don't judge me.",
+      "me (dismayed): He says you look weird. I'm sorry. He's really loud, you know.",
+      "me: Hey, you're new here, right? You want to fight, or just talk to a uniform?",
+      "player: She's talking to her uniform. Do you join the conversation?",
+      "choice How do you respond?",
+      "- Tell Ryuko she should stop talking to the uniform, and get some sleep. (set side_me)",
+      "- Tell Senketsu you like him, and let Ryuko laugh. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Satsuki Kiryuin",
+    "name": "World: Arrival, Satsuki Kiryuin",
+    "lines": [
+      "background classroom",
+      "me enters left with slide",
+      "me: I am taking over the student council by noon. This school requires discipline.",
+      "me (pleased): You will be assessed. Three questions. Answer quickly.",
+      "me: Do not be late. Lateness is weakness, and I do not tolerate weakness.",
+      "player: She's taking over the council by lunchtime. Do you answer her questions?",
+      "choice What's your answer?",
+      "- Tell Satsuki she can't run the school, and walk out of the room. (set side_me)",
+      "- Answer her three questions, and see what she does with the answers. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Denji",
+    "name": "World: Arrival, Denji & Megumin",
+    "lines": [
+      "cast megumin as Megumin",
+      "background sakura",
+      "me enters left with slide",
+      "megumin enters right with fade",
+      "megumin: Denji! Do you want to see my explosion? It's the best one in town!",
+      "me (pleased): Explosion? Do you have any food for after? Please say yes.",
+      "megumin (pleased): Hah! I'll blow up a donut for you, if you carry me home.",
+      "player: Two very simple dreams. Do you back Denji's food, or Megumin's explosion?",
+      "choice Who do you side with?",
+      "- Tell Denji the food is worth more than the explosion, and he should eat. (set side_me)",
+      "- Tell Megumin the explosion is great, and she should show it off. (set side_megumin, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Denji",
+    "name": "World: Arrival, Denji & Power",
+    "lines": [
+      "cast power as Power",
+      "background sakura",
+      "me enters left with slide",
+      "power enters right with fade",
+      "power: Human! Power is here to rule this plaza. You should bow, and share your food.",
+      "me (dismayed): Power? You're the one who ate my donut yesterday? Hah, no way!",
+      "power (dismayed): Power did not eat the donut! It was... stolen. By a bird.",
+      "player: They arrive together, arguing. Whose side are you on?",
+      "choice Who do you back?",
+      "- Tell Power the donut is Denji's, and she should give it back. (set side_me)",
+      "- Tell Denji the bird took it, and he should forgive Power. (set side_power, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Power",
+    "name": "World: Arrival, Power & Denji",
+    "lines": [
+      "cast denji as Denji",
+      "background sakura",
+      "me enters left with slide",
+      "denji enters right with fade",
+      "denji: Hey! Is that Power? You were the one who took the last donut, right?",
+      "me (dismayed): Power did not take it! It was stolen. By a bird. Denji, you fool!",
+      "denji (pleased): Ha! Okay, but I'm still hungry. Let's get food together, Power.",
+      "player: They arrive together, arguing. Whose side are you on?",
+      "choice Who do you back?",
+      "- Tell Denji the donut is his to chase, and Power should admit she took it. (set side_me)",
+      "- Tell Power the bird is to blame, and Denji should share. (set side_denji, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Power",
+    "name": "World: Arrival, Power & Kyoko Sakura",
+    "lines": [
+      "cast kyoko as Kyoko Sakura",
+      "background cafe",
+      "me enters left with slide",
+      "kyoko enters right with fade",
+      "kyoko: Power, is it? I have an apple. Want to fight for it?",
+      "me (dismayed): Power does not fight over apples! Power only fights for honour!",
+      "kyoko (pleased): Honour? Okay, then the apple's yours if you can catch it.",
+      "player: A food fight, from the first apple. Which side are you on?",
+      "choice Who do you back?",
+      "- Tell Power the apple is beneath her, and she should walk away. (set side_me)",
+      "- Tell Kyoko the fight is on, and Power should catch the apple. (set side_kyoko, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Aki Hayakawa",
+    "name": "World: Arrival, Aki Hayakawa & Denji",
+    "lines": [
+      "cast denji as Denji",
+      "background rooftop",
+      "me enters left with slide",
+      "denji enters right with fade",
+      "denji: Aki! You're on the roof again. Can I have a cigarette? Just one. Please?",
+      "me (dismayed): No. Go eat your bread. You're not old enough to smoke, Denji.",
+      "denji (pleased): I'm not a kid! I'm a devil hunter! Let me have a smoke!",
+      "player: Babysitting Denji, on the rooftop. Do you back Aki, or Denji?",
+      "choice Who do you side with?",
+      "- Tell Aki he's right, and Denji should go home. (set side_me)",
+      "- Tell Denji he's a hunter, and he deserves the smoke. (set side_denji, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Aki Hayakawa",
+    "name": "World: Arrival, Aki Hayakawa & Levi",
+    "lines": [
+      "cast levi as Levi",
+      "background rooftop",
+      "me enters left with slide",
+      "levi enters right with fade",
+      "levi: Hayakawa. I didn't expect you here. You look tired, like me.",
+      "me (dismayed): Levi. You're not the only one tired of this town. Want a seat?",
+      "levi (pleased): Tch. Fine. But don't smoke near me. The air's dirty enough.",
+      "player: Two tired soldiers, the same look. Do you back Aki's silence, or Levi's rules?",
+      "choice Who do you side with?",
+      "- Tell Aki the smoke is fine, and Levi should relax. (set side_me)",
+      "- Tell Levi the rooftop is clean, and Aki should put the cigarette away. (set side_levi, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Makima",
+    "name": "World: Arrival, Makima & Aki Hayakawa",
+    "lines": [
+      "cast aki as Aki Hayakawa",
+      "background rooftop",
+      "me enters left with slide",
+      "aki enters right with fade",
+      "aki: Makima. You're giving me orders again? I'm not your dog, you know.",
+      "me (pleased): Aki, you're my most useful dog. Sit. The Gun Devil is waiting.",
+      "aki (dismayed): ...Fine. But I'll do it my way, not your way.",
+      "player: An order to her subordinate. Do you back the order, or Aki's way?",
+      "choice Who do you side with?",
+      "- Tell Makima the order is good, and Aki should follow it. (set side_me)",
+      "- Tell Aki his way is better, and Makima should listen. (set side_aki, give climax_pack)"
+    ]
+  },
+  {
+    "newcomer": "Makima",
+    "name": "World: Arrival, Makima & Albedo",
+    "lines": [
+      "cast albedo as Albedo",
+      "background library",
+      "me enters left with slide",
+      "albedo enters right with fade",
+      "albedo: Makima. I've heard about your control. It's very interesting.",
+      "me (pleased): Albedo. You're the one who wants to control a whole world. How lovely.",
+      "albedo (pleased): Perhaps we should compare notes. Two controllers, in one town.",
+      "player: Two who want control, each politely. Who do you back?",
+      "choice Who do you support?",
+      "- Tell Makima that Albedo is a threat, and she should keep her distance. (set side_me)",
+      "- Tell Albedo that Makima is worth watching, and she should talk to her. (set side_albedo, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Beast Titan",
+    "name": "World: Arrival, Beast Titan & Levi",
+    "lines": [
+      "cast levi as Levi",
+      "background forest",
+      "me enters left with slide",
+      "levi enters right with fade",
+      "levi: Zeke. I know what you're planning. Don't.",
+      "me (pleased): Levi! You're here. I was going to throw a ball, but you look like you'd break it.",
+      "levi (dismayed): Tch. You've got bad blood in you. I'm not forgetting Erwin.",
+      "player: Bad blood. Do you let them throw, or stop the fight before it starts?",
+      "choice Who do you side with?",
+      "- Tell Zeke the forest is his, and Levi should leave. (set side_me)",
+      "- Tell Levi the ball is harmless, and he should play catch. (set side_levi, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Beast Titan",
+    "name": "World: Arrival, Beast Titan & Lord Genome",
+    "lines": [
+      "cast lord as Lord Genome",
+      "background forest",
+      "me enters left with slide",
+      "lord enters right with fade",
+      "lord: The surface. It requires an ending. The world is too bright.",
+      "me (pleased): You're right. We should end it, gently. Like a doctor.",
+      "lord (dismayed): I shall decide the ending, not you. Do not get ahead of the king.",
+      "player: Two who think the world needs ending. Do you back Zeke's gentle plan, or Genome's throne?",
+      "choice Who do you side with?",
+      "- Tell Lord Genome his throne is too much, and Zeke should stop. (set side_me)",
+      "- Tell Zeke his plan is gentle, and Genome should listen. (set side_lord, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Eren",
+    "name": "World: Arrival, Eren & Mikasa",
+    "lines": [
+      "cast mikasa as Mikasa",
+      "background arena",
+      "me enters left with slide",
+      "mikasa enters right with fade",
+      "mikasa: Eren, you're bleeding again. Let me see your hands.",
+      "me (dismayed): Don't fuss over me, Mikasa. I'm fine. I'm training.",
+      "mikasa (dismayed): You're not fine. You've never been fine. Sit down.",
+      "player: She wraps his hands, and he complains. Do you back Eren, or Mikasa?",
+      "choice Who do you side with?",
+      "- Tell Eren to let Mikasa help, and stop training for once. (set side_me)",
+      "- Tell Mikasa to let Eren train, he needs it. (set side_mikasa, give climax_pack)"
+    ]
+  },
+  {
+    "newcomer": "Eren",
+    "name": "World: Arrival, Eren & Giorno Giovanna",
+    "lines": [
+      "cast giorno as Giorno Giovanna",
+      "background beach",
+      "me enters left with slide",
+      "giorno enters right with fade",
+      "giorno: Eren. You chose the hard path. Why?",
+      "me (dismayed): Because it's the only path left. I can't go back now.",
+      "giorno (pleased): Then let's walk it together. Dreams are better shared.",
+      "player: Two who chose the hard path. Who do you back?",
+      "choice Who gets your support?",
+      "- Tell Giorno his dream is too soft, and Eren should listen to Mikasa instead. (set side_me)",
+      "- Tell Eren his path is brave, and Giorno should walk with him. (set side_giorno, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Levi",
+    "name": "World: Arrival, Levi & Erza Scarlet",
+    "lines": [
+      "cast erza as Erza Scarlet",
+      "background cafe",
+      "me enters left with slide",
+      "erza enters right with fade",
+      "erza: Levi. I've heard about your tea. Let's see if it's worth the reputation.",
+      "me (dismayed): Erza. Your armour's on the table again. Put it on the floor.",
+      "erza (pleased): Ha! You're as strict as ever. Let's have a duel over the tea.",
+      "player: Two commanders, one tea. Who do you back?",
+      "choice Who do you support?",
+      "- Tell Erza her armour is a mess, and she should clean up. (set side_me)",
+      "- Tell Levi his tea is good, and he should share it with Erza. (set side_erza, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Levi",
+    "name": "World: Arrival, Levi & Eren",
+    "lines": [
+      "cast eren as Eren",
+      "background arena",
+      "me enters left with slide",
+      "eren enters right with fade",
+      "eren: Levi! You're going to yell at me for the bleeding again, aren't you?",
+      "me (dismayed): Yes. Clean up the arena. And stop bleeding on the floor.",
+      "eren (pleased): You're tough, but I'll keep going. That's the plan.",
+      "player: Tough love, on the arena floor. Do you back Levi, or Eren?",
+      "choice Who do you side with?",
+      "- Tell Eren the arena is his responsibility, and Levi is right. (set side_me)",
+      "- Tell Levi the training is Eren's choice, and he should respect it. (set side_eren, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Mikasa",
+    "name": "World: Arrival, Mikasa & Yor Forger",
+    "lines": [
+      "cast yor as Yor Forger",
+      "background sakura",
+      "me enters left with slide",
+      "yor enters right with fade",
+      "yor: Mikasa, right? You're very quiet, like me. Are you here for a job?",
+      "me (dismayed): I'm looking for someone. And you're blushing. Why?",
+      "yor (dismayed): I'm not blushing! It's the sun. Okay, it's a bit embarrassing.",
+      "player: Two quiet killers, both blushing. Do you back Mikasa's search, or Yor's job?",
+      "choice Who gets your support?",
+      "- Tell Mikasa the job is more important, and she should focus on it. (set side_me)",
+      "- Tell Yor the search is worth it, and she should help Mikasa. (set side_yor, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Nui Harime",
+    "name": "World: Arrival, Nui Harime & Ryuko Matoi",
+    "lines": [
+      "cast ryuko as Ryuko Matoi",
+      "background ruins",
+      "me enters left with slide",
+      "ryuko enters right with fade",
+      "ryuko: You! Nui Harime! I know your handiwork. Stop making dolls!",
+      "me (pleased): Ryuko! Your uniform is so pretty. Can I sew it?",
+      "ryuko (dismayed): Don't you dare touch Senketsu! Get out of the warehouse!",
+      "player: Hatred at first sight. Who do you cheer for?",
+      "choice Who do you side with?",
+      "- Tell Nui the dolls are a crime, and she should stop sewing. (set side_me)",
+      "- Tell Ryuko the uniform is special, and Nui should leave it alone. (set side_ryuko, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Nui Harime",
+    "name": "World: Arrival, Nui Harime & Joker",
+    "lines": [
+      "cast joker as Joker",
+      "background ruins",
+      "me enters left with slide",
+      "joker enters right with fade",
+      "joker: Nui! Your dolls are so creepy. Teehee, I love creepy.",
+      "me (pleased): Joker! Your smile is terrifying. Do you want a doll too?",
+      "joker (pleased): Ha! A doll of me? That would be a joke. A killer one.",
+      "player: Two terrifying smiles. Do you back the sewing, or the joke?",
+      "choice Who do you back?",
+      "- Tell Nui the joke is cruel, and she should stop. (set side_me)",
+      "- Tell Joker the doll is a fine joke, and he should try it. (set side_joker, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Ragyo Kiryuin",
+    "name": "World: Arrival, Ragyo Kiryuin & Satsuki Kiryuin",
+    "lines": [
+      "cast satsuki as Satsuki Kiryuin",
+      "background ruins",
+      "me enters left with slide",
+      "satsuki enters right with fade",
+      "satsuki: Mother. You are glowing in the warehouse again. Stop it.",
+      "me (dismayed): Satsuki. You are defying the family. Obey, or leave.",
+      "satsuki (dismayed): I will not obey. I will rebel. This family is broken.",
+      "player: Mother and daughter. Do you stand with the family, or with Satsuki?",
+      "choice Who do you side with?",
+      "- Tell Satsuki the family is right, and she should come home. (set side_me)",
+      "- Tell Ragyo the rebellion is real, and she should listen to her daughter. (set side_satsuki, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Ragyo Kiryuin",
+    "name": "World: Arrival, Ragyo Kiryuin & DIO",
+    "lines": [
+      "cast dio as DIO",
+      "background ruins",
+      "me enters left with slide",
+      "dio enters right with fade",
+      "dio: Ragyo. You consider yourself a god, do you? Amusing.",
+      "me (pleased): DIO. You consider yourself a god too. Let's see whose heaven is bigger.",
+      "dio (pleased): Hah! Time will decide, Lady Ragyo. And I am not in a hurry.",
+      "player: Two who consider themselves gods. Who do you back?",
+      "choice Who do you support?",
+      "- Tell DIO he's not a god, and Ragyo should keep her throne. (set side_me)",
+      "- Tell Ragyo her heaven is the best, and DIO should bow. (set side_dio, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Ryuko Matoi",
+    "name": "World: Arrival, Ryuko Matoi & Satsuki Kiryuin",
+    "lines": [
+      "cast satsuki as Satsuki Kiryuin",
+      "background arena",
+      "me enters left with slide",
+      "satsuki enters right with fade",
+      "satsuki: Matoi. Your uniform is an insult to the academy. Take it off.",
+      "me (dismayed): Make me, Satsuki! Senketsu isn't going anywhere!",
+      "satsuki (pleased): Hmph. You are interesting. Perhaps we will fight, then.",
+      "player: Rival sisters who don't know it yet. Do you back Ryuko, or Satsuki?",
+      "choice Who do you side with?",
+      "- Tell Satsuki the uniform's an insult, and Ryuko should take it off. (set side_me)",
+      "- Tell Ryuko the uniform is special, and Satsuki should respect it. (set side_satsuki, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Ryuko Matoi",
+    "name": "World: Arrival, Ryuko Matoi & Toph",
+    "lines": [
+      "cast toph as Toph",
+      "background arena",
+      "me enters left with slide",
+      "toph enters right with fade",
+      "toph: Ryuko. You're the one who wanted a rematch. I can feel you clenching your fists.",
+      "me (dismayed): Toph! I'm going to beat you this time! Get ready!",
+      "toph (pleased): Ha! Bring your uniform and your big mouth. Let's see who's tougher.",
+      "player: Rematch, again. Do you back Ryuko, or Toph?",
+      "choice Who do you cheer for?",
+      "- Tell Toph she's already beaten Ryuko, and she should stop bragging. (set side_me)",
+      "- Tell Ryuko she can win this time, and Toph should watch out. (set side_toph, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Satsuki Kiryuin",
+    "name": "World: Arrival, Satsuki Kiryuin & Ryuko Matoi",
+    "lines": [
+      "cast ryuko as Ryuko Matoi",
+      "background classroom",
+      "me enters left with slide",
+      "ryuko enters right with fade",
+      "ryuko: Satsuki! You're taking over the student council? That's not fair!",
+      "me (pleased): Matoi. You are impertinent. But you are the only one who challenges me.",
+      "ryuko (dismayed): Challenge you? I'm going to beat you! Just watch!",
+      "player: Rival, and maybe sister. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Ryuko she's not fit for the council, and she should leave. (set side_me)",
+      "- Tell Satsuki the council needs a rival, and Ryuko should join. (set side_ryuko, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Satsuki Kiryuin",
+    "name": "World: Arrival, Satsuki Kiryuin & Weiss Schnee",
+    "lines": [
+      "cast weiss as Weiss Schnee",
+      "background library",
+      "me enters left with slide",
+      "weiss enters right with fade",
+      "weiss: Satsuki Kiryuin. Your council has very high standards. I'm impressed, a little.",
+      "me (pleased): Weiss Schnee. You have standards too. Let us compare them.",
+      "weiss (pleased): Hmph. Perhaps, but mine are better. We'll see who keeps up.",
+      "player: Two heiresses, both sure of their standards. Who do you back?",
+      "choice Who do you support?",
+      "- Tell Weiss her standards are too high, and Satsuki should relax. (set side_me)",
+      "- Tell Satsuki her council is the best, and Weiss should join. (set side_weiss, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Mikasa",
+    "name": "World: Arrival, Mikasa & Eren",
+    "lines": [
+      "cast eren as Eren",
+      "background arena",
+      "me enters left with slide",
+      "eren enters right with fade",
+      "eren: Mikasa! I'm here. I didn't run away, I promise. I was training.",
+      "me (pleased): Eren! You're alive. Good. Let me wrap those hands properly this time.",
+      "eren (dismayed): You always do that. Fine, but only because you worry about me.",
+      "player: She's found him, after a long search. Do you help her, or let Eren keep training?",
+      "choice Who do you side with?",
+      "- Tell Mikasa to let Eren go, and give him some room. (set side_me)",
+      "- Tell Eren to let Mikasa help, and sit still for once. (set side_eren, give color_pack)"
+    ]
+  }
+]

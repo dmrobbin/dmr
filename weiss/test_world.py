@@ -282,6 +282,59 @@ class WorldPageTests(TestCase):
         self.assertEqual((theirs.deck.name, mine.deck_id != theirs.deck_id), ("Deck 1", True))
         self.assertTrue(CardList.objects.filter(pk=theirs.deck_id).exists())
 
+    def test_more_packs_open_from_the_reveal_without_going_back_to_the_save(self):
+        save = world.start(self.user, 1, SET)  # 2 packs
+        opened_url = reverse("weiss:world_opened", args=[1])
+        self.client.post(reverse("weiss:world_open", args=[1]), {"count": 1})  # one left
+        page = self.client.get(opened_url)
+        self.assertContains(page, "Open 1 more")
+        self.assertContains(page, f'action="{reverse("weiss:world_open", args=[1])}"')
+        self.client.post(reverse("weiss:world_open", args=[1]), {"count": 1})
+        save.refresh_from_db()
+        self.assertEqual(save.packs, 0)
+        self.assertNotContains(self.client.get(opened_url), "more</button>")  # nothing left to open
+
+    def test_equipping_from_the_deck_builder_stays_on_the_builder(self):
+        save = world.start(self.user, 1, SET)
+        second = world.new_deck(save, "Aggro")
+        builder = reverse("weiss:world_deck_edit", args=[1, second.pk])
+        self.assertContains(self.client.get(builder), "Equip this deck")
+        response = self.client.post(reverse("weiss:world_deck_equip", args=[1, second.pk]), {"next": "builder"})
+        self.assertRedirects(response, builder)
+        save.refresh_from_db()
+        self.assertEqual(save.deck, second)
+        self.assertNotContains(self.client.get(builder), "Equip this deck")  # equipped now: nothing to do
+
+    def test_the_town_opens_with_its_menu_and_full_screen(self):
+        world.start(self.user, 1, SET)
+        page = self.client.get(reverse("weiss:world_town", args=[1]))
+        self.assertContains(page, "data-open-menu")
+        self.assertContains(page, 'data-url="' + reverse("weiss:world_deck", args=[1]) + '?from=town"')
+        self.assertContains(page, "data-fullscreen")
+
+    def test_the_pages_the_town_frames_can_be_framed_by_this_site_only(self):
+        # Django refuses to frame pages by default, which left the town's panels blank.
+        world.start(self.user, 1, SET)
+        for url in (reverse("weiss:world_quests", args=[1]), reverse("weiss:world_events", args=[1]),
+                    reverse("weiss:world_deck", args=[1])):
+            with self.subTest(url):
+                self.assertEqual(self.client.get(url)["X-Frame-Options"], "SAMEORIGIN")
+
+    def test_a_deck_opened_from_the_town_goes_back_to_the_town(self):
+        save = world.start(self.user, 1, SET)
+        world.open_packs(save, 1)  # a builder with cards in it (an empty one says so, with its own link)
+        town_flow = "?from=town"
+        builder = reverse("weiss:world_deck_edit", args=[1, save.deck_id]) + town_flow
+        self.assertRedirects(self.client.get(reverse("weiss:world_deck", args=[1]) + town_flow), builder)
+        self.assertContains(self.client.get(builder), "Back to the town")
+        self.assertContains(self.client.get(reverse("weiss:world_deck_edit", args=[1, save.deck_id])), "Back to your save")  # from the save
+        second = world.new_deck(save, "Aggro")
+        builder = reverse("weiss:world_deck_edit", args=[1, second.pk]) + town_flow
+        response = self.client.post(reverse("weiss:world_deck_equip", args=[1, second.pk]), {"next": "builder", "from": "town"})
+        self.assertRedirects(response, builder)  # equipped from the builder, and still in the town's flow
+        save.refresh_from_db()
+        self.assertEqual(save.deck, second)
+
     def test_a_slot_is_deleted_only_when_its_name_is_typed(self):
         world.start(self.user, 1, SET)
         self.client.post(reverse("weiss:world_delete", args=[1]), {"confirm": "yes"})
@@ -297,12 +350,14 @@ class WorldPageTests(TestCase):
         self.assertContains(self.client.get(reverse("weiss:cpu_home") + "?tab=world"), "Starting packs")
         self.assertContains(self.client.get(reverse("weiss:cpu_home") + "?tab=world"), "Asking the shop for a set")
         fields = {"start_packs": 15, "start_money": 800, "pack_price": 250, "specialty_price": 900, "card_price": 5000, "request_price": 450, "win_payout": 150,
-                  "first_win_bonus": 50, "ranks": "New: 0\nPal: 10", **LOADOUT_FIELDS}
+                  "first_win_bonus": 50, "ranks": "New: 0\nPal: 10", "talk_points": 7, "start_cast": 10, "weekly_cast": 3,
+                  "arrival_coins": 250, "arrival_points": 9, **LOADOUT_FIELDS}
         self.client.post(reverse("weiss:world_settings"), {**fields, "loadout_climax_pick": 2})
         settings = WorldSettings.current()
         self.assertEqual((settings.start_packs, settings.start_money, settings.loadout), (15, 800, {"climax_pick": 2}))
         self.assertEqual((world.specialty_price(), world.card_price(), world.request_price()), (900, 5000, 450))
         self.assertEqual(world.rank_names(), ["New", "Pal"])
+        self.assertEqual((world.talk_points(), world.roster.numbers()), (7, (10, 3, 250, 9)))
         self.client.post(reverse("weiss:world_settings"), {**fields, "start_packs": 0})  # nothing to build from: refused
         self.assertEqual(WorldSettings.current().start_packs, 15)
 

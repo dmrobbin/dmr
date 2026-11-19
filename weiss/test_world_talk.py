@@ -344,13 +344,13 @@ class GainAndRewardTests(DuelTests):
         return self.save.relations.get(str(self.cinder.pk), {}).get("points", 0)
 
     def test_temperament_sets_how_fast_points_come(self):
-        for temperament, expected in (("warm", 4), ("neutral", 3), ("villain", 2)):
+        for temperament, expected in (("warm", 9), ("neutral", 6), ("villain", 4)):  # talk points 6 (doubled from 3)
             self.cinder.temperament = temperament
-            self.assertEqual(world.gain(self.cinder, world.TALK_POINTS), expected)
+            self.assertEqual(world.gain(self.cinder, world.talk_points()), expected)
             self.assertEqual(world.gain(self.cinder, -4), -4)  # losing points is never scaled
         self.cinder.save()
         talk(self.save, self.cinder.pk)
-        self.assertEqual(self.points(), 2)
+        self.assertEqual(self.points(), 4)
 
     def test_each_rank_brings_its_rewards_once(self):
         money = self.save.money

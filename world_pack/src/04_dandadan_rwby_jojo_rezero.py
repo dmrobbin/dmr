@@ -2479,3 +2479,594 @@ CAST = [
               "choice", "- Best friends, both of you.", "- I'll look after you two.",
               "me (pleased): Rem: 'Best friends!' Ram: 'Fine. Best friends. Don't tell Roswaal.'"]),
 ]
+
+ARRIVALS = [
+  {
+    "newcomer": "Aira",
+    "name": "World: Arrival, Aira",
+    "lines": [
+      "background classroom",
+      "me enters center with rise",
+      "me: Hear me, all of you! I am the chosen hero, and I have arrived to save this town.",
+      "me (dismayed): ...Oh. You're not impressed. That's fine. Destiny is patient.",
+      "me (pleased): You may bow now. Or cheer, if you prefer. Either is acceptable.",
+      "player: She's announced herself as a hero. Do you believe her?",
+      "choice What do you say?",
+      "- Tell Aira the town doesn't need saving, and she should sit down. (set side_me)",
+      "- Tell Aira you believe her, and she can pick the first quest. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Momo Ayase",
+    "name": "World: Arrival, Momo Ayase",
+    "lines": [
+      "background classroom",
+      "me enters left with slide",
+      "me: Okay, quick question. Do you believe in ghosts? Or aliens? Be honest.",
+      "me (dismayed): You're laughing. Rude. I'm serious about the ghosts, okay?",
+      "me (pleased): Fine, if you believe in aliens, we can be friends. Hi!",
+      "player: She asks if you believe in ghosts, or aliens. What's your answer?",
+      "choice How do you respond?",
+      "- Tell Momo that ghosts are real, and she should stop asking. (set side_me)",
+      "- Tell Momo that aliens are just rumours, and she should relax. (set side_me, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Okarun",
+    "name": "World: Arrival, Okarun",
+    "lines": [
+      "background library",
+      "me enters right with pop",
+      "me: Eek! Who said that? Oh, sorry. I was reading about yokai. They're really scary.",
+      "me (dismayed): Don't sneak up on me! I'm trying to read the book about the spirits.",
+      "me (pleased): Oh, you're interested? That's amazing. Want to look at my notes?",
+      "player: He jumps when you speak. Do you sit down and read with him?",
+      "choice What's your response?",
+      "- Tell Okarun the yokai book is silly, and he should put it away. (set side_me)",
+      "- Sit down, and let Okarun show you his notes. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Cinder Fall",
+    "name": "World: Arrival, Cinder Fall",
+    "lines": [
+      "background city",
+      "me enters center with fade",
+      "me: There's a fire on the street, did you notice? I think it's lovely.",
+      "me (pleased): Don't be scared. The flames obey me. They always do.",
+      "me: I'm new in town. I'm looking for a place with a lot of warmth.",
+      "player: A fire starts, and she smiles at it. Do you move back?",
+      "choice What do you do?",
+      "- Tell Cinder the fire is dangerous, and she should put it out. (set side_me)",
+      "- Tell Cinder the fire's lovely, and ask her to show you. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Ruby Rose",
+    "name": "World: Arrival, Ruby Rose",
+    "lines": [
+      "background cafe",
+      "me enters left with fade",
+      "me: Oh! Sorry, I was just hungry. These cookies look amazing, can I try one?",
+      "me (dismayed): ...Okay, I ate the whole plate. That was an accident. Okay, not an accident.",
+      "me (pleased): Hi! I'm Ruby Rose. I'm the best at cookies. And scythes. Mostly cookies.",
+      "player: She's eaten every cookie at the counter. Do you say something?",
+      "choice How do you respond?",
+      "- Tell Ruby the cookies were for everyone, and she should pay for them. (set side_me)",
+      "- Tell Ruby the cookies are fine, and offer to bake her another batch. (set side_me, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Weiss Schnee",
+    "name": "World: Arrival, Weiss Schnee",
+    "lines": [
+      "background library",
+      "me enters right with slide",
+      "me: This filing is wrong. The index goes by author, not by title. Who did this?",
+      "me (dismayed): Oh, you did it? Well, it's still wrong. Let me fix it.",
+      "me (pleased): There. Now it's correct. You're welcome, though you didn't ask for help.",
+      "player: She's corrected the library's filing. Do you thank her, or argue?",
+      "choice What's your reaction?",
+      "- Tell Weiss she's a bit too picky, and walk out. (set side_me)",
+      "- Thank Weiss for the help, and ask her to show you the system. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "DIO",
+    "name": "World: Arrival, DIO",
+    "lines": [
+      "background ruins",
+      "me enters center with fade",
+      "me: Time stops. Do you feel it? I am behind you now, if you're curious.",
+      "me (pleased): Hm. You didn't flinch. Interesting. Few do, when time bends.",
+      "me: Shall we talk about heaven? I have a son I'd like you to meet.",
+      "player: Time stopped, and when it started, he was behind you. Do you turn around?",
+      "choice What do you do?",
+      "- Tell DIO time's not for him to play with, and walk away. (set side_me)",
+      "- Turn around, and ask DIO about his son. (set side_me, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Giorno Giovanna",
+    "name": "World: Arrival, Giorno Giovanna",
+    "lines": [
+      "background cafe",
+      "me enters right with rise",
+      "me: Your coffee needs something. Watch, I'll make it a flower.",
+      "me (pleased): There. A flower, from your cup. Do you like it? It's a little gold.",
+      "me: My name is Giorno. I'm here to make something of my life. Nice to meet you.",
+      "player: He grows a flower from your coffee cup. Do you keep it?",
+      "choice How do you respond?",
+      "- Tell Giorno the flower's a waste of coffee, and take the cup back. (set side_me)",
+      "- Keep the flower, and ask him how he did it. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Jolyne Cujoh",
+    "name": "World: Arrival, Jolyne Cujoh",
+    "lines": [
+      "background beach",
+      "me enters left with drop",
+      "me: Don't come any closer. I got out of somewhere, and I'm not going back.",
+      "me (dismayed): ...Okay, you don't know me, and I don't know you. Let's keep it that way.",
+      "me (pleased): Hey, you. You look like you could use a fight. Want one?",
+      "player: She escaped from somewhere, and won't say where. Do you ask?",
+      "choice What do you say?",
+      "- Tell Jolyne she should explain herself, or leave the beach. (set side_me)",
+      "- Tell Jolyne you won't ask, and offer her a drink. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Echidna",
+    "name": "World: Arrival, Echidna",
+    "lines": [
+      "background library",
+      "me enters center with fade",
+      "me: Oh, what a lovely library. Would you like to join me for tea? It isn't tea.",
+      "me (pleased): Excellent. The cups are ready. Do sit down, the questions will come.",
+      "me: How interesting that you accepted. Let's begin with your favourite word.",
+      "player: She invites you to tea in a place that isn't the library. Do you go?",
+      "choice What do you say?",
+      "- Tell Echidna the library is the only place for tea, and decline. (set side_me)",
+      "- Accept the invitation, and ask what the tea really is. (set side_me, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Emilia",
+    "name": "World: Arrival, Emilia",
+    "lines": [
+      "background forest",
+      "me enters left with slide",
+      "me: Excuse me! I'm a bit lost in the forest. I'm very sorry to bother you.",
+      "me (dismayed): Oh, I didn't mean to trouble you. Please ignore my nerves.",
+      "me (pleased): Thank you so much for stopping. Would you like to meet my little friend?",
+      "player: She's lost in the forest, and very polite about it. Do you help her?",
+      "choice What's your response?",
+      "- Tell Emilia the forest is her own problem, and walk on. (set side_me)",
+      "- Walk her out of the forest, and meet her friend on the way. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Ram/Rem",
+    "name": "World: Arrival, Ram/Rem",
+    "lines": [
+      "background cafe",
+      "me enters center with fade",
+      "me: Rem: 'Welcome. We were just about to clean a mansion that isn't here.'",
+      "me (dismayed): Ram: 'Rem, that's not important. Hmph. Visitors are a nuisance.'",
+      "me (pleased): Rem: 'But you are very welcome. Please make yourself at home.'",
+      "player: They've come to clean a mansion that isn't here. Do you help them?",
+      "choice What do you say?",
+      "- Tell them the mansion isn't real, and send them home. (set side_me)",
+      "- Tell Rem the mansion's lovely, and help them clean it. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Aira",
+    "name": "World: Arrival, Aira & Okarun",
+    "lines": [
+      "cast okarun as Okarun",
+      "background library",
+      "me enters left with slide",
+      "okarun enters right with fade",
+      "okarun: Hello? Why are you following me around like that? It's kind of scary.",
+      "me (pleased): Okarun, I'm here to save you! You need a hero, obviously.",
+      "okarun (dismayed): Save me from what? I'm fine. I just have to read about yokai.",
+      "player: She's sure he needs saving. Do you back Aira's destiny, or Okarun's books?",
+      "choice Who do you side with?",
+      "- Tell Aira the yokai books are safe, and Okarun doesn't need saving. (set side_me)",
+      "- Tell Okarun the destiny is real, and he should accept the hero. (set side_okarun, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Aira",
+    "name": "World: Arrival, Aira & Momo Ayase",
+    "lines": [
+      "cast momo as Momo Ayase",
+      "background classroom",
+      "me enters left with slide",
+      "momo enters right with fade",
+      "momo: Aira! Are you still announcing you're a hero? Nobody believes you, you know.",
+      "me (pleased): Momo! Your hair is so pretty, I'm jealous. But I'm still the chosen one.",
+      "momo (dismayed): Ugh, don't be jealous. Hero. Whatever. Let's go get some cake.",
+      "player: Rivals who'd never admit they're friends. Whose side are you on?",
+      "choice Who do you back?",
+      "- Tell Momo that Aira is annoying, and she should stop. (set side_me)",
+      "- Tell Aira that Momo's hair is pretty, and she should share the cake. (set side_momo, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Momo Ayase",
+    "name": "World: Arrival, Momo Ayase & Okarun",
+    "lines": [
+      "cast okarun as Okarun",
+      "background library",
+      "me enters left with slide",
+      "okarun enters right with fade",
+      "okarun: Momo! Do you believe in ghosts? I've got a notebook of them.",
+      "me (pleased): Ghosts? Don't be ridiculous. Okay, show me the notebook.",
+      "okarun (pleased): You're interested? Okay, but only if you promise not to laugh.",
+      "player: Their arguing is almost flirting. Who gets your support?",
+      "choice Whose side do you take?",
+      "- Tell Okarun the ghosts are fake, and Momo should prove it. (set side_me)",
+      "- Tell Momo the ghosts are real, and she should take the notebook. (set side_okarun, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Momo Ayase",
+    "name": "World: Arrival, Momo Ayase & Akane Kurokawa",
+    "lines": [
+      "cast akane as Akane Kurokawa",
+      "background cafe",
+      "me enters left with slide",
+      "akane enters right with fade",
+      "akane: Momo, right? You're the one who always has a poster. Can I see it?",
+      "me (pleased): Akane Kurokawa! You're an actress, right? Let's have cake and talk.",
+      "akane (pleased): Yes, let's! I'll copy your poster style for my next role. Okay?",
+      "player: Girls' cafe chat. Do you join in, or let them talk?",
+      "choice Who do you side with?",
+      "- Tell Akane to stop copying Momo, and let her have her own style. (set side_me)",
+      "- Tell Momo the cake is great, and Akane should try it. (set side_akane, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Okarun",
+    "name": "World: Arrival, Okarun & Momo Ayase",
+    "lines": [
+      "cast momo as Momo Ayase",
+      "background library",
+      "me enters left with slide",
+      "momo enters right with fade",
+      "momo: Okarun! Stop reading that book. It's creepy, and you're freaking out the new girl.",
+      "me (dismayed): It's not creepy, Momo! It's real! The yokai are real!",
+      "momo (pleased): Ugh, fine. But I'm not holding your hand if you get scared.",
+      "player: Their arguing is flirting, to anyone watching. Do you back Okarun's books, or Momo's cool?",
+      "choice Who do you side with?",
+      "- Tell Momo the books are a waste of time, and Okarun should stop reading. (set side_me)",
+      "- Tell Okarun the yokai are real, and Momo should listen. (set side_momo, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Okarun",
+    "name": "World: Arrival, Okarun & Simon the digger",
+    "lines": [
+      "cast simon as Simon the digger",
+      "background library",
+      "me enters left with slide",
+      "simon enters right with fade",
+      "simon: Um, hi. I'm looking for a book about tunnels. Do you know where it is?",
+      "me (dismayed): A tunnel book? Um, yes. It's here. But it's about yokai tunnels.",
+      "simon (pleased): Oh! That's even cooler. Can I borrow it? I'll dig it back to you.",
+      "player: Two shy ones, finding each other. Who do you help?",
+      "choice Who do you side with?",
+      "- Tell Simon the tunnel book is his, and Okarun should lend it. (set side_me)",
+      "- Tell Okarun the tunnels are real, and Simon should read the yokai book. (set side_simon, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Cinder Fall",
+    "name": "World: Arrival, Cinder Fall & Ruby Rose",
+    "lines": [
+      "cast ruby as Ruby Rose",
+      "background city",
+      "me enters left with slide",
+      "ruby enters right with fade",
+      "ruby: Cinder! You're setting the alley on fire again! Stop it, please!",
+      "me (pleased): Ruby. The silver-eyed girl. The fire loves you, you know.",
+      "ruby (dismayed): Ugh, don't say that. My eyes are scary enough already.",
+      "player: The silver-eyed girl, and the fire. Who do you back?",
+      "choice Whose side do you take?",
+      "- Tell Cinder the fire is dangerous, and she should stop. (set side_me)",
+      "- Tell Ruby that her eyes are special, and she should let the fire warm her. (set side_ruby, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Cinder Fall",
+    "name": "World: Arrival, Cinder Fall & Azula",
+    "lines": [
+      "cast azula as Azula",
+      "background city",
+      "me enters left with slide",
+      "azula enters right with fade",
+      "azula: Cinder. You're playing with fire in my alley. Stop it, or I'll stop you.",
+      "me (pleased): Azula! Another fire-user. Let's see whose flames burn brighter.",
+      "azula (dismayed): Don't be ridiculous. My fire is controlled. Yours is a mess.",
+      "player: Two fire-wielders, one dangerous friendship. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Azula the alley is hers, and Cinder should back off. (set side_me)",
+      "- Tell Cinder the flames are a gift, and Azula should join her. (set side_azula, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Ruby Rose",
+    "name": "World: Arrival, Ruby Rose & Weiss Schnee",
+    "lines": [
+      "cast weiss as Weiss Schnee",
+      "background library",
+      "me enters left with slide",
+      "weiss enters right with fade",
+      "weiss: Ruby! You knocked over my stack of books! Do you know how long that took?",
+      "me (dismayed): Sorry, Weiss! It was an accident! Crescent Rose slipped.",
+      "weiss (dismayed): Accidents do not happen to me. Clean it up, and apologise properly.",
+      "player: Team RWBY's oldest argument. Do you side with Ruby, or Weiss?",
+      "choice Who do you back?",
+      "- Tell Weiss the books can wait, and she should relax. (set side_me)",
+      "- Tell Ruby the books are an accident, and she should clean them up. (set side_weiss, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Ruby Rose",
+    "name": "World: Arrival, Ruby Rose & Chisato Nishikigi",
+    "lines": [
+      "cast chisato as Chisato Nishikigi",
+      "background cafe",
+      "me enters left with slide",
+      "chisato enters right with fade",
+      "chisato: Ruby! Want a cookie? I baked them this morning, just for fun!",
+      "me (pleased): Chisato! Cookies! You're my new favourite person!",
+      "chisato (pleased): Yay! Let's fight after, okay? Together!",
+      "player: Two cheerful fighters, and cookies. Who gets your support?",
+      "choice Who do you side with?",
+      "- Tell Chisato the cookies are hers, and Ruby should get her own. (set side_me)",
+      "- Tell Ruby the cookies are shared, and Chisato should fight with her. (set side_chisato, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Weiss Schnee",
+    "name": "World: Arrival, Weiss Schnee & Ruby Rose",
+    "lines": [
+      "cast ruby as Ruby Rose",
+      "background library",
+      "me enters left with slide",
+      "ruby enters right with fade",
+      "ruby: Weiss! Look, I brought you a cookie. Please don't be mad about the books.",
+      "me (dismayed): A cookie does not fix my notes, Ruby. But... thank you, I suppose.",
+      "ruby (pleased): Hey! Team RWBY's back together! Okay, sort of.",
+      "player: Ruby's side of the same argument. Whose side are you on?",
+      "choice Who do you back?",
+      "- Tell Ruby the cookie isn't enough, and she should apologise properly. (set side_me)",
+      "- Tell Weiss the cookie is nice, and she should forgive Ruby. (set side_ruby, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Weiss Schnee",
+    "name": "World: Arrival, Weiss Schnee & Satsuki Kiryuin",
+    "lines": [
+      "cast satsuki as Satsuki Kiryuin",
+      "background classroom",
+      "me enters left with slide",
+      "satsuki enters right with fade",
+      "satsuki: Weiss Schnee. I have heard of your family. You may be useful to the council.",
+      "me (dismayed): Satsuki Kiryuin. I have heard of your rebellion. Let us compare heiresses.",
+      "satsuki (pleased): Hmph. I approve of your standards. Perhaps we will work together.",
+      "player: Two heiresses. Who do you back?",
+      "choice Who do you support?",
+      "- Tell Satsuki the council is too strict, and Weiss should leave. (set side_me)",
+      "- Tell Weiss her family's standards are high, and Satsuki should listen. (set side_satsuki, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "DIO",
+    "name": "World: Arrival, DIO & Giorno Giovanna",
+    "lines": [
+      "cast giorno as Giorno Giovanna",
+      "background ruins",
+      "me enters left with slide",
+      "giorno enters right with fade",
+      "giorno: Father. I've heard about you. You want me by your side, don't you?",
+      "me (pleased): My son. You've grown into something I never expected. Come, join me.",
+      "giorno (dismayed): No. I will walk my own path. Not yours.",
+      "player: Father and son. Do you back DIO's heaven, or Giorno's dream?",
+      "choice Who do you side with?",
+      "- Tell Giorno to join his father, and see the heaven. (set side_me)",
+      "- Tell DIO that Giorno's dream is his own, and to let him go. (set side_giorno, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "DIO",
+    "name": "World: Arrival, DIO & Ragyo Kiryuin",
+    "lines": [
+      "cast ragyo as Ragyo Kiryuin",
+      "background ruins",
+      "me enters left with slide",
+      "ragyo enters right with fade",
+      "ragyo: DIO. You consider yourself a god, I hear. How amusing.",
+      "me (pleased): Lady Ragyo. You consider yourself the same. Let us see whose heaven is bigger.",
+      "ragyo (dismayed): Do not compare me to you. I am the mother of clothing itself.",
+      "player: Two gods, one warehouse. Who do you back?",
+      "choice Who do you support?",
+      "- Tell DIO his heaven is the true one, and Ragyo should bow. (set side_me)",
+      "- Tell Ragyo her clothing is divine, and DIO should listen. (set side_ragyo, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Giorno Giovanna",
+    "name": "World: Arrival, Giorno Giovanna & Jolyne Cujoh",
+    "lines": [
+      "cast jolyne as Jolyne Cujoh",
+      "background cafe",
+      "me enters left with slide",
+      "jolyne enters right with fade",
+      "jolyne: Giorno! You made a flower in a cafe. That's the weirdest thing I've seen.",
+      "me (pleased): Jolyne! Do you want one too? Your family would love it.",
+      "jolyne (dismayed): My family's a mess. Don't bring them into this.",
+      "player: Family, sort of. Do you back Giorno's flower, or Jolyne's string?",
+      "choice Who do you side with?",
+      "- Tell Jolyne the flower is a waste, and she should keep her string. (set side_me)",
+      "- Tell Giorno the flower is great, and Jolyne should try one. (set side_jolyne, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Giorno Giovanna",
+    "name": "World: Arrival, Giorno Giovanna & Eren",
+    "lines": [
+      "cast eren as Eren",
+      "background beach",
+      "me enters left with slide",
+      "eren enters right with fade",
+      "eren: Giorno. You have a dream too, don't you? I can tell from your face.",
+      "me (pleased): Eren! I do. Mine is to walk my own path, and yours is to see the sea.",
+      "eren (dismayed): Mine's a heavy one. Are you sure you want to walk with me?",
+      "player: Two with dreams. Who do you back?",
+      "choice Who do you side with?",
+      "- Tell Eren his dream is too dark, and Giorno should go on alone. (set side_me)",
+      "- Tell Giorno his dream is worth sharing, and Eren should walk with him. (set side_eren, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Jolyne Cujoh",
+    "name": "World: Arrival, Jolyne Cujoh & Giorno Giovanna",
+    "lines": [
+      "cast giorno as Giorno Giovanna",
+      "background beach",
+      "me enters left with slide",
+      "giorno enters right with fade",
+      "giorno: Jolyne. You escaped from somewhere. Do you need a place to stay?",
+      "me (dismayed): Giorno, I'm fine. Stop trying to fix me with flowers.",
+      "giorno (pleased): Then let me make you one anyway. It's the least I can do.",
+      "player: Family, sort of. Whose side are you on?",
+      "choice Who do you side with?",
+      "- Tell Giorno the flowers are too much, and Jolyne should be left alone. (set side_me)",
+      "- Tell Jolyne a flower might be nice, and Giorno should make one. (set side_giorno, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Jolyne Cujoh",
+    "name": "World: Arrival, Jolyne Cujoh & Ryuko Matoi",
+    "lines": [
+      "cast ryuko as Ryuko Matoi",
+      "background city",
+      "me enters left with slide",
+      "ryuko enters right with fade",
+      "ryuko: Jolyne! I heard you escaped from somewhere. Did you break out?",
+      "me (dismayed): Ryuko Matoi. Yeah. And nobody's sending me back. Got it?",
+      "ryuko (pleased): Got it. Two punks, one town. Let's cause some trouble, huh?",
+      "player: Two punks. Do you back Jolyne's secret, or Ryuko's questions?",
+      "choice Who do you side with?",
+      "- Tell Ryuko to leave Jolyne alone, and let her keep her secret. (set side_me)",
+      "- Tell Jolyne to trust Ryuko, and tell her what happened. (set side_ryuko, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Echidna",
+    "name": "World: Arrival, Echidna & Emilia",
+    "lines": [
+      "cast emilia as Emilia",
+      "background forest",
+      "me enters left with slide",
+      "emilia enters right with fade",
+      "emilia: Echidna? You're the witch I've heard about. Why are you looking at me that way?",
+      "me (pleased): Emilia. A visitor who's lost in the forest. How interesting. Would you like a contract?",
+      "emilia (dismayed): No contracts, please. I'm trying to get through my trial on my own.",
+      "player: The witch's offer. Do you tell Emilia to take it, or to refuse?",
+      "choice Who do you back?",
+      "- Tell Echidna the offer is generous, and Emilia should consider it. (set side_me)",
+      "- Tell Emilia to refuse, and face the trial on her own terms. (set side_emilia, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Echidna",
+    "name": "World: Arrival, Echidna & Frieren",
+    "lines": [
+      "cast frieren as Frieren",
+      "background library",
+      "me enters left with slide",
+      "frieren enters right with fade",
+      "frieren: Echidna. You're as old as I am, I think. Is that a tea invitation?",
+      "me (pleased): Frieren. Two old scholars. How interesting. Would you like to discuss magic?",
+      "frieren (pleased): Hm. Yes, maybe. Your questions are too many, but they're good ones.",
+      "player: Two centuries-old scholars. Who do you back?",
+      "choice Who do you side with?",
+      "- Tell Frieren the tea is a trap, and Echidna should go home. (set side_me)",
+      "- Tell Echidna the questions are good, and Frieren should answer them. (set side_frieren, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Emilia",
+    "name": "World: Arrival, Emilia & Ram/Rem",
+    "lines": [
+      "cast ramrem as Ram/Rem",
+      "background cafe",
+      "me enters left with slide",
+      "ramrem enters right with fade",
+      "ramrem: Lady Emilia. Rem: 'We have been looking for you.' Ram: 'Don't wander off again.'",
+      "me (pleased): Oh, Rem and Ram! I'm so sorry. I got lost in the forest again.",
+      "ramrem (dismayed): Rem: 'Lady Emilia, please be careful.' Ram: 'Hmph. Honestly.'",
+      "player: Their lady, and her household. Do you help Emilia, or the twins?",
+      "choice Who gets your support?",
+      "- Tell Rem and Ram the lady is fine, and they should let her wander. (set side_me)",
+      "- Tell Emilia the twins are worried, and she should stay close. (set side_ramrem, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Emilia",
+    "name": "World: Arrival, Emilia & Madoka",
+    "lines": [
+      "cast madoka as Madoka",
+      "background classroom",
+      "me enters left with slide",
+      "madoka enters right with fade",
+      "madoka: Emilia! You're so kind. Would you like to join our class? You can sit with me.",
+      "me (pleased): Madoka! Thank you. Puck says you're a very kind person too.",
+      "madoka (pleased): Puck? Oh, your little friend. I'd love to meet him properly.",
+      "player: Two kind hearts. Who do you back?",
+      "choice Who do you side with?",
+      "- Tell Madoka to let Emilia be, and find her own friends. (set side_me)",
+      "- Tell Emilia to join the class, and meet Madoka properly. (set side_madoka, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Ram/Rem",
+    "name": "World: Arrival, Ram/Rem & Emilia",
+    "lines": [
+      "cast emilia as Emilia",
+      "background cafe",
+      "me enters left with slide",
+      "emilia enters right with fade",
+      "emilia: Rem! Ram! I'm sorry I wandered off again. Please don't be too cross.",
+      "me (dismayed): Rem: 'Lady Emilia! We were so worried!' Ram: 'Hmph. Don't do it again.'",
+      "emilia (pleased): I won't! I promise, really. Thank you for looking after me.",
+      "player: They serve their lady, and she's lost again. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Emilia she's been reckless again, and the twins should be firm. (set side_me)",
+      "- Tell Rem and Ram the lady is trying, and they should forgive her. (set side_emilia, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Ram/Rem",
+    "name": "World: Arrival, Ram/Rem & Kanna",
+    "lines": [
+      "cast kanna as Kanna",
+      "background beach",
+      "me enters left with slide",
+      "kanna enters right with fade",
+      "kanna: Ram. Rem. Kanna wants to share the lunch. Do you want some?",
+      "me (dismayed): Rem: 'Oh, thank you, Kanna!' Ram: 'We're on duty. Hmph. A small piece.'",
+      "kanna: Kanna's dragon is shy, but he likes you. Eat slowly.",
+      "player: Two who serve someone they love. Who do you back?",
+      "choice Who do you side with?",
+      "- Tell Kanna the lunch is for her alone, and the twins should work. (set side_me)",
+      "- Tell Ram and Rem to take a break, and share the lunch with Kanna. (set side_kanna, give color_pack)"
+    ]
+  }
+]

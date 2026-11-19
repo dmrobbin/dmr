@@ -21,11 +21,13 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.timesince import timesince
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
 
 from . import buffs, challenge, packs, quests, scenes, world
 from . import world_calendar
 from . import world_events as events
+from . import world_roster as roster
 from .cpu_views import MAX_LOADOUT, MAX_START_PACKS, back_to, staff_required
 from .lists import CLIMAX_COUNT, COPY_LIMIT, DECK_GROUPS, DECK_SIZE, unlimited
 from .models import CardList, CpuProfile, CpuSchedule, Scene, WorldPlace, WorldSave, WorldSettings
@@ -101,6 +103,17 @@ def save_or_home(request, slot):
         messages.error(request, f"Slot {slot} has no save.")
         return None, redirect("weiss:world_home")
     return save, None
+
+
+def from_town(request):
+    """Whether a deck's page was opened from the town's menu: it then goes back to the town, and stays in that flow."""
+    return request.GET.get("from") == "town" or request.POST.get("from") == "town"
+
+
+def deck_page(request, slot, deck=None):
+    """A deck's builder page (the equipped one, with no deck), keeping the town's flow when the player came from it."""
+    url = reverse("weiss:world_deck_edit", args=[slot, deck]) if deck else reverse("weiss:world_deck", args=[slot])
+    return f"{url}?from=town" if from_town(request) else url
 
 
 def played_ago(save):
@@ -200,15 +213,20 @@ def world_opened(request, slot):
         return redirect("weiss:world_save", slot=slot)
     opening = save.last_opening
     back = reverse("weiss:world_save", args=[slot])
+    again = None  # a button that opens the next packs from here, rather than going back to the save to choose
     if opening.get("bought"):
         town = reverse("weiss:world_town", args=[slot])
         actions = [("Back to the town", town, True), ("Change your decks", f"{back}#decks", False)]
+    elif save.packs:
+        size = min(save.packs, 10)  # the save page's default
+        again = {"label": f"Open {size} more", "url": reverse("weiss:world_open", args=[slot]), "count": size}
+        actions = [("Back to your save", back, False)]
     else:
-        first = ("Open more", back, True) if save.packs or save.rewards else ("Build your deck", reverse("weiss:world_deck", args=[slot]), True)
+        first = ("Open your specialty packs", back, True) if save.rewards else ("Build your deck", reverse("weiss:world_deck", args=[slot]), True)
         actions = [first, ("Back to your save", back, False)]
     return render(request, "weiss/pack_open.html", {
         "set_id": opening["set_id"], "set_name": opening["set"], "count": len(opening["packs"]), "pack_size": packs.PACK_SIZE,
-        "opening": opening, "back_url": back, "back_label": f"Slot {slot}", "actions": actions,
+        "opening": opening, "back_url": back, "back_label": f"Slot {slot}", "actions": actions, "again": again,
     })
 
 
@@ -231,6 +249,8 @@ def world_claim(request, slot):
     return redirect("weiss:world_save", slot=slot)
 
 
+# The town shows these pages in its own window (world_town.js), so they may be framed by this site, and only by it.
+@xframe_options_sameorigin
 @staff_required
 def world_deck(request, slot, deck=None):
     """Build one of the save's decks from its cards (the equipped one, without a deck in the link): the challenge deck
@@ -239,7 +259,7 @@ def world_deck(request, slot, deck=None):
     if away:
         return away
     if deck is None:
-        return redirect("weiss:world_deck_edit", slot=slot, deck=save.deck_id) if save.deck_id else redirect("weiss:world_save", slot=slot)
+        return redirect(deck_page(request, slot, save.deck_id)) if save.deck_id else redirect("weiss:world_save", slot=slot)
     chosen = world.deck_in(save, deck)
     if not chosen:
         messages.error(request, "That deck isn't one of this save's.")
@@ -256,7 +276,7 @@ def world_deck(request, slot, deck=None):
             still = world.deck_problem(save, chosen)
             messages.success(request, f"“{chosen.name}” saved. To duel with it: {still[0].lower()}{still[1:]}" if still
                              else f"“{chosen.name}” saved: it's ready to duel.")
-        return redirect("weiss:world_deck_edit", slot=slot, deck=chosen.pk)
+        return redirect(deck_page(request, slot, chosen.pk))
     cards = []
     for card, pulled, in_deck in world.deck_pool(save, chosen):
         card.image_src = reverse("weiss:card_image", args=[card.pk])
@@ -275,12 +295,16 @@ def world_deck(request, slot, deck=None):
     levels = (["climax"], ["0"], ["1"], ["2", "3"])
     groups = [{"label": label, "target": target, "required": required, "levels": counted}
               for (label, target, required, _), counted in zip(DECK_GROUPS, levels)]
-    back = reverse("weiss:world_save", args=[slot])
+    town_flow = from_town(request)
+    equipped = chosen.pk == save.deck_id
     return render(request, "weiss/challenge_deck.html", {
         "run": save, "cards": cards, "deck_size": DECK_SIZE, "climax_target": CLIMAX_COUNT, "climax_min": CLIMAX_COUNT,
         "copy_limit": COPY_LIMIT, "over_size_ok": False, "options": options, "partner": None, "deck_groups": groups, "state_url": "",
-        "back_url": back, "back_label": f"Slot {slot}", "back_button": "Back to your save",
-        "heading": f"Build “{chosen.name}”", "equipped": chosen.pk == save.deck_id,
+        "back_url": reverse("weiss:world_town", args=[slot]) if town_flow else reverse("weiss:world_save", args=[slot]),
+        "back_label": f"Slot {slot}", "back_button": "Back to the town" if town_flow else "Back to your save",
+        "heading": f"Build “{chosen.name}”", "equipped": equipped, "from_town": town_flow,
+        # Equipping from here, so the deck's own page is where it's both built and chosen to duel with.
+        "equip_url": None if equipped else reverse("weiss:world_deck_equip", args=[slot, chosen.pk]),
     })
 
 
@@ -300,6 +324,8 @@ def deck_change(view):
                 view(request, save, chosen)
             except ValueError as error:
                 messages.error(request, str(error))
+            if request.POST.get("next") == "builder":  # from the deck's own builder: stay there
+                return redirect(deck_page(request, slot, chosen.pk))
         return redirect(f"{reverse('weiss:world_save', args=[slot])}#decks")
     return staff_required(require_POST(wrapper))
 
@@ -492,6 +518,7 @@ def world_quest(request, save):
     return world.quest_act(save, request.POST.get("cpu", ""), request.POST.get("act", ""), request.POST.get("quest", ""), request.POST)
 
 
+@xframe_options_sameorigin
 @staff_required
 def world_quests(request, slot):
     """The save's quest log: what's offered, under way (each stage and objective, how far along), finished and closed."""
@@ -501,11 +528,13 @@ def world_quests(request, slot):
     found = quests.journal(save)
     tab = request.GET.get("show") if request.GET.get("show") in ("done", "failed") else "active"
     return render(request, "weiss/world_quests.html", {"save": save, "journal": found, "tab": tab,
-                                                       "tabs": [("active", "Under way", len(found["active"]) + len(found["offered"])),
+                                                       "tabs": [("active", "Under way", len(found["active"]) + len(found["offered"])
+                                                                 + sum(1 for chapter in found["story"] if chapter.get("stages"))),
                                                                 ("done", "Finished", len(found["done"])),
                                                                 ("failed", "Closed", len(found["failed"]))]})
 
 
+@xframe_options_sameorigin
 @staff_required
 def world_events(request, slot):
     """The notice board: the week's calendar (weiss.world_events), what's on today, and the weekly tournament (entry,
@@ -588,10 +617,13 @@ def world_scene(request, slot):
     save, away = save_or_home(request, slot)
     if away:
         return away
-    pending = save.flags.pop("scene", None)
-    scene = Scene.objects.filter(pk=(pending or {}).get("scene")).first()
-    if pending:
+    pending = save.flags.get("scene")
+    arrival = bool((pending or {}).get("arrival"))
+    if pending and not arrival:  # played once; an arrival stays until its choice is in (world_scene_done)
+        save.flags.pop("scene")
+        world.next_scene(save)  # the next one waiting comes up
         save.save(update_fields=["flags"])
+    scene = Scene.objects.filter(pk=(pending or {}).get("scene")).first()
     compiled, errors = scenes.compile_scene(scene.script) if scene else (None, True)
     if errors:
         return redirect("weiss:world_town", slot=slot)
@@ -600,7 +632,26 @@ def world_scene(request, slot):
     return render(request, "weiss/world_scene.html", {
         "save": save, "payload": scenes.scene_payload(compiled, scene.name, viewer=request.user), "player_name": request.user.username,
         "rewards": rewards, "reward_link": next((reward["link"] for reward in rewards if reward["link"]), ""),
+        "done_url": reverse("weiss:world_scene_done", args=[slot]) if arrival else "",
     })
+
+
+@staff_required
+@require_POST
+def world_scene_done(request, slot):
+    """A newcomer's arrival scene is over: what the player chose (the flags and packs its options set) is paid out,
+    once (weiss.world_roster.arrival_done). Answers {"rewards", "link"} for the scene page to show."""
+    save, away = save_or_home(request, slot)
+    if away:
+        return JsonResponse({"error": f"Slot {slot} has no save."}, status=404)
+    try:
+        chosen = json.loads(request.POST.get("state") or "{}")
+        with transaction.atomic():
+            save = WorldSave.objects.select_for_update().get(pk=save.pk)
+            done = roster.arrival_done(save, list(chosen.get("flags") or []), list(chosen.get("buffs") or []))
+    except (ValueError, TypeError, AttributeError) as error:
+        return JsonResponse({"error": str(error) or "That didn't go through."}, status=400)
+    return JsonResponse(done)
 
 
 @town_move
@@ -648,6 +699,11 @@ def world_settings(request):
             "request_price": whole("request_price", 0, MAX_COINS, "A set request's price"),
             "win_payout": whole("win_payout", 0, MAX_COINS, "A win's payout"),
             "first_win_bonus": whole("first_win_bonus", 0, MAX_COINS, "The day's first win bonus"),
+            "talk_points": whole("talk_points", 0, 50, "Points for the day's first talk"),
+            "start_cast": whole("start_cast", 2, 200, "The starting cast"),
+            "weekly_cast": whole("weekly_cast", 1, 50, "Arrivals each week"),
+            "arrival_coins": whole("arrival_coins", 0, MAX_COINS, "An arrival scene's coins"),
+            "arrival_points": whole("arrival_points", 0, 50, "An arrival scene's points"),
         }
     except ValueError as error:
         messages.error(request, str(error))

@@ -8,7 +8,10 @@
 {% block content %}
   <p class="back"><a href="{{ back_url }}">&larr; {{ back_label }}</a></p>
   <h1>{{ heading|default:"Build your deck" }}</h1>
-  {% if equipped is not None %}<p class="small{% if not equipped %} muted{% endif %}">{% if equipped %}★ Equipped: the deck you duel with.{% else %}Not equipped: equip it on your save's page to duel with it.{% endif %}</p>{% endif %}
+  {% if equipped is not None %}<p class="small{% if not equipped %} muted{% endif %}">{% if equipped %}★ Equipped: the deck you duel with.{% elif equip_url %}Not equipped: this isn't the deck you duel with.{% else %}Not equipped: equip it on your save's page to duel with it.{% endif %}</p>{% endif %}
+  {% if equip_url %}
+    <form method="post" action="{{ equip_url }}" class="world-equip">{% csrf_token %}<input type="hidden" name="next" value="builder">{% if from_town %}<input type="hidden" name="from" value="town">{% endif %}<button type="submit" class="button-small">Equip this deck</button></form>
+  {% endif %}
   {% if partner %}
     <p class="muted small">The pool is yours and {{ partner.username }}'s: every card either of you has pulled is here. A copy in one deck can't go in the other,
       so a card {{ partner.username }}'s deck has every copy of is greyed out until they take some out. <a href="{% url 'weiss:arcade_coop_partner_deck' %}">See {{ partner.username }}'s deck</a>.

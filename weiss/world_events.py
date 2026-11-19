@@ -235,7 +235,8 @@ def registration(save, event):
 def eligible(save):
     """The CPUs who can enter: those who duel in the town (finalized, with a deck), less any a quest sent away."""
     gone = quests.gone(save)
-    return {cpu_id: rules for cpu_id, rules in world.haunts().items() if cpu_id not in gone}
+    in_town = world.roster.released(save)  # only those in the save's town so far
+    return {cpu_id: rules for cpu_id, rules in world.haunts().items() if cpu_id not in gone and (in_town is None or cpu_id in in_town)}
 
 
 def draw_entrants(save, event):

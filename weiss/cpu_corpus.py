@@ -686,6 +686,24 @@ def import_world_pack(files, dry_run=False, user=None, known=None):
         result.problems += [f"scene “{name}”, line {line}: {error}" for line, error in scenes.compile_scene(script, find=find)[1]]
     wanted = []
     pack_keys = quest_keys([entry.get("world") for data in files for entry in data.get("cpus") or []])
+    pack_keys |= {str(chapter.get("key")) for data in files for chapter in data.get("story") or [] if isinstance(chapter, dict) and chapter.get("key")}
+    story = []  # (checked fields, its file's result): a story file's chapters (weiss.quests, story quests)
+    for data, result in zip(files, results):
+        raw = data.get("story")
+        if raw is None:
+            continue
+        if not isinstance(raw, list):
+            result.problems.append("story: a list of chapters (quests with \"story\": true).")
+            continue
+        context = quest_context(info, set(pack_scenes), cpus=names.values(), quest_keys=pack_keys, offline=known is not None)
+        for number, chapter in enumerate(raw, 1):
+            if not isinstance(chapter, dict) or not chapter.get("story"):
+                result.problems.append(f"story chapter {number}: give it \"story\": true (a story file's quests are its chapters).")
+                continue
+            fields, errors = quests.check(chapter, context)
+            result.problems += [f"story chapter {number}: {error}" for error in errors]
+            if fields and not errors:
+                story.append((fields, result))
     for data, result in zip(files, results):
         for number, entry in enumerate(data.get("cpus") or [], 1):
             name = str(entry.get("name", "")).strip()
@@ -697,9 +715,14 @@ def import_world_pack(files, dry_run=False, user=None, known=None):
                                names=quest_context(info, set(pack_scenes), cpus=names.values(), quest_keys=pack_keys, offline=known is not None))
             result.problems[before:] = [f"{names[name.lower()]}: {problem}" for problem in result.problems[before:]]
             wanted.append((names[name.lower()], found, result))
+    chapters = {}
+    for fields, result in story:
+        chapters.setdefault(id(result), [result, 0])[1] += 1
     if dry_run or known is not None or any(result.problems for result in results):
         for name, (rules, tastes, lines, _, found_quests), result in wanted:
             result.done.append((name, done_words(rules, lines, found_quests)))
+        for result, count in chapters.values():
+            result.done.append(("The story", f"{count} chapter{'s' if count != 1 else ''}"))
         return results
     with transaction.atomic():
         for name, script, _ in pack_scenes.values():
@@ -715,6 +738,10 @@ def import_world_pack(files, dry_run=False, user=None, known=None):
             profile.chatter.all().delete()
             make_world(profile, rules, tastes, lines, temperament, found_quests)
             result.done.append((name, done_words(rules, lines, found_quests)))
+        for order, (fields, _) in enumerate(story, 1):  # the story's chapters, by key: saves keep their place in them
+            quests.save_quest(fields, order=order)
+        for result, count in chapters.values():
+            result.done.append(("The story", f"{count} chapter{'s' if count != 1 else ''}"))
     return results
 
 

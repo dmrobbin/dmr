@@ -484,6 +484,38 @@ Time is the player's budget. Where to go and whom to see should be a choice.
   - All 75 CPUs have their own: three of each in `world_pack/src` (`hello` and `bye`: a stranger's, a friend's
     (rank 2) and a close friend's (rank 4)), built into the packs. Re-import the six packs to put them live.
 
+## The story — framework built
+
+- **Chapters** are story quests (`"story": true`, `"chapter": n`), with no giver, kept in `world_pack/src/00_story.py`
+  and imported with the packs (a pack file's `story` list).
+  - **Beginning:** each begins by itself once what it requires is done (the chapter before it, a flag). The first
+    begins with the save.
+  - **Finishing:** each finishes by itself (its one ending with no `to`), or with a choice made by talking to someone.
+- **Scenes:** a chapter's `scene` plays when it begins, a stage's when that stage is done, and an ending's when it's
+  reached.
+  - **The queue:** scenes now queue (`world.queue_scene`, `next_scene`), so several play in a row, and a visit's
+    scene is no longer skipped when another is waiting.
+- **Characters:** whoever a chapter names is brought into town when it begins (`world_roster.bring`).
+- **The quest log** shows the story first.
+- **A placeholder chain** of three chapters is in, so it can be played through. What to write:
+  [world-story-plan.md](world-story-plan.md).
+
+## The cast a few at a time, and arrivals — built
+
+- **A small cast to start:** a save starts with 12 random CPUs (`start_cast`), at least 2 of them villains, and about
+  4 more arrive each week (`weekly_cast`). CPUs whose quests name each other always arrive together.
+  - **Where it's kept:** the plan is on the save (`WorldSave.roster`, `weiss/world_roster.py`, migration 0064).
+  - **Who's out:** the day's draw only uses CPUs in town, and so does the tournament.
+  - **Saves from before:** they get a roster the first time they're loaded, with everyone the player has met (points
+    or a quest) in the first wave.
+  - **CPUs made later** arrive the next week.
+- **Arrivals:** each Monday the town says who's new and plays each newcomer's arrival scene, if one's written.
+  - **The choice:** the player takes a side (`side_<cast id>`). That character gets `arrival_points`, and the option
+    gives a pack (`give …`) or `arrival_coins`.
+  - **The scenes:** listed in [world-arrivals-plan.md](world-arrivals-plan.md).
+- **Talk points** are a setting (`talk_points`), now 6 for the day's first talk (double the old 3).
+- All five numbers are on the World mode tab.
+
 ## Staff testing: raising a rank — built
 
 Checking a quest or a rank-up scene used to mean playing for days. Two quick routes, both staff only:

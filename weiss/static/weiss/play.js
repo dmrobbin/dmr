@@ -136,10 +136,11 @@
   touchQuery.addEventListener("change", setModes);
   compactQuery.addEventListener("change", setModes);
 
-  // Board view: "focus" (big stage, piles around it) or "classic" (three even rows). Remembered
-  // per browser; storage can be unavailable (private windows), so it falls back to focus.
+  // Board view: "focus" (big stage, piles around it), "classic" (three even rows) or "wide" (the focused
+  // board turned on its side: you on the left, your opponent on the right, your hand along the bottom).
+  // Remembered per browser; storage can be unavailable (private windows), so it falls back to focus.
   const LAYOUT_KEY = "weiss-board-layout";
-  const LAYOUTS = { focus: "Focused", classic: "Classic" };
+  const LAYOUTS = { focus: "Focused", classic: "Classic", wide: "Widescreen" };
   let layout = "focus";
   try {
     if (LAYOUTS[localStorage.getItem(LAYOUT_KEY)]) layout = localStorage.getItem(LAYOUT_KEY);
@@ -156,6 +157,8 @@
   function showLayout() {
     const shown = compact ? "focus" : layout;
     for (const name of Object.keys(LAYOUTS)) root.classList.toggle(`layout-${name}`, name === shown);
+    // Widescreen is built from the focused mats (turned, not redrawn), so it carries their classes too.
+    root.classList.toggle("layout-focus", shown === "focus" || shown === "wide");
   }
   setLayout(layout);
 
@@ -1925,14 +1928,14 @@
   // The color the server says the color rule is holding this hand card back for, or null.
   const colorMissing = (card) => (board.needs_color || {})[card.uid] || null;
 
-  // Which colors are in our clock and level zone (how many cards doesn't matter), in a strip
-  // between the board and the hand, under the waiting room.
-  function activeColorsHtml(side) {
+  // The colors in a side's clock and level zones (how many cards doesn't matter). The side's outline glows
+  // with them (site.css, .table-side .mat::after), so the style is a list of colors set on the side.
+  const GLOW_COLORS = { yellow: "#e3c33b", green: "#4fae5b", red: "#d9534f", blue: "#4a8fd9", purple: "#9b6cd1" };
+  function glowStyle(side) {
     const present = new Set([...side.zones.clock, ...side.zones.level]
       .map((c) => (c.card && cards[c.card] ? cards[c.card].color : "")).filter(Boolean));
-    const colors = [...COLORS.filter((c) => present.has(c)), ...[...present].filter((c) => !COLORS.includes(c))];
-    const chips = colors.map((c) => `<span class="active-color color-${esc(c.toLowerCase())}">${esc(c)}</span>`).join("");
-    return `<div class="active-colors"><span class="zone-label">Active colors</span>${chips || '<span class="muted small">none yet</span>'}</div>`;
+    const colors = COLORS.filter((c) => present.has(c)).map((c) => GLOW_COLORS[c.toLowerCase()]).filter(Boolean);
+    return colors.length ? ` style="--glow-colors: ${colors.join(", ")}"` : "";
   }
 
   // Any reversed character on either side (the encore step waits for them).
@@ -2109,19 +2112,24 @@
     const split = compact && opp;
     if (!split) boardView = "me";
     if (split) boardEl.dataset.view = boardView; else delete boardEl.dataset.view;
+    // Widescreen puts each hand under its own side (the portraits sit at the outer edges); everything else keeps the hands in their sides.
+    const wideBoard = layout === "wide" && !compact;
+    const handOpp = opp ? `<div class="hand hand-opponent${avatars[opp.name] ? " has-portrait" : ""}">${handPortrait(opp.name)}<span class="zone-label">${avatars[opp.name] ? "Hand" : `${whose(opp.name)} hand`} <b>${oppHand}</b></span>
+          <div class="hand-cards">${Array.from({ length: oppHand }, backHtml).join("")}</div></div>` : "";
+    const handMe = `<div class="hand hand-me zone${avatars[me.name] ? " has-portrait" : ""}" data-drop="hand" data-owner="me">${handPortrait(me.name)}<span class="zone-label">Your hand <b>${me.zones.hand.length}</b></span>
+          <div class="hand-cards">${me.zones.hand.map(handCardHtml).join("")}</div></div>`;
     boardEl.innerHTML = `
       ${split ? boardSwitchHtml(me, opp) : ""}
-      ${opp ? `<div class="table-side side-opponent">${climaxBackdropHtml(opp, "opponent")}
-        <div class="hand hand-opponent${avatars[opp.name] ? " has-portrait" : ""}">${handPortrait(opp.name)}<span class="zone-label">${avatars[opp.name] ? "Hand" : `${whose(opp.name)} hand`} <b>${oppHand}</b></span>
-          <div class="hand-cards">${Array.from({ length: oppHand }, backHtml).join("")}</div></div>
+      ${opp ? `<div class="table-side side-opponent"${glowStyle(opp)}>${climaxBackdropHtml(opp, "opponent")}
+        ${wideBoard ? "" : handOpp}
         ${matHtml(opp, "opponent")}</div>` : ""}
+      ${wideBoard ? handOpp : ""}
       <div class="table-divider">${matchStarsHtml(0)}<span class="table-turn">${board.rps ? `Game ${gameNumber()} · rock, paper, scissors` : `${board.my_turn ? "Your turn" : `${opp ? whose(opp.name) : "Opponent's"} turn`} · game ${gameNumber()} · turn ${board.turn_number} · ${cxHtml(PHASES[board.phase])} phase`}</span>${matchStarsHtml(1)}</div>
-      <div class="table-side side-me">${climaxBackdropHtml(me, "me")}
+      <div class="table-side side-me"${glowStyle(me)}>${climaxBackdropHtml(me, "me")}
         ${matHtml(me, "me")}
-        ${activeColorsHtml(me)}
-        <div class="hand hand-me zone${avatars[me.name] ? " has-portrait" : ""}" data-drop="hand" data-owner="me">${handPortrait(me.name)}<span class="zone-label">Your hand <b>${me.zones.hand.length}</b></span>
-          <div class="hand-cards">${me.zones.hand.map(handCardHtml).join("")}</div></div>
-      </div>`;
+        ${wideBoard ? "" : handMe}
+      </div>
+      ${wideBoard ? handMe : ""}`;
 
     fx.setTableMood();
     renderControls();

@@ -19,7 +19,11 @@
   const shop = $("[data-shop]");
   const mapButton = $("[data-open-map]");
   const shopButton = $("[data-open-shop]");
-  const waitButton = $("[data-wait]");
+  const waitButton = $("[data-wait]"); // the HUD's, once the time's spent here
+  const menuButton = $("[data-open-menu]");
+  const menuPanel = $("[data-menu-panel]");
+  const menuWait = $("[data-menu-wait]");
+  const fullscreenButtons = root.querySelectorAll("[data-fullscreen], [data-menu-fullscreen]");
   const toast = $("[data-toast]");
   const csrf = root.querySelector("[name=csrfmiddlewaretoken]").value;
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -60,6 +64,7 @@
     }
     paintTime();
     $("[data-deck-notice]").hidden = town.deck_ready;
+    $("[data-deck-hint]").textContent = town.deck_ready ? "" : "Not ready to duel yet";
     paintQuests();
     const waiting = $("[data-scene-waiting]");
     const linked = result && result.scene; // the duel's result banner links to it already
@@ -173,6 +178,7 @@
     const { active = 0, ready = 0 } = town.quests || {};
     link.querySelector("[data-quests-count]").textContent = active ? ` (${active})` : "";
     link.classList.toggle("town-quests-ready", ready > 0);
+    menuButton.classList.toggle("town-hud-alert", ready > 0); // so the menu says something's waiting, shut or not
     link.title = ready ? `${ready} ready to finish` : active ? `${active} under way` : "Your quest log";
     link.setAttribute("aria-label", `Quests${active ? `: ${active} under way` : ""}${ready ? `, ${ready} ready to finish` : ""}`);
   }
@@ -191,7 +197,9 @@
   const thisTime = () => ["this morning", "this afternoon", "this evening", "tonight"][town.time]; // as weiss.world.this_time
   function paintTime() {
     if (town.engaged && !map.hidden) closeMap(false);
-    mapButton.hidden = town.engaged || town.choose; // while choosing, the map is already open
+    mapButton.hidden = town.choose; // while choosing, the map is already open
+    mapButton.disabled = Boolean(town.engaged); // spent here: the map says why it's shut, rather than vanishing
+    $("[data-map-hint]").hidden = !town.engaged;
     // Time has just passed: where now? The map opens under the passage's cover, so it's there when the new time of day
     // is shown. It has to be answered (staying is a choice); in staff test mode it can be closed, which is staying.
     if (town.choose && (map.hidden || (town.choose_required && !mapRequired))) openMap(town.choose_required);
@@ -204,10 +212,14 @@
     staffWait.hidden = !town.test_mode;
     $("[data-jump]").hidden = !town.test_mode;
     staffWait.disabled = busy || Boolean(town.duel);
-    waitButton.hidden = !town.can_wait;
-    waitButton.textContent = `Pass time: ${town.next_time.toLowerCase()}`;
-    waitButton.title = town.engaged ? `You've spent ${thisTime()} here. Pass time to go somewhere else.` : "There's nobody out right now.";
+    // Passing time sits top right once the time's spent here (committed); the menu always has it, saying why not if it can't.
+    const next = town.next_time.toLowerCase();
+    waitButton.hidden = !town.engaged;
+    waitButton.textContent = `Pass time: ${next}`;
+    waitButton.title = town.duel ? "You're in a duel: finish it first." : `You've spent ${thisTime()} here. Pass time to go somewhere else.`;
     waitButton.disabled = busy || Boolean(town.duel);
+    menuWait.querySelector("[data-menu-wait-hint]").textContent = town.can_wait ? `to ${next}` : town.wait_why;
+    menuWait.disabled = busy || Boolean(town.duel);
   }
 
   // Time passing, over the stage: the sky turns and the sun (or moon) moves on to the new time of day, then the place
@@ -417,6 +429,7 @@
       const a = document.createElement("a");
       a.href = link.href;
       a.textContent = link.text;
+      if (link.title) Object.assign(a.dataset, { sheetOpen: "", title: link.title }); // opens its panel, not its page
       why.append(a);
     }
     menu.append(why);
@@ -542,7 +555,7 @@
     }
     list.push(["Leave", leave, { quiet: true }]);
     options(list);
-    if (why) note(why, !town.deck_ready && !town.duel ? { href: root.dataset.decksUrl, text: "Your decks" } : null);
+    if (why) note(why, !town.deck_ready && !town.duel ? { href: root.dataset.decksUrl, text: "Your decks", title: "Your deck" } : null);
   }
 
   // ---- Quests in the talk box (weiss.world.quest_act): offers, talking them through, handing cards over, endings ----
@@ -822,7 +835,7 @@
         : ["Duel", () => duel(false), { disabled: Boolean(why), title: why }],
       ["Not now", choices, { quiet: true }],
     ]);
-    if (why) note(why, !town.deck_ready && !town.duel ? { href: root.dataset.decksUrl, text: "Your decks" } : null);
+    if (why) note(why, !town.deck_ready && !town.duel ? { href: root.dataset.decksUrl, text: "Your decks", title: "Your deck" } : null);
   }
 
   async function duel(stakes) {
@@ -968,7 +981,7 @@
     mapRequired = false;
     map.hidden = true;
     mapButton.setAttribute("aria-expanded", "false");
-    if (refocus) mapButton.focus({ preventScroll: true });
+    if (refocus) menuButton.focus({ preventScroll: true }); // the map's button lives in the menu, which is shut
   }
 
   // ---- The card shop ----
@@ -1387,8 +1400,134 @@
   function closeShop(refocus = true) {
     shop.hidden = true;
     shopButton.setAttribute("aria-expanded", "false");
-    if (refocus) shopButton.focus({ preventScroll: true });
+    if (refocus) menuButton.focus({ preventScroll: true }); // likewise the shop's
   }
+
+  // ---- The menu: everything the town offers, from the HUD's Menu button. Choosing an item closes it. ----
+  function openMenu() {
+    menuPanel.hidden = false;
+    menuButton.setAttribute("aria-expanded", "true");
+    menuPanel.querySelector("a[href], button:not(:disabled)")?.focus({ preventScroll: true });
+  }
+
+  function closeMenu(refocus = true) {
+    if (menuPanel.hidden) return;
+    const inside = menuPanel.contains(document.activeElement); // focus shouldn't fall out of the page with it
+    menuPanel.hidden = true;
+    menuButton.setAttribute("aria-expanded", "false");
+    if (refocus || inside) menuButton.focus({ preventScroll: true });
+  }
+
+  menuButton.addEventListener("click", () => (menuPanel.hidden ? openMenu() : closeMenu()));
+  menuPanel.addEventListener("click", (event) => {
+    if (event.target.closest("a, button:not(:disabled)")) closeMenu(false);
+  });
+  document.addEventListener("click", (event) => {
+    if (!menuPanel.hidden && !menuPanel.contains(event.target) && !menuButton.contains(event.target)) closeMenu(false);
+  });
+
+  // ---- Panels: the town's own pages (quests, the deck, the bounty board), framed in the stage so the town never reloads.
+  // Each one is the real page, so its forms and scripts work as they do anywhere. A link back to the town, or Esc, closes
+  // it; closing catches the town up, as what was done there may change what's shown. ----
+  const sheet = $("[data-sheet]");
+  const sheetFrame = $("[data-sheet-frame]");
+  const sheetTitle = $("[data-sheet-title]");
+  const townPath = root.dataset.townUrl;
+
+  function openSheet(title, url) {
+    if (mapRequired) return say("Choose where to spend the new time first.");
+    closeMenu(false);
+    closeMap(false);
+    closeShop(false);
+    closeTalk(false);
+    sheetTitle.textContent = title;
+    sheetFrame.title = title;
+    sheetFrame.src = url;
+    sheet.hidden = false;
+    $("[data-sheet-close]").focus({ preventScroll: true });
+  }
+
+  function closeSheet(refocus = true) {
+    if (sheet.hidden) return;
+    sheet.hidden = true;
+    sheetFrame.src = "about:blank";
+    if (refocus) menuButton.focus({ preventScroll: true });
+    refreshTown();
+  }
+
+  // Each page the panel shows: a link back to the town closes it, from inside.
+  function onSheetLoad() {
+    if (sheet.hidden) return;
+    let doc;
+    try {
+      doc = sheetFrame.contentDocument;
+      if (sheetFrame.contentWindow.location.pathname === townPath) return closeSheet();
+      if (!doc.querySelector("main")) throw new Error("no page"); // a refused or failed page is an error page, with no main
+    } catch {
+      // The browser wouldn't show the page here (it refuses to frame it, or it failed): say so, rather than a blank panel.
+      say("That page couldn't open in the town. Try it again, or use Full screen and the menu.");
+      return closeSheet();
+    }
+    doc.addEventListener("click", (event) => {
+      const link = event.target.closest?.("a[href]");
+      if (link && link.pathname === townPath) {
+        event.preventDefault();
+        closeSheet();
+      }
+    });
+    doc.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeSheet();
+    });
+  }
+
+  async function refreshTown() {
+    if (busy) return;
+    try {
+      const response = await fetch(root.dataset.stateUrl, { headers: { Accept: "application/json" } });
+      if (!response.ok) return;
+      const fresh = await response.json();
+      if (fresh.version !== town.version) {
+        town = fresh;
+        paint();
+      }
+    } catch { /* what's shown will do */ }
+  }
+
+  sheetFrame.addEventListener("load", onSheetLoad);
+  $("[data-sheet-close]").addEventListener("click", () => closeSheet());
+  // Anything marked to open a panel (the menu, the news, the deck's notice) does, without going to its page.
+  root.addEventListener("click", (event) => {
+    const opener = event.target.closest("[data-sheet-open]");
+    if (!opener || !root.contains(opener)) return;
+    event.preventDefault();
+    openSheet(opener.dataset.title, opener.dataset.url || opener.href);
+  });
+
+  // ---- Full screen: the stage (the game window) fills the browser window. Esc or F leaves it. ----
+  const fullscreenable = Boolean(stage.requestFullscreen);
+  function paintFullscreen() {
+    const on = document.fullscreenElement === stage;
+    for (const button of fullscreenButtons) {
+      button.hidden = !fullscreenable;
+      button.setAttribute("aria-pressed", String(on));
+    }
+    $("[data-fullscreen]").title = on ? "Leave full screen (F)" : "Full screen (F)";
+    $("[data-menu-fullscreen]").textContent = on ? "Leave full screen" : "Full screen";
+  }
+
+  async function toggleFullscreen() {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await stage.requestFullscreen();
+    } catch {
+      say("Full screen isn't available here.");
+    }
+  }
+
+  document.addEventListener("fullscreenchange", paintFullscreen);
+  $("[data-fullscreen]").addEventListener("click", toggleFullscreen);
+  $("[data-menu-fullscreen]").addEventListener("click", toggleFullscreen);
+  paintFullscreen();
 
   // ---- Input ----
 
@@ -1397,7 +1536,7 @@
     if (advance && !event.target.closest("button, a")) advance();
   });
   stage.addEventListener("click", (event) => {
-    if (advance && !event.target.closest("button, a, [data-box]")) advance();
+    if (advance && !event.target.closest("button, a, [data-box], [data-sheet]")) advance();
   });
   mapButton.addEventListener("click", () => (map.hidden ? openMap() : dismissMap()));
   shopButton.addEventListener("click", () => (shop.hidden ? openShop() : closeShop()));
@@ -1427,7 +1566,9 @@
       row.scrollBy({ left: Number(step.dataset.cardsStep) * row.clientWidth * 0.8, behavior: reduced ? "auto" : "smooth" });
     });
   }
-  waitButton.addEventListener("click", wait);
+  // (Not passed straight to wait: its argument is the staff flag, and a click event would count as one.)
+  waitButton.addEventListener("click", () => wait());
+  menuWait.addEventListener("click", () => wait());
   $("[data-staff-wait]").addEventListener("click", () => wait(true));
   $("[data-jump-go]").addEventListener("click", async () => {
     closeTalk(false);
@@ -1456,15 +1597,19 @@
     }
     if (event.ctrlKey || event.metaKey || event.altKey || event.target.matches("input, textarea, select")) return;
     const key = event.key.toLowerCase();
+    if (!sheet.hidden && key !== "escape") return; // a panel's open: its page has the keys
     if ((key === "enter" || key === " ") && advance && !event.target.closest("button, a")) {
       event.preventDefault();
       advance();
     } else if (key === "escape") {
-      if (!map.hidden && !mapRequired) dismissMap();
+      if (!sheet.hidden) closeSheet();
+      else if (!menuPanel.hidden) closeMenu();
+      else if (!map.hidden && !mapRequired) dismissMap();
       else if (!shop.hidden) closeShop();
       else if (talking && !advance) closeTalk();
-    } else if (key === "m" && !talking && !mapButton.hidden && !mapRequired) map.hidden ? openMap() : dismissMap();
+    } else if (key === "m" && !talking && !mapButton.hidden && !mapButton.disabled && !mapRequired) map.hidden ? openMap() : dismissMap();
     else if (key === "w" && !talking && !mapRequired) wait(Boolean(town.test_mode && !town.can_wait));
+    else if (key === "f") toggleFullscreen();
   });
   // Coming back to the tab (from a duel, or another tab): catch up.
   document.addEventListener("visibilitychange", async () => {

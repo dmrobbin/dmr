@@ -18,7 +18,22 @@
   </nav>
 
   {% if tab == "active" %}
-    {% if not journal.active and not journal.offered %}
+    {% if journal.story %}
+      {# The story's chapters (weiss.quests story quests): the one under way in full, the finished ones in a line each. #}
+      <h2 class="quest-section">The story</h2>
+      <ul class="quest-list quest-story">
+        {% for quest in journal.story %}
+          {% if quest.stages %}
+            {% include "weiss/world_quest_card.html" with quest=quest %}
+          {% else %}
+            <li class="quest quest-done quest-chapter-done"><p class="small"><span class="quest-check" aria-hidden="true">✓</span>
+              <strong>{{ quest.chapter }}: {{ quest.title }}</strong>{% if quest.ending_about %} <span class="muted">· {{ quest.ending_about }}</span>{% endif %}</p></li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if not journal.active and not journal.offered and not journal.story %}
       <div class="quest-empty">
         <p>No quests yet.</p>
         <p class="muted small">As you get to know people in town, some will ask for your help. Their big moments wait on it: a friendship's
@@ -49,62 +64,7 @@
       <h2 class="quest-section">Under way</h2>
       <ul class="quest-list">
         {% for quest in journal.active %}
-          <li class="quest{% if quest.settling %} quest-ready{% endif %}">
-            <div class="quest-head">
-              {% if quest.giver %}{% include "weiss/avatar.html" with avatar=quest.avatar name=quest.giver size="quest-face" %}{% endif %}
-              <div>
-                <h3 class="quest-title">{{ quest.title }}</h3>
-                <p class="small muted">{% if quest.giver %}For {{ quest.giver }}{% endif %}{% if quest.gate %} · Unlocks {{ quest.gate }}{% endif %}</p>
-              </div>
-              {% if quest.settling %}<span class="deck-tag quest-tag">Ready to finish</span>{% endif %}
-              {% if quest.ends %}<span class="deck-tag quest-tag quest-timed">Ends {{ quest.ends }}</span>{% endif %}
-            </div>
-            <p class="quest-about">{{ quest.about }}</p>
-
-            <ol class="quest-stages">
-              {% for stage in quest.stages %}
-                <li class="quest-stage{% if stage.done %} done{% endif %}">
-                  <p class="quest-stage-text">{% if stage.done %}<span class="quest-check" aria-hidden="true">✓</span>{% endif %}{{ stage.text }}{% if stage.done %}<span class="visually-hidden"> (done)</span>{% endif %}</p>
-                  {% if not stage.done %}
-                    <ul class="quest-objectives">
-                      {% for obj in stage.objectives %}
-                        <li class="quest-objective{% if obj.done %} done{% endif %}">
-                          <span class="quest-box" aria-hidden="true">{% if obj.done %}✓{% endif %}</span>
-                          <span>{{ obj.text }}{% if obj.done %}<span class="visually-hidden"> (done)</span>{% endif %}</span>
-                          {% if obj.card %}{% include "weiss/world_card_facts.html" with card=obj.card %}{% endif %}
-                          {% if obj.need > 1 %}
-                            <span class="quest-count small">{{ obj.have }}/{{ obj.need }}</span>
-                            <progress class="quest-progress" max="{{ obj.need }}" value="{{ obj.have }}" aria-label="{{ obj.have }} of {{ obj.need }}"></progress>
-                          {% endif %}
-                        </li>
-                      {% endfor %}
-                    </ul>
-                  {% endif %}
-                </li>
-              {% endfor %}
-              {% if quest.left > 0 and not quest.settling %}
-                <li class="quest-stage quest-later small muted">{{ quest.left }} more step{{ quest.left|pluralize }} after this.</li>
-              {% endif %}
-            </ol>
-
-            {% if quest.settling %}
-              <div class="quest-endings">
-                <p><strong>{% if quest.endings|length > 1 %}How does it end? It's your choice.{% else %}All done: go and finish it.{% endif %}</strong></p>
-                <ul>
-                  {% for ending in quest.endings %}
-                    <li>
-                      {{ ending.title }} <span class="muted small">· with {{ ending.to }}</span>
-                      {% if ending.away %}<span class="small panel-error"> {{ ending.to }} has left town.</span>{% endif %}
-                      {% if ending.missing %}<span class="small muted"> · first: {{ ending.missing|join:", " }}</span>{% endif %}
-                    </li>
-                  {% endfor %}
-                </ul>
-                {% if quest.endings|length > 1 %}<p class="small muted">Some endings can close other quests for good. You'll see exactly what each one closes before you choose.</p>{% endif %}
-              </div>
-            {% endif %}
-
-            {% if quest.rewards %}<p class="quest-rewards small"><span class="muted">Reward:</span> {{ quest.rewards|join:" · " }}</p>{% endif %}
-          </li>
+          {% include "weiss/world_quest_card.html" with quest=quest %}
         {% endfor %}
       </ul>
     {% endif %}

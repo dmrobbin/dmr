@@ -181,7 +181,8 @@ def check(data, context=None, giver=None):
     problems = []
     if not isinstance(data, dict):
         return None, ["A quest is written as {\"key\": ..., \"title\": ..., \"stages\": [...], \"endings\": [...]}."]
-    allowed = {"key", "title", "giver", "gates", "about", "offer", "requires", "stages", "endings", "rewards", "hidden", "window", "board"}
+    allowed = {"key", "title", "giver", "gates", "about", "offer", "requires", "stages", "endings", "rewards", "hidden", "window", "board",
+               "story", "chapter", "scene"}
     if extra := sorted(set(data) - allowed):
         problems.append(f"No such fields as {', '.join(extra)}.")
     key = str(data.get("key") or "")
@@ -202,6 +203,25 @@ def check(data, context=None, giver=None):
     giver = cpu_name(giver, f"{where} giver") if giver else None
     gate = data.get("gates")
     board = bool(data.get("board"))
+    story = bool(data.get("story"))
+    if story:  # a chapter of the story: it begins by itself once what it requires is done
+        if giver:
+            problems.append(f"{where}: a story chapter has no giver: it begins by itself once what it requires is done.")
+        if gate is not None or data.get("window") is not None or board:
+            problems.append(f"{where}: a story chapter can't gate a rank, be timed (window) or go on the notice board.")
+    chapter = data.get("chapter")
+    if chapter is not None and (not isinstance(chapter, int) or isinstance(chapter, bool) or chapter < 1):
+        problems.append(f"{where}: chapter is a whole number from 1.")
+
+    def scene_named(name, what):
+        """A scene a quest plays (when it begins, a stage is done or an ending chosen): it has to exist."""
+        if name is None or name == "":
+            return ""
+        if not isinstance(name, str) or not context.scenes(name):
+            problems.append(f"{what}: there's no scene called “{name}”.")
+        return str(name)
+
+    start_scene = scene_named(data.get("scene"), f"{where} scene")
     if board and giver:
         problems.append(f"{where}: a board quest is the notice board's: it has no giver.")
     window = data.get("window")
@@ -358,8 +378,8 @@ def check(data, context=None, giver=None):
         raw_stages = []
     for n, stage in enumerate(raw_stages, 1):
         at = f"{where} stage {n}"
-        if not isinstance(stage, dict) or set(stage) - {"text", "objectives"}:
-            problems.append(f"{at}: write it as {{\"text\": ..., \"objectives\": [...]}}.")
+        if not isinstance(stage, dict) or set(stage) - {"text", "objectives", "scene"}:
+            problems.append(f"{at}: write it as {{\"text\": ..., \"objectives\": [...]}} (and a \"scene\" to play when it's done).")
             continue
         text = str(stage.get("text") or "").strip()
         if not text or len(text) > 200:
@@ -368,7 +388,8 @@ def check(data, context=None, giver=None):
         if not isinstance(objectives, list) or not 1 <= len(objectives) <= MAX_OBJECTIVES:
             problems.append(f"{at}: it needs 1 to {MAX_OBJECTIVES} objectives.")
             objectives = []
-        stages.append({"text": text, "objectives": [o for i, raw in enumerate(objectives, 1) if (o := objective(raw, f"{at} objective {i}"))]})
+        stages.append({"text": text, "objectives": [o for i, raw in enumerate(objectives, 1) if (o := objective(raw, f"{at} objective {i}"))],
+                       **({"scene": found} if (found := scene_named(stage.get("scene"), f"{at} scene")) else {})})
 
     def rewards(raw, at):
         given = []
@@ -406,7 +427,10 @@ def check(data, context=None, giver=None):
     if not isinstance(raw_endings, list) or not 1 <= len(raw_endings) <= MAX_ENDINGS:
         problems.append(f"{where}: it needs 1 to {MAX_ENDINGS} endings (one, if there's no choice to make).")
         raw_endings = []
-    ending_fields = {"key", "title", "about", "to", "requires", "locks", "removes", "flags", "rewards", "script"}
+    ending_fields = {"key", "title", "about", "to", "requires", "locks", "removes", "flags", "rewards", "script", "scene"}
+    if story and isinstance(raw_endings, list) and sum(1 for e in raw_endings if isinstance(e, dict) and not e.get("to")) > 1:
+        problems.append(f"{where}: only one of a story chapter's endings can finish by itself (no \"to\"); the others are "
+                        "chosen by talking to someone.")
     for n, ending in enumerate(raw_endings, 1):
         at = f"{where} ending {n}"
         if not isinstance(ending, dict):
@@ -422,8 +446,8 @@ def check(data, context=None, giver=None):
         if not etitle or len(etitle) > 100:
             problems.append(f"{at}: it needs a title, what the player chooses, at most 100 characters.")
         to = ending.get("to") or giver
-        if board and not ending.get("to"):
-            to = ""  # claimed at the notice board
+        if (board or story) and not ending.get("to"):
+            to = ""  # claimed at the notice board, or (a story chapter's) it finishes by itself
         elif not to:
             problems.append(f"{at}: say who it's turned in to (to), since the quest has no giver.")
         else:
@@ -452,13 +476,20 @@ def check(data, context=None, giver=None):
                         "about": str(ending.get("about") or ""), "to": to, "locks": list(locks) if isinstance(locks, list) else [],
                         "removes": removes, "flags": list(flags),
                         "requires": [o for i, raw in enumerate(needs, 1) if (o := objective(raw, f"{at} requires {i}"))],
-                        "rewards": rewards(ending.get("rewards"), at), "script": script(ending.get("script"), f"{at} script")})
+                        "rewards": rewards(ending.get("rewards"), at), "script": script(ending.get("script"), f"{at} script"),
+                        "scene": scene_named(ending.get("scene"), f"{at} scene")})
     spec = {"about": about, "offer": offer, "requires": requires, "stages": stages, "endings": endings,
             "rewards": rewards(data.get("rewards"), where), "hidden": bool(data.get("hidden", False))}
     if window is not None:
         spec["window"] = window
     if board:
         spec["board"] = True
+    if story:
+        spec["story"] = True
+    if chapter is not None:
+        spec["chapter"] = chapter
+    if start_scene:
+        spec["scene"] = start_scene
     return {"key": key, "title": title, "giver": giver, "gate_rank": gate, "spec": spec}, problems
 
 
@@ -477,7 +508,8 @@ def as_file(quest):
     if spec.get("requires"):
         data["requires"] = spec["requires"]
     data["stages"] = [{"text": stage["text"], "objectives": [{**o, "script": lines(o["script"])} if o.get("script") else o
-                                                               for o in stage["objectives"]]} for stage in spec.get("stages", [])]
+                                                               for o in stage["objectives"]],
+                       **({"scene": stage["scene"]} if stage.get("scene") else {})} for stage in spec.get("stages", [])]
     data["endings"] = []
     for ending in spec.get("endings", []):
         written = {k: v for k, v in ending.items() if v not in ("", [], None)}
@@ -494,6 +526,9 @@ def as_file(quest):
         data["window"] = spec["window"]
     if spec.get("board"):
         data["board"] = True
+    for field in ("story", "chapter", "scene"):
+        if spec.get(field):
+            data[field] = spec[field]
     return data
 
 
@@ -597,6 +632,8 @@ def offerable(save, quest):
     """Whether the quest's giver would offer it now: not taken or closed, its giver here to stay, what it requires
     done, and for a gate quest, the points its rank takes with every earlier gate passed."""
     spec = quest.spec or {}
+    if spec.get("story"):  # a story chapter isn't offered: it begins by itself (begin_story)
+        return False
     if (not quest.giver_id and not spec.get("board")) or (quest.giver_id and quest.giver_id in gone(save)):
         return False
     entry = log(save).get(quest.key)
@@ -717,7 +754,8 @@ def news(save, text, quest=None, link=None):
 def advance(save):
     """Settle what's changed: state objectives met now, and stages done (the quest moves on, or waits for an ending).
     Returns whether the save's quests changed."""
-    if not any(entry.get("status") == "active" for entry in save.quests.get("log", {}).values()):
+    entries = save.quests.get("log", {}).values()
+    if not any(entry.get("status") == "active" or (entry.get("status") == "settling" and entry.get("story")) for entry in entries):
         return False
     moved = False
     for quest in quests(save).values():
@@ -731,11 +769,15 @@ def advance(save):
             stages = quest.spec.get("stages", [])
             entry["stage"] = entry.get("stage", 0) + 1
             moved = True
+            if stages[entry["stage"] - 1].get("scene"):  # a scene for the stage just done
+                world.queue_scene(save, stages[entry["stage"] - 1]["scene"], cpu=quest.giver_id)
             if entry["stage"] >= len(stages):
                 entry["status"] = "settling"
                 news(save, f"Done: {stages[-1]['text']}. {settle_hint(save, quest)}", quest)
             else:
                 news(save, f"Done: {stages[entry['stage'] - 1]['text']}. Next: {stages[entry['stage']]['text']}.", quest)
+        if entry and entry.get("status") == "settling" and (quest.spec or {}).get("story"):
+            moved = finish_story(save, quest) or moved
     return moved
 
 
@@ -744,6 +786,8 @@ def settle_hint(save, quest):
     found = lookup(save)
     if quest.spec.get("board"):
         return "Claim it at the notice board."
+    if quest.spec.get("story") and any(not ending["to"] for ending in quest.spec.get("endings", [])):
+        return ""  # it finishes by itself
     names = list(dict.fromkeys(ending["to"] for ending in quest.spec.get("endings", [])
                                if ending["to"] and found.cpu_id(ending["to"]) not in gone(save)))
     if not names:
@@ -868,9 +912,8 @@ def arrived(save):
             scene = Scene.objects.filter(name__iexact=obj.get("scene") or "").first() if obj.get("scene") else None
             cast = scene_cast(scene) if scene else []
             world.meet(save, place.key, cast)
-            if scene and not save.flags.get("scene"):
-                save.flags["scene"] = {"scene": scene.pk, "cpu": cast[0] if cast else None, "auto": True,
-                                       "rewards": [[text, reward_link] for text, reward_link in given]}
+            if scene:  # played straight away, or after whatever's waiting to be watched
+                world.queue_scene(save, scene, cpu=cast[0] if cast else None, rewards=[[text, reward_link] for text, reward_link in given])
                 link = reverse("weiss:world_scene", args=[save.slot])
             got = f" You got {', '.join(text for text, _ in given)}." if given else ""
             news(save, f"{describe(save, obj)}: done.{got}", quest, link)
@@ -878,6 +921,62 @@ def arrived(save):
 
 
 # ---------------------------------------------------------------- Talking: offers, objectives and endings
+
+def chapter_label(quest):
+    """"Chapter 2" (or "The story", for a chapter with no number)."""
+    chapter = (quest.spec or {}).get("chapter")
+    return f"Chapter {chapter}" if chapter else "The story"
+
+
+def story_quests(save):
+    """The story's chapters, in order: by chapter number, then the staff's order. Read without filling the save's
+    quest cache (quests(save)) when it isn't filled yet: this runs on every change to a save, and a quest made later in
+    the same request must still be found."""
+    found = save._quests.values() if hasattr(save, "_quests") else Quest.objects.filter(giver__isnull=True)
+    return sorted((quest for quest in found if (quest.spec or {}).get("story")),
+                  key=lambda quest: ((quest.spec or {}).get("chapter") or 0, quest.order, quest.pk))
+
+
+def begin_story(save):
+    """Story chapters whose time has come begin by themselves: each whose `requires` (quests done, flags set) are met.
+    Whoever a chapter names is brought into town if they haven't arrived yet (weiss.world_roster.bring), its scene
+    queues to play, and the town says it's begun. Returns whether any began."""
+    began = False
+    for quest in story_quests(save):
+        if quest.key in log(save):
+            continue
+        requires = quest.spec.get("requires") or {}
+        if any(status(save, key) != "done" for key in requires.get("quests", [])):
+            continue
+        if any(not world.has_flag(save, flag) for flag in requires.get("flags", [])):
+            continue
+        found = lookup(save)
+        world.roster.bring(save, [pk for name in world.roster.named_in(quest.spec) if (pk := found.cpu_id(name))])
+        log(save)[quest.key] = {"status": "active", "stage": 0, "since": save.turn, "progress": {}, "done": [], "story": True}
+        first = quest.spec["stages"][0]["text"] if quest.spec.get("stages") else ""
+        news(save, f"{chapter_label(quest)}: {quest.title}." + (f" First: {first}." if first else ""), quest)
+        if quest.spec.get("scene"):
+            world.queue_scene(save, quest.spec["scene"])
+        began = True
+    if began:
+        advance(save)
+    return began
+
+
+def finish_story(save, quest):
+    """A story chapter with every stage done finishes by itself, by its ending with no "to", once that ending's own
+    requirements are met (its rewards, flags and scene, as any ending's). The next chapter can then begin."""
+    ending = next((ending for ending in quest.spec.get("endings", []) if not ending["to"]), None)
+    if not ending or any(not met(save, quest, f"e.{ending['key']}.{i}", obj) for i, obj in enumerate(ending.get("requires", []))):
+        return False
+    _, events = choose(save, None, quest.key, ending["key"], True)
+    for event in events:  # what choosing said goes in the town's news, as nobody's talking
+        if event.get("quest"):
+            news(save, event["quest"], quest)
+        elif event.get("reward"):
+            news(save, f"★ {event['reward']}", quest, event.get("link"))
+    return True
+
 
 def offers(save, cpu):
     return [quest for quest in quests(save).values() if quest.giver_id == cpu.pk and offerable(save, quest)]
@@ -965,6 +1064,8 @@ def accept(save, cpu, key):
     count = (log(save).get(key) or {}).get("count", 0)  # a timed quest done before, in an earlier week
     log(save)[key] = {"status": "active", "stage": 0, "since": save.turn, "progress": {}, "done": [],
                       **({"week": week_now(save)} if timed(quest) else {}), **({"count": count} if count else {})}
+    if quest.spec.get("scene"):
+        world.queue_scene(save, quest.spec["scene"], cpu=quest.giver_id)
     first = quest.spec["stages"][0]["text"]
     events = [{"quest": f"Quest taken: {quest.title}. First: {first}."}]
     advance(save)
@@ -1123,6 +1224,8 @@ def choose(save, cpu, key, ending_key, confirmed):
     before = world.rank_of(save, quest.giver_id) if quest.giver_id else 0
     entry = log(save)[key]
     entry.update(status="done", ending=ending_key, finished=save.turn)
+    if ending.get("scene"):
+        world.queue_scene(save, ending["scene"], cpu=quest.giver_id)
     if timed(quest):
         entry["count"] = entry.get("count", 0) + 1
     events = [{"quest": f"Quest complete: {quest.title}.", "done": True}]
@@ -1338,13 +1441,15 @@ def journal(save):
     """The quest log as its page shows it: {"offered", "active", "done", "failed"}, each a list of quests in words."""
     found = lookup(save)
     ranks = world.rank_names()
-    sections = {"offered": [], "active": [], "done": [], "failed": []}
+    sections = {"offered": [], "active": [], "done": [], "failed": [], "story": []}
     for quest in quests(save).values():
         entry = log(save).get(quest.key)
         spec = quest.spec or {}
         giver = quest.giver if quest.giver_id else None
         base = {"key": quest.key, "title": quest.title, "about": spec.get("about", ""), "giver": giver.name if giver else "",
-                "avatar": giver.avatar if giver else None, "gate": ranks[quest.gate_rank] if quest.gate_rank else ""}
+                "avatar": giver.avatar if giver else None, "gate": ranks[quest.gate_rank] if quest.gate_rank else "",
+                "story": bool(spec.get("story")), "chapter": chapter_label(quest) if spec.get("story") else "",
+                "chapter_number": spec.get("chapter") or 0}
         again = timed(quest) and entry and entry.get("status") in ("done", "expired") and offerable(save, quest)
         if not entry or again:
             if offerable(save, quest):
@@ -1386,6 +1491,11 @@ def journal(save):
             sections["failed"].append({**base, "why": "" if entry.get("reason") == "locked" else entry.get("why", ""), "by": closer.title if closer else "",
                                        "by_ending": chosen["title"] if chosen else "",
                                        "held": ranks[quest.gate_rank - 1] if quest.gate_rank else ""})
+    # The story's chapters (under way and finished) go in their own section, first, in chapter order.
+    for name in ("active", "done"):
+        sections["story"] += [entry for entry in sections[name] if entry["story"]]
+        sections[name] = [entry for entry in sections[name] if not entry["story"]]
+    sections["story"].sort(key=lambda entry: entry["chapter_number"])
     return sections
 
 

@@ -3151,3 +3151,790 @@ CAST = [
               "choice", "- Best friends, Yu.", "- I'll face the truth with you.",
               "me (pleased): Best friend. I am thou. Thou art I. Something like that."]),
 ]
+
+ARRIVALS = [
+  {
+    "newcomer": "Frieren",
+    "name": "World: Arrival, Frieren",
+    "lines": [
+      "background library",
+      "me enters center with fade",
+      "me: I'm looking for a spell that makes flowers bloom in winter. Do you know one?",
+      "me (pleased): Hm. You don't. Pity. Humans rarely do, I've found.",
+      "me: I'll stay in town for a while. I need a quiet place to read, that's all.",
+      "player: She's looking for a spell for flowers. Do you help her find it?",
+      "choice What do you say?",
+      "- Tell Frieren the spell is hopeless, and she should leave the flowers alone. (set side_me)",
+      "- Tell Frieren you'll help her look, and find her a quiet table. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Fern",
+    "name": "World: Arrival, Fern",
+    "lines": [
+      "background library",
+      "me enters left with slide",
+      "me: Excuse me, have you seen Frieren? She's late. Again.",
+      "me (dismayed): Oh, I'm sorry. I'm just worried about her. She walks off so often.",
+      "me: If you see her, tell her breakfast is cold. She'll understand what I mean.",
+      "player: She's looking for Frieren, who's late. Do you help her search?",
+      "choice What's your response?",
+      "- Tell Fern that Frieren will turn up, and she should eat breakfast. (set side_me)",
+      "- Help Fern look for Frieren, and check the library first. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Kanna",
+    "name": "World: Arrival, Kanna",
+    "lines": [
+      "background classroom",
+      "me enters right with pop",
+      "me: I want to go to school. Kanna has snacks. Do you want some?",
+      "me (pleased): You took one. Good. Now you're Kanna's friend, that's how it works.",
+      "me: Kanna's dragon is in the bag. Don't tell the teacher.",
+      "player: She brings snacks to school, and wants you to share. Do you take one?",
+      "choice How do you respond?",
+      "- Tell Kanna that snacks aren't allowed, and she should put them away. (set side_me)",
+      "- Take a snack, and promise to keep the dragon a secret. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Tohru",
+    "name": "World: Arrival, Tohru",
+    "lines": [
+      "background cafe",
+      "me enters center with fade",
+      "me: Hello! I'm Tohru. I'd like to be the town's maid, if that's all right.",
+      "me (pleased): You're so kind to let me try. I'll clean the whole cafe for you.",
+      "me (dismayed): Oh no, I broke a plate already. Please don't tell Miss Kobayashi.",
+      "player: She offers to be the town's maid. Do you let her clean?",
+      "choice What's your answer?",
+      "- Tell Tohru the cafe is clean enough, and she should sit and rest. (set side_me)",
+      "- Let Tohru clean the cafe, and hire her for the week. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Protagonist",
+    "name": "World: Arrival, Protagonist",
+    "lines": [
+      "background classroom",
+      "me enters left with fade",
+      "me: ...Hi. I'm new. I don't really talk much.",
+      "me (pleased): ...Okay. Everyone's nice. I guess that's a good sign.",
+      "me: ...Do you want to sit by the window? It's quiet there.",
+      "player: He transfers in, says very little, and everyone already likes him. Do you sit with him?",
+      "choice What's your answer?",
+      "- Tell the Protagonist to sit somewhere else, and let him be quiet. (set side_me)",
+      "- Sit by the window with him, and say nothing for a while. (set side_me, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Yukari",
+    "name": "World: Arrival, Yukari",
+    "lines": [
+      "background classroom",
+      "me enters right with rise",
+      "me: Oops! Sorry! My arrow went a bit wide. Are you okay?",
+      "me (pleased): Ha! You're fine! Hey, do you want to try? You'll be terrible at it.",
+      "me: I'm Yukari. I'm in the archery club. We're short of people. Please?",
+      "player: Her arrow nearly hits you. Do you try the bow?",
+      "choice How do you respond?",
+      "- Tell Yukari she shouldn't be shooting indoors, and she should stop. (set side_me)",
+      "- Try the bow, and let her laugh at how badly you miss. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Twilight",
+    "name": "World: Arrival, Twilight",
+    "lines": [
+      "background cafe",
+      "me enters left with slide",
+      "me: Good afternoon. I'm just an ordinary psychiatrist, nothing unusual. Please sit.",
+      "me (dismayed): You're staring. I'm not a spy, I promise. Let's talk about your feelings.",
+      "me (pleased): Ha. You're quick. I'll keep you as a patient, if you like.",
+      "player: He says he's an ordinary psychiatrist. Do you believe him?",
+      "choice What do you say?",
+      "- Tell Twilight he's clearly a spy, and walk out of the cafe. (set side_me)",
+      "- Sit down, and tell him about your feelings. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Yor Forger",
+    "name": "World: Arrival, Yor Forger",
+    "lines": [
+      "background sakura",
+      "me enters center with fade",
+      "me: Excuse me. Is there anything that needs disposing of? I'm very good at it.",
+      "me (dismayed): Oh! I didn't mean that the way it sounded. Please ignore me.",
+      "me (pleased): Thank you for listening. I'm trying to be normal. It's harder than it looks.",
+      "player: She politely asks if anyone needs something disposed of. How do you answer?",
+      "choice What's your response?",
+      "- Tell Yor to take her offer somewhere else, and walk away quickly. (set side_me)",
+      "- Tell Yor you'll let her know if anything needs disposing of, and thank her. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Enterprise",
+    "name": "World: Arrival, Enterprise",
+    "lines": [
+      "background beach",
+      "me enters center with fade",
+      "me: The sea. It seems to owe me something. Do you know what that feeling is like?",
+      "me (pleased): Hm. You don't, I think. You're honest, which is rare.",
+      "me: Would you come drill with me on the beach? The waves are calm today.",
+      "player: She watches the sea like it owes her something. Do you join her on the sand?",
+      "choice How do you respond?",
+      "- Tell Enterprise the sea doesn't owe her anything, and she should relax. (set side_me)",
+      "- Join her on the beach, and watch the waves together. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Joker (P5)",
+    "name": "World: Arrival, Joker (P5)",
+    "lines": [
+      "background cafe",
+      "me enters right with slide",
+      "me: Hey. Mind if I work here? I make a mean curry, and I need the money.",
+      "me (pleased): Good. You're not scared of the coffee. Most people are.",
+      "me: Don't tell anyone where I'm working. Okay? Thanks.",
+      "player: He asks if he can work in the cafe. Do you let him?",
+      "choice What's your answer?",
+      "- Tell Joker the cafe is full, and send him somewhere else. (set side_me)",
+      "- Tell Joker he's hired, and ask him to make the curry. (set side_me, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Kureiji Ollie",
+    "name": "World: Arrival, Kureiji Ollie",
+    "lines": [
+      "background sakura",
+      "me enters center with rise",
+      "me: Hiii! This is Ollie's first concert in town! Everyone, sing along!",
+      "me (dismayed): Oops, my arm just came off. It's fine. Ollie's used to it.",
+      "me (pleased): You're singing! Okay, you're my first fan, and you're alive! Yay!",
+      "player: Her first concert in town, and her arm just fell off. Do you sing along?",
+      "choice What do you do?",
+      "- Tell Ollie the concert's too loud, and she should stop. (set side_me)",
+      "- Sing along with Ollie, and help her put her arm back on. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Mai Sakurajima",
+    "name": "World: Arrival, Mai Sakurajima",
+    "lines": [
+      "background library",
+      "me enters right with fade",
+      "me: I'm in a bunny suit, in the library. Nobody else seems to notice. Weird, right?",
+      "me (dismayed): You noticed? Okay, you're the only one. Please don't tell anyone.",
+      "me (pleased): Thanks. I'm not used to being seen. It's a bit nice, actually.",
+      "player: She's in a bunny suit in the library, and nobody but you notices. Do you say something?",
+      "choice What's your response?",
+      "- Tell Mai the suit's a bad idea, and she should change. (set side_me)",
+      "- Tell Mai you see her, and let her stay as she is. (set side_me, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Marceline",
+    "name": "World: Arrival, Marceline",
+    "lines": [
+      "background rooftop",
+      "me enters center with rise",
+      "me: Hey, mortal. I'm floating over the roof. Don't freak out, it's totally normal.",
+      "me (pleased): Ha! You're not screaming. I like that. Want to hear a song?",
+      "me: I'm writing a new one. It's missing something. You might help me find it.",
+      "player: She floats over the roof, playing bass. Do you stay and listen?",
+      "choice How do you respond?",
+      "- Tell Marceline to come down, and stop showing off. (set side_me)",
+      "- Stay and listen, and try to say what the song is missing. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Shadow",
+    "name": "World: Arrival, Shadow",
+    "lines": [
+      "background rooftop",
+      "me enters left with fade",
+      "me: I'm searching for someone. Someone who isn't here anymore. Have you seen them?",
+      "me (dismayed): ...No? Then leave me alone for a bit. It's a private search.",
+      "me (pleased): Wait. You look like you might believe in promises. Stay, if you do.",
+      "player: He's searching for someone who isn't here. Do you help him look?",
+      "choice What's your answer?",
+      "- Tell Shadow the search is hopeless, and he should go home. (set side_me)",
+      "- Help Shadow look, and ask him who he's searching for. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Sol Badguy",
+    "name": "World: Arrival, Sol Badguy",
+    "lines": [
+      "background city",
+      "me enters right with pop",
+      "me: Gimme a fight, or gimme a cold drink. Either one. I don't care which.",
+      "me (pleased): Hmph. You didn't back off. Fine, you can have a drink.",
+      "me: Don't waste my time with small talk. I'll fight you, if you can keep up.",
+      "player: He wants a fight and a cold drink. Do you give him either?",
+      "choice What do you do?",
+      "- Tell Sol you don't want a fight, and offer him a drink instead. (set side_me)",
+      "- Give him a cold drink, and accept his challenge for later. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Yu Narukami",
+    "name": "World: Arrival, Yu Narukami",
+    "lines": [
+      "background classroom",
+      "me enters left with slide",
+      "me: Hi! I'm going to cook for everyone on my first day. Want to be the taster?",
+      "me (pleased): Great! You're honest, right? I need someone to tell me the truth.",
+      "me: The curry's almost ready. Just wait, it's going to be amazing.",
+      "player: He cooks for everyone on his first day. Do you taste it?",
+      "choice What's your response?",
+      "- Tell Yu the curry looks dull, and walk away. (set side_me)",
+      "- Taste the curry, and tell him the truth about it. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Frieren",
+    "name": "World: Arrival, Frieren & Fern",
+    "lines": [
+      "cast fern as Fern",
+      "background library",
+      "me enters left with slide",
+      "fern enters right with fade",
+      "fern: Frieren! You're late for breakfast again. Your tea is cold, and so am I.",
+      "me (pleased): Fern. Breakfast can wait. I found a flower spell in an old book.",
+      "fern (dismayed): You always find a spell instead of eating. Come on, I'll drag you.",
+      "player: Her apprentice drags her to breakfast. Do you back Frieren's spell, or Fern's food?",
+      "choice Who do you side with?",
+      "- Tell Fern that breakfast is important, and Frieren should eat. (set side_me)",
+      "- Tell Frieren the spell is worth it, and Fern should let her finish. (set side_fern, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Frieren",
+    "name": "World: Arrival, Frieren & Echidna",
+    "lines": [
+      "cast echidna as Echidna",
+      "background library",
+      "me enters left with slide",
+      "echidna enters right with fade",
+      "echidna: Frieren. Two old scholars in one library. How interesting. Tea?",
+      "me (pleased): Echidna. You ask too many questions. Let's see if your answers are better.",
+      "echidna (pleased): Oh, they are. Let's compare centuries over a cup.",
+      "player: Two old scholars. Who do you back?",
+      "choice Who do you side with?",
+      "- Tell Echidna the tea is a trap, and Frieren should refuse. (set side_me)",
+      "- Tell Frieren the questions are interesting, and she should drink the tea. (set side_echidna, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Fern",
+    "name": "World: Arrival, Fern & Frieren",
+    "lines": [
+      "cast frieren as Frieren",
+      "background library",
+      "me enters left with slide",
+      "frieren enters right with fade",
+      "frieren: Fern. You're here, looking for me. I'm not late. I was reading.",
+      "me (dismayed): Frieren, you're always reading. Breakfast is cold. Please.",
+      "frieren (pleased): Oh. Fine. I'll eat, but only because you asked nicely.",
+      "player: As above, from her side. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Frieren to finish her book, and let Fern wait. (set side_me)",
+      "- Tell Fern to be patient, and let Frieren read. (set side_frieren, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Fern",
+    "name": "World: Arrival, Fern & Ram/Rem",
+    "lines": [
+      "cast ramrem as Ram/Rem",
+      "background cafe",
+      "me enters left with slide",
+      "ramrem enters right with fade",
+      "ramrem: Fern. Rem: 'You're late for the mansion's tea.' Ram: 'Keep someone else on schedule.'",
+      "me (dismayed): I'm not late! I was helping Frieren find breakfast. Honestly.",
+      "ramrem (pleased): Rem: 'We understand. Please come in.' Ram: 'Barely adequate, but come in.'",
+      "player: Two who keep someone else on schedule. Who do you back?",
+      "choice Who do you side with?",
+      "- Tell Ram and Rem that Fern is late, and they should scold her. (set side_me)",
+      "- Tell Fern that the twins are kind, and she should join them for tea. (set side_ramrem, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Kanna",
+    "name": "World: Arrival, Kanna & Tohru",
+    "lines": [
+      "cast tohru as Tohru",
+      "background beach",
+      "me enters left with slide",
+      "tohru enters right with fade",
+      "tohru: Kanna! Are you sharing your lunch again? You always do, and it's lovely.",
+      "me (pleased): Tohru! Kanna has lunch for everyone. Eat, eat, it's very good.",
+      "tohru (pleased): Mm! Your dragon's food is very good too. Kanna, please share the rest.",
+      "player: Family. Who do you back?",
+      "choice Who do you side with?",
+      "- Tell Tohru that Kanna's lunch is too much, and she should keep her own food. (set side_me)",
+      "- Tell Kanna to share with Tohru, and let the dragons eat together. (set side_tohru, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Kanna",
+    "name": "World: Arrival, Kanna & Madoka",
+    "lines": [
+      "cast madoka as Madoka",
+      "background classroom",
+      "me enters left with slide",
+      "madoka enters right with fade",
+      "madoka: Kanna! You're sharing your snacks in class? That's so kind of you.",
+      "me (pleased): Madoka! Kanna has enough for you too. Kanna likes new friends.",
+      "madoka (pleased): Thank you! I'll bring a snack for you tomorrow. Promise.",
+      "player: Two gentle souls. Who do you back?",
+      "choice Whose side do you take?",
+      "- Tell Madoka to save her snacks, and not share them with Kanna. (set side_me)",
+      "- Tell Kanna to share with Madoka, and make a new friend. (set side_madoka, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Tohru",
+    "name": "World: Arrival, Tohru & Kanna",
+    "lines": [
+      "cast kanna as Kanna",
+      "background beach",
+      "me enters left with slide",
+      "kanna enters right with fade",
+      "kanna: Tohru. You're cooking again? Kanna wants a bit. Only a bit.",
+      "me (pleased): Kanna! Yes, of course! I'll make you something special, just for you.",
+      "kanna (pleased): Kanna approves. Tohru, you're good at cooking. Like a real dragon.",
+      "player: Family. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Kanna to wait for her food, and not be so greedy. (set side_me)",
+      "- Tell Tohru to make Kanna something special, and let her eat. (set side_kanna, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Tohru",
+    "name": "World: Arrival, Tohru & Mami Tomoe",
+    "lines": [
+      "cast mami as Mami Tomoe",
+      "background cafe",
+      "me enters left with slide",
+      "mami enters right with fade",
+      "mami: Tohru! You're making a feast in the cafe? Let me bring some cake!",
+      "me (pleased): Mami! Yes, please! We'll have a feast for the whole town.",
+      "mami (pleased): Yes! A host and a cook, together. We'll make the town happy.",
+      "player: Two hosts. Who do you back?",
+      "choice Who do you side with?",
+      "- Tell Mami the cake is hers, and Tohru should make her own feast. (set side_me)",
+      "- Tell Tohru the feast is great, and Mami should bring cake. (set side_mami, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Protagonist",
+    "name": "World: Arrival, Protagonist & Yukari",
+    "lines": [
+      "cast yukari as Yukari",
+      "background classroom",
+      "me enters left with slide",
+      "yukari enters right with fade",
+      "yukari: Hey, you're the new transfer student! Want to join the archery club?",
+      "me (pleased): ...Okay. Maybe. I'll watch first. Don't be upset if I'm quiet.",
+      "yukari (pleased): Ha! Quiet's fine. You'll be a great shot, I bet.",
+      "player: A club, a quiet leader, and a bow. Do you back the Protagonist, or Yukari's club?",
+      "choice Who do you side with?",
+      "- Tell Yukari the Protagonist is too quiet for the club, and she should leave him. (set side_me)",
+      "- Tell the Protagonist the club is worth joining, and he should try the bow. (set side_yukari, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Protagonist",
+    "name": "World: Arrival, Protagonist & Yu Narukami",
+    "lines": [
+      "cast yu as Yu Narukami",
+      "background classroom",
+      "me enters left with slide",
+      "yu enters right with fade",
+      "yu: Hey, Protagonist. You're quiet, like me. Want to talk after school?",
+      "me (pleased): ...Okay. You're the one who's been cooking. I heard about the curry.",
+      "yu (pleased): Yeah, you should come taste it. Maybe you'll say something about it.",
+      "player: Two silent leaders. Who do you back?",
+      "choice Who do you side with?",
+      "- Tell Yu the curry is too much, and the Protagonist should avoid it. (set side_me)",
+      "- Tell the Protagonist to taste Yu's curry, and maybe speak about it. (set side_yu, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Yukari",
+    "name": "World: Arrival, Yukari & Protagonist",
+    "lines": [
+      "cast protagonist as Protagonist",
+      "background classroom",
+      "me enters left with slide",
+      "protagonist enters right with fade",
+      "protagonist: ...Yukari. You're shooting at the door again. Stop it.",
+      "me (pleased): The door is a target! Oops, sorry. Okay, do you want to try?",
+      "protagonist: ...Maybe. Show me the form first.",
+      "player: As above, from her side. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell the Protagonist to leave the club alone, and watch from the door. (set side_me)",
+      "- Tell Yukari to show him the form, and let him try. (set side_protagonist, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Yukari",
+    "name": "World: Arrival, Yukari & Sayaka Miki",
+    "lines": [
+      "cast sayaka as Sayaka Miki",
+      "background beach",
+      "me enters left with slide",
+      "sayaka enters right with fade",
+      "sayaka: Yukari! You're shooting arrows at the beach? That's so cool! Can I try?",
+      "me (pleased): Sayaka! Yes! But don't scream when the arrow goes into the sand.",
+      "sayaka (pleased): Ha! I'm a hero, I'm not scared of sand! Let's do it!",
+      "player: Two loud hearts. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Sayaka the beach is no place for arrows, and she should stop. (set side_me)",
+      "- Tell Yukari that Sayaka is a hero, and she should let her try. (set side_sayaka, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Twilight",
+    "name": "World: Arrival, Twilight & Yor Forger",
+    "lines": [
+      "cast yor as Yor Forger",
+      "background cafe",
+      "me enters left with slide",
+      "yor enters right with fade",
+      "yor: Oh! Twilight, is it? You're my husband, right? I mean, the one I pretend to be.",
+      "me (dismayed): Yor, please. We're cover for each other. Keep the story straight.",
+      "yor (pleased): Right! Our little family story. I'll make you breakfast for the act.",
+      "player: His 'wife', and the cover. Do you back Twilight's story, or Yor's sincerity?",
+      "choice Who do you side with?",
+      "- Tell Yor the story's a lie, and she should admit it. (set side_me)",
+      "- Tell Twilight the cover is fine, and he should keep Yor close. (set side_yor, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Twilight",
+    "name": "World: Arrival, Twilight & Batman",
+    "lines": [
+      "cast batman as Batman",
+      "background rooftop",
+      "me enters left with slide",
+      "batman enters right with fade",
+      "batman: Twilight. You're pretending to be a psychiatrist. I can see right through you.",
+      "me (dismayed): Batman. You're not a psychiatrist either. Let's keep it that way.",
+      "batman (dismayed): Fine. But I'm watching you. Two detectives in the same town.",
+      "player: Two detectives. Who do you back?",
+      "choice Who do you support?",
+      "- Tell Batman that Twilight is a fake, and he should expose him. (set side_me)",
+      "- Tell Twilight that Batman is a good ally, and he should trust him. (set side_batman, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Yor Forger",
+    "name": "World: Arrival, Yor Forger & Twilight",
+    "lines": [
+      "cast twilight as Twilight",
+      "background cafe",
+      "me enters left with slide",
+      "twilight enters right with fade",
+      "twilight: Yor. Our family story. Did you say 'husband' in the plaza again?",
+      "me (dismayed): Twilight! I'm sorry. I'm terrible at small talk, really.",
+      "twilight (pleased): It's fine. Just don't tell anyone about the job, okay?",
+      "player: As above, from her side. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Twilight the cover is a mess, and Yor should stop talking. (set side_me)",
+      "- Tell Yor the cover is good, and Twilight should keep her. (set side_twilight, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Yor Forger",
+    "name": "World: Arrival, Yor Forger & Mikasa",
+    "lines": [
+      "cast mikasa as Mikasa",
+      "background sakura",
+      "me enters left with slide",
+      "mikasa enters right with fade",
+      "mikasa: Yor. You're quiet, like me. Are you here for a job too?",
+      "me (dismayed): Mikasa. Yes, I'm here for a job. And you're staring at me.",
+      "mikasa (dismayed): Sorry. You look like someone who's hiding something. Like me.",
+      "player: Two quiet killers, both blushing. Do you back Yor's job, or Mikasa's search?",
+      "choice Who do you side with?",
+      "- Tell Mikasa the job is more important, and Yor should keep working. (set side_me)",
+      "- Tell Yor the search is worth it, and Mikasa should join her. (set side_mikasa, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Enterprise",
+    "name": "World: Arrival, Enterprise & Rapi",
+    "lines": [
+      "cast rapi as Rapi",
+      "background beach",
+      "me enters left with slide",
+      "rapi enters right with fade",
+      "rapi: Enterprise. You're watching the sea. Are you on watch, or just staring?",
+      "me (pleased): Rapi! I'm watching the sea. I'm not sure what I'm looking for.",
+      "rapi (pleased): Acceptable. We'll drill on the beach tomorrow. Be ready.",
+      "player: Two soldiers. Who do you back?",
+      "choice Who do you side with?",
+      "- Tell Rapi the drill is pointless, and Enterprise should relax. (set side_me)",
+      "- Tell Enterprise the drill is worth it, and Rapi should lead. (set side_rapi, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Enterprise",
+    "name": "World: Arrival, Enterprise & Eren",
+    "lines": [
+      "cast eren as Eren",
+      "background beach",
+      "me enters left with slide",
+      "eren enters right with fade",
+      "eren: Enterprise. You're looking at the sea. What's out there? Do you know?",
+      "me (pleased): Eren. I don't know. That's the question I can't answer yet.",
+      "eren (pleased): Then let's find out together. Walk with me, past the walls.",
+      "player: What's beyond the sea. Who do you back?",
+      "choice Who do you side with?",
+      "- Tell Eren the sea is nothing, and he should stop asking. (set side_me)",
+      "- Tell Enterprise the sea is worth exploring, and Eren should walk with her. (set side_eren, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Joker (P5)",
+    "name": "World: Arrival, Joker (P5) & Yu Narukami",
+    "lines": [
+      "cast yu as Yu Narukami",
+      "background cafe",
+      "me enters left with slide",
+      "yu enters right with fade",
+      "yu: Joker! The curry smells amazing. Can I try some? I'm making a dish for the team.",
+      "me (pleased): Yu! Yes, have some. We'll make the team's dish together, Persona style.",
+      "yu (pleased): Persona style? That sounds like a plan. Let's do it.",
+      "player: Two Persona users. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Yu the curry is Joker's, and he should keep it. (set side_me)",
+      "- Tell Joker the team dish is a great idea, and Yu should join in. (set side_yu, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Joker (P5)",
+    "name": "World: Arrival, Joker (P5) & Batman",
+    "lines": [
+      "cast batman as Batman",
+      "background city",
+      "me enters left with slide",
+      "batman enters right with fade",
+      "batman: Joker. You're in the alley again. I know your tricks.",
+      "me (pleased): Bats! Come on, one of my jokes, just a small one. Please?",
+      "batman (dismayed): No jokes. Tell me what you're planning, or leave.",
+      "player: Two masks. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Batman the jokes are harmless, and he should relax. (set side_me)",
+      "- Tell Joker the alley is his, and Batman should leave. (set side_batman, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Kureiji Ollie",
+    "name": "World: Arrival, Kureiji Ollie & Ruby Hoshino",
+    "lines": [
+      "cast ruby as Ruby Hoshino",
+      "background sakura",
+      "me enters left with slide",
+      "ruby enters right with fade",
+      "ruby: Ollie! You're a zombie idol? That's amazing! Can I be your back-up dancer?",
+      "me (pleased): Ruby! Yes! Two idols, one of them dead. Let's do the concert together!",
+      "ruby (pleased): Ha! Okay, but please keep your arm on. I need it for the dance.",
+      "player: Two idols, one a zombie. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Ruby the zombie idol is a bit much, and she should keep her distance. (set side_me)",
+      "- Tell Ollie that Ruby would make a great back-up dancer, and she should join in. (set side_ruby, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Kureiji Ollie",
+    "name": "World: Arrival, Kureiji Ollie & Marceline",
+    "lines": [
+      "cast marceline as Marceline",
+      "background rooftop",
+      "me enters left with slide",
+      "marceline enters right with fade",
+      "marceline: Ollie, right? The zombie idol? You sing like a ghost. I like that.",
+      "me (pleased): Marceline! You float! Can you float over the concert? Ollie wants to see!",
+      "marceline (pleased): Okay, but only if you sing along. Two undead musicians, one song.",
+      "player: Two undead musicians. Who do you back?",
+      "choice Who do you side with?",
+      "- Tell Marceline the floating is a distraction, and Ollie should focus. (set side_me)",
+      "- Tell Ollie the floating is cool, and Marceline should join the concert. (set side_marceline, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Marceline",
+    "name": "World: Arrival, Marceline & Kureiji Ollie",
+    "lines": [
+      "cast kureiji as Kureiji Ollie",
+      "background rooftop",
+      "me enters left with slide",
+      "kureiji enters right with fade",
+      "kureiji: Marceline! Hiii! Can you float over my concert? Ollie wants a big audience!",
+      "me (pleased): Ollie! Sure, if your arm stays on. I'll play the bass for you.",
+      "kureiji (dismayed): My arm is fine! It's just loose. Hiii, don't laugh!",
+      "player: As above, from her side. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Ollie her arm is a mess, and she should keep it still. (set side_me)",
+      "- Tell Marceline the concert is fun, and she should float over the crowd. (set side_kureiji, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Marceline",
+    "name": "World: Arrival, Marceline & Frieren",
+    "lines": [
+      "cast frieren as Frieren",
+      "background forest",
+      "me enters left with slide",
+      "frieren enters right with fade",
+      "frieren: Marceline. You've been floating in the forest again. The trees are complaining.",
+      "me (pleased): Frieren! The trees love my music. Want to hear the new song?",
+      "frieren (pleased): Hm. Perhaps. You and I have both outlived so many. Play it.",
+      "player: Two who outlive everyone. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Frieren the trees should be left alone, and Marceline should stop. (set side_me)",
+      "- Tell Marceline the song is good, and Frieren should listen. (set side_frieren, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Mai Sakurajima",
+    "name": "World: Arrival, Mai Sakurajima & Kana Arima",
+    "lines": [
+      "cast kana as Kana Arima",
+      "background library",
+      "me enters left with slide",
+      "kana enters right with fade",
+      "kana: Mai Sakurajima? You look just as miserable as I do. Same, huh?",
+      "me (dismayed): Kana Arima. I'm not miserable. I'm just invisible. Mostly.",
+      "kana (pleased): Ha! You're visible to me. Let's cry together, on cue. Ten seconds.",
+      "player: Two famous faces who want to be left alone. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Kana the crying is pointless, and Mai should be left alone. (set side_me)",
+      "- Tell Mai that Kana can see her, and she should stop vanishing. (set side_kana, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Mai Sakurajima",
+    "name": "World: Arrival, Mai Sakurajima & Cinderella",
+    "lines": [
+      "cast cinderella as Cinderella",
+      "background beach",
+      "me enters left with slide",
+      "cinderella enters right with fade",
+      "cinderella: Mai. You're vanishing again? I can still see you, even in the sun.",
+      "me (dismayed): Cinderella, please. The vanishing is getting worse. Don't stare.",
+      "cinderella (pleased): I won't. Let's look for my slipper together. We both need to be seen.",
+      "player: Two who vanish at a deadline. Who do you help?",
+      "choice Who gets your help?",
+      "- Tell Cinderella she's too strict about the slipper, and Mai should rest. (set side_me)",
+      "- Tell Mai she should trust Cinderella, and search for the slipper with her. (set side_cinderella, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Shadow",
+    "name": "World: Arrival, Shadow & Homura Akemi",
+    "lines": [
+      "cast homura as Homura Akemi",
+      "background rooftop",
+      "me enters left with slide",
+      "homura enters right with fade",
+      "homura: Shadow. You're searching for someone too, aren't you? I can see it in your eyes.",
+      "me (dismayed): Homura. Yes. And you're searching for a timeline. We're not so different.",
+      "homura (pleased): Hm. Maybe not. Stay on the roof with me. It's quieter.",
+      "player: Two loners. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Homura the timeline is none of Shadow's business, and he should leave. (set side_me)",
+      "- Tell Shadow that Homura needs company, and he should stay. (set side_homura, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Shadow",
+    "name": "World: Arrival, Shadow & Sol Badguy",
+    "lines": [
+      "cast sol as Sol Badguy",
+      "background rooftop",
+      "me enters left with slide",
+      "sol enters right with fade",
+      "sol: Shadow. You're lurking on my roof, aren't you? Gimme a fight or a drink.",
+      "me (pleased): Sol. You're always in a bad mood. Fine, I'll fight you, but not on the roof.",
+      "sol (pleased): Hmph. That's the most honest thing you've said. Let's go to the alley.",
+      "player: Two who don't need anyone. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Sol the roof is his, and Shadow should find another place. (set side_me)",
+      "- Tell Shadow that Sol's fight is worth it, and he should join. (set side_sol, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Sol Badguy",
+    "name": "World: Arrival, Sol Badguy & Shadow",
+    "lines": [
+      "cast shadow as Shadow",
+      "background city",
+      "me enters left with slide",
+      "shadow enters right with fade",
+      "shadow: Sol. You want a fight? I'm searching for someone, so make it quick.",
+      "me (pleased): Quick? Hmph. Fine. Searching is for the weak. Fight me instead.",
+      "shadow (dismayed): ...No. Not today. Find someone else to fight.",
+      "player: As above, from his side. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Shadow the search can wait, and he should fight Sol. (set side_me)",
+      "- Tell Sol the search is more important, and he should let Shadow go. (set side_shadow, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Sol Badguy",
+    "name": "World: Arrival, Sol Badguy & Toph",
+    "lines": [
+      "cast toph as Toph",
+      "background arena",
+      "me enters left with slide",
+      "toph enters right with fade",
+      "toph: Sol Badguy. I can feel you stomping around like a grumpy bear. What do you want?",
+      "me (pleased): Toph. A rematch. You beat me last time. I want my revenge.",
+      "toph (pleased): Ha! Bring it. The ground's ready for you, you big bear.",
+      "player: Rematch! Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Toph that Sol's rematch is pointless, and he should go home. (set side_me)",
+      "- Tell Sol the rematch is his chance, and Toph should accept it. (set side_toph, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Yu Narukami",
+    "name": "World: Arrival, Yu Narukami & Protagonist",
+    "lines": [
+      "cast protagonist as Protagonist",
+      "background classroom",
+      "me enters left with slide",
+      "protagonist enters right with fade",
+      "protagonist: Yu. You're cooking for the whole school? Can I try?",
+      "me (pleased): Protagonist! Yes! You're the quiet one, the one who said yes. Taste it.",
+      "protagonist: ...It's good. Really. I'll say more, if you want.",
+      "player: Two silent leaders. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell the Protagonist the curry is too salty, and he should say so. (set side_me)",
+      "- Tell Yu the curry is great, and the Protagonist should say more. (set side_protagonist, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Yu Narukami",
+    "name": "World: Arrival, Yu Narukami & Tohru",
+    "lines": [
+      "cast tohru as Tohru",
+      "background cafe",
+      "me enters left with slide",
+      "tohru enters right with fade",
+      "tohru: Yu! A cook-off? I brought my dragon's stew. It's a bit suspicious, but good.",
+      "me (pleased): Tohru! Perfect. I'll bring my curry. Let's see who wins.",
+      "tohru (pleased): You're on! I'll make it extra tasty, just for the contest.",
+      "player: A cook-off. Who gets your vote?",
+      "choice Who do you vote for?",
+      "- Tell Tohru her stew is suspicious, and Yu should win. (set side_me)",
+      "- Tell Yu his curry is delicious, and Tohru should show off her stew. (set side_tohru, give color_pack)"
+    ]
+  }
+]

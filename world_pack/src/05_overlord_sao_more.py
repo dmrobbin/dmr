@@ -2586,3 +2586,692 @@ CAST = [
               "choice", "- Best friends, Gray.", "- Live for her, and for you.",
               "me (pleased): Best friend. Heh. Ur would've liked you."]),
 ]
+
+ARRIVALS = [
+  {
+    "newcomer": "Ainz Ooal Gown",
+    "name": "World: Arrival, Ainz Ooal Gown",
+    "lines": [
+      "background ruins",
+      "me enters center with fade",
+      "me: I have arrived. Ahem. The Sorcerer King greets this town. Be grateful.",
+      "me (dismayed): ...Hm. Nothing to be grateful for? Interesting. I shall have to adjust.",
+      "me: My servants would have prepared a reception. I'm improvising, so bear with me.",
+      "player: He's arrived in full regalia, and seems to be panicking inside. Do you help?",
+      "choice What do you say?",
+      "- Tell Ainz the town doesn't need a king, and he should wait in line. (set side_me)",
+      "- Tell Ainz you'd be glad to show him around, and he can relax. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Albedo",
+    "name": "World: Arrival, Albedo",
+    "lines": [
+      "background ruins",
+      "me enters right with slide",
+      "me: Where is Lord Ainz? Be quick, and be honest. I'll know if you lie.",
+      "me (pleased): Oh, you're very polite. That's lovely. I'll remember you.",
+      "me: Don't stand so close. You're blocking my view of the stairs.",
+      "player: She asks where Lord Ainz is, sweetly and dangerously. Do you tell her?",
+      "choice How do you answer?",
+      "- Tell Albedo that Ainz is out of town, and she should leave. (set side_me)",
+      "- Tell Albedo that Ainz is at the cafe, and she can join him. (set side_me, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Asuna Yuuki",
+    "name": "World: Arrival, Asuna Yuuki",
+    "lines": [
+      "background cafe",
+      "me enters left with slide",
+      "me: Excuse me. Would you mind if I used your kitchen? I'm a cook, and I'm bored.",
+      "me (pleased): Thank you so much! I'll make the best meal you've ever tasted.",
+      "me (dismayed): ...Oh no, I burnt the rice. Don't look at it. Please.",
+      "player: She asks to cook in the cafe kitchen. Do you let her?",
+      "choice What's your answer?",
+      "- Tell Asuna the kitchen is closed, and she should try another day. (set side_me)",
+      "- Let Asuna cook, and promise to eat the burnt rice anyway. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Kirito",
+    "name": "World: Arrival, Kirito",
+    "lines": [
+      "background arena",
+      "me enters center with fade",
+      "me: Hm? I logged in by mistake. Is this a game? It looks like a game.",
+      "me (pleased): Oh, there's a duel arena. Let me just check my level. Hmm.",
+      "me (dismayed): ...That was a mistake. I'm not a beginner. I just hid my level.",
+      "player: He assumes it's a game, and seems to be hiding something. Do you ask?",
+      "choice What do you do?",
+      "- Tell Kirito this isn't a game, and he should take the town seriously. (set side_me)",
+      "- Tell Kirito the duel arena is fun, and offer a practice match. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Batman",
+    "name": "World: Arrival, Batman",
+    "lines": [
+      "background rooftop",
+      "me enters right with fade",
+      "me: You've been seen today. By someone watching you. I'm the one watching.",
+      "me (pleased): ...Good. You didn't run. That tells me something useful.",
+      "me: Keep your voice down. The city has ears, and some of them are mine.",
+      "player: A shadow on the rooftop. He's been watching you. Do you talk to him?",
+      "choice How do you respond?",
+      "- Tell Batman he's creepy, and walk back down the stairs. (set side_me)",
+      "- Tell Batman you'll talk, and ask him what he's been watching. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Joker",
+    "name": "World: Arrival, Joker",
+    "lines": [
+      "background ruins",
+      "me enters left with pop",
+      "me: Ha! Hello, my new audience! Here, catch a playing card. For later.",
+      "me (pleased): Ha! You caught it! Good reflexes. The card's a joke. Sort of.",
+      "me: Keep it safe. I might ask for it back, when I'm feeling generous.",
+      "player: He leaves you a playing card and a laugh. Do you keep it?",
+      "choice What do you do?",
+      "- Tell Joker the card's a cheap joke, and drop it on the floor. (set side_me)",
+      "- Keep the card, and laugh with him. (set side_me, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Cinderella",
+    "name": "World: Arrival, Cinderella",
+    "lines": [
+      "background sakura",
+      "me enters center with fade",
+      "me: Oh no! My glass slipper. I've lost it in the plaza. Please help me.",
+      "me (dismayed): Don't step on it! It's glass, and it's very valuable.",
+      "me (pleased): Thank you. You're very kind. I'll remember your face, if I forget the shoe.",
+      "player: She's lost a glass slipper in the plaza. Do you help search?",
+      "choice What's your response?",
+      "- Tell Cinderella she should find her own shoe, and walk on. (set side_me)",
+      "- Help search for the slipper, and promise to keep it safe. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Rapi",
+    "name": "World: Arrival, Rapi",
+    "lines": [
+      "background arena",
+      "me enters left with slide",
+      "me: Reporting for duty! Who's in charge? Nobody? Then I'm in charge.",
+      "me (pleased): Acceptable. You stood still when I shouted. That's the first step.",
+      "me: Drill starts now. Ten minutes. No talking. Go.",
+      "player: She reports for duty to nobody. Do you salute her?",
+      "choice What do you say?",
+      "- Tell Rapi nobody's in charge, and she can go home. (set side_me)",
+      "- Salute Rapi, and join her drill for ten minutes. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Darkness",
+    "name": "World: Arrival, Darkness",
+    "lines": [
+      "background arena",
+      "me enters right with rise",
+      "me: Please! Hit me! As hard as you can! It's for training, I promise!",
+      "me (pleased): Ahh! That was perfect! Oh, sorry. I'm a bit excited.",
+      "me: My name is Darkness. I'm a crusader. Will you protect me, or shall I protect you?",
+      "player: She asks to be hit, for training. Do you do it?",
+      "choice How do you answer?",
+      "- Tell Darkness you won't hit her, and she should find someone else. (set side_me)",
+      "- Hit her, as hard as you can, and cheer her on. (set side_me, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Megumin",
+    "name": "World: Arrival, Megumin",
+    "lines": [
+      "background sakura",
+      "me enters center with pop",
+      "me: Behold! I'll blow up something at the edge of town. Explosion!",
+      "me (dismayed): ...It was a small one. Okay, it knocked over a lamp post. Oops.",
+      "me (pleased): Hi! I'm Megumin, the greatest mage. You should carry me home now.",
+      "player: She's exploded something at the edge of town. Do you carry her home?",
+      "choice What's your response?",
+      "- Tell Megumin the explosion was a mistake, and she should walk home. (set side_me)",
+      "- Carry her home, and tell her the explosion was impressive. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Erza Scarlet",
+    "name": "World: Arrival, Erza Scarlet",
+    "lines": [
+      "background arena",
+      "me enters center with zoom",
+      "me: Requip! I'm ready for the arena. Where's the cake? I want the cake first.",
+      "me (pleased): Good. Now, comrade, you'll show me the cake shop. Hurry.",
+      "me: I am Erza Scarlet. I'm not joking about the cake. Please.",
+      "player: She requips in the arena, and asks where the cake is. Do you show her?",
+      "choice How do you respond?",
+      "- Tell Erza the cake is for later, and she should wait for the match. (set side_me)",
+      "- Show Erza the cake shop, and promise to share a slice. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Gray Fullbuster",
+    "name": "World: Arrival, Gray Fullbuster",
+    "lines": [
+      "background arena",
+      "me enters left with pop",
+      "me: Ice-make! Look at this fountain. It's frozen solid, I think.",
+      "me (dismayed): Oh. My shirt's gone again. Don't look. Please don't look.",
+      "me (pleased): Hi! I'm Gray. I make ice, and lose my clothes. It's a long story.",
+      "player: He's frozen the fountain, and he's shirtless. Do you say something?",
+      "choice What's your response?",
+      "- Tell Gray to put a shirt on, and he should fix the fountain. (set side_me)",
+      "- Tell Gray the fountain's beautiful, and ask for a sculpture. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Chisato Nishikigi",
+    "name": "World: Arrival, Chisato Nishikigi",
+    "lines": [
+      "background cafe",
+      "me enters center with pop",
+      "me: Hi! I'm opening a cafe stall, right here in the cafe! Isn't that fun?",
+      "me (pleased): You're going to be my first customer! Coffee's on me!",
+      "me: Oh, and this is Takina. She's going to be very serious about the coffee.",
+      "player: She's opened a cafe stall inside the cafe. Do you buy a coffee?",
+      "choice What do you say?",
+      "- Tell Chisato the cafe's already full, and she should move the stall. (set side_me)",
+      "- Buy a coffee, and tell Chisato the stall's a good idea. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Takina Inoue",
+    "name": "World: Arrival, Takina Inoue",
+    "lines": [
+      "background cafe",
+      "me enters left with fade",
+      "me: Excuse me. Where is the cafe's manager? I need to speak with someone in charge.",
+      "me (dismayed): I'm sorry. I was looking for someone. Chisato's stall is in the way.",
+      "me: Hm. You're the one who's been helping Chisato. Thank you. Let me know if you need anything.",
+      "player: She asks where the manager is. Do you point her to the stall?",
+      "choice What's your response?",
+      "- Tell Takina the manager is busy, and she should wait. (set side_me)",
+      "- Tell Takina Chisato's stall is right there, and point her to it. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Ainz Ooal Gown",
+    "name": "World: Arrival, Ainz Ooal Gown & Albedo",
+    "lines": [
+      "cast albedo as Albedo",
+      "background ruins",
+      "me enters left with slide",
+      "albedo enters right with fade",
+      "albedo: Lord Ainz! I have followed you here. I hope the town is worthy of you.",
+      "me (dismayed): Albedo, you're behind me again. Please stop being so close.",
+      "albedo (pleased): Only because I'm devoted to you, my lord. You know that.",
+      "player: She arrives a step behind him. Do you back Ainz, or Albedo's devotion?",
+      "choice Who do you side with?",
+      "- Tell Albedo to step back, and let Ainz have some room. (set side_me)",
+      "- Tell Ainz that Albedo's devotion is useful, and he should trust her. (set side_albedo, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Ainz Ooal Gown",
+    "name": "World: Arrival, Ainz Ooal Gown & Lord Genome",
+    "lines": [
+      "cast lord as Lord Genome",
+      "background ruins",
+      "me enters left with slide",
+      "lord enters right with fade",
+      "lord: The Sorcerer King. A king, arriving in my warehouse? Kneel, or be judged.",
+      "me (dismayed): Spiral King. I shall not kneel in a warehouse. Let us talk, as equals.",
+      "lord (pleased): Two kings at a cold summit. Very well. Speak, and I shall listen.",
+      "player: Two kings. Who do you back?",
+      "choice Who do you side with?",
+      "- Tell Lord Genome he's the only king in town, and Ainz should leave. (set side_me)",
+      "- Tell Ainz the warehouse is fine, and Genome should share the throne. (set side_lord, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Albedo",
+    "name": "World: Arrival, Albedo & Ainz Ooal Gown",
+    "lines": [
+      "cast ainz as Ainz Ooal Gown",
+      "background ruins",
+      "me enters left with slide",
+      "ainz enters right with fade",
+      "ainz: Albedo. I can feel you watching me. Please don't do that.",
+      "me (pleased): Lord Ainz! I'm here to serve you. What is your command?",
+      "ainz (dismayed): My command is that you stop smiling at me like that. Please.",
+      "player: As above. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Ainz that Albedo's loyalty is too much, and he should send her home. (set side_me)",
+      "- Tell Albedo that Ainz needs her, and she should serve him. (set side_ainz, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Albedo",
+    "name": "World: Arrival, Albedo & Makima",
+    "lines": [
+      "cast makima as Makima",
+      "background ruins",
+      "me enters left with slide",
+      "makima enters right with fade",
+      "makima: Albedo. I hear you wish to control the world. How curious.",
+      "me (pleased): Makima. You control people through their hearts, don't you? Lovely.",
+      "makima (pleased): Yes. Let's compare methods. Perhaps we'll work together, one day.",
+      "player: Two controllers. Who do you back?",
+      "choice Who do you support?",
+      "- Tell Makima that Albedo's control is too cruel, and she should stop. (set side_me)",
+      "- Tell Albedo that Makima's methods are worth learning, and she should talk. (set side_makima, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Asuna Yuuki",
+    "name": "World: Arrival, Asuna Yuuki & Kirito",
+    "lines": [
+      "cast kirito as Kirito",
+      "background cafe",
+      "me enters left with slide",
+      "kirito enters right with fade",
+      "kirito: Asuna? You're cooking again? Please say it's not another burnt rice.",
+      "me (dismayed): Kirito, I said I'd make it better. It's not burnt, it's seasoned.",
+      "kirito (pleased): Seasoned, huh? Okay. Let's eat it together, then.",
+      "player: A couple, arriving together, if their quests ever tie them. Whose side do you take?",
+      "choice Who do you side with?",
+      "- Tell Kirito the rice is burnt, and he should stop eating it. (set side_me)",
+      "- Tell Asuna the rice is great, and Kirito should eat with her. (set side_kirito, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Asuna Yuuki",
+    "name": "World: Arrival, Asuna Yuuki & Tohru",
+    "lines": [
+      "cast tohru as Tohru",
+      "background cafe",
+      "me enters left with slide",
+      "tohru enters right with fade",
+      "tohru: Oh! Is this a cook-off? I brought my special dish. It's a bit suspicious.",
+      "me (pleased): Tohru! A cook-off? I'll make my best bento. Let's see who wins.",
+      "tohru (pleased): It's a contest, then! I'll win with my dragon-tail stew. Count on it.",
+      "player: A cook-off in the cafe. Who gets your vote?",
+      "choice Who do you vote for?",
+      "- Tell Tohru her stew is suspicious, and Asuna should win. (set side_me)",
+      "- Tell Asuna her bento is great, and Tohru should show her stew. (set side_tohru, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Kirito",
+    "name": "World: Arrival, Kirito & Asuna Yuuki",
+    "lines": [
+      "cast asuna as Asuna Yuuki",
+      "background arena",
+      "me enters left with slide",
+      "asuna enters right with fade",
+      "asuna: Kirito! You logged in without telling me? I was looking everywhere for you.",
+      "me (dismayed): Asuna, I didn't mean to. I just hid my level again. Sorry.",
+      "asuna (pleased): Ha! Fine. But you're buying lunch, and you're telling me the truth.",
+      "player: As above, from her side. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Kirito that Asuna is too strict, and he should keep his level hidden. (set side_me)",
+      "- Tell Asuna that Kirito's honest now, and she should trust him. (set side_asuna, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Kirito",
+    "name": "World: Arrival, Kirito & Simon",
+    "lines": [
+      "cast simon as Simon",
+      "background arena",
+      "me enters left with slide",
+      "simon enters right with fade",
+      "simon: Hey, you're the one with the sword? I'm Simon. I came through the ceiling.",
+      "me (pleased): Simon! Another hero. Are you here for the duel, or the stars?",
+      "simon (pleased): Both! Let's see if the drill beats the sword. Come on.",
+      "player: Two heroes. Who do you back?",
+      "choice Whose side do you take?",
+      "- Tell Simon the drill's just a toy, and Kirito's sword is better. (set side_me)",
+      "- Tell Kirito the drill has potential, and Simon's spirit is real. (set side_simon, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Batman",
+    "name": "World: Arrival, Batman & Joker",
+    "lines": [
+      "cast joker as Joker",
+      "background rooftop",
+      "me enters left with slide",
+      "joker enters right with fade",
+      "joker: Bats! You're on the roof again. Did you miss me? I missed you!",
+      "me (dismayed): Joker. Stop the trap. I know what you're planning.",
+      "joker (pleased): Ha! You're no fun. But you'll see the joke, eventually.",
+      "player: The old enemy. Do you stand with Batman, or let Joker laugh?",
+      "choice Who do you side with?",
+      "- Tell Batman to stop being so serious, and let Joker have his laugh. (set side_me)",
+      "- Tell Joker his trap is too far, and Batman should take it seriously. (set side_joker, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Batman",
+    "name": "World: Arrival, Batman & Twilight",
+    "lines": [
+      "cast twilight as Twilight",
+      "background library",
+      "me enters left with slide",
+      "twilight enters right with fade",
+      "twilight: You're watching the city. I can see it in your posture. Detective?",
+      "me (dismayed): Twilight. You're not a psychiatrist, are you? I can tell.",
+      "twilight (pleased): No. But you're not a bat, either. Shall we compare cases?",
+      "player: Two detectives. Who do you back?",
+      "choice Who do you support?",
+      "- Tell Twilight he's lying about being a psychiatrist, and Batman should watch him. (set side_me)",
+      "- Tell Batman the case is worth sharing, and Twilight should talk. (set side_twilight, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Joker",
+    "name": "World: Arrival, Joker & Batman",
+    "lines": [
+      "cast batman as Batman",
+      "background ruins",
+      "me enters left with slide",
+      "batman enters right with fade",
+      "batman: Joker. You left a playing card. I'd like to know what it means.",
+      "me (pleased): Bats! It's for later! Ha! It's a clue, and a joke, all in one.",
+      "batman (dismayed): It's a threat, and you know it. Stop playing with the city.",
+      "player: As above. Whose side are you on?",
+      "choice Who do you side with?",
+      "- Tell Batman the card is harmless, and he should relax. (set side_me)",
+      "- Tell Joker the card is a clue, and he should explain. (set side_batman, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Joker",
+    "name": "World: Arrival, Joker & Nui Harime",
+    "lines": [
+      "cast nui as Nui Harime",
+      "background ruins",
+      "me enters left with slide",
+      "nui enters right with fade",
+      "nui: Joker! Your smile is so creepy. I want to sew you a jacket, teehee!",
+      "me (pleased): Nui Harime! Your dolls are the best joke in town. Ha!",
+      "nui (pleased): Teehee! A joke doll? I'll make you one with a big grin.",
+      "player: Two terrifying smiles. Who do you back?",
+      "choice Who do you support?",
+      "- Tell Nui the jacket is too creepy, and Joker should refuse it. (set side_me)",
+      "- Tell Joker the doll is a great joke, and Nui should sew him one. (set side_nui, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Cinderella",
+    "name": "World: Arrival, Cinderella & Rapi",
+    "lines": [
+      "cast rapi as Rapi",
+      "background arena",
+      "me enters left with slide",
+      "rapi enters right with fade",
+      "rapi: Cinderella. You're a princess, aren't you? You look like you could lead a squad.",
+      "me (pleased): Rapi, dear. Only if the squad is elegant. I have standards.",
+      "rapi (pleased): Acceptable. Join the drill, and we'll see how elegant you can be.",
+      "player: Squadmates, from a princess and a soldier. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Rapi the drill's too rough for a princess, and Cinderella should refuse. (set side_me)",
+      "- Tell Cinderella the squad needs elegance, and Rapi should accept it. (set side_rapi, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Cinderella",
+    "name": "World: Arrival, Cinderella & Mai Sakurajima",
+    "lines": [
+      "cast mai as Mai Sakurajima",
+      "background beach",
+      "me enters left with slide",
+      "mai enters right with fade",
+      "mai: Cinderella. Your shoe's gone, isn't it? I can see you're looking for it.",
+      "me (dismayed): Mai. Yes, my slipper. Please don't vanish before I find it.",
+      "mai (pleased): I won't. Let's look together. We both need to be seen.",
+      "player: Two who vanish at a deadline. Do you help them search?",
+      "choice Who do you help?",
+      "- Tell Mai she should stop vanishing, and help Cinderella search. (set side_me)",
+      "- Tell Cinderella she should trust Mai, and let her help. (set side_mai, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Rapi",
+    "name": "World: Arrival, Rapi & Cinderella",
+    "lines": [
+      "cast cinderella as Cinderella",
+      "background arena",
+      "me enters left with slide",
+      "cinderella enters right with fade",
+      "cinderella: Rapi, is it? You're very orderly. My slipper would fit in your drill.",
+      "me (pleased): Cinderella. Orderly is good, but your slipper is glass. Keep it safe.",
+      "cinderella (dismayed): I know it's glass. Don't remind me. Let's do the drill.",
+      "player: Squadmates. Who do you back?",
+      "choice Who do you side with?",
+      "- Tell Cinderella the drill is too much, and she should sit it out. (set side_me)",
+      "- Tell Rapi the squad needs Cinderella, and she should join in. (set side_cinderella, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Rapi",
+    "name": "World: Arrival, Rapi & Yoko",
+    "lines": [
+      "cast yoko as Yoko",
+      "background beach",
+      "me enters left with slide",
+      "yoko enters right with fade",
+      "yoko: Rapi. You shoot like a soldier. Want to compare scopes on the beach?",
+      "me (pleased): Yoko! A sniper. Acceptable. Hit the target from here.",
+      "yoko (pleased): Bullseye. Your turn, then. Let's see if you're better than me.",
+      "player: Two snipers. Who do you back?",
+      "choice Who do you support?",
+      "- Tell Yoko her scope is better, and Rapi should admit it. (set side_me)",
+      "- Tell Rapi her aim is better, and Yoko should respect it. (set side_yoko, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Darkness",
+    "name": "World: Arrival, Darkness & Megumin",
+    "lines": [
+      "cast megumin as Megumin",
+      "background sakura",
+      "me enters left with slide",
+      "megumin enters right with fade",
+      "megumin: Darkness! You want to be hit again? I'll explode something for you!",
+      "me (pleased): Megumin! Please, go ahead! Explode me, and I'll be so happy!",
+      "megumin (dismayed): No, no! I'm not hitting you with an explosion! That's just wrong.",
+      "player: Party members who've never agreed. Do you back Darkness, or Megumin?",
+      "choice Who do you side with?",
+      "- Tell Megumin the explosion is too much, and she should stop. (set side_me)",
+      "- Tell Darkness the explosion is worth it, and Megumin should try. (set side_megumin, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Darkness",
+    "name": "World: Arrival, Darkness & Levi",
+    "lines": [
+      "cast levi as Levi",
+      "background arena",
+      "me enters left with slide",
+      "levi enters right with fade",
+      "levi: You're the one who wants to be hit. Hm. Stand still, I'll scold you instead.",
+      "me (pleased): Levi! Please, scold me! I love it when you scold me, really!",
+      "levi (dismayed): Tch. You're disgusting. Go train, and stop asking for trouble.",
+      "player: She wants him to scold her. Do you back Darkness, or Levi's rules?",
+      "choice Who do you side with?",
+      "- Tell Levi to scold Darkness, and let her learn the hard way. (set side_me)",
+      "- Tell Darkness to listen to Levi, and train properly. (set side_levi, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Megumin",
+    "name": "World: Arrival, Megumin & Darkness",
+    "lines": [
+      "cast darkness as Darkness",
+      "background sakura",
+      "me enters left with slide",
+      "darkness enters right with fade",
+      "darkness: Megumin! Explode something for me! I'm ready to be hit by your magic!",
+      "me (pleased): Darkness! Okay, but only if you promise to carry me home after.",
+      "darkness (pleased): Of course! Carrying you is the best reward. Let's do it!",
+      "player: As above, from her side. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Darkness to find another partner, and let Megumin rest. (set side_me)",
+      "- Tell Megumin the explosion is worth it, and Darkness should join in. (set side_darkness, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Megumin",
+    "name": "World: Arrival, Megumin & Kyoko Sakura",
+    "lines": [
+      "cast kyoko as Kyoko Sakura",
+      "background city",
+      "me enters left with slide",
+      "kyoko enters right with fade",
+      "kyoko: Megumin! You're carrying a huge pile of food. Want to share?",
+      "me (pleased): Kyoko! Food! I'll explode something for you if you give me half.",
+      "kyoko (pleased): Deal. Explode the donut stall, and I'll let you have the apple.",
+      "player: Two who only care about one thing. Do you back Megumin, or Kyoko?",
+      "choice Who do you side with?",
+      "- Tell Kyoko the donut stall isn't a target, and Megumin should eat. (set side_me)",
+      "- Tell Megumin the donut stall is fair game, and Kyoko should share. (set side_kyoko, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Erza Scarlet",
+    "name": "World: Arrival, Erza Scarlet & Gray Fullbuster",
+    "lines": [
+      "cast gray as Gray Fullbuster",
+      "background arena",
+      "me enters left with slide",
+      "gray enters right with fade",
+      "gray: Erza! You're in the arena, and you want cake. Same old, huh?",
+      "me (pleased): Gray! Yes, I want the cake. And you're going to help me find it.",
+      "gray (dismayed): Fine. But you're buying the cake, because I lost my shirt again.",
+      "player: Guildmates, arguing about the cake. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Gray he owes Erza a cake, and he should pay for it. (set side_me)",
+      "- Tell Erza the cake is worth the trouble, and Gray should help her. (set side_gray, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Erza Scarlet",
+    "name": "World: Arrival, Erza Scarlet & Levi",
+    "lines": [
+      "cast levi as Levi",
+      "background cafe",
+      "me enters left with slide",
+      "levi enters right with fade",
+      "levi: Erza. Your armour is on my table. I'll need you to move it, please.",
+      "me (dismayed): Levi! It's a commander's table, Levi. Sit down and have some cake.",
+      "levi (pleased): Tch. Fine. But if it's dirty, you're cleaning it. Deal?",
+      "player: Two commanders, one tea. Who do you back?",
+      "choice Who do you support?",
+      "- Tell Erza her armour has no place on Levi's table, and she should move it. (set side_me)",
+      "- Tell Levi the cake's a fine reward, and he should sit with Erza. (set side_levi, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Gray Fullbuster",
+    "name": "World: Arrival, Gray Fullbuster & Erza Scarlet",
+    "lines": [
+      "cast erza as Erza Scarlet",
+      "background arena",
+      "me enters left with slide",
+      "erza enters right with fade",
+      "erza: Gray, you lost your shirt again? Honestly. Put on something decent.",
+      "me (dismayed): Erza, I'm trying! The ice keeps breaking my clothes!",
+      "erza (pleased): Then you'll wear my spare armour. Hm. It fits, a little.",
+      "player: As above, from his side. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Erza to leave Gray alone, and let him be shirtless. (set side_me)",
+      "- Tell Gray the armour's a good fit, and Erza should help him. (set side_erza, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Gray Fullbuster",
+    "name": "World: Arrival, Gray Fullbuster & Kittan",
+    "lines": [
+      "cast kittan as Kittan",
+      "background beach",
+      "me enters left with slide",
+      "kittan enters right with fade",
+      "kittan: Oi! Gray! You're shirtless again! That's the spirit, mate!",
+      "me (dismayed): Kittan, don't encourage him! I'm freezing out here.",
+      "kittan (pleased): Ha! Two shirtless men on the beach. This is the best day ever!",
+      "player: Two shirtless men. Do you help Gray find his shirt, or Kittan?",
+      "choice Who gets your help?",
+      "- Tell Kittan his shirt is his problem, and Gray should keep his own. (set side_me)",
+      "- Tell Gray the shirt can wait, and Kittan should join the fun. (set side_kittan, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Chisato Nishikigi",
+    "name": "World: Arrival, Chisato Nishikigi & Takina Inoue",
+    "lines": [
+      "cast takina as Takina Inoue",
+      "background cafe",
+      "me enters left with slide",
+      "takina enters right with fade",
+      "takina: Chisato. I told you the stall would be in the way. Now the manager's annoyed.",
+      "me (pleased): Takina! Don't worry, I'll make the manager a coffee. He'll love it!",
+      "takina (dismayed): You always say that. Fine. I'll watch the stall while you work.",
+      "player: They arrive together, one with a stall and one with a question. Who do you back?",
+      "choice Who do you side with?",
+      "- Tell Takina the stall is a problem, and Chisato should move it. (set side_me)",
+      "- Tell Chisato the stall is a good idea, and Takina should help her. (set side_takina, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Chisato Nishikigi",
+    "name": "World: Arrival, Chisato Nishikigi & Ruby Rose",
+    "lines": [
+      "cast ruby as Ruby Rose",
+      "background cafe",
+      "me enters left with slide",
+      "ruby enters right with fade",
+      "ruby: Chisato! You opened a stall? Are you going to bake cookies too?",
+      "me (pleased): Ruby Rose! Yes, cookies! Want to share with my bestie Takina?",
+      "ruby (pleased): Yes! Two cheerful fighters, and the best cookies in town! Let's go!",
+      "player: Two cheerful fighters. Who gets your support?",
+      "choice Who do you side with?",
+      "- Tell Ruby the cookies are hers, and Chisato should make her own. (set side_me)",
+      "- Tell Chisato the cookies are fun, and Ruby should help her bake. (set side_ruby, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Takina Inoue",
+    "name": "World: Arrival, Takina Inoue & Chisato Nishikigi",
+    "lines": [
+      "cast chisato as Chisato Nishikigi",
+      "background cafe",
+      "me enters left with slide",
+      "chisato enters right with fade",
+      "chisato: Takina! You're here! Let's make the coffee together, it'll be fun!",
+      "me (dismayed): Chisato. I'm here to speak with the manager. The stall's in the way.",
+      "chisato (pleased): The manager? I am the manager! Okay, sort of. Please have a drink.",
+      "player: Joint scene, from her side: the stall, and the manager. Whose side do you take?",
+      "choice Who do you back?",
+      "- Tell Chisato the stall must move, and Takina should be heard. (set side_me)",
+      "- Tell Takina the coffee is a good start, and Chisato should keep the stall. (set side_chisato, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Takina Inoue",
+    "name": "World: Arrival, Takina Inoue & Homura Akemi",
+    "lines": [
+      "cast homura as Homura Akemi",
+      "background classroom",
+      "me enters left with slide",
+      "homura enters right with fade",
+      "homura: Takina. You're here for the manager? I'd like to talk about the timeline.",
+      "me (dismayed): Homura. I'm not here to talk about timelines. I'm here to work.",
+      "homura (pleased): Good. Serious ones are rare. Let's keep this brief.",
+      "player: Two serious ones. Who do you back?",
+      "choice Who do you side with?",
+      "- Tell Homura the timeline is nonsense, and Takina should leave. (set side_me)",
+      "- Tell Takina the work matters, and Homura should listen. (set side_homura, give color_pack)"
+    ]
+  }
+]

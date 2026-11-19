@@ -10,37 +10,10 @@
        data-travel-url="{% url 'weiss:world_travel' save.slot %}" data-wait-url="{% url 'weiss:world_wait' save.slot %}"
        data-duel-url="{% url 'weiss:world_duel' save.slot %}" data-buy-card-url="{% url 'weiss:world_buy_card' save.slot %}" data-request-set-url="{% url 'weiss:world_request_set' save.slot %}" data-checkout-url="{% url 'weiss:world_checkout' save.slot %}" data-slot="{{ save.slot }}"
        data-buy-gift-url="{% url 'weiss:world_buy_gift' save.slot %}" data-talk-url="{% url 'weiss:world_talk' save.slot %}"
-       data-answer-url="{% url 'weiss:world_answer' save.slot %}" data-give-url="{% url 'weiss:world_give' save.slot %}" data-level-url="{% url 'weiss:world_level' save.slot %}" data-decks-url="{% url 'weiss:world_save' save.slot %}#decks"
+       data-answer-url="{% url 'weiss:world_answer' save.slot %}" data-give-url="{% url 'weiss:world_give' save.slot %}" data-level-url="{% url 'weiss:world_level' save.slot %}" data-decks-url="{% url 'weiss:world_deck' save.slot %}?from=town"
        data-quest-url="{% url 'weiss:world_quest' save.slot %}" data-jump-url="{% url 'weiss:world_jump' save.slot %}" data-test-mode-url="{% url 'weiss:world_test_mode' save.slot %}"
-       data-player="{{ request.user.username }}">
+       data-town-url="{% url 'weiss:world_town' save.slot %}" data-player="{{ request.user.username }}">
     {% csrf_token %}
-    <div class="town-bar">
-      <p class="town-where"><strong data-place-name>{{ town.place.name }}</strong>
-        <span class="muted" data-when>{{ town.date }} · {{ town.time_name|lower }}</span></p>
-      <p class="town-coins" data-coins>{{ town.money }} coins</p>
-      <div class="town-actions">
-        <a class="button-small secondary town-quests" href="{% url 'weiss:world_quests' save.slot %}" data-quests>Quests<span data-quests-count></span></a>
-        <a class="button-small secondary" href="{% url 'weiss:world_events' save.slot %}">This week</a>
-        <button type="button" class="button-small" data-open-shop aria-expanded="false" aria-controls="town-shop" hidden>Shop counter</button>
-        <button type="button" class="button-small secondary" data-open-map aria-expanded="false" aria-controls="town-map"{% if town.engaged %} hidden{% endif %}>Map</button>
-        <button type="button" class="button-small" data-wait{% if not town.can_wait %} hidden{% endif %}>Pass time: {{ town.next_time|lower }}</button>
-        {% if town.staff %}
-          {# Staff testing (world.test_mode): Wait any time and go anywhere; off, staff play by the real rules. #}
-          <button type="button" class="button-small secondary town-staff" data-staff-wait{% if not town.test_mode %} hidden{% endif %}>Wait (staff)</button>
-          <span class="town-staff town-jump" data-jump{% if not town.test_mode %} hidden{% endif %}>
-            <label>Jump to <select data-jump-day>
-              {% for day in weekdays %}<option value="{{ forloop.counter0 }}">{{ day }}</option>{% endfor %}
-            </select></label>
-            <button type="button" class="button-small secondary" data-jump-go>Go</button>
-          </span>
-          <button type="button" class="button-small secondary town-staff" data-test-mode aria-pressed="{% if town.test_mode %}true{% else %}false{% endif %}"
-                  title="Staff only: Wait any time and travel freely, for testing">{% if town.test_mode %}Test mode: on{% else %}Test mode{% endif %}</button>
-        {% else %}
-          <button type="button" data-staff-wait hidden></button><button type="button" data-test-mode hidden></button>
-          <span data-jump hidden><select data-jump-day></select><button type="button" data-jump-go></button></span>
-        {% endif %}
-      </div>
-    </div>
     <p class="small town-notice" data-duel-banner hidden></p>
     <p class="small town-notice town-events" data-events hidden></p>
     <div class="small town-notice town-result" data-result hidden role="status">
@@ -52,22 +25,86 @@
     <p class="small town-notice town-scene-waiting" data-scene-waiting hidden></p>
     <div class="small town-notice town-result town-news" data-news hidden role="status">
       <ul></ul>
-      <p><a href="{% url 'weiss:world_quests' save.slot %}">Open your quest log</a></p>
+      <p><a href="{% url 'weiss:world_quests' save.slot %}?from=town" data-sheet-open data-title="Quests">Open your quest log</a></p>
       <button type="button" class="town-result-close" data-news-close aria-label="Dismiss quest news">×</button>
     </div>
     <p class="small town-notice" data-deck-notice{% if town.deck_ready %} hidden{% endif %}>Your equipped deck isn't ready to duel yet.
-      <a href="{% url 'weiss:world_save' save.slot %}#decks">Finish it</a> before you challenge anyone.</p>
+      <a href="{% url 'weiss:world_deck' save.slot %}?from=town" data-sheet-open data-title="Your deck">Finish it</a> before you challenge anyone.</p>
 
     <div class="vn-stage town-stage" data-stage>
       <div class="vn-bg" data-backdrop></div>
       <div class="town-light" data-light></div>
       <div class="town-people" data-people role="group" aria-label="Who's here"></div>
+      {# The card shop's counter on the backdrop: the sign and the counter itself open the shop (world_town.js). #}
+      <button type="button" class="town-shop-hotspot" data-open-shop aria-expanded="false" aria-controls="town-shop" hidden>
+        <span class="town-shop-sign">Card shop</span>
+      </button>
       <div class="town-empty" data-empty hidden>
         <p>Nobody's here right now.</p>
         <p class="small">Try the map, or wait a while.</p>
       </div>
 
-      {# Talking to someone: their words, and what you can do. #}
+      {# The game's own bar, over the stage: the menu, where and when, and passing time once the time's spent here. #}
+      <div class="town-hud">
+        <div class="town-hud-side">
+          <button type="button" class="town-hud-button town-menu-button" data-open-menu aria-expanded="false" aria-controls="town-hud-menu">Menu</button>
+        </div>
+        <div class="town-hud-center">
+          <p class="town-when" data-when>{{ town.date }} · {{ town.time_name|lower }}</p>
+          <p class="town-hud-sub small"><span data-place-name>{{ town.place.name }}</span> · <span data-coins>{{ town.money }} coins</span></p>
+        </div>
+        <div class="town-hud-side town-hud-end">
+          {# Shown once the player has spent this time here (weiss.world.engaged): the one thing left to do is pass it. #}
+          <button type="button" class="town-hud-button town-hud-wait" data-wait hidden>Pass time: {{ town.next_time|lower }}</button>
+          <button type="button" class="town-hud-button town-hud-icon" data-fullscreen aria-label="Full screen" title="Full screen (F)" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
+          </button>
+        </div>
+      </div>
+
+      {# Everything the town offers, in one place. Closes once an item's chosen (its page or panel opens). #}
+      <section class="town-hud-menu" id="town-hud-menu" data-menu-panel hidden aria-label="Town menu">
+        <div class="town-hud-menu-list">
+          <button type="button" class="town-hud-menu-item" data-sheet-open data-title="Quests" data-url="{% url 'weiss:world_quests' save.slot %}" data-quests>
+            <span>Quests<span class="town-hud-menu-count" data-quests-count></span></span>
+          </button>
+          <button type="button" class="town-hud-menu-item" data-open-map aria-expanded="false" aria-controls="town-map">
+            <span>Map</span><span class="town-hud-menu-hint" data-map-hint hidden>Pass time to go somewhere else</span>
+          </button>
+          <button type="button" class="town-hud-menu-item" data-sheet-open data-title="Your deck" data-url="{% url 'weiss:world_deck' save.slot %}?from=town">
+            <span>Your deck<span class="town-hud-menu-hint" data-deck-hint></span></span>
+          </button>
+          <button type="button" class="town-hud-menu-item" data-sheet-open data-title="Notice board" data-url="{% url 'weiss:world_events' save.slot %}">
+            <span>Bounty board<span class="town-hud-menu-hint">bounties, this week's events and the tournament</span></span>
+          </button>
+          <a class="town-hud-menu-item" href="{% url 'weiss:world_save' save.slot %}">
+            <span>Your save<span class="town-hud-menu-hint">packs, decks and settings</span></span>
+          </a>
+          <button type="button" class="town-hud-menu-item" data-menu-wait>
+            <span>Pass time<span class="town-hud-menu-hint" data-menu-wait-hint></span></span>
+          </button>
+          <button type="button" class="town-hud-menu-item" data-menu-fullscreen>
+            <span>Full screen</span>
+          </button>
+          {% if town.staff %}
+            <p class="town-hud-menu-group">Staff testing</p>
+            {# Staff testing (world.test_mode): Wait any time and go anywhere; off, staff play by the real rules. #}
+            <button type="button" class="town-hud-menu-item town-staff" data-test-mode aria-pressed="{% if town.test_mode %}true{% else %}false{% endif %}"
+                    title="Staff only: Wait any time and travel freely, for testing">{% if town.test_mode %}Test mode: on{% else %}Test mode{% endif %}</button>
+            <button type="button" class="town-hud-menu-item town-staff" data-staff-wait{% if not town.test_mode %} hidden{% endif %}>Wait (staff)</button>
+            <div class="town-hud-menu-jump town-staff" data-jump{% if not town.test_mode %} hidden{% endif %}>
+              <label>Jump to <select data-jump-day>
+                {% for day in weekdays %}<option value="{{ forloop.counter0 }}">{{ day }}</option>{% endfor %}
+              </select></label>
+              <button type="button" class="button-small secondary" data-jump-go>Go</button>
+            </div>
+          {% else %}
+            <button type="button" data-staff-wait hidden></button><button type="button" data-test-mode hidden></button>
+            <div data-jump hidden><select data-jump-day></select><button type="button" data-jump-go></button></div>
+          {% endif %}
+        </div>
+      </section>
+
       <section class="vn-box town-box" data-box hidden aria-live="polite">
         <span class="vn-name" data-name></span>
         <p class="town-relation small" data-relation hidden></p>
@@ -144,6 +181,14 @@
           <ul class="town-stock" data-gift-stock></ul>
         </div>
       </section>
+      {# Pages from the menu, shown here without leaving the town (world_town.js openSheet): the page itself, framed. #}
+      <section class="town-sheet" data-sheet hidden aria-labelledby="town-sheet-title">
+        <div class="town-sheet-head">
+          <h2 id="town-sheet-title" data-sheet-title></h2>
+          <button type="button" class="button-small secondary" data-sheet-close>Close</button>
+        </div>
+        <iframe class="town-sheet-frame" data-sheet-frame title="Town page"></iframe>
+      </section>
       <p class="town-toast" data-toast aria-live="polite"></p>
 
       {# Time passing (world_town.js passage): back from a duel, the page comes with it already covering the place. #}
@@ -158,7 +203,7 @@
       </div>
     </div>
     <p class="small muted town-help">Look around and shop as much as you like. Once you talk to someone, give a gift or duel, you're spending this
-      time of day here: talk to and give gifts to whoever's around, then pass time (a duel passes it by itself). Keys: M map, W pass time, Esc back.</p>
+      time of day here: talk to and give gifts to whoever's around, then pass time (a duel passes it by itself). Keys: M map, W pass time, F full screen, Esc closes what's open.</p>
   </div>
   {{ town|json_script:"town-state" }}
   {{ result|json_script:"town-result" }}

@@ -65,6 +65,21 @@
       <label class="infinite-number">The day's first win, more
         <input type="number" name="first_win_bonus" min="0" max="1000000" value="{{ world_settings.first_win_bonus }}" required>
       </label>
+      <label class="infinite-number">Points for the day's first talk
+        <input type="number" name="talk_points" min="0" max="50" value="{{ world_settings.talk_points }}" required>
+      </label>
+      <label class="infinite-number">CPUs in town at the start
+        <input type="number" name="start_cast" min="2" max="200" value="{{ world_settings.start_cast }}" required>
+      </label>
+      <label class="infinite-number">New CPUs each week
+        <input type="number" name="weekly_cast" min="1" max="50" value="{{ world_settings.weekly_cast }}" required>
+      </label>
+      <label class="infinite-number">An arrival scene's coins
+        <input type="number" name="arrival_coins" min="0" max="1000000" value="{{ world_settings.arrival_coins }}" required>
+      </label>
+      <label class="infinite-number">Points for the side taken in an arrival
+        <input type="number" name="arrival_points" min="0" max="50" value="{{ world_settings.arrival_points }}" required>
+      </label>
     </div>
   </section>
   <section class="cpu-section">

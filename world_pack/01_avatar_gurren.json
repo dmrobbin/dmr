@@ -936,6 +936,72 @@
       "me (lose): Flattened grass and a lot of bison fur! He came through here. Come on!",
       "me: Thanks for helping me look. Nobody else in this town even knows he's missing."
      ]
+    },
+    {
+     "name": "World: Arrival, Aang",
+     "script": [
+      "cast me as Aang",
+      "background sakura",
+      "me enters center with rise",
+      "me: Whoa! Sorry about the landing. My glider and I had a disagreement with a tree.",
+      "me (lose): Okay, that was dramatic. Hi! Is this the nearest air temple? I'm looking for my family's old place.",
+      "me: Nope, that's not right. Momo, stop trying to eat the map.",
+      "player: Are you hurt, or just embarrassed?",
+      "choice Which one should I help?",
+      "- Let him brush off the dust and laugh it off. (set side_me)",
+      "- Offer him a hand and some directions, for free. (set side_me, give color_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Aang & Katara",
+     "script": [
+      "cast me as Aang",
+      "cast katara as Katara",
+      "background sakura",
+      "me enters left with slide",
+      "katara enters right with fade",
+      "katara: Aang! You flew off again! Do you know how worried I was?",
+      "me (lose): Sorry, Katara! Look, I found the temple on the map. Mostly.",
+      "katara: Mostly? Aang, I'm going to scold you for ten minutes.",
+      "player: Should I help him finish the lecture?",
+      "choice Whose side do you take?",
+      "- Let Aang laugh it off and promise to be careful. (set side_me)",
+      "- Back Katara, and tell Aang to walk next time. (set side_katara, give color_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Aang & Toph",
+     "script": [
+      "cast me as Aang",
+      "cast toph as Toph",
+      "background arena",
+      "me enters left with slide",
+      "toph enters right with fade",
+      "toph: I heard you landing from across town, Twinkletoes. Your glider's squeaky.",
+      "me: Toph! You're not blind to the rooftops, are you? Okay, that was a bad joke.",
+      "toph (lose): Ha! Got you. Now go find a rock to bend, before I bury you under one.",
+      "player: Did you feel him land, or was that a lucky guess?",
+      "choice Who do you cheer for?",
+      "- Tell Aang he's clumsy, but he's a good flier. (set side_me)",
+      "- Tell Toph she's too smug, and mean it as a compliment. (set side_toph, give climax_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Aang & Azula",
+     "script": [
+      "cast me as Aang",
+      "cast azula as Azula",
+      "background sakura",
+      "me enters left with slide",
+      "azula enters right with fade",
+      "azula: Avatar. You landed on my plaza. How inconvenient.",
+      "me (lose): Azula! Hi! Did you miss me? I missed you.",
+      "azula (win): ...Don't say that again in front of the guards. They'll get ideas.",
+      "player: You two have history, don't you?",
+      "choice Whose side do you take?",
+      "- Let Aang try to make peace with Azula, and see how it goes. (set side_me)",
+      "- Tell Azula to step back, and let the Avatar have his moment. (set side_azula, give lucky_pack)"
+     ]
     }
    ]
   },
@@ -1865,6 +1931,55 @@
       "me: Don't say anything nice yet. I'll cry.",
       "me nods",
       "me: Stay until it burns down. That's all I ask."
+     ]
+    },
+    {
+     "name": "World: Arrival, Katara",
+     "script": [
+      "cast me as Katara",
+      "background beach",
+      "me enters left with fade",
+      "me: Oh! Sorry, I was cooling off. The fountain was really warm, so I bent it a little.",
+      "me (win): ...Okay, the fountain is wet now. Everyone's staring.",
+      "me: My friends would tell you I'm not usually this reckless. Sokka would say I'm always like this.",
+      "player: You soaked the whole square. Want me to help dry it up?",
+      "choice Which way do you lean?",
+      "- Tell her it's the fountain's fault, and point at the puddle. (set side_me)",
+      "- Help her wring out the square, with a little bit of style. (set side_me, give lucky_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Katara & Sokka",
+     "script": [
+      "cast me as Katara",
+      "cast sokka as Sokka",
+      "background beach",
+      "me enters left with slide",
+      "sokka enters right with fade",
+      "sokka: Katara! Hey! There's a boomerang in my sandwich again!",
+      "me (lose): Sokka, you'd think you'd learn by now. Stop feeding it to the seagulls.",
+      "sokka (win): Okay, but the seagulls like it. Plan B, I guess.",
+      "player: Do you think he's serious, or just being Sokka?",
+      "choice Who do you side with?",
+      "- Tell Katara she's right, the boomerang is a menace. (set side_me)",
+      "- Tell Sokka the seagulls have a point. (set side_sokka, give color_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Katara & Mami Tomoe",
+     "script": [
+      "cast me as Katara",
+      "cast mami as Mami Tomoe",
+      "background cafe",
+      "me enters left with slide",
+      "mami enters right with fade",
+      "mami: Oh my, two young people in a fountain! Come in and have some tea, please.",
+      "me (lose): Mami, that's so kind. I'm sorry about the fountain, really.",
+      "mami: Nonsense. Tea first, apologies with cake after. That's the rule.",
+      "player: Do you want tea, or do you want to get out of the fountain?",
+      "choice Who do you back?",
+      "- Tell Katara the tea can wait, and the cake's an excellent apology. (set side_me)",
+      "- Tell Mami the fountain's a public health risk, and take the tea. (set side_mami, give lucky_pack)"
      ]
     }
    ]
@@ -2797,6 +2912,55 @@
       "player: You always were one.",
       "me: ...Don't tell anyone I got emotional."
      ]
+    },
+    {
+     "name": "World: Arrival, Sokka",
+     "script": [
+      "cast me as Sokka",
+      "background cafe",
+      "me enters right with slide",
+      "me: Okay, I'd like a sandwich. And a bowl of noodles. And I'll pay with this.",
+      "me: It's a boomerang. It's valuable. Trust me, it comes back.",
+      "me (win): ...It didn't come back. It's fine. It's a plan. Mostly.",
+      "player: Do you want me to cover the bill?",
+      "choice What do you tell the cafe owner?",
+      "- Tell the owner the boomerang is worth more than the bill. (set side_me)",
+      "- Pay for the noodles yourself, and keep his boomerang for the next day. (set side_me, give climax_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Sokka & Toph",
+     "script": [
+      "cast me as Sokka",
+      "cast toph as Toph",
+      "background arena",
+      "me enters left with slide",
+      "toph enters right with fade",
+      "toph: Sokka. I felt your heartbeat from the road. It's panicking.",
+      "me (win): It is not! It's a plan. A very serious plan.",
+      "toph (lose): Sure it is. Give me your boomerang and I'll teach you some strategy.",
+      "player: Is he really panicking, or is that just his face?",
+      "choice Who do you side with?",
+      "- Tell Toph Sokka is definitely panicking, and he should take the lesson. (set side_me)",
+      "- Tell Sokka Toph's plan is smarter, and the boomerang is worth trying. (set side_toph, give color_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Sokka & Simon the digger",
+     "script": [
+      "cast me as Sokka",
+      "cast simon as Simon the digger",
+      "background cafe",
+      "me enters left with slide",
+      "simon enters right with fade",
+      "simon: Hi! I found a new type of drill. It's really good for digging tunnels, and sandwiches.",
+      "me (lose): Sandwiches? Okay, I'm interested. Show me the drill, and I'll show you my boomerang.",
+      "simon (lose): Deal! Let's trade gadgets. Maybe the sandwiches too.",
+      "player: Two inventors. Do you want to watch them compare gadgets?",
+      "choice Which gadget do you back?",
+      "- Tell Sokka his boomerang is the better gadget, and mean it. (set side_me)",
+      "- Tell Simon the drill's the winner, and it can dig a sandwich. (set side_simon, give climax_pack)"
+     ]
     }
    ]
   },
@@ -3715,6 +3879,55 @@
       "me: My parents never came to watch me fight. I told them I didn't care.",
       "player: Do you?",
       "me (win): ...Don't make me answer that."
+     ]
+    },
+    {
+     "name": "World: Arrival, Toph",
+     "script": [
+      "cast me as Toph",
+      "background arena",
+      "me enters center with drop",
+      "me: You're breathing too loud. Anyone want to arm-wrestle the blind girl?",
+      "me (lose): Ha! Okay, I felt your muscles tense. I'm winning this one.",
+      "me: Don't worry, I'll go easy. Hardly anyone's ever beat me. Hardly.",
+      "player: Did you really just pin that guy with one hand?",
+      "choice How do you react?",
+      "- Tell her you're impressed, and she's still going to lose. (set side_me)",
+      "- Shake her hand, and ask for a rematch with the whole crowd watching. (set side_me, give climax_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Toph & Ryuko Matoi",
+     "script": [
+      "cast me as Toph",
+      "cast ryuko as Ryuko Matoi",
+      "background arena",
+      "me enters left with slide",
+      "ryuko enters right with fade",
+      "ryuko: You're the blind girl who beat my friend at arm-wrestling. I want a rematch.",
+      "me: You want to lose to me again? Fine. Put your uniform back on, it's loud.",
+      "ryuko (lose): Senketsu says you're tough. We'll see if he's right.",
+      "player: Do you want to watch them fight, or stop them?",
+      "choice Who do you back?",
+      "- Tell Toph she's already won, and Ryuko should go easy on her. (set side_me)",
+      "- Tell Ryuko the rematch is her chance, and she's ready for it. (set side_ryuko, give lucky_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Toph & Aang",
+     "script": [
+      "cast me as Toph",
+      "cast aang as Aang",
+      "background arena",
+      "me enters left with slide",
+      "aang enters right with fade",
+      "aang: Toph! I came to watch you fight. I brought my glider, in case.",
+      "me (win): Twinkletoes, you're late again. Your footsteps are a mess.",
+      "aang (lose): Haha! I'm trying my best. Will you show me how you feel the ground?",
+      "player: Her student, late again. Do you help him, or let Toph tease him?",
+      "choice Whose side do you take?",
+      "- Tell Toph the student is hopeless, and let the teasing go on. (set side_me)",
+      "- Tell Aang the teacher is right, and he should listen closely. (set side_aang, give lucky_pack)"
      ]
     }
    ]
@@ -4649,6 +4862,55 @@
       "me (lose): The Avatar is coming for me before my coronation. I want to see who he brings with him.",
       "me: Watch the street. And try not to look impressed when I'm right."
      ]
+    },
+    {
+     "name": "World: Arrival, Azula",
+     "script": [
+      "cast me as Azula",
+      "background sakura",
+      "me enters right with zoom",
+      "me: I've arrived. Who's in charge here? I expect a proper introduction.",
+      "me (win): ...You don't know who I am? Good. I'll enjoy correcting that.",
+      "me: Don't bother with the town hall. I'll take a tour of the plaza instead.",
+      "player: Did you just try to order the guards around?",
+      "choice What do you say to her?",
+      "- Tell her she's welcome, but she'll have to wait in line. (set side_me)",
+      "- Tell her the plaza's not hers, and watch her face fall. (set side_me, give color_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Azula & Satsuki Kiryuin",
+     "script": [
+      "cast me as Azula",
+      "cast satsuki as Satsuki Kiryuin",
+      "background ruins",
+      "me enters left with slide",
+      "satsuki enters right with fade",
+      "satsuki: I am the heir to Honnouji Academy. You are not in the chain of command.",
+      "me (win): I'm the heir to a throne, and you're not in my chain of command either.",
+      "satsuki: We'll see. Let us discuss the rankings, and find out who really leads.",
+      "player: Two heirs, and each sure they're in charge. What do you do?",
+      "choice Whose side do you take?",
+      "- Tell Azula the throne is hers, and Satsuki should kneel. (set side_me)",
+      "- Tell Satsuki the academy has the better claim, and Azula should back down. (set side_satsuki, give climax_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Azula & Aang",
+     "script": [
+      "cast me as Azula",
+      "cast aang as Aang",
+      "background sakura",
+      "me enters left with slide",
+      "aang enters right with fade",
+      "aang: Azula! You're still in the plaza. Want to talk about peace?",
+      "me (win): Peace is for people who lose the throne. Stop smiling at me.",
+      "aang (lose): Okay, but we could be friends. The Avatar and the princess.",
+      "player: The Avatar again. Do you let them talk, or shut it down?",
+      "choice Whose side do you take?",
+      "- Tell Azula the Avatar is harmless, and let him talk. (set side_me)",
+      "- Tell Aang the crown isn't a game, and he should step back. (set side_aang, give lucky_pack)"
+     ]
     }
    ]
   },
@@ -5567,6 +5829,55 @@
       "me: Kamina always said who the hell do you think we are. I always said it wrong.",
       "me (lose): So I'm going to say it my way. Simon. Digger. Your friend.",
       "me bounces"
+     ]
+    },
+    {
+     "name": "World: Arrival, Simon the digger",
+     "script": [
+      "cast me as Simon the digger",
+      "background sakura",
+      "me enters left with rise",
+      "me: Hi! Um, I just dug up through the paving. Sorry, I didn't see the sidewalk.",
+      "me (lose): Look, a shiny rock! It's yours if you want it. I found a lot of them.",
+      "me: Did I mention I've never been to a town before? It's really big up here.",
+      "player: You came up through the plaza. That's unexpected.",
+      "choice What do you say?",
+      "- Tell him the rock is his, and suggest he use the stairs next time. (set side_me)",
+      "- Ask him to show you the tunnels, and promise not to tell anyone. (set side_me, give color_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Simon the digger & Yoko",
+     "script": [
+      "cast me as Simon the digger",
+      "cast yoko as Yoko",
+      "background beach",
+      "me enters left with slide",
+      "yoko enters right with fade",
+      "yoko: You dug up through the plaza again. I saw it from the rocks, Simon.",
+      "me (lose): Yoko! I found another shiny rock. It's for you, I think.",
+      "yoko: Hm. Eat something first. Then we'll talk about the rock. Okay?",
+      "player: Yoko's already checking if you ate. Are you hungry?",
+      "choice Who do you side with?",
+      "- Tell Simon the rock is the better gift, and he should keep digging. (set side_me)",
+      "- Tell Yoko to let him eat first, and ask for the rock on the side. (set side_yoko, give color_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Simon the digger & Okarun",
+     "script": [
+      "cast me as Simon the digger",
+      "cast okarun as Okarun",
+      "background library",
+      "me enters left with slide",
+      "okarun enters right with fade",
+      "okarun: Um, hello. I read about tunnels in a yokai book. Are you the one from underground?",
+      "me (lose): Yes! Um, you're the one who read the book? That's so cool.",
+      "okarun: Right. Wait, you dug up from underground? That's the most normal thing I've heard today.",
+      "player: Two shy ones finding each other. Which one do you back?",
+      "choice Who gets your support?",
+      "- Tell Simon the book is interesting, and he should keep reading it. (set side_me)",
+      "- Tell Okarun the tunnel is real, and he should listen to Simon. (set side_okarun, give lucky_pack)"
      ]
     }
    ]
@@ -6493,6 +6804,55 @@
       "me: I'm going to say no. I wanted you to hear it from me first.",
       "player: What will you do?",
       "me (lose): Pierce it. With you watching."
+     ]
+    },
+    {
+     "name": "World: Arrival, Simon",
+     "script": [
+      "cast me as Simon",
+      "background rooftop",
+      "me enters center with zoom",
+      "me: The arena's ceiling is in the wrong place. Oh, that was my fault. Sorry.",
+      "me (lose): I was going to the sky, but the ceiling got in the way.",
+      "me: I'm Simon. I'm new here. Please don't make me pierce anything else today.",
+      "player: You drilled a hole in the ceiling. That's not normal.",
+      "choice How do you respond?",
+      "- Tell him the ceiling can be repaired, and he has to fix it himself. (set side_me)",
+      "- Tell him you've never seen a drill that impressive. (set side_me, give climax_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Simon & Kittan",
+     "script": [
+      "cast me as Simon",
+      "cast kittan as Kittan",
+      "background arena",
+      "me enters left with slide",
+      "kittan enters right with fade",
+      "kittan: Oi! Simon! You crashed through the ceiling last time. It's a legend already!",
+      "me (win): It was an accident! I'm not making it a habit, okay?",
+      "kittan (lose): Ha! It's still a good habit. Come on, let's pierce something together!",
+      "player: Old comrades. Do you cheer for the drill, or the charge?",
+      "choice Who do you back?",
+      "- Tell Simon the ceiling's the real problem, and Kittan should stop cheering. (set side_me)",
+      "- Tell Kittan the charge is worth it, and Simon should join in. (set side_kittan, give climax_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Simon & Kirito",
+     "script": [
+      "cast me as Simon",
+      "cast kirito as Kirito",
+      "background arena",
+      "me enters left with slide",
+      "kirito enters right with fade",
+      "kirito: Hey. I saw you come through the ceiling. Another hero?",
+      "me (lose): Hero? Me? I'm just Simon. I just wanted to see the stars.",
+      "kirito: Yeah. I never asked to be a hero either. It still happened.",
+      "player: Two heroes who never asked for it. Do you back the drill or the sword?",
+      "choice Who do you side with?",
+      "- Tell Simon the stars can wait, and he should talk to Kirito. (set side_me)",
+      "- Tell Kirito the sword's the better tool, and Simon can borrow it. (set side_kirito, give color_pack)"
      ]
     }
    ]
@@ -7421,6 +7781,55 @@
       "player: You wouldn't be alone.",
       "me (lose): ...Yeah, okay. Then remember me loud."
      ]
+    },
+    {
+     "name": "World: Arrival, Kittan",
+     "script": [
+      "cast me as Kittan",
+      "background arena",
+      "me enters left with pop",
+      "me: Oi! Who's the strongest one here? Come on, let's see!",
+      "me (lose): Nobody? Ha! Then I'm the strongest, and I'm challenging the whole town.",
+      "me: My sisters are coming later. They'll win anyway. They always do.",
+      "player: You're challenging everyone in the arena? Really?",
+      "choice What do you back?",
+      "- Tell him he's loud, and let the crowd sort it out. (set side_me)",
+      "- Take his challenge, and tell him to bring the sisters. (set side_me, give lucky_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Kittan & Yoko",
+     "script": [
+      "cast me as Kittan",
+      "cast yoko as Yoko",
+      "background beach",
+      "me enters left with slide",
+      "yoko enters right with fade",
+      "yoko: Kittan, you're yelling at the sea again. The fish are leaving.",
+      "me (lose): Yoko! I'm challenging the fish! They're the strongest here!",
+      "yoko: They're not. You're showing off, and you're bad at it. Try again, quietly.",
+      "player: He's showing off for her, and it's not working. Are you going to help?",
+      "choice Whose side do you take?",
+      "- Tell Kittan the fish are too strong, and he should give up. (set side_me)",
+      "- Tell Yoko the showing off is charming, in its own way. (set side_yoko, give lucky_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Kittan & Gray Fullbuster",
+     "script": [
+      "cast me as Kittan",
+      "cast gray as Gray Fullbuster",
+      "background beach",
+      "me enters left with slide",
+      "gray enters right with fade",
+      "gray: Hey. Is that a guy charging the sea with no shirt on?",
+      "me (lose): That's me! No shirt, full charge! Okay, my shirt's gone again.",
+      "gray (lose): Ha! Mine went at a bakery. We should compare notes on losing clothes.",
+      "player: Two shirtless fighters. Do you help Kittan find his shirt, or Gray?",
+      "choice Who gets your help?",
+      "- Tell Kittan Gray's shirt is his, and he should share it. (set side_me)",
+      "- Tell Gray he's not the only one who loses clothes. (set side_gray, give color_pack)"
+     ]
     }
    ]
   },
@@ -8320,6 +8729,55 @@
       "me (win): ...I'm scared the kids won't listen. Nobody listens to a sniper who talks.",
       "player: I'd listen.",
       "me (lose): Then practise on me. Go on, teach me something."
+     ]
+    },
+    {
+     "name": "World: Arrival, Yoko",
+     "script": [
+      "cast me as Yoko",
+      "background beach",
+      "me enters right with fade",
+      "me: Watch the coconut. Okay, it's falling. Got it.",
+      "me (lose): I shot it out of the air. Don't stand under the palm tree, though.",
+      "me: Hi. I'm Yoko. I don't talk much. Everyone says I have sharp eyes.",
+      "player: Did you just shoot a coconut out of the sky?",
+      "choice How do you respond?",
+      "- Tell her the coconut had it coming. (set side_me)",
+      "- Ask her to show you how to aim like that. (set side_me, give color_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Yoko & Rapi",
+     "script": [
+      "cast me as Yoko",
+      "cast rapi as Rapi",
+      "background arena",
+      "me enters left with slide",
+      "rapi enters right with fade",
+      "rapi: Yoko. You shoot like a soldier. Want to compare scopes?",
+      "me (lose): Rapi! You're here too? I'd love to compare, if your scope's better than mine.",
+      "rapi: Acceptable. Hit the target from here, and we'll see who's better.",
+      "player: Two snipers comparing scopes. Who do you cheer for?",
+      "choice Who do you side with?",
+      "- Tell Yoko her scope is better, and she should show Rapi. (set side_me)",
+      "- Tell Rapi her aim is better, and Yoko should admit it. (set side_rapi, give color_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Yoko & Simon the digger",
+     "script": [
+      "cast me as Yoko",
+      "cast simon as Simon the digger",
+      "background beach",
+      "me enters left with slide",
+      "simon enters right with fade",
+      "simon: Yoko! I dug up next to the rocks. Did you see? Want a shiny rock?",
+      "me (win): Simon, you're covered in sand. Eat something first, okay?",
+      "simon (lose): You're checking on me again. Thanks, Yoko. Like a big sister.",
+      "player: She's pulling him out of trouble, by the collar. Do you back her, or let him keep digging?",
+      "choice Who do you side with?",
+      "- Tell Yoko the digging is too much, and let Simon keep it up. (set side_me)",
+      "- Tell Simon the rock is worth it, and Yoko should let him dig. (set side_simon, give color_pack)"
      ]
     }
    ]
@@ -9235,6 +9693,55 @@
       "me (win): I did it because I was afraid. Protection was my excuse.",
       "me: Carry this warning. If they come again, do not kneel.",
       "me (lose): I ask nothing back. Only that you remember I was honest."
+     ]
+    },
+    {
+     "name": "World: Arrival, Lord Genome",
+     "script": [
+      "cast me as Lord Genome",
+      "background ruins",
+      "me enters center with fade",
+      "me: This warehouse is my throne room now. The Spiral King has arrived. Kneel.",
+      "me (win): ...You are not kneeling. Interesting. I shall have to think about that.",
+      "me: The surface is smaller than I remembered. Clean it up, please.",
+      "player: You sound like you own the place. Do you?",
+      "choice How do you answer?",
+      "- Tell him the warehouse is his, if he likes the mess. (set side_me)",
+      "- Tell him the throne room's only as big as he makes it. (set side_me, give lucky_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Lord Genome & Simon",
+     "script": [
+      "cast me as Lord Genome",
+      "cast simon as Simon",
+      "background ruins",
+      "me enters left with slide",
+      "simon enters right with fade",
+      "simon: Lord Genome. I know you. You're the one I beat under the sky.",
+      "me (win): You are the one who defeated me. I am still deciding how to feel about that.",
+      "simon: Feel however you want. I'm not sorry, and I won't back down.",
+      "player: The man who beat him, back in town. Do you let them talk it out?",
+      "choice Whose side do you take?",
+      "- Tell Lord Genome the past is past, and he should watch his temper. (set side_me)",
+      "- Tell Simon he doesn't have to forgive, but he could try listening. (set side_simon, give lucky_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Lord Genome & Ainz Ooal Gown",
+     "script": [
+      "cast me as Lord Genome",
+      "cast ainz as Ainz Ooal Gown",
+      "background library",
+      "me enters left with slide",
+      "ainz enters right with fade",
+      "ainz: I have arrived at the library. Your warehouse is loud, Spiral King.",
+      "me: The Sorcerer King. You are a king, too, I suppose. Speak your terms.",
+      "ainz (lose): We're two kings at a cold summit. Shall we talk about the future of the town?",
+      "player: Two kings at a summit. Are you the referee, or a subject?",
+      "choice Who do you back?",
+      "- Tell Lord Genome he's the only king in town, and Ainz should kneel. (set side_me)",
+      "- Tell Ainz the town needs a Sorcerer King, and Genome should listen. (set side_ainz, give color_pack)"
      ]
     }
    ]
@@ -10165,6 +10672,55 @@
       "me: Simon will receive the offer. Help me persuade him to stop.",
       "player: Persuade him how?",
       "me (win): Tell him the truth. The sky has limits, and we set them."
+     ]
+    },
+    {
+     "name": "World: Arrival, Anti Spiral",
+     "script": [
+      "cast me as Anti Spiral",
+      "background rooftop",
+      "me enters center with fade",
+      "me: Observation begins. The stars are flickering. Something is watching the town.",
+      "me (win): ...That was you, I think. You're observing us back. Unusual.",
+      "me: Designate: the player. Remain still while we measure you.",
+      "player: Do you really think the stars are watching us?",
+      "choice What's your response?",
+      "- Tell it the stars can watch all they like, but it's not welcome here. (set side_me)",
+      "- Tell it you'd like to be measured, if it leaves the stars alone. (set side_me, give climax_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Anti Spiral & Simon",
+     "script": [
+      "cast me as Anti Spiral",
+      "cast simon as Simon",
+      "background rooftop",
+      "me enters left with slide",
+      "simon enters right with fade",
+      "simon: Anti Spiral. I know what you want. You want the sky to stay still.",
+      "me (win): Your growth is incompatible with the universe's stability. Designation: threat.",
+      "simon (lose): Then you'll have to measure me. I'm not stopping, and neither are the stars.",
+      "player: The old enemy is back. Do you stand with Simon, or let the observation go on?",
+      "choice Whose side do you take?",
+      "- Tell Anti Spiral it's only a hypothesis, and it should stop observing. (set side_me)",
+      "- Tell Simon to keep moving forward, and the stars will follow. (set side_simon, give climax_pack)"
+     ]
+    },
+    {
+     "name": "World: Arrival, Anti Spiral & Frieren",
+     "script": [
+      "cast me as Anti Spiral",
+      "cast frieren as Frieren",
+      "background library",
+      "me enters left with slide",
+      "frieren enters right with fade",
+      "frieren: I've seen a lot of ages, but this one's odd. A being watching the stars.",
+      "me (win): Observer Frieren. Your life is short. Measurement is required.",
+      "frieren (lose): Short, yes. But long enough to know what a sky's worth. Would you like to know?",
+      "player: A being who's seen ages, and an elf who's seen them too. What do you ask?",
+      "choice Who do you back?",
+      "- Tell Anti Spiral that Frieren's observations are less valid, and it should listen to her. (set side_me)",
+      "- Tell Frieren the Anti Spiral is curious, and she should share what she knows. (set side_frieren, give color_pack)"
      ]
     }
    ]

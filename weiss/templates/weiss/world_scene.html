@@ -23,6 +23,18 @@
         </p>
       </section>
     {% endif %}
+    {% if done_url %}
+      {# A newcomer's arrival (weiss.world_roster): its choice is sent when the scene ends, and what it gave is shown. #}
+      <section class="scene-rewards" data-arrival-rewards data-done-url="{{ done_url }}" hidden aria-labelledby="arrival-rewards-title" tabindex="-1">
+        {% csrf_token %}
+        <h2 id="arrival-rewards-title" class="scene-rewards-title">You got</h2>
+        <ul class="scene-rewards-list" data-arrival-list></ul>
+        <p class="scene-rewards-actions">
+          <a class="button-small secondary" href="#" data-arrival-cards hidden>See the cards</a>
+          <a class="button-small" href="{% url 'weiss:world_town' save.slot %}">Back to the town</a>
+        </p>
+      </section>
+    {% endif %}
     <p class="challenge-event-foot"><a class="link-button" href="{% url 'weiss:world_town' save.slot %}" data-town-url>Back to the town</a></p>
   </div>
   {{ payload|json_script:"scene-payload" }}
@@ -33,7 +45,9 @@
       const player = new ScenePlayer(document.querySelector("[data-scene-root]"), scene, {
         playerName: "{{ player_name|escapejs }}",
         // A scene with rewards ends on them (the player goes on when ready); one without goes back to the town.
-        onEnd: () => {
+        onEnd: (state) => {
+          const arrival = document.querySelector("[data-arrival-rewards]");
+          if (arrival) return finishArrival(arrival, state);
           const rewards = document.querySelector("[data-scene-rewards]");
           if (!rewards) return setTimeout(() => location.assign(town), 600);
           rewards.hidden = false;
@@ -43,5 +57,31 @@
       });
       player.start();
     });
+
+    // An arrival's choice: sent to the server, which pays it once; then what it gave is shown.
+    async function finishArrival(panel, state) {
+      const list = panel.querySelector("[data-arrival-list]");
+      const show = (lines) => {
+        list.replaceChildren(...lines.map((line) => Object.assign(document.createElement("li"), { textContent: `★ ${line}` })));
+        panel.hidden = false;
+        panel.focus({ preventScroll: true });
+        panel.scrollIntoView({ block: "nearest" });
+      };
+      try {
+        const body = new URLSearchParams({ state: JSON.stringify({ flags: state.flags || [], buffs: state.buffs || [] }) });
+        const token = panel.querySelector("[name=csrfmiddlewaretoken]").value;
+        const response = await fetch(panel.dataset.doneUrl, { method: "POST", headers: { "X-CSRFToken": token }, body });
+        const data = await response.json();
+        if (!response.ok) return show([data.error || "That didn't go through. Go back to the town and it'll be waiting."]);
+        if (data.link) {
+          const cards = panel.querySelector("[data-arrival-cards]");
+          cards.href = data.link;
+          cards.hidden = false;
+        }
+        show(data.rewards.length ? data.rewards : ["A new face in town."]);
+      } catch {
+        show(["That didn't go through. Check your connection: back in the town, the scene will be waiting."]);
+      }
+    }
   </script>
 {% endblock %}

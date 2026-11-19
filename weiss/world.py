@@ -18,9 +18,10 @@ from django.urls import reverse
 from . import buffs, challenge, chatter, packs, quests
 from . import world_calendar as calendar
 from . import world_events as events
+from . import world_roster as roster
 from .lists import CLIMAX_COUNT, COPY_LIMIT, DECK_SIZE, climax_problem, is_climax, unlimited, unplayable
-from .models import (Card, CardList, CardListEntry, CpuProfile, CpuSchedule, GameRoom, GiftItem, WorldPlace, WorldSave, WorldSettings,
-                     default_ranks)
+from .models import (Card, CardList, CardListEntry, CpuProfile, CpuSchedule, GameRoom, GiftItem, Scene, WorldPlace, WorldSave,
+                     WorldSettings, default_ranks)
 
 MIN_SET_CARDS = 100  # cards a set needs in its packs to start a save with
 MAX_DECKS = 10  # a save's decks: all built from the same cards it's opened, one of them equipped for duels
@@ -68,8 +69,12 @@ def save_in(user, slot):
 def changed(save, *fields):
     """Save these fields, and the version that says something changed. Whatever changed, the quests under way are
     checked again (a card opened, a rank reached, a flag set can each finish an objective)."""
-    if quests.advance(save):
-        fields = (*fields, "quests")
+    began = quests.begin_story(save)  # a story chapter whose time has come (it can bring someone into town, and a scene)
+    moved = quests.advance(save)
+    if moved:  # a chapter that just finished lets the next begin, now
+        began = quests.begin_story(save) or began
+    if moved or began:
+        fields = (*fields, "quests", "flags", "roster", "money", "pool", "gifts", "last_opening")
     save.version += 1
     save.save(update_fields=list(dict.fromkeys([*fields, "version", "played"])))
 
@@ -92,6 +97,9 @@ def start(user, slot, expansion_id, rng=random):
         )
         save.deck = CardList.objects.create(user=user, name="Deck 1", world_save=save)
         save.save(update_fields=["deck"])
+        roster.ensure(save)  # who's in town: a small cast to start, more each week
+        if quests.begin_story(save):  # the story's first chapter, and its opening scene for the first visit to the town
+            save.save(update_fields=["quests", "flags", "roster"])
     return save
 
 
@@ -347,6 +355,8 @@ def time_passed(save):
         save.today = {}
     save.flags["choose"] = save.turn
     quests.expire(save)  # timed quests whose window has closed
+    if save.turn % (len(WorldSave.TIMES) * 7) == 0:
+        roster.week_started(save)  # a new week's newcomers, and their arrival scenes
 
 
 def anyone_out(save):
@@ -435,6 +445,9 @@ def day_cast(save, day, by_cpu=None):
     used once at most. Rank-gated haunts are drawn like the rest (whereabouts leaves those out), so getting to know one
     CPU never moves another."""
     by_cpu = haunts() if by_cpu is None else by_cpu
+    in_town = roster.released(save, day)  # the save's cast so far (weiss.world_roster); None: everyone
+    if in_town is not None:
+        by_cpu = {cpu_id: rules for cpu_id, rules in by_cpu.items() if cpu_id in in_town}
     rng = random.Random(f"{save.seed}:{day}:cast")
     weekday = day % 7
     seen, used_once, plan = Counter(), set(), []
@@ -1059,7 +1072,12 @@ def buy_packs(save, expansion_id, count, rng=random):
 
 # ---------------------------------------------------------------- Friendship (save.relations)
 
-TALK_POINTS = 3  # the first talk of the day with someone
+TALK_POINTS = 6  # the first talk of the day with someone, until staff set it (WorldSettings.talk_points)
+
+
+def talk_points():
+    found = settings()
+    return found.talk_points if found else TALK_POINTS
 WIN_POINTS = 6
 LOSS_POINTS = 2
 GIFT_POINTS = {"loved": 12, "liked": 6, "neutral": 2, "disliked": -4}
@@ -1435,7 +1453,7 @@ def talk(save, cpu_id):
         return converse(save, cpu, talk_line(save, cpu.pk, cold, first=False))
     rel["talked"] = save.day
     world = Talk(save, cpu, "talk")
-    gained = world.points(gain(cpu, TALK_POINTS))
+    gained = world.points(gain(cpu, talk_points()))
     found = converse(save, cpu, talk_line(save, cpu.pk, cold, first=True), gained)
     if world.ranked_up is not None:
         save.today["talk"]["rank_up"] = world.ranked_up
@@ -1676,6 +1694,7 @@ def town_news(save):
 
 def town(save):
     """The town as the page shows it: when and where it is, the save's coins, who's here, the shop and the map."""
+    roster.ensure(save)
     known = places(save)
     here = place_of(save, known)
     time = save.turn % len(WorldSave.TIMES)
@@ -1724,3 +1743,30 @@ def scene_waiting(save):
     who = CpuProfile.objects.filter(pk=pending.get("cpu")).values_list("name", flat=True).first() if pending.get("cpu") else None
     # "auto": a quest's visit scene, which the town goes to straight away rather than waiting to be clicked.
     return {"url": reverse("weiss:world_scene", args=[save.slot]), "who": who or "", "auto": bool(pending.get("auto"))}
+
+
+
+# ---------------------------------------------------------------- Scenes waiting to be watched
+
+def queue_scene(save, scene, cpu=None, rewards=None):
+    """A full scene for the town to play (straight away, as the town comes to it): `scene` is a Scene or its name. If
+    one's waiting already, it goes in a queue and plays next. `rewards`: [[words, link]] for the scene to end on."""
+    if isinstance(scene, str):
+        scene = Scene.objects.filter(name__iexact=scene).first()
+    if not scene:
+        return
+    item = {"scene": scene.pk, "auto": True, **({"cpu": cpu} if cpu else {}), **({"rewards": rewards} if rewards else {})}
+    if save.flags.get("scene"):
+        save.flags.setdefault("scene_queue", []).append(item)
+    else:
+        save.flags["scene"] = item
+
+
+def next_scene(save):
+    """A scene's been watched: the next waiting one comes up (then a newcomer's arrival, if any are still to come)."""
+    queue = save.flags.get("scene_queue") or []
+    if not save.flags.get("scene") and queue:
+        save.flags["scene"] = queue.pop(0)
+    if not queue:
+        save.flags.pop("scene_queue", None)
+    roster.next_arrival(save)

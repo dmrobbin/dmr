@@ -1066,6 +1066,43 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .level-stack .pcard + .pcard { margin-top: calc(var(--card-h) * -.78); }
 .level-stack .pcard:hover { z-index: 2; }
 
+/* Widescreen: both sides of the table at once, side by side and symmetrical. You are on the left and your opponent
+   on the right, each the focused board, theirs mirrored across the centre so the two stages face each other.
+   Each hand sits centred under its own side, with its portrait at the outer edge of the screen. The turn and
+   phase text runs along the top. Card sizes come from the window's height (--stage-w), so the whole table fits
+   without scrolling. The 28rem is the room kept for the page header, the turn line, the hands and the page's
+   bottom padding: raise it if the bottom of the screen is cut off. The 62rem and 17 keep the two mats
+   inside their sides on a narrow window. */
+.container.dashboard:has(.play.layout-wide) { max-width: none; }
+.play.layout-wide { --stage-w: min(clamp(4.4rem, 6.6vw, 8.4rem), calc((100vh - 28rem) / 4.9), calc((100vw - 62rem) / 17)); }
+/* Each side's mat is about 6.6 stage cards wide. The width limit above keeps it inside its side, so the
+   boards never run into the centre gap. */
+.layout-wide .play-board { grid-template-columns: var(--portrait-col) minmax(0, 1fr) 4rem minmax(0, 1fr) var(--portrait-col); grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "top top top top top" ". me . opp ." ". hand-me . hand-opp ."; --portrait-col: 7.5rem; }
+.layout-wide .side-me { grid-area: me; min-width: 0; }
+.layout-wide .side-opponent { grid-area: opp; min-width: 0; }
+/* The turn and phase line across the top, centred over both sides. */
+.layout-wide .table-divider { grid-area: top; display: flex; align-items: center; justify-content: center; gap: .6rem; padding: .3rem 0; border: none; }
+/* Each hand is the width of its side, centred under it. Its portrait sits outside the hand, in the outer column. */
+.layout-wide .hand-me { grid-area: hand-me; --card-w: clamp(3.4rem, 4vw, 4.4rem); --card-h: calc(var(--card-w) * 1.4); }
+.layout-wide .hand-opponent { grid-area: hand-opp; align-self: start; max-width: none; }
+.layout-wide .hand-opponent .hand-cards { flex-flow: row wrap; align-content: center; justify-content: center; }
+.layout-wide .hand-me .hand-portrait { right: auto; left: calc(-1 * (var(--portrait) + .8rem)); }
+.layout-wide .hand-opponent .hand-portrait { right: calc(-1 * (var(--portrait) + .8rem)); }
+/* Piles and clock: a little under the stage's size, as on the focused board, and never bigger than the stage. */
+.layout-wide :is(.zone-stock, .zone-memory, .zone-deck, .zone-resolution, .zone-waiting, .zone-clock) { --card-w: min(clamp(3.4rem, 5vw, 6.2rem), calc(var(--stage-w) * .75)); --card-h: calc(var(--card-w) * 1.4); }
+/* Their side: the same mat mirrored across the divider. Their piles that sit beside the stage are on the
+   divider side, the level is on the outside, and each pile group keeps its order from our side. */
+.layout-wide .mat-opponent { grid-template-areas: "right stage left" "right clock level"; }
+.layout-wide .mat-opponent .mat-left-piles { grid-row: 1; align-self: start; }
+.layout-wide .mat-opponent .mat-stage, .layout-wide .mat-opponent .mat-right { flex-direction: column; }
+.layout-wide .mat .zone.pile { min-width: calc(var(--card-w) + .6rem); }
+/* Pile labels wrap onto two lines rather than widening the pile (and its side) past its card. */
+.layout-wide .zone.pile .zone-label { white-space: normal; text-align: center; }
+/* The climax zone is sized from the stage too, so it shrinks with the cards on a narrow window. */
+.layout-wide .zone.pile.zone-climax { --cx-w: calc(var(--stage-w) * 2.05); --cx-h: calc(var(--stage-w) * 1.45); }
+/* Zones are as wide as their card, not as tall as it: the default minimum uses the card's height. */
+.layout-wide .zone.slot, .layout-wide .zone.pile, .layout-wide .zone.spread { min-width: calc(var(--card-w) + .6rem); }
+
 /* Board view switch in the controls panel. */
 .layout-switch { display: inline-flex; margin-top: .6rem; border: 1px solid var(--border); border-radius: .45rem; overflow: hidden; font-size: .78rem; }
 .layout-switch button { font: inherit; color: var(--muted); background: none; border: none; padding: .3rem .65rem; cursor: pointer; }
@@ -1092,10 +1129,6 @@ button.button-small.secondary { border: 1px solid var(--border); }
 
 /* Active colors: a strip of the colors in your clock and level zone, right-aligned between the board
    and your hand so it sits under the waiting room. Colors come from .color-<name> (--chip). */
-.active-colors { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .35rem; padding: 0 .3rem; }
-.active-colors .zone-label { margin-right: .15rem; }
-.active-color { display: inline-flex; align-items: center; gap: .3rem; padding: .12rem .5rem; border-radius: 999px; font-size: .72rem; font-weight: 600; border: 1px solid var(--chip, var(--border)); background: color-mix(in srgb, var(--chip, var(--muted)) 22%, var(--surface)); }
-.active-color::before { content: ""; width: .6rem; height: .6rem; border-radius: 50%; background: var(--chip, var(--muted)); }
 
 .hand { position: relative; display: flex; flex-direction: column; align-items: center; gap: .3rem; padding: .4rem; border-radius: .5rem; }
 /* As tall as a hand with one row of cards, and the cards keep clear of it on both sides so they stay centered.
@@ -2292,13 +2325,19 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 @keyframes table-heartbeat { 0%, 100% { opacity: .5; } 12% { opacity: 1; } 24% { opacity: .62; } 36% { opacity: .92; } 60% { opacity: .5; } }
 .play-board[data-brink~="me"] .mat-me .zone-clock, .play-board[data-brink~="opponent"] .mat-opponent .zone-clock {
   border-radius: .5rem; box-shadow: 0 0 0 1px rgb(235 70 70 / .75), 0 0 18px rgb(235 70 70 / .35); }
-.play-board .mat { border-radius: .8rem; transition: box-shadow .5s, opacity .5s; }
+.play-board .mat { position: relative; border-radius: .8rem; transition: box-shadow .5s, opacity .5s; }
+/* The board's outline: a thicker ring in the colors this side has active (set by play.js as --glow-colors),
+   drawn over the mat's edge. With no active colors there's no ring. */
+.play-board .mat::after { content: ""; position: absolute; inset: -.3rem; border-radius: 1.1rem; padding: .3rem; pointer-events: none;
+  background: conic-gradient(var(--glow-colors, transparent));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); transition: opacity .45s ease; }
 /* Match point, said in words too (play.js spreadHtml): beside the clock's label. */
 .match-point-tag { margin-left: .35rem; padding: .05rem .4rem; border-radius: 999px; font-size: .62rem; font-weight: 700; letter-spacing: .08em; color: #fff; background: rgb(200 45 50 / .85); box-shadow: 0 0 10px rgb(235 70 70 / .45); }
 /* A damage that could end the game (play_fx.js damageFlips): everything but that side's clock dims while its cards
    turn over in slow motion, and the clock is lifted out of the dark. */
-.play-board :is(.hand, .zone, .table-divider, .active-colors) { transition: filter .45s ease, opacity .45s ease; }
-.play-board[data-lethal] :is(.hand, .zone, .table-divider, .active-colors) { filter: brightness(.4) saturate(.6); }
+.play-board :is(.hand, .zone, .table-divider) { transition: filter .45s ease, opacity .45s ease; }
+.play-board[data-lethal] :is(.hand, .zone, .table-divider) { filter: brightness(.4) saturate(.6); }
 .play-board[data-lethal="me"] .mat-me .zone-clock, .play-board[data-lethal="opponent"] .mat-opponent .zone-clock {
   filter: none; position: relative; z-index: 3; border-radius: .5rem; box-shadow: 0 0 0 2px rgb(235 70 70 / .9), 0 0 32px rgb(235 70 70 / .55); animation: lethal-throb .9s ease-in-out infinite; }
 @keyframes lethal-throb { 50% { box-shadow: 0 0 0 2px rgb(255 120 110 / 1), 0 0 48px rgb(235 70 70 / .75); } }
@@ -2874,6 +2913,63 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .town-coins { color: var(--accent); font-weight: 600; }
 .town-actions { display: flex; gap: .4rem; }
 .town-actions button:focus-visible, .town-reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* The game's HUD over the stage (world_town.html): the menu at the left, the date and time in the middle, passing time
+   and full screen at the right. It lets the stage's clicks through except on its own buttons. */
+.town-hud { position: absolute; top: 0; left: 0; right: 0; z-index: 7; display: flex; align-items: flex-start; justify-content: space-between; gap: .6rem; padding: .7rem .8rem; pointer-events: none; }
+.town-hud > * { pointer-events: auto; }
+.town-hud-side { flex: 1 1 0; display: flex; align-items: center; gap: .4rem; min-width: 0; }
+.town-hud-end { justify-content: flex-end; }
+.town-hud-center { flex: 0 1 auto; min-width: 0; text-align: center; color: #f3efe7; text-shadow: 0 1px 6px rgb(0 0 0 / .85); }
+.town-hud-center p { margin: 0; }
+.town-when { font-family: var(--serif); font-size: clamp(1.05rem, 2.6vw, 1.5rem); font-weight: 600; line-height: 1.2; }
+.town-hud-sub { margin-top: .1rem !important; color: #e4dccb; }
+.town-hud-button { position: relative; padding: .4rem .9rem; font: inherit; font-size: .9rem; color: #f3efe7; white-space: nowrap; background: rgb(14 13 20 / .85);
+  border: 1px solid rgb(212 175 55 / .55); border-radius: .5rem; cursor: pointer; }
+.town-hud-button:hover:not(:disabled), .town-hud-button:focus-visible { border-color: var(--accent); background: rgb(40 34 18 / .95); outline: none; }
+.town-hud-button:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+.town-hud-button:disabled { opacity: .45; cursor: not-allowed; }
+.town-hud-button[hidden] { display: none; }
+.town-hud-wait { border-color: var(--accent); }
+.town-hud-icon { display: grid; place-items: center; padding: .4rem .5rem; }
+.town-hud-icon svg { width: 1.15rem; height: 1.15rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.town-hud-icon[aria-pressed="true"] { color: var(--accent); }
+.town-hud-alert::after { content: ""; position: absolute; top: -.25rem; right: -.25rem; width: .6rem; height: .6rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px #0b0a10; }
+.town-hud-menu { position: absolute; top: 3.4rem; left: .8rem; z-index: 9; width: min(19rem, calc(100% - 1.6rem)); max-height: calc(100% - 4.4rem); overflow-y: auto; overscroll-behavior: contain;
+  padding: .4rem; background: rgb(14 13 20 / .97); border: 1px solid rgb(212 175 55 / .5); border-radius: .6rem; box-shadow: 0 .6rem 1.6rem rgb(0 0 0 / .55); }
+.town-hud-menu[hidden] { display: none; }
+.town-hud-menu-list { display: flex; flex-direction: column; gap: .15rem; }
+.town-hud-menu-item { display: flex; align-items: center; justify-content: space-between; gap: .6rem; width: 100%; padding: .55rem .7rem; font: inherit; font-size: .95rem; color: #f3efe7;
+  text-align: left; text-decoration: none; background: none; border: 0; border-radius: .4rem; cursor: pointer; }
+.town-hud-menu-item:hover:not(:disabled), .town-hud-menu-item:focus-visible { outline: none; background: rgb(40 34 18 / .95); box-shadow: inset 0 0 0 1px var(--accent); }
+.town-hud-menu-item:disabled { color: #8d877c; cursor: not-allowed; }
+.town-hud-menu-item[hidden], .town-hud-menu-jump[hidden], .town-hud-menu-hint[hidden] { display: none; }
+.town-hud-menu-hint { display: block; margin-top: .1rem; font-size: .78rem; color: #a59f94; }
+.town-hud-menu-count { margin-left: .4rem; color: var(--accent); }
+.town-hud-menu-group { margin: .5rem .7rem .15rem; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: #a59f94; }
+.town-hud-menu-item.town-staff { color: var(--muted); border: 1px dashed rgb(255 255 255 / .18); }
+.town-hud-menu-jump { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .4rem .7rem; font-size: .9rem; color: #cfc9be; }
+.town-hud-menu-jump select { font: inherit; font-size: .85rem; }
+/* Full screen: the stage is the whole browser window, its overlays and all. */
+.town-stage:fullscreen { width: 100vw; height: 100vh; max-height: none; aspect-ratio: auto; border: 0; border-radius: 0; }
+.town-stage:-webkit-full-screen { width: 100vw; height: 100vh; max-height: none; aspect-ratio: auto; border: 0; border-radius: 0; }
+/* The card shop's counter on the backdrop (weiss/static/weiss/backdrops.js draws it at x 31–69%, y 72–86%). */
+.town-shop-hotspot { position: absolute; left: 31%; width: 38%; top: 70%; height: 18%; z-index: 1; padding: 0; background: transparent; cursor: pointer;
+  border: 2px solid transparent; border-radius: .6rem; transition: border-color .2s ease, box-shadow .2s ease, background .2s ease; }
+.town-shop-hotspot[hidden] { display: none; }
+.town-shop-hotspot:hover, .town-shop-hotspot:focus-visible { outline: none; border-color: rgb(255 210 226 / .75); background: rgb(255 122 168 / .08); box-shadow: 0 0 1.2rem rgb(255 122 168 / .35); }
+.town-shop-hotspot:focus-visible { box-shadow: 0 0 0 2px #ffd2e2; }
+.town-shop-sign { position: absolute; left: 50%; top: -.95rem; translate: -50% 0; padding: .15rem .8rem; font-size: .85rem; font-weight: 700; white-space: nowrap; color: #2a0f1a;
+  background: linear-gradient(#ffd6e6, #ff9ec0); border-radius: .4rem; box-shadow: 0 .2rem .6rem rgb(0 0 0 / .45); }
+.town-shop-hotspot:hover .town-shop-sign, .town-shop-hotspot:focus-visible .town-shop-sign { filter: brightness(1.08); }
+/* The panels from the menu (world_town.js openSheet): the page itself, framed inside the town's window. */
+.town-sheet { position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; background: var(--bg); cursor: default; }
+.town-sheet[hidden] { display: none; }
+.town-sheet-head { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .55rem .8rem; border-bottom: 1px solid rgb(212 175 55 / .35); }
+.town-sheet-head h2 { margin: 0; font-size: 1.1rem; }
+.town-sheet-frame { flex: 1 1 auto; width: 100%; min-height: 0; border: 0; background: var(--bg); }
+/* A page shown inside one of those panels: the site's own header, footer and back links are the town's now. */
+.in-frame .site-header, .in-frame .site-footer, .in-frame .back { display: none; }
+.in-frame main.container { padding-top: 1rem; }
 .town-stage { cursor: default; max-height: min(72vh, 42rem); }
 .town-stage .vn-bg { transition: opacity .26s ease; }
 .town-stage.town-fading .vn-bg, .town-stage.town-fading .town-people { opacity: 0; }
@@ -2883,8 +2979,10 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .town-noon { background: none; }
 .town-evening { background: linear-gradient(rgb(255 130 70 / .28), rgb(120 40 80 / .22)); }
 .town-night { background: linear-gradient(rgb(8 14 48 / .62), rgb(4 6 24 / .5)); }
-.town-people { position: absolute; inset: 0; z-index: 2; transition: opacity .26s ease; }
-.town-person { position: absolute; bottom: 0; height: 80%; translate: -50% 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+/* The people's layer covers the whole stage, so it lets clicks through to what's behind (the shop counter); each person
+   is still clickable on their own. */
+.town-people { position: absolute; inset: 0; z-index: 2; pointer-events: none; transition: opacity .26s ease; }
+.town-person { position: absolute; bottom: 0; height: 80%; translate: -50% 0; pointer-events: auto; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
   padding: 0; border: 0; background: none; cursor: pointer; transition: filter .3s ease, transform .25s ease; }
 @media (prefers-reduced-motion: no-preference) { .town-person { animation: town-arrive .5s ease-out both; animation-delay: var(--delay, 0ms); } }
 @keyframes town-arrive { from { opacity: 0; transform: translateY(6%); } }
@@ -2899,7 +2997,7 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .town-person:focus-visible { outline: none; }
 .town-person.town-away { filter: brightness(.4) saturate(.6); }
 .town-person.town-chosen .town-tag, .town-person.town-away .town-tag { opacity: 0; }
-.town-empty { position: absolute; inset: 0; z-index: 2; display: grid; place-content: center; text-align: center; color: #f3efe7; text-shadow: 0 1px 6px rgb(0 0 0 / .8); }
+.town-empty { position: absolute; inset: 0; z-index: 2; pointer-events: none; display: grid; place-content: center; text-align: center; color: #f3efe7; text-shadow: 0 1px 6px rgb(0 0 0 / .8); }
 .town-empty p { margin: 0; }
 .town-empty[hidden] { display: none; }
 .town-box { cursor: default; outline: none; }
@@ -2939,7 +3037,7 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .town-float.town-float-down { color: #9fb4ff; }
 @media (prefers-reduced-motion: no-preference) { .town-float { animation: town-float 1.4s ease-out forwards; } }
 @keyframes town-float { from { opacity: 0; transform: translateY(1rem); } 15% { opacity: 1; } to { opacity: 0; transform: translateY(-2.5rem); } }
-.town-toast { position: absolute; top: .8rem; left: 50%; z-index: 9; pointer-events: none; translate: -50% 0; max-width: 90%; margin: 0; padding: .4rem 1rem; font-size: .9rem; color: #f3efe7; text-align: center;
+.town-toast { position: absolute; top: 4.1rem; left: 50%; z-index: 9; pointer-events: none; translate: -50% 0; max-width: 90%; margin: 0; padding: .4rem 1rem; font-size: .9rem; color: #f3efe7; text-align: center;
   background: rgb(8 8 12 / .88); border: 1px solid rgb(212 175 55 / .45); border-radius: 2rem; opacity: 0; pointer-events: none; transition: opacity .3s ease; }
 .town-toast.town-toast-on { opacity: 1; }
 .town-map { position: absolute; inset: 0; z-index: 8; overflow: auto; padding: 1rem 1.2rem; background: rgb(8 8 12 / .93); cursor: default; }
@@ -2971,6 +3069,10 @@ button.spire-node-face:disabled { cursor: not-allowed; }
   .town-option { flex: 1 1 40%; }
   .town-tag { opacity: 1; }
   .town-bond { position: static; translate: none; display: inline-block; margin: .3rem 0 0; }
+  .town-hud { padding: .5rem; gap: .3rem; }
+  .town-hud-sub { font-size: .75rem; }
+  .town-hud-button { padding: .35rem .6rem; font-size: .8rem; }
+  .town-hud-menu { left: .5rem; top: 3.1rem; }
 }
 
 /* World mode's saves (weiss/world_home.html, world_new.html, world_save.html). */
@@ -3348,3 +3450,6 @@ button.spire-node-face:disabled { cursor: not-allowed; }
   .town-basket-line { grid-template-columns: minmax(0, 1fr) auto auto; }
   .town-basket-stepper { grid-column: 1 / 2; grid-row: 2; }
 }
+/* World mode: the quest log's story */
+.quest-story .quest-chapter-done { padding: .5rem .7rem; }
+.quest-story .quest-chapter-done p { margin: 0; }

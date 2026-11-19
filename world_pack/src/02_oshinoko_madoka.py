@@ -2081,3 +2081,496 @@ CAST = [
               "choice", "- I see you, Sayaka.", "- Your wish wasn't a waste.",
               "me (pleased): Best friend. That's my new wish. Except it already came true. Ha!"]),
 ]
+
+ARRIVALS = [
+  {
+    "newcomer": "Akane Kurokawa",
+    "name": "World: Arrival, Akane Kurokawa",
+    "lines": [
+      "background library",
+      "me enters center with fade",
+      "me: Hold still. Your posture is so interesting. I'm copying it for a role.",
+      "me (pleased): Don't look so offended. Actors learn from everyone, even the rude ones.",
+      "me: I'll need your name, your habits, and what makes you cry. Start with the name.",
+      "player: Are you really studying me for a part?",
+      "choice What's your reaction?",
+      "- Tell her she can study you, but she'll have to pay for coffee. (set side_me)",
+      "- Tell her you'll give her the honest answer, and she should keep the notes. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Aqua Hoshino",
+    "name": "World: Arrival, Aqua Hoshino",
+    "lines": [
+      "background classroom",
+      "me enters left with slide",
+      "me: Hold the camera steady. No, not you, the town. I'm making a project.",
+      "me (dismayed): Okay, you're in the frame now. Don't look at the lens too long.",
+      "me: Be sincere. The camera picks up everything. Even your lies.",
+      "player: Why are you filming the whole town?",
+      "choice How do you respond?",
+      "- Tell him the town doesn't want to be filmed, and he should stop. (set side_me)",
+      "- Tell him you'll be sincere, and he should keep rolling. (set side_me, give climax_pack)"
+    ]
+  },
+  {
+    "newcomer": "Kana Arima",
+    "name": "World: Arrival, Kana Arima",
+    "lines": [
+      "background classroom",
+      "me enters right with pop",
+      "me: I used to be a child star. Don't ask which show. Don't. I mean it.",
+      "me (dismayed): ...I shouldn't have said that. Forget I said anything.",
+      "me: Now I'm a regular person. Mostly. Hi.",
+      "player: A former child star. Do you want to hear more?",
+      "choice What do you say?",
+      "- Tell her the past doesn't matter, and she should stop worrying. (set side_me)",
+      "- Tell her you'll keep the secret, and she can talk when she's ready. (set side_me, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Ruby Hoshino",
+    "name": "World: Arrival, Ruby Hoshino",
+    "lines": [
+      "background classroom",
+      "me enters center with rise",
+      "me: Want a B-Komachi flyer? It's our new show! Take two, one for a friend.",
+      "me (pleased): Ha! You took two! That's my first fan of the day. Hi!",
+      "me: We're the best group in town. Okay, the only group. But still the best.",
+      "player: Did you really come to the school just to hand out flyers?",
+      "choice What's your response?",
+      "- Tell Ruby the flyers are tacky, and she should try a poster. (set side_me)",
+      "- Tell Ruby you'll come to the show, and she should bring the second flyer. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Legendary Idol Ai",
+    "name": "World: Arrival, Legendary Idol Ai",
+    "lines": [
+      "background sakura",
+      "me enters center with zoom",
+      "me: Oh, the crowd's gathering. Don't worry, I'll smile for everyone.",
+      "me (pleased): You're not screaming. That's refreshing. Hi, I'm Ai.",
+      "me: Be honest, are you here for me, or for the idol?",
+      "player: The whole plaza is watching you. Is it too much?",
+      "choice Which side do you take?",
+      "- Tell Ai the crowd is a bit much, and she should go somewhere quiet. (set side_me)",
+      "- Tell Ai the plaza loves her, and she should stay and smile. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Madoka",
+    "name": "World: Arrival, Madoka",
+    "lines": [
+      "background classroom",
+      "me enters left with fade",
+      "me: Hi! I'm new here, and I don't know anyone. Is this seat taken?",
+      "me (dismayed): Sorry, I'm really nervous. I hope I didn't startle you.",
+      "me: You look like someone who's been here a while. Could you show me around?",
+      "player: She's latched onto you already. Do you help her find her way?",
+      "choice What do you say?",
+      "- Tell her the school is huge, and she should find a friend in her own class. (set side_me)",
+      "- Tell her you'll show her around, and she can sit with you. (set side_me, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Homura Akemi",
+    "name": "World: Arrival, Homura Akemi",
+    "lines": [
+      "background classroom",
+      "me enters right with drop",
+      "me: That white creature at the window. Don't go near it, not for a wish.",
+      "me (dismayed): You don't believe me. That's fine. You will. You always do.",
+      "me: Let's keep this short. I'd like to leave before the bell.",
+      "player: You warned me about a white creature, and you're leaving? What's going on?",
+      "choice Who do you trust?",
+      "- Tell Homura the warning is strange, and she should explain it. (set side_me)",
+      "- Tell Homura you'll be careful, and she can rest for a minute. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Kyoko Sakura",
+    "name": "World: Arrival, Kyoko Sakura",
+    "lines": [
+      "background city",
+      "me enters center with pop",
+      "me: *munch* This apple's good. Want half? I'm not going to ask twice.",
+      "me (pleased): You took it. Good. Nobody wastes food around me.",
+      "me: Don't look at my clothes. I have bigger problems than a hole in my jacket.",
+      "player: You're giving away food, but you're not sharing it. Do you want the rest of the apple?",
+      "choice What's your reaction?",
+      "- Tell Kyoko she should share the whole apple, and not just the half. (set side_me)",
+      "- Tell Kyoko you'll take the apple, and she can keep the rest. (set side_me, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Mami Tomoe",
+    "name": "World: Arrival, Mami Tomoe",
+    "lines": [
+      "background cafe",
+      "me enters right with slide",
+      "me: Oh, you're here! Please sit down. I've made far too much tea, and far too much cake.",
+      "me (pleased): Ahh, you're not shy. Wonderful. Here, try the strawberry one.",
+      "me: Will you come back tomorrow? Please say yes.",
+      "player: A tea party, without an invitation. Do you stay?",
+      "choice What's your response?",
+      "- Tell Mami the cake is too much, and she should save some for later. (set side_me)",
+      "- Tell Mami you'll stay for the whole tea, and she should have the last slice. (set side_me, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Sayaka Miki",
+    "name": "World: Arrival, Sayaka Miki",
+    "lines": [
+      "background classroom",
+      "me enters left with rise",
+      "me: Excuse me! Do you know the way to the hospital? I'm going to visit a friend.",
+      "me (dismayed): Oops, I'm rambling. Sorry. I'm nervous about the visit.",
+      "me: You look like you'd be a good hero. Would you help me?",
+      "player: Someone needs help getting to the hospital. Do you go with her?",
+      "choice What's your reaction?",
+      "- Tell Sayaka the hospital's down the road, and she can walk there herself. (set side_me)",
+      "- Tell Sayaka you'll go with her, and she should lead the way. (set side_me, give climax_pack)"
+    ]
+  },
+  {
+    "newcomer": "Akane Kurokawa",
+    "name": "World: Arrival, Akane Kurokawa & Aqua Hoshino",
+    "lines": [
+      "cast aqua as Aqua Hoshino",
+      "background library",
+      "me enters left with slide",
+      "aqua enters right with fade",
+      "aqua: Akane. I know you've been following me. Stop writing my name in your notebook.",
+      "me (pleased): I'm not following you. I'm studying you. There's a difference.",
+      "aqua (dismayed): Fine. But my lead is real. I'm not going to play your role.",
+      "player: She's worried about him, and he's shutting her out. Do you back her, or him?",
+      "choice Who do you side with?",
+      "- Tell Aqua she should let Akane help him, even if it's a role. (set side_me)",
+      "- Tell Akane she should give Aqua some room, and stop studying him. (set side_aqua, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Akane Kurokawa",
+    "name": "World: Arrival, Akane Kurokawa & Kana Arima",
+    "lines": [
+      "cast kana as Kana Arima",
+      "background cafe",
+      "me enters left with slide",
+      "kana enters right with fade",
+      "kana: Akane Kurokawa. You're the one who copies everyone's walk. It's creepy.",
+      "me (pleased): Kana Arima. You're the one who cries on cue. Let's compare notes.",
+      "kana (dismayed): I don't cry on cue! That was one time. It was real.",
+      "player: Actors' rivalry, right away. Who do you support?",
+      "choice Whose side do you take?",
+      "- Tell Akane she's copying Kana, and she should stop. (set side_me)",
+      "- Tell Kana she can cry on cue if she wants, and Akane should copy that. (set side_kana, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Aqua Hoshino",
+    "name": "World: Arrival, Aqua Hoshino & Ruby Hoshino",
+    "lines": [
+      "cast ruby as Ruby Hoshino",
+      "background classroom",
+      "me enters left with slide",
+      "ruby enters right with fade",
+      "ruby: Aqua! You're filming my rehearsal again. You can't put me in your project!",
+      "me (dismayed): It's a documentary, Ruby. The whole town should see your moves.",
+      "ruby (pleased): Ha! Okay, but only if you give me the good angle. The good one.",
+      "player: Twin bickering. Do you help Aqua keep filming, or Ruby keep her privacy?",
+      "choice Who do you side with?",
+      "- Tell Ruby the documentary is worth it, and she should give Aqua a chance. (set side_me)",
+      "- Tell Aqua the rehearsal is private, and he should stop filming. (set side_ruby, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Aqua Hoshino",
+    "name": "World: Arrival, Aqua Hoshino & Twilight",
+    "lines": [
+      "cast twilight as Twilight",
+      "background cafe",
+      "me enters left with slide",
+      "twilight enters right with fade",
+      "twilight: I saw your camera from across the street. Are you making a documentary?",
+      "me (dismayed): I'm not telling you anything. Who are you, really?",
+      "twilight (pleased): Just a psychiatrist. Your secret's safe with me, I think.",
+      "player: Two people with secrets recognise each other. Do you trust Twilight, or Aqua?",
+      "choice Who do you back?",
+      "- Tell Twilight he's clearly lying, and Aqua should be careful. (set side_me)",
+      "- Tell Aqua the psychiatrist seems honest, and he should share. (set side_twilight, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Kana Arima",
+    "name": "World: Arrival, Kana Arima & Ruby Hoshino",
+    "lines": [
+      "cast ruby as Ruby Hoshino",
+      "background classroom",
+      "me enters left with slide",
+      "ruby enters right with fade",
+      "ruby: Kana! We're doing the group dance today, and you're late!",
+      "me (dismayed): I'm not late, I'm practising my crying. It's hard.",
+      "ruby (pleased): You're not practising crying! You're practising my dance, which is worse.",
+      "player: Idol practice gone wrong. Do you pick a side?",
+      "choice Who do you side with?",
+      "- Tell Ruby the crying can wait, and the dance has to be perfect. (set side_me)",
+      "- Tell Kana the dance can wait, and the crying is more important. (set side_ruby, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Kana Arima",
+    "name": "World: Arrival, Kana Arima & Mai Sakurajima",
+    "lines": [
+      "cast mai as Mai Sakurajima",
+      "background library",
+      "me enters left with slide",
+      "mai enters right with fade",
+      "mai: Kana Arima. You're famous, and you look miserable. Same as me.",
+      "me (dismayed): Mai Sakurajima. Please don't tell anyone I was here. I need quiet.",
+      "mai (pleased): I'd never. I'm barely here myself. Let's just sit in silence.",
+      "player: Two famous faces who want to be left alone. Do you give them the quiet?",
+      "choice Who gets your support?",
+      "- Tell Mai she should stop vanishing, and let Kana have some attention. (set side_me)",
+      "- Tell Kana she should share the quiet, and not perform for everyone. (set side_mai, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Ruby Hoshino",
+    "name": "World: Arrival, Ruby Hoshino & Kana Arima",
+    "lines": [
+      "cast kana as Kana Arima",
+      "background classroom",
+      "me enters left with slide",
+      "kana enters right with fade",
+      "kana: Ruby. Stop waving your flyer in my face. I'm trying to study.",
+      "me (pleased): Kana! You're the best idol in the group! Come be my partner!",
+      "kana (dismayed): I'm not an idol. I'm a sad former child star. Stop it.",
+      "player: Idol group drama, at lunch. Whose side are you on?",
+      "choice Who do you back?",
+      "- Tell Kana she should join Ruby's group, for the team. (set side_me)",
+      "- Tell Ruby the group can wait, and Kana needs some time. (set side_kana, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Ruby Hoshino",
+    "name": "World: Arrival, Ruby Hoshino & Kureiji Ollie",
+    "lines": [
+      "cast kureiji as Kureiji Ollie",
+      "background sakura",
+      "me enters left with slide",
+      "kureiji enters right with fade",
+      "kureiji: Hiii! Ruby! Are you the idol? Can I touch your flyer? It's warm.",
+      "me (dismayed): Ollie! Don't touch it, it's not warm, it's just sweaty from my hand!",
+      "kureiji (pleased): Ha! Ollie likes sweaty flyers. Ollie's a zombie, you know.",
+      "player: Two idols, one of them a zombie. Do you help Ruby, or let Ollie have the flyer?",
+      "choice Who do you side with?",
+      "- Tell Ollie the flyer is Ruby's, and she should keep it. (set side_me)",
+      "- Tell Ruby the flyer's fine, and Ollie can have it. (set side_kureiji, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Legendary Idol Ai",
+    "name": "World: Arrival, Legendary Idol Ai & Ruby Hoshino",
+    "lines": [
+      "cast ruby as Ruby Hoshino",
+      "background sakura",
+      "me enters left with slide",
+      "ruby enters right with fade",
+      "ruby: Mum? Wait. Is that you? Oh no, I'm so embarrassed!",
+      "me (pleased): Ruby. My daughter. I thought you'd be taller. Hi, sweetheart.",
+      "ruby (dismayed): Don't call me sweetheart in front of everyone! Mum!",
+      "player: Mother and daughter, in the middle of the plaza. Do you stay out of it?",
+      "choice Who do you support?",
+      "- Tell Ai she should give Ruby some space, in front of the fans. (set side_me)",
+      "- Tell Ruby she should listen to her mum, just this once. (set side_ruby, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Legendary Idol Ai",
+    "name": "World: Arrival, Legendary Idol Ai & Ruby Rose",
+    "lines": [
+      "cast ruby as Ruby Rose",
+      "background sakura",
+      "me enters left with slide",
+      "ruby enters right with fade",
+      "ruby: Hi! Are you the idol? Someone told me you were Ruby. I'm Ruby Rose!",
+      "me (pleased): Oh! You're the other Ruby! Nice to meet you. Let's get cookies.",
+      "ruby (pleased): Yes! Cookies! Okay, wait, that's not for you. It's mine.",
+      "player: The wrong Ruby, a mix-up. Do you help Ai, or Ruby Rose?",
+      "choice Who gets your help?",
+      "- Tell Ai the cookies are hers, and she should share with Ruby Rose. (set side_me)",
+      "- Tell Ruby Rose the cookies are hers, and she should keep them. (set side_ruby, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Madoka",
+    "name": "World: Arrival, Madoka & Homura Akemi",
+    "lines": [
+      "cast homura as Homura Akemi",
+      "background classroom",
+      "me enters left with slide",
+      "homura enters right with fade",
+      "homura: Madoka. You're new here, and you're nervous. Don't worry about the wish.",
+      "me (dismayed): Homura? How do you know my name? I don't even know yours.",
+      "homura: I know many things I shouldn't. Stay close to me, and keep your distance from Kyubey.",
+      "player: The transfer student who knows her name. Do you trust Homura?",
+      "choice Who do you back?",
+      "- Tell Madoka that Homura's a stranger, and she should walk away. (set side_me)",
+      "- Tell Homura that Madoka needs a friend, and she should stay close. (set side_homura, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Madoka",
+    "name": "World: Arrival, Madoka & Kanna",
+    "lines": [
+      "cast kanna as Kanna",
+      "background beach",
+      "me enters left with slide",
+      "kanna enters right with fade",
+      "kanna: You're new. Kanna likes new people. Want to share my lunch?",
+      "me (pleased): Oh, Kanna! Thank you! Your lunch is so pretty, with the dragon on it.",
+      "kanna: Kanna's dragon is shy. Don't tell him you noticed.",
+      "player: Two gentle souls. Do you let them share lunch, or hurry Madoka along?",
+      "choice Whose side do you take?",
+      "- Tell Madoka the lunch can wait, and she should hurry to class. (set side_me)",
+      "- Tell Kanna the lunch is a good idea, and Madoka should share. (set side_kanna, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Homura Akemi",
+    "name": "World: Arrival, Homura Akemi & Madoka",
+    "lines": [
+      "cast madoka as Madoka",
+      "background classroom",
+      "me enters left with slide",
+      "madoka enters right with fade",
+      "madoka: Homura, why do you keep watching me? You're like a guard.",
+      "me (dismayed): Because I'm trying to keep you from a bad wish. It's not your fault.",
+      "madoka (pleased): A wish? You know about that too? Okay, let's talk after school.",
+      "player: Watching over her, from the other side of the room. Do you help Homura, or Madoka?",
+      "choice Who do you side with?",
+      "- Tell Madoka she should stop being watched, and make her own choices. (set side_me)",
+      "- Tell Homura she should trust Madoka, and talk to her properly. (set side_madoka, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Homura Akemi",
+    "name": "World: Arrival, Homura Akemi & Shadow",
+    "lines": [
+      "cast shadow as Shadow",
+      "background rooftop",
+      "me enters left with slide",
+      "shadow enters right with fade",
+      "shadow: You know her, the girl with the pink hair. She's the one you'd die for?",
+      "me (dismayed): I don't know what you mean. Stay out of this, please.",
+      "shadow (pleased): Then I'll stay quiet. But I know that look. I wear it too.",
+      "player: Two loners with one person they'd die for. Do you side with Homura, or Shadow?",
+      "choice Who do you back?",
+      "- Tell Shadow he shouldn't be watching Homura, and he should leave. (set side_me)",
+      "- Tell Homura that Shadow understands, and she can trust him. (set side_shadow, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Kyoko Sakura",
+    "name": "World: Arrival, Kyoko Sakura & Sayaka Miki",
+    "lines": [
+      "cast sayaka as Sayaka Miki",
+      "background city",
+      "me enters left with slide",
+      "sayaka enters right with fade",
+      "sayaka: Kyoko! You stole that apple from the stall, didn't you? Give it back!",
+      "me (pleased): Stole? I'm sharing it. There's a difference, hero girl.",
+      "sayaka (dismayed): That's not sharing, it's stealing with a smile! Justice demands it back!",
+      "player: Instant argument, from the first word. Whose side are you on?",
+      "choice Who do you back?",
+      "- Tell Sayaka the apple's already gone, and she should let it go. (set side_me)",
+      "- Tell Kyoko the apple's hers to share, and she should stop running. (set side_sayaka, give climax_pack)"
+    ]
+  },
+  {
+    "newcomer": "Kyoko Sakura",
+    "name": "World: Arrival, Kyoko Sakura & Megumin",
+    "lines": [
+      "cast megumin as Megumin",
+      "background city",
+      "me enters left with slide",
+      "megumin enters right with fade",
+      "megumin: Kyoko! Do you have any food? I'm starving after my explosion!",
+      "me (pleased): Food? Sure. Eat it, all of it. Nobody wastes food around me.",
+      "megumin (pleased): Thank you! I'll explode something for you, as a gift!",
+      "player: Two who only care about one thing. Do you help Kyoko feed Megumin, or stop her?",
+      "choice Who do you side with?",
+      "- Tell Megumin the food is Kyoko's, and she shouldn't take it all. (set side_me)",
+      "- Tell Kyoko Megumin deserves a meal, and she should share. (set side_megumin, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Mami Tomoe",
+    "name": "World: Arrival, Mami Tomoe & Madoka",
+    "lines": [
+      "cast madoka as Madoka",
+      "background cafe",
+      "me enters left with slide",
+      "madoka enters right with fade",
+      "madoka: Mami! You invited me to tea, but there's no cake for me.",
+      "me (pleased): Madoka, dear! Of course there's cake. I baked it just for you.",
+      "madoka (pleased): You're so kind. I'll remember this, and I'll remember you.",
+      "player: A mentor and a student at the tea table. Do you take Mami's side, or Madoka's?",
+      "choice Who gets your support?",
+      "- Tell Madoka that Mami's cake is hers, and she should have a second slice. (set side_me)",
+      "- Tell Mami that Madoka needs a mentor, and she should stay close. (set side_madoka, give lucky_pack)"
+    ]
+  },
+  {
+    "newcomer": "Mami Tomoe",
+    "name": "World: Arrival, Mami Tomoe & Tohru",
+    "lines": [
+      "cast tohru as Tohru",
+      "background cafe",
+      "me enters left with slide",
+      "tohru enters right with fade",
+      "tohru: Oh! Are you the host? I brought a dish. It's a bit suspicious, but it's good.",
+      "me (pleased): A dish? Let's have a taste. I baked a cake, so we'll see who wins.",
+      "tohru (pleased): Ooh, a contest! I'll make you my special stew. It's very good.",
+      "player: Two hosts, one cake contest. Who gets your vote?",
+      "choice Who do you vote for?",
+      "- Tell Tohru her stew looks suspicious, and Mami should win. (set side_me)",
+      "- Tell Mami her cake is great, and Tohru should show off her stew. (set side_tohru, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Sayaka Miki",
+    "name": "World: Arrival, Sayaka Miki & Kyoko Sakura",
+    "lines": [
+      "cast kyoko as Kyoko Sakura",
+      "background classroom",
+      "me enters left with slide",
+      "kyoko enters right with fade",
+      "kyoko: Hey, Sayaka. You're the hero girl with the violin, right? Want an apple?",
+      "me (dismayed): No! I don't take food from strangers. Kyoko, you're a bad influence.",
+      "kyoko (pleased): Bad influence, huh? I'll take that as a compliment. Eat the apple.",
+      "player: Rivalry from the first word. Who do you support?",
+      "choice Whose side do you take?",
+      "- Tell Kyoko she's a bad influence, and Sayaka should be careful. (set side_me)",
+      "- Tell Sayaka she's a hero, and Kyoko should stop tempting her. (set side_kyoko, give color_pack)"
+    ]
+  },
+  {
+    "newcomer": "Sayaka Miki",
+    "name": "World: Arrival, Sayaka Miki & Emilia",
+    "lines": [
+      "cast emilia as Emilia",
+      "background forest",
+      "me enters left with slide",
+      "emilia enters right with fade",
+      "emilia: Hello! Are you looking for someone? I'm lost in the forest, and so is Puck.",
+      "me (pleased): Oh, Emilia! A knight is always ready to help. Which way?",
+      "emilia (pleased): Thank you! Puck says you're a hero too. How nice.",
+      "player: Two knights, both looking for someone else. Who do you help?",
+      "choice Who gets your help?",
+      "- Tell Emilia the forest is her problem, and Sayaka should keep looking for her friend. (set side_me)",
+      "- Tell Sayaka the forest is dangerous, and Emilia should follow her. (set side_emilia, give lucky_pack)"
+    ]
+  }
+]

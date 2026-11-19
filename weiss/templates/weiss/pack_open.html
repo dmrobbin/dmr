@@ -22,9 +22,10 @@
     <h2 data-pack-total></h2>
     <ul class="pack-tally" data-pack-tally></ul>
     <ul class="pack-grid" data-pack-grid></ul>
-    <p class="list-actions">
+    <div class="list-actions">
+      {% if again %}<form method="post" action="{{ again.url }}">{% csrf_token %}<input type="hidden" name="count" value="{{ again.count }}"><button type="submit" class="button-small">{{ again.label }}</button></form>{% endif %}
       {% for label, url, primary in actions %}<a class="button-small{% if not primary %} secondary{% endif %}" href="{{ url }}">{{ label }}</a>{% endfor %}
-    </p>
+    </div>
   </section>
   {{ opening|json_script:"pack-opening" }}
   {# Clicking a pulled card opens its details, as in the deck builder (lists.js). #}

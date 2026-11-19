@@ -15,6 +15,7 @@ A cast file has CAST = [cpu(...), ...]. In a CPU:
   (rank 2) and a close friend (rank 4)).
 - repeat (optional): lines for talking again, at each tier: "future" and "past" (lists of three), and "like" and
   "dislike" (each {"with", "lines"}: three comparisons, unfavourable to favourable).
+- ARRIVALS (a module-level list, optional): arrival scenes, each {"newcomer", "name", "lines"}; filed under the newcomer.
 - tournament (optional): lines for the tournament week, by spectator, entrant, out, champion and duel, each three
   lists (ranks 0, 2, 4).
 - mid (optional): first-talk lines for the in-between ranks, a dict of rank ("1", "3", "5") to lines.
@@ -115,9 +116,19 @@ def main():
         module = importlib.util.module_from_spec(module_spec)
         module.cpu = cpu
         module_spec.loader.exec_module(module)
-        pack = {"pack": source.stem, "cpus": [entry(spec) for spec in module.CAST]}
+        pack = {"pack": source.stem, "cpus": [entry(spec) for spec in getattr(module, "CAST", [])]}
+        # STORY: the story's chapters (weiss.quests story quests), and STORY_SCENES the scenes they play
+        # ({"name", "lines"}, casting whoever they need themselves). See docs/world-story-plan.md.
+        if hasattr(module, "STORY"):
+            pack["story"] = module.STORY
+            pack["scenes"] = [{"name": scene["name"], "script": list(scene["lines"])} for scene in getattr(module, "STORY_SCENES", [])]
+        # ARRIVALS: a newcomer's arrival scenes (docs/world-arrivals-plan.md), filed under the newcomer; the newcomer is "me".
+        by_name = {cpu["name"]: cpu for cpu in pack["cpus"]}
+        for arrival in getattr(module, "ARRIVALS", []):
+            newcomer = by_name[arrival["newcomer"]]
+            newcomer["scenes"].append({"name": arrival["name"], "script": [f"cast me as {arrival['newcomer']}", *(staged(line).replace("(pleased)", "(lose)").replace("(dismayed)", "(win)") for line in arrival["lines"])]})
         (HERE / f"{source.stem}.json").write_text(json.dumps(pack, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
-        print(f"{source.stem}.json: {len(pack['cpus'])} CPUs")
+        print(f"{source.stem}.json: {len(pack['cpus'])} CPUs" + (f", {len(pack['story'])} story chapters" if pack.get("story") else ""))
         built += len(pack["cpus"])
     print(f"{built} CPUs in all")
 

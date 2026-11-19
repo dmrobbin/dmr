@@ -8,6 +8,8 @@
   <title>{% block title %}Dashboard{% endblock %} · Daryl Robbin</title>
   <link rel="stylesheet" href="{% static 'core/site.css' %}">
   <script src="{% static 'weiss/searchable_select.js' %}" defer></script>
+  {# A page shown inside the town's window (world_town.js): the site's header, footer and back links are the town's own. #}
+  <script>if (window.top !== window) document.documentElement.classList.add("in-frame");</script>
   {% block head %}{% endblock %}
 </head>
 <body>
