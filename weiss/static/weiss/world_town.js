@@ -1486,7 +1486,7 @@
     const banner = $("[data-result]");
     banner.querySelector("[data-result-text]").textContent = result.event ? result.event : result.won
       ? `You beat ${result.cpu}: +${result.coins} coins${result.first ? " (with the day's first-win bonus)" : ""}.`
-      : `${result.cpu} won this time${result.stake ? `; the ${result.stake}-coin entry fee is gone` : ""}. Time moved on.`;
+      : `${result.cpu} won this time${result.stake ? `; the ${result.stake}-coin entry fee is gone` : ""}${result.coins ? `. +${result.coins} coins anyway` : ""}. Time moved on.`;
     const quote = banner.querySelector("[data-result-line]");
     quote.hidden = !result.line;
     quote.textContent = result.line ? `${result.cpu}: “${result.line}”` : "";

@@ -573,6 +573,7 @@ def cpu_portraits(cpu):
 # ---------------------------------------------------------------- Duels
 
 STAKE_PRIZE = 2  # a high-stakes win pays its entry fee back this many times over
+LOSS_PAYOUT_SHARE = 0.6  # a loss still pays this share of the win payout (not the high-stakes prize, which it forfeits)
 
 
 def payouts():
@@ -626,8 +627,9 @@ def start_duel(save, cpu_id, high_stakes=False):
 
 def game_finished(room, over):
     """A world duel's game is over (`over`, its game_over): a win pays (the duel's payout, the day's first win's bonus
-    and a high-stakes prize), and win or lose, the time slot's used up. What happened waits on the save
-    (flags["last_duel"]) for the town to say. Once per game."""
+    and a high-stakes prize); a loss still pays LOSS_PAYOUT_SHARE of the payout, but forfeits a high-stakes fee. Win
+    or lose, the time slot's used up. What happened waits on the save (flags["last_duel"]) for the town to say. Once
+    per game."""
     with transaction.atomic():
         save = WorldSave.objects.select_for_update().filter(pk=room.world_save_id).first()
         if not save or (save.flags.get("last_duel") or {}).get("room") == room.pk:
@@ -643,7 +645,8 @@ def game_finished(room, over):
         else:
             payout, bonus = payouts()
             first = won and not save.today.get("won")
-            coins = (payout + (bonus if first else 0) + room.world_stake * STAKE_PRIZE) if won else 0
+            base = payout + (bonus if first else 0)
+            coins = base + room.world_stake * STAKE_PRIZE if won else round(base * LOSS_PAYOUT_SHARE)
             save.money += coins
             points = gain(cpu, WIN_POINTS if won else LOSS_POINTS) if cpu else 0
         if won:

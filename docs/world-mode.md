@@ -163,7 +163,8 @@ puts the player back where they were.
 - **Duels:** a real game against the CPU with the equipped deck, linked to the save (`GameRoom.world_save`, and
   `world_stake` for the fee, taken when it starts). When the game ends, `play.game_ended` hands it to
   `world.game_finished`, once per game: a win pays `win_payout`, plus `first_win_bonus` for the day's first win, plus
-  twice a high-stakes fee; win or lose, the time slot's used up. The game-over screen says what it paid and goes
+  twice a high-stakes fee; a loss still pays `LOSS_PAYOUT_SHARE` (60%) of `win_payout` (no first-win bonus, and a
+  high-stakes fee stays forfeited); win or lose, the time slot's used up. The game-over screen says what it paid and goes
   "Back to the town", where the result is said once. A town duel can't be rematched, reset or given another deck.
 - **An unfinished duel holds the time:** while it's under way, the town says so (with a link back to it), waiting is
   refused and no other duel can start. Travelling and shopping still work.

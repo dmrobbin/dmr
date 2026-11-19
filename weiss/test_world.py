@@ -545,10 +545,10 @@ class DuelTests(TestCase):
         self.finish(second, won=True)
         self.assertEqual(self.save.money, 1300 + 200)  # not the day's first win
 
-    def test_a_loss_only_uses_up_the_time(self):
+    def test_a_loss_pays_a_share_and_uses_up_the_time(self):
         room = world.start_duel(self.save, self.cinder.pk)
         self.finish(room, won=False)
-        self.assertEqual((self.save.money, self.save.turn, self.save.flags["last_duel"]["won"]), (1000, 1, False))
+        self.assertEqual((self.save.money, self.save.turn, self.save.flags["last_duel"]["won"]), (1000 + 120, 1, False))
 
     def test_high_stakes(self):
         room = world.start_duel(self.save, self.cinder.pk, high_stakes=True)
@@ -558,7 +558,7 @@ class DuelTests(TestCase):
         self.assertEqual(self.save.money, 700 + 200 + 100 + 600)
         lost = world.start_duel(self.save, self.cinder.pk, high_stakes=True)
         self.finish(lost, won=False)
-        self.assertEqual(self.save.money, 1600 - 300)  # the fee's gone
+        self.assertEqual(self.save.money, 1600 - 300 + 120)  # the fee's gone, but the loss still pays its share
         self.save.money = 100
         with self.assertRaises(ValueError):
             world.start_duel(self.save, self.cinder.pk, high_stakes=True)  # can't afford it
