@@ -698,6 +698,7 @@ class WorldSettings(models.Model):
     pack_price = models.PositiveIntegerField(default=300, help_text="What a pack costs at the card shop")
     specialty_price = models.PositiveIntegerField(default=600, help_text="What a specialty pack (lucky, climax, level, color) costs at the card shop")
     card_price = models.PositiveIntegerField(default=3000, help_text="What a single card (a rare or better, from the day's selection) costs at the card shop")
+    request_price = models.PositiveIntegerField(default=300, help_text="What asking the card shop to stock a set costs: it's on the shelves from the next day, for 3 days")
     win_payout = models.PositiveIntegerField(default=200, help_text="Coins for winning a duel")
     first_win_bonus = models.PositiveIntegerField(default=100, help_text="More coins for the day's first win")
     ranks = models.JSONField(default=default_ranks, help_text="Friendship ranks with each CPU: [{name, points}], from the first (0 points)")

@@ -219,6 +219,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Oh, hi! Sorry, I'm trying to find my bison. Have you seen him?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hey there. Is this your first time in town?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): Hi, {player}! Still looking for Appa. Want to help?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Oh, it's you! Did you come to duel or just to say hi?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! Good, you're here. I was just telling Momo about you."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Hey, {player}! Ready for some fun today?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}! You're the best! Come on, I want to show you something."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Look who's back! Momo, it's {player}!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}! Oh, I missed you. Things are never boring when you show up."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Hey, {player}. Come sit with me. Just a minute."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, my best friend! Air scooter time? Please say yes."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}! Hi! You made my whole day, you know that?"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: See you! Watch out for falling bison."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Okay, bye! Don't get lost in the maze!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Later! Don't forget to come back soon."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): Bye, {player}! Have fun out there!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): See you later, {player}! Come back soon!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Okay, go! Don't forget to visit!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Go on, {player}! I'll be right here when you're back."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Bye, {player}! Keep out of trouble!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon, {player}. I'll miss our talks."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Take care, {player}. Don't keep me waiting too long!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Go, go! But come back. Always come back, {player}."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Bye, best friend. See you soon!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): Oh, hey again! You're getting easier to talk to, you know."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: So, what's your favourite thing about this town? Mine's the bison."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Monk Gyatso taught me to listen first. You're pretty good at that."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): Have you tried the egg custard tarts yet? They're so good."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Do you ever feel like the whole world is waiting on you? Me too, sometimes."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Hey, {player}! You know you're basically Team Avatar now?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: I haven't told Katara this, but I'm glad you're around more than she thinks."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Want to try the air scooter? Okay, maybe after a duel, like I said."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: Sometimes I still feel like a kid in a monk's robe. You help with that."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Momo keeps stealing your food. Is that a sign he likes you?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, I'd fly across the whole world for you. Just saying."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You're the one I tell about the iceberg. Nobody else gets that."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Okay, I've been practising airbending for you. Watch this."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: When all this is over, we're still doing the egg tarts together, right?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend, come on. There's a whole sky out there, and I want to share it."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Aang, Friend"
@@ -643,6 +916,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hello. Did you want something?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Oh. You're here. Okay."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Hi. You look like you could use something warm to drink."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Hello. Want to sit by the water with me?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}. Good. Have you been eating properly?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Hi, {player}. You look like you need rest."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}, there you are. I was hoping I'd see you today."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}! Good to see you. Sit, sit."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. You're the first person I wanted to see this morning."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Hey, {player}. Did you bring the good tea?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}! My favourite waterbender's favourite person. Come here."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, I've been waiting all day. Stay a while."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Take care of yourself."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Mind the tides out there."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Be safe out there."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Goodbye. Don't walk too far."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Be safe, {player}."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Bye, {player}. Eat something on the way."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Don't go too far, {player}. I mean it."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Go on, {player}. I'll be watching the water."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon, {player}. The house is quieter without you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Take care, {player}. Let me know when you're home safe."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Come back soon. I'll keep the stew warm for you, {player}."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Bye, {player}. You're family. You know that?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You're still here. I didn't expect that. Good."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Have you ever been to the Southern Water Tribe? It's cold, but it's home."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Sokka says you're alright. I'm still deciding."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: I practise my forms at dawn. You can watch, if you're up early."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: My mother used to sing when she worked. I still hum it sometimes."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You've been good company lately. Don't let it go to your head."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: When Aang's too serious, I know you'll make him laugh. Thank you for that."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You remembered the tea I like. Nobody remembers things like that."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: Sometimes I miss the ocean at home. You make it feel closer."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): I trust you with the healing scrolls. That's a big deal, you know."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, you're family now. Water Tribe family, the good kind."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: I'd keep your back in any fight, the way you keep mine."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): I've been saving a necklace for someone special. I think it's time you have it."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: When I think about who I'd call at midnight, it's always you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Come sit with me by the water. It's quiet, and I want you here."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Katara, Friend"
@@ -651,6 +1197,146 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Katara, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "katara-forms",
+      "title": "Without a Master",
+      "gates": 2,
+      "about": "Katara is teaching herself waterbending forms from an old scroll, and wants someone to watch her practise.",
+      "offer": [
+       "them: I found a scroll of old waterbending forms. There's no master to check my work, though.",
+       "them (pleased): Would you watch me try? Just tell me when I get one wrong."
+      ],
+      "stages": [
+       {
+        "text": "Watch Katara practise at the beach in the evening",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "beach",
+          "times": [
+           2
+          ],
+          "scene": "World: Katara, Beach",
+          "rewards": [
+           {
+            "coins": 200
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Give Katara a bottled tea to keep her going",
+        "objectives": [
+         {
+          "do": "give_gift",
+          "gift": "bottled-tea",
+          "to": "Katara"
+         }
+        ]
+       },
+       {
+        "text": "Tell Katara what you saw",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Katara",
+          "script": [
+           "them (pleased): You watched the whole thing? Hm. Thank you.",
+           "them: Next time, tell me the truth about my footwork."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "first-audience",
+        "title": "Be her first audience",
+        "about": "Her forms are steadier now, and she's glad someone was there to watch.",
+        "rewards": [
+         {
+          "coins": 300
+         },
+         {
+          "gift": "bouquet"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "southern-lights",
+      "title": "The Southern Lights",
+      "gates": 5,
+      "about": "It's the anniversary of Katara's mother's death. She wants company, not comfort, and she'll decide what that means at the end.",
+      "offer": [
+       "them: Every year I light a candle at the shrine. This year I don't want to be alone with it.",
+       "them (dismayed): Don't make it a big thing. Just come."
+      ],
+      "stages": [
+       {
+        "text": "Go to the shrine in the evening",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "shrine",
+          "times": [
+           2
+          ],
+          "scene": "World: Katara, Shrine",
+          "rewards": [
+           {
+            "pack": "color_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Win a duel with Katara: Saving Aang in your deck",
+        "objectives": [
+         {
+          "do": "win_with",
+          "card": "ATLA/WX04-079",
+          "against": [
+           "Katara"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Stay with her until the candle's out",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Katara",
+          "script": [
+           "them: The candle's still burning. Thank you for staying.",
+           "them (pleased): Next year, you're bringing the good stew."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "stay-until-dawn",
+        "title": "Stay until the candle burns down",
+        "about": "Katara isn't alone with it any more, and she tells you so.",
+        "rewards": [
+         {
+          "coins": 600
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -689,6 +1375,34 @@
       "- That's what best friends do.",
       "me (lose): Then it's settled. You're family now. Water Tribe family.",
       "me: And Water Tribe family gets the good stew. Come on."
+     ]
+    },
+    {
+     "name": "World: Katara, Beach",
+     "script": [
+      "cast me as Katara",
+      "background dusk",
+      "me enters left with slide",
+      "me: Feet planted. Arms soft. Push... and I just got a face full of ocean.",
+      "player: Are you hurt?",
+      "me (lose): Ha! No. Hold still, you've got a scrape. I can fix that.",
+      "me glows",
+      "me: I'm better than I thought. Mum would have laughed at me for doubting it.",
+      "me: Keep watching. I'm not finished yet."
+     ]
+    },
+    {
+     "name": "World: Katara, Shrine",
+     "script": [
+      "cast me as Katara",
+      "background shrine",
+      "me enters center with fade",
+      "me: Mum's candle. I light one every year, even though this isn't our shrine.",
+      "player: It isn't silly.",
+      "me (win): ...It's easier with someone sitting beside me.",
+      "me: Don't say anything nice yet. I'll cry.",
+      "me nods",
+      "me: Stay until it burns down. That's all I ask."
      ]
     }
    ]
@@ -902,6 +1616,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Can I help you? Sokka's open for business. Mostly."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hey. Want to hear a plan? It's a good one."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Sokka, warrior, strategist. You've heard of me. Right?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Oh, a new face. Want a sandwich? It's for strategy."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! My favourite audience. Want to hear a joke?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Hey, {player}. I've got a new plan. Don't laugh."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}! My partner in strategy! Got a new idea for you."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}! Did you come to hear my latest brilliant scheme?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}! Glad you're here. I was just doing the math on our next duel."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}! Good timing. I need a second opinion on boomerangs."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}! My best friend and best strategist. Come in, come in!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}! The plan's ready and it's got your name on it!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Alright, see ya. Sokka out."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Later. Don't trip on any plans."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: See ya. Don't get eaten by anything."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Bye. Watch the boomerang."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Later, {player}! Boomerang always comes back."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): See ya, {player}! Stay out of trouble!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Go on, {player}. My plans need you back soon."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Bye, {player}! Save me a seat at the next strategy meeting!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Don't be gone long, {player}. I'll have new snacks."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Later, {player}. Stay safe, okay? I'm serious."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Go, {player}! But come back. Boomerang rules."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Bye, best friend! Don't forget the plan!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: So you're the new one. Sokka's got the plan. Want a napkin?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Quick question: boomerang or sword? It's a test. Answer quickly."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Is it weird that I'm glad you showed up? Don't answer that."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: I've been practising my jokes on Aang. He's a tough crowd."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You look like someone who'd be good in a fight. Strategy-wise, I mean."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Hey, my favourite audience! You laugh at the right moments."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: I was going to tell you the plan, but I think you'd just laugh at the sandwiches."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You helped me win that tournament, sort of. Mostly you helped."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: Don't tell Katara, but I wrote you into the plan as a key asset. Again."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Ever notice how we always end up at the same cafe? Destiny, probably."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, my best friend, if you ever need a plan, I'm your guy."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: I wrote you a real haiku this time. It's only four syllables off."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): You're the one person I'd let see me without the armour."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: When this all ends, let's go to the beach with a boomerang. Just us."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Hey, best friend, you're the strategy I didn't know I needed."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Sokka, Friend"
@@ -910,6 +1897,144 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Sokka, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "master-plan",
+      "title": "The Master Plan",
+      "gates": 2,
+      "about": "Sokka has a plan to win the town tournament, drawn across three cafe tables on napkins.",
+      "offer": [
+       "them: I have a plan for the tournament. It's on napkins. Don't touch the napkins.",
+       "them (pleased): You can be part of it. Step three is still a bit open."
+      ],
+      "stages": [
+       {
+        "text": "Hear the plan at the cafe at noon",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "cafe",
+          "times": [
+           1
+          ],
+          "scene": "World: Sokka, Cafe",
+          "rewards": [
+           {
+            "coins": 150
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Have Sokka: Warrior of the Southern Water Tribe",
+        "objectives": [
+         {
+          "do": "have_card",
+          "card": "ATLA/WX04-077"
+         }
+        ]
+       },
+       {
+        "text": "Tell Sokka what you think of the plan",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Sokka",
+          "script": [
+           "them (dismayed): Sandwiches are not a strategy. ...Okay, they're part of one.",
+           "them (pleased): Fine. You can have a napkin of your own."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "keep-the-plan",
+        "title": "Keep the plan",
+        "about": "Sokka's plan is still mostly sandwiches. He's very proud of it.",
+        "rewards": [
+         {
+          "coins": 300
+         },
+         {
+          "gift": "instant-ramen"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "space-sword",
+      "title": "Space Sword",
+      "gates": 5,
+      "about": "Sokka has forged a sword out of a meteorite and needs a worthy test. He's nervous about how it looks.",
+      "offer": [
+       "them: I made a sword out of a meteorite. Don't laugh. It's just... black.",
+       "them (dismayed): I need someone to test it. Someone who won't tell me it's ugly."
+      ],
+      "stages": [
+       {
+        "text": "Test the sword at the arena at noon",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "arena",
+          "times": [
+           1
+          ],
+          "scene": "World: Sokka, Arena",
+          "rewards": [
+           {
+            "pack": "level_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Beat Sokka in a duel",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Sokka"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Hear what Sokka thinks of the sword",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Sokka",
+          "script": [
+           "them (pleased): It's not ugly. It's... a warrior's sword. Thank you.",
+           "them: You're my best friend, and you're not allowed to say otherwise."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "wield-it",
+        "title": "Wield the sword",
+        "about": "Sokka carries the black blade into every fight from now on, and insists it's a lucky one.",
+        "rewards": [
+         {
+          "coins": 700
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -947,6 +2072,37 @@
       "- Your secret's safe.",
       "- I'm telling Aang immediately.",
       "me (intro): Okay, best friend celebration. I know a place with the best sea prunes. Kidding! It's meat."
+     ]
+    },
+    {
+     "name": "World: Sokka, Cafe",
+     "script": [
+      "cast me as Sokka",
+      "background cafe",
+      "me enters right with slide",
+      "me: Okay, nobody touch the napkins. This is the plan.",
+      "me: Step one: Aang distracts the enemy. Step two: I eat their lunch.",
+      "player: What's step three?",
+      "me (win): ...Step three is an open problem.",
+      "me: You fix step three and I'll say it was my idea. Deal?",
+      "player: Deal.",
+      "me (lose): Teamwork! Also, sandwiches."
+     ]
+    },
+    {
+     "name": "World: Sokka, Arena",
+     "script": [
+      "cast me as Sokka",
+      "background arena",
+      "me enters left with slide",
+      "me: Don't laugh. I forged this sword out of a meteorite.",
+      "player: It's black.",
+      "me (win): It's a space sword. Black is the space colour.",
+      "me: Watch me cut this training dummy in half.",
+      "screen flash",
+      "me (lose): Clean. Really clean. I'm a warrior now.",
+      "player: You always were one.",
+      "me: ...Don't tell anyone I got emotional."
      ]
     }
    ]
@@ -1147,6 +2303,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: I heard you coming a mile off. What do you want?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Your footsteps are loud. Are you always like that?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Oh, it's you. Your heartbeat's still nervous. Relax."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Hey. Don't make me come find you next time."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}. Took you long enough. I felt you coming."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Hey, {player}. Your footsteps are getting less annoying."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}! Got a fight in mind? Or just an awkward hello?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): It's {player}! I could feel you from the other side of town."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. Good. I wanted to see your face, but I'll take the footsteps."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}! Come sit on the ground with me. Feel that?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}! My best friend, which I'll never admit to anyone else."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Oh, {player}. Glad I can feel you. That's the best part of my day."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Yeah, yeah. Go on."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Try not to trip over anything."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Later. Don't fall in a ditch."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Bye. I'll feel you leaving."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Later, {player}. Try not to step on any rocks."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Bye, {player}. Don't make me come find you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Go, {player}. I'll feel you coming back."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): See you, {player}. Stay on solid ground."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon, {player}. The ground's boring without you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Bye, {player}. Don't get lost."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Go on. You'll be back, I can feel it, {player}."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Bye, best friend. Give that earth a kick for me."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You walk like you're trying not to be noticed. Adorable."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Tell me something I can't feel through the ground. Go on."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Your heartbeat's getting less nervous. That's progress."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: I can tell when you're lying. Don't try it."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Fine, you can sit on the rock next to me. Don't make it weird."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You actually made me laugh. Don't tell the others."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: I let you feel the earth move. Most people scream. You didn't."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You're going to be a great earthbender someday, if you keep at it."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: You're the one I wanted to see after the tournament. Not Aang. You."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Okay, you can call me Toph in private. Not Greatest Earthbender."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, my best friend. I'll never say it in front of Sokka."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You stayed when I was a pain. That's the whole reason I trust you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Come on, let's go to the arena and beat up some rocks together."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: I can feel you from across town now. That's how much I notice you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend, you know what I'd do for you? Anything. Don't tell anyone."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Toph, Friend"
@@ -1155,6 +2584,146 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Toph, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "seismic-sense",
+      "title": "Seismic Sense",
+      "gates": 2,
+      "about": "Toph will only bother with someone who can \"see\" the way she does.",
+      "offer": [
+       "them: You'll only get to know me if you can keep up. Don't worry, I'll make it easy. Mostly.",
+       "them (pleased): Take your shoes off. Then we'll see."
+      ],
+      "stages": [
+       {
+        "text": "Go into the forest in the evening",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "forest",
+          "times": [
+           2
+          ],
+          "scene": "World: Toph, Forest",
+          "rewards": [
+           {
+            "pack": "climax_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Give Toph an energy drink",
+        "objectives": [
+         {
+          "do": "give_gift",
+          "gift": "energy-drink",
+          "to": "Toph"
+         }
+        ]
+       },
+       {
+        "text": "Tell Toph what you noticed",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Toph",
+          "script": [
+           "them (pleased): You heard the squirrel too. Okay. That's a yes.",
+           "them: Don't let it go to your head. Heads are easy to hit."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "one-of-us",
+        "title": "Be one of her people",
+        "about": "Toph lets you into her short list. She'll never admit it, but she's glad.",
+        "rewards": [
+         {
+          "coins": 350
+         },
+         {
+          "gift": "iced-coffee"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "blind-bandit",
+      "title": "The Blind Bandit",
+      "gates": 5,
+      "about": "Toph's old Earth Rumble belt, and the family who never knew what she did with her life.",
+      "offer": [
+       "them: I won the Earth Rumble when I was twelve. My parents never came to see it.",
+       "them (dismayed): I don't care. Don't look at me like that."
+      ],
+      "stages": [
+       {
+        "text": "Meet Toph at the arena in the evening",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "arena",
+          "times": [
+           2
+          ],
+          "scene": "World: Toph, Arena",
+          "rewards": [
+           {
+            "pack": "color_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Win a duel with Toph: The Blind Bandit in your deck",
+        "objectives": [
+         {
+          "do": "win_with",
+          "card": "ATLA/WX04-024",
+          "against": [
+           "Toph"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Give Toph your answer",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Toph",
+          "script": [
+           "them: You're the first person I didn't have to fight to be seen by.",
+           "them (pleased): Heh. Sap. Don't tell anyone."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "keep-the-belt",
+        "title": "Keep the belt",
+        "about": "Toph gives you the belt and asks you to hold on to it for her, in case she misses it.",
+        "rewards": [
+         {
+          "coins": 500
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -1194,6 +2763,34 @@
       "- I'll risk the punch.",
       "me shakes",
       "me (lose): Ow, you're tougher than you look. Good."
+     ]
+    },
+    {
+     "name": "World: Toph, Forest",
+     "script": [
+      "cast me as Toph",
+      "background forest",
+      "me enters right with drop",
+      "me: Shoes off. Eyes closed. Yes, you too.",
+      "player: Why?",
+      "me: Because I can hear every footstep in this forest. Including yours. Including the squirrel.",
+      "player: A squirrel?",
+      "me (lose): Left, three trees back. Told you.",
+      "me: I'm showing off. Nobody ever asked me to show them anything before."
+     ]
+    },
+    {
+     "name": "World: Toph, Arena",
+     "script": [
+      "cast me as Toph",
+      "background arena",
+      "me enters center with rise",
+      "me: Catch.",
+      "player: It's heavy. Is this a championship belt?",
+      "me (lose): Earth Rumble, two years running. I stopped counting after I stopped going home.",
+      "me: My parents never came to watch me fight. I told them I didn't care.",
+      "player: Do you?",
+      "me (win): ...Don't make me answer that."
      ]
     }
    ]
@@ -1400,6 +2997,279 @@
       "min_rank": 4,
       "script": [
        "them (pleased): Go, then. Don't keep me waiting next time."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: You're in my light. Move."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: You're standing in the wrong place. Go."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: You again. Keep your distance."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Oh. It's you. I suppose you may speak."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. You're punctual. I expected worse."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: Ah, {player}. You may approach. Briefly."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. Good. Sit. I have something to show you."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. You're finally here. About time."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. I'd hoped you'd come. Don't let it go to your head."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. You're welcome here. You know that much."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. Stay close. You're the one person I let stand beside me."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. Come here. The crown can wait a minute."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: You're dismissed."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Go. I've seen enough of you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: You may go. I'll allow it."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Leave. Don't let the door hit you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Go, then. Don't keep me waiting."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Dismissed. And don't be late."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Go. Come back when you have something worth my time."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Off you go, {player}. Be ready when I call."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Go, {player}. I'll be watching the sky until you return."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Take care, {player}. You're not disposable, which is rare."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Go. Come back soon, {player}. I don't like being without my one ally."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Bye, {player}. Return safely. That's not a request."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: I suppose you're worth a few minutes of my time now."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You surprised me once. I don't like being surprised. Try not to do it again."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: What would you do with the throne, if you had it? Answer honestly."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Ty Lee thinks you're amusing. I think you're useful."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Sit. You may ask me one question today. Only one."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You've proven yourself more than I expected. Don't let it show."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: I keep my plans from most people. You've earned a glimpse of one."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Zuko's been asking about you. He's pathetic, but he's not wrong."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: My coronation is coming. You'll have a place beside me, if you want it."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You're the only one who isn't afraid of me, which is inconvenient."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, I trust you more than anyone else in this palace."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You're the only one I'd let stand beside the throne."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Stay with me tonight. I don't like the dark when I'm thinking."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: If the Avatar ever comes for me, I'd want you on my side. That's a rare thing for me to say."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend, you're my one ally. Don't waste it on anyone else."
       ]
      },
      {
@@ -1836,6 +3706,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Oh! Hi. Um. Were you looking for someone?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hi. I'm digging. You can watch if you want."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Hey. I found a rock. It's kind of shiny. Want to see?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Oh, hi. Sorry, I'm covered in dirt."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! Hi! Are you here to dig with me?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Hey, {player}! I was just thinking about you."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}! I found the most amazing rock. You have to see it."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}! Glad you came. I'm still a bit nervous, but it's okay."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}! Kamina would have liked you. I think you'd have liked him."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}! Come look at the tunnel I've been digging."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}! My best friend! I dug all the way to the surface for you!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Hey, {player}. Don't go, stay and see what I found today!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Okay. Um. Bye."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: See you. Watch your step."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: See you! Careful of the holes."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Bye. Don't fall in one."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): See you, {player}! I'll keep digging."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Bye, {player}! Come back soon, okay?"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Go on, {player}. I'll save you a shiny rock for next time."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Bye, {player}! Don't forget your helmet!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon, {player}. The tunnel's not as fun without you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Bye, {player}! I'll keep the best rock for you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Go, {player}! Come back. Team Dai-Gurren isn't complete without you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Bye, best friend! I'll be digging up the stars for you!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Um. You came back. That's nice. Do you want to see the tunnel?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: I'm still learning how to talk to people. You're easy, though."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Kamina used to say I'd dig my way out of anything. Maybe he was right."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Are you scared of the dark? Me too. A little."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Thanks for not calling me a coward. People used to."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): I found another shiny rock. It's for you. Don't laugh."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: You're the first person who doesn't think I'm stupid for digging."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Want to see my tunnel? I dug it out just for us."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: Kamina's shades look better on me when you're around. Weird, right?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): I'm getting better at talking. You helped with that."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, my best friend. I'd dig to the centre of the planet for you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You believe in me when I don't believe in myself. That's the biggest thing."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Let's go up to the surface together. I want to see the stars with you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: When I'm scared, I think about you. That's how I keep digging."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend, the drill's not turning right without you. Come on."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Simon the digger, Friend"
@@ -1844,6 +3987,142 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Simon the digger, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "dig-deeper",
+      "title": "Dig Deeper",
+      "gates": 2,
+      "about": "Simon's drill found something glowing under the old warehouse, and he's too scared to touch it alone.",
+      "offer": [
+       "them: My drill found something under the warehouse. It's humming. Can you come look?",
+       "them (dismayed): Don't tell Kamina yet. He'll want to dig it up himself."
+      ],
+      "stages": [
+       {
+        "text": "Go to the warehouse at night",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "warehouse",
+          "times": [
+           3
+          ],
+          "scene": "World: Simon the digger, Warehouse",
+          "rewards": [
+           {
+            "coins": 200
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Have Team DAI-GURREN's Leader, Simon",
+        "objectives": [
+         {
+          "do": "have_card",
+          "card": "GL/S52-E062"
+         }
+        ]
+       },
+       {
+        "text": "Tell Simon what you think it is",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Simon the digger",
+          "script": [
+           "them (pleased): It's mine? Okay. Okay. I'll keep digging.",
+           "them: Thank you for not laughing at me."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "keep-the-core",
+        "title": "Keep the core",
+        "about": "Simon keeps the glowing core in a box by his bed, and checks on it every morning.",
+        "rewards": [
+         {
+          "coins": 350
+         },
+         {
+          "gift": "handheld"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "kaminas-shades",
+      "title": "Kamina's Shades",
+      "gates": 5,
+      "about": "Simon wears Kamina's glasses for the first time, and they're far too big for him.",
+      "offer": [
+       "them: Kamina left me his shades. I've never had the nerve to wear them.",
+       "them (dismayed): You're going to laugh. Just tell me if they look stupid."
+      ],
+      "stages": [
+       {
+        "text": "Meet Simon in the plaza in the morning",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "plaza",
+          "times": [
+           0
+          ],
+          "scene": "World: Simon the digger, Plaza",
+          "rewards": [
+           {
+            "pack": "level_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Have Kamina",
+        "objectives": [
+         {
+          "do": "have_card",
+          "card": "GL/S52-E002"
+         }
+        ]
+       },
+       {
+        "text": "Tell Simon how he looks",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Simon the digger",
+          "script": [
+           "them (pleased): You think I look like Kamina? Thanks.",
+           "them: Okay, I'm wearing them. That's the first step."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "wear-them",
+        "title": "Wear them proudly",
+        "about": "Simon wears the shades to every duel. He says Kamina would have made fun of him for it.",
+        "rewards": [
+         {
+          "coins": 600
+         },
+         {
+          "gift": "sunglasses"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -1880,6 +4159,35 @@
       "- Let's pierce the heavens together.",
       "- Who the hell do you think we are?",
       "me (lose): ...Yeah! Team Dai-Gurren's newest member! Official!"
+     ]
+    },
+    {
+     "name": "World: Simon the digger, Warehouse",
+     "script": [
+      "cast me as Simon the digger",
+      "background ruins",
+      "me enters left with rise",
+      "me: Don't step near the hole. It's deep. I mean really deep.",
+      "me: I found this under the warehouse. It hums when I hold it.",
+      "player: Let me see.",
+      "me (win): Wait. ...Okay. Careful.",
+      "me: It's warm. Like a heartbeat. I think it's... mine.",
+      "player: Yours?",
+      "me (lose): I found it. Me. ...Don't laugh, okay?"
+     ]
+    },
+    {
+     "name": "World: Simon the digger, Plaza",
+     "script": [
+      "cast me as Simon the digger",
+      "background sakura",
+      "me enters center with fade",
+      "me: Kamina's shades. They're way too big. I look like a bug.",
+      "player: You look good.",
+      "me (win): ...Thanks. Really?",
+      "me: Kamina always said who the hell do you think we are. I always said it wrong.",
+      "me (lose): So I'm going to say it my way. Simon. Digger. Your friend.",
+      "me bounces"
      ]
     }
    ]
@@ -2037,6 +4345,13 @@
       ]
      },
      {
+      "context": "estranged",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You let the Anti Spiral win. I can't pretend we're still fine."
+      ]
+     },
+     {
       "context": "hello",
       "min_rank": 0,
       "script": [
@@ -2079,6 +4394,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Need something? Keep moving."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hello. You look like you've got fire in you."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Hm. A new face. Make it quick."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Oh. You. Hello, I guess."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}. Good. I could use someone with fire in them."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}. Walk with me a bit."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}, partner. Still turning that drill?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. I've been thinking about you, so you showed up at the right time."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. Kamina would have liked you. I think I like you too."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. Come up to the rooftop with me. The stars are out."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, my partner. Keep spinning with me, okay?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Hey, {player}. Best partner I ever had. Don't tell Kamina."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Keep moving forward."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Go on. Don't stop."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Pierce whatever's in front of you. Go."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Bye. Keep fighting."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Go on, {player}. Pierce the heavens, or whatever's in front of you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): See you soon, {player}. Keep spinning."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Go, partner. Don't stop moving forward, {player}."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Take care, {player}. The sky will still be there when you're back."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon, {player}. I like having you around."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Bye, {player}. Don't go too far from the fight."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): See you, partner. We're going to pierce the heavens together."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Bye, best partner. Don't stop moving forward."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You're still here. Good. I'm not used to people sticking around."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Ever look at the stars and feel small? Me too."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: What's your drill, your own drill? Everyone's got one."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Don't follow me too close. I'm moving fast."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Nia would have liked you. I think."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You trust me. I can feel it. That's the best part."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: I'm trying to be the leader they need. You help me keep that goal."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Let's go to the rooftop. The sky's better with a partner."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: I still remember the first time we fought together. You were terrible. You're better now."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Partner, you keep my spiral turning. That matters."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, you're my best partner. The best. Don't tell Kamina."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: When I think about the heavens, I think about you standing next to me."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Let's dig up something big together. I've got a plan."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You never gave up on me, even when I was loud and stupid. Thank you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend, I'm going to pierce the heavens with you. Promise me."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Simon, Friend"
@@ -2087,6 +4675,160 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Simon, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "row-row",
+      "title": "Row, Row",
+      "gates": 2,
+      "about": "Grown-up Simon can't sleep and goes up to the rooftop to look at the stars.",
+      "offer": [
+       "them: I can't sleep. I keep going up to the rooftop to look at the stars.",
+       "them (pleased): Come up and count them with me. You'll be bored, but you'll be there."
+      ],
+      "stages": [
+       {
+        "text": "Go up to the rooftop in the evening",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "rooftop",
+          "times": [
+           2
+          ],
+          "scene": "World: Simon, Rooftop",
+          "rewards": [
+           {
+            "coins": 200
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Have Piercing Sentiments, Simon & Nia",
+        "objectives": [
+         {
+          "do": "have_card",
+          "card": "GL/S52-E074"
+         }
+        ]
+       },
+       {
+        "text": "Tell Simon what you saw up there",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Simon",
+          "script": [
+           "them: You think people get to keep the ones they lose? ...Thanks for saying it.",
+           "them (pleased): Keep looking up with me, partner."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "keep-looking-up",
+        "title": "Keep looking up",
+        "about": "Simon still goes to the rooftop at night. Now he tells you about the stars he's named.",
+        "rewards": [
+         {
+          "coins": 400
+         },
+         {
+          "gift": "earbuds"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "pierce-the-heavens",
+      "title": "Pierce the Heavens",
+      "gates": 5,
+      "about": "The Anti Spiral says evolution must stop. Simon disagrees, and the sky goes wrong while he decides.",
+      "offer": [
+       "them (dismayed): The Anti Spiral sent me a message. I'm not going to answer it alone.",
+       "them: Will you watch while I decide?"
+      ],
+      "stages": [
+       {
+        "text": "Be with Simon on the rooftop at night",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "rooftop",
+          "times": [
+           3
+          ],
+          "scene": "World: Simon, Rooftop (night)",
+          "rewards": [
+           {
+            "pack": "color_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Beat the Anti Spiral in a duel",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Anti Spiral"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Give Simon your answer",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Simon",
+          "script": [
+           "them: I've made my choice. Let's see whose drill pierces deeper.",
+           "them (pleased): Stand with me, then."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "pierce",
+        "title": "Pierce the heavens",
+        "about": "Simon refuses the Anti Spiral's offer and breaks through the limit. The Anti Spiral's Best friend quest is closed for good.",
+        "locks": [
+         "the-spiral-nemesis"
+        ],
+        "rewards": [
+         {
+          "coins": 800
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ]
+       },
+       {
+        "key": "hold-the-sky",
+        "title": "Hold the sky",
+        "about": "Simon turns the offer down, but leaves the Anti Spiral room to change its mind.",
+        "rewards": [
+         {
+          "coins": 500
+         },
+         {
+          "gift": "playmat"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -2120,6 +4862,34 @@
       "- Always.",
       "- Let's keep moving forward.",
       "me (intro): Then let's dig. Up, this time. All the way to the stars."
+     ]
+    },
+    {
+     "name": "World: Simon, Rooftop",
+     "script": [
+      "cast me as Simon",
+      "background rooftop",
+      "me enters right with slide",
+      "me: Can't sleep. Came up to look at the stars. Nia liked them.",
+      "player: Which ones?",
+      "me (lose): That cluster there. It looks like a drill. She named it. Terrible name.",
+      "me: I keep wondering if people get to keep the ones they lose.",
+      "player: I think you do.",
+      "me (win): ...I'm not sure I believe it yet. Stay up with me a little?"
+     ]
+    },
+    {
+     "name": "World: Simon, Rooftop (night)",
+     "script": [
+      "cast me as Simon",
+      "background night",
+      "me enters center with rise",
+      "me: The sky's wrong tonight. It's too still.",
+      "player: What's happening?",
+      "me (win): The Anti Spiral sent an offer. A finished universe. No more growing. No more losing anyone.",
+      "me: I'm going to say no. I wanted you to hear it from me first.",
+      "player: What will you do?",
+      "me (lose): Pierce it. With you watching."
      ]
     }
    ]
@@ -2332,6 +5102,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hah? Who're you supposed to be?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Oi. You lookin' for a fight?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Hey. You look like someone who fights. Good."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Hi! Don't mind me, I'm just fired up."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Oi, {player}! You're lookin' fired up today!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Hey, {player}! Come on, we're gettin' a sandwich!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}! My right-hand! Great to see you, mate!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Oi! {player}! I was just tellin' my sisters about you."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}! Come here, I want to show you my new drill!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}, you're the best. Really, you are!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}! My best friend! You're my right-hand for life!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Hey, {player}! The Black Siblings are gonna love you!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Yeah, get outta here!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Later. Don't get beat up."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Later! Don't do anything stupid!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: See ya. Go get 'em."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Later, {player}! Don't do anything I wouldn't do!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): See ya, {player}! Come back when you're hungry!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Go get 'em, {player}! The Black Siblings got your back!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Bye, {player}! Save me a seat at the next fight!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon, {player}! The fights ain't the same without ya!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Bye, {player}! Stay loud, okay?"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Go on! But come back, right-hand. That's an order!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Bye, best friend! I'll charge in for you any time!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Hah! You're tougher than you look. Keep it up!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You fight like someone who's got guts. I like that."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: My sisters want to meet you. They're scary, so good luck."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Don't mind the noise. It's just me being fired up."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You want to spar? I'll go easy. Mostly."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Oi! My right-hand man! Come on, let's grab a drink."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: You're the only one who doesn't get tired of my shouting."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): My sisters asked me to bring you to dinner. Scary, but you'll be fine."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: I used to fight alone. Having you around makes it less lonely."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You got my back in that last duel. I won't forget it."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, I'd charge into any fight for you, no questions."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You're the one I'd want at my side when the big charge comes."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Let's go down the arena and make some noise together."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: When everyone else gives up, you're still there. That's a best friend."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend, you're the reason I keep fighting. Don't go anywhere."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Kittan, Friend"
@@ -2340,6 +5383,146 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Kittan, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "black-siblings",
+      "title": "Black Siblings",
+      "gates": 2,
+      "about": "Kittan is trying to buy presents for his three sisters, and he can't tell which one wants what.",
+      "offer": [
+       "them: Three presents, three sisters, and one of me. Help me pick, will ya?",
+       "them (pleased): Don't tell 'em I asked. They'll think I've gone soft."
+      ],
+      "stages": [
+       {
+        "text": "Meet Kittan in the plaza at noon",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "plaza",
+          "times": [
+           1
+          ],
+          "scene": "World: Kittan, Plaza",
+          "rewards": [
+           {
+            "coins": 150
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Give Kittan an iced coffee",
+        "objectives": [
+         {
+          "do": "give_gift",
+          "gift": "iced-coffee",
+          "to": "Kittan"
+         }
+        ]
+       },
+       {
+        "text": "Tell Kittan what you decided",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Kittan",
+          "script": [
+           "them (pleased): Same present for all three? Genius! Ha!",
+           "them: You're my right-hand, you know that?"
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "deliver",
+        "title": "Deliver the presents",
+        "about": "The sisters get identical presents and fight over them anyway. Kittan is thrilled.",
+        "rewards": [
+         {
+          "coins": 300
+         },
+         {
+          "gift": "sunglasses"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "last-stand",
+      "title": "Last Stand",
+      "gates": 5,
+      "about": "Kittan talks about what courage costs, and what he'd do when it all comes down to one charge.",
+      "offer": [
+       "them: You ever think about what you'd do at the end? One big charge, no way back?",
+       "them (dismayed): ...Forget I said anything. Just come fight with me."
+      ],
+      "stages": [
+       {
+        "text": "Meet Kittan at the arena in the evening",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "arena",
+          "times": [
+           2
+          ],
+          "scene": "World: Kittan, Arena",
+          "rewards": [
+           {
+            "pack": "climax_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Win a duel with King Kittan in your deck",
+        "objectives": [
+         {
+          "do": "win_with",
+          "card": "GL/S52-E004",
+          "against": [
+           "Kittan"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Give Kittan your answer",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Kittan",
+          "script": [
+           "them: No charging off alone, you say? ...Okay, that's fair.",
+           "them (pleased): Then we go together. KING KITTAN, DOUBLE-TEAM!"
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "charge-together",
+        "title": "Charge together",
+        "about": "Kittan promises not to charge in alone. He doesn't always keep it, but he means it.",
+        "rewards": [
+         {
+          "coins": 700
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -2375,6 +5558,34 @@
       "- No charging off alone.",
       "- I'll be watching.",
       "me (lose): Ha! Then let's charge together. KING KITTAN, DOUBLE-TEAM!"
+     ]
+    },
+    {
+     "name": "World: Kittan, Plaza",
+     "script": [
+      "cast me as Kittan",
+      "background sakura",
+      "me enters left with slide",
+      "me: Three presents. Three sisters. One of me. I'm not good at this.",
+      "player: Which sister gets which?",
+      "me (win): That's the problem! They all want the bigger present.",
+      "player: Give them the same gift, then.",
+      "me (lose): Genius! My sisters would fight anyone for each other, and they'd fight me for the best one.",
+      "me bounces"
+     ]
+    },
+    {
+     "name": "World: Kittan, Arena",
+     "script": [
+      "cast me as Kittan",
+      "background arena",
+      "me enters center with fade",
+      "me: I wrap my fists before every fight. Even the friendly ones.",
+      "player: Why the friendly ones?",
+      "me (win): Because courage isn't free. It costs you something every time you charge in.",
+      "me: I'd charge in first, every time. Even if I was the only one.",
+      "player: You wouldn't be alone.",
+      "me (lose): ...Yeah, okay. Then remember me loud."
      ]
     }
    ]
@@ -2574,6 +5785,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hi. You need something, or just looking?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hey. Don't walk in front of the scope."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Oh, hi. You're not yelling. That's a good start."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Hi. Need help with a shot?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Hey, {player}. Nice to see a face that isn't yelling."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}. The view's better with you here."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. Saved you a spot on the rocks. Sit."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Hey, {player}. Good, you can be my spotter today."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. I was starting to miss you, you know."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. Come with me to the beach. Let's see if you can keep up."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. You're the one I don't have to aim past. Glad you came."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Hey, {player}. My favourite person on the whole coast."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: See you around."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Watch your step on the way out."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Take it easy."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Okay. Bye."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Take it easy, {player}."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): See you, {player}. Keep your eyes sharp."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Go on, {player}. Don't get shot at."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Later, {player}. Good eyes."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Don't stay away too long, {player}, okay?"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Bye, {player}. Come back to the beach soon."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Bye, {player}. I'll keep a spot on the rocks for you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Go, best friend. The view will wait for you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You're not a yeller. That's the first thing I noticed."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Got good eyes? Let's see if they're as sharp as you think."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: I don't usually talk this much. You're a good listener."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Don't walk in front of the rocks while I'm shooting. Thanks."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Want to learn how to hold a rifle? I'll make it easy."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You're the only one who doesn't make me explain the scope."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: I miss Kamina. You remind me of him sometimes, but in a good way."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You spotted that last shot. I owe you a drink."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: The beach feels less lonely when you're around. Don't tell anyone."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You're my spotter now. Not just for practice."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, you're the one person I don't aim past. Ever."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: I want to teach you everything I know. Because you'd teach me something back."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Let's watch the sunset from the rocks. Just the two of us."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: When the war ended, I thought I'd be alone. You proved me wrong."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend, my spotter and my friend. Let's keep this for good."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Yoko, Friend"
@@ -2582,6 +6066,142 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Yoko, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "long-range-support",
+      "title": "Long-Range Support",
+      "gates": 2,
+      "about": "Yoko wants a spotter for target practice, and someone to call the wind.",
+      "offer": [
+       "them: I need a spotter. Someone who can call the wind and not panic.",
+       "them (pleased): Bring your eyes. Leave the shouting at home."
+      ],
+      "stages": [
+       {
+        "text": "Go to the beach at noon",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "beach",
+          "times": [
+           1
+          ],
+          "scene": "World: Yoko, Beach",
+          "rewards": [
+           {
+            "coins": 200
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Have Special Lesson, Yomako",
+        "objectives": [
+         {
+          "do": "have_card",
+          "card": "GL/S52-E019"
+         }
+        ]
+       },
+       {
+        "text": "Tell Yoko how the shots went",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Yoko",
+          "script": [
+           "them (pleased): Six for six. You've got good eyes.",
+           "them: Next time I'll miss on purpose. You'll know it when you see it."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "spotter",
+        "title": "Be her spotter",
+        "about": "Yoko asks you to spot for her any time she's on the beach. It's the highest praise she gives.",
+        "rewards": [
+         {
+          "coins": 300
+         },
+         {
+          "gift": "iced-coffee"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "teacher-yoko",
+      "title": "Teacher Yoko",
+      "gates": 5,
+      "about": "After the war, Yoko wants to teach. She's scared the kids won't listen to a sniper.",
+      "offer": [
+       "them: I'm writing a lesson plan. It's mostly stick figures.",
+       "them (dismayed): Don't laugh. I've never taught anyone anything."
+      ],
+      "stages": [
+       {
+        "text": "Meet Yoko in the plaza in the evening",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "plaza",
+          "times": [
+           2
+          ],
+          "scene": "World: Yoko, Plaza",
+          "rewards": [
+           {
+            "pack": "color_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Have New Teacher, Yomako",
+        "objectives": [
+         {
+          "do": "have_card",
+          "card": "GL/S52-E028"
+         }
+        ]
+       },
+       {
+        "text": "Listen to Yoko's first lesson",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Yoko",
+          "script": [
+           "them (pleased): You listened. Really listened. Okay, that's my first student.",
+           "them: Thank you, {player}. I'll tell the kids you were the test."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "start-the-class",
+        "title": "Start the class",
+        "about": "Yoko runs her first class, and the kids listen. Mostly because she's scary.",
+        "rewards": [
+         {
+          "coins": 500
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -2615,6 +6235,33 @@
       "- I'm right here.",
       "- I'll spot for you anytime.",
       "me (lose): Then let's watch the sunset. Together, for once."
+     ]
+    },
+    {
+     "name": "World: Yoko, Beach",
+     "script": [
+      "cast me as Yoko",
+      "background beach",
+      "me enters right with slide",
+      "me: Cans on the rocks. Wind's from the left. Call it.",
+      "player: Left. Low. Six cans.",
+      "me: ...Six. Every single one. Sweet.",
+      "me: And I'll miss the seventh on purpose, so you don't get cocky.",
+      "player: Ha. Okay.",
+      "me (lose): Good eyes. Keep 'em open next time."
+     ]
+    },
+    {
+     "name": "World: Yoko, Plaza",
+     "script": [
+      "cast me as Yoko",
+      "background dusk",
+      "me enters center with fade",
+      "me: I drew a lesson plan. Three pages. It's mostly stick figures.",
+      "player: Show me.",
+      "me (win): ...I'm scared the kids won't listen. Nobody listens to a sniper who talks.",
+      "player: I'd listen.",
+      "me (lose): Then practise on me. Go on, teach me something."
      ]
     }
    ]
@@ -2817,6 +6464,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: You approach the Spiral King unbidden."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Speak your business, surface child."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: You return. Few seek the Spiral King twice."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Ah. A visitor. Kneel, if you must."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. You return. Sit, and listen."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: Hm. {player}. You are not as foolish as the others."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. Sit. Tell me of the surface today."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. You return. The king has been waiting."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. The one who does not fear the surface. Sit beside me."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. The chronicle is ready. Come hear it."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. My one honest companion. Sit. The spiral turns for you."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. You have made a king very glad to see you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Begone."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Go, then. The surface awaits."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Go. Do not kneel to anyone."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Return when you have something worth saying."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Go, then. The chronicle will wait."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Begone. You may return."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Go, {player}. Return to me when the surface disappoints you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Farewell, {player}. Carry the spiral with you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Go. Return to me, {player}. The king is lonely without you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Go in peace, {player}. The spiral will keep watch over you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Go, {player}. And return. You are the only one who has ever made me say that."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Farewell, companion. The spiral turns for you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You speak carefully. That is rare on the surface."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: The chronicle is not finished. I would have you read the next page."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Tell me what the surface has become. Be exact."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Few stand in the throne room without trembling. You do not. Interesting."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Sit. You may ask the king a question. One."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You do not fear my silence. I have grown to value that."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: The spiral has changed since you came. I have noticed."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): I have shown you my chronicle. No one else has seen it."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: You understand what I gave up. That is more than my kin ever did."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Return tomorrow. The king is at his most honest in the evening."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, my honest companion. The spiral turns more gently for you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You are the only one who has ever told me I was wrong. I am grateful."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Walk the library with me. The histories are finally bearable."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: When the Anti-Spirals return, I will want you beside me. Not as servant. As equal."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend, I shall be honest with you always. Remember that."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Lord Genome, Friend"
@@ -2825,6 +6745,145 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Lord Genome, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "spiral-kings-library",
+      "title": "The Spiral King's Library",
+      "gates": 2,
+      "about": "Lord Genome wants someone to read the old histories to, and to correct them when they're wrong.",
+      "offer": [
+       "them: The histories of the surface are full of errors. I will not read them alone.",
+       "them (pleased): Come to the library. Bring your ears, not your opinions."
+      ],
+      "stages": [
+       {
+        "text": "Go to the library at noon",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "library",
+          "times": [
+           1
+          ],
+          "scene": "World: Lord Genome, Library",
+          "rewards": [
+           {
+            "coins": 200
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Have Tyrant of Teppelin, Lordgenome",
+        "objectives": [
+         {
+          "do": "have_card",
+          "card": "GL/S52-E043"
+         }
+        ]
+       },
+       {
+        "text": "Tell Lord Genome whether you agree",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Lord Genome",
+          "script": [
+           "them (pleased): You disagree with the chronicle. Good. Now you have a reason to listen.",
+           "them: Return tomorrow. The king has more to say."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "hear-chronicle",
+        "title": "Hear the chronicle",
+        "about": "Lord Genome reads you the whole chronicle, with its errors fixed by memory.",
+        "rewards": [
+         {
+          "coins": 400
+         },
+         {
+          "gift": "manga"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "the-last-lesson",
+      "title": "The Last Lesson",
+      "gates": 5,
+      "about": "Lord Genome warns you what's waiting beyond the spiral, and why he ruled by fear.",
+      "offer": [
+       "them: There is a warning I must give. It will not be pleasant.",
+       "them (dismayed): Do not interrupt. I have had a thousand years to rehearse it."
+      ],
+      "stages": [
+       {
+        "text": "Go to the shrine at night",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "shrine",
+          "times": [
+           3
+          ],
+          "scene": "World: Lord Genome, Shrine",
+          "rewards": [
+           {
+            "pack": "level_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Win a duel with Two Faces, Enki in your deck",
+        "objectives": [
+         {
+          "do": "win_with",
+          "card": "GL/S52-E049",
+          "against": [
+           "Lord Genome"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Hear Lord Genome out to the end",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Lord Genome",
+          "script": [
+           "them: You did not kneel. Remember that when they come.",
+           "them (pleased): Carry the warning. I ask nothing back."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "carry-warning",
+        "title": "Carry the warning",
+        "about": "You carry Lord Genome's warning out of the shrine. He asked nothing for it, which is how you know it matters.",
+        "rewards": [
+         {
+          "coins": 700
+         },
+         {
+          "gift": "bottled-tea"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -2858,6 +6917,35 @@
       "- You're not alone anymore.",
       "- The surface is big enough for both of us.",
       "me (lose): Then let the spiral turn. I will watch it with you."
+     ]
+    },
+    {
+     "name": "World: Lord Genome, Library",
+     "script": [
+      "cast me as Lord Genome",
+      "background library",
+      "me enters center with fade",
+      "me: Sit. This chronicle is wrong about the third age. Listen closely.",
+      "me: The historians wrote that the surface was empty. It was not. I was there.",
+      "player: You're making that up.",
+      "me (win): I do not make things up. I embellish. There is a difference.",
+      "me: Tell me honestly. Would you have made my choices?",
+      "player: No.",
+      "me (lose): Good. You are less foolish than most. Sit again tomorrow."
+     ]
+    },
+    {
+     "name": "World: Lord Genome, Shrine",
+     "script": [
+      "cast me as Lord Genome",
+      "background shrine",
+      "me enters center with fade",
+      "me: The Anti-Spirals came before the spiral kings. I watched them come.",
+      "me: They erased whole worlds. I could not stop them, so I caged humanity instead.",
+      "player: You did it to protect them.",
+      "me (win): I did it because I was afraid. Protection was my excuse.",
+      "me: Carry this warning. If they come again, do not kneel.",
+      "me (lose): I ask nothing back. Only that you remember I was honest."
      ]
     }
    ]
@@ -3019,6 +7107,13 @@
       ]
      },
      {
+      "context": "estranged",
+      "min_rank": 0,
+      "script": [
+       "them: Stagnation chosen. Your friendship is no longer logged."
+      ]
+     },
+     {
       "context": "hello",
       "min_rank": 0,
       "script": [
@@ -3061,6 +7156,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Spiral life form detected."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Observation begins. State your designation."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Spiral life form. Your presence is noted."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Observation. Continue as you are."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: Spiral life form designate: {player}. Proceed."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. Your behaviour is... statistically anomalous. Be welcome."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. Observation resumes. Your growth is recorded."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. You return. Logged."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. Your existence no longer disrupts my calculations. Welcome."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. Designated: acquaintance. No. Friend. Retained."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. Designated: friend, permanently. Observation is pleasant with you."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. Warmth recorded. Return soon."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Departure noted."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Observation paused. Continue."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Depart. The observation continues."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Leave. The record is not finished."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Observation paused. Return."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Departure logged. Go."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Observation paused, {player}. Return. The record requires you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Depart, {player}. Continue growing. Report back."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Depart, {player}. The observation is incomplete without you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Go, {player}. Return safely. That is a hypothesis I now hold."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Depart, {player}. Friendship is retained. Return."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Farewell, {player}. Warmth logged. Retained."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Your presence has been observed. Accepted, provisionally."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Question: why do you persist? Answer for the record."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: The observation continues. Do not alter your behaviour."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Anomaly noted. Growth exceeds parameters. Continue."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Designate: acquaintance. Provisional status confirmed."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Your growth has exceeded expectations. Recorded, with interest."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: We have begun to measure warmth. You are the primary variable."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You disagree with us, and survive. Statistically unusual, and welcome."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: Observation is no longer neutral. This is a concern. And a pleasure."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Return. The record requires your next answer."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. Designated: friend, permanently. Retained without condition."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: Our hypothesis about spirals has been revised. Thanks to you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Come observe the stars with us. Warmth is a useful measure."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: We no longer wish to end the universe. We wish to keep you in it."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend. Logged. Permanently. Return whenever you can."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Anti Spiral, Friend"
@@ -3069,6 +7437,158 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Anti Spiral, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "observation",
+      "title": "Observation",
+      "gates": 2,
+      "about": "The Anti Spiral studies the player like a specimen, and records every answer without judging it.",
+      "offer": [
+       "them: Spiral life form designate: {player}. Observation begins. Answer truthfully.",
+       "them: Your answers will be recorded. Judgement is not required."
+      ],
+      "stages": [
+       {
+        "text": "Be observed in the library in the evening",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "library",
+          "times": [
+           2
+          ],
+          "scene": "World: Anti Spiral, Library",
+          "rewards": [
+           {
+            "pack": "climax_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Have Messenger Nia",
+        "objectives": [
+         {
+          "do": "have_card",
+          "card": "GL/S52-E090"
+         }
+        ]
+       },
+       {
+        "text": "Give the Anti Spiral your final answer",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Anti Spiral",
+          "script": [
+           "them: Hope without evidence. Acceptable. Logged.",
+           "them (pleased): Observation complete. You are... retained."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "retained",
+        "title": "Let it record you",
+        "about": "The Anti Spiral keeps a file on you now. It calls the file friendship, and it isn't wrong.",
+        "rewards": [
+         {
+          "coins": 400
+         },
+         {
+          "gift": "bottled-tea"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "the-spiral-nemesis",
+      "title": "The Spiral Nemesis",
+      "gates": 5,
+      "about": "The Anti Spiral offers the player a quiet, finished universe, and asks for help persuading Simon to stop.",
+      "offer": [
+       "them: We have watched countless spirals burn out. I am considering a different outcome.",
+       "them (dismayed): Do not interpret this as sentiment. It is a hypothesis."
+      ],
+      "stages": [
+       {
+        "text": "Meet the Anti Spiral on the rooftop at night",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "rooftop",
+          "times": [
+           3
+          ],
+          "scene": "World: Anti Spiral, Rooftop",
+          "rewards": [
+           {
+            "pack": "color_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Have Ultimate Universal Diablo, Granzeboma",
+        "objectives": [
+         {
+          "do": "have_card",
+          "card": "GL/S52-E091"
+         }
+        ]
+       },
+       {
+        "text": "Give the Anti Spiral your answer",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Anti Spiral",
+          "script": [
+           "them: You have heard the offer. Now decide.",
+           "them (dismayed): ...Your answer is recorded. Designate: warmth."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "accept-the-limit",
+        "title": "Accept the limit",
+        "about": "The Anti Spiral accepts the limit on evolution and asks you to make Simon accept it too. Simon's Best friend quest is closed for good.",
+        "locks": [
+         "pierce-the-heavens"
+        ],
+        "rewards": [
+         {
+          "coins": 800
+         },
+         {
+          "pack": "level_pack"
+         }
+        ]
+       },
+       {
+        "key": "grow-beyond",
+        "title": "Let evolution go on",
+        "about": "The Anti Spiral sets its hypothesis aside. Simon's road to the heavens stays open.",
+        "rewards": [
+         {
+          "coins": 500
+         },
+         {
+          "gift": "manga"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -3104,6 +7624,34 @@
       "- That's friendship.",
       "- Welcome back to feeling.",
       "me (lose): Friendship. Logged. Retained. Permanently."
+     ]
+    },
+    {
+     "name": "World: Anti Spiral, Library",
+     "script": [
+      "cast me as Anti Spiral",
+      "background library",
+      "me enters center with fade",
+      "me: Why do you read? Why do you hope? Answer. Recording.",
+      "player: Because I want to know what happens next.",
+      "me: Logged. Hope without evidence. Acceptable.",
+      "player: Why do you ask so many questions?",
+      "me (win): ...Observation is what we do. It is also lonely, when no one answers.",
+      "me: Continue. The record is not finished."
+     ]
+    },
+    {
+     "name": "World: Anti Spiral, Rooftop",
+     "script": [
+      "cast me as Anti Spiral",
+      "background night",
+      "me enters center with fade",
+      "me: Look at the sky. No growth. No loss. A finished universe.",
+      "player: It looks empty.",
+      "me (lose): Empty is safe. Nothing can be lost that was never there.",
+      "me: Simon will receive the offer. Help me persuade him to stop.",
+      "player: Persuade him how?",
+      "me (win): Tell him the truth. The sky has limits, and we set them."
      ]
     }
    ]

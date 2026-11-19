@@ -8,7 +8,7 @@
 
   <div class="town" data-world-town data-state-url="{% url 'weiss:world_town_state' save.slot %}"
        data-travel-url="{% url 'weiss:world_travel' save.slot %}" data-wait-url="{% url 'weiss:world_wait' save.slot %}"
-       data-duel-url="{% url 'weiss:world_duel' save.slot %}" data-buy-card-url="{% url 'weiss:world_buy_card' save.slot %}"
+       data-duel-url="{% url 'weiss:world_duel' save.slot %}" data-buy-card-url="{% url 'weiss:world_buy_card' save.slot %}" data-request-set-url="{% url 'weiss:world_request_set' save.slot %}"
        data-buy-gift-url="{% url 'weiss:world_buy_gift' save.slot %}" data-talk-url="{% url 'weiss:world_talk' save.slot %}"
        data-answer-url="{% url 'weiss:world_answer' save.slot %}" data-give-url="{% url 'weiss:world_give' save.slot %}" data-level-url="{% url 'weiss:world_level' save.slot %}" data-decks-url="{% url 'weiss:world_save' save.slot %}#decks"
        data-quest-url="{% url 'weiss:world_quest' save.slot %}" data-test-mode-url="{% url 'weiss:world_test_mode' save.slot %}"
@@ -91,6 +91,16 @@
         <div role="tabpanel" id="shop-packs" aria-labelledby="shop-tab-packs" data-shop-panel="packs">
           <p class="small muted" data-shop-note></p>
           <ul class="town-stock" data-stock></ul>
+          <section class="town-request" aria-labelledby="town-request-title">
+            <h3 class="town-request-title" id="town-request-title">Ask for a set</h3>
+            <p class="small muted" data-request-note tabindex="-1"></p>
+            <div class="town-request-form" data-request-form>
+              <label class="town-shop-set">Set
+                <select data-request-set></select>
+              </label>
+              <span data-request-button></span>
+            </div>
+          </section>
         </div>
         <div role="tabpanel" id="shop-specials" aria-labelledby="shop-tab-specials" data-shop-panel="specials" hidden>
           <p class="small muted" data-specials-note></p>

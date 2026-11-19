@@ -457,6 +457,17 @@ def world_level(request, save):
 
 
 @town_move
+def world_request_set(request, save):
+    """Ask the card shop to stock a set: on the shelves from tomorrow, for a few days."""
+    try:
+        expansion_id = int(request.POST.get("set") or 0)
+    except ValueError:
+        raise ValueError("Choose a set to ask for.")
+    asked = world.request_set(save, expansion_id)
+    return f"{asked['name']} is ordered: {world.request_words(save, asked)}"
+
+
+@town_move
 def world_quest(request, save):
     """Something about a quest, with someone here: its offer, taking it, talking it through, handing a card over, or
     choosing how it ends (see world.quest_act)."""
@@ -547,6 +558,7 @@ def world_settings(request):
             "pack_price": whole("pack_price", 1, MAX_COINS, "A pack's price"),
             "specialty_price": whole("specialty_price", 1, MAX_COINS, "A specialty pack's price"),
             "card_price": whole("card_price", 1, MAX_COINS, "A single card's price"),
+            "request_price": whole("request_price", 0, MAX_COINS, "A set request's price"),
             "win_payout": whole("win_payout", 0, MAX_COINS, "A win's payout"),
             "first_win_bonus": whole("first_win_bonus", 0, MAX_COINS, "The day's first win bonus"),
         }

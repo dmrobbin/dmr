@@ -658,11 +658,83 @@ def pack_price():
 
 
 def shop_stock(save):
-    """[{"id", "name"}] the shop sells today: the save's set always, and others that change each day (from the seed)."""
+    """[{"id", "name", "requested"}] the shop sells today: the save's set always, a set the player asked for while it's on
+    the shelves (next to the save's own), and others that change each day (from the seed)."""
     others = [entry for entry in offered_sets() if entry["id"] != save.expansion_id]
     rng = random.Random(f"{save.seed}:{save.turn // 4}:shop")
     picked = rng.sample(others, min(SHOP_SETS - 1, len(others)))
-    return [{"id": save.expansion_id, "name": save.set_name}] + [{"id": e["id"], "name": e["name"]} for e in picked]
+    stock = [{"id": save.expansion_id, "name": save.set_name, "requested": False}]
+    stock += [{"id": e["id"], "name": e["name"], "requested": False} for e in picked]
+    asked = save.flags.get("request")
+    if asked and asked["from"] <= shop_day(save) <= asked["until"]:
+        stock = [entry for entry in stock if entry["id"] != asked["id"]]
+        stock.insert(1, {"id": asked["id"], "name": asked["name"], "requested": True})
+    return stock
+
+
+REQUEST_DAYS = 3  # a set the player asks for is on the shelves this many days, from the day after
+REQUEST_PRICE = 300  # until staff set it (WorldSettings)
+
+
+def shop_day(save):
+    """The day the shop's on (counting from 0), as its stock changes."""
+    return save.turn // len(WorldSave.TIMES)
+
+
+def request_price():
+    found = settings()
+    return found.request_price if found else REQUEST_PRICE
+
+
+def set_request(save):
+    """The set the player asked the shop for, while it's still to come or on the shelves ({"id", "name", "from",
+    "until"}: the days it's stocked), or None: then they can ask for another."""
+    asked = save.flags.get("request")
+    return asked if asked and shop_day(save) <= asked["until"] else None
+
+
+def request_words(save, asked):
+    """When a requested set is on the shelves, in words."""
+    today, last = shop_day(save), WorldSave.DAYS[asked["until"] % 7]
+    if today < asked["from"]:
+        first = WorldSave.DAYS[asked["from"] % 7]
+        return f"on the shelves from tomorrow ({first}) until {last}."
+    if today == asked["until"]:
+        return "on the shelves today, its last day."
+    return f"on the shelves until {last}."
+
+
+def request_set(save, expansion_id):
+    """Ask the card shop to stock a set: it's on the shelves from tomorrow for REQUEST_DAYS days. One at a time: the
+    next can be asked for once it's gone. Raises ValueError saying why it can't."""
+    here = place_of(save)
+    if not here or not here.shop:
+        raise ValueError("You need to be at the card shop.")
+    asked = set_request(save)
+    if asked:
+        raise ValueError(f"You've asked for {asked['name']} already: it's {request_words(save, asked)} Ask for another once it's gone.")
+    entry = next((entry for entry in offered_sets() if entry["id"] == expansion_id), None)
+    if not entry:
+        raise ValueError("The shop can't get that set.")
+    if expansion_id == save.expansion_id:
+        raise ValueError(f"{entry['name']} is on the shelves every day already.")
+    price = request_price()
+    if price > save.money:
+        raise ValueError(f"Asking for a set costs {price} coins, and you have {save.money}.")
+    save.money -= price
+    today = shop_day(save)
+    save.flags["request"] = {"id": expansion_id, "name": entry["name"], "from": today + 1, "until": today + REQUEST_DAYS}
+    changed(save, "money", "flags")
+    return save.flags["request"]
+
+
+def shop_request(save):
+    """Asking for a set, as the counter shows it: the price, how long it stays, the set asked for (and when it's on the
+    shelves) or None, and the sets that can be asked for (every set the shop can get but the save's own)."""
+    asked = set_request(save)
+    return {"price": request_price(), "days": REQUEST_DAYS,
+            "asked": {"name": asked["name"], "when": request_words(save, asked)} if asked else None,
+            "sets": [{"id": entry["id"], "name": entry["name"]} for entry in offered_sets() if entry["id"] != save.expansion_id]}
 
 
 SHOP_SPECIALS = ("lucky_pack", "climax_pack", "level_pack", "color_pack")  # specialty packs the counter sells (weiss.buffs)
@@ -758,6 +830,7 @@ def shop(save):
                       "asks": buffs.BUFFS[key].pack if buffs.BUFFS[key].pack in ("level", "color") else ""} for key in SHOP_SPECIALS],
         "levels": list(buffs.LEVELS), "colors": list(buffs.COLORS),
         "gifts": inventory(save),
+        "request": shop_request(save),
         "cards": [{"id": card.pk, "name": card.name, "rarity": packs.rarity_of(card), "set": card.expansion,
                    "image": reverse("weiss:card_image", args=[card.pk]), "url": reverse("weiss:card", args=[card.pk]), "popup": reverse("weiss:card_popup", args=[card.pk]),
                    "sold": card.pk in bought} for card in shop_cards(save)],
@@ -798,7 +871,7 @@ GIFT_POINTS = {"loved": 12, "liked": 6, "neutral": 2, "disliked": -4}
 GIFTS_PER_DAY = 1  # gifts to each CPU a day
 GAIN = {"warm": 1.5, "friendly": 1.25, "neutral": 1.0, "aloof": 0.75, "villain": 0.6}  # by temperament: talk, gifts and duels
 MAX_GIFTS = 99  # of each item held
-RESERVED_FLAGS = {"last_duel", "set", "scene", "choose", "test_mode"}
+RESERVED_FLAGS = {"last_duel", "set", "scene", "choose", "test_mode", "request"}
 TALK_FIELDS = ("relations", "today", "flags", "money", "gifts", "pool", "last_opening", "quests")  # what talking can change
 
 

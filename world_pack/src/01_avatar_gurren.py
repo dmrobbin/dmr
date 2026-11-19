@@ -80,11 +80,452 @@ AZULA_SCENES = [{"name": "World: Azula, Rooftop", "lines": [
     "me: Watch the street. And try not to look impressed when I'm right.",
 ]}]
 
+# Quests and visit scenes for the nine CPUs of pack 01 (the rest of the pack is Aang and Azula, above).
+# Gate quests: Friend (gates 2) and Best friend (gates 5). Simon and Anti Spiral lock each other.
+
+KATARA_QUESTS = [
+    {"key": "katara-forms", "title": "Without a Master", "gates": 2,
+     "about": "Katara is teaching herself waterbending forms from an old scroll, and wants someone to watch her practise.",
+     "offer": ["them: I found a scroll of old waterbending forms. There's no master to check my work, though.",
+               "them (pleased): Would you watch me try? Just tell me when I get one wrong."],
+     "stages": [
+         {"text": "Watch Katara practise at the beach in the evening", "objectives": [{"do": "visit", "place": "beach", "times": [2], "scene": "World: Katara, Beach", "rewards": [{"coins": 200}]}]},
+         {"text": "Give Katara a bottled tea to keep her going", "objectives": [{"do": "give_gift", "gift": "bottled-tea", "to": "Katara"}]},
+         {"text": "Tell Katara what you saw", "objectives": [{"do": "talk", "to": "Katara", "script": ["them (pleased): You watched the whole thing? Hm. Thank you.", "them: Next time, tell me the truth about my footwork."]}]},
+     ],
+     "endings": [{"key": "first-audience", "title": "Be her first audience", "about": "Her forms are steadier now, and she's glad someone was there to watch.",
+                  "rewards": [{"coins": 300}, {"gift": "bouquet"}]}]},
+    {"key": "southern-lights", "title": "The Southern Lights", "gates": 5,
+     "about": "It's the anniversary of Katara's mother's death. She wants company, not comfort, and she'll decide what that means at the end.",
+     "offer": ["them: Every year I light a candle at the shrine. This year I don't want to be alone with it.",
+               "them (dismayed): Don't make it a big thing. Just come."],
+     "stages": [
+         {"text": "Go to the shrine in the evening", "objectives": [{"do": "visit", "place": "shrine", "times": [2], "scene": "World: Katara, Shrine", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Win a duel with Katara: Saving Aang in your deck", "objectives": [{"do": "win_with", "card": "ATLA/WX04-079", "against": ["Katara"]}]},
+         {"text": "Stay with her until the candle's out", "objectives": [{"do": "talk", "to": "Katara", "script": ["them: The candle's still burning. Thank you for staying.", "them (pleased): Next year, you're bringing the good stew."]}]},
+     ],
+     "endings": [{"key": "stay-until-dawn", "title": "Stay until the candle burns down", "about": "Katara isn't alone with it any more, and she tells you so.",
+                  "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+]
+KATARA_SCENES = [
+    {"name": "World: Katara, Beach", "lines": [
+        "background dusk",
+        "me enters left with slide",
+        "me: Feet planted. Arms soft. Push... and I just got a face full of ocean.",
+        "player: Are you hurt?",
+        "me (pleased): Ha! No. Hold still, you've got a scrape. I can fix that.",
+        "me glows",
+        "me: I'm better than I thought. Mum would have laughed at me for doubting it.",
+        "me: Keep watching. I'm not finished yet.",
+    ]},
+    {"name": "World: Katara, Shrine", "lines": [
+        "background shrine",
+        "me enters center with fade",
+        "me: Mum's candle. I light one every year, even though this isn't our shrine.",
+        "player: It isn't silly.",
+        "me (dismayed): ...It's easier with someone sitting beside me.",
+        "me: Don't say anything nice yet. I'll cry.",
+        "me nods",
+        "me: Stay until it burns down. That's all I ask.",
+    ]},
+]
+
+SOKKA_QUESTS = [
+    {"key": "master-plan", "title": "The Master Plan", "gates": 2,
+     "about": "Sokka has a plan to win the town tournament, drawn across three cafe tables on napkins.",
+     "offer": ["them: I have a plan for the tournament. It's on napkins. Don't touch the napkins.",
+               "them (pleased): You can be part of it. Step three is still a bit open."],
+     "stages": [
+         {"text": "Hear the plan at the cafe at noon", "objectives": [{"do": "visit", "place": "cafe", "times": [1], "scene": "World: Sokka, Cafe", "rewards": [{"coins": 150}]}]},
+         {"text": "Have Sokka: Warrior of the Southern Water Tribe", "objectives": [{"do": "have_card", "card": "ATLA/WX04-077"}]},
+         {"text": "Tell Sokka what you think of the plan", "objectives": [{"do": "talk", "to": "Sokka", "script": ["them (dismayed): Sandwiches are not a strategy. ...Okay, they're part of one.", "them (pleased): Fine. You can have a napkin of your own."]}]},
+     ],
+     "endings": [{"key": "keep-the-plan", "title": "Keep the plan", "about": "Sokka's plan is still mostly sandwiches. He's very proud of it.",
+                  "rewards": [{"coins": 300}, {"gift": "instant-ramen"}]}]},
+    {"key": "space-sword", "title": "Space Sword", "gates": 5,
+     "about": "Sokka has forged a sword out of a meteorite and needs a worthy test. He's nervous about how it looks.",
+     "offer": ["them: I made a sword out of a meteorite. Don't laugh. It's just... black.",
+               "them (dismayed): I need someone to test it. Someone who won't tell me it's ugly."],
+     "stages": [
+         {"text": "Test the sword at the arena at noon", "objectives": [{"do": "visit", "place": "arena", "times": [1], "scene": "World: Sokka, Arena", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Beat Sokka in a duel", "objectives": [{"do": "defeat", "cpus": ["Sokka"]}]},
+         {"text": "Hear what Sokka thinks of the sword", "objectives": [{"do": "talk", "to": "Sokka", "script": ["them (pleased): It's not ugly. It's... a warrior's sword. Thank you.", "them: You're my best friend, and you're not allowed to say otherwise."]}]},
+     ],
+     "endings": [{"key": "wield-it", "title": "Wield the sword", "about": "Sokka carries the black blade into every fight from now on, and insists it's a lucky one.",
+                  "rewards": [{"coins": 700}, {"pack": "lucky_pack"}]}]},
+]
+SOKKA_SCENES = [
+    {"name": "World: Sokka, Cafe", "lines": [
+        "background cafe",
+        "me enters right with slide",
+        "me: Okay, nobody touch the napkins. This is the plan.",
+        "me: Step one: Aang distracts the enemy. Step two: I eat their lunch.",
+        "player: What's step three?",
+        "me (dismayed): ...Step three is an open problem.",
+        "me: You fix step three and I'll say it was my idea. Deal?",
+        "player: Deal.",
+        "me (pleased): Teamwork! Also, sandwiches.",
+    ]},
+    {"name": "World: Sokka, Arena", "lines": [
+        "background arena",
+        "me enters left with slide",
+        "me: Don't laugh. I forged this sword out of a meteorite.",
+        "player: It's black.",
+        "me (dismayed): It's a space sword. Black is the space colour.",
+        "me: Watch me cut this training dummy in half.",
+        "screen flash",
+        "me (pleased): Clean. Really clean. I'm a warrior now.",
+        "player: You always were one.",
+        "me: ...Don't tell anyone I got emotional.",
+    ]},
+]
+
+TOPH_QUESTS = [
+    {"key": "seismic-sense", "title": "Seismic Sense", "gates": 2,
+     "about": "Toph will only bother with someone who can \"see\" the way she does.",
+     "offer": ["them: You'll only get to know me if you can keep up. Don't worry, I'll make it easy. Mostly.",
+               "them (pleased): Take your shoes off. Then we'll see."],
+     "stages": [
+         {"text": "Go into the forest in the evening", "objectives": [{"do": "visit", "place": "forest", "times": [2], "scene": "World: Toph, Forest", "rewards": [{"pack": "climax_pack"}]}]},
+         {"text": "Give Toph an energy drink", "objectives": [{"do": "give_gift", "gift": "energy-drink", "to": "Toph"}]},
+         {"text": "Tell Toph what you noticed", "objectives": [{"do": "talk", "to": "Toph", "script": ["them (pleased): You heard the squirrel too. Okay. That's a yes.", "them: Don't let it go to your head. Heads are easy to hit."]}]},
+     ],
+     "endings": [{"key": "one-of-us", "title": "Be one of her people", "about": "Toph lets you into her short list. She'll never admit it, but she's glad.",
+                  "rewards": [{"coins": 350}, {"gift": "iced-coffee"}]}]},
+    {"key": "blind-bandit", "title": "The Blind Bandit", "gates": 5,
+     "about": "Toph's old Earth Rumble belt, and the family who never knew what she did with her life.",
+     "offer": ["them: I won the Earth Rumble when I was twelve. My parents never came to see it.",
+               "them (dismayed): I don't care. Don't look at me like that."],
+     "stages": [
+         {"text": "Meet Toph at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Toph, Arena", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Win a duel with Toph: The Blind Bandit in your deck", "objectives": [{"do": "win_with", "card": "ATLA/WX04-024", "against": ["Toph"]}]},
+         {"text": "Give Toph your answer", "objectives": [{"do": "talk", "to": "Toph", "script": ["them: You're the first person I didn't have to fight to be seen by.", "them (pleased): Heh. Sap. Don't tell anyone."]}]},
+     ],
+     "endings": [{"key": "keep-the-belt", "title": "Keep the belt", "about": "Toph gives you the belt and asks you to hold on to it for her, in case she misses it.",
+                  "rewards": [{"coins": 500}, {"pack": "lucky_pack"}]}]},
+]
+TOPH_SCENES = [
+    {"name": "World: Toph, Forest", "lines": [
+        "background forest",
+        "me enters right with drop",
+        "me: Shoes off. Eyes closed. Yes, you too.",
+        "player: Why?",
+        "me: Because I can hear every footstep in this forest. Including yours. Including the squirrel.",
+        "player: A squirrel?",
+        "me (pleased): Left, three trees back. Told you.",
+        "me: I'm showing off. Nobody ever asked me to show them anything before.",
+    ]},
+    {"name": "World: Toph, Arena", "lines": [
+        "background arena",
+        "me enters center with rise",
+        "me: Catch.",
+        "player: It's heavy. Is this a championship belt?",
+        "me (pleased): Earth Rumble, two years running. I stopped counting after I stopped going home.",
+        "me: My parents never came to watch me fight. I told them I didn't care.",
+        "player: Do you?",
+        "me (dismayed): ...Don't make me answer that.",
+    ]},
+]
+
+SIMON_THE_DIGGER_QUESTS = [
+    {"key": "dig-deeper", "title": "Dig Deeper", "gates": 2,
+     "about": "Simon's drill found something glowing under the old warehouse, and he's too scared to touch it alone.",
+     "offer": ["them: My drill found something under the warehouse. It's humming. Can you come look?",
+               "them (dismayed): Don't tell Kamina yet. He'll want to dig it up himself."],
+     "stages": [
+         {"text": "Go to the warehouse at night", "objectives": [{"do": "visit", "place": "warehouse", "times": [3], "scene": "World: Simon the digger, Warehouse", "rewards": [{"coins": 200}]}]},
+         {"text": "Have Team DAI-GURREN's Leader, Simon", "objectives": [{"do": "have_card", "card": "GL/S52-E062"}]},
+         {"text": "Tell Simon what you think it is", "objectives": [{"do": "talk", "to": "Simon the digger", "script": ["them (pleased): It's mine? Okay. Okay. I'll keep digging.", "them: Thank you for not laughing at me."]}]},
+     ],
+     "endings": [{"key": "keep-the-core", "title": "Keep the core", "about": "Simon keeps the glowing core in a box by his bed, and checks on it every morning.",
+                  "rewards": [{"coins": 350}, {"gift": "handheld"}]}]},
+    {"key": "kaminas-shades", "title": "Kamina's Shades", "gates": 5,
+     "about": "Simon wears Kamina's glasses for the first time, and they're far too big for him.",
+     "offer": ["them: Kamina left me his shades. I've never had the nerve to wear them.",
+               "them (dismayed): You're going to laugh. Just tell me if they look stupid."],
+     "stages": [
+         {"text": "Meet Simon in the plaza in the morning", "objectives": [{"do": "visit", "place": "plaza", "times": [0], "scene": "World: Simon the digger, Plaza", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Have Kamina", "objectives": [{"do": "have_card", "card": "GL/S52-E002"}]},
+         {"text": "Tell Simon how he looks", "objectives": [{"do": "talk", "to": "Simon the digger", "script": ["them (pleased): You think I look like Kamina? Thanks.", "them: Okay, I'm wearing them. That's the first step."]}]},
+     ],
+     "endings": [{"key": "wear-them", "title": "Wear them proudly", "about": "Simon wears the shades to every duel. He says Kamina would have made fun of him for it.",
+                  "rewards": [{"coins": 600}, {"gift": "sunglasses"}]}]},
+]
+SIMON_THE_DIGGER_SCENES = [
+    {"name": "World: Simon the digger, Warehouse", "lines": [
+        "background ruins",
+        "me enters left with rise",
+        "me: Don't step near the hole. It's deep. I mean really deep.",
+        "me: I found this under the warehouse. It hums when I hold it.",
+        "player: Let me see.",
+        "me (dismayed): Wait. ...Okay. Careful.",
+        "me: It's warm. Like a heartbeat. I think it's... mine.",
+        "player: Yours?",
+        "me (pleased): I found it. Me. ...Don't laugh, okay?",
+    ]},
+    {"name": "World: Simon the digger, Plaza", "lines": [
+        "background sakura",
+        "me enters center with fade",
+        "me: Kamina's shades. They're way too big. I look like a bug.",
+        "player: You look good.",
+        "me (dismayed): ...Thanks. Really?",
+        "me: Kamina always said who the hell do you think we are. I always said it wrong.",
+        "me (pleased): So I'm going to say it my way. Simon. Digger. Your friend.",
+        "me bounces",
+    ]},
+]
+
+SIMON_QUESTS = [
+    {"key": "row-row", "title": "Row, Row", "gates": 2,
+     "about": "Grown-up Simon can't sleep and goes up to the rooftop to look at the stars.",
+     "offer": ["them: I can't sleep. I keep going up to the rooftop to look at the stars.",
+               "them (pleased): Come up and count them with me. You'll be bored, but you'll be there."],
+     "stages": [
+         {"text": "Go up to the rooftop in the evening", "objectives": [{"do": "visit", "place": "rooftop", "times": [2], "scene": "World: Simon, Rooftop", "rewards": [{"coins": 200}]}]},
+         {"text": "Have Piercing Sentiments, Simon & Nia", "objectives": [{"do": "have_card", "card": "GL/S52-E074"}]},
+         {"text": "Tell Simon what you saw up there", "objectives": [{"do": "talk", "to": "Simon", "script": ["them: You think people get to keep the ones they lose? ...Thanks for saying it.", "them (pleased): Keep looking up with me, partner."]}]},
+     ],
+     "endings": [{"key": "keep-looking-up", "title": "Keep looking up", "about": "Simon still goes to the rooftop at night. Now he tells you about the stars he's named.",
+                  "rewards": [{"coins": 400}, {"gift": "earbuds"}]}]},
+    {"key": "pierce-the-heavens", "title": "Pierce the Heavens", "gates": 5,
+     "about": "The Anti Spiral says evolution must stop. Simon disagrees, and the sky goes wrong while he decides.",
+     "offer": ["them (dismayed): The Anti Spiral sent me a message. I'm not going to answer it alone.",
+               "them: Will you watch while I decide?"],
+     "stages": [
+         {"text": "Be with Simon on the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Simon, Rooftop (night)", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Beat the Anti Spiral in a duel", "objectives": [{"do": "defeat", "cpus": ["Anti Spiral"]}]},
+         {"text": "Give Simon your answer", "objectives": [{"do": "talk", "to": "Simon", "script": ["them: I've made my choice. Let's see whose drill pierces deeper.", "them (pleased): Stand with me, then."]}]},
+     ],
+     "endings": [
+         {"key": "pierce", "title": "Pierce the heavens", "about": "Simon refuses the Anti Spiral's offer and breaks through the limit. The Anti Spiral's Best friend quest is closed for good.",
+          "locks": ["the-spiral-nemesis"], "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "hold-the-sky", "title": "Hold the sky", "about": "Simon turns the offer down, but leaves the Anti Spiral room to change its mind.",
+          "rewards": [{"coins": 500}, {"gift": "playmat"}]},
+     ]},
+]
+SIMON_SCENES = [
+    {"name": "World: Simon, Rooftop", "lines": [
+        "background rooftop",
+        "me enters right with slide",
+        "me: Can't sleep. Came up to look at the stars. Nia liked them.",
+        "player: Which ones?",
+        "me (pleased): That cluster there. It looks like a drill. She named it. Terrible name.",
+        "me: I keep wondering if people get to keep the ones they lose.",
+        "player: I think you do.",
+        "me (dismayed): ...I'm not sure I believe it yet. Stay up with me a little?",
+    ]},
+    {"name": "World: Simon, Rooftop (night)", "lines": [
+        "background night",
+        "me enters center with rise",
+        "me: The sky's wrong tonight. It's too still.",
+        "player: What's happening?",
+        "me (dismayed): The Anti Spiral sent an offer. A finished universe. No more growing. No more losing anyone.",
+        "me: I'm going to say no. I wanted you to hear it from me first.",
+        "player: What will you do?",
+        "me (pleased): Pierce it. With you watching.",
+    ]},
+]
+
+KITTAN_QUESTS = [
+    {"key": "black-siblings", "title": "Black Siblings", "gates": 2,
+     "about": "Kittan is trying to buy presents for his three sisters, and he can't tell which one wants what.",
+     "offer": ["them: Three presents, three sisters, and one of me. Help me pick, will ya?",
+               "them (pleased): Don't tell 'em I asked. They'll think I've gone soft."],
+     "stages": [
+         {"text": "Meet Kittan in the plaza at noon", "objectives": [{"do": "visit", "place": "plaza", "times": [1], "scene": "World: Kittan, Plaza", "rewards": [{"coins": 150}]}]},
+         {"text": "Give Kittan an iced coffee", "objectives": [{"do": "give_gift", "gift": "iced-coffee", "to": "Kittan"}]},
+         {"text": "Tell Kittan what you decided", "objectives": [{"do": "talk", "to": "Kittan", "script": ["them (pleased): Same present for all three? Genius! Ha!", "them: You're my right-hand, you know that?"]}]},
+     ],
+     "endings": [{"key": "deliver", "title": "Deliver the presents", "about": "The sisters get identical presents and fight over them anyway. Kittan is thrilled.",
+                  "rewards": [{"coins": 300}, {"gift": "sunglasses"}]}]},
+    {"key": "last-stand", "title": "Last Stand", "gates": 5,
+     "about": "Kittan talks about what courage costs, and what he'd do when it all comes down to one charge.",
+     "offer": ["them: You ever think about what you'd do at the end? One big charge, no way back?",
+               "them (dismayed): ...Forget I said anything. Just come fight with me."],
+     "stages": [
+         {"text": "Meet Kittan at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Kittan, Arena", "rewards": [{"pack": "climax_pack"}]}]},
+         {"text": "Win a duel with King Kittan in your deck", "objectives": [{"do": "win_with", "card": "GL/S52-E004", "against": ["Kittan"]}]},
+         {"text": "Give Kittan your answer", "objectives": [{"do": "talk", "to": "Kittan", "script": ["them: No charging off alone, you say? ...Okay, that's fair.", "them (pleased): Then we go together. KING KITTAN, DOUBLE-TEAM!"]}]},
+     ],
+     "endings": [{"key": "charge-together", "title": "Charge together", "about": "Kittan promises not to charge in alone. He doesn't always keep it, but he means it.",
+                  "rewards": [{"coins": 700}, {"pack": "lucky_pack"}]}]},
+]
+KITTAN_SCENES = [
+    {"name": "World: Kittan, Plaza", "lines": [
+        "background sakura",
+        "me enters left with slide",
+        "me: Three presents. Three sisters. One of me. I'm not good at this.",
+        "player: Which sister gets which?",
+        "me (dismayed): That's the problem! They all want the bigger present.",
+        "player: Give them the same gift, then.",
+        "me (pleased): Genius! My sisters would fight anyone for each other, and they'd fight me for the best one.",
+        "me bounces",
+    ]},
+    {"name": "World: Kittan, Arena", "lines": [
+        "background arena",
+        "me enters center with fade",
+        "me: I wrap my fists before every fight. Even the friendly ones.",
+        "player: Why the friendly ones?",
+        "me (dismayed): Because courage isn't free. It costs you something every time you charge in.",
+        "me: I'd charge in first, every time. Even if I was the only one.",
+        "player: You wouldn't be alone.",
+        "me (pleased): ...Yeah, okay. Then remember me loud.",
+    ]},
+]
+
+YOKO_QUESTS = [
+    {"key": "long-range-support", "title": "Long-Range Support", "gates": 2,
+     "about": "Yoko wants a spotter for target practice, and someone to call the wind.",
+     "offer": ["them: I need a spotter. Someone who can call the wind and not panic.",
+               "them (pleased): Bring your eyes. Leave the shouting at home."],
+     "stages": [
+         {"text": "Go to the beach at noon", "objectives": [{"do": "visit", "place": "beach", "times": [1], "scene": "World: Yoko, Beach", "rewards": [{"coins": 200}]}]},
+         {"text": "Have Special Lesson, Yomako", "objectives": [{"do": "have_card", "card": "GL/S52-E019"}]},
+         {"text": "Tell Yoko how the shots went", "objectives": [{"do": "talk", "to": "Yoko", "script": ["them (pleased): Six for six. You've got good eyes.", "them: Next time I'll miss on purpose. You'll know it when you see it."]}]},
+     ],
+     "endings": [{"key": "spotter", "title": "Be her spotter", "about": "Yoko asks you to spot for her any time she's on the beach. It's the highest praise she gives.",
+                  "rewards": [{"coins": 300}, {"gift": "iced-coffee"}]}]},
+    {"key": "teacher-yoko", "title": "Teacher Yoko", "gates": 5,
+     "about": "After the war, Yoko wants to teach. She's scared the kids won't listen to a sniper.",
+     "offer": ["them: I'm writing a lesson plan. It's mostly stick figures.",
+               "them (dismayed): Don't laugh. I've never taught anyone anything."],
+     "stages": [
+         {"text": "Meet Yoko in the plaza in the evening", "objectives": [{"do": "visit", "place": "plaza", "times": [2], "scene": "World: Yoko, Plaza", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Have New Teacher, Yomako", "objectives": [{"do": "have_card", "card": "GL/S52-E028"}]},
+         {"text": "Listen to Yoko's first lesson", "objectives": [{"do": "talk", "to": "Yoko", "script": ["them (pleased): You listened. Really listened. Okay, that's my first student.", "them: Thank you, {player}. I'll tell the kids you were the test."]}]},
+     ],
+     "endings": [{"key": "start-the-class", "title": "Start the class", "about": "Yoko runs her first class, and the kids listen. Mostly because she's scary.",
+                  "rewards": [{"coins": 500}, {"pack": "lucky_pack"}]}]},
+]
+YOKO_SCENES = [
+    {"name": "World: Yoko, Beach", "lines": [
+        "background beach",
+        "me enters right with slide",
+        "me: Cans on the rocks. Wind's from the left. Call it.",
+        "player: Left. Low. Six cans.",
+        "me: ...Six. Every single one. Sweet.",
+        "me: And I'll miss the seventh on purpose, so you don't get cocky.",
+        "player: Ha. Okay.",
+        "me (pleased): Good eyes. Keep 'em open next time.",
+    ]},
+    {"name": "World: Yoko, Plaza", "lines": [
+        "background dusk",
+        "me enters center with fade",
+        "me: I drew a lesson plan. Three pages. It's mostly stick figures.",
+        "player: Show me.",
+        "me (dismayed): ...I'm scared the kids won't listen. Nobody listens to a sniper who talks.",
+        "player: I'd listen.",
+        "me (pleased): Then practise on me. Go on, teach me something.",
+    ]},
+]
+
+LORD_GENOME_QUESTS = [
+    {"key": "spiral-kings-library", "title": "The Spiral King's Library", "gates": 2,
+     "about": "Lord Genome wants someone to read the old histories to, and to correct them when they're wrong.",
+     "offer": ["them: The histories of the surface are full of errors. I will not read them alone.",
+               "them (pleased): Come to the library. Bring your ears, not your opinions."],
+     "stages": [
+         {"text": "Go to the library at noon", "objectives": [{"do": "visit", "place": "library", "times": [1], "scene": "World: Lord Genome, Library", "rewards": [{"coins": 200}]}]},
+         {"text": "Have Tyrant of Teppelin, Lordgenome", "objectives": [{"do": "have_card", "card": "GL/S52-E043"}]},
+         {"text": "Tell Lord Genome whether you agree", "objectives": [{"do": "talk", "to": "Lord Genome", "script": ["them (pleased): You disagree with the chronicle. Good. Now you have a reason to listen.", "them: Return tomorrow. The king has more to say."]}]},
+     ],
+     "endings": [{"key": "hear-chronicle", "title": "Hear the chronicle", "about": "Lord Genome reads you the whole chronicle, with its errors fixed by memory.",
+                  "rewards": [{"coins": 400}, {"gift": "manga"}]}]},
+    {"key": "the-last-lesson", "title": "The Last Lesson", "gates": 5,
+     "about": "Lord Genome warns you what's waiting beyond the spiral, and why he ruled by fear.",
+     "offer": ["them: There is a warning I must give. It will not be pleasant.",
+               "them (dismayed): Do not interrupt. I have had a thousand years to rehearse it."],
+     "stages": [
+         {"text": "Go to the shrine at night", "objectives": [{"do": "visit", "place": "shrine", "times": [3], "scene": "World: Lord Genome, Shrine", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Win a duel with Two Faces, Enki in your deck", "objectives": [{"do": "win_with", "card": "GL/S52-E049", "against": ["Lord Genome"]}]},
+         {"text": "Hear Lord Genome out to the end", "objectives": [{"do": "talk", "to": "Lord Genome", "script": ["them: You did not kneel. Remember that when they come.", "them (pleased): Carry the warning. I ask nothing back."]}]},
+     ],
+     "endings": [{"key": "carry-warning", "title": "Carry the warning", "about": "You carry Lord Genome's warning out of the shrine. He asked nothing for it, which is how you know it matters.",
+                  "rewards": [{"coins": 700}, {"gift": "bottled-tea"}]}]},
+]
+LORD_GENOME_SCENES = [
+    {"name": "World: Lord Genome, Library", "lines": [
+        "background library",
+        "me enters center with fade",
+        "me: Sit. This chronicle is wrong about the third age. Listen closely.",
+        "me: The historians wrote that the surface was empty. It was not. I was there.",
+        "player: You're making that up.",
+        "me (dismayed): I do not make things up. I embellish. There is a difference.",
+        "me: Tell me honestly. Would you have made my choices?",
+        "player: No.",
+        "me (pleased): Good. You are less foolish than most. Sit again tomorrow.",
+    ]},
+    {"name": "World: Lord Genome, Shrine", "lines": [
+        "background shrine",
+        "me enters center with fade",
+        "me: The Anti-Spirals came before the spiral kings. I watched them come.",
+        "me: They erased whole worlds. I could not stop them, so I caged humanity instead.",
+        "player: You did it to protect them.",
+        "me (dismayed): I did it because I was afraid. Protection was my excuse.",
+        "me: Carry this warning. If they come again, do not kneel.",
+        "me (pleased): I ask nothing back. Only that you remember I was honest.",
+    ]},
+]
+
+ANTI_SPIRAL_QUESTS = [
+    {"key": "observation", "title": "Observation", "gates": 2,
+     "about": "The Anti Spiral studies the player like a specimen, and records every answer without judging it.",
+     "offer": ["them: Spiral life form designate: {player}. Observation begins. Answer truthfully.",
+               "them: Your answers will be recorded. Judgement is not required."],
+     "stages": [
+         {"text": "Be observed in the library in the evening", "objectives": [{"do": "visit", "place": "library", "times": [2], "scene": "World: Anti Spiral, Library", "rewards": [{"pack": "climax_pack"}]}]},
+         {"text": "Have Messenger Nia", "objectives": [{"do": "have_card", "card": "GL/S52-E090"}]},
+         {"text": "Give the Anti Spiral your final answer", "objectives": [{"do": "talk", "to": "Anti Spiral", "script": ["them: Hope without evidence. Acceptable. Logged.", "them (pleased): Observation complete. You are... retained."]}]},
+     ],
+     "endings": [{"key": "retained", "title": "Let it record you", "about": "The Anti Spiral keeps a file on you now. It calls the file friendship, and it isn't wrong.",
+                  "rewards": [{"coins": 400}, {"gift": "bottled-tea"}]}]},
+    {"key": "the-spiral-nemesis", "title": "The Spiral Nemesis", "gates": 5,
+     "about": "The Anti Spiral offers the player a quiet, finished universe, and asks for help persuading Simon to stop.",
+     "offer": ["them: We have watched countless spirals burn out. I am considering a different outcome.",
+               "them (dismayed): Do not interpret this as sentiment. It is a hypothesis."],
+     "stages": [
+         {"text": "Meet the Anti Spiral on the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Anti Spiral, Rooftop", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Have Ultimate Universal Diablo, Granzeboma", "objectives": [{"do": "have_card", "card": "GL/S52-E091"}]},
+         {"text": "Give the Anti Spiral your answer", "objectives": [{"do": "talk", "to": "Anti Spiral", "script": ["them: You have heard the offer. Now decide.", "them (dismayed): ...Your answer is recorded. Designate: warmth."]}]},
+     ],
+     "endings": [
+         {"key": "accept-the-limit", "title": "Accept the limit", "about": "The Anti Spiral accepts the limit on evolution and asks you to make Simon accept it too. Simon's Best friend quest is closed for good.",
+          "locks": ["pierce-the-heavens"], "rewards": [{"coins": 800}, {"pack": "level_pack"}]},
+         {"key": "grow-beyond", "title": "Let evolution go on", "about": "The Anti Spiral sets its hypothesis aside. Simon's road to the heavens stays open.",
+          "rewards": [{"coins": 500}, {"gift": "manga"}]},
+     ]},
+]
+ANTI_SPIRAL_SCENES = [
+    {"name": "World: Anti Spiral, Library", "lines": [
+        "background library",
+        "me enters center with fade",
+        "me: Why do you read? Why do you hope? Answer. Recording.",
+        "player: Because I want to know what happens next.",
+        "me: Logged. Hope without evidence. Acceptable.",
+        "player: Why do you ask so many questions?",
+        "me (dismayed): ...Observation is what we do. It is also lonely, when no one answers.",
+        "me: Continue. The record is not finished.",
+    ]},
+    {"name": "World: Anti Spiral, Rooftop", "lines": [
+        "background night",
+        "me enters center with fade",
+        "me: Look at the sky. No growth. No loss. A finished universe.",
+        "player: It looks empty.",
+        "me (pleased): Empty is safe. Nothing can be lost that was never there.",
+        "me: Simon will receive the offer. Help me persuade him to stop.",
+        "player: Persuade him how?",
+        "me (dismayed): Tell him the truth. The sky has limits, and we set them.",
+    ]},
+]
+
 CAST = [
     cpu("Aang", "warm", quests=AANG_QUESTS, extra_scenes=AANG_SCENES,
         haunts=[("plaza", "wk", "01", 60), ("beach", "we", "12", 50), ("shrine", "035", "0", 35), ("cafe", "246", "2", 30)],
         tastes=(["cute"], ["sweet", "game", "calm"], ["spicy"]),
         lines={
+            "mid": {"1": ["them (pleased): Oh, hey again! You're getting easier to talk to, you know.", "them: So, what's your favourite thing about this town? Mine's the bison.", "them: Monk Gyatso taught me to listen first. You're pretty good at that.", "them (pleased): Have you tried the egg custard tarts yet? They're so good.", "them: Do you ever feel like the whole world is waiting on you? Me too, sometimes."], "3": ["them (pleased): Hey, {player}! You know you're basically Team Avatar now?", "them: I haven't told Katara this, but I'm glad you're around more than she thinks.", "them (pleased): Want to try the air scooter? Okay, maybe after a duel, like I said.", "them: Sometimes I still feel like a kid in a monk's robe. You help with that.", "them (pleased): Momo keeps stealing your food. Is that a sign he likes you?"], "5": ["them (pleased): {player}, I'd fly across the whole world for you. Just saying.", "them: You're the one I tell about the iceberg. Nobody else gets that.", "them (pleased): Okay, I've been practising airbending for you. Watch this.", "them: When all this is over, we're still doing the egg tarts together, right?", "them (pleased): Best friend, come on. There's a whole sky out there, and I want to share it."]},
+            "hello_steps": [["them: Oh, hi! Sorry, I'm trying to find my bison. Have you seen him?", "them: Hey there. Is this your first time in town?"], ["them (pleased): Hi, {player}! Still looking for Appa. Want to help?", "them: Oh, it's you! Did you come to duel or just to say hi?"], ["them (pleased): {player}! Good, you're here. I was just telling Momo about you.", "them (pleased): Hey, {player}! Ready for some fun today?"], ["them (pleased): {player}! You're the best! Come on, I want to show you something.", "them (pleased): Look who's back! Momo, it's {player}!"], ["them (pleased): {player}! Oh, I missed you. Things are never boring when you show up.", "them (pleased): Hey, {player}. Come sit with me. Just a minute."], ["them (pleased): {player}, my best friend! Air scooter time? Please say yes.", "them (pleased): {player}! Hi! You made my whole day, you know that?"]],
+            "bye_steps": [["them: See you! Watch out for falling bison.", "them: Okay, bye! Don't get lost in the maze!"], ["them: Later! Don't forget to come back soon.", "them (pleased): Bye, {player}! Have fun out there!"], ["them (pleased): See you later, {player}! Come back soon!", "them (pleased): Okay, go! Don't forget to visit!"], ["them (pleased): Go on, {player}! I'll be right here when you're back.", "them (pleased): Bye, {player}! Keep out of trouble!"], ["them (pleased): Come back soon, {player}. I'll miss our talks.", "them (pleased): Take care, {player}. Don't keep me waiting too long!"], ["them (pleased): Go, go! But come back. Always come back, {player}.", "them (pleased): Bye, best friend. See you soon!"]],
             "hello": ["them: Oh, hey! Are you lost? This place is kind of a maze.", "them (pleased): {player}! Perfect timing, I was just getting bored.", "them (pleased): {player}! Momo, look who it is!"],
             "bye": ["them: Okay, bye! Watch out for falling bison.", "them (pleased): See you later! Don't forget to have fun!", "them (pleased): Come back soon, okay? Things are more fun with you around."],
             "hi": ["them (pleased): Hi! I'm Aang. Want to see an air scooter? ...Okay, maybe after a duel.",
@@ -119,10 +560,13 @@ CAST = [
               "me: So, best friends? Real ones. The kind who'd fly across the world for each other.",
               "player: Real ones.", "me (intro): Then let's go! There's a whole world to show you, and I'm buying the egg custard tarts!"]),
 
-    cpu("Katara", "warm",
+    cpu("Katara", "warm", quests=KATARA_QUESTS, extra_scenes=KATARA_SCENES,
         haunts=[("beach", "wk", "12", 60), ("plaza", "we", "01", 45), ("shrine", "24", "2", 30), ("cafe", "013", "0", 30)],
         tastes=(["calm"], ["flowers", "food", "cute"], ["spicy"]),
         lines={
+            "mid": {"1": ["them: You're still here. I didn't expect that. Good.", "them: Have you ever been to the Southern Water Tribe? It's cold, but it's home.", "them: Sokka says you're alright. I'm still deciding.", "them: I practise my forms at dawn. You can watch, if you're up early.", "them: My mother used to sing when she worked. I still hum it sometimes."], "3": ["them (pleased): You've been good company lately. Don't let it go to your head.", "them: When Aang's too serious, I know you'll make him laugh. Thank you for that.", "them (pleased): You remembered the tea I like. Nobody remembers things like that.", "them: Sometimes I miss the ocean at home. You make it feel closer.", "them (pleased): I trust you with the healing scrolls. That's a big deal, you know."], "5": ["them (pleased): {player}, you're family now. Water Tribe family, the good kind.", "them: I'd keep your back in any fight, the way you keep mine.", "them (pleased): I've been saving a necklace for someone special. I think it's time you have it.", "them: When I think about who I'd call at midnight, it's always you.", "them (pleased): Come sit with me by the water. It's quiet, and I want you here."]},
+            "hello_steps": [["them: Hello. Did you want something?", "them: Oh. You're here. Okay."], ["them: Hi. You look like you could use something warm to drink.", "them: Hello. Want to sit by the water with me?"], ["them (pleased): {player}. Good. Have you been eating properly?", "them (pleased): Hi, {player}. You look like you need rest."], ["them (pleased): {player}, there you are. I was hoping I'd see you today.", "them (pleased): {player}! Good to see you. Sit, sit."], ["them (pleased): {player}. You're the first person I wanted to see this morning.", "them (pleased): Hey, {player}. Did you bring the good tea?"], ["them (pleased): {player}! My favourite waterbender's favourite person. Come here.", "them (pleased): {player}, I've been waiting all day. Stay a while."]],
+            "bye_steps": [["them: Take care of yourself.", "them: Mind the tides out there."], ["them: Be safe out there.", "them: Goodbye. Don't walk too far."], ["them (pleased): Be safe, {player}.", "them (pleased): Bye, {player}. Eat something on the way."], ["them (pleased): Don't go too far, {player}. I mean it.", "them (pleased): Go on, {player}. I'll be watching the water."], ["them (pleased): Come back soon, {player}. The house is quieter without you.", "them (pleased): Take care, {player}. Let me know when you're home safe."], ["them (pleased): Come back soon. I'll keep the stew warm for you, {player}.", "them (pleased): Bye, {player}. You're family. You know that?"]],
             "hello": ["them: Hello. Do you need something?", "them (pleased): {player}, there you are. Have you been eating properly?", "them (pleased): {player}! Come here. I was hoping I'd see you today."],
             "bye": ["them: Take care of yourself.", "them (pleased): Be safe out there, {player}.", "them (pleased): Don't go too far. I mean it. Come back soon."],
             "hi": ["them: Hi, I'm Katara, from the Southern Water Tribe. You look like you could use a friendly face.",
@@ -153,10 +597,13 @@ CAST = [
               "me (pleased): Then it's settled. You're family now. Water Tribe family.",
               "me: And Water Tribe family gets the good stew. Come on."]),
 
-    cpu("Sokka", "warm",
+    cpu("Sokka", "warm", quests=SOKKA_QUESTS, extra_scenes=SOKKA_SCENES,
         haunts=[("cafe", "wk", "12", 60), ("beach", "we", "01", 50), ("plaza", "135", "2", 35), ("arena", "024", "1", 25)],
         tastes=(["food"], ["game", "cool", "spicy"], ["calm"]),
         lines={
+            "mid": {"1": ["them: So you're the new one. Sokka's got the plan. Want a napkin?", "them: Quick question: boomerang or sword? It's a test. Answer quickly.", "them: Is it weird that I'm glad you showed up? Don't answer that.", "them: I've been practising my jokes on Aang. He's a tough crowd.", "them: You look like someone who'd be good in a fight. Strategy-wise, I mean."], "3": ["them (pleased): Hey, my favourite audience! You laugh at the right moments.", "them: I was going to tell you the plan, but I think you'd just laugh at the sandwiches.", "them (pleased): You helped me win that tournament, sort of. Mostly you helped.", "them: Don't tell Katara, but I wrote you into the plan as a key asset. Again.", "them (pleased): Ever notice how we always end up at the same cafe? Destiny, probably."], "5": ["them (pleased): {player}, my best friend, if you ever need a plan, I'm your guy.", "them: I wrote you a real haiku this time. It's only four syllables off.", "them (pleased): You're the one person I'd let see me without the armour.", "them: When this all ends, let's go to the beach with a boomerang. Just us.", "them (pleased): Hey, best friend, you're the strategy I didn't know I needed."]},
+            "hello_steps": [["them: Can I help you? Sokka's open for business. Mostly.", "them: Hey. Want to hear a plan? It's a good one."], ["them: Sokka, warrior, strategist. You've heard of me. Right?", "them: Oh, a new face. Want a sandwich? It's for strategy."], ["them (pleased): {player}! My favourite audience. Want to hear a joke?", "them (pleased): Hey, {player}. I've got a new plan. Don't laugh."], ["them (pleased): {player}! My partner in strategy! Got a new idea for you.", "them (pleased): {player}! Did you come to hear my latest brilliant scheme?"], ["them (pleased): {player}! Glad you're here. I was just doing the math on our next duel.", "them (pleased): {player}! Good timing. I need a second opinion on boomerangs."], ["them (pleased): {player}! My best friend and best strategist. Come in, come in!", "them (pleased): {player}! The plan's ready and it's got your name on it!"]],
+            "bye_steps": [["them: Alright, see ya. Sokka out.", "them: Later. Don't trip on any plans."], ["them: See ya. Don't get eaten by anything.", "them: Bye. Watch the boomerang."], ["them (pleased): Later, {player}! Boomerang always comes back.", "them (pleased): See ya, {player}! Stay out of trouble!"], ["them (pleased): Go on, {player}. My plans need you back soon.", "them (pleased): Bye, {player}! Save me a seat at the next strategy meeting!"], ["them (pleased): Don't be gone long, {player}. I'll have new snacks.", "them (pleased): Later, {player}. Stay safe, okay? I'm serious."], ["them (pleased): Go, {player}! But come back. Boomerang rules.", "them (pleased): Bye, best friend! Don't forget the plan!"]],
             "hello": ["them: Can I help you? Sokka's open for business. Well, open-ish.", "them (pleased): {player}! My favourite audience. Want to hear a joke?", "them (pleased): There's my partner in strategy! I've got a new plan. It's great."],
             "bye": ["them: Alright, see ya. Sokka out.", "them (pleased): Later! Remember: boomerang always comes back. So should you.", "them (pleased): Don't be gone long. My plans need a second opinion."],
             "hi": ["them: Sokka. Warrior. Strategist. Meat and sarcasm guy. You've probably heard of me.",
@@ -187,10 +634,13 @@ CAST = [
               "choice", "- Your secret's safe.", "- I'm telling Aang immediately.",
               "me (intro): Okay, best friend celebration. I know a place with the best sea prunes. Kidding! It's meat."]),
 
-    cpu("Toph", "aloof",
+    cpu("Toph", "aloof", quests=TOPH_QUESTS, extra_scenes=TOPH_SCENES,
         haunts=[("arena", "wk", "12", 65), ("forest", "we", "12", 40), ("plaza", "246", "2", 30)],
         tastes=(["sporty"], ["food", "spicy", "cool"], ["fancy"]),
         lines={
+            "mid": {"1": ["them: You walk like you're trying not to be noticed. Adorable.", "them: Tell me something I can't feel through the ground. Go on.", "them: Your heartbeat's getting less nervous. That's progress.", "them: I can tell when you're lying. Don't try it.", "them: Fine, you can sit on the rock next to me. Don't make it weird."], "3": ["them (pleased): You actually made me laugh. Don't tell the others.", "them: I let you feel the earth move. Most people scream. You didn't.", "them (pleased): You're going to be a great earthbender someday, if you keep at it.", "them: You're the one I wanted to see after the tournament. Not Aang. You.", "them (pleased): Okay, you can call me Toph in private. Not Greatest Earthbender."], "5": ["them (pleased): {player}, my best friend. I'll never say it in front of Sokka.", "them: You stayed when I was a pain. That's the whole reason I trust you.", "them (pleased): Come on, let's go to the arena and beat up some rocks together.", "them: I can feel you from across town now. That's how much I notice you.", "them (pleased): Best friend, you know what I'd do for you? Anything. Don't tell anyone."]},
+            "hello_steps": [["them: I heard you coming a mile off. What do you want?", "them: Your footsteps are loud. Are you always like that?"], ["them: Oh, it's you. Your heartbeat's still nervous. Relax.", "them: Hey. Don't make me come find you next time."], ["them (pleased): {player}. Took you long enough. I felt you coming.", "them (pleased): Hey, {player}. Your footsteps are getting less annoying."], ["them (pleased): {player}! Got a fight in mind? Or just an awkward hello?", "them (pleased): It's {player}! I could feel you from the other side of town."], ["them (pleased): {player}. Good. I wanted to see your face, but I'll take the footsteps.", "them (pleased): {player}! Come sit on the ground with me. Feel that?"], ["them (pleased): {player}! My best friend, which I'll never admit to anyone else.", "them (pleased): Oh, {player}. Glad I can feel you. That's the best part of my day."]],
+            "bye_steps": [["them: Yeah, yeah. Go on.", "them: Try not to trip over anything."], ["them: Later. Don't fall in a ditch.", "them: Bye. I'll feel you leaving."], ["them (pleased): Later, {player}. Try not to step on any rocks.", "them (pleased): Bye, {player}. Don't make me come find you."], ["them (pleased): Go, {player}. I'll feel you coming back.", "them (pleased): See you, {player}. Stay on solid ground."], ["them (pleased): Come back soon, {player}. The ground's boring without you.", "them (pleased): Bye, {player}. Don't get lost."], ["them (pleased): Go on. You'll be back, I can feel it, {player}.", "them (pleased): Bye, best friend. Give that earth a kick for me."]],
             "hello": ["them: I heard you coming a mile off. What do you want?", "them (pleased): Hey, it's the one with the nervous feet. What's up?", "them (pleased): Took you long enough, Twinkletoes number two."],
             "bye": ["them: Yeah, yeah. Go on.", "them (pleased): Later. Try not to trip over anything.", "them (pleased): Don't make me come find you. I will. I'll feel you coming."],
             "hi": ["them: You walk like a pushover. Your heartbeat says you're nervous. Relax, I don't bite. Much.",
@@ -224,6 +674,9 @@ CAST = [
         haunts=[("rooftop", "all", "23", 70), ("warehouse", "1356", "3", 50), ("arena", "024", "1", 35, 2)],
         tastes=(["fancy"], ["cool", "spicy"], ["cute"]),
         lines={
+            "mid": {"1": ["them: I suppose you're worth a few minutes of my time now.", "them: You surprised me once. I don't like being surprised. Try not to do it again.", "them: What would you do with the throne, if you had it? Answer honestly.", "them: Ty Lee thinks you're amusing. I think you're useful.", "them: Sit. You may ask me one question today. Only one."], "3": ["them (pleased): You've proven yourself more than I expected. Don't let it show.", "them: I keep my plans from most people. You've earned a glimpse of one.", "them (pleased): Zuko's been asking about you. He's pathetic, but he's not wrong.", "them: My coronation is coming. You'll have a place beside me, if you want it.", "them (pleased): You're the only one who isn't afraid of me, which is inconvenient."], "5": ["them (pleased): {player}, I trust you more than anyone else in this palace.", "them: You're the only one I'd let stand beside the throne.", "them (pleased): Stay with me tonight. I don't like the dark when I'm thinking.", "them: If the Avatar ever comes for me, I'd want you on my side. That's a rare thing for me to say.", "them (pleased): Best friend, you're my one ally. Don't waste it on anyone else."]},
+            "hello_steps": [["them: You're in my light. Move.", "them: You're standing in the wrong place. Go."], ["them: You again. Keep your distance.", "them: Oh. It's you. I suppose you may speak."], ["them: {player}. You're punctual. I expected worse.", "them: Ah, {player}. You may approach. Briefly."], ["them (pleased): {player}. Good. Sit. I have something to show you.", "them (pleased): {player}. You're finally here. About time."], ["them (pleased): {player}. I'd hoped you'd come. Don't let it go to your head.", "them (pleased): {player}. You're welcome here. You know that much."], ["them (pleased): {player}. Stay close. You're the one person I let stand beside me.", "them (pleased): {player}. Come here. The crown can wait a minute."]],
+            "bye_steps": [["them: You're dismissed.", "them: Go. I've seen enough of you."], ["them: You may go. I'll allow it.", "them: Leave. Don't let the door hit you."], ["them: Go, then. Don't keep me waiting.", "them: Dismissed. And don't be late."], ["them (pleased): Go. Come back when you have something worth my time.", "them (pleased): Off you go, {player}. Be ready when I call."], ["them (pleased): Go, {player}. I'll be watching the sky until you return.", "them (pleased): Take care, {player}. You're not disposable, which is rare."], ["them (pleased): Go. Come back soon, {player}. I don't like being without my one ally.", "them (pleased): Bye, {player}. Return safely. That's not a request."]],
             "hello": ["them: You're blocking my light.", "them: You again. At least you're punctual.", "them (pleased): Ah. You. I was beginning to think I'd have to summon you."],
             "bye": ["them: You're dismissed.", "them: You may go. I'll allow it.", "them (pleased): Go, then. Don't keep me waiting next time."],
             "hi": ["them: You're standing in the presence of royalty. A bow would be appropriate.",
@@ -256,10 +709,13 @@ CAST = [
               "me (intro): ...If you tell anyone I said this, I'll deny it. But you're my friend. My only real one.",
               "me (pleased): Now go. Before I say anything else embarrassing."]),
 
-    cpu("Simon the digger", "warm",
+    cpu("Simon the digger", "warm", quests=SIMON_THE_DIGGER_QUESTS, extra_scenes=SIMON_THE_DIGGER_SCENES,
         haunts=[("plaza", "wk", "01", 55), ("beach", "we", "12", 45), ("warehouse", "135", "1", 30), ("school", "024", "0", 30)],
         tastes=(["food"], ["cool", "game", "cards"], ["fancy"]),
         lines={
+            "mid": {"1": ["them: Um. You came back. That's nice. Do you want to see the tunnel?", "them: I'm still learning how to talk to people. You're easy, though.", "them: Kamina used to say I'd dig my way out of anything. Maybe he was right.", "them: Are you scared of the dark? Me too. A little.", "them: Thanks for not calling me a coward. People used to."], "3": ["them (pleased): I found another shiny rock. It's for you. Don't laugh.", "them: You're the first person who doesn't think I'm stupid for digging.", "them (pleased): Want to see my tunnel? I dug it out just for us.", "them: Kamina's shades look better on me when you're around. Weird, right?", "them (pleased): I'm getting better at talking. You helped with that."], "5": ["them (pleased): {player}, my best friend. I'd dig to the centre of the planet for you.", "them: You believe in me when I don't believe in myself. That's the biggest thing.", "them (pleased): Let's go up to the surface together. I want to see the stars with you.", "them: When I'm scared, I think about you. That's how I keep digging.", "them (pleased): Best friend, the drill's not turning right without you. Come on."]},
+            "hello_steps": [["them: Oh! Hi. Um. Were you looking for someone?", "them: Hi. I'm digging. You can watch if you want."], ["them: Hey. I found a rock. It's kind of shiny. Want to see?", "them: Oh, hi. Sorry, I'm covered in dirt."], ["them (pleased): {player}! Hi! Are you here to dig with me?", "them (pleased): Hey, {player}! I was just thinking about you."], ["them (pleased): {player}! I found the most amazing rock. You have to see it.", "them (pleased): {player}! Glad you came. I'm still a bit nervous, but it's okay."], ["them (pleased): {player}! Kamina would have liked you. I think you'd have liked him.", "them (pleased): {player}! Come look at the tunnel I've been digging."], ["them (pleased): {player}! My best friend! I dug all the way to the surface for you!", "them (pleased): Hey, {player}. Don't go, stay and see what I found today!"]],
+            "bye_steps": [["them: Okay. Um. Bye.", "them: See you. Watch your step."], ["them: See you! Careful of the holes.", "them: Bye. Don't fall in one."], ["them (pleased): See you, {player}! I'll keep digging.", "them (pleased): Bye, {player}! Come back soon, okay?"], ["them (pleased): Go on, {player}. I'll save you a shiny rock for next time.", "them (pleased): Bye, {player}! Don't forget your helmet!"], ["them (pleased): Come back soon, {player}. The tunnel's not as fun without you.", "them (pleased): Bye, {player}! I'll keep the best rock for you."], ["them (pleased): Go, {player}! Come back. Team Dai-Gurren isn't complete without you.", "them (pleased): Bye, best friend! I'll be digging up the stars for you!"]],
             "hello": ["them: Oh! Um. Hi. Were you looking for someone?", "them (pleased): {player}! I found a really nice rock earlier. Want to see?", "them (pleased): {player}! I was hoping it'd be you."],
             "bye": ["them: Okay. Um. Bye.", "them (pleased): See you! I'll keep digging.", "them (pleased): Come back soon, okay? I'll save you the best rock."],
             "hi": ["them: Oh! Hi. I'm Simon. I dig. Holes, mostly. Sorry, that sounded weird.",
@@ -287,10 +743,13 @@ CAST = [
               "choice", "- Let's pierce the heavens together.", "- Who the hell do you think we are?",
               "me (pleased): ...Yeah! Team Dai-Gurren's newest member! Official!"]),
 
-    cpu("Simon", "friendly",
+    cpu("Simon", "friendly", quests=SIMON_QUESTS, extra_scenes=SIMON_SCENES,
         haunts=[("arena", "wk", "12", 55), ("rooftop", "we", "23", 45), ("plaza", "135", "1", 30)],
         tastes=(["cool"], ["calm", "food"], ["fancy"]),
         lines={
+            "mid": {"1": ["them: You're still here. Good. I'm not used to people sticking around.", "them: Ever look at the stars and feel small? Me too.", "them: What's your drill, your own drill? Everyone's got one.", "them: Don't follow me too close. I'm moving fast.", "them: Nia would have liked you. I think."], "3": ["them (pleased): You trust me. I can feel it. That's the best part.", "them: I'm trying to be the leader they need. You help me keep that goal.", "them (pleased): Let's go to the rooftop. The sky's better with a partner.", "them: I still remember the first time we fought together. You were terrible. You're better now.", "them (pleased): Partner, you keep my spiral turning. That matters."], "5": ["them (pleased): {player}, you're my best partner. The best. Don't tell Kamina.", "them: When I think about the heavens, I think about you standing next to me.", "them (pleased): Let's dig up something big together. I've got a plan.", "them: You never gave up on me, even when I was loud and stupid. Thank you.", "them (pleased): Best friend, I'm going to pierce the heavens with you. Promise me."]},
+            "hello_steps": [["them: Need something? Keep moving.", "them: Hello. You look like you've got fire in you."], ["them: Hm. A new face. Make it quick.", "them: Oh. You. Hello, I guess."], ["them (pleased): {player}. Good. I could use someone with fire in them.", "them (pleased): {player}. Walk with me a bit."], ["them (pleased): {player}, partner. Still turning that drill?", "them (pleased): {player}. I've been thinking about you, so you showed up at the right time."], ["them (pleased): {player}. Kamina would have liked you. I think I like you too.", "them (pleased): {player}. Come up to the rooftop with me. The stars are out."], ["them (pleased): {player}, my partner. Keep spinning with me, okay?", "them (pleased): Hey, {player}. Best partner I ever had. Don't tell Kamina."]],
+            "bye_steps": [["them: Keep moving forward.", "them: Go on. Don't stop."], ["them: Pierce whatever's in front of you. Go.", "them: Bye. Keep fighting."], ["them (pleased): Go on, {player}. Pierce the heavens, or whatever's in front of you.", "them (pleased): See you soon, {player}. Keep spinning."], ["them (pleased): Go, partner. Don't stop moving forward, {player}.", "them (pleased): Take care, {player}. The sky will still be there when you're back."], ["them (pleased): Come back soon, {player}. I like having you around.", "them (pleased): Bye, {player}. Don't go too far from the fight."], ["them (pleased): See you, partner. We're going to pierce the heavens together.", "them (pleased): Bye, best partner. Don't stop moving forward."]],
             "hello": ["them: Need something?", "them (pleased): {player}. Good. I could use someone with fire in them.", "them (pleased): Partner! Your drill still turning?"],
             "bye": ["them: Keep moving forward.", "them (pleased): Go on. Pierce the heavens, or whatever's in front of you.", "them (pleased): See you soon, partner. Don't stop moving forward."],
             "hi": ["them: Simon. Leader of Team Dai-Gurren. I've fought gods. A duel is fine.",
@@ -306,6 +765,7 @@ CAST = [
             "r1": "them: You remind me of the kid I used to be. Before the sky got big.",
             "r3": "them: I lost Nia. I lost Kamina. I keep moving forward because of them. And now because of you, a little.",
             "r4": "them (pleased): You're someone I'd trust with Gurren Lagann. That's the highest thing I can say.",
+            "cold": "them (dismayed): You let the Anti Spiral win. I can't pretend we're still fine.",
         },
         friend=["background rooftop", "me enters right with slide", "me: I come up here to think. The sky's quieter up close.",
                 "me: You know what spiral power is? It's the power to keep going. To grow.",
@@ -319,10 +779,13 @@ CAST = [
               "choice", "- Always.", "- Let's keep moving forward.",
               "me (intro): Then let's dig. Up, this time. All the way to the stars."]),
 
-    cpu("Kittan", "friendly",
+    cpu("Kittan", "friendly", quests=KITTAN_QUESTS, extra_scenes=KITTAN_SCENES,
         haunts=[("arena", "wk", "12", 55), ("plaza", "we", "12", 45), ("warehouse", "024", "3", 25), ("beach", "135", "1", 30)],
         tastes=(["cool"], ["sporty", "drink"], ["calm"]),
         lines={
+            "mid": {"1": ["them: Hah! You're tougher than you look. Keep it up!", "them: You fight like someone who's got guts. I like that.", "them: My sisters want to meet you. They're scary, so good luck.", "them: Don't mind the noise. It's just me being fired up.", "them: You want to spar? I'll go easy. Mostly."], "3": ["them (pleased): Oi! My right-hand man! Come on, let's grab a drink.", "them: You're the only one who doesn't get tired of my shouting.", "them (pleased): My sisters asked me to bring you to dinner. Scary, but you'll be fine.", "them: I used to fight alone. Having you around makes it less lonely.", "them (pleased): You got my back in that last duel. I won't forget it."], "5": ["them (pleased): {player}, I'd charge into any fight for you, no questions.", "them: You're the one I'd want at my side when the big charge comes.", "them (pleased): Let's go down the arena and make some noise together.", "them: When everyone else gives up, you're still there. That's a best friend.", "them (pleased): Best friend, you're the reason I keep fighting. Don't go anywhere."]},
+            "hello_steps": [["them: Hah? Who're you supposed to be?", "them: Oi. You lookin' for a fight?"], ["them: Hey. You look like someone who fights. Good.", "them: Hi! Don't mind me, I'm just fired up."], ["them (pleased): Oi, {player}! You're lookin' fired up today!", "them (pleased): Hey, {player}! Come on, we're gettin' a sandwich!"], ["them (pleased): {player}! My right-hand! Great to see you, mate!", "them (pleased): Oi! {player}! I was just tellin' my sisters about you."], ["them (pleased): {player}! Come here, I want to show you my new drill!", "them (pleased): {player}, you're the best. Really, you are!"], ["them (pleased): {player}! My best friend! You're my right-hand for life!", "them (pleased): Hey, {player}! The Black Siblings are gonna love you!"]],
+            "bye_steps": [["them: Yeah, get outta here!", "them: Later. Don't get beat up."], ["them: Later! Don't do anything stupid!", "them: See ya. Go get 'em."], ["them (pleased): Later, {player}! Don't do anything I wouldn't do!", "them (pleased): See ya, {player}! Come back when you're hungry!"], ["them (pleased): Go get 'em, {player}! The Black Siblings got your back!", "them (pleased): Bye, {player}! Save me a seat at the next fight!"], ["them (pleased): Come back soon, {player}! The fights ain't the same without ya!", "them (pleased): Bye, {player}! Stay loud, okay?"], ["them (pleased): Go on! But come back, right-hand. That's an order!", "them (pleased): Bye, best friend! I'll charge in for you any time!"]],
             "hello": ["them: Hah? Who're you supposed to be?", "them (pleased): Oi, {player}! You're lookin' fired up today!", "them (pleased): THERE'S my right-hand! Get over here!"],
             "bye": ["them: Yeah, get outta here!", "them (pleased): Later! Don't do anything I wouldn't do! ...Which ain't much!", "them (pleased): Go get 'em! The Black Siblings got your back!"],
             "hi": ["them: Kittan! Leader of the Black Siblings! Pilot of King Kittan! You might've heard of 'em!",
@@ -350,10 +813,13 @@ CAST = [
               "choice", "- No charging off alone.", "- I'll be watching.",
               "me (pleased): Ha! Then let's charge together. KING KITTAN, DOUBLE-TEAM!"]),
 
-    cpu("Yoko", "friendly",
+    cpu("Yoko", "friendly", quests=YOKO_QUESTS, extra_scenes=YOKO_SCENES,
         haunts=[("beach", "wk", "12", 60), ("arena", "we", "12", 45), ("plaza", "024", "2", 30)],
         tastes=(["cool"], ["sporty", "drink"], ["calm"]),
         lines={
+            "mid": {"1": ["them: You're not a yeller. That's the first thing I noticed.", "them: Got good eyes? Let's see if they're as sharp as you think.", "them: I don't usually talk this much. You're a good listener.", "them: Don't walk in front of the rocks while I'm shooting. Thanks.", "them: Want to learn how to hold a rifle? I'll make it easy."], "3": ["them (pleased): You're the only one who doesn't make me explain the scope.", "them: I miss Kamina. You remind me of him sometimes, but in a good way.", "them (pleased): You spotted that last shot. I owe you a drink.", "them: The beach feels less lonely when you're around. Don't tell anyone.", "them (pleased): You're my spotter now. Not just for practice."], "5": ["them (pleased): {player}, you're the one person I don't aim past. Ever.", "them: I want to teach you everything I know. Because you'd teach me something back.", "them (pleased): Let's watch the sunset from the rocks. Just the two of us.", "them: When the war ended, I thought I'd be alone. You proved me wrong.", "them (pleased): Best friend, my spotter and my friend. Let's keep this for good."]},
+            "hello_steps": [["them: Hi. You need something, or just looking?", "them: Hey. Don't walk in front of the scope."], ["them: Oh, hi. You're not yelling. That's a good start.", "them: Hi. Need help with a shot?"], ["them (pleased): Hey, {player}. Nice to see a face that isn't yelling.", "them (pleased): {player}. The view's better with you here."], ["them (pleased): {player}. Saved you a spot on the rocks. Sit.", "them (pleased): Hey, {player}. Good, you can be my spotter today."], ["them (pleased): {player}. I was starting to miss you, you know.", "them (pleased): {player}. Come with me to the beach. Let's see if you can keep up."], ["them (pleased): {player}. You're the one I don't have to aim past. Glad you came.", "them (pleased): Hey, {player}. My favourite person on the whole coast."]],
+            "bye_steps": [["them: See you around.", "them: Watch your step on the way out."], ["them: Take it easy.", "them: Okay. Bye."], ["them (pleased): Take it easy, {player}.", "them (pleased): See you, {player}. Keep your eyes sharp."], ["them (pleased): Go on, {player}. Don't get shot at.", "them (pleased): Later, {player}. Good eyes."], ["them (pleased): Don't stay away too long, {player}, okay?", "them (pleased): Bye, {player}. Come back to the beach soon."], ["them (pleased): Bye, {player}. I'll keep a spot on the rocks for you.", "them (pleased): Go, best friend. The view will wait for you."]],
             "hello": ["them: Hi. You need something, or just looking?", "them (pleased): Hey, {player}. Nice to see a face that isn't yelling.", "them (pleased): There you are. I was starting to miss you."],
             "bye": ["them: See you around.", "them (pleased): Take it easy, {player}.", "them (pleased): Don't stay away too long, okay?"],
             "hi": ["them: Yoko. Sniper. And yes, I'm a girl, before you ask. Everybody asks.",
@@ -381,10 +847,13 @@ CAST = [
               "choice", "- I'm right here.", "- I'll spot for you anytime.",
               "me (pleased): Then let's watch the sunset. Together, for once."]),
 
-    cpu("Lord Genome", "villain",
+    cpu("Lord Genome", "villain", quests=LORD_GENOME_QUESTS, extra_scenes=LORD_GENOME_SCENES,
         haunts=[("warehouse", "all", "23", 70), ("shrine", "0246", "3", 45), ("library", "135", "1", 30, 2)],
         tastes=(["fancy"], ["calm", "book"], ["sporty"]),
         lines={
+            "mid": {"1": ["them: You speak carefully. That is rare on the surface.", "them: The chronicle is not finished. I would have you read the next page.", "them: Tell me what the surface has become. Be exact.", "them: Few stand in the throne room without trembling. You do not. Interesting.", "them: Sit. You may ask the king a question. One."], "3": ["them (pleased): You do not fear my silence. I have grown to value that.", "them: The spiral has changed since you came. I have noticed.", "them (pleased): I have shown you my chronicle. No one else has seen it.", "them: You understand what I gave up. That is more than my kin ever did.", "them (pleased): Return tomorrow. The king is at his most honest in the evening."], "5": ["them (pleased): {player}, my honest companion. The spiral turns more gently for you.", "them: You are the only one who has ever told me I was wrong. I am grateful.", "them (pleased): Walk the library with me. The histories are finally bearable.", "them: When the Anti-Spirals return, I will want you beside me. Not as servant. As equal.", "them (pleased): Best friend, I shall be honest with you always. Remember that."]},
+            "hello_steps": [["them: You approach the Spiral King unbidden.", "them: Speak your business, surface child."], ["them: You return. Few seek the Spiral King twice.", "them: Ah. A visitor. Kneel, if you must."], ["them: {player}. You return. Sit, and listen.", "them: Hm. {player}. You are not as foolish as the others."], ["them (pleased): {player}. Sit. Tell me of the surface today.", "them (pleased): {player}. You return. The king has been waiting."], ["them (pleased): {player}. The one who does not fear the surface. Sit beside me.", "them (pleased): {player}. The chronicle is ready. Come hear it."], ["them (pleased): {player}. My one honest companion. Sit. The spiral turns for you.", "them (pleased): {player}. You have made a king very glad to see you."]],
+            "bye_steps": [["them: Begone.", "them: Go, then. The surface awaits."], ["them: Go. Do not kneel to anyone.", "them: Return when you have something worth saying."], ["them: Go, then. The chronicle will wait.", "them: Begone. You may return."], ["them (pleased): Go, {player}. Return to me when the surface disappoints you.", "them (pleased): Farewell, {player}. Carry the spiral with you."], ["them (pleased): Go. Return to me, {player}. The king is lonely without you.", "them (pleased): Go in peace, {player}. The spiral will keep watch over you."], ["them (pleased): Go, {player}. And return. You are the only one who has ever made me say that.", "them (pleased): Farewell, companion. The spiral turns for you."]],
             "hello": ["them: You approach the Spiral King unbidden.", "them: You return. Speak.", "them: Ah. The one who walks on the surface without fear. Sit."],
             "bye": ["them: Begone.", "them: Go, then.", "them: Go. The surface awaits you. Return to me."],
             "hi": ["them: Kneel, child. You stand before the Spiral King.",
@@ -413,10 +882,13 @@ CAST = [
               "choice", "- You're not alone anymore.", "- The surface is big enough for both of us.",
               "me (pleased): Then let the spiral turn. I will watch it with you."]),
 
-    cpu("Anti Spiral", "villain",
+    cpu("Anti Spiral", "villain", quests=ANTI_SPIRAL_QUESTS, extra_scenes=ANTI_SPIRAL_SCENES,
         haunts=[("rooftop", "all", "3", 65), ("warehouse", "wk", "23", 50), ("library", "035", "2", 30, 2)],
         tastes=(["calm"], ["book"], ["sporty", "music"]),
         lines={
+            "mid": {"1": ["them: Your presence has been observed. Accepted, provisionally.", "them: Question: why do you persist? Answer for the record.", "them: The observation continues. Do not alter your behaviour.", "them: Anomaly noted. Growth exceeds parameters. Continue.", "them: Designate: acquaintance. Provisional status confirmed."], "3": ["them (pleased): Your growth has exceeded expectations. Recorded, with interest.", "them: We have begun to measure warmth. You are the primary variable.", "them (pleased): You disagree with us, and survive. Statistically unusual, and welcome.", "them: Observation is no longer neutral. This is a concern. And a pleasure.", "them (pleased): Return. The record requires your next answer."], "5": ["them (pleased): {player}. Designated: friend, permanently. Retained without condition.", "them: Our hypothesis about spirals has been revised. Thanks to you.", "them (pleased): Come observe the stars with us. Warmth is a useful measure.", "them: We no longer wish to end the universe. We wish to keep you in it.", "them (pleased): Best friend. Logged. Permanently. Return whenever you can."]},
+            "hello_steps": [["them: Spiral life form detected.", "them: Observation begins. State your designation."], ["them: Spiral life form. Your presence is noted.", "them: Observation. Continue as you are."], ["them: Spiral life form designate: {player}. Proceed.", "them: {player}. Your behaviour is... statistically anomalous. Be welcome."], ["them (pleased): {player}. Observation resumes. Your growth is recorded.", "them (pleased): {player}. You return. Logged."], ["them (pleased): {player}. Your existence no longer disrupts my calculations. Welcome.", "them (pleased): {player}. Designated: acquaintance. No. Friend. Retained."], ["them (pleased): {player}. Designated: friend, permanently. Observation is pleasant with you.", "them (pleased): {player}. Warmth recorded. Return soon."]],
+            "bye_steps": [["them: Departure noted.", "them: Observation paused. Continue."], ["them: Depart. The observation continues.", "them: Leave. The record is not finished."], ["them: Observation paused. Return.", "them: Departure logged. Go."], ["them (pleased): Observation paused, {player}. Return. The record requires you.", "them (pleased): Depart, {player}. Continue growing. Report back."], ["them (pleased): Depart, {player}. The observation is incomplete without you.", "them (pleased): Go, {player}. Return safely. That is a hypothesis I now hold."], ["them (pleased): Depart, {player}. Friendship is retained. Return.", "them (pleased): Farewell, {player}. Warmth logged. Retained."]],
             "hello": ["them: Spiral life form detected.", "them: Spiral life form designate: {player}. Proceed.", "them: {player}. Your presence has been... anticipated."],
             "bye": ["them: Departure noted.", "them: Observation paused.", "them: Return. The observation is... incomplete without you."],
             "hi": ["them: Spiral life form. Your existence accelerates the end of the universe.",
@@ -432,6 +904,7 @@ CAST = [
             "r1": "them: You do not despair. Analysis inconclusive.",
             "r3": "them: We were once like you. We chose to stop. We sealed ourselves away to save the universe.",
             "r4": "them: If all spiral life were like you... perhaps the end would not come. A dangerous hypothesis.",
+            "cold": "them: Stagnation chosen. Your friendship is no longer logged.",
         },
         friend=["background void", "me enters center with fade", "me: Observe. The universe. Finite. Fragile.",
                 "me: Every spiral that grows draws it closer to collapse. Spiral Nemesis.",

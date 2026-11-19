@@ -994,6 +994,7 @@
     if (!town.shop) return;
     showTab(shopTab);
     listPacks();
+    listRequest();
     listSpecials();
     listCards();
     listGifts();
@@ -1055,6 +1056,7 @@
       const name = document.createElement("p");
       name.className = "town-stock-name";
       name.textContent = set.name;
+      if (set.requested) name.append(" ", el("span", "town-stock-tag", "Requested"));
       const buttons = document.createElement("div");
       buttons.className = "town-stock-buy";
       buttons.append(
@@ -1064,6 +1066,39 @@
       item.append(cover(set, "town-stock-cover"), name, buttons);
       list.append(item);
     }
+  }
+
+  // Asking the shop for a set (weiss.world.request_set): on the shelves from tomorrow for a few days, one at a time.
+  let requestSet = null;
+  function listRequest() {
+    const { price, days, asked, sets } = town.shop.request;
+    const note = $("[data-request-note]");
+    const form = $("[data-request-form]");
+    if (asked) {
+      note.textContent = `You've asked for ${asked.name}: it's ${asked.when} You can ask for another once it's gone.`;
+      form.hidden = true;
+      return;
+    }
+    form.hidden = !sets.length;
+    note.textContent = sets.length
+      ? `Not seeing the set you want? Ask for it: it's on the shelves from tomorrow for ${days} days. One set at a time.`
+      : "There are no other sets the shop can get.";
+    if (!sets.some((set) => set.id === requestSet)) requestSet = sets[0]?.id ?? null;
+    const select = $("[data-request-set]");
+    select.replaceChildren(...sets.map((set) => new Option(set.name, set.id, false, set.id === requestSet)));
+    select.onchange = () => { requestSet = Number(select.value); };
+    const holder = $("[data-request-button]");
+    const button = buyButton("Ask for it", price, () => askForSet(Number(select.value)));
+    button.setAttribute("aria-label", `Ask for the chosen set, ${coins(price)} coins`);
+    holder.replaceChildren(button);
+  }
+
+  async function askForSet(id) {
+    const data = await post(root.dataset.requestSetUrl, { set: id });
+    if (!data) return;
+    listStock();
+    say(data.said);
+    $("[data-request-note]").focus({ preventScroll: true }); // the button it was is gone: say what happened there
   }
 
   function listSpecials() {

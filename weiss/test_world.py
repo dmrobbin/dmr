@@ -295,12 +295,13 @@ class WorldPageTests(TestCase):
 
     def test_staff_settings(self):
         self.assertContains(self.client.get(reverse("weiss:cpu_home") + "?tab=world"), "Starting packs")
-        fields = {"start_packs": 15, "start_money": 800, "pack_price": 250, "specialty_price": 900, "card_price": 5000, "win_payout": 150,
+        self.assertContains(self.client.get(reverse("weiss:cpu_home") + "?tab=world"), "Asking the shop for a set")
+        fields = {"start_packs": 15, "start_money": 800, "pack_price": 250, "specialty_price": 900, "card_price": 5000, "request_price": 450, "win_payout": 150,
                   "first_win_bonus": 50, "ranks": "New: 0\nPal: 10", **LOADOUT_FIELDS}
         self.client.post(reverse("weiss:world_settings"), {**fields, "loadout_climax_pick": 2})
         settings = WorldSettings.current()
         self.assertEqual((settings.start_packs, settings.start_money, settings.loadout), (15, 800, {"climax_pick": 2}))
-        self.assertEqual((world.specialty_price(), world.card_price()), (900, 5000))
+        self.assertEqual((world.specialty_price(), world.card_price(), world.request_price()), (900, 5000, 450))
         self.assertEqual(world.rank_names(), ["New", "Pal"])
         self.client.post(reverse("weiss:world_settings"), {**fields, "start_packs": 0})  # nothing to build from: refused
         self.assertEqual(WorldSettings.current().start_packs, 15)

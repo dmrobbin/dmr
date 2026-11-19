@@ -180,6 +180,11 @@ puts the player back where they were.
     by default), and you can buy one of each a day. A card goes straight into the save's cards without leaving the
     town (`world_buy_card`, a town move).
   - Staff set both prices on the World mode tab (migration 0051).
+  - **Asking for a set** (`world.request_set`, under the Packs tab): the player picks any set the shop can get (all but
+    the save's own) and pays `request_price` (300 by default; staff set it on the World mode tab, migration 0060). It's on
+    the shelves from the next day for 3 days (`REQUEST_DAYS`), next to the save's own set and tagged "Requested", so its
+    packs, specialty packs and single cards can be bought then. One at a time: another can be asked for once it's gone.
+    The request is kept in the save's flags (`request`, which chatter can't set).
   - The grade table (`packs.GRADES`) learned "N", an extra booster's plain print. It had been graded as a special
     foil, which skewed that set's packs and would have put plain cards among the shop's rares.
 

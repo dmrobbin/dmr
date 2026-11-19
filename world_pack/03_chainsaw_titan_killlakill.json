@@ -154,6 +154,13 @@
       ]
      },
      {
+      "context": "estranged",
+      "min_rank": 0,
+      "script": [
+       "them: Makima got her way, then. Don't come looking for me for a light."
+      ]
+     },
+     {
       "context": "hello",
       "min_rank": 0,
       "script": [
@@ -196,6 +203,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Public Safety. Do you need something?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Keep walking. I'm busy."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Hm. Hi. Be quick about it."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Oh, you. Is this about work?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: Oh, it's you. Have you eaten?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. Sit, if you want. I'm not going anywhere."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. Good. Sit down for a minute."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. You picked a quiet time. Thanks."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. Don't say anything. Just sit with me."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Hey, {player}. You're easy to be around."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. My friend. Sit, and let's watch the sky."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. Glad you came. It's rare I say that."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Stay out of trouble."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Bye. Be careful."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: See you. Be careful out there."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Go. Don't do anything dumb."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: See you. Don't get hurt, {player}."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Go on, {player}. Mind the traffic."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Come back in one piece, {player}."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Bye, {player}. Keep your head down."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon, {player}. I'll get tired of the rooftop without you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Take care, {player}. Don't make me come looking."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Come back in one piece. That's an order, {player}."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Bye, best friend. Keep your head on straight."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Don't mind the smoke. I'm not lighting it, see?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You're quiet. I like that. Keep it that way."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: The Fox Devil's bargain is costly. I'm not going to talk about it yet."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Hm. You're not in a hurry. Good."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Sit, if you want. I'm thinking."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You don't ask too many questions. I appreciate that."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: Makima's been watching me. You're the only one I can talk to without her hearing."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Let's go to the rooftop. It's easier to think up there."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: You're a good partner. I'd want you with me on the hard days."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You remind me that I'm still a person, not just a devil hunter."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, my friend. I'd take the Fox Devil's price for you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: When I think of who I can trust, it's always you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Let's go up to the rooftop tonight. Just us, no plans."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You know my plan, and you don't judge it. That's rare."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend. Stay with me on the roof. It's quiet with you."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Aki Hayakawa, Friend"
@@ -204,6 +484,160 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Aki Hayakawa, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "aki-smoke-break",
+      "title": "Smoke Break",
+      "gates": 2,
+      "about": "Aki needs someone who won't talk while he thinks, and he's hard to find for it.",
+      "offer": [
+       "them: I come up here to think. Don't say anything, okay?",
+       "them (pleased): You didn't talk. That's already better than most."
+      ],
+      "stages": [
+       {
+        "text": "Find Aki on the rooftop in the evening",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "rooftop",
+          "times": [
+           2
+          ],
+          "scene": "World: Aki Hayakawa, Rooftop",
+          "rewards": [
+           {
+            "coins": 150
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Have Watchdog of Special Division 4, Aki Hayakawa",
+        "objectives": [
+         {
+          "do": "have_card",
+          "card": "CSM/S96-E080"
+         }
+        ]
+       },
+       {
+        "text": "Let Aki say what's on his mind",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Aki Hayakawa",
+          "script": [
+           "them: The Fox Devil's price is steep. I'm paying it gladly.",
+           "them (pleased): Thanks for not asking how much."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "quiet-company",
+        "title": "Keep the quiet company",
+        "about": "Aki stops lighting cigarettes he doesn't smoke, and waits for you to sit down first.",
+        "rewards": [
+         {
+          "coins": 300
+         },
+         {
+          "gift": "sleeves"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "aki-the-gun-devil",
+      "title": "The Gun Devil",
+      "gates": 5,
+      "about": "Aki's own revenge on the Gun Devil, or the one Makima plans for him.",
+      "offer": [
+       "them (dismayed): Makima has a plan for the Gun Devil. It isn't mine.",
+       "them: Come up tonight. I want to tell you before I decide."
+      ],
+      "stages": [
+       {
+        "text": "Meet Aki on the rooftop at night",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "rooftop",
+          "times": [
+           3
+          ],
+          "scene": "World: Aki Hayakawa, Rooftop (night)",
+          "rewards": [
+           {
+            "pack": "color_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Beat Makima in a duel",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Makima"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Give Aki your answer",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Aki Hayakawa",
+          "script": [
+           "them: Her plan or mine. Which one would you back?",
+           "them (pleased): Mine, then. Thanks for backing me."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "his-own-way",
+        "title": "His own way",
+        "about": "Aki goes after the Gun Devil his way. Makima's Best friend quest is closed for good.",
+        "rewards": [
+         {
+          "coins": 800
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ],
+        "locks": [
+         "makima-control"
+        ]
+       },
+       {
+        "key": "hold-back",
+        "title": "Hold back for now",
+        "about": "Aki keeps his revenge to himself, and waits for a better time.",
+        "rewards": [
+         {
+          "coins": 500
+         },
+         {
+          "gift": "earbuds"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -239,6 +673,32 @@
       "- I'm not losing you, Aki.",
       "- Let's make good memories.",
       "me (lose): Best friend. Yeah. I'd like that to be the last thing I think about. A long time from now."
+     ]
+    },
+    {
+     "name": "World: Aki Hayakawa, Rooftop",
+     "script": [
+      "cast me as Aki Hayakawa",
+      "background rooftop",
+      "me enters center with fade",
+      "me: Want one? No? Good. I'm just holding it.",
+      "player: Why hold it if you don't smoke it?",
+      "me (win): It gives my hands something to do while I think.",
+      "me: The Fox Devil took my future. I'm paying the price gladly.",
+      "player: Is it worth it?",
+      "me (lose): Yeah. For the people I can still keep safe."
+     ]
+    },
+    {
+     "name": "World: Aki Hayakawa, Rooftop (night)",
+     "script": [
+      "cast me as Aki Hayakawa",
+      "background night",
+      "me enters left with rise",
+      "me: Makima has a plan for the Gun Devil. I'm not sure I like it.",
+      "player: Why not?",
+      "me (win): Because it isn't mine. It's hers, and she's been wrong before.",
+      "me: Would you help me do it my way? Not her way. Mine."
      ]
     }
    ]
@@ -448,6 +908,279 @@
       "min_rank": 4,
       "script": [
        "them (pleased): Come back soon, man. I mean it. Like, really soon."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Yo. You got food?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hey, stranger. Don't touch my stuff."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Oh, hi! Are you the one who knows about dogs?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Hey, what's up? Want to hang out?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Hey, it's you! Did ya bring bread?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! Come on, let's go get some food!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}! Yes! You're here! Best day ever, probably!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}! Did ya see my new devil form?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}, man! My best bud! Come hang out!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}! I was thinking about you, honest."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}! My best friend! Okay, I'm going to say it. I like you."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}! Come on, the donuts won't eat themselves!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: 'Kay, later."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Bye. Don't get eaten."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: See ya! Stay alive."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Later! Watch the stairs."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): See ya! Bring jam next time!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Bye, {player}! Don't get killed."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Come back soon, {player}. Like, really soon."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Bye, {player}! Don't forget the donuts!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon, man. I mean it."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): See ya, {player}! I'll keep the couch warm."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Come back, best bud. I'll save you the good fries."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Bye, {player}! You're my favourite, don't tell Power."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Oh, you're the one who showed up with the bread. Thanks."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You don't look like you'd steal my food. Good."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Do you ever get tired of being hungry? Me too."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): You're not so bad. Don't tell Power."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Ask me one thing. But it better not be about the chainsaw."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You bring the good snacks. That's why we're friends, right?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: I used to be alone with the devils. You make the nights less lonely."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Let's go to the plaza. I'll show you the best donut stand in town."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: You didn't laugh when I told you about my dream. Thanks for that."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You're my bud. Like, a real bud, not just a food bud."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, my best bud! I'd fight every devil for you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You're the one who makes me want to be more than a chainsaw."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Let's go to the rooftop tonight. I'll share my last bite."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You're the first person who ever said I'm good enough to be loved."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend! Let's eat until we're full and then eat more!"
       ]
      },
      {
@@ -783,6 +1516,13 @@
       ]
      },
      {
+      "context": "estranged",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Your own way, Aki. Then you won't get my help, and I'll find another good dog."
+      ]
+     },
+     {
       "context": "hello",
       "min_rank": 0,
       "script": [
@@ -825,6 +1565,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hello. You're new."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hm. What brings you to me?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Ah. You're here. Sit, if you like."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: You came to see me. Good."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): There you are. I knew you'd come."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}. Sit, I'll order for you."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Good. You came straight to me, {player}."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. You're easy to read. I like that."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. I'm glad it's you I've been waiting for."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. Sit with me. I'd like to talk about the future."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. The one person I don't have to read carefully."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. Come here. I've kept a place for you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Run along."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Off you go."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Come when I call."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Go. I'll know if you're late."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Go, {player}. Come when I call."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Run along, {player}. Don't be late."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Come back soon. I'll know if you don't."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Bye, {player}. Stay where I can find you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon, {player}. You're easy to keep in mind."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Go, {player}. The future is waiting for you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Come back, {player}. I'd like you by my side for it all."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Bye, {player}. You're the only good dog I need."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You're learning fast. I'm impressed, a little."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Tell me what you want most. Be honest. I'll know if you lie."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You're an interesting dog. Obedient, but not dull."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Sit. We'll talk about your future, if you'd like."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: I like watching you think. It's very easy to read."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You're one of the few I'd listen to. Don't make me regret it."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: The future I'm building needs people like you. Keep that in mind."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Shall we have lunch? I'll order for you. You'll like it."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: Aki doesn't see the whole picture. You might, if you try."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You're easy to keep close. I'll keep you close."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, my most loyal companion. The best dog I've had."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: In the world I'm making, you'll never feel pain again. I promise."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Come to the shrine tonight. We'll talk about the new order."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You understand me better than anyone. That's rare, even for me."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend. Stay by my side. I'll make the world gentle for you."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Makima, Friend"
@@ -833,6 +1846,162 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Makima, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "makima-a-good-dog",
+      "title": "A Good Dog",
+      "gates": 2,
+      "about": "Makima tests whether the player follows instructions, and orders for them without asking.",
+      "offer": [
+       "them: You'll follow me, won't you? Sit. There, that's better.",
+       "them (pleased): Good. You're easy to read. I like that."
+      ],
+      "stages": [
+       {
+        "text": "Meet Makima at the cafe at noon",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "cafe",
+          "times": [
+           1
+          ],
+          "scene": "World: Makima, Cafe",
+          "rewards": [
+           {
+            "pack": "climax_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Give Makima a bouquet",
+        "objectives": [
+         {
+          "do": "give_gift",
+          "gift": "bouquet",
+          "to": "Makima"
+         }
+        ]
+       },
+       {
+        "text": "Accept what Makima orders",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Makima",
+          "script": [
+           "them: I ordered for you. You'll like it, and you'll eat it all.",
+           "them (pleased): Yes. Just like that."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "good-dog",
+        "title": "Be a good dog",
+        "about": "Makima pats your head at the cafe door. You aren't sure whether it's a reward.",
+        "rewards": [
+         {
+          "coins": 300
+         },
+         {
+          "gift": "shortcake"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "makima-control",
+      "title": "Control",
+      "gates": 5,
+      "about": "Makima offers the player a place in her better world, a world without pain, run by her.",
+      "offer": [
+       "them: A world without pain. Run by me. Would you want that?",
+       "them (pleased): Think about it. I'll explain at the shrine."
+      ],
+      "stages": [
+       {
+        "text": "Meet Makima at the shrine at night",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "shrine",
+          "times": [
+           3
+          ],
+          "scene": "World: Makima, Shrine",
+          "rewards": [
+           {
+            "pack": "color_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Win a duel with Makima: Devil Hunter in your deck",
+        "objectives": [
+         {
+          "do": "win_with",
+          "card": "CSM/S96-E058",
+          "against": [
+           "Makima"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Give Makima your answer",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Makima",
+          "script": [
+           "them: Persuade Aki to let me handle the Gun Devil. Can you do that?",
+           "them (pleased): Good. I knew you'd be useful."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "trust-her",
+        "title": "Trust her",
+        "about": "Makima takes charge of the Gun Devil. Aki's Best friend quest is closed for good.",
+        "rewards": [
+         {
+          "coins": 800
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ],
+        "locks": [
+         "aki-the-gun-devil"
+        ]
+       },
+       {
+        "key": "refuse-her",
+        "title": "Refuse her",
+        "about": "Makima shrugs and finds someone else to order around.",
+        "rewards": [
+         {
+          "coins": 500
+         },
+         {
+          "gift": "bottled-tea"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -867,6 +2036,30 @@
       "- That's what friends are.",
       "- You don't have to control me.",
       "me (lose): Best friend. An equal. ...How strange. How nice."
+     ]
+    },
+    {
+     "name": "World: Makima, Cafe",
+     "script": [
+      "cast me as Makima",
+      "background cafe",
+      "me enters center with fade",
+      "me: Sit. I already ordered, you'll like it.",
+      "player: How did you know what I like?",
+      "me (lose): I like people who are easy to read. You're very easy.",
+      "me: Eat. It's a good plate. Don't make me say it twice."
+     ]
+    },
+    {
+     "name": "World: Makima, Shrine",
+     "script": [
+      "cast me as Makima",
+      "background shrine",
+      "me enters center with rise",
+      "me: Imagine a world with no pain. Nobody screaming. Nobody losing.",
+      "player: That sounds like a dream.",
+      "me (win): It's a plan. One I'm close to finishing.",
+      "me: Ask Aki to let me handle the Gun Devil. He'll listen to you."
      ]
     }
    ]
@@ -1067,6 +2260,279 @@
       "min_rank": 4,
       "script": [
        "them (pleased): Return soon, or Power will be very bored and break things!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hah?! Who dares approach the great Power?!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Ugh. A peasant. Speak quickly."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Oh, it's a human. Power is busy being great."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: You! Power recognises you. Barely."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Ah, it's my servant! You may bask in my presence!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! Power is pleased you came. A little."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}! Power has missed you! A little!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}! Sit, and watch Power be magnificent."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): My number one human! Power has missed you! Only a little!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}! Come, let's go cause some trouble."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}! My best friend, the only one Power doesn't boss around."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}! Power loves you! Don't tell anyone!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Begone, peasant!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Go! Power is too great for you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Go! Power is busy."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Bah. Go on, then."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Go! But bring tribute when you return!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Bye, {player}! Power expects a gift next time!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Return soon, {player}, or Power will be very bored!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Bye, {player}! Don't get lost on the way!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Return soon, or Power will break things! Please come back!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Go, {player}! Don't keep Power waiting!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Go, best friend! Power will guard your seat!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Bye, {player}! Come back. Power is nothing without its human."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Hah! You've got guts to approach the great Power. Good."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Power notices you. Don't let it go to your head."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You fight well for a human. Not as well as Power, though."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): You're allowed to stay in Power's presence. For now."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Ask one question. Power will decide if it's worthy."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You're a loyal servant. Power is almost impressed."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: Denji talks about you. Power doesn't mind listening, sometimes."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Come to the plaza. Power will show you the best poses."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: You make Power feel less alone, but don't tell anyone."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You bring tribute and good company. Power approves."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}! My best human! Power would share its last cookie with you!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: Power would fight the whole world for you. Power is not used to this feeling."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Let's go to the arena tonight. Power will teach you the big move."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You're the one Power trusts most, out of all the humans."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend! Power loves you! Power is not saying that again!"
       ]
      },
      {
@@ -1448,6 +2914,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hm? Oh. Hello there."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hi. Be careful where you stand."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Oh. Hi. Nice day for a walk."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Hello. Would you like to play catch?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Ah, you again. Want to play catch?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}. It's a good day for a throw."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. Glad you came. I've been thinking about the trees."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. Sit with me, if you don't mind the wind."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. There you are. I've been waiting, in my own slow way."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. I was hoping you'd come. Let's walk."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, my friend. We still have a game to finish."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. You're gentle with me. Thank you for that."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Mind the trees."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Goodbye. Be careful."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Take care of yourself."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Bye. Watch your step."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Run along, {player}. Don't get stepped on."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Bye, {player}. Mind the path."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Come back. We still have a game to finish."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): See you, {player}. Keep your feet on the ground."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon, {player}. I'll be waiting, slowly."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Bye, {player}. You make the afternoons good."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Come back, friend. The trees will miss you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Bye, {player}. Be well. I'll keep the plan gentle."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Oh, you're new. I'm sorry if I was too loud before."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Do you like the forest? It's peaceful. I don't get out much."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: My throws are better when someone stands still. You're good at that."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Hm. I was hoping you'd come back. Not many do."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: I've been thinking about Tom Ksaver. He used to say the same thing."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You're gentle with me, even when I'm not gentle back. Thank you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: I told you about my plan. You didn't run. That means a lot."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Let's walk through the trees. The quiet helps me think."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: You make the afternoons feel less heavy. I didn't expect that."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You're the one who helps me remember to be kind."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, my friend. I'd hate for you to be hurt by what I do."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You've been my best afternoon in years. Don't tell Levi."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Let's go to the arena. One more game of catch, just us."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: If I could choose one person to keep, it would be you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend. I'll be careful with you. Always."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Beast Titan, Friend"
@@ -1456,6 +3195,145 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Beast Titan, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "beast-titan-throwing-practice",
+      "title": "Throwing Practice",
+      "gates": 2,
+      "about": "Zeke wants someone to play catch with, and he apologises every time he throws too hard.",
+      "offer": [
+       "them: Want to play catch? I'll go easy. Mostly.",
+       "them (pleased): You're doing better than my last partner. He's a titan, so, that's a bit of a joke."
+      ],
+      "stages": [
+       {
+        "text": "Play catch with Zeke at the arena at noon",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "arena",
+          "times": [
+           1
+          ],
+          "scene": "World: Beast Titan, Arena",
+          "rewards": [
+           {
+            "coins": 150
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Give Zeke a handheld game to play between throws",
+        "objectives": [
+         {
+          "do": "give_gift",
+          "gift": "handheld",
+          "to": "Beast Titan"
+         }
+        ]
+       },
+       {
+        "text": "Talk about Tom Ksaver with Zeke",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Beast Titan",
+          "script": [
+           "them: Tom Ksaver was the only good afternoon I had. Thank you for asking.",
+           "them (pleased): You're easy to throw with. Sorry, to talk to. Easy to talk to."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "catch-again",
+        "title": "Catch again tomorrow",
+        "about": "Zeke leaves a baseball on your doorstep with a polite note.",
+        "rewards": [
+         {
+          "coins": 300
+         },
+         {
+          "gift": "playmat"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "beast-titan-euthanasia-plan",
+      "title": "The Euthanasia Plan",
+      "gates": 5,
+      "about": "Zeke's calm plan to end Eldia's suffering, explained gently, like a doctor would.",
+      "offer": [
+       "them: I have a plan to end the suffering on this island. It's very gentle.",
+       "them (pleased): Walk with me in the forest. You'll understand."
+      ],
+      "stages": [
+       {
+        "text": "Walk with Zeke in the forest at night",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "forest",
+          "times": [
+           3
+          ],
+          "scene": "World: Beast Titan, Forest",
+          "rewards": [
+           {
+            "pack": "level_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Beat Levi in a duel",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Levi"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Answer Zeke's question",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Beast Titan",
+          "script": [
+           "them: Can kindness be cruel? I'd like your honest answer.",
+           "them (pleased): ...Thank you. That's a good answer."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "gentle-plan",
+        "title": "Hear the gentle plan out",
+        "about": "Zeke tells you the rest of his plan, and asks you to keep it a secret.",
+        "rewards": [
+         {
+          "coins": 600
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -1491,6 +3369,30 @@
       "- Believe him now.",
       "- Stay and play.",
       "me (lose): Best friend. One more throw, then. And another after that."
+     ]
+    },
+    {
+     "name": "World: Beast Titan, Arena",
+     "script": [
+      "cast me as Beast Titan",
+      "background arena",
+      "me enters left with slide",
+      "me: Catch! Sorry. That was too hard. Here, a softer one.",
+      "player: That one was perfect.",
+      "me (lose): Thanks. People usually run away when I throw.",
+      "me: Tom Ksaver used to play catch with me. Those were good afternoons."
+     ]
+    },
+    {
+     "name": "World: Beast Titan, Forest",
+     "script": [
+      "cast me as Beast Titan",
+      "background forest",
+      "me enters center with fade",
+      "me: The forest is quiet at night. Perfect for a plan like mine.",
+      "player: What is your plan?",
+      "me (win): To end the suffering. Gently. Like a doctor would.",
+      "me: Do you think kindness can be cruel? I'm not sure any more."
      ]
     }
    ]
@@ -1647,6 +3549,13 @@
       ]
      },
      {
+      "context": "estranged",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You stopped me. Fine. Don't follow me any further."
+      ]
+     },
+     {
       "context": "hello",
       "min_rank": 0,
       "script": [
@@ -1689,6 +3598,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Move."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hm. You're blocking the path."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Oh. Hi. Don't get in the way."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: You again. Fine."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: Oh. You. ...Fine."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. Hi. Don't make it weird."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Hey. Glad it's you, {player}."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. I'm glad you didn't leave yet."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): ...Hey, {player}. Glad it's you."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. Walk with me to the edge of town."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. You're the only one who's ever asked where I was going."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. Stay with me a while. Please."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Get out of here."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Go. Don't stand around."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Keep moving forward."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Bye. Keep going."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Keep moving forward, {player}."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Bye, {player}. Don't wait around for me."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Stay alive. I mean it, {player}."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Go, {player}. Be careful out there."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Stay alive, {player}. I need you alive."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back, {player}. I'll think about you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Stay alive. Come back, please. Don't let Mikasa follow me."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Bye, {player}. You're the one I won't forget."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You're still here. Hm. Why?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Do you ever think about what's past the walls?"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: I don't usually talk to people. You're easy to be quiet with."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Watch the path. It's steep up there."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Fine. You can walk with me for a bit."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You're the one who listened when I said I want to see the sea."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: I'm tired of pretending I'm fine. You don't make me."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Let's go to the beach. I want to see the water again."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: I'm starting to trust you. That's not easy for me."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You're one of the few who makes me want to stay."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, my friend. I'd want you to live to see the sea."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You're the only one who doesn't ask me to explain myself."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Let's walk along the beach at night, the way we used to plan."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: I wish I could stop, for you. I can't, but I'd try."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend. Keep moving forward with me, as far as you can."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Eren, Friend"
@@ -1697,6 +3879,161 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Eren, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "eren-beyond-the-walls",
+      "title": "Beyond the Walls",
+      "gates": 2,
+      "about": "Eren wants to see the sea with someone, and to know what's on the other side.",
+      "offer": [
+       "them: I want to see the sea. Will you come with me?",
+       "them (pleased): Good. Don't be late. I hate being late."
+      ],
+      "stages": [
+       {
+        "text": "Watch the sea with Eren at the beach in the evening",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "beach",
+          "times": [
+           2
+          ],
+          "scene": "World: Eren, Beach",
+          "rewards": [
+           {
+            "coins": 200
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Win a duel with Eren: Eren: Conversation at Sunset in your deck",
+        "objectives": [
+         {
+          "do": "win_with",
+          "card": "AOT/SX04-012",
+          "against": [
+           "Eren"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Answer Eren's question",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Eren",
+          "script": [
+           "them: What's on the other side? Do you think it's different?",
+           "them (pleased): ...Yeah. I think so too."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "what-is-beyond",
+        "title": "Wonder what's beyond",
+        "about": "Eren keeps staring at the horizon, and says the sea is nothing like he imagined.",
+        "rewards": [
+         {
+          "coins": 300
+         },
+         {
+          "gift": "earbuds"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "eren-keep-moving-forward",
+      "title": "Keep Moving Forward",
+      "gates": 5,
+      "about": "Eren has seen the future, and he's going to go through with it. He won't explain why.",
+      "offer": [
+       "them: I can't stop. I've decided. I won't explain why.",
+       "them (dismayed): Just don't let Mikasa follow me. Please."
+      ],
+      "stages": [
+       {
+        "text": "Meet Eren at the beach at night",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "beach",
+          "times": [
+           3
+          ],
+          "scene": "World: Eren, Beach (night)",
+          "rewards": [
+           {
+            "pack": "color_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Have Eren Titan: Declaration of War",
+        "objectives": [
+         {
+          "do": "have_card",
+          "card": "AOT/SX04-003"
+         }
+        ]
+       },
+       {
+        "text": "Give Eren your answer",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Eren",
+          "script": [
+           "them: Will you keep Mikasa away from me, whatever happens?",
+           "them (pleased): ...Thanks. That's all I wanted."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "keep-moving-forward",
+        "title": "Keep moving forward",
+        "about": "Eren goes on alone. Mikasa's Best friend quest is closed for good.",
+        "rewards": [
+         {
+          "coins": 800
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ],
+        "locks": [
+         "mikasa-see-you-later"
+        ]
+       },
+       {
+        "key": "hold-on",
+        "title": "Hold on a little longer",
+        "about": "Eren hesitates, and promises to think about it.",
+        "rewards": [
+         {
+          "coins": 500
+         },
+         {
+          "gift": "handheld"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -1732,6 +4069,31 @@
       "- You can still choose, Eren.",
       "- I'm with you.",
       "me (lose): Best friend. Then... remember me like this. Looking at the ocean. Free."
+     ]
+    },
+    {
+     "name": "World: Eren, Beach",
+     "script": [
+      "cast me as Eren",
+      "background dusk",
+      "me enters left with rise",
+      "me: This is the sea. This is really it.",
+      "player: How does it feel?",
+      "me (win): Like nothing I expected. Smaller. Bigger. I don't know.",
+      "me: What's on the other side? You can't see it from here, can you?",
+      "player: No. You can't."
+     ]
+    },
+    {
+     "name": "World: Eren, Beach (night)",
+     "script": [
+      "cast me as Eren",
+      "background night",
+      "me enters center with fade",
+      "me: I can't stop. I've seen what happens if I do.",
+      "player: What happens?",
+      "me (win): I won't say. You'd try to stop me too.",
+      "me: Don't let Mikasa follow me. Please."
      ]
     }
    ]
@@ -1930,6 +4292,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: You're in the way."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Wipe your feet before you come in."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: You again. Did you wash your hands?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Hm. You're on time. Good."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: You again. Did you wipe your feet?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. Sit, before the tea gets cold."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): ...Oh. It's you, {player}. Sit, before the tea goes cold."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. Good. Your table's clean."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. Good to see you. The squad would've liked you."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. Come sit, I'll pour you a proper cup."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. You're the only one I'd share my tea with. Sit."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. Pull up a chair. The promise can wait a minute."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Don't track dirt on your way out."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Go on. Mind the stairs."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Tch. Go on."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Bye. Keep your blades sharp."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Go on, {player}. Don't track dirt in."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Bye, {player}. Keep your hands clean."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Go, {player}. Come back when your table needs cleaning."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Bye, {player}. Take care out there."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon, {player}. The table's dull without you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Go, {player}. Don't do anything reckless."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Don't die out there, {player}. That's all I ask."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Bye, {player}. Come back to tea. That's an order."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You're in my space. Step back, please."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: I'm not a fan of small talk. Make it brief."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Your table is clean. Acceptable. Sit."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You're not as messy as the others. Keep it that way."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Ask me one question. I'll answer it, once."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You don't crowd me, and you clean up after yourself. That's a start."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: I still think about the squad. You're the only one I say their names to."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Come to the arena. I'll show you the cleanest form."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: You're the first person who's made tea feel worth it in years."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You're someone I'd trust with my blades. Don't make me say it again."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. My friend. I'd keep my promise with you beside me."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You're the only one I'd want at my table, every day."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Let's go to the arena at dusk. The blades are ready for you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: Erwin would have liked you. He always liked people who kept things clean."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend. Don't die, and don't leave me the mess."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Levi, Friend"
@@ -1938,6 +4573,159 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Levi, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "levi-clean-up",
+      "title": "Clean Up",
+      "gates": 2,
+      "about": "Levi will drink tea with someone who keeps a clean table, and he's very particular about it.",
+      "offer": [
+       "them: Your table's a disgrace. Sit down, and mind the crumbs.",
+       "them (pleased): Hm. You keep a clean table. That's acceptable."
+      ],
+      "stages": [
+       {
+        "text": "Sit with Levi at the cafe in the morning",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "cafe",
+          "times": [
+           0
+          ],
+          "scene": "World: Levi, Cafe",
+          "rewards": [
+           {
+            "coins": 150
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Give Levi a bottled tea",
+        "objectives": [
+         {
+          "do": "give_gift",
+          "gift": "bottled-tea",
+          "to": "Levi"
+         }
+        ]
+       },
+       {
+        "text": "Let Levi talk about his squad",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Levi",
+          "script": [
+           "them: My squad. Briefly. Don't ask me more.",
+           "them (pleased): ...You didn't ask. Good."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "clean-table",
+        "title": "Keep a clean table",
+        "about": "Levi pours you a second cup without a word. It's his way of saying thanks.",
+        "rewards": [
+         {
+          "coins": 300
+         },
+         {
+          "gift": "sleeves"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "levi-a-promise-to-erwin",
+      "title": "A Promise to Erwin",
+      "gates": 5,
+      "about": "Levi has one promise left to keep: Erwin's last order, and the Beast Titan.",
+      "offer": [
+       "them: There's one promise left to keep. Erwin's.",
+       "them (dismayed): Come to the arena tonight. I'm not doing this alone."
+      ],
+      "stages": [
+       {
+        "text": "Meet Levi at the arena in the evening",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "arena",
+          "times": [
+           2
+          ],
+          "scene": "World: Levi, Arena",
+          "rewards": [
+           {
+            "pack": "color_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Have To Seize Freedom, Levi",
+        "objectives": [
+         {
+          "do": "have_card",
+          "card": "AOT/S50-E031"
+         }
+        ]
+       },
+       {
+        "text": "Answer Levi's question",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Levi",
+          "script": [
+           "them: Will you be there when I keep it?",
+           "them (pleased): ...Good. Then I won't be the only one."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "keep-the-promise",
+        "title": "Keep the promise",
+        "about": "Levi sends the Beast Titan away for good, as Erwin ordered. Zeke is gone from the town.",
+        "rewards": [
+         {
+          "coins": 800
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ],
+        "removes": [
+         "Beast Titan"
+        ]
+       },
+       {
+        "key": "put-the-blades-away",
+        "title": "Put the blades away",
+        "about": "Levi puts the blades down. He says the promise can wait, and you can help him decide.",
+        "rewards": [
+         {
+          "coins": 500
+         },
+         {
+          "gift": "playmat"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -1972,6 +4760,30 @@
       "- I'm not going anywhere.",
       "- Let's have tea tomorrow.",
       "me (lose): Best friend. Tch. Fine. Tomorrow. Don't be late."
+     ]
+    },
+    {
+     "name": "World: Levi, Cafe",
+     "script": [
+      "cast me as Levi",
+      "background cafe",
+      "me enters right with fade",
+      "me: Sit. Not there, the table's wet. There.",
+      "player: You wiped my table before I sat down.",
+      "me (win): Obviously. Did you think I'd let you sit at a dirty table?",
+      "me: Hm. You keep your hands clean. That's something."
+     ]
+    },
+    {
+     "name": "World: Levi, Arena",
+     "script": [
+      "cast me as Levi",
+      "background arena",
+      "me enters center with rise",
+      "me: Erwin's last order. I've sharpened these blades every night since.",
+      "player: What was the order?",
+      "me (win): Keep the Beast Titan from the walls. Keep it away from the others.",
+      "me: I need to keep that promise. I'd like you there when I do."
      ]
     }
    ]
@@ -2129,6 +4941,13 @@
       ]
      },
      {
+      "context": "estranged",
+      "min_rank": 0,
+      "script": [
+       "them: He chose to keep moving forward. I can't pretend that's fine."
+      ]
+     },
+     {
       "context": "hello",
       "min_rank": 0,
       "script": [
@@ -2171,6 +4990,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: ...Hello."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hm. Are you here for something?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Oh. Hi. Have you seen Eren?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Hello. I'm busy. Sorry."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. Have you seen Eren? ...Okay. Stay a while."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. Hi. It's cold today."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. You're safe. Good."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. Here, sit by the fire with me."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. I'm glad you're here. Really."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. Wear something warm before you leave."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. You're family to me. Stay."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. You're the one I'd always come back to."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Goodbye."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Bye. Be careful."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Wear your scarf. It's cold."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Goodbye. Take care."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Bye, {player}. Wear something warm."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Goodbye, {player}. Be safe."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Come back safe, {player}."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Bye, {player}. Take care of yourself."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back safe. Family comes back."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Go, {player}. I'll be waiting."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Come back safe, {player}. You're family. Always."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Bye, {player}. Always come back."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Hm. You're not the usual sort. Good."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: I'm watching the path. Don't startle me."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Do you know where Eren went? No? Okay."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: The forest is cold this time of year. Dress warmer next time."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: I'll answer one question. Choose wisely."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You don't ask about Eren all the time. Thank you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: I'm trying to keep you safe, too. I hope that's okay."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Let's sit by the fire at the plaza. It's warmer there."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: You're the one I'd tell about the scarf's story."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You're the only one who sees me, not the blade."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. You're family to me. Always."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: I'd stop anyone who hurt you, even Eren, if I had to."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Let's walk back through the forest together, like before."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You're the one I'd come back to, no matter where I went."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend. Wear the scarf, and come home safe."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Mikasa, Friend"
@@ -2179,6 +5271,161 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Mikasa, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "mikasa-the-scarf",
+      "title": "The Scarf",
+      "gates": 2,
+      "about": "Mikasa lost her scarf in the forest, and she won't go back without it.",
+      "offer": [
+       "them: I lost my scarf. I'm not going home without it.",
+       "them (pleased): Thank you for helping. Really."
+      ],
+      "stages": [
+       {
+        "text": "Search the forest with Mikasa in the morning",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "forest",
+          "times": [
+           0
+          ],
+          "scene": "World: Mikasa, Forest",
+          "rewards": [
+           {
+            "coins": 200
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Have Awkward Affection, Mikasa",
+        "objectives": [
+         {
+          "do": "have_card",
+          "card": "AOT/S35-E061"
+         }
+        ]
+       },
+       {
+        "text": "Tell Mikasa who gave her the scarf",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Mikasa",
+          "script": [
+           "them: Eren gave it to me. I never take it off.",
+           "them (pleased): ...You didn't laugh. Good."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "never-take-it-off",
+        "title": "Never take it off",
+        "about": "Mikasa ties the scarf back on and tells you its history, one knot at a time.",
+        "rewards": [
+         {
+          "coins": 300
+         },
+         {
+          "gift": "plushie"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "mikasa-see-you-later",
+      "title": "See You Later",
+      "gates": 5,
+      "about": "Mikasa has to choose between Eren and stopping him, and she already knows her answer.",
+      "offer": [
+       "them (dismayed): What would you do if someone you loved was about to do something terrible?",
+       "them: Meet me in the plaza. Please."
+      ],
+      "stages": [
+       {
+        "text": "Meet Mikasa in the plaza in the evening",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "plaza",
+          "times": [
+           2
+          ],
+          "scene": "World: Mikasa, Plaza",
+          "rewards": [
+           {
+            "pack": "climax_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Win a duel with Mikasa: Mikasa: Recovery Mission in your deck",
+        "objectives": [
+         {
+          "do": "win_with",
+          "card": "AOT/SX04-047",
+          "against": [
+           "Mikasa"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Give Mikasa your answer",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Mikasa",
+          "script": [
+           "them: I'll stop him, even if it breaks me.",
+           "them (pleased): ...Thank you for not telling me it's easy."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "stop-him",
+        "title": "Stop him",
+        "about": "Mikasa goes after Eren herself. Eren's Best friend quest is closed for good.",
+        "rewards": [
+         {
+          "coins": 800
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ],
+        "locks": [
+         "eren-keep-moving-forward"
+        ]
+       },
+       {
+        "key": "stay-with-him",
+        "title": "Stay with him",
+        "about": "Mikasa chooses to follow Eren, and asks you to stay close to her.",
+        "rewards": [
+         {
+          "coins": 500
+         },
+         {
+          "gift": "bouquet"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -2213,6 +5460,30 @@
       "- I'll protect you too.",
       "- You're my family too.",
       "me (lose): Best friend. Family. I'll wrap my scarf around both of us, then."
+     ]
+    },
+    {
+     "name": "World: Mikasa, Forest",
+     "script": [
+      "cast me as Mikasa",
+      "background forest",
+      "me enters left with slide",
+      "me: I lost it. It was here. I'm sure it was here.",
+      "player: I found it on a branch.",
+      "me (lose): ...Thank you. I'll put it back on.",
+      "me: Eren gave it to me. I've never taken it off since."
+     ]
+    },
+    {
+     "name": "World: Mikasa, Plaza",
+     "script": [
+      "cast me as Mikasa",
+      "background sakura",
+      "me enters center with fade",
+      "me: If the person you loved was about to do something terrible, what would you do?",
+      "player: I'd try to stop them.",
+      "me (win): I already know my answer. I just hoped someone else would say it.",
+      "me: Please stay close to me, whatever I choose."
      ]
     }
    ]
@@ -2414,6 +5685,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Ooh! A new toy? Hiii~!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Hi~! Hold still while I measure you!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): Hello~! Did you come to be a doll?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): Ooh, look at this one! So many possibilities!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Yay, it's you! Nui's favourite plaything is back~!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}~! Want to see my new sewing kit?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Eeee! {player}, come here, come here!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}! I've been sewing all day. Want to see?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}! Nui missed you SO much~! Come here!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}~! Hold still, I need your measurements!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}! My favourite friend in the whole world~!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}! You're my best doll. Come in!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Bye-byeee~!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Bye~! Don't come apart!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): Go~! Don't tear your seams!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): Bye, bye! Stay pretty~!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Don't come apart at the seams while Nui's away~!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Bye, {player}~! Come back soon!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Come back soon or Nui will come find you~!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Bye, {player}! Keep your measurements up to date!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon, {player}~! Nui will sew you a new coat!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Go, {player}! Nui will be lonely without you!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Come back soon, best doll! Teehee!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Bye, {player}~! My favourite. Don't let anyone else sew you!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): Ooh, you're interesting! Let me pin you up for a fitting."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Hm! Your measurements look promising. Stand still."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: I never invite people to the warehouse. You're special."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them (pleased): Do you like my dresses? I made them all myself."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Quiet, please. I'm concentrating on the stitching."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You don't flinch when I hold the scissors. I like that!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: The dolls are lonely without company. You're good company."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Come try on the new coat. It's almost perfect."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: Lady Ragyo would approve of you. Probably."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You make the warehouse feel warm, somehow."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, my favourite plaything. Forever and ever, teehee!"
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: I'd sew you a dress for every day, if you let me."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Come to the warehouse at night. I'll show you my best work."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You're the only one who asks me about the stitching. It means a lot."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend! Let's make something beautiful together!"
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Nui Harime, Friend"
@@ -2422,6 +5966,145 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Nui Harime, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "nui-sewing-circle",
+      "title": "Sewing Circle",
+      "gates": 2,
+      "about": "Nui wants to make a doll of the player, with the eyes left for later.",
+      "offer": [
+       "them: Hold still while I measure you. It's for a doll.",
+       "them (pleased): Lovely. You'll look exactly like you. Almost."
+      ],
+      "stages": [
+       {
+        "text": "Find Nui in the alley at night",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "alley",
+          "times": [
+           3
+          ],
+          "scene": "World: Nui Harime, Alley",
+          "rewards": [
+           {
+            "pack": "climax_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Bring Nui a bouquet for her sewing circle",
+        "objectives": [
+         {
+          "do": "give_gift",
+          "gift": "bouquet",
+          "to": "Nui Harime"
+         }
+        ]
+       },
+       {
+        "text": "Let Nui finish the measurements",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Nui Harime",
+          "script": [
+           "them: I'll add the eyes later. Don't ask why.",
+           "them (pleased): You'll make an excellent doll."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "doll-with-no-eyes",
+        "title": "Let her finish the doll",
+        "about": "Nui shows you the doll with no eyes, and tells you exactly where she'll put them.",
+        "rewards": [
+         {
+          "coins": 300
+         },
+         {
+          "gift": "sleeves"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "nui-grand-couturier",
+      "title": "Grand Couturier",
+      "gates": 5,
+      "about": "Nui shows what she really is, among half-finished dresses in the warehouse.",
+      "offer": [
+       "them: Lady Ragyo made me perfect. Come see what perfect looks like.",
+       "them (dismayed): Don't be afraid. I'm only cheerful when I'm sewing."
+      ],
+      "stages": [
+       {
+        "text": "Visit Nui at the warehouse in the evening",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "warehouse",
+          "times": [
+           2
+          ],
+          "scene": "World: Nui Harime, Warehouse",
+          "rewards": [
+           {
+            "pack": "level_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Beat Ragyo Kiryuin in a duel",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Ragyo Kiryuin"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Answer Nui's question",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Nui Harime",
+          "script": [
+           "them: Can a made thing be loved, do you think?",
+           "them (pleased): ...You said yes. Keep saying it."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "grand-couturier",
+        "title": "Be her first customer",
+        "about": "Nui sews you a jacket out of the half-finished dresses. It fits perfectly, and she's delighted.",
+        "rewards": [
+         {
+          "coins": 600
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -2455,6 +6138,30 @@
       "- You're my friend, Nui.",
       "- You can choose who you are.",
       "me (lose): Best friend! Nui will sew it into her heart! Ehehe~! Don't tell Lady Ragyo!"
+     ]
+    },
+    {
+     "name": "World: Nui Harime, Alley",
+     "script": [
+      "cast me as Nui Harime",
+      "background city",
+      "me enters center with fade",
+      "me: Measuring tape, scissors, and a very happy face. Hold still.",
+      "player: What are you making?",
+      "me (lose): A doll. It looks exactly like you. Minus the eyes.",
+      "me: I'll add the eyes later. Don't worry about it."
+     ]
+    },
+    {
+     "name": "World: Nui Harime, Warehouse",
+     "script": [
+      "cast me as Nui Harime",
+      "background ruins",
+      "me enters left with rise",
+      "me: Lady Ragyo made me perfect. Isn't that lovely?",
+      "player: Perfect how?",
+      "me (win): Stitched together, with purpose. Like these dresses.",
+      "me: Do you think a made thing can be loved? Honestly?"
      ]
     }
    ]
@@ -2610,6 +6317,13 @@
       ]
      },
      {
+      "context": "estranged",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): My daughter chose rebellion. She'll find no welcome in this house."
+      ]
+     },
+     {
       "context": "hello",
       "min_rank": 0,
       "script": [
@@ -2652,6 +6366,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: What a drab little thing you are."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hm. Stand still. Let me look at you."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Ah, you. You dress a touch better today."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Come closer. I want to see the stitching."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Come into the light, {player}. Let me look at you."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}. You're improving. Sit."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. Good. Come here. I want to talk about your clothing."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. I'm glad you came. We have much to discuss."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. Come into the light, little one. You shine today."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. Sit by me. The family misses you."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. You're the one I'd trust with the family's secrets."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. Welcome home. Stay as long as you like."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Leave."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Go. You're wasting my light."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: You may go."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Off with you. Mind your posture."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Go, {player}. You may leave."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Bye, {player}. Don't wear anything drab."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Go. Return to me shining, {player}."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Bye, {player}. Come back to the warehouse soon."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Go, {player}. Return to me, shining."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Bye, {player}. Come back soon, my little one."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Go, {player}. Return to me, and bring Satsuki if you can."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Farewell, {player}. The family is stronger with you in it."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You're a passable specimen. Stand up straight."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Hm. You're not entirely useless. Good."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: The clothing I wear is alive, like you. Remember that."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Sit, and listen. Don't interrupt."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You may ask one question. Make it intelligent."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You're one of the few who doesn't flinch at the light."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: Satsuki is becoming difficult. I need you to watch her for me."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Come to the library. I'll show you a new fibre."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: You are useful to the family. Remember that."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You shine a little when you agree with me. How charming."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, my most loyal child. The family is stronger with you."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You're the only one I'd trust with my secrets."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Come into the warehouse. Let's discuss the family's future."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: I want you beside me when the true clothing is revealed."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend. Welcome home, always. Never leave the light."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Ragyo Kiryuin, Friend"
@@ -2660,6 +6647,161 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Ragyo Kiryuin, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "ragyo-life-fibers",
+      "title": "Life Fibers",
+      "gates": 2,
+      "about": "Ragyo explains what clothing truly is, glowing faintly while she lectures.",
+      "offer": [
+       "them: Clothing is alive. Humans are merely its hosts. Let me explain.",
+       "them (pleased): Attentive. I approve."
+      ],
+      "stages": [
+       {
+        "text": "Hear Ragyo at the library at noon",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "library",
+          "times": [
+           1
+          ],
+          "scene": "World: Ragyo Kiryuin, Library",
+          "rewards": [
+           {
+            "pack": "climax_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Have Ragyo Plots Cocoon Sphere Birth",
+        "objectives": [
+         {
+          "do": "have_card",
+          "card": "KLK/S27-E021"
+         }
+        ]
+       },
+       {
+        "text": "Let Ragyo finish her lecture",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Ragyo Kiryuin",
+          "script": [
+           "them: Would you make good fabric? I think you would.",
+           "them (pleased): Good. You understand the spirit of it."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "good-fabric",
+        "title": "Accept the compliment",
+        "about": "Ragyo gives you a scrap of living cloth, and tells you to keep it close.",
+        "rewards": [
+         {
+          "coins": 300
+         },
+         {
+          "gift": "bouquet"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "ragyo-mothers-order",
+      "title": "Mother's Order",
+      "gates": 5,
+      "about": "Ragyo wants the player to bring Satsuki to heel, and asks them to stand with the family.",
+      "offer": [
+       "them: Satsuki is planning a rebellion. Don't pretend you haven't noticed.",
+       "them (dismayed): Stand with the family. Stand with me."
+      ],
+      "stages": [
+       {
+        "text": "Visit Ragyo at the warehouse at night",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "warehouse",
+          "times": [
+           3
+          ],
+          "scene": "World: Ragyo Kiryuin, Warehouse",
+          "rewards": [
+           {
+            "pack": "color_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Win a duel with Ragyo: Plots Cocoon Sphere Birth in your deck",
+        "objectives": [
+         {
+          "do": "win_with",
+          "card": "KLK/S27-E021",
+          "against": [
+           "Ragyo Kiryuin"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Give Ragyo your answer",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Ragyo Kiryuin",
+          "script": [
+           "them: Will you bring Satsuki back to the family?",
+           "them (pleased): ...Good. Obedience is its own reward."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "obey",
+        "title": "Obey",
+        "about": "Ragyo's order stands. Satsuki's Best friend quest is closed for good.",
+        "rewards": [
+         {
+          "coins": 800
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ],
+        "locks": [
+         "satsuki-rebellion"
+        ]
+       },
+       {
+        "key": "refuse-her",
+        "title": "Refuse her",
+        "about": "Ragyo's smile tightens, and she dismisses you from the warehouse.",
+        "rewards": [
+         {
+          "coins": 500
+         },
+         {
+          "gift": "handheld"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -2694,6 +6836,30 @@
       "- I'm your friend, Ragyo.",
       "- It's not too late.",
       "me (lose): Best friend. How... human of me. I find I don't hate it."
+     ]
+    },
+    {
+     "name": "World: Ragyo Kiryuin, Library",
+     "script": [
+      "cast me as Ragyo Kiryuin",
+      "background library",
+      "me enters center with fade",
+      "me: Clothing is alive, and it chooses its hosts. Listen closely.",
+      "player: That sounds terrible.",
+      "me (win): It sounds like a lesson. Pay attention.",
+      "me: Would you make good fabric? I think you'd be very useful."
+     ]
+    },
+    {
+     "name": "World: Ragyo Kiryuin, Warehouse",
+     "script": [
+      "cast me as Ragyo Kiryuin",
+      "background ruins",
+      "me enters right with slide",
+      "me: Satsuki is planning a rebellion. I know it.",
+      "player: What are you going to do?",
+      "me (win): Bring her back to the family. By force, if needed.",
+      "me: Stand with me, not with her. The family needs you."
      ]
     }
    ]
@@ -2893,6 +7059,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Yeah? Whaddaya want?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hey. Is that a new jacket?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Oh, hey. Didn't see you there."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Hi. You look like you fight. Good."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Hey, {player}! Good timing, I was gettin' bored."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): {player}! Senketsu, look who it is!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}! Senketsu says hi, by the way."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}! C'mon, let's go do somethin' fun."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): There ya are, {player}! C'mon, let's go do somethin'!"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}! Got a fight in mind, or just a chat?"
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}! My best friend. Senketsu agrees, too."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}! Come on, I'll show you the new move."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Later."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: See ya. Don't get hit."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Bye. Don't do anything dumb."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Later, alright?"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): See ya, {player}! Don't let anybody push ya around!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them (pleased): Bye, {player}! Watch your back!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Go on, {player}! Come back soon."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Bye, {player}! Don't let the uniform get you in trouble!"
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Come back soon, alright? I'll be around, {player}."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): See ya, {player}! Senketsu will miss you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Come back soon, best friend! I'll be waiting, Senketsu too."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Bye, {player}! Don't go gettin' yourself killed."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Yeah? You look like you could handle a fight. Good."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You're not scared of Senketsu, are you? He's a bit loud."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Don't mind my uniform. It's got opinions."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Hey, you're alright. Don't ruin it."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Want to spar? I'll go easy. A little."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You stuck around even when Senketsu was being rude. That's cool."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: I'm getting closer to finding the other half of the blade. Thanks for helping."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Come to the alley, I'll show you where I found the clue."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: You're the one I'd want at my back in any fight."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Senketsu says you're good people. I agree."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}! You're my best friend, and Senketsu's, too."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: When I find my father's killer, I want you to be the first to know."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Let's go to the arena. Show me your best move, and I'll show you mine."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You never gave up on me, even when I was a total mess."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend! Don't let anyone push you around, ever!"
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Ryuko Matoi, Friend"
@@ -2901,6 +7340,145 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Ryuko Matoi, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "ryuko-senketsu",
+      "title": "Senketsu",
+      "gates": 2,
+      "about": "Ryuko's uniform talks, and she wants to know if you can hear it.",
+      "offer": [
+       "them: My uniform talks to me. Don't laugh. Please just listen.",
+       "them (pleased): Okay, you can laugh a little."
+      ],
+      "stages": [
+       {
+        "text": "Watch Ryuko argue with Senketsu at the arena at noon",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "arena",
+          "times": [
+           1
+          ],
+          "scene": "World: Ryuko Matoi, Arena",
+          "rewards": [
+           {
+            "coins": 200
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Have Connected by Blood, Ryuko",
+        "objectives": [
+         {
+          "do": "have_card",
+          "card": "KLK/S27-E064"
+         }
+        ]
+       },
+       {
+        "text": "Tell Ryuko what Senketsu said",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Ryuko Matoi",
+          "script": [
+           "them: Senketsu likes you. He says you're an honest person.",
+           "them (pleased): ...See? I'm not crazy."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "senketsu-likes-you",
+        "title": "Senketsu likes you",
+        "about": "Senketsu says your name in its own voice. Ryuko grins for the rest of the day.",
+        "rewards": [
+         {
+          "coins": 300
+         },
+         {
+          "gift": "instant-ramen"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "ryuko-scissor-blade",
+      "title": "Scissor Blade",
+      "gates": 5,
+      "about": "Ryuko is close to finding her father's killer, and she shows you half a blade.",
+      "offer": [
+       "them (dismayed): I've found half of the scissor blade. The other half is out there.",
+       "them: Will you help me find the rest?"
+      ],
+      "stages": [
+       {
+        "text": "Meet Ryuko in the alley in the evening",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "alley",
+          "times": [
+           2
+          ],
+          "scene": "World: Ryuko Matoi, Alley",
+          "rewards": [
+           {
+            "pack": "color_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Win a duel with Ryuko: Changing Into Senketsu in your deck",
+        "objectives": [
+         {
+          "do": "win_with",
+          "card": "KLK/SP03-E05",
+          "against": [
+           "Ryuko Matoi"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Give Ryuko your answer",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Ryuko Matoi",
+          "script": [
+           "them: When I find the other half, will you have my back?",
+           "them (pleased): ...Good. I'll hold you to it."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "have-her-back",
+        "title": "Have her back",
+        "about": "Ryuko gives you the half-blade to hold until the other half turns up.",
+        "rewards": [
+         {
+          "coins": 800
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -2934,6 +7512,30 @@
       "- You're human where it counts.",
       "- I'm proud of you.",
       "me (lose): Best friend. Heh. Senketsu, you hear that? We've got another one."
+     ]
+    },
+    {
+     "name": "World: Ryuko Matoi, Arena",
+     "script": [
+      "cast me as Ryuko Matoi",
+      "background arena",
+      "me enters left with slide",
+      "me: Senketsu, stop it. Stop it! No, I'm not shouting at you.",
+      "player: Is it talking to you?",
+      "me (lose): All the time. It likes you, you know.",
+      "me: Am I crazy? Be honest."
+     ]
+    },
+    {
+     "name": "World: Ryuko Matoi, Alley",
+     "script": [
+      "cast me as Ryuko Matoi",
+      "background city",
+      "me enters right with rise",
+      "me: Half a blade. My father's, from the scissors that killed him.",
+      "player: Where's the other half?",
+      "me (win): Somewhere out there. I'll find it.",
+      "me: When I do, will you have my back?"
      ]
     }
    ]
@@ -3091,6 +7693,13 @@
       ]
      },
      {
+      "context": "estranged",
+      "min_rank": 0,
+      "script": [
+       "them: Mother won. Then I'm no longer your ally. Stay out of my way."
+      ]
+     },
+     {
       "context": "hello",
       "min_rank": 0,
       "script": [
@@ -3133,6 +7742,279 @@
       ]
      },
      {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: State your business."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 0,
+      "script": [
+       "them: Hm. You're on time, at least."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: You may approach."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 1,
+      "script": [
+       "them: Ah. Stand straight, please."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: You may approach, {player}."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 2,
+      "script": [
+       "them: {player}. Sit. We have something to discuss."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. Good. Stand with me a moment."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): {player}. You're improving. I noticed."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. Good. Stand with me, and watch the city."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): {player}. I'm glad you came. Honestly."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. The one ally I'd stand beside without fear."
+      ]
+     },
+     {
+      "context": "hello",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}. Sit. Tell me what you've seen today."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Dismissed."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 0,
+      "script": [
+       "them: Go. Be prompt next time."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: Go. Remain human."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 1,
+      "script": [
+       "them: You may leave."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Go, {player}. Remain human."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 2,
+      "script": [
+       "them: Dismissed, {player}. Be prompt."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Return soon. That is not a request, {player}."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Go, {player}. Keep your guard up."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Return soon, {player}. The city is quieter without you."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 4,
+      "script": [
+       "them (pleased): Go, {player}. I'll expect you back at the rooftop."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Return soon. Stand with me again, {player}."
+      ]
+     },
+     {
+      "context": "goodbye",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Go, {player}. You are my one true ally. Return."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: You've earned a few minutes of my time. Use them well."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: I don't hand out trust. You haven't earned it, yet."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: The academy's rules are strict. You're learning them."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Hm. You're more useful than I first thought."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 1,
+      "script": [
+       "them: Ask one question. I will answer, with precision."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): You're one of the few I'd stand beside in the rebellion."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: My mother's plans are tyrannical. You're one of the few who sees it."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): Come to the rooftop. We'll discuss the future of Honnouji."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them: You're earning my respect, slowly. Keep at it."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 3,
+      "script": [
+       "them (pleased): I trust you enough to tell you a secret. Don't repeat it."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): {player}, my ally, my friend. You're the only one I'd stand with."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: When the rebellion comes, I want you by my side, as an equal."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Let's go up to the rooftop. The city looks different with you here."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them: You're the one who makes me want to be more than a weapon."
+      ]
+     },
+     {
+      "context": "greet",
+      "min_rank": 5,
+      "script": [
+       "them (pleased): Best friend. Stand with me. Always. That's an order I'd like you to take."
+      ]
+     },
+     {
       "context": "rank_up",
       "min_rank": 2,
       "scene": "World: Satsuki Kiryuin, Friend"
@@ -3141,6 +8023,161 @@
       "context": "rank_up",
       "min_rank": 5,
       "scene": "World: Satsuki Kiryuin, Best friend"
+     }
+    ],
+    "quests": [
+     {
+      "key": "satsuki-honnouji-academy",
+      "title": "Honnouji Academy",
+      "gates": 2,
+      "about": "Satsuki inspects the player like a new recruit and asks three questions.",
+      "offer": [
+       "them: Three questions. Answer quickly. Hesitation is a weakness.",
+       "them (pleased): Barely acceptable. For now."
+      ],
+      "stages": [
+       {
+        "text": "Be inspected by Satsuki at school in the morning",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "school",
+          "times": [
+           0
+          ],
+          "scene": "World: Satsuki Kiryuin, School",
+          "rewards": [
+           {
+            "coins": 150
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Give Satsuki a bouquet at the gates",
+        "objectives": [
+         {
+          "do": "give_gift",
+          "gift": "bouquet",
+          "to": "Satsuki Kiryuin"
+         }
+        ]
+       },
+       {
+        "text": "Answer Satsuki's last question",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Satsuki Kiryuin",
+          "script": [
+           "them: Would you follow a leader without question?",
+           "them (pleased): Hm. Honest answer. I'll note it."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "barely-acceptable",
+        "title": "Be barely acceptable",
+        "about": "Satsuki accepts you into her small circle, and says so with a short nod.",
+        "rewards": [
+         {
+          "coins": 300
+         },
+         {
+          "gift": "sleeves"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "satsuki-rebellion",
+      "title": "Rebellion",
+      "gates": 5,
+      "about": "Satsuki's life-long plan to overthrow her mother, and what she's built to do it.",
+      "offer": [
+       "them: Everything I've built was a weapon. Aimed at my mother.",
+       "them (dismayed): Come to the rooftop tonight. I'll show you the rest."
+      ],
+      "stages": [
+       {
+        "text": "Meet Satsuki on the rooftop at night",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "rooftop",
+          "times": [
+           3
+          ],
+          "scene": "World: Satsuki Kiryuin, Rooftop",
+          "rewards": [
+           {
+            "pack": "color_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Beat Ragyo Kiryuin in a duel",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Ragyo Kiryuin"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Give Satsuki your answer",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Satsuki Kiryuin",
+          "script": [
+           "them: Will you be part of it, or will you stand aside?",
+           "them (pleased): ...Then you're part of it. Welcome."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "rebel",
+        "title": "Rebel",
+        "about": "Satsuki begins her rebellion. Ragyo's Best friend quest is closed for good.",
+        "rewards": [
+         {
+          "coins": 800
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ],
+        "locks": [
+         "ragyo-mothers-order"
+        ]
+       },
+       {
+        "key": "wait-for-the-moment",
+        "title": "Wait for the right moment",
+        "about": "Satsuki decides the timing isn't right yet, and tells you to be ready.",
+        "rewards": [
+         {
+          "coins": 500
+         },
+         {
+          "gift": "playmat"
+         }
+        ]
+       }
+      ]
      }
     ]
    },
@@ -3175,6 +8212,31 @@
       "- You're my best friend.",
       "- You don't have to carry it alone.",
       "me (lose): Best friend. I accept. And I'll guard it with everything I have."
+     ]
+    },
+    {
+     "name": "World: Satsuki Kiryuin, School",
+     "script": [
+      "cast me as Satsuki Kiryuin",
+      "background classroom",
+      "me enters center with slide",
+      "me: You're late. Barely. Three questions. Answer quickly.",
+      "player: Fine.",
+      "me (win): Question one: what would you do if a leader was wrong?",
+      "player: I'd say so.",
+      "me (lose): Barely acceptable. For now. Don't make me regret it."
+     ]
+    },
+    {
+     "name": "World: Satsuki Kiryuin, Rooftop",
+     "script": [
+      "cast me as Satsuki Kiryuin",
+      "background night",
+      "me enters left with rise",
+      "me: I've built everything as a weapon. It's aimed at my mother.",
+      "player: Why tell me?",
+      "me (win): Because you might be the one who helps me finish it.",
+      "me: Be part of it, or stay out of the way. Choose now."
      ]
     }
    ]

@@ -1,10 +1,1719 @@
 """World mode cast: Oshi no Ko and Puella Magi Madoka Magica."""
 
+AKANE_KUROKAWA_QUESTS = [
+  {
+    "key": "akane-method-acting",
+    "title": "Method Acting",
+    "gates": 2,
+    "about": "Akane is studying the player, to play them in a role.",
+    "offer": [
+      "them: I've been watching how you walk. Hold still, I'm copying it.",
+      "them (pleased): Don't worry, it's a compliment."
+    ],
+    "stages": [
+      {
+        "text": "Find Akane at the library at noon",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "library",
+            "times": [
+              1
+            ],
+            "scene": "World: Akane Kurokawa, Library",
+            "rewards": [
+              {
+                "coins": 200
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Give Akane a manga volume for research",
+        "objectives": [
+          {
+            "do": "give_gift",
+            "gift": "manga",
+            "to": "Akane Kurokawa"
+          }
+        ]
+      },
+      {
+        "text": "Answer her question: what do you want?",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Akane Kurokawa",
+            "script": [
+              "them: I can copy everything about you but that. Tell me.",
+              "them (pleased): Hm. Honest. That I can use."
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "let-her-play-you",
+        "title": "Let her play you",
+        "about": "Akane's copy of you is perfect now, and she's proud of it.",
+        "rewards": [
+          {
+            "coins": 300
+          },
+          {
+            "gift": "shortcake"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "akane-profile-of-a-killer",
+    "title": "Profile of a Killer",
+    "gates": 5,
+    "about": "Akane has worked out who Aqua is hunting, and what the hunt is doing to him.",
+    "offer": [
+      "them (dismayed): I have a profile. It's about Aqua, and it's not pretty.",
+      "them: I need someone to help me stop him before he crosses a line."
+    ],
+    "stages": [
+      {
+        "text": "Meet Akane at the cafe in the evening",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "cafe",
+            "times": [
+              2
+            ],
+            "scene": "World: Akane Kurokawa, Cafe",
+            "rewards": [
+              {
+                "pack": "color_pack"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Have Perfect Trace, Akane Kurokawa",
+        "objectives": [
+          {
+            "do": "have_card",
+            "card": "OSK/S107-E068"
+          }
+        ]
+      },
+      {
+        "text": "Decide what to do about Aqua",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Akane Kurokawa",
+            "script": [
+              "them: Aqua's hunt is going to get him killed, or worse.",
+              "them (dismayed): Stop him, or let him go. Your call."
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "stop-him",
+        "title": "Stop him",
+        "about": "Akane tells Aqua's secret to the one person who can stop him. Aqua's Best friend quest is closed for good.",
+        "rewards": [
+          {
+            "coins": 800
+          },
+          {
+            "pack": "lucky_pack"
+          }
+        ],
+        "locks": [
+          "aqua-revenge"
+        ]
+      },
+      {
+        "key": "let-him-go",
+        "title": "Let him go his own way",
+        "about": "Akane keeps the profile to herself and lets Aqua chase his revenge.",
+        "rewards": [
+          {
+            "coins": 500
+          },
+          {
+            "gift": "earbuds"
+          }
+        ]
+      }
+    ]
+  }
+]
+AKANE_KUROKAWA_SCENES = [
+  {
+    "name": "World: Akane Kurokawa, Library",
+    "lines": [
+      "background library",
+      "me enters center with fade",
+      "me: Stay still. Your shoulders go up when you think. Like this.",
+      "player: I'm not doing that.",
+      "me (pleased): You just did it. Notebook page four.",
+      "me: Don't worry. I won't play you badly. Just better than you'd like.",
+      "player: What do you want from me?",
+      "me (dismayed): ...That's the one line I can't copy. Tell me?"
+    ]
+  },
+  {
+    "name": "World: Akane Kurokawa, Cafe",
+    "lines": [
+      "background dusk",
+      "me enters left with slide",
+      "me: I wrote Aqua's profile. Read it, and tell me I'm wrong.",
+      "player: Is he really hunting someone?",
+      "me (dismayed): The man who had Ai killed. He's close.",
+      "me: Watching him do this to himself is the worst part.",
+      "me: I need you to decide what happens next. I can't carry it alone."
+    ]
+  }
+]
+AQUA_HOSHINO_QUESTS = [
+  {
+    "key": "aqua-behind-the-camera",
+    "title": "Behind the Camera",
+    "gates": 2,
+    "about": "Aqua needs an extra for a reality show shoot, and he's not gentle about it.",
+    "offer": [
+      "them: I need an extra for a shoot. Someone who looks sincere on camera.",
+      "them (pleased): That's rare in this business. Don't waste it."
+    ],
+    "stages": [
+      {
+        "text": "Go to school for the shoot in the morning",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "school",
+            "times": [
+              0
+            ],
+            "scene": "World: Aqua Hoshino, School",
+            "rewards": [
+              {
+                "coins": 150
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Have Mask of Revenge, Aqua",
+        "objectives": [
+          {
+            "do": "have_card",
+            "card": "OSK/S107-E067"
+          }
+        ]
+      },
+      {
+        "text": "Hear what Aqua thought of the shoot",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Aqua Hoshino",
+            "script": [
+              "them (pleased): You were sincere on camera. I didn't expect that.",
+              "them: Don't tell anyone I said it."
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "in-the-shot",
+        "title": "Be in the shot",
+        "about": "Aqua puts you in the final cut. He says it's the only honest take in the whole show.",
+        "rewards": [
+          {
+            "coins": 300
+          },
+          {
+            "gift": "playmat"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "aqua-revenge",
+    "title": "Revenge",
+    "gates": 5,
+    "about": "Aqua has found a lead on the man who had Ai killed, and he needs a witness, not help.",
+    "offer": [
+      "them (dismayed): I found a name. A photo, too. I'm not asking for help.",
+      "them: I'm asking you to watch."
+    ],
+    "stages": [
+      {
+        "text": "Meet Aqua in the alley at night",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "alley",
+            "times": [
+              3
+            ],
+            "scene": "World: Aqua Hoshino, Alley",
+            "rewards": [
+              {
+                "pack": "climax_pack"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Win a duel with Aqua: Wrap-up Party in your deck",
+        "objectives": [
+          {
+            "do": "win_with",
+            "card": "OSK/S107-E084",
+            "against": [
+              "Aqua Hoshino"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Give Aqua your answer",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Aqua Hoshino",
+            "script": [
+              "them: I need to know whether you'll stand there while I finish this.",
+              "them (pleased): Okay. A witness, then."
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "finish-it",
+        "title": "Finish it",
+        "about": "Aqua follows the lead to its end. Akane's Best friend quest is closed for good.",
+        "rewards": [
+          {
+            "coins": 800
+          },
+          {
+            "pack": "lucky_pack"
+          }
+        ],
+        "locks": [
+          "akane-profile-of-a-killer"
+        ]
+      },
+      {
+        "key": "walk-away",
+        "title": "Walk away from the lead",
+        "about": "Aqua leaves the photo in a drawer and lets it go, for now.",
+        "rewards": [
+          {
+            "coins": 500
+          },
+          {
+            "gift": "handheld"
+          }
+        ]
+      }
+    ]
+  }
+]
+AQUA_HOSHINO_SCENES = [
+  {
+    "name": "World: Aqua Hoshino, School",
+    "lines": [
+      "background classroom",
+      "me enters right with slide",
+      "me: Action. No. Not that smile, a sincere one. Again.",
+      "player: Like this?",
+      "me (pleased): ...Yeah. Keep that. That's the one.",
+      "me: Don't read anything into it. You're a prop with decent eyes.",
+      "player: Thanks, I think.",
+      "me (dismayed): It's not a compliment. It's a warning. Cameras see everything."
+    ]
+  },
+  {
+    "name": "World: Aqua Hoshino, Alley",
+    "lines": [
+      "background city",
+      "me enters left with rise",
+      "me: It's raining. Good. Nobody looks up.",
+      "player: What's in the envelope?",
+      "me (dismayed): A photo, and a name. The man who ordered Ai's death.",
+      "me: I don't need your help. I need a witness.",
+      "player: You'll have one.",
+      "me (pleased): ...Good. Don't blink."
+    ]
+  }
+]
+KANA_ARIMA_QUESTS = [
+  {
+    "key": "kana-ten-second-crier",
+    "title": "The Ten-Second Crier",
+    "gates": 2,
+    "about": "Kana is rehearsing crying on cue, and it won't come.",
+    "offer": [
+      "them (dismayed): Don't look. I'm practising.",
+      "them: Ten seconds, on cue. It's not that hard. Apparently."
+    ],
+    "stages": [
+      {
+        "text": "Watch Kana rehearse at school at noon",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "school",
+            "times": [
+              1
+            ],
+            "scene": "World: Kana Arima, School",
+            "rewards": [
+              {
+                "coins": 200
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Have POP IN 2, Kana Arima",
+        "objectives": [
+          {
+            "do": "have_card",
+            "card": "OSK/S121-E018"
+          }
+        ]
+      },
+      {
+        "text": "Tell Kana what you saw",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Kana Arima",
+            "script": [
+              "them (dismayed): You saw nothing. You understand? Nothing.",
+              "them (pleased): ...Thanks for not making it a thing."
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "never-saw-it",
+        "title": "Never saw it",
+        "about": "Kana's tears worked, and she swears you were never there to see them.",
+        "rewards": [
+          {
+            "coins": 300
+          },
+          {
+            "gift": "manga"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "kana-child-star-no-more",
+    "title": "Child Star No More",
+    "gates": 5,
+    "about": "Kana has been turned down for a role for being too old, and she won't say so out loud.",
+    "offer": [
+      "them: They said I'm too old. For a kid's role. I'm sixteen.",
+      "them (dismayed): Don't say anything. I ordered three desserts. I'll eat none."
+    ],
+    "stages": [
+      {
+        "text": "Find Kana at the cafe in the evening",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "cafe",
+            "times": [
+              2
+            ],
+            "scene": "World: Kana Arima, Cafe",
+            "rewards": [
+              {
+                "pack": "color_pack"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Win a duel with Kana: POP IN 2 in your deck",
+        "objectives": [
+          {
+            "do": "win_with",
+            "card": "OSK/S121-E018",
+            "against": [
+              "Kana Arima"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Ask Kana the question she can't answer",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Kana Arima",
+            "script": [
+              "them: Does anyone remember child stars once they grow up?",
+              "them (pleased): ...You do. Okay. That helps."
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "keep-her-company",
+        "title": "Keep her company",
+        "about": "Kana eats the desserts after all, and asks you to come to the next audition.",
+        "rewards": [
+          {
+            "coins": 600
+          },
+          {
+            "pack": "lucky_pack"
+          }
+        ]
+      }
+    ]
+  }
+]
+KANA_ARIMA_SCENES = [
+  {
+    "name": "World: Kana Arima, School",
+    "lines": [
+      "background classroom",
+      "me enters center with fade",
+      "me: Okay. Sad face. Sad face. ...Why isn't it working?",
+      "player: Think of something sad.",
+      "me (dismayed): I'm thinking of you, and that's not helping.",
+      "me: Fine. Okay. Last try.",
+      "me bounces",
+      "me: ...You saw that? Forget you saw that. Right now."
+    ]
+  },
+  {
+    "name": "World: Kana Arima, Cafe",
+    "lines": [
+      "background cafe",
+      "me enters left with slide",
+      "me: Three desserts. I'm not going to eat any of them.",
+      "player: Why did you order them?",
+      "me (dismayed): Because nobody's ever ordered dessert for me.",
+      "me: Child stars grow up and nobody remembers them. I'm just... wondering if that's me.",
+      "player: I'd remember you.",
+      "me (pleased): ...Then eat the strawberry one. Don't tell me it's a lie."
+    ]
+  }
+]
+RUBY_HOSHINO_QUESTS = [
+  {
+    "key": "ruby-b-komachi-rehearsal",
+    "title": "B-Komachi Rehearsal",
+    "gates": 2,
+    "about": "Ruby needs an audience of one for her new routine.",
+    "offer": [
+      "them (pleased): You're my audience today. Don't blink, okay?",
+      "them: The routine is perfect, except the bow. I can't land the bow."
+    ],
+    "stages": [
+      {
+        "text": "Watch Ruby's routine in the plaza at noon",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "plaza",
+            "times": [
+              1
+            ],
+            "scene": "World: Ruby Hoshino, Plaza",
+            "rewards": [
+              {
+                "coins": 150
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Have To a Shining Stage, Ruby",
+        "objectives": [
+          {
+            "do": "have_card",
+            "card": "OSK/S107-E036"
+          }
+        ]
+      },
+      {
+        "text": "Tell Ruby how the bow looked",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Ruby Hoshino",
+            "script": [
+              "them (pleased): You didn't laugh when I tripped? Good. You're my first fan now.",
+              "them: That's a promise, remember?"
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "first-fan",
+        "title": "Be her first fan",
+        "about": "Ruby lands the bow on the fourth try. She keeps your first autograph in her case.",
+        "rewards": [
+          {
+            "coins": 300
+          },
+          {
+            "gift": "bouquet"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "ruby-ais-daughter",
+    "title": "Ai's Daughter",
+    "gates": 5,
+    "about": "Ruby has found her mother's old concert ticket, and she isn't sure what it means.",
+    "offer": [
+      "them (dismayed): I found a ticket. Mum's last concert. I've never told anyone.",
+      "them: Will you come to the cafe and look at it with me?"
+    ],
+    "stages": [
+      {
+        "text": "Meet Ruby at the cafe in the evening",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "cafe",
+            "times": [
+              2
+            ],
+            "scene": "World: Ruby Hoshino, Cafe",
+            "rewards": [
+              {
+                "pack": "level_pack"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Win a duel with Ruby: Flames of Revenge in your deck",
+        "objectives": [
+          {
+            "do": "win_with",
+            "card": "OSK/S121-E032",
+            "against": [
+              "Ruby Hoshino"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Answer Ruby's question",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Ruby Hoshino",
+            "script": [
+              "them: Can you love someone you only remember from a stage?",
+              "them (pleased): ...Okay. I think you can."
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "love-from-the-stage",
+        "title": "Love from the stage",
+        "about": "Ruby keeps the ticket in her pocket for every show. She says it's lucky.",
+        "rewards": [
+          {
+            "coins": 700
+          },
+          {
+            "pack": "lucky_pack"
+          }
+        ]
+      }
+    ]
+  }
+]
+RUBY_HOSHINO_SCENES = [
+  {
+    "name": "World: Ruby Hoshino, Plaza",
+    "lines": [
+      "background sakura",
+      "me enters center with rise",
+      "me: Okay! Watch! Step, turn, point, and... wait, I'm falling. I'm not falling.",
+      "player: You're fine. Keep going!",
+      "me (pleased): Ha! That was the best trip I've ever done!",
+      "me: Promise me you'll be my first fan. Like, officially.",
+      "player: I promise.",
+      "me bounces"
+    ]
+  },
+  {
+    "name": "World: Ruby Hoshino, Cafe",
+    "lines": [
+      "background cafe",
+      "me enters right with fade",
+      "me: Mum's ticket. Last show, same stage as ours.",
+      "player: You kept it.",
+      "me (dismayed): I didn't know what else to do with it.",
+      "me: I never saw her perform. Only the videos. Is that the same as knowing her?",
+      "player: It's a start.",
+      "me (pleased): A start. Okay. I can work with that."
+    ]
+  }
+]
+LEGENDARY_IDOL_AI_QUESTS = [
+  {
+    "key": "ai-the-lie-of-love",
+    "title": "The Lie of Love",
+    "gates": 2,
+    "about": "Ai runs a fan meet, and she wants to know if you can tell her real smile from the rest.",
+    "offer": [
+      "them: Watch carefully. Three smiles. Tell me which one is real.",
+      "them (pleased): Whatever you say, I'll tell you it's wrong."
+    ],
+    "stages": [
+      {
+        "text": "Watch Ai's fan meet at the plaza in the evening",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "plaza",
+            "times": [
+              2
+            ],
+            "scene": "World: Legendary Idol Ai, Plaza",
+            "rewards": [
+              {
+                "coins": 200
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Have Legendary Idol, Ai",
+        "objectives": [
+          {
+            "do": "have_card",
+            "card": "OSK/S107-E045"
+          }
+        ]
+      },
+      {
+        "text": "Tell Ai which smile you think was real",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Legendary Idol Ai",
+            "script": [
+              "them (dismayed): Wrong. Sweetly wrong. Remember that.",
+              "them (pleased): ...But the last one was close."
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "real-smile",
+        "title": "Find the real smile",
+        "about": "Ai smiles once, without the lights on. She says you're the only one who ever noticed.",
+        "rewards": [
+          {
+            "coins": 300
+          },
+          {
+            "gift": "bouquet"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "ai-everyones-idol",
+    "title": "Everyone's Idol",
+    "gates": 5,
+    "about": "Ai has never said \"I love you\" and meant it, and she's practising the words above the city.",
+    "offer": [
+      "them: I have to say something tonight. I don't know if I can.",
+      "them (dismayed): Stay on the rooftop with me. Just listen."
+    ],
+    "stages": [
+      {
+        "text": "Find Ai on the rooftop at night",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "rooftop",
+            "times": [
+              3
+            ],
+            "scene": "World: Legendary Idol Ai, Rooftop",
+            "rewards": [
+              {
+                "pack": "color_pack"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Win a duel with Ai: Unshakable Center in your deck",
+        "objectives": [
+          {
+            "do": "win_with",
+            "card": "OSK/S107-TE10",
+            "against": [
+              "Legendary Idol Ai"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Listen while she practises",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Legendary Idol Ai",
+            "script": [
+              "them: I love you. ...It feels like a lie.",
+              "them (pleased): Say it again. Let me listen until it doesn't."
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "until-it-stops",
+        "title": "Listen until it stops feeling a lie",
+        "about": "Ai says the words once more, and this time she doesn't look away from you.",
+        "rewards": [
+          {
+            "coins": 700
+          },
+          {
+            "pack": "lucky_pack"
+          }
+        ]
+      }
+    ]
+  }
+]
+LEGENDARY_IDOL_AI_SCENES = [
+  {
+    "name": "World: Legendary Idol Ai, Plaza",
+    "lines": [
+      "background dusk",
+      "me enters center with fade",
+      "me: Smile one. Smile two. Smile three. Which one's real?",
+      "player: The second one.",
+      "me (dismayed): Wrong. Sweetly wrong. I'll remember that.",
+      "me: Next time, don't answer until I ask you properly."
+    ]
+  },
+  {
+    "name": "World: Legendary Idol Ai, Rooftop",
+    "lines": [
+      "background night",
+      "me enters left with rise",
+      "me: The city looks so small from up here. Everyone's so far away.",
+      "player: Are you okay?",
+      "me (dismayed): I'm practising. The words. They feel like a lie.",
+      "me: Stay and listen. Not because you have to. Because I'd like you to."
+    ]
+  }
+]
+MADOKA_QUESTS = [
+  {
+    "key": "madoka-kyubeys-offer",
+    "title": "Kyubey's Offer",
+    "gates": 2,
+    "about": "A small white creature offered Madoka a wish, and she wants your advice before she answers.",
+    "offer": [
+      "them: A small white creature came to me. It offered me a wish.",
+      "them (dismayed): I don't know if it would be selfish. Will you tell me?"
+    ],
+    "stages": [
+      {
+        "text": "Meet Madoka at school in the morning",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "school",
+            "times": [
+              0
+            ],
+            "scene": "World: Madoka, School",
+            "rewards": [
+              {
+                "coins": 150
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Bring Madoka a strawberry shortcake",
+        "objectives": [
+          {
+            "do": "give_gift",
+            "gift": "shortcake",
+            "to": "Madoka"
+          }
+        ]
+      },
+      {
+        "text": "Tell Madoka what you think of the wish",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Madoka",
+            "script": [
+              "them: Wishing for something isn't always selfish, is it?",
+              "them (pleased): ...Thank you. I'll think about it."
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "think-it-over",
+        "title": "Let her think it over",
+        "about": "Madoka thinks it over, and keeps the question to herself for a while.",
+        "rewards": [
+          {
+            "coins": 300
+          },
+          {
+            "gift": "plushie"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "madoka-a-wish",
+    "title": "A Wish",
+    "gates": 5,
+    "about": "The witches are winning. Madoka has a wish that might end it, and it costs her.",
+    "offer": [
+      "them (dismayed): The witches are getting stronger. I've thought of a wish.",
+      "them: I want you to hear it before I make it."
+    ],
+    "stages": [
+      {
+        "text": "Meet Madoka at the plaza in the evening",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "plaza",
+            "times": [
+              2
+            ],
+            "scene": "World: Madoka, Plaza",
+            "rewards": [
+              {
+                "pack": "color_pack"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Have Ultimate Madoka",
+        "objectives": [
+          {
+            "do": "have_card",
+            "card": "MM/W17-E030"
+          }
+        ]
+      },
+      {
+        "text": "Hear the wish",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Madoka",
+            "script": [
+              "them: It's for everyone. It costs me. Will you remember me?",
+              "them (pleased): ...Thank you for not saying no."
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "make-the-wish",
+        "title": "Let her make the wish",
+        "about": "Madoka makes her wish for everyone. Homura's Best friend quest is closed for good.",
+        "rewards": [
+          {
+            "coins": 800
+          },
+          {
+            "pack": "lucky_pack"
+          }
+        ],
+        "locks": [
+          "homura-once-more"
+        ]
+      },
+      {
+        "key": "hold-her-hand",
+        "title": "Hold her hand instead",
+        "about": "Madoka keeps her wish for another day, and asks you to stay close while she decides.",
+        "rewards": [
+          {
+            "coins": 500
+          },
+          {
+            "gift": "plushie"
+          }
+        ]
+      }
+    ]
+  }
+]
+MADOKA_SCENES = [
+  {
+    "name": "World: Madoka, School",
+    "lines": [
+      "background classroom",
+      "me enters center with fade",
+      "me: Last night a small white creature appeared at my window. It said it could grant me a wish.",
+      "player: What did you wish for?",
+      "me (dismayed): I didn't. Not yet. I'm not sure what I'd ask for.",
+      "me: Is it selfish, do you think? To wish for something that helps other people?"
+    ]
+  },
+  {
+    "name": "World: Madoka, Plaza",
+    "lines": [
+      "background dusk",
+      "me enters left with slide",
+      "me: I thought of a wish. It's for everyone, but it costs me.",
+      "player: What does it cost?",
+      "me (dismayed): Being forgotten, mostly. Everyone would forget me.",
+      "me: Remember me, okay? Even if I'm the only one who does."
+    ]
+  }
+]
+HOMURA_AKEMI_QUESTS = [
+  {
+    "key": "homura-transfer-student",
+    "title": "Transfer Student",
+    "gates": 2,
+    "about": "Homura warns the player to keep away from Madoka, and knows things she shouldn't.",
+    "offer": [
+      "them: Keep away from Madoka. Don't ask why. I'll only tell you once.",
+      "them (dismayed): You don't believe me. You will."
+    ],
+    "stages": [
+      {
+        "text": "Find Homura at school in the morning",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "school",
+            "times": [
+              0
+            ],
+            "scene": "World: Homura Akemi, School",
+            "rewards": [
+              {
+                "pack": "climax_pack"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Have Best Friends, Madoka & Homura",
+        "objectives": [
+          {
+            "do": "have_card",
+            "card": "MM/W17-E047"
+          }
+        ]
+      },
+      {
+        "text": "Hear Homura's warning again",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Homura Akemi",
+            "script": [
+              "them: Madoka must never make a contract. I mean it.",
+              "them (pleased): ...You listened. That's rarer than you think."
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "keep-your-distance",
+        "title": "Keep your distance",
+        "about": "Homura doesn't say thanks, but she stops watching you the way she watched Madoka.",
+        "rewards": [
+          {
+            "coins": 300
+          },
+          {
+            "gift": "sleeves"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "homura-once-more",
+    "title": "Once More",
+    "gates": 5,
+    "about": "The truth about the time loops. Homura has lived this month more than once.",
+    "offer": [
+      "them (dismayed): I have lived this month more times than I can count.",
+      "them: I need you to help me stop her once more."
+    ],
+    "stages": [
+      {
+        "text": "Meet Homura on the rooftop at night",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "rooftop",
+            "times": [
+              3
+            ],
+            "scene": "World: Homura Akemi, Rooftop",
+            "rewards": [
+              {
+                "pack": "color_pack"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Win a duel with Homura: For Madoka's Sake in your deck",
+        "objectives": [
+          {
+            "do": "win_with",
+            "card": "MM/W35-E026",
+            "against": [
+              "Homura Akemi"
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Give Homura your answer",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Homura Akemi",
+            "script": [
+              "them: Turn back time with me, or let her make the wish?",
+              "them (pleased): Then I'll do it alone. Thank you anyway."
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "turn-back-time",
+        "title": "Turn back time",
+        "about": "Homura turns the clock back once more. Madoka's Best friend quest is closed for good.",
+        "rewards": [
+          {
+            "coins": 800
+          },
+          {
+            "pack": "lucky_pack"
+          }
+        ],
+        "locks": [
+          "madoka-a-wish"
+        ]
+      },
+      {
+        "key": "let-her-choose",
+        "title": "Let her choose",
+        "about": "Homura lets Madoka choose for herself, and watches from a distance.",
+        "rewards": [
+          {
+            "coins": 500
+          },
+          {
+            "gift": "manga"
+          }
+        ]
+      }
+    ]
+  }
+]
+HOMURA_AKEMI_SCENES = [
+  {
+    "name": "World: Homura Akemi, School",
+    "lines": [
+      "background classroom",
+      "me enters right with slide",
+      "me: You shouldn't be here this early.",
+      "player: I just wanted to talk.",
+      "me (dismayed): You knew my name before we'd met. That's the first thing I'd like explained.",
+      "player: I don't know how.",
+      "me: Then stay away from her. Madoka must never make a contract."
+    ]
+  },
+  {
+    "name": "World: Homura Akemi, Rooftop",
+    "lines": [
+      "background night",
+      "me enters center with fade",
+      "me: I've lived this month more times than I can count. Every time, she makes the same wish.",
+      "player: What happens after?",
+      "me (dismayed): I don't remember how it ends, only how it starts again.",
+      "me: Help me stop it. Once more."
+    ]
+  }
+]
+KYOKO_SAKURA_QUESTS = [
+  {
+    "key": "kyoko-eat-it-all",
+    "title": "Eat It All",
+    "gates": 2,
+    "about": "Kyoko shares food with people who don't waste it, and she'll watch to see whether you do.",
+    "offer": [
+      "them: Here. Eat that. If you waste it, I'll know.",
+      "them (pleased): Don't look so surprised. Just finish the apple."
+    ],
+    "stages": [
+      {
+        "text": "Find Kyoko in the alley in the evening",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "alley",
+            "times": [
+              2
+            ],
+            "scene": "World: Kyoko Sakura, Alley",
+            "rewards": [
+              {
+                "coins": 200
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Share some melon bread with Kyoko",
+        "objectives": [
+          {
+            "do": "give_gift",
+            "gift": "melon-bread",
+            "to": "Kyoko Sakura"
+          }
+        ]
+      },
+      {
+        "text": "Talk to Kyoko over the bread",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Kyoko Sakura",
+            "script": [
+              "them: You finished the apple. So you get another. That's how it works.",
+              "them (pleased): ...Friendship, by my rules."
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "finish-the-apple",
+        "title": "Finish the apple",
+        "about": "Kyoko gives you another apple, then a third. You can't tell whether it's a gift or a test.",
+        "rewards": [
+          {
+            "coins": 300
+          },
+          {
+            "gift": "instant-ramen"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "kyoko-fathers-church",
+    "title": "Father's Church",
+    "gates": 5,
+    "about": "The ruined chapel that Kyoko never visits, and what her wish did to her family.",
+    "offer": [
+      "them (dismayed): There's a ruined chapel by the shrine. I haven't been back in years.",
+      "them: Come with me. I don't want to go alone."
+    ],
+    "stages": [
+      {
+        "text": "Meet Kyoko at the shrine at noon",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "shrine",
+            "times": [
+              1
+            ],
+            "scene": "World: Kyoko Sakura, Shrine",
+            "rewards": [
+              {
+                "pack": "level_pack"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Have Kyoko Wishes for a Miracle",
+        "objectives": [
+          {
+            "do": "have_card",
+            "card": "MM/W17-E069"
+          }
+        ]
+      },
+      {
+        "text": "Let Kyoko pray",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Kyoko Sakura",
+            "script": [
+              "them: I haven't prayed in years. I'm bad at it.",
+              "them (pleased): ...There. That's enough for now."
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "pray-with-her",
+        "title": "Pray with her",
+        "about": "Kyoko tells you what her wish cost her family, and asks you to keep it.",
+        "rewards": [
+          {
+            "coins": 600
+          },
+          {
+            "pack": "lucky_pack"
+          }
+        ]
+      }
+    ]
+  }
+]
+KYOKO_SAKURA_SCENES = [
+  {
+    "name": "World: Kyoko Sakura, Alley",
+    "lines": [
+      "background city",
+      "me enters right with slide",
+      "me: Catch. Eat it. All of it. Core too.",
+      "player: The core too?",
+      "me (pleased): The core too. Nothing goes to waste around me.",
+      "me: You didn't spit it out. That's the first good sign."
+    ]
+  },
+  {
+    "name": "World: Kyoko Sakura, Shrine",
+    "lines": [
+      "background shrine",
+      "me enters center with fade",
+      "me: My father's church. Ruined. My wish did that.",
+      "player: You don't have to tell me.",
+      "me (dismayed): I know. I want to. Once.",
+      "me: My family was everything, and I wished for something that tore them apart.",
+      "me (pleased): Now I pray, badly. You can laugh. I won't mind."
+    ]
+  }
+]
+MAMI_TOMOE_QUESTS = [
+  {
+    "key": "mami-tea-time",
+    "title": "Tea Time",
+    "gates": 2,
+    "about": "Mami has baked far too much for one person, and she's set out a tea service for two.",
+    "offer": [
+      "them (pleased): Oh, you're here. I baked. Sit, please.",
+      "them: There's far too much cake for one person, so you'll help."
+    ],
+    "stages": [
+      {
+        "text": "Join Mami for tea at the cafe at noon",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "cafe",
+            "times": [
+              1
+            ],
+            "scene": "World: Mami Tomoe, Cafe",
+            "rewards": [
+              {
+                "coins": 150
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Bring Mami a strawberry shortcake",
+        "objectives": [
+          {
+            "do": "give_gift",
+            "gift": "shortcake",
+            "to": "Mami Tomoe"
+          }
+        ]
+      },
+      {
+        "text": "Let Mami talk about the cakes",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Mami Tomoe",
+            "script": [
+              "them: That one is a sponge. That one is a mistake. Don't tell anyone.",
+              "them (pleased): Will you come back tomorrow? Please?"
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "come-back-tomorrow",
+        "title": "Come back tomorrow",
+        "about": "Mami sets out the cups for two every day now, and never explains why.",
+        "rewards": [
+          {
+            "coins": 300
+          },
+          {
+            "gift": "bouquet"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "mami-not-alone",
+    "title": "Not Alone",
+    "gates": 5,
+    "about": "Mami admits why she's always hosting. She's been alone since the accident, and fighting alone too.",
+    "offer": [
+      "them (dismayed): Can I tell you why I keep baking?",
+      "them: I don't want you to think it's silly."
+    ],
+    "stages": [
+      {
+        "text": "Watch the sunset with Mami on the rooftop",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "rooftop",
+            "times": [
+              2
+            ],
+            "scene": "World: Mami Tomoe, Rooftop",
+            "rewards": [
+              {
+                "pack": "color_pack"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Have Mami is \"No Longer Alone\"",
+        "objectives": [
+          {
+            "do": "have_card",
+            "card": "MM/W17-E008"
+          }
+        ]
+      },
+      {
+        "text": "Answer Mami's question",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Mami Tomoe",
+            "script": [
+              "them: Will you be my partner? In the fights, and everything?",
+              "them (pleased): ...Then I'm not alone, am I?"
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "partners",
+        "title": "Be her partner",
+        "about": "Mami holds out a cake for you to share at the next battle. She says it's a promise.",
+        "rewards": [
+          {
+            "coins": 600
+          },
+          {
+            "pack": "lucky_pack"
+          }
+        ]
+      }
+    ]
+  }
+]
+MAMI_TOMOE_SCENES = [
+  {
+    "name": "World: Mami Tomoe, Cafe",
+    "lines": [
+      "background cafe",
+      "me enters center with fade",
+      "me: Oh, you came! I set out a full service. I hope you're hungry.",
+      "player: Is all of this for me?",
+      "me (pleased): For two. I hoped someone would come.",
+      "me: That's a lemon curd tart. That's a vanilla sponge. Try the mistake, it's the best one."
+    ]
+  },
+  {
+    "name": "World: Mami Tomoe, Rooftop",
+    "lines": [
+      "background dusk",
+      "me enters left with slide",
+      "me: I always host because I'm afraid of an empty table.",
+      "player: Since when?",
+      "me (dismayed): Since the accident. Since it was only me.",
+      "me: Will you be my partner? I don't want to fight alone any more.",
+      "me (pleased): ...Thank you. Now eat your cake."
+    ]
+  }
+]
+SAYAKA_MIKI_QUESTS = [
+  {
+    "key": "sayaka-the-violinist",
+    "title": "The Violinist",
+    "gates": 2,
+    "about": "Sayaka wants a CD signed for a friend in hospital, and she's practising what to say out loud.",
+    "offer": [
+      "them: I need to ask someone for a signature. I've practised all week.",
+      "them (dismayed): Don't laugh. Please just listen to my lines."
+    ],
+    "stages": [
+      {
+        "text": "Find Sayaka at school in the morning",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "school",
+            "times": [
+              0
+            ],
+            "scene": "World: Sayaka Miki, School",
+            "rewards": [
+              {
+                "coins": 200
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Give Sayaka a set of earbuds for her friend's playlist",
+        "objectives": [
+          {
+            "do": "give_gift",
+            "gift": "earbuds",
+            "to": "Sayaka Miki"
+          }
+        ]
+      },
+      {
+        "text": "Let Sayaka rehearse once more",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Sayaka Miki",
+            "script": [
+              "them (pleased): You're a better friend than I deserve, you know that?",
+              "them: Okay. Now the lines. Properly this time."
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "be-her-friend",
+        "title": "Be her friend",
+        "about": "Sayaka gets the signature and gives you a copy of the CD, with the best track marked.",
+        "rewards": [
+          {
+            "coins": 300
+          },
+          {
+            "gift": "plushie"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "sayaka-mermaids-wish",
+    "title": "Mermaid's Wish",
+    "gates": 5,
+    "about": "Sayaka made a wish for someone else, and wonders whether it was worth what it cost her.",
+    "offer": [
+      "them (dismayed): I made a wish once. For someone else. Was it worth it?",
+      "them: Come to the beach. I'll tell you there."
+    ],
+    "stages": [
+      {
+        "text": "Meet Sayaka at the beach in the evening",
+        "objectives": [
+          {
+            "do": "visit",
+            "place": "beach",
+            "times": [
+              2
+            ],
+            "scene": "World: Sayaka Miki, Beach",
+            "rewards": [
+              {
+                "pack": "climax_pack"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Have Sayaka Finds Her Wish",
+        "objectives": [
+          {
+            "do": "have_card",
+            "card": "MM/W17-E088"
+          }
+        ]
+      },
+      {
+        "text": "Give Sayaka your answer",
+        "objectives": [
+          {
+            "do": "talk",
+            "to": "Sayaka Miki",
+            "script": [
+              "them: Can anyone be a hero without getting anything back?",
+              "them (pleased): ...You count as something back. Decided."
+            ]
+          }
+        ]
+      }
+    ],
+    "endings": [
+      {
+        "key": "something-back",
+        "title": "Be something back",
+        "about": "Sayaka decides you count as the thing she gets back, and she stops counting the cost.",
+        "rewards": [
+          {
+            "coins": 600
+          },
+          {
+            "pack": "lucky_pack"
+          }
+        ]
+      }
+    ]
+  }
+]
+SAYAKA_MIKI_SCENES = [
+  {
+    "name": "World: Sayaka Miki, School",
+    "lines": [
+      "background classroom",
+      "me enters center with fade",
+      "me: Hi. I'm going to say hello to Kyosuke. Watch me do it.",
+      "me (dismayed): Hi, Kyosuke. I... um. I'm... nevermind.",
+      "player: Try again, slower.",
+      "me (pleased): Hi, Kyosuke. I'm here to ask you something. Nice. Nice.",
+      "me: You're not going to laugh at me. Thanks."
+    ]
+  },
+  {
+    "name": "World: Sayaka Miki, Beach",
+    "lines": [
+      "background dusk",
+      "me enters right with slide",
+      "me: Once I wished for a friend to be well. She is. I think.",
+      "player: You don't know?",
+      "me (dismayed): I don't know what I'd have had left, if I'd wished for myself.",
+      "me: You stayed. That counts, doesn't it?",
+      "player: It counts."
+    ]
+  }
+]
+
 CAST = [
-    cpu("Akane Kurokawa", "friendly",
+    cpu("Akane Kurokawa", "friendly", quests=AKANE_KUROKAWA_QUESTS, extra_scenes=AKANE_KUROKAWA_SCENES,
         haunts=[("library", "wk", "12", 60), ("school", "we", "01", 40), ("cafe", "135", "2", 35)],
         tastes=(["book"], ["calm", "drink"], ["cool"]),
         lines={
+            "mid": {"1": ["them: I've been reading your habits. Don't worry, it's for a role.", "them (pleased): You're not as dull as I first thought. That's a compliment.", "them: What's the one thing you'd never tell a stranger? I'm asking for the script.", "them: Do you know how many times I've practised walking into a room? Hundreds.", "them: Sit. I need a reaction from you. Be honest."], "3": ["them (pleased): Your face is my favourite study. Please don't stop being yourself.", "them: I used to play the perfect girl. You make me want to be a little messy.", "them: I've been thinking about Aqua. I'm worried about him. Are you?", "them (pleased): Come to the rehearsal. I want you to see the real me, not the role.", "them: You copy me better than I copy you. We'd make a good duo."], "5": ["them (pleased): {player}, my real friend, the one who isn't a character to me.", "them: I'd stop any role for you. That's the most honest thing I've ever said.", "them (pleased): Let's go somewhere quiet. I'm tired of being on stage.", "them: You're the only one who knows my real laugh. Keep it that way.", "them (pleased): Best friend. I'll keep the notebook, and throw away the role."]},
+            "hello_steps": [["them: Oh! Sorry, I was miles away. Can I help you?", "them: Hi. Don't mind me, I'm running lines."], ["them: Ah, hello. Do you have time to talk for a second?", "them: Oh, hi! Are you here for the play?"], ["them (pleased): {player}! Good, I could use a break from this script.", "them (pleased): Hi, {player}. Want to help me rehearse?"], ["them (pleased): {player}! Perfect timing. I was just watching how you walk.", "them (pleased): {player}, hi! I've got a new idea for a role."], ["them (pleased): {player}. You're exactly who I wanted to see today.", "them (pleased): Hey, {player}. I'm glad you came. Sit with me a bit."], ["them (pleased): {player}. I like who I am around you. That's rare, you know.", "them (pleased): {player}! My favourite co-star. Come see the new scene!"]],
+            "bye_steps": [["them: Ah, okay. Take care.", "them: Bye. Keep your head down out there."], ["them: See you. Good luck with whatever you're doing.", "them: Bye! Watch the crowd on the way out."], ["them (pleased): See you, {player}. Wish me luck at rehearsal.", "them (pleased): Bye, {player}! Don't forget your notebook."], ["them (pleased): Go on, {player}. Come back and tell me how you did.", "them (pleased): Bye, {player}! I'll be practising. Come watch."], ["them (pleased): Come back soon? I like who I am around you, {player}.", "them (pleased): Take care, {player}. Don't make me wait too long!"], ["them (pleased): Go, {player}. Come back. My best audience is you.", "them (pleased): Bye, best friend. Keep watching me."]],
+            "cold": "them (dismayed): You let him cross the line. I can't play the friend who pretends that was fine.",
             "hello": ["them: Oh! Sorry, I was miles away. Can I help you?", "them (pleased): {player}! Good, I could use a break from this script.", "them (pleased): {player}. You're exactly who I wanted to see."],
             "bye": ["them: Ah, okay. Take care.", "them (pleased): See you, {player}. Wish me luck at rehearsal.", "them (pleased): Come back soon? I like who I am around you."],
             "hi": ["them: Oh, hello. I'm Akane. Sorry, I was studying a role. I sometimes forget where I am.",
@@ -34,10 +1743,14 @@ CAST = [
               "choice", "- You're more than any role.", "- I'll always see the real you.",
               "me (intro): Then I'll stop hiding behind characters around you. Best friends. No script."]),
 
-    cpu("Aqua Hoshino", "aloof",
+    cpu("Aqua Hoshino", "aloof", quests=AQUA_HOSHINO_QUESTS, extra_scenes=AQUA_HOSHINO_SCENES,
         haunts=[("school", "wk", "01", 55), ("cafe", "we", "12", 45), ("alley", "135", "3", 30)],
         tastes=(["drink"], ["book", "cool"], ["sweet"]),
         lines={
+            "mid": {"1": ["them: You're watching me. I can tell. Just don't film me.", "them: I don't trust people easily. You're in the middle, for now.", "them: The camera shows what people want. I don't.", "them: Do you ever get tired of pretending? I do.", "them: Fine. You can come to the set. Stay out of the shot."], "3": ["them (pleased): You're the only one I don't have to act around. It's a relief.", "them: I've been looking for a name. I think I'm getting close.", "them (pleased): That photo of Ai you saw. I wish I could forget it. You help.", "them: You're honest on camera and off. It's rare in this business.", "them (pleased): Come on, let's walk the alley. It's quieter that way."], "5": ["them (pleased): {player}, you're the witness I need, and the friend I want.", "them: Ai would've liked you. She was always honest with her fans.", "them (pleased): When this is over, I'll show you the real Aqua. No camera.", "them: You were the only one who didn't look away from me.", "them (pleased): Best friend. Stay close while I finish this, okay?"]},
+            "hello_steps": [["them: ...What.", "them: Yeah? Can I help you?"], ["them: Oh. Hi. You're in the way of the lights, though.", "them: You again. Fine. Sit."], ["them (pleased): Oh, {player}. It's you. Fine. Sit.", "them (pleased): {player}. You're easy to be around. Sorry, that's a weird thing to say."], ["them (pleased): {player}. Good. I need someone who doesn't fake their face.", "them (pleased): ...{player}. Hey. Good to see you."], ["them (pleased): ...Hey. I was waiting. Don't make it weird.", "them (pleased): {player}. You know which of my smiles is real. Sit with me."], ["them (pleased): {player}. The only person I don't need to act for.", "them (pleased): {player}. You came back. I'm not going to say anything else."]],
+            "bye_steps": [["them: Right.", "them: Go. Don't waste my lights."], ["them: See you.", "them: Later."], ["them (pleased): See you, {player}. Don't make it a big thing.", "them (pleased): Bye, {player}. Keep your shoulders loose."], ["them (pleased): Go on. Come back when the shoot's done.", "them (pleased): Bye, {player}. Stay sincere out there."], ["them (pleased): Come back tomorrow. If you want to.", "them (pleased): ...Bye, {player}. Don't get hurt."], ["them (pleased): Go. Come back soon. I'll keep your seat in the shot.", "them (pleased): Bye, {player}. You're the only one I'd trust with a witness."]],
+            "cold": "them: You stopped me. Fine. Stay out of my way from now on.",
             "hello": ["them: ...What.", "them: Oh. It's you. Fine. Sit.", "them (pleased): ...Hey. I was waiting. Don't make it weird."],
             "bye": ["them: Right.", "them: See you.", "them (pleased): ...Come back tomorrow. If you want."],
             "hi": ["them: Aqua. I'm not interested in chatting, but I'll duel if that's why you're here.",
@@ -66,10 +1779,13 @@ CAST = [
               "choice", "- You deserve to be happy, Aqua.", "- No more lies between us.",
               "me (pleased): Best friend. Okay. Don't let me screw it up."]),
 
-    cpu("Kana Arima", "aloof",
+    cpu("Kana Arima", "aloof", quests=KANA_ARIMA_QUESTS, extra_scenes=KANA_ARIMA_SCENES,
         haunts=[("school", "wk", "12", 55), ("plaza", "we", "12", 45), ("cafe", "024", "2", 30)],
         tastes=(["sweet"], ["music", "cute"], ["cool"]),
         lines={
+            "mid": {"1": ["them: Don't get too comfortable. I'm still working on my face.", "them: You're not terrible at acting. You're just not trying.", "them: What makes you cry? Be honest. I'm taking notes.", "them: That dessert place is overrated. Don't tell the others.", "them: Stand over there. Your shadow is ruining my lighting."], "3": ["them (pleased): You actually listened when I said I was too old. Thanks.", "them: Nobody else asks me how the rehearsals went. You do.", "them (pleased): You can have the strawberry cake. I'm not hungry anyway.", "them: You're the first person I've cried in front of. Well, almost.", "them (pleased): Come with me to the audition. I'll get through it if you're there."], "5": ["them (pleased): {player}, my real friend. Not the child star. Just me.", "them: You're the only one who remembers me when I'm not on stage.", "them (pleased): Let's go somewhere with no cameras. Just the two of us.", "them: I'd cry for you, if I were ever sad. Real tears, I promise.", "them (pleased): Best friend. Don't tell anyone I said that. Okay?"]},
+            "hello_steps": [["them: Yes? Autographs are five hundred yen.", "them: Hm. Don't stare. I'm working."], ["them: Oh. You. Need something?", "them: Hi. You're not going to ask me to cry again, are you?"], ["them (pleased): Oh, it's you! Took you long enough to say hi.", "them (pleased): {player}. Hi. Did you see my practice?"], ["them (pleased): {player}! Finally! Do you know how long I've been standing here?", "them (pleased): Hey, {player}. Don't tell anyone, but I was hoping you'd come."], ["them (pleased): {player}. You're the only one who saw me try to cry. Hi.", "them (pleased): {player}! Come on, let's eat something sweet."], ["them (pleased): {player}. Glad you're here. Really. Don't make it weird.", "them (pleased): {player}! My best friend, and I'm not saying it twice."]],
+            "bye_steps": [["them: Hmph. Bye.", "them: Go on, then."], ["them: Fine, go.", "them: See you. Whatever."], ["them (pleased): Fine, go, {player}. Not like I'll miss you or anything.", "them (pleased): Bye, {player}. Don't tell anyone I said that."], ["them (pleased): Go, {player}. Come back before my next audition.", "them (pleased): Bye, {player}. You'd better come back."], ["them (pleased): You'd better come back, {player}. I mean it.", "them (pleased): Go. Ten seconds to cry, remember? Come back for that."], ["them (pleased): Go, {player}. Come back soon. I'll save you a dessert.", "them (pleased): Bye, best friend. I'm going to miss you, ugh."]],
             "hello": ["them: Yes? Autographs are five hundred yen.", "them (pleased): Oh, it's you! Took you long enough to come say hi.", "them (pleased): Finally! Do you know how long I've been standing here?"],
             "bye": ["them: Hmph. Bye.", "them (pleased): Fine, go. Not like I'll miss you or anything.", "them (pleased): You'd better come back. I mean it. Ten seconds to cry, remember?"],
             "hi": ["them: You know who I am, right? The genius child actor? Ten seconds to cry? No? Ugh.",
@@ -99,10 +1815,13 @@ CAST = [
               "choice", "- I'll never forget you.", "- Front row, every show.",
               "me (pleased): Then I'll shine so bright you'll never need to look anywhere else. Best friend. Got it?"]),
 
-    cpu("Ruby Hoshino", "warm",
+    cpu("Ruby Hoshino", "warm", quests=RUBY_HOSHINO_QUESTS, extra_scenes=RUBY_HOSHINO_SCENES,
         haunts=[("school", "wk", "01", 55), ("plaza", "we", "12", 50), ("cafe", "135", "2", 35)],
         tastes=(["music"], ["cute", "sweet"], ["book"]),
         lines={
+            "mid": {"1": ["them (pleased): You're my fan now, right? Please say yes.", "them: Do you like the new song? It's a little tricky to sing.", "them (pleased): Want to hear my favourite dance move? It's a bit silly.", "them: My mum used to dance with me. I still do it in the kitchen.", "them: I'm trying a new routine. Stay and watch me fall over, okay?"], "3": ["them (pleased): You remember all my routines. That's amazing, honestly.", "them: Sometimes I wonder if Mum would have liked you. I think she would.", "them (pleased): Come to the cafe after practice. I'll buy you cake.", "them: You make the stage feel smaller. In a good way.", "them (pleased): Want a sneak peek at the next show? You're the only one I'd show."], "5": ["them (pleased): {player}, you're the first fan who became a real friend.", "them: Mum's ticket is always in my pocket now. Because of you.", "them (pleased): Let's go to the show together. Front row, always.", "them: You're the one I'd want to dance with on the biggest stage.", "them (pleased): Best friend! Come on, let's dance it out together!"]},
+            "hello_steps": [["them (pleased): Oh, hi! Are you a fan? You can be a fan!", "them (pleased): Hi! Want to see my dance?"], ["them (pleased): Hi! Have you seen my show poster? It's on every wall!", "them (pleased): Hey! You look like you'd like my new song."], ["them (pleased): {player}! My favourite fan is here!", "them (pleased): {player}! Did you come to watch me practise?"], ["them (pleased): {player}! Okay, today's going to be great now.", "them (pleased): {player}! I've got a new routine. You have to see it."], ["them (pleased): {player}! Yay! You're my first fan, remember?", "them (pleased): {player}! Come sit, I want to show you the bow I finally landed."], ["them (pleased): {player}! My best fan, my best friend. Front row!", "them (pleased): {player}! You're the reason I keep dancing. Hi!"]],
+            "bye_steps": [["them (pleased): Byeee!", "them (pleased): See ya! Keep smiling!"], ["them (pleased): Bye! Stay sharp!", "them (pleased): Later! Don't be a stranger!"], ["them (pleased): See ya, {player}! Come to my next show, okay?", "them (pleased): Bye, {player}! Bring the whole team!"], ["them (pleased): Go, {player}! Watch the stage for me!", "them (pleased): Bye! Keep being my first fan!"], ["them (pleased): Come back soon, {player}! Don't keep me waiting!", "them (pleased): Bye, {player}! I'll practise the bow until you're back."], ["them (pleased): Come back soon! Front row seat's always yours, {player}!", "them (pleased): Bye, best friend! I'll be dancing for you!"]],
             "hello": ["them (pleased): Oh, hi! Are you a fan? You can be a fan!", "them (pleased): {player}! My favourite fan is here!", "them (pleased): {player}! Yay! Okay, today's going to be great now."],
             "bye": ["them (pleased): Byeee!", "them (pleased): See you! Come to my next show, okay?", "them (pleased): Come back soon! Front row seat's always yours!"],
             "hi": ["them (pleased): Hi hi! I'm Ruby! I'm going to be an idol like my mom! Want to be my first fan?",
@@ -131,10 +1850,13 @@ CAST = [
               "choice", "- I'm your biggest fan.", "- Shine as yourself, Ruby.",
               "me (intro): Then I'll be the idol who's real. And you'll be my best friend forever. That's the dream!"]),
 
-    cpu("Legendary Idol Ai", "neutral",
+    cpu("Legendary Idol Ai", "neutral", quests=LEGENDARY_IDOL_AI_QUESTS, extra_scenes=LEGENDARY_IDOL_AI_SCENES,
         haunts=[("plaza", "wk", "12", 55), ("cafe", "we", "12", 45), ("rooftop", "135", "3", 30)],
         tastes=(["cute"], ["music", "sweet"], ["spicy"]),
         lines={
+            "mid": {"1": ["them: You're not like the other fans. You look at me like I'm a person.", "them (pleased): I wonder if you can tell when I'm smiling for real. Try me.", "them: Don't worry about the cameras. They don't matter here.", "them: What's your favourite song? Mine's the one I can't finish.", "them: You're a good audience. Better than the crowd."], "3": ["them (pleased): You know my real smile now, don't you? Honestly.", "them: I used to think fame was enough. You make it feel less lonely.", "them (pleased): Come to the rehearsal. I want you to hear the unfinished song.", "them: I've been practising the words. They still feel strange, but you help.", "them (pleased): You're the only one who calls me Ai and not the idol. Thank you."], "5": ["them (pleased): {player}... you're the one I'd say the words to, and mean them.", "them: The city lights don't seem as far away when you're beside me.", "them (pleased): Let's walk on the rooftop. No fans, no cameras. Just us.", "them: I love you, and this time it doesn't feel like a lie at all.", "them (pleased): Best friend. Stay with me until the sun comes up?"]},
+            "hello_steps": [["them (pleased): Hi there~! Did you come to see me?", "them (pleased): Hello~! Smile for the camera!"], ["them (pleased): Oh, hi~! Don't tell anyone I wasn't ready.", "them (pleased): Hey~! You're in my light, but that's okay."], ["them (pleased): {player}! I saved my best smile for you.", "them (pleased): {player}~! It's always nice to see a familiar face."], ["them (pleased): {player}~! Good, you can tell me which smile is real.", "them (pleased): {player}! Shall we have coffee? Just us."], ["them (pleased): {player}... I'm really glad it's you. No acting.", "them (pleased): {player}. I'm practising with you. Stay a minute."], ["them (pleased): {player}. The one who makes the lights feel warm.", "them (pleased): {player}! My best friend. Don't tell the fans."]],
+            "bye_steps": [["them (pleased): Bye-bye~! Love you!", "them (pleased): See you~! Take care!"], ["them (pleased): Bye~! Smile for me on the way out!", "them (pleased): Bye! Don't forget your shades!"], ["them (pleased): See you, {player}! Love you!", "them (pleased): Bye, {player}~! Watch the fans on the way out."], ["them (pleased): Go on, {player}. Come back to the next show!", "them (pleased): Bye, {player}! I'll be looking for you in the crowd."], ["them (pleased): See you soon, {player}. Come back. Please.", "them (pleased): Bye, {player}. I'll keep a smile for you."], ["them (pleased): See you soon. ...I think I really mean it, this time.", "them (pleased): Bye, best friend. I'll be missing you already."]],
             "hello": ["them (pleased): Hi there~! Did you come to see me?", "them (pleased): {player}! I saved my best smile for you.", "them (pleased): {player}... I'm really glad it's you. No acting."],
             "bye": ["them (pleased): Bye-bye~! Love you!", "them (pleased): See you, {player}! Love you!", "them (pleased): See you soon. ...I think I really mean it, this time."],
             "hi": ["them (pleased): Hi there! It's me, Ai! You came to see me, didn't you?",
@@ -163,10 +1885,14 @@ CAST = [
               "choice", "- You're not lying now.", "- Love can grow.",
               "me (pleased): I love you, {player}. As my best friend. ...Ah. That one was true. I could feel it."]),
 
-    cpu("Madoka", "warm",
+    cpu("Madoka", "warm", quests=MADOKA_QUESTS, extra_scenes=MADOKA_SCENES,
         haunts=[("school", "wk", "01", 60), ("cafe", "we", "12", 45), ("plaza", "135", "2", 35)],
         tastes=(["cute"], ["sweet", "flowers"], ["spicy"]),
         lines={
+            "mid": {"1": ["them: I've been wondering what you'd wish for, if you could. Be honest.", "them: Do you believe in fate? I'm not sure, but I'd like to.", "them: It's nice to have someone new to talk to. Thank you.", "them: Homura keeps telling me to be careful. You don't do that.", "them: Would you like to walk to school together sometime?"], "3": ["them (pleased): You make me feel less afraid of the witches. Thank you.", "them: I think about the wish every night. You're part of why it's easier.", "them (pleased): Let's go to the cafe. Mami will be so happy to see you.", "them: Sayaka and I used to talk like this. I miss her sometimes.", "them (pleased): You're easy to be around. That's what I wish everyone was like."], "5": ["them (pleased): {player}, I'd make any wish for you, if I could.", "them: You're the one I'd want to remember, even if nobody else did.", "them (pleased): Let's go up to the rooftop and see the city lights.", "them: I hope you'll still be here after everything. Please.", "them (pleased): Best friend. Thank you for seeing me, even when it's hard."]},
+            "hello_steps": [["them: Oh, hello! Is everything okay?", "them: Hi! Did you need anything?"], ["them: Oh, hi. Nice to see you here.", "them: Hello! Did you come to see Mami?"], ["them (pleased): {player}! I was just thinking about you.", "them (pleased): Hi, {player}! Are you busy today?"], ["them (pleased): {player}! Good, I could use a friend today.", "them (pleased): {player}! Come sit with me. Just for a moment."], ["them (pleased): {player}! Seeing you makes the whole day brighter.", "them (pleased): {player}. Thank you for being here. It means a lot."], ["them (pleased): {player}! My best friend. Please stay as long as you can.", "them (pleased): Hi, {player}. I'll remember this one, I promise."]],
+            "bye_steps": [["them: Okay! Take care!", "them: Bye! Be safe."], ["them: See you. Take care!", "them: Bye! Don't do anything reckless."], ["them (pleased): Bye, {player}! See you tomorrow?", "them (pleased): See you, {player}! Don't forget me."], ["them (pleased): Go on, {player}. Come back when you can.", "them (pleased): Bye, {player}! I'll be right here."], ["them (pleased): Come back soon, okay? I'll be right here.", "them (pleased): Bye, {player}. Thank you for coming."], ["them (pleased): Bye, best friend. Remember me, okay?", "them (pleased): Go, {player}. I'll keep the light on for you."]],
+            "cold": "them (dismayed): Homura stopped me. I understand why. It still hurts that she had to.",
             "hello": ["them: Oh, hello! Is everything okay?", "them (pleased): {player}! I was just thinking about you!", "them (pleased): {player}! Seeing you makes the whole day brighter."],
             "bye": ["them: Okay! Take care!", "them (pleased): Bye, {player}! See you tomorrow?", "them (pleased): Come back soon, okay? I'll be right here."],
             "hi": ["them (pleased): Oh, hi! I'm Madoka Kaname. Are you new here? I can show you around!",
@@ -195,10 +1921,14 @@ CAST = [
               "choice", "- I'll always remember you.", "- Stay with us, Madoka.",
               "me (intro): Best friends, forever and ever. Across every timeline. That's my promise."]),
 
-    cpu("Homura Akemi", "aloof",
+    cpu("Homura Akemi", "aloof", quests=HOMURA_AKEMI_QUESTS, extra_scenes=HOMURA_AKEMI_SCENES,
         haunts=[("school", "wk", "01", 55), ("rooftop", "all", "23", 40), ("shrine", "135", "2", 30)],
         tastes=(["calm"], ["book", "cool"], ["cute"]),
         lines={
+            "mid": {"1": ["them: You're not the one I expected to see. That's not a bad thing.", "them: I've been counting my loops. You're not part of the count. Yet.", "them: Be careful who you trust. Including me.", "them: Do you like the rain? It reminds me of the first time I stayed.", "them: You may ask me one question. I'll answer it honestly."], "3": ["them (pleased): You're one of the few people I'm glad to see this loop.", "them: I've tried so many times to save her. You're the first to help me think.", "them (pleased): Let's walk to the shrine. It's quieter than the school.", "them: You didn't ask me to explain everything. Thank you for that.", "them (pleased): I would like you to know me, not just the timeline."], "5": ["them (pleased): {player}, my one constant. Please remember this, whatever happens.", "them: In every loop I forget everyone. You're the one I keep choosing.", "them (pleased): Let's sit on the rooftop and just breathe for a minute.", "them: I'll protect Madoka, and I'll protect you too. Both, if I can.", "them (pleased): Best friend. Stay with me. Once more, and then never again."]},
+            "hello_steps": [["them: ...Do you need something?", "them: Hm. You shouldn't be here alone."], ["them: You're still around. Be careful.", "them: Oh. You. I didn't expect you to be here."], ["them: It's you. You're still here. Good.", "them: {player}. Don't come near her today."], ["them (pleased): {player}. I was hoping you'd be here.", "them (pleased): {player}. I'm glad this one is going well."], ["them (pleased): ...{player}. I'm glad this timeline has you in it.", "them (pleased): {player}. Sit. Let's breathe for a moment."], ["them (pleased): {player}. You're the one thing I've been able to keep, this time.", "them (pleased): {player}. Please stay. I want to remember this."]],
+            "bye_steps": [["them: Be careful.", "them: Watch your back."], ["them: Don't do anything foolish.", "them: Stay away from danger."], ["them: Be careful out there, {player}.", "them: Don't do anything foolish, {player}."], ["them (pleased): Go, {player}. Be safe until next time.", "them (pleased): Bye, {player}. I'll find you again."], ["them (pleased): Come back. Please. I want to remember this one.", "them (pleased): Bye, {player}. You're the one I want to keep."], ["them (pleased): Come back. I'll keep this timeline safe for you.", "them (pleased): Bye, best friend. Come back. Please."]],
+            "cold": "them: She chose it. Then I'll stop asking you to choose with me.",
             "hello": ["them: ...Do you need something?", "them: It's you. You're still here. Good.", "them (pleased): ...{player}. I'm glad this timeline has you in it."],
             "bye": ["them: Be careful.", "them: Don't do anything foolish.", "them (pleased): Come back. Please. I want to remember this one."],
             "hi": ["them: ...Who are you? You weren't here in any of the other timelines.",
@@ -228,10 +1958,13 @@ CAST = [
               "choice", "- You don't have to fight alone.", "- I'll remember every timeline with you.",
               "me (pleased): Then this is the one I want to keep. This one. With you in it."]),
 
-    cpu("Kyoko Sakura", "aloof",
+    cpu("Kyoko Sakura", "aloof", quests=KYOKO_SAKURA_QUESTS, extra_scenes=KYOKO_SAKURA_SCENES,
         haunts=[("alley", "all", "23", 55), ("shrine", "wk", "1", 45), ("plaza", "we", "12", 35)],
         tastes=(["food"], ["sweet", "spicy"], ["fancy"]),
         lines={
+            "mid": {"1": ["them: Hm. You didn't waste that apple. Respect.", "them: My dad's church is a mess. Don't ask about it yet.", "them: You're alright, for a stranger who eats their food.", "them: Want more? Don't make me say it twice.", "them: I don't talk to most people. You're doing okay so far."], "3": ["them (pleased): You keep showing up with food. That's the friend rule, right?", "them: I haven't prayed in years. You make me want to try.", "them (pleased): Come to the alley, I'll show you my favourite spot.", "them: You're the first person who didn't tell me to stop being rude.", "them (pleased): You're my kind of person. Don't tell anyone."], "5": ["them (pleased): {player}, you're my best friend, and you don't waste anything.", "them: I'd take the church back for you, if I could.", "them (pleased): Let's go to the shrine. I'll pray and you can eat.", "them: You're the only person I'd share my last apple with.", "them (pleased): Best friend. Thanks for being the one who finishes the food."]},
+            "hello_steps": [["them: *crunch* Whaddaya want?", "them: Hm. You want something to eat?"], ["them: Oh, it's you. Yeah, hi.", "them: You look hungry. Want an apple?"], ["them (pleased): Hey, it's you. Want a pocky? Kidding. Here.", "them (pleased): {player}. Hungry? Come on, I'm buying."], ["them (pleased): {player}! Took you long enough. Want some ramen?", "them (pleased): Hey, {player}. Don't waste the food today."], ["them (pleased): There ya are, {player}! I saved you the best bite.", "them (pleased): {player}! Come sit. I've got news about the church."], ["them (pleased): {player}! You're my best friend. Eat up, okay?", "them (pleased): Hey, {player}. Didn't waste a thing today, right?"]],
+            "bye_steps": [["them: Yeah, see ya.", "them: Later. Don't spill your food."], ["them: Bye. Keep your hands clean.", "them: See ya. Don't waste anything."], ["them (pleased): Later. Don't waste food while I'm gone, {player}.", "them (pleased): See ya, {player}. Eat something on the way."], ["them (pleased): Go on, {player}. I'll bring snacks next time.", "them (pleased): Bye, {player}. Stay out of trouble."], ["them (pleased): Come back, alright? It's boring without ya, {player}.", "them (pleased): Bye, {player}. Don't make me come find you."], ["them (pleased): Come back soon. Best friends share food, right?", "them (pleased): Bye, best friend. I'll save you a bite."]],
             "hello": ["them: *crunch* Whaddaya want?", "them (pleased): Hey, it's you. Want a pocky? Kidding. Here.", "them (pleased): There ya are! Took ya long enough."],
             "bye": ["them: Yeah, see ya.", "them (pleased): Later. Don't waste food while I'm gone.", "them (pleased): Come back, alright? It's boring without ya."],
             "hi": ["them: Want some? *crunch* No? More for me. Who're you?",
@@ -259,10 +1992,13 @@ CAST = [
               "choice", "- You don't have to be alone, Kyoko.", "- I'd fight for you too.",
               "me (pleased): Best friend, huh. Okay. Then you're stuck with me. Take an apple."]),
 
-    cpu("Mami Tomoe", "friendly",
+    cpu("Mami Tomoe", "friendly", quests=MAMI_TOMOE_QUESTS, extra_scenes=MAMI_TOMOE_SCENES,
         haunts=[("cafe", "wk", "12", 60), ("school", "we", "01", 40), ("rooftop", "024", "2", 30)],
         tastes=(["sweet"], ["drink", "fancy"], ["spicy"]),
         lines={
+            "mid": {"1": ["them: Oh, you came back! Would you like another cup?", "them: I'm always baking. I hope you don't mind all the crumbs.", "them: Tell me about yourself. I'd like to know what you like.", "them: You're very polite. I appreciate that a great deal.", "them: Come sit by the window. It's a nice view from here."], "3": ["them (pleased): You always remember how I like my tea. Thank you.", "them: I've been thinking about my family. You make it easier to talk about.", "them (pleased): Let's bake something together. I'll let you help with the frosting.", "them: You're the one who keeps me company when the witches are quiet.", "them (pleased): I'd love to show you my favourite recipe. It's a secret."], "5": ["them (pleased): {player}, my partner and my friend. I can't imagine fighting without you.", "them: I don't feel alone with you. That means everything to me.", "them (pleased): Let's go to the rooftop and watch the sunset with cake.", "them: You're the one I'd save the last slice for, always.", "them (pleased): Best friend. Stay for dinner, please. The table's always set."]},
+            "hello_steps": [["them: Oh, hello there. Can I help you?", "them: Hello! Would you like a little something?"], ["them: Hi, welcome. Please, have a seat.", "them: Oh, hello. Have you eaten yet?"], ["them (pleased): {player}! Perfect timing, the tea's just ready.", "them (pleased): Hello, {player}! I baked too much again."], ["them (pleased): {player}! Come in, come in. There's cake.", "them (pleased): {player}, welcome. You're just in time for the good part."], ["them (pleased): {player}, welcome. I set out a cup for you, just in case.", "them (pleased): Hi, {player}! You always make the house feel full."], ["them (pleased): {player}! My best friend and my favourite guest. Sit here.", "them (pleased): {player}! I saved the best slice for you, don't argue."]],
+            "bye_steps": [["them: Take care, now.", "them: Goodbye. Mind the stairs."], ["them: Bye! Come back for tea sometime.", "them: Okay. Take care of yourself."], ["them (pleased): Do come by again, {player}. I'll have cake.", "them (pleased): Bye, {player}! Take a cake for the road."], ["them (pleased): Go on, {player}. Come back when you're hungry.", "them (pleased): Bye, {player}. Come back before the tea goes cold."], ["them (pleased): Come back soon. The house is too quiet without you.", "them (pleased): Take care, {player}. I'll set a place for you."], ["them (pleased): Bye, best friend. Come back soon, and bring an appetite.", "them (pleased): Bye, {player}. I'll keep a cup for you, always."]],
             "hello": ["them: Oh, hello there. Can I help you?", "them (pleased): {player}! Perfect timing, the tea's just ready.", "them (pleased): {player}, welcome. I set out a cup for you, just in case."],
             "bye": ["them: Take care, now.", "them (pleased): Do come by again. I'll have cake next time.", "them (pleased): Come back soon. The house is too quiet without you."],
             "hi": ["them (pleased): Oh, hello! I'm Mami Tomoe. Would you like some tea? I always make too much.",
@@ -291,10 +2027,13 @@ CAST = [
               "choice", "- Lean on me.", "- You're never alone again.",
               "me (pleased): Then you're my dearest friend. My best friend. I'll set two cups for you, always."]),
 
-    cpu("Sayaka Miki", "friendly",
+    cpu("Sayaka Miki", "friendly", quests=SAYAKA_MIKI_QUESTS, extra_scenes=SAYAKA_MIKI_SCENES,
         haunts=[("school", "wk", "01", 55), ("beach", "we", "12", 45), ("plaza", "024", "2", 35)],
         tastes=(["music"], ["sweet", "sporty"], ["spicy"]),
         lines={
+            "mid": {"1": ["them: Hey! You're cool. Do you play anything? I play violin.", "them: I'm practising my speech. Want to hear it?", "them: What's your favourite song? Mine's the one with the hero's theme.", "them: You look like someone who'd join the justice club. Want to?", "them: Don't laugh at my violin. Please."], "3": ["them (pleased): You're the best justice partner I could have asked for.", "them: I think about Kyosuke a lot. You make it less scary to say his name.", "them (pleased): Come to the beach. I'll play you the song I wrote.", "them: You helped me decide which wish I want. Thanks.", "them (pleased): You're the one I trust to tell me when I'm wrong."], "5": ["them (pleased): {player}, you're my best friend, and my hero too.", "them: I'd give up any wish for you. Actually, I already did, sort of.", "them (pleased): Let's go to the beach at sunset. I'll play just for you.", "them: You count as something back. I know that now.", "them (pleased): Best friend! Let's keep being heroes together, forever."]},
+            "hello_steps": [["them: Yo! New face? Hi!", "them: Hey. You look like you could use a hero."], ["them: Hi! Are you here to help with something?", "them: Oh! Hello. Sorry, I'm practising."], ["them (pleased): {player}! Justice partner! What's the plan?", "them (pleased): {player}! Good to see you. Have you practised your lines?"], ["them (pleased): {player}! I've been waiting for you to ask me to play.", "them (pleased): {player}! Come on, let's do something good today."], ["them (pleased): THERE you are, {player}! I was about to send out a search party!", "them (pleased): {player}! Don't laugh, but I missed you."], ["them (pleased): {player}! My best friend. Justice is always better with you.", "them (pleased): Hi, {player}! Are you ready to be a hero with me?"]],
+            "bye_steps": [["them: Okay, later!", "them: Bye! Stay out of trouble."], ["them: See you! Be careful!", "them: Okay, bye! Keep your head up."], ["them (pleased): See ya! Stay heroic, {player}!", "them (pleased): Bye, {player}! Don't forget your violin."], ["them (pleased): Go on, {player}! Justice doesn't wait.", "them (pleased): Bye, {player}! Keep a little light in the dark."], ["them (pleased): Come back soon, {player}! The town's quieter without you.", "them (pleased): Bye, {player}! Be safe, partner!"], ["them (pleased): Come back soon, partner! Justice waits for no one. Except you.", "them (pleased): Bye, best friend! Keep being a hero for me."]],
             "hello": ["them: Yo! New face? Hi!", "them (pleased): {player}! Justice partner! What's the plan?", "them (pleased): THERE you are! I was about to send out a search party!"],
             "bye": ["them: Okay, later!", "them (pleased): See ya! Stay heroic!", "them (pleased): Come back soon, partner! Justice waits for no one. Except you."],
             "hi": ["them: Yo! Sayaka Miki, magical girl of justice! Well, aspiring. Whatever!",

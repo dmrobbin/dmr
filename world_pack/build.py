@@ -13,6 +13,9 @@ A cast file has CAST = [cpu(...), ...]. In a CPU:
   wins), lost (after the player loses), r1, r3, r4 (what reaching ranks 1, 3 and 4 says); hello and bye (each a list
   of three one-line scripts: what it says when the player walks up and when they leave, to a stranger, a friend
   (rank 2) and a close friend (rank 4)).
+- mid (optional): first-talk lines for the in-between ranks, a dict of rank ("1", "3", "5") to lines.
+- hello_steps and bye_steps (optional): two lines of greeting and two of goodbye for each of the six relationship steps,
+  a list of six pairs, rank 0 (Stranger) first. They come on top of hello and bye.
 - friend, best: the scenes reaching Friend (rank 2) and Best friend (rank 5) play, as script lines; the cast line
   for the CPU (as `me`) is added at the top. "me (pleased):" and "me (dismayed):" become its screens.
 - quests (optional): the quests it gives, as weiss.quests writes them (without the giver: it's this CPU). The ones
@@ -63,6 +66,15 @@ def entry(spec):
     for key, context in (("hello", "hello"), ("bye", "goodbye")):
         for rank, script in zip(GREETING_RANKS, spec["lines"].get(key, [])):
             chatter.append({"context": context, "min_rank": rank, "script": [script]})
+    # hello_steps and bye_steps: two lines for each relationship step, rank 0 (Stranger) to 5 (Best friend).
+    for key, context in (("hello_steps", "hello"), ("bye_steps", "goodbye")):
+        for rank, pair in enumerate(spec["lines"].get(key, [])):
+            for line in pair:
+                chatter.append({"context": context, "min_rank": rank, "script": [line]})
+    # mid: first-talk lines for the in-between ranks, keyed by rank ("1", "3", "5").
+    for rank, scripts in spec["lines"].get("mid", {}).items():
+        for script in scripts:
+            chatter.append({"context": "greet", "min_rank": int(rank), "script": [script]})
     scenes = []
     for rank, title, lines in ((2, "Friend", spec["friend"]), (5, "Best friend", spec["best"])):
         scene = f"World: {name}, {title}"
