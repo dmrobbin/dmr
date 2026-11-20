@@ -654,6 +654,8 @@ def world_scene(request, slot):
     save, away = save_or_home(request, slot)
     if away:
         return away
+    if tutorial.active(save):  # nothing interrupts the tutorial: a waiting scene plays once it's over
+        return redirect("weiss:world_town", slot=slot)
     pending = save.flags.get("scene")
     scene = Scene.objects.filter(pk=(pending or {}).get("scene")).first()
     compiled, errors = scenes.compile_scene(world.scene_script(save, scene)) if scene else (None, True)

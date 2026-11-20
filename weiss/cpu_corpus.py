@@ -752,6 +752,11 @@ def import_world_pack(files, dry_run=False, user=None, known=None):
             result.done.append((name, done_words(rules, lines, found_quests)))
         for order, (fields, _) in enumerate(story, 1):  # the story's chapters, by key: saves keep their place in them
             quests.save_quest(fields, order=order)
+        if story or any(data.get("story") is not None for data in files):  # a story file is the whole story: chapters it
+            kept = {fields["key"] for fields, _ in story}                     # no longer has are gone (or a new save
+            for quest in Quest.objects.filter(giver__isnull=True).exclude(key__in=kept):  # would still begin them)
+                if (quest.spec or {}).get("story"):
+                    quest.delete()
         for guides, lines, _ in tutorial_parts:  # the tutorial: its guides, and every step's lines replaced
             WorldSettings.objects.update_or_create(pk=1, defaults={"tutorial_guides": guides})
             TutorialLine.objects.all().delete()

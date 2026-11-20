@@ -247,3 +247,16 @@ class BannerTests(TutorialBase):
         self.assertIn("Head back to the town", tutorial.banner(self.save, "reveal")["hint"])  # just bought a pack
         self.through("deck")
         self.assertIn("Decks", tutorial.banner(self.save, "deck")["hint"])  # the deck step's done on the deck pages
+
+
+class NoSceneDuringTheTutorialTests(TutorialBase):
+    def test_a_scene_waits_until_the_tutorial_is_over(self):
+        from .models import Scene
+        Scene.objects.create(name="Old welcome", script="narrator: The old opening.")
+        world.queue_scene(self.save, "Old welcome")
+        self.save.save()
+        self.assertIsNone(world.town(self.save)["scene"])  # the town doesn't play it
+        self.client.force_login(self.user)
+        self.assertRedirects(self.client.get(reverse("weiss:world_scene", args=[1])), reverse("weiss:world_town", args=[1]))
+        tutorial.finish(self.save)
+        self.assertIsNotNone(world.town(self.save)["scene"])  # once it's over, it plays

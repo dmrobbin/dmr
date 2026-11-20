@@ -270,3 +270,13 @@ class MentorTests(QuestBase):
         world.changed(self.save, "relations")
         self.assertEqual(quests.status(self.fresh(), "friend"), "settling")
         self.assertIn("has_best_friend", world.scene_flags(self.save))
+
+
+class StoryReplaceTests(StoryBase):
+    def test_importing_the_story_removes_chapters_it_no_longer_has(self):
+        chapter("c1-guide", 1, scene="Opening")  # the old first chapter, from an earlier import
+        result = import_world_pack([StoryFileTests.story_file(self)])[0]
+        self.assertEqual(result.problems, [])
+        self.assertFalse(Quest.objects.filter(key="c1-guide").exists())
+        self.assertTrue(Quest.objects.filter(key="story-1").exists())
+        self.assertTrue(Quest.objects.filter(key="bounty-three-duelists").exists())  # the notice board's are not the story's

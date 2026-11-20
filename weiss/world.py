@@ -1779,9 +1779,10 @@ def town(save):
 
 
 def scene_waiting(save):
-    """{"url", "who"} for a scene the save has waiting to be watched, or None."""
+    """{"url", "who"} for a scene the save has waiting to be watched, or None. Nothing plays while the tutorial's on:
+    a scene queued then waits until it's over."""
     pending = save.flags.get("scene")
-    if not pending:
+    if not pending or tutorial.active(save):
         return None
     who = CpuProfile.objects.filter(pk=pending.get("cpu")).values_list("name", flat=True).first() if pending.get("cpu") else None
     # "auto": a quest's visit scene, which the town goes to straight away rather than waiting to be clicked.
