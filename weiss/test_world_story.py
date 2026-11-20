@@ -113,7 +113,8 @@ class ChainTests(StoryBase):
         self.assertEqual(names, ["Opening", "Stage done", "Ending"])
         save.save()
         self.client.force_login(self.user)
-        self.client.get(reverse("weiss:world_scene", args=[1]))  # watched: the next comes up
+        self.client.get(reverse("weiss:world_scene", args=[1]))
+        self.client.post(reverse("weiss:world_scene_done", args=[1]), {"state": '{"flags": [], "buffs": []}'})  # watched to its end: the next comes up
         self.assertEqual(self.fresh().flags["scene"]["scene"], Scene.objects.get(name="Stage done").pk)
 
     def test_a_chapter_brings_whoever_it_names_into_town(self):
@@ -191,5 +192,79 @@ class StoryFileTests(StoryBase):
         import json
         from pathlib import Path
         data = json.loads((Path(__file__).resolve().parent.parent / "world_pack" / "00_story.json").read_text(encoding="utf-8"))
-        result = import_world_pack([data], dry_run=True)[0]
+        names = [line.split(" as ", 1)[1] for scene in data["scenes"] for line in scene["script"] if line.startswith("cast ") and "{mentor}" not in line]
+        result = import_world_pack([data], known=names)[0]  # checked against the CPUs its scenes cast, as the pack checker does
         self.assertEqual(result.problems, [])
+
+
+# ---------------------------------------------------------------- Chapter 1's mechanics: the guide, an easy duel, a best friend
+
+from .test_world_quests import QuestBase, make_quest, stage  # noqa: E402
+
+
+class MentorTests(QuestBase):
+    def finish(self, room, won):
+        over = {"winner": str(room.host_id if won else room.guest_id), "loser": "x", "reason": "level", "rematch": []}
+        room.state["game_over"] = over
+        room.save(update_fields=["state"])
+        world.game_finished(room, over)
+
+    def choose_guide(self):
+        script = "\n".join(["cast g0 as Ruby", "cast g1 as Cinder", "background sakura", "choice Who?",
+                            "- Ruby (set mentor_g0)", "- Cinder (set mentor_g1)"])
+        Scene.objects.create(name="Pick a guide", script=script)
+        world.queue_scene(self.save, "Pick a guide")
+        return world.scene_done(self.save, ["mentor_g0"], [])
+
+    def test_a_scene_choice_makes_the_guide(self):
+        done = self.choose_guide()
+        self.assertEqual(self.save.flags["mentor"], self.ruby.pk)
+        self.assertIn("mentor_chosen", self.save.flags["set"])
+        self.assertIn("Ruby is your guide", done["rewards"])
+        self.assertEqual(quests.mentor_name(self.save), "Ruby")
+
+    def test_mentor_in_a_quest_is_the_guide(self):
+        make_quest("lesson", self.cinder, stages=[stage({"do": "talk", "to": "{mentor}", "script": ["them: Hi."]})])
+        self.choose_guide()
+        save = self.fresh()
+        objective = quests.quests(save)["lesson"].spec["stages"][0]["objectives"][0]
+        self.assertEqual(objective["to"], "Ruby")
+        self.assertEqual(Quest.objects.get(key="lesson").spec["stages"][0]["objectives"][0]["to"], "{mentor}")  # stored as written
+
+    def test_a_scene_for_this_guide_comes_first(self):
+        self.choose_guide()
+        Scene.objects.create(name="Lesson", script="narrator: For any guide.")
+        own = Scene.objects.create(name="Lesson (Ruby)", script="narrator: For Ruby.")
+        world.queue_scene(self.save, "Lesson")
+        self.assertEqual(self.save.flags["scene"]["scene"], own.pk)
+
+    def test_a_scene_casts_the_guide_and_knows_the_save(self):
+        self.choose_guide()
+        Scene.objects.create(name="Guide talks", script="cast guide as {mentor}\nguide: Hello!")
+        world.queue_scene(self.save, "Guide talks")
+        self.save.save()
+        self.client.force_login(self.user)
+        page = self.client.get(reverse("weiss:world_scene", args=[1]))
+        self.assertContains(page, "Ruby")
+        self.assertContains(page, "has_mentor")
+
+    def test_the_easy_duel_counts_win_or_lose(self):
+        self.choose_guide()
+        make_quest("spar", self.cinder, stages=[stage({"do": "duel", "cpu": "{mentor}", "model": "easy"})])
+        save = self.fresh()
+        world.quest_act(save, self.cinder.pk, "accept", "spar", {})
+        save.today.pop("engaged", None)
+        room = world.start_duel(save, self.ruby.pk)
+        self.assertEqual(room.state["cpu_model"], "easy")  # the guide goes easy on you
+        self.finish(room, won=False)
+        self.assertEqual(quests.status(self.fresh(), "spar"), "settling")
+
+    def test_a_best_friend_with_anyone(self):
+        make_quest("friend", self.cinder, stages=[stage({"do": "rank", "rank": 5})])
+        world.quest_act(self.save, self.cinder.pk, "accept", "friend", {})
+        self.assertEqual(quests.describe(self.save, {"do": "rank", "rank": 5}), "Become Best friend with anyone")
+        self.assertNotIn("has_best_friend", world.scene_flags(self.save))
+        self.save.relations[str(self.ruby.pk)] = {"points": world.ranks()[5]["points"]}
+        world.changed(self.save, "relations")
+        self.assertEqual(quests.status(self.fresh(), "friend"), "settling")
+        self.assertIn("has_best_friend", world.scene_flags(self.save))

@@ -495,8 +495,10 @@ class VisitAndCardTests(QuestBase):
         world.travel(save, "beach")
         self.client.force_login(self.user)
         page = self.client.get(reverse("weiss:world_scene", args=[1]))
-        self.assertContains(page, "You got")
-        self.assertContains(page, "50 coins")
+        self.assertContains(page, "data-scene-done")
+        self.assertIn("scene", self.fresh().flags)  # waiting until it's been played to its end
+        done = self.client.post(reverse("weiss:world_scene_done", args=[1]), {"state": '{"flags": [], "buffs": []}'}).json()
+        self.assertEqual(done["rewards"], ["50 coins"])  # it ends on what the visit gave
         self.assertNotIn("scene", self.fresh().flags)  # played once
 
     def test_after_time_passes_the_map_opens_even_in_test_mode(self):

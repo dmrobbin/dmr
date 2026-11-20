@@ -26,6 +26,7 @@ How it plays out on a save (save.quests["log"][key]):
 - Done, with its ending; or failed, closed by another quest's ending. There's no deadline and no giving up: a quest
   only fails when a choice closes it, and the player is told before they make it.
 """
+import json
 import random
 import re
 from types import SimpleNamespace
@@ -65,7 +66,9 @@ OBJECTIVES = {  # do: (fields it can have, what it's for: the reference's words)
               "straight away, with the CPUs it casts there afterwards, and its rewards (coins or a pack, usually) are given."),
     "give_card": ({"card", "copies", "to"}, "Hand a card over to a CPU, for good: it leaves the save's cards and decks."),
     "give_gift": ({"gift", "to"}, "Give a CPU this gift."),
-    "rank": ({"cpu", "rank"}, "Reach this friendship rank with a CPU."),
+    "rank": ({"cpu", "rank"}, "Reach this friendship rank with a CPU (no cpu: with anyone)."),
+    "duel": ({"cpu", "model", "result", "count"}, "Duel this CPU (`result`: any, the default, win or loss), `count` times; `model` "
+             "sets how it plays in those duels (easy, say: a lesson)."),
     "talk": ({"to", "script"}, "Talk to a CPU: its script plays (chatter, with choices that can set flags)."),
     "flag": ({"flag", "text"}, "Have a flag (a chatter choice or an ending sets them): say what it means in `text`."),
     "event": ({"event", "result", "count"}, "Take part in an event (WorldEvent, by key): `result` is enter (the default), round "
@@ -99,6 +102,9 @@ def known_context(extra_keys=(), loose=False):
 
 
 EVENT_RESULTS = ("enter", "round", "win")
+DUEL_RESULTS = ("any", "win", "loss")
+DUEL_MODELS = ("easy", "standard", "focused", "strategic", "hard")  # weiss.cpu.MODELS
+MENTOR = "{mentor}"  # in a quest or scene, the CPU the player chose as their guide (the story's first chapter)
 WINDOW_FIELDS = {"weekdays", "times", "every", "offset", "event"}
 
 
@@ -194,6 +200,8 @@ def check(data, context=None, giver=None):
     where = f"“{title or key}”"
 
     def cpu_name(name, what):
+        if str(name or "").strip().lower() == MENTOR:  # whoever the player chose as their guide (the story)
+            return MENTOR
         found = context.cpus.get(str(name or "").strip().lower())
         if not found:
             problems.append(f"{what}: there's no CPU called “{name}”.")
@@ -349,9 +357,15 @@ def check(data, context=None, giver=None):
         if do == "give_gift" and raw.get("gift") not in context.gifts:
             problems.append(f"{at} (give_gift): there's no gift “{raw.get('gift')}”.")
         if do == "rank":
-            if "cpu" not in raw:
-                problems.append(f"{at} (rank): name the CPU in cpu.")
             whole("rank", 1, len(context.ranks) - 1)
+        if do == "duel":
+            if "cpu" not in raw:
+                problems.append(f"{at} (duel): name the CPU in cpu.")
+            if raw.get("result", "any") not in DUEL_RESULTS:
+                problems.append(f"{at} (duel): result is one of {', '.join(DUEL_RESULTS)}.")
+            if raw.get("model") and raw["model"] not in DUEL_MODELS:
+                problems.append(f"{at} (duel): model is one of {', '.join(DUEL_MODELS)}.")
+            whole("count", 1, 20, 1)
         if do == "event":
             if not NAME.fullmatch(str(raw.get("event") or "")):
                 problems.append(f"{at} (event): event is an event's key (see the Events page).")
@@ -586,10 +600,31 @@ def lookup(save):
 
 # ---------------------------------------------------------------- A save's quests
 
+def mentor_name(save):
+    """The name of the CPU the player chose as their guide, or None."""
+    pk = (save.flags or {}).get("mentor")
+    return CpuProfile.objects.filter(pk=pk).values_list("name", flat=True).first() if pk else None
+
+
+def resolved(save, found):
+    """These quests with MENTOR in them made the save's own: the guide's name in its place, once one's chosen (the
+    stored quests are never changed)."""
+    name = mentor_name(save) if any(MENTOR in json.dumps(quest.spec or {}) for quest in found) else None
+    if not name:
+        return found
+    escaped = json.dumps(name)[1:-1]
+    for quest in found:
+        text = json.dumps(quest.spec or {})
+        if MENTOR in text:
+            quest.spec = json.loads(text.replace(MENTOR, escaped))
+    return found
+
+
 def quests(save):
-    """{key: Quest}, every quest there is, found once per save object (a request)."""
+    """{key: Quest}, every quest there is, found once per save object (a request), the guide's name in place of
+    MENTOR."""
     if not hasattr(save, "_quests"):
-        save._quests = {quest.key: quest for quest in Quest.objects.select_related("giver")}
+        save._quests = {quest.key: quest for quest in resolved(save, list(Quest.objects.select_related("giver")))}
     return save._quests
 
 
@@ -681,7 +716,8 @@ def need(obj):
     """How many of something an objective counts to."""
     return {"defeat": len(obj.get("cpus", [])), "combo": obj.get("count", 1), "streak": obj.get("wins", 1),
             "beat_different": obj.get("count", 1), "have_card": obj.get("copies", 1), "give_card": 1,
-            "collect": obj.get("count", 1), "rank": obj.get("rank", 1), "event": obj.get("count", 1)}.get(obj["do"], 1)
+            "collect": obj.get("count", 1), "rank": obj.get("rank", 1), "event": obj.get("count", 1),
+            "duel": obj.get("count", 1)}.get(obj["do"], 1)
 
 
 def held(save, obj):
@@ -699,6 +735,8 @@ def held(save, obj):
         names = {card.name for card in cards if not obj.get("trait") or has_trait(card, obj["trait"])}
         return len(names)
     if do == "rank":
+        if not obj.get("cpu"):  # with anyone: the closest friendship
+            return max((world.rank_of(save, int(pk)) for pk in save.relations), default=0)
         cpu_id = found.cpu_id(obj["cpu"])
         return world.rank_of(save, cpu_id) if cpu_id else 0
     if do == "flag":
@@ -862,6 +900,8 @@ def duel_finished(save, room, won):
                 elif log(save)[quest.key].get("progress", {}).get(key):
                     log(save)[quest.key]["progress"][key] = 0
                     news(save, f"Your run of wins is over: {describe(save, obj)} starts again.", quest)
+            elif do == "duel" and cpu.name.lower() == obj["cpu"].lower() and obj.get("result", "any") in ("any", "win" if won else "loss"):
+                counted = tick(save, quest, key)
             elif do == "beat_different" and won and (not obj.get("temperament") or cpu.temperament == obj["temperament"]) \
                     and (not obj.get("cpus") or cpu.name.lower() in {n.lower() for n in obj["cpus"]}):
                 counted = tick(save, quest, key, cpu.name)
@@ -869,6 +909,15 @@ def duel_finished(save, room, won):
                 have, wanted = progress(save, quest, key, obj)
                 news(save, f"{describe(save, obj)}: {'done' if have >= wanted else f'{have}/{wanted}'}.", quest)
     advance(save)
+
+
+def duel_model(save, cpu):
+    """How this CPU plays a duel starting now, if a quest under way says (a duel objective's `model`), else None."""
+    for quest in quests(save).values():
+        for _, obj in current(save, quest):
+            if obj["do"] == "duel" and obj.get("model") and obj["cpu"].lower() == cpu.name.lower():
+                return obj["model"]
+    return None
 
 
 def duel_started(save, room):
@@ -886,9 +935,9 @@ def gift_given(save, cpu, item):
     advance(save)
 
 
-def scene_cast(scene):
-    """The CPUs a scene casts (their ids), from its cast lines."""
-    compiled, _ = scene_language.compile_scene(scene.script)
+def scene_cast(scene, save=None):
+    """The CPUs a scene casts (their ids), from its cast lines (with the save's guide where it says {mentor})."""
+    compiled, _ = scene_language.compile_scene(world.scene_script(save, scene) if save else scene.script)
     return sorted({profile.pk for profile in compiled["cast"].values()})
 
 
@@ -910,7 +959,7 @@ def arrived(save):
             given = give_rewards(save, quest, obj.get("rewards") or [])
             link = None
             scene = Scene.objects.filter(name__iexact=obj.get("scene") or "").first() if obj.get("scene") else None
-            cast = scene_cast(scene) if scene else []
+            cast = scene_cast(scene, save) if scene else []
             world.meet(save, place.key, cast)
             if scene:  # played straight away, or after whatever's waiting to be watched
                 world.queue_scene(save, scene, cpu=cast[0] if cast else None, rewards=[[text, reward_link] for text, reward_link in given])
@@ -932,7 +981,7 @@ def story_quests(save):
     """The story's chapters, in order: by chapter number, then the staff's order. Read without filling the save's
     quest cache (quests(save)) when it isn't filled yet: this runs on every change to a save, and a quest made later in
     the same request must still be found."""
-    found = save._quests.values() if hasattr(save, "_quests") else Quest.objects.filter(giver__isnull=True)
+    found = save._quests.values() if hasattr(save, "_quests") else resolved(save, list(Quest.objects.filter(giver__isnull=True)))
     return sorted((quest for quest in found if (quest.spec or {}).get("story")),
                   key=lambda quest: ((quest.spec or {}).get("chapter") or 0, quest.order, quest.pk))
 
@@ -1415,7 +1464,11 @@ def describe(save, obj):
         item = GiftItem.objects.filter(key=obj["gift"]).first()
         return f"Give {obj['to']} {f'{item.icon} {item.name}'.strip() if item else obj['gift']}"
     if do == "rank":
-        return f"Become {world.rank_names()[obj['rank']]} with {obj['cpu']}"
+        return f"Become {world.rank_names()[obj['rank']]} with {obj.get('cpu') or 'anyone'}"
+    if do == "duel":
+        how = {"win": "Beat", "loss": "Lose to"}.get(obj.get("result", "any"), "Duel")
+        times = f" {obj['count']} times" if obj.get("count", 1) > 1 else ""
+        return f"{how} {obj['cpu']}{times}"
     if do == "talk":
         return f"Talk to {obj['to']}"
     if do == "event":

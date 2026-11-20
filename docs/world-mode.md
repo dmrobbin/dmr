@@ -497,8 +497,27 @@ Time is the player's budget. Where to go and whom to see should be a choice.
     scene is no longer skipped when another is waiting.
 - **Characters:** whoever a chapter names is brought into town when it begins (`world_roster.bring`).
 - **The quest log** shows the story first.
+- **The guide (`{mentor}`, `quests.MENTOR`):** the CPU the player chose. A scene choice option `(set mentor_<cast
+  id>)` sets it (`world.scene_done`). Quests are resolved per save (`quests.resolved`), and scenes cast it
+  (`world.scene_script`); a scene named "… (<guide>)" is preferred for that guide (`world.queue_scene`).
+- **A "duel" objective:** `{"do": "duel", "cpu": …, "model": "easy", "result": "any"|"win"|"loss", "count": n}`. Its
+  `model` sets how the CPU plays (the room's state `cpu_model`, read in `play.py`).
+- **"rank" with no `cpu`:** a friendship that far with anyone.
+- **Scenes can branch** on the save's flags, and `has_friend`, `has_close_friend`, `has_best_friend`, `has_mentor`
+  and `champion` (`world.scene_flags`). Winning a tournament sets the save's `champion` flag.
+- **World scenes stay waiting** until the page reports their end (`world_scene_done`), so leaving part-way replays
+  them; their choices' flags become the save's.
 - **A placeholder chain** of three chapters is in, so it can be played through. What to write:
   [world-story-plan.md](world-story-plan.md).
+
+## Duel rewards: a card from their deck — built
+
+- After any won world duel, the player picks one of the beaten CPU's distinct non-climax cards (all of them, if the
+  deck is climaxes only) and gets a copy.
+- **The offer waits:** a notice above the stage, and a button on the duel's result banner, until it's taken, or a
+  later win replaces it.
+- **The code:** `weiss/world_rewards.py` (`offer_card_pick`, `card_pick_view`, `pick_card`) and the town move
+  `world_pick_card`.
 
 ## The cast a few at a time, and arrivals — built
 

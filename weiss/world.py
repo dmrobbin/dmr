@@ -18,6 +18,7 @@ from django.urls import reverse
 from . import buffs, challenge, chatter, packs, quests
 from . import world_calendar as calendar
 from . import world_events as events
+from . import world_rewards
 from . import world_roster as roster
 from .lists import CLIMAX_COUNT, COPY_LIMIT, DECK_SIZE, climax_problem, is_climax, unlimited, unplayable
 from .models import (Card, CardList, CardListEntry, CpuProfile, CpuSchedule, GameRoom, GiftItem, Scene, WorldPlace, WorldSave,
@@ -630,6 +631,8 @@ def start_duel(save, cpu_id, high_stakes=False):
     save.money -= fee
     room = GameRoom(host=save.user, host_deck=save.deck, status=GameRoom.Status.PLAYING, world_save=save, world_stake=fee)
     seat_cpu(room, cpu)
+    if (model := quests.duel_model(save, cpu)):  # a quest's duel sets how it plays (the story's lesson: easy)
+        room.state["cpu_model"] = model
     room.save()
     events.round_started(save, room)  # the player's tournament opponent, at their round's time: it's that round
     quests.duel_started(save, room)
@@ -648,6 +651,8 @@ def game_finished(room, over):
         if not save or (save.flags.get("last_duel") or {}).get("room") == room.pk:
             return
         won = over["winner"] == str(room.host_id)
+        if won:
+            world_rewards.offer_card_pick(save, room)
         cpu = CpuProfile.objects.filter(pk=room.cpu_profile_id).first()
         event_words, event_rewards = "", []
         if events.is_round(save, room):
@@ -1732,6 +1737,7 @@ def town(save):
         "duel": {"url": reverse("weiss:play_room", args=[duel.pk]), "cpu": duel.cpu_name} if duel else None,
         # A scene still to watch (a rank-up's, a quest's): kept until it's seen, wherever the player went in between.
         "scene": scene_waiting(save),
+        "card_pick": world_rewards.card_pick_view(save),
     }
 
 
@@ -1752,7 +1758,9 @@ def queue_scene(save, scene, cpu=None, rewards=None):
     """A full scene for the town to play (straight away, as the town comes to it): `scene` is a Scene or its name. If
     one's waiting already, it goes in a queue and plays next. `rewards`: [[words, link]] for the scene to end on."""
     if isinstance(scene, str):
-        scene = Scene.objects.filter(name__iexact=scene).first()
+        mentor = quests.mentor_name(save)  # the guide's own version first ("World: Story, … (Aang)"), then the one for any guide
+        scene = (Scene.objects.filter(name__iexact=f"{scene} ({mentor})").first() if mentor else None) or \
+            Scene.objects.filter(name__iexact=scene).first()
     if not scene:
         return
     item = {"scene": scene.pk, "auto": True, **({"cpu": cpu} if cpu else {}), **({"rewards": rewards} if rewards else {})}
@@ -1770,3 +1778,61 @@ def next_scene(save):
     if not queue:
         save.flags.pop("scene_queue", None)
     roster.next_arrival(save)
+
+
+
+# ---------------------------------------------------------------- A scene's end: what its choices did
+
+MENTOR_FLAG = "mentor_"  # an option's "(set mentor_<cast id>)": that character becomes the player's guide
+
+
+def scene_script(save, scene):
+    """A scene's script for this save: the guide's name where it says {mentor} (the story's scenes cast "{mentor}")."""
+    name = quests.mentor_name(save)
+    return scene.script.replace(quests.MENTOR, name) if name else scene.script
+
+
+def scene_flags(save):
+    """What a scene can branch on ("if has_best_friend goto …"): the save's own flags, and what's true of it now:
+    has_friend, has_close_friend, has_best_friend (a friendship that far with anyone), has_mentor, champion (won a
+    weekly tournament)."""
+    top = max((rank_of(save, int(pk)) for pk in save.relations), default=0)
+    ranks = len(rank_names()) - 1
+    found = set(save.flags.get("set", []))
+    found |= {name for name, rank in (("has_friend", 2), ("has_close_friend", 4), ("has_best_friend", ranks)) if top >= rank}
+    if save.flags.get("mentor"):
+        found.add("has_mentor")
+    return sorted(found)  # "champion" is one of the save's own flags, set when it first wins a tournament
+
+
+def scene_done(save, chosen_flags, chosen_buffs):
+    """The waiting scene's been played to its end (the scene page reports what its choices set): a newcomer's arrival
+    pays out (weiss.world_roster.arrival_done); any other scene's "mentor_<cast id>" makes that character the guide,
+    its other flags become the save's (for quests and later scenes), and its rewards (a visit's, given already) are
+    said. Then the next waiting scene comes up. Returns {"rewards": [words], "link": a link to see a pack's cards}."""
+    pending = save.flags.get("scene") or {}
+    if not pending:
+        raise ValueError("There's no scene waiting.")
+    if pending.get("arrival"):
+        return roster.arrival_done(save, chosen_flags, chosen_buffs)
+    from . import scenes
+    scene = Scene.objects.filter(pk=pending.get("scene")).first()
+    cast = scenes.compile_scene(scene_script(save, scene))[0]["cast"] if scene else {}
+    words = [text for text, _ in pending.get("rewards", [])]
+    link = next((link for _, link in pending.get("rewards", []) if link), "")
+    for flag in map(str, chosen_flags):
+        if flag.startswith(MENTOR_FLAG):  # "mentor_<cast id>": that character's the guide now
+            guide = cast.get(flag[len(MENTOR_FLAG):])
+            if not guide:
+                continue
+            save.flags["mentor"] = guide.pk
+            roster.bring(save, [guide.pk])
+            save.__dict__.pop("_quests", None)  # the quests name the guide now
+            flag = "mentor_chosen"
+            words.append(f"{guide.name} is your guide")
+        if flag not in RESERVED_FLAGS:
+            save.flags["set"] = sorted(set(save.flags.get("set", [])) | {flag})
+    save.flags.pop("scene", None)
+    next_scene(save)
+    changed(save, *TALK_FIELDS, "roster")
+    return {"rewards": words, "link": link}

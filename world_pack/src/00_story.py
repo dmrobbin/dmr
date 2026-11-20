@@ -2,27 +2,176 @@
 
 A chapter begins by itself once what it `requires` is done (the chapter before it, a flag), and finishes by itself
 when its stages are done (its one ending with no "to"; others are chosen by talking to someone). It can play scenes:
-`scene` when it begins, a stage's `scene` when that stage is done, an ending's `scene` when it's reached. Whoever a
-chapter names is brought into town when it begins, even if they hadn't arrived yet.
+`scene` when it begins, a stage's `scene` when that stage is done, an ending's `scene` when it's reached, and a
+visit's scene at its place. Whoever a chapter names is brought into town when it begins.
 
-These three chapters are PLACEHOLDERS, so the chain can be played through before the story's written: plain
-objectives, no scenes. The scenes the real chapters need are listed in docs/world-story-plan.md. A scene is written
-in STORY_SCENES as {"name", "lines"}, casting whoever it needs ("cast aang as Aang"), and named in a chapter's "scene".
+{mentor} stands for the guide the player chose in the first scene (an option's "(set mentor_<cast id>)"), in quests
+(objectives' cpu, to) and in scenes ("cast guide as {mentor}"). A scene can have a version for one guide: the same name
+with the guide's name after it, "World: Story, C1 After the lesson (Aang)", played instead when Aang's the guide.
+Scenes can branch on what's true of the save (world.scene_flags): has_friend, has_close_friend, has_best_friend,
+has_mentor, champion, and the save's own flags ("if has_best_friend goto proud").
+
+Chapter 1: the player arrives, chooses a guide, learns the town (the plaza, the card shop, friendship and gifts), duels
+the guide (on easy), is paid to buy packs and sent to win the weekly tournament; once they have, the guide looks at the
+friendships they've made, and sends them to make a best friend before Chapter 2.
+
+Scenes in this file are played as written (no mood mapping): pictures are main, intro, win and lose. So "pleased" is
+written (lose) and "dismayed" is written (win), as in the other packs.
 """
 
+GUIDES = ["Aang", "Chisato Nishikigi", "Asuna Yuuki", "Erza Scarlet"]  # the guides offered (cast g0 to g3)
+
+
 STORY = [
-    {"key": "story-1", "title": "A new town", "story": True, "chapter": 1,
-     "about": "You've just arrived in town with a deck and a few coins. Find your feet.",
-     "stages": [{"text": "Win your first duel", "objectives": [{"do": "beat_different", "count": 1}]}],
-     "endings": [{"key": "done", "title": "Settled in", "rewards": [{"coins": 300}]}]},
-    {"key": "story-2", "title": "Making a name", "story": True, "chapter": 2, "requires": {"quests": ["story-1"]},
-     "about": "People are starting to notice the newcomer with the deck. Show them what you can do.",
-     "stages": [{"text": "Beat three different duelists", "objectives": [{"do": "beat_different", "count": 3}]}],
-     "endings": [{"key": "done", "title": "A name in town", "rewards": [{"pack": "climax_pack"}]}]},
-    {"key": "story-3", "title": "Tournament weekend", "story": True, "chapter": 3, "requires": {"quests": ["story-2"]},
-     "about": "The arena runs a tournament every weekend. It's time you entered.",
-     "stages": [{"text": "Enter the weekly tournament", "objectives": [{"do": "event", "event": "weekly-tournament"}]}],
-     "endings": [{"key": "done", "title": "In the bracket", "rewards": [{"coins": 500}]}]},
+    {"key": "c1-guide", "title": "Choose your guide", "story": True, "chapter": 1,
+     "about": "You've just arrived in town. Someone's offered to show you around: choose who.",
+     "scene": "World: Story, C1 Welcome",
+     "stages": [{"text": "Choose your guide", "objectives": [{"do": "flag", "flag": "mentor_chosen", "text": "Choose who'll show you around"}]}],
+     "endings": [{"key": "done", "title": "A guide chosen"}]},
+
+    {"key": "c1-tutorial", "title": "Learning the ropes", "story": True, "chapter": 1, "requires": {"quests": ["c1-guide"]},
+     "about": "{mentor} is showing you how things work in town: where to go, how to get cards, how to make friends, and how to duel.",
+     "scene": "World: Story, C1 Meet your guide",
+     "stages": [
+         {"text": "Meet {mentor} in the plaza",
+          "objectives": [{"do": "visit", "place": "plaza", "scene": "World: Story, C1 The town", "rewards": [{"coins": 100}]}]},
+         {"text": "Go to the card shop with {mentor}",
+          "objectives": [{"do": "visit", "place": "shop", "scene": "World: Story, C1 The card shop", "rewards": [{"coins": 200}]}]},
+         {"text": "Hear {mentor} out about making friends",
+          "objectives": [{"do": "talk", "to": "{mentor}", "script": [
+              "them: Friendship here is simple. Talk to people every day, even if it's only a hello.",
+              "them (pleased): Gifts matter. Everyone loves something different, so look for what makes them smile.",
+              "them: Duels make friends too. Win or lose, you'll both remember who played fair.",
+              "them: Ranks run from Stranger up to Best friend. Each step is a bit closer, and some of them unlock things.",
+              "them (pleased): Be someone's friend, and they'll be yours. That's the whole trick.",
+          ]}]},
+         {"text": "Duel {mentor} (they'll go easy on you)",
+          "objectives": [{"do": "duel", "cpu": "{mentor}", "model": "easy"}]},
+     ],
+     "endings": [{"key": "done", "title": "Lesson learned", "scene": "World: Story, C1 After the lesson", "rewards": [{"coins": 1500}]}]},
+
+    {"key": "c1-tournament", "title": "Champion of the arena", "story": True, "chapter": 1, "requires": {"quests": ["c1-tutorial"]},
+     "about": "{mentor} says to come back once you've won the weekly tournament at the arena.",
+     "stages": [{"text": "Win the weekly tournament", "objectives": [{"do": "event", "event": "weekly-tournament", "result": "win"}]}],
+     "endings": [{"key": "done", "title": "Champion", "scene": "World: Story, C1 Champion", "rewards": [{"coins": 1000}]}]},
+
+    {"key": "c1-best-friend", "title": "A true friend", "story": True, "chapter": 1, "requires": {"quests": ["c1-tournament"]},
+     "about": "{mentor} wants to see you make a real friend in town, a best friend, before what comes next.",
+     "stages": [
+         {"text": "Become someone's Best friend", "objectives": [{"do": "rank", "rank": 5}]},
+         {"text": "Tell {mentor}", "objectives": [{"do": "talk", "to": "{mentor}", "script": [
+             "them (pleased): So you've made a best friend. Tell me, what did they do to earn that?",
+             "player: They stuck around when I lost.",
+             "them: That's the kind of friend that counts. I'm proud of you.",
+             "them (pleased): Keep them close. What comes next will be harder than this.",
+         ]}]},
+     ],
+     "endings": [{"key": "done", "title": "Chapter 1 complete", "scene": "World: Story, C1 Chapter end", "rewards": [{"pack": "lucky_pack"}]}]},
 ]
 
-STORY_SCENES = []
+STORY_SCENES = [
+    {"name": "World: Story, C1 Welcome", "lines": [
+        "cast g0 as Aang",
+        "cast g1 as Chisato Nishikigi",
+        "cast g2 as Asuna Yuuki",
+        "cast g3 as Erza Scarlet",
+        "background sakura",
+        "narrator: You step off the road into the town square. It's busy, and everyone seems to know someone.",
+        "g0 enters far-left with slide",
+        "g1 enters left with fade",
+        "g2 enters right with fade",
+        "g3 enters far-right with slide",
+        "narrator: Four people come over at once. Each of them wants to show you around.",
+        "g0 (lose): Hi! I'm Aang. You look like you've just got off a long trip. I can show you where everything is.",
+        "g1: Chisato, from the café. I know where the best coffee is, the best cards, and the shortcuts nobody else uses.",
+        "g2: Asuna. I'll make you lunch first, and then I'll show you the arena, if you can handle it.",
+        "g3: Erza. I don't talk much, but I know how to win. And how to keep a friend.",
+        "player: Four of you, all offering at once. Who should I trust?",
+        "g0 (lose): Trust whoever you like best. That's kind of the point of this town.",
+        "g3: Don't overthink it. Pick the one you'd want to spend the afternoon with.",
+        "narrator: Choose who'll show you around.",
+        "choice Who will show you around?",
+        "- Aang: Let's start with the fun stuff. (set mentor_g0)",
+        "- Chisato: Show me the café and the cards. (set mentor_g1)",
+        "- Asuna: Lunch first, then the arena. (set mentor_g2)",
+        "- Erza: Teach me to win, and to make friends. (set mentor_g3)",
+    ]},
+    {"name": "World: Story, C1 Meet your guide", "lines": [
+        "cast guide as {mentor}",
+        "background sakura",
+        "guide enters center with fade",
+        "guide (lose): Welcome to town. I'm glad it's you I'm showing around.",
+        "player: Thanks. What's the first thing I should know?",
+        "guide: Three things. The plaza is where everyone meets. The card shop is where you get cards. And friends are why you keep coming back.",
+        "player: Friends?",
+        "guide (lose): The more time you spend with people here, the closer you get. Talk to them, give them gifts, duel them.",
+        "guide: Let's start with the plaza. Ready?",
+    ]},
+    {"name": "World: Story, C1 The town", "lines": [
+        "cast guide as {mentor}",
+        "background sakura",
+        "guide enters left with fade",
+        "guide: This is the plaza. People come and go, and they're not always here. Check the map to see who's where.",
+        "player: Who's here right now?",
+        "guide: Press M for the map. Anyone with a name is somewhere in town. Click them to talk, give a gift, or duel.",
+        "guide (lose): Everyone has their own days, so come back at different times to find someone new.",
+        "player: And the time?",
+        "guide: Time runs in four parts of the day: morning, noon, evening and night. Each talk or duel uses up that part of the day.",
+        "guide: When there's nothing left to do, pass time with W. The town carries on without you.",
+        "player: And the days?",
+        "guide: Seven days a week, and then Monday again. Most people keep a routine, so learn theirs.",
+    ]},
+    {"name": "World: Story, C1 The card shop", "lines": [
+        "cast guide as {mentor}",
+        "background shop",
+        "guide enters right with slide",
+        "guide: This is the card shop. Packs are the main thing. Each one gives you a handful of cards from a set.",
+        "player: How do I get better cards?",
+        "guide: Specialty packs have better odds for one kind of card, like climaxes or a colour. They cost more, but they're worth it.",
+        "guide: Single cards are on the rack, a few rares a day. Those are for when you know exactly what you want.",
+        "guide (lose): Gifts are on their own tab. Everyone you talk to has tastes, so bring them something they'll love.",
+        "player: And the basket?",
+        "guide: Everything you pick, from any tab, goes in the basket. You can add more, or empty it, before you pay. Nothing is bought until you check out.",
+        "guide: Right. Let's go and get you some money to spend. Come and find me after the duel.",
+    ]},
+    {"name": "World: Story, C1 After the lesson", "lines": [
+        "cast guide as {mentor}",
+        "background arena",
+        "guide enters center with fade",
+        "guide: That's the lesson. You played a proper game, and that's all I wanted to see.",
+        "player: Was that a good game, then?",
+        "guide (lose): Win or lose, you learned the table. Here's 1,500 coins to spend on packs at the shop. Buy a few and see what you get.",
+        "guide: When you've won the weekly tournament, come back and find me. I'll want to hear about your friends, too.",
+        "guide: The tournament is at the arena. Enter on Saturday, and bring your best deck on Sunday.",
+        "player: I'll be there.",
+    ]},
+    {"name": "World: Story, C1 Champion", "lines": [
+        "cast guide as {mentor}",
+        "background arena",
+        "guide enters center with fade",
+        "guide (lose): You won the tournament! Champion of the arena.",
+        "player: I did it.",
+        "if has_best_friend goto proud",
+        "guide: You haven't made a best friend yet, though. That's what I want to see before we take on what's next.",
+        "guide: Find someone you really click with. Keep talking to them, give them what they love, and win them over.",
+        "player: How long will that take?",
+        "guide: As long as it takes. Come back when you've got one, and tell me who.",
+        "end",
+        "label proud",
+        "guide (lose): And you've already got a best friend. I'm proud of you, honestly.",
+        "player: Thanks.",
+        "guide: Friends are what carry you through this town. Come and tell me who they are.",
+        "end",
+    ]},
+    {"name": "World: Story, C1 Chapter end", "lines": [
+        "cast guide as {mentor}",
+        "background sakura",
+        "guide enters center with fade",
+        "guide (lose): A true friend. That's what I was waiting for you to find.",
+        "player: What happens now?",
+        "guide: The town opens up a little more. There are people who've been waiting to meet you, and a few with questions.",
+        "guide (lose): What's coming next is about them. I'll be around if you need me.",
+        "player: Thanks, for everything.",
+        "guide: That's what friends are for. See you around.",
+    ]},
+]

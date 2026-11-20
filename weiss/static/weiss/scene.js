@@ -95,7 +95,7 @@
     reset() {
       this.actors = {};
       this.actorsEl.innerHTML = "";
-      this.flags = new Set();
+      this.flags = new Set(this.scene.flags || []); // what's true already (world mode: the save's flags, "has_best_friend")
       this.choices = [];
       this.buffs = [];
       this.fights = [];

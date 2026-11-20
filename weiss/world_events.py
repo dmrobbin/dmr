@@ -392,6 +392,7 @@ def settle(save, event, found, round_no, won):
         rewards = [text for text, _ in given]
         words = f"{event.name}: you're the champion! +{coins:,} coins."
         quests.event_done(save, event.key, "win")
+        save.flags["set"] = sorted(set(save.flags.get("set", [])) | {"champion"})  # for scenes and the story to know
         sleeves.record(save.user_id, counts={"world_events": 1})
         champion_scene(save, event)
     elif coins:

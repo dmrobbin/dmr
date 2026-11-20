@@ -1020,6 +1020,8 @@ def cpu_move(room, wait, safe=False):
             model, aggression = challenge.infinite_style(room.arcade_run, room.cpu_profile)
         elif room.arcade_run_id and "blood_pact" in buffs.fight_mods(challenge.of(room.arcade_run)):
             model, aggression = "hard", cpu.MAX_AGGRESSION
+        elif room.state.get("cpu_model") in cpu.MINDS:  # a world duel that sets how the CPU plays (a story lesson: "easy")
+            model = room.state["cpu_model"]
         action = (cpu.fallback_action(room.state, room.guest_id) if safe
                   else cpu.next_action(room.state, room.guest_id, lookups["info"], aggression, model=model))
         if not action:

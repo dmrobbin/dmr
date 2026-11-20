@@ -191,7 +191,14 @@
   const SOUND_BASE = root.dataset.soundBase || "";
   let soundOn = "soundOn" in root.dataset;
   let soundVolume = Number(root.dataset.soundVolume ?? 60); // 0 to 100
-  let musicVolume = Number(root.dataset.musicVolume ?? 60); // the music under the cues, 0 to 100 (60 is the default balance)
+  // The music under the cues, 0 to 100 (60 is the default balance). Remembered per browser under a key the town shares
+  // (world_audio.js); with nothing stored, the player's saved setting, then 60.
+  const MUSIC_VOLUME_KEY = "weiss-music-volume";
+  let musicVolume = Number(root.dataset.musicVolume ?? 60);
+  try {
+    const remembered = localStorage.getItem(MUSIC_VOLUME_KEY);
+    if (remembered !== null && Number.isFinite(Number(remembered))) musicVolume = Number(remembered);
+  } catch (e) { /* the saved setting, then */ }
   const OPPONENT_VOLUME = 0.55; // the other side's sounds, against ours
   const SOUND_BOOST = 2.2; // into the limiter, so sounds are loud without clipping
   const SOUND_STAGGER_MS = 140; // between sounds from the same board, e.g. clocking a card and then drawing
@@ -318,6 +325,7 @@
 
   function setMusicVolume(volume, save) {
     musicVolume = volume;
+    try { localStorage.setItem(MUSIC_VOLUME_KEY, String(volume)); } catch (e) { /* only this visit, then */ }
     syncMusic();
     clearTimeout(musicSaveTimer);
     if (save) musicSaveTimer = setTimeout(() => saveSound({ music: String(volume) }), SOUND_SAVE_MS);

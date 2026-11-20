@@ -27,6 +27,7 @@ from django.views.decorators.http import require_POST
 from . import buffs, challenge, packs, quests, scenes, world
 from . import world_calendar
 from . import world_events as events
+from . import world_rewards
 from . import world_roster as roster
 from .cpu_views import MAX_LOADOUT, MAX_START_PACKS, back_to, staff_required
 from .lists import CLIMAX_COUNT, COPY_LIMIT, DECK_GROUPS, DECK_SIZE, unlimited
@@ -473,6 +474,13 @@ def world_buy_card(request, save):
 
 
 @town_move
+def world_pick_card(request, save):
+    """A card from the beaten CPU's deck: a copy goes in the save's cards."""
+    card = world_rewards.pick_card(save, request.POST.get("card", ""))
+    return f"{card.name} is yours."
+
+
+@town_move
 def world_talk(request, save):
     """Talk to someone here: what they say, played in the box, and the day's first talk's points."""
     return world.talk(save, request.POST.get("cpu", ""))
@@ -613,34 +621,34 @@ def world_buy_gift(request, save):
 
 @staff_required
 def world_scene(request, slot):
-    """A full scene a rank-up plays (Chatter.scene), then back to the town. Shown once."""
+    """The scene waiting to be watched (a rank-up's, a quest's, the story's, a newcomer's arrival), played to its end,
+    which the page reports (world_scene_done): what its choices set, and what it gave. It stays waiting until then, so
+    leaving part-way plays it again, and a choice (the story's guide) can't be skipped."""
     save, away = save_or_home(request, slot)
     if away:
         return away
     pending = save.flags.get("scene")
-    arrival = bool((pending or {}).get("arrival"))
-    if pending and not arrival:  # played once; an arrival stays until its choice is in (world_scene_done)
-        save.flags.pop("scene")
-        world.next_scene(save)  # the next one waiting comes up
-        save.save(update_fields=["flags"])
     scene = Scene.objects.filter(pk=(pending or {}).get("scene")).first()
-    compiled, errors = scenes.compile_scene(scene.script) if scene else (None, True)
+    compiled, errors = scenes.compile_scene(world.scene_script(save, scene)) if scene else (None, True)
     if errors:
+        if pending:  # a scene that can't play (deleted, or broken since): skip it rather than block the town
+            save.flags.pop("scene")
+            world.next_scene(save)
+            save.save(update_fields=["flags"])
         return redirect("weiss:world_town", slot=slot)
-    # A quest visit's rewards, given on arrival: shown when the scene ends, so the moment ends with something gained.
-    rewards = [{"text": text, "link": link} for text, link in (pending or {}).get("rewards", [])]
+    payload = scenes.scene_payload(compiled, scene.name, viewer=request.user)
+    payload["flags"] = world.scene_flags(save)  # what it can branch on ("if has_best_friend goto …")
     return render(request, "weiss/world_scene.html", {
-        "save": save, "payload": scenes.scene_payload(compiled, scene.name, viewer=request.user), "player_name": request.user.username,
-        "rewards": rewards, "reward_link": next((reward["link"] for reward in rewards if reward["link"]), ""),
-        "done_url": reverse("weiss:world_scene_done", args=[slot]) if arrival else "",
+        "save": save, "payload": payload, "player_name": request.user.username,
+        "done_url": reverse("weiss:world_scene_done", args=[slot]),
     })
 
 
 @staff_required
 @require_POST
 def world_scene_done(request, slot):
-    """A newcomer's arrival scene is over: what the player chose (the flags and packs its options set) is paid out,
-    once (weiss.world_roster.arrival_done). Answers {"rewards", "link"} for the scene page to show."""
+    """The waiting scene's been played to its end: what its choices set (flags, packs) takes effect, once
+    (world.scene_done). Answers {"rewards", "link"} for the scene page to end on."""
     save, away = save_or_home(request, slot)
     if away:
         return JsonResponse({"error": f"Slot {slot} has no save."}, status=404)
@@ -648,7 +656,7 @@ def world_scene_done(request, slot):
         chosen = json.loads(request.POST.get("state") or "{}")
         with transaction.atomic():
             save = WorldSave.objects.select_for_update().get(pk=save.pk)
-            done = roster.arrival_done(save, list(chosen.get("flags") or []), list(chosen.get("buffs") or []))
+            done = world.scene_done(save, [str(flag) for flag in chosen.get("flags") or []], [str(buff) for buff in chosen.get("buffs") or []])
     except (ValueError, TypeError, AttributeError) as error:
         return JsonResponse({"error": str(error) or "That didn't go through."}, status=400)
     return JsonResponse(done)

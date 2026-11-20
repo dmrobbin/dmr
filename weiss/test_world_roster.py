@@ -175,7 +175,7 @@ class ArrivalTests(RosterBase):
         save.save()
         self.client.force_login(self.user)
         page = self.client.get(reverse("weiss:world_scene", args=[1]))
-        self.assertContains(page, "data-arrival-rewards")
+        self.assertContains(page, "data-scene-done")
         save.refresh_from_db()
         self.assertTrue(save.flags["scene"]["arrival"])  # kept until the choice is in
         answer = self.client.post(reverse("weiss:world_scene_done", args=[1]), {"state": json.dumps({"flags": ["side_new"], "buffs": []})})

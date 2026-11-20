@@ -6,61 +6,38 @@
 {% block head %}<script src="{% static 'weiss/backdrops.js' %}" defer></script><script src="{% static 'weiss/scene.js' %}" defer></script>{% endblock %}
 
 {% block content %}
-  {# A rank-up's scene (Chatter.scene, world_views.world_scene): played once, then back to the town. #}
+  {# The scene waiting to be watched (world_views.world_scene). When it ends, the page reports what its choices set
+     (world_scene_done), which takes effect once; then it ends on what the scene gave, or goes back to the town. #}
   <div class="challenge-event">
     <p class="challenge-event-head"><span class="deck-tag">A moment</span> {{ payload.title }}</p>
     <div class="challenge-event-stage" data-scene-root></div>
-    {% if rewards %}
-      {# Shown when the scene ends: what the visit gave (world_views.world_scene). #}
-      <section class="scene-rewards" data-scene-rewards hidden aria-labelledby="scene-rewards-title" tabindex="-1">
-        <h2 id="scene-rewards-title" class="scene-rewards-title">You got</h2>
-        <ul class="scene-rewards-list">
-          {% for reward in rewards %}<li>★ {{ reward.text }}</li>{% endfor %}
-        </ul>
-        <p class="scene-rewards-actions">
-          {% if reward_link %}<a class="button-small" href="{{ reward_link }}">See the cards</a>{% endif %}
-          <a class="button-small{% if reward_link %} secondary{% endif %}" href="{% url 'weiss:world_town' save.slot %}" data-rewards-town>Back to the town</a>
-        </p>
-      </section>
-    {% endif %}
-    {% if done_url %}
-      {# A newcomer's arrival (weiss.world_roster): its choice is sent when the scene ends, and what it gave is shown. #}
-      <section class="scene-rewards" data-arrival-rewards data-done-url="{{ done_url }}" hidden aria-labelledby="arrival-rewards-title" tabindex="-1">
-        {% csrf_token %}
-        <h2 id="arrival-rewards-title" class="scene-rewards-title">You got</h2>
-        <ul class="scene-rewards-list" data-arrival-list></ul>
-        <p class="scene-rewards-actions">
-          <a class="button-small secondary" href="#" data-arrival-cards hidden>See the cards</a>
-          <a class="button-small" href="{% url 'weiss:world_town' save.slot %}">Back to the town</a>
-        </p>
-      </section>
-    {% endif %}
+    <section class="scene-rewards" data-scene-done data-done-url="{{ done_url }}" hidden aria-labelledby="scene-done-title" tabindex="-1">
+      {% csrf_token %}
+      <h2 id="scene-done-title" class="scene-rewards-title">You got</h2>
+      <ul class="scene-rewards-list" data-scene-done-list></ul>
+      <p class="scene-rewards-actions">
+        <a class="button-small" href="#" data-scene-done-cards hidden>See the cards</a>
+        <a class="button-small" href="{% url 'weiss:world_town' save.slot %}" data-scene-done-town>Back to the town</a>
+      </p>
+    </section>
     <p class="challenge-event-foot"><a class="link-button" href="{% url 'weiss:world_town' save.slot %}" data-town-url>Back to the town</a></p>
   </div>
   {{ payload|json_script:"scene-payload" }}
   <script>
     window.addEventListener("DOMContentLoaded", () => {
       const scene = JSON.parse(document.getElementById("scene-payload").textContent);
-      const town = document.querySelector("[data-town-url]").href;
       const player = new ScenePlayer(document.querySelector("[data-scene-root]"), scene, {
         playerName: "{{ player_name|escapejs }}",
-        // A scene with rewards ends on them (the player goes on when ready); one without goes back to the town.
-        onEnd: (state) => {
-          const arrival = document.querySelector("[data-arrival-rewards]");
-          if (arrival) return finishArrival(arrival, state);
-          const rewards = document.querySelector("[data-scene-rewards]");
-          if (!rewards) return setTimeout(() => location.assign(town), 600);
-          rewards.hidden = false;
-          rewards.focus({ preventScroll: true });
-          rewards.scrollIntoView({ block: "nearest" });
-        },
+        onEnd: (state) => finishScene(state),
       });
       player.start();
     });
 
-    // An arrival's choice: sent to the server, which pays it once; then what it gave is shown.
-    async function finishArrival(panel, state) {
-      const list = panel.querySelector("[data-arrival-list]");
+    // The scene's over: what its choices set is sent (it takes effect once), then it ends on what it gave, if anything.
+    async function finishScene(state) {
+      const panel = document.querySelector("[data-scene-done]");
+      const town = document.querySelector("[data-town-url]").href;
+      const list = panel.querySelector("[data-scene-done-list]");
       const show = (lines) => {
         list.replaceChildren(...lines.map((line) => Object.assign(document.createElement("li"), { textContent: `★ ${line}` })));
         panel.hidden = false;
@@ -72,13 +49,15 @@
         const token = panel.querySelector("[name=csrfmiddlewaretoken]").value;
         const response = await fetch(panel.dataset.doneUrl, { method: "POST", headers: { "X-CSRFToken": token }, body });
         const data = await response.json();
-        if (!response.ok) return show([data.error || "That didn't go through. Go back to the town and it'll be waiting."]);
+        if (!response.ok) return show([data.error || "That didn't go through. Back in the town, the scene will be waiting."]);
+        if (!data.rewards.length) return setTimeout(() => location.assign(town), 600);
         if (data.link) {
-          const cards = panel.querySelector("[data-arrival-cards]");
+          const cards = panel.querySelector("[data-scene-done-cards]");
           cards.href = data.link;
           cards.hidden = false;
+          panel.querySelector("[data-scene-done-town]").classList.add("secondary");
         }
-        show(data.rewards.length ? data.rewards : ["A new face in town."]);
+        show(data.rewards);
       } catch {
         show(["That didn't go through. Check your connection: back in the town, the scene will be waiting."]);
       }

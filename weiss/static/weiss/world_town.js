@@ -27,8 +27,6 @@
   const toast = $("[data-toast]");
   const csrf = root.querySelector("[name=csrfmiddlewaretoken]").value;
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const LIGHTS = ["town-morning", "town-noon", "town-evening", "town-night"];
-  const DAYLIT = new Set(["sakura", "beach", "ocean", "classroom", "forest", "snow", "desert"]); // drawn in daylight: tinted for the time
   const TYPE_MS = 22;
 
   let town = JSON.parse(document.getElementById("town-state").textContent);
@@ -43,8 +41,8 @@
     const place = town.place;
     if (place) {
       backdrop.dataset.bg = place.backdrop;
-      backdrop.innerHTML = window.SceneBackdrops ? SceneBackdrops.draw(place.backdrop) : "";
-      light.className = `town-light ${DAYLIT.has(place.backdrop) ? LIGHTS[town.time] : ""}`;
+      backdrop.innerHTML = window.SceneBackdrops ? SceneBackdrops.draw(place.backdrop, town.time) : "";
+      light.className = "town-light"; // the time of day is drawn into the backdrop (backdrops.js)
       $("[data-place-name]").textContent = place.name;
       document.title = `${place.name} · ${document.title.split(" · ").slice(1).join(" · ")}`;
     }
@@ -76,6 +74,8 @@
     showNews(town.news);
     town.news = [];
     paintPeople();
+    paintPick();
+    announce();
     if (!map.hidden) listPlaces();
     if (!shop.hidden) listStock();
   }
@@ -121,6 +121,7 @@
       button.className = "town-person";
       button.dataset.cpu = person.id;
       button.style.left = `${spots[i]}%`;
+      button.dataset.spot = spots[i]; // where they stand when nobody's talking to them (applyTalkFocus)
       button.style.setProperty("--delay", `${i * 90}ms`);
       const marker = questMarker(person);
       button.setAttribute("aria-label", `Talk to ${person.name}${marker ? `: ${marker.label}` : ""}`);
@@ -140,6 +141,26 @@
       people.append(button);
     });
     empty.hidden = here.length > 0;
+    applyTalkFocus();
+  }
+
+  // Talking to someone moves them to the middle of the stage and dims the place behind them (the .town-talking CSS);
+  // the others step back as they always have. Undone when the talk closes. Under reduced motion nobody moves: the
+  // place just fades.
+  function applyTalkFocus() {
+    stage.classList.toggle("town-talking", Boolean(talking));
+    for (const el of people.children) {
+      const focused = Boolean(talking) && Number(el.dataset.cpu) === talking.id;
+      el.classList.toggle("town-away", Boolean(talking) && !focused);
+      el.classList.toggle("town-chosen", focused);
+      if (!reduced) el.style.left = `${focused ? 50 : el.dataset.spot}%`;
+    }
+  }
+
+  // Tells the rest of the page (the sound, see world:town in the docs) what the town is showing now.
+  function announce() {
+    document.dispatchEvent(new CustomEvent("world:town", { detail: {
+      place: town.place && town.place.key, time: town.time, events: (town.events && town.events.today) || [], talking: Boolean(talking) } }));
   }
 
   // Someone with a quest for the player ("!") or something to do about one ("★"): marked over their head.
@@ -494,8 +515,8 @@
   function meet(person) {
     if (talking) return;
     talking = person;
-    for (const el of people.children) el.classList.toggle("town-away", Number(el.dataset.cpu) !== person.id);
-    people.querySelector(`[data-cpu="${person.id}"]`)?.classList.add("town-chosen");
+    applyTalkFocus();
+    announce();
     box.hidden = false;
     speaker("them");
     showRelation(person.relation);
@@ -865,7 +886,8 @@
     clearPanel();
     box.hidden = true;
     relationEl.hidden = true;
-    for (const el of people.children) el.classList.remove("town-away", "town-chosen");
+    applyTalkFocus();
+    announce();
     if (person && refocus) people.querySelector(`[data-cpu="${person.id}"]`)?.focus({ preventScroll: true });
   }
 
@@ -880,7 +902,7 @@
       button.type = "button";
       button.className = "town-place";
       button.disabled = place.here && !town.choose; // choosing where to spend a new time of day: staying is an answer
-      button.innerHTML = `<span class="town-place-art">${window.SceneBackdrops ? SceneBackdrops.draw(place.backdrop) : ""}</span>
+      button.innerHTML = `<span class="town-place-art">${window.SceneBackdrops ? SceneBackdrops.draw(place.backdrop, town.time) : ""}</span>
         <span class="town-place-name"></span><span class="town-place-who small"></span>`;
       button.querySelector(".town-place-name").textContent = place.name;
       if (place.events && place.events.length) {  // an event on there now (weiss.world_events.at_places)
@@ -1403,6 +1425,124 @@
     if (refocus) menuButton.focus({ preventScroll: true }); // likewise the shop's
   }
 
+  // ---- The card pick: after a win, one card from the beaten CPU's deck (town.card_pick, weiss.world_rewards). It waits
+  // in a notice above the stage, and in the duel's result banner, until it's taken or a later win replaces it. ----
+  const pick = $("[data-pick]");
+  const pickList = $("[data-pick-list]");
+  const pickConfirm = $("[data-pick-confirm]");
+  const pickNotice = $("[data-pick-notice]");
+  const pickOpen = $("[data-pick-open]");
+  let pickChosen = null; // the card waiting for its confirmation
+
+  function paintPick() {
+    const offer = town.card_pick;
+    pickNotice.hidden = !offer;
+    if (offer) $("[data-pick-text]").textContent = `${offer.cpu}'s deck has a card for you to take. `;
+    if (!offer) {
+      if (!pick.hidden) closePick(false);
+    } else if (!pick.hidden) {
+      listPick(offer); // the offer changed under the open picker: show the new one
+    }
+  }
+
+  function openPick() {
+    const offer = town.card_pick;
+    if (!offer) return;
+    closeMap(false);
+    closeShop(false);
+    closeTalk(false);
+    $("[data-pick-title]").textContent = `Choose a card from ${offer.cpu}'s deck`;
+    $("[data-pick-note]").textContent = "Pick one card to keep. Use the arrow keys to look along the row; Esc decides later.";
+    listPick(offer);
+    backPick(false);
+    pick.hidden = false;
+    pickOpen.setAttribute("aria-expanded", "true");
+    (pickList.querySelector(".town-pick-card") || $("[data-pick-close]")).focus({ preventScroll: true });
+  }
+
+  // Esc, or "Decide later": the offer stays in the notice until a card is taken or a later win replaces it.
+  function closePick(refocus = true) {
+    pick.hidden = true;
+    pickChosen = null;
+    pickConfirm.hidden = true;
+    pickOpen.setAttribute("aria-expanded", "false");
+    if (refocus) pickOpen.focus({ preventScroll: true });
+  }
+
+  function listPick(offer) {
+    pickList.replaceChildren();
+    if (!offer.cards.length) {
+      pickList.append(el("li", "small muted", "There are no cards left to choose from."));
+      return;
+    }
+    for (const card of offer.cards) {
+      const item = document.createElement("li");
+      item.className = "town-card town-pick-item";
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "town-pick-card";
+      const facts = [card.color, card.level != null ? `Level ${card.level}` : ""].filter(Boolean).join(" · ");
+      button.setAttribute("aria-label", `${card.name}, ${card.rarity}${facts ? `, ${facts}` : ""}`);
+      const art = el("span", "town-card-art");
+      if (card.image) {
+        const img = document.createElement("img");
+        img.src = card.image;
+        img.alt = "";
+        img.loading = "lazy";
+        img.addEventListener("error", () => { img.remove(); art.classList.add("no-art"); }, { once: true });
+        art.append(img);
+      } else {
+        art.classList.add("no-art"); // no picture: the name and rarity still say which card it is
+      }
+      art.append(el("span", "town-card-rarity", card.rarity));
+      button.append(art, el("span", "town-card-name", card.name), el("span", "town-pick-meta small muted", facts));
+      button.addEventListener("click", () => askPick(card));
+      item.append(button);
+      pickList.append(item);
+    }
+  }
+
+  // Arrow keys move through the grid of cards: across a row, and up or down a row.
+  pickList.addEventListener("keydown", (event) => {
+    const buttons = [...pickList.querySelectorAll(".town-pick-card")];
+    const at = buttons.indexOf(document.activeElement);
+    if (at < 0) return;
+    const perRow = Math.max(1, buttons.findIndex((b) => b.offsetTop > buttons[0].offsetTop) || buttons.length);
+    const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: perRow, ArrowUp: -perRow }[event.key];
+    if (!step) return;
+    event.preventDefault();
+    buttons[Math.min(buttons.length - 1, Math.max(0, at + step))].focus();
+  });
+
+  function askPick(card) {
+    pickChosen = card;
+    $("[data-pick-confirm-text]").textContent = `Take ${card.name} from ${town.card_pick.cpu}'s deck?`;
+    pickConfirm.hidden = false;
+    pickConfirm.querySelector("[data-pick-take]").focus({ preventScroll: true });
+  }
+
+  function backPick(refocus = true) {
+    pickConfirm.hidden = true;
+    const chosen = pickChosen;
+    pickChosen = null;
+    if (refocus && chosen) {
+      [...pickList.querySelectorAll(".town-pick-card")].find((b) => b.getAttribute("aria-label").startsWith(chosen.name))?.focus({ preventScroll: true });
+    }
+  }
+
+  async function takePick(card) {
+    const data = await post(root.dataset.pickCardUrl, { card: card.id });
+    if (!data) return;
+    closePick(false);
+    paint();
+    say(data.said);
+  }
+
+  pickOpen.addEventListener("click", openPick);
+  $("[data-pick-close]").addEventListener("click", () => closePick());
+  $("[data-pick-back]").addEventListener("click", () => backPick());
+  $("[data-pick-take]").addEventListener("click", () => pickChosen && takePick(pickChosen));
+
   // ---- The menu: everything the town offers, from the HUD's Menu button. Choosing an item closes it. ----
   function openMenu() {
     menuPanel.hidden = false;
@@ -1595,14 +1735,16 @@
       event.preventDefault();
       return skipPassage();
     }
-    if (event.ctrlKey || event.metaKey || event.altKey || event.target.matches("input, textarea, select")) return;
+    if (event.ctrlKey || event.metaKey || event.altKey || event.target.matches?.("input, textarea, select")) return;
     const key = event.key.toLowerCase();
     if (!sheet.hidden && key !== "escape") return; // a panel's open: its page has the keys
+    if (!pick.hidden && key !== "escape") return; // the card pick has its own keys
     if ((key === "enter" || key === " ") && advance && !event.target.closest("button, a")) {
       event.preventDefault();
       advance();
     } else if (key === "escape") {
       if (!sheet.hidden) closeSheet();
+      else if (!pick.hidden) (pickConfirm.hidden ? closePick() : backPick());
       else if (!menuPanel.hidden) closeMenu();
       else if (!map.hidden && !mapRequired) dismissMap();
       else if (!shop.hidden) closeShop();
@@ -1644,6 +1786,11 @@
     if (result.scene) {
       const link = Object.assign(document.createElement("a"), { href: result.scene, className: "button-small", textContent: `A moment with ${result.cpu}` });
       more.append(Object.assign(document.createElement("p"), {}), link);
+    }
+    if (town.card_pick) {
+      const choose = Object.assign(document.createElement("button"), { type: "button", className: "button-small", textContent: `Choose a card from ${town.card_pick.cpu}'s deck` });
+      choose.addEventListener("click", openPick);
+      more.append(choose);
     }
     banner.hidden = false;
     banner.querySelector("[data-result-close]").addEventListener("click", () => (banner.hidden = true));

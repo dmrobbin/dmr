@@ -349,6 +349,8 @@ select option { color: var(--text); background: var(--surface); }
 
 @media (max-width: 40rem) {
   .site-header .container { height: auto; min-height: 4rem; flex-wrap: wrap; gap: .5rem; padding-top: .5rem; padding-bottom: .5rem; }
+  /* The header's links (Public site, Log out, Profile) wrap onto a second line instead of pushing the page wider than the phone. */
+  .dashboard-header .logout { flex-wrap: wrap; gap: .3rem .8rem; justify-content: flex-end; }
   .card-detail { grid-template-columns: 1fr; }
   .card-image { max-width: 20rem; }
   .card-grid { grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); }
@@ -2971,10 +2973,10 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .in-frame .site-header, .in-frame .site-footer, .in-frame .back { display: none; }
 .in-frame main.container { padding-top: 1rem; }
 .town-stage { cursor: default; max-height: min(72vh, 42rem); }
-.town-stage .vn-bg { transition: opacity .26s ease; }
+.town-stage .vn-bg { transition: opacity .26s ease, filter .45s ease; }
 .town-stage.town-fading .vn-bg, .town-stage.town-fading .town-people { opacity: 0; }
 /* Time of day, as light over the place. */
-.town-light { position: absolute; inset: 0; z-index: 1; pointer-events: none; transition: background .6s ease; }
+.town-light { position: absolute; inset: 0; z-index: 1; pointer-events: none; transition: background .6s ease, filter .45s ease; }
 .town-morning { background: linear-gradient(rgb(255 214 170 / .16), rgb(255 236 210 / .06)); }
 .town-noon { background: none; }
 .town-evening { background: linear-gradient(rgb(255 130 70 / .28), rgb(120 40 80 / .22)); }
@@ -2983,7 +2985,7 @@ button.spire-node-face:disabled { cursor: not-allowed; }
    is still clickable on their own. */
 .town-people { position: absolute; inset: 0; z-index: 2; pointer-events: none; transition: opacity .26s ease; }
 .town-person { position: absolute; bottom: 0; height: 80%; translate: -50% 0; pointer-events: auto; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
-  padding: 0; border: 0; background: none; cursor: pointer; transition: filter .3s ease, transform .25s ease; }
+  padding: 0; border: 0; background: none; cursor: pointer; transition: filter .3s ease, transform .25s ease, left .5s ease; }
 @media (prefers-reduced-motion: no-preference) { .town-person { animation: town-arrive .5s ease-out both; animation-delay: var(--delay, 0ms); } }
 @keyframes town-arrive { from { opacity: 0; transform: translateY(6%); } }
 .town-picture { display: block; max-height: 100%; max-width: 30vw; object-fit: contain; object-position: bottom; filter: drop-shadow(0 .6rem 1.2rem rgb(0 0 0 / .6)); transition: transform .25s ease, filter .25s ease; }
@@ -2997,6 +2999,11 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .town-person:focus-visible { outline: none; }
 .town-person.town-away { filter: brightness(.4) saturate(.6); }
 .town-person.town-chosen .town-tag, .town-person.town-away .town-tag { opacity: 0; }
+/* Talking to someone (world_town.js applyTalkFocus): they stand in the middle, in front of the others, and the
+   place behind them dims and blurs so the talk box and their picture are what's left. */
+.town-stage.town-talking .vn-bg, .town-stage.town-talking .town-light { filter: brightness(.5) blur(3px); }
+.town-person.town-chosen { z-index: 3; }
+@media (prefers-reduced-motion: reduce) { .town-person { transition: filter .3s ease, transform .25s ease; } }
 .town-empty { position: absolute; inset: 0; z-index: 2; pointer-events: none; display: grid; place-content: center; text-align: center; color: #f3efe7; text-shadow: 0 1px 6px rgb(0 0 0 / .8); }
 .town-empty p { margin: 0; }
 .town-empty[hidden] { display: none; }
@@ -3045,6 +3052,22 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .town-map-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .75rem; }
 .town-map-head h2 { margin: 0; font-size: 1.2rem; }
 .town-map-note { margin: -.4rem 0 .75rem; }
+/* The card pick (world_town.js openPick): a notice while a card is waiting, then the deck's cards as a grid. The
+   cards are the shop's single-card look; the confirmation sits under the list. */
+.town-pick-notice { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .8rem; }
+.town-pick-notice[hidden] { display: none; }
+.town-pick[hidden] { display: none; }
+.town-pick-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: 1rem .8rem; margin: 0; padding: .2rem .1rem .6rem; list-style: none; }
+.town-pick-item.town-card { width: auto; }
+.town-pick-card { display: flex; flex-direction: column; gap: .3rem; width: 100%; padding: 0; border: 0; border-radius: .4rem; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.town-pick-card .town-card-name { display: block; margin: 0; }
+.town-pick-card:hover .town-card-art img, .town-pick-card:focus-visible .town-card-art img { transform: scale(1.04); }
+.town-pick-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.town-pick-meta { margin: 0; }
+.town-pick-confirm { position: sticky; bottom: 0; margin-top: .6rem; padding: .8rem 1rem; border: 1px solid rgb(212 175 55 / .45); border-radius: .5rem; background: rgb(14 14 20 / .97); }
+.town-pick-confirm[hidden] { display: none; }
+.town-pick-confirm p { margin: 0 0 .5rem; font-weight: 600; }
+.town-pick-confirm-buttons { display: flex; flex-wrap: wrap; gap: .5rem; }
 .town-place.town-place-here { border-color: rgb(212 175 55 / .6); }
 /* Staff testing controls in the town's bar: dashed, so they never look like part of the game. */
 .button-small.town-staff { border-style: dashed; color: var(--muted); }
@@ -3069,10 +3092,14 @@ button.spire-node-face:disabled { cursor: not-allowed; }
   .town-option { flex: 1 1 40%; }
   .town-tag { opacity: 1; }
   .town-bond { position: static; translate: none; display: inline-block; margin: .3rem 0 0; }
-  .town-hud { padding: .5rem; gap: .3rem; }
+  /* On a phone the buttons keep the top row and the date and place drop onto a row of their own, so the title
+     never runs under the buttons. Every button stays a 44px touch target. */
+  .town-hud { flex-wrap: wrap; padding: .5rem; gap: .3rem; }
+  .town-hud-center { order: 3; flex: 1 0 100%; padding-top: .1rem; }
+  .town-when { font-size: 1.1rem; }
   .town-hud-sub { font-size: .75rem; }
-  .town-hud-button { padding: .35rem .6rem; font-size: .8rem; }
-  .town-hud-menu { left: .5rem; top: 3.1rem; }
+  .town-hud-button { min-height: 2.75rem; min-width: 2.75rem; padding: .35rem .6rem; font-size: .8rem; }
+  .town-hud-menu { left: .5rem; top: 3.5rem; }
 }
 
 /* World mode's saves (weiss/world_home.html, world_new.html, world_save.html). */
@@ -3453,3 +3480,13 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 /* World mode: the quest log's story */
 .quest-story .quest-chapter-done { padding: .5rem .7rem; }
 .quest-story .quest-chapter-done p { margin: 0; }
+/* World mode: the town's sound controls (weiss/static/weiss/world_audio.js): the toggle in the top-right bar, and the
+   volume in the menu. Off reads as struck through, so it's clear without a word. */
+.town-hud-sound.is-off { opacity: .6; }
+.town-hud-sound.is-off svg { stroke: currentColor; }
+.town-hud-sound.is-off svg path:last-child { opacity: 0; }
+.town-hud-sound svg { width: 1.15rem; height: 1.15rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.town-hud-sound path:first-child { fill: currentColor; stroke: none; }
+.town-hud-menu-sound { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .55rem .7rem; font-size: .95rem; color: #f3efe7; }
+.town-hud-menu-sound input[type="range"] { flex: 0 1 9rem; min-width: 0; accent-color: var(--accent); cursor: pointer; }
+.town-hud-menu-sound:focus-within { box-shadow: inset 0 0 0 1px var(--accent); border-radius: .4rem; }

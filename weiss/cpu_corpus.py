@@ -678,6 +678,8 @@ def import_world_pack(files, dry_run=False, user=None, known=None):
 
     def find(who):
         who = who.strip().strip('"“”').strip()
+        if who.lower() == quests.MENTOR:  # the story's scenes cast whoever the player chose as their guide
+            return SimpleNamespace(name=quests.MENTOR, pk=0), None
         if known is not None:
             return (SimpleNamespace(name=names[who.lower()]), None) if who.lower() in names else (None, f"There's no CPU called “{who}”.")
         return scenes.find_cpu(who)

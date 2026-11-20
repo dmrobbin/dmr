@@ -47,40 +47,42 @@ need themselves (`cast aang as Aang`), with the player speaking as `player`. A c
 - **Keys never change:** saves refer to a chapter by its key (`story-1`). Rewording a chapter, adding stages to the
   end or adding scenes is safe. Changing a key, or removing a stage a save is on, isn't.
 
-## What's in now: a placeholder chain
+## Chapter 1 (built; its scenes are stubs to write)
 
-`00_story.py` has three placeholder chapters, so the chain can be played through before anything's written. They
-have plain objectives and no scenes:
+`world_pack/src/00_story.py` holds Chapter 1's four quests. They run end to end now, with stub scenes (narrator lines
+saying what goes there).
 
-| Chapter | Key | Stage | Reward |
+| Key | Quest | What the player does | Ends with |
 |---|---|---|---|
-| 1. A new town | `story-1` | Win your first duel | 300 coins |
-| 2. Making a name | `story-2` | Beat three different duelists | A climax pack |
-| 3. Tournament weekend | `story-3` | Enter the weekly tournament | 500 coins |
+| `c1-guide` | Choose your guide | Watches the welcome scene and chooses a guide (the scene's choice) | — |
+| `c1-tutorial` | Learning the ropes | Meets the guide in the plaza (a visit scene, 100 coins), goes to the card shop with them (a visit scene, 200 coins), hears them out about friendship (a talk), and duels them; they play on Easy, and it counts win or lose | 1,500 coins, and the guide's "come back when you've won the tournament" scene |
+| `c1-tournament` | Champion of the arena | Wins the weekly tournament | 1,000 coins, and the guide's scene on the player's friendships |
+| `c1-best-friend` | A true friend | Becomes someone's Best friend (anyone; done at once if they are already), then tells the guide | A lucky pack, and the chapter's last scene |
 
-To try it: build the packs (`python world_pack/build.py`), import `00_story.json` on the Import tab, and start a
-new save. Saves started before the import begin Chapter 1 the next time anything changes.
+**How the guide works:**
+- **Choosing:** the welcome scene casts the candidate guides, and each option sets `mentor_<cast id>`. The one chosen
+  becomes the guide and is brought into town.
+- **Referring to them:** quests and scenes then write `{mentor}` for them: `"to": "{mentor}"`, `cast guide as {mentor}`.
+- **One guide's own version:** a scene can have a version for one guide, named with theirs after it
+  ("World: Story, C1 After the lesson (Aang)"), which plays instead of the general one when they're the guide.
+- **Branching:** scenes can branch on `has_friend`, `has_close_friend`, `has_best_friend`, `has_mentor`, `champion`,
+  and any flag a scene's choice set ("if has_best_friend goto proud").
 
-## Scenes to write
+### Chapter 1's scenes and talks to write
 
-None of these are written. Names are suggestions; a chapter names whatever it's called.
-
-### The opening (Chapter 1)
-
-| Scene | Plays | What it needs to do |
+| Scene (or talk) | Plays | What it does |
 |---|---|---|
-| **World: Story, Opening** | The first time the player reaches the town (Chapter 1 begins with the save) | Welcome the player to town and set up why they're here. Point them at the card shop and the arena. End on what Chapter 1 asks ("win your first duel"). A narrator scene, or one with a guide character Chapter 1 names. |
-| **World: Story, First win** | Chapter 1's stage done (its first duel won) | A short beat: someone noticed. Sets up Chapter 2. |
-| **World: Story, Settled in** | Chapter 1's ending | Optional. A night in town, the player settling in. |
+| **World: Story, C1 Welcome** | The first time the player reaches the town | The player arrives; the candidate guides introduce themselves, each in their own voice; the player chooses (options `(set mentor_gN)`). The candidates are `GUIDES` in 00_story.py (now Aang, Chisato, Asuna and Erza): the writer picks the final few. |
+| **World: Story, C1 Meet your guide** | Once the guide's chosen | The guide welcomes the player properly and says what they'll show them |
+| **World: Story, C1 The town** | Visiting the plaza with the guide | People are out at different times, the map, passing time |
+| **World: Story, C1 The card shop** | Visiting the shop with the guide | Packs, specialty packs, single cards, gifts, the basket |
+| Talk: "Hear {mentor} out about making friends" | Talking to the guide | Talking each day, gifts (what people love), duels, ranks, what friends do for you |
+| **World: Story, C1 After the lesson** | After the easy duel, win or lose | The guide pays the player to buy packs and says to come back once they've won the weekly tournament |
+| **World: Story, C1 Champion** | Winning the tournament | The guide looks at the player's friendships: proud if `has_best_friend`; if not, encourages them to make a best friend first |
+| Talk: "Tell {mentor}" | After making a best friend | The guide hears who it is |
+| **World: Story, C1 Chapter end** | Chapter 1's end | The guide sees the player's made a true friend; a hint of Chapter 2 |
 
-### Chapters 2 and 3 (the placeholders, once they're real)
-
-| Scene | Plays | What it needs to do |
-|---|---|---|
-| **World: Story, Making a name** | Chapter 2 begins | The town starts talking about the newcomer. Introduce whoever Chapter 2 is about. |
-| **World: Story, A name in town** | Chapter 2's ending | A rival or a mentor reacts to the player's three wins. |
-| **World: Story, Tournament weekend** | Chapter 3 begins | The weekly tournament explained in story terms: who runs it, who's entering, why it matters to the story. |
-| **World: Story, In the bracket** | Chapter 3's ending (entered) | The night before the rounds. |
+Each can be written once for any guide (casting `{mentor}`), or once per guide for the biggest moments.
 
 ### For every chapter after
 

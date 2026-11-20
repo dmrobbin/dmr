@@ -8,7 +8,7 @@
 
   <div class="town" data-world-town data-state-url="{% url 'weiss:world_town_state' save.slot %}"
        data-travel-url="{% url 'weiss:world_travel' save.slot %}" data-wait-url="{% url 'weiss:world_wait' save.slot %}"
-       data-duel-url="{% url 'weiss:world_duel' save.slot %}" data-buy-card-url="{% url 'weiss:world_buy_card' save.slot %}" data-request-set-url="{% url 'weiss:world_request_set' save.slot %}" data-checkout-url="{% url 'weiss:world_checkout' save.slot %}" data-slot="{{ save.slot }}"
+       data-duel-url="{% url 'weiss:world_duel' save.slot %}" data-buy-card-url="{% url 'weiss:world_buy_card' save.slot %}" data-pick-card-url="{% url 'weiss:world_pick_card' save.slot %}" data-request-set-url="{% url 'weiss:world_request_set' save.slot %}" data-checkout-url="{% url 'weiss:world_checkout' save.slot %}" data-slot="{{ save.slot }}"
        data-buy-gift-url="{% url 'weiss:world_buy_gift' save.slot %}" data-talk-url="{% url 'weiss:world_talk' save.slot %}"
        data-answer-url="{% url 'weiss:world_answer' save.slot %}" data-give-url="{% url 'weiss:world_give' save.slot %}" data-level-url="{% url 'weiss:world_level' save.slot %}" data-decks-url="{% url 'weiss:world_deck' save.slot %}?from=town"
        data-quest-url="{% url 'weiss:world_quest' save.slot %}" data-jump-url="{% url 'weiss:world_jump' save.slot %}" data-test-mode-url="{% url 'weiss:world_test_mode' save.slot %}"
@@ -23,6 +23,9 @@
       <button type="button" class="town-result-close" data-result-close aria-label="Dismiss">×</button>
     </div>
     <p class="small town-notice town-scene-waiting" data-scene-waiting hidden></p>
+    {# A card from a beaten CPU's deck is waiting to be taken (a duel's reward, world_rewards); opens the picker. #}
+    <p class="small town-notice town-pick-notice" data-pick-notice hidden><span data-pick-text></span>
+      <button type="button" class="button-small" data-pick-open aria-haspopup="dialog" aria-controls="town-pick">Choose a card</button></p>
     <div class="small town-notice town-result town-news" data-news hidden role="status">
       <ul></ul>
       <p><a href="{% url 'weiss:world_quests' save.slot %}?from=town" data-sheet-open data-title="Quests">Open your quest log</a></p>
@@ -56,6 +59,10 @@
         <div class="town-hud-side town-hud-end">
           {# Shown once the player has spent this time here (weiss.world.engaged): the one thing left to do is pass it. #}
           <button type="button" class="town-hud-button town-hud-wait" data-wait hidden>Pass time: {{ town.next_time|lower }}</button>
+          {# Sound on or off, the duel's setting too (world_audio.js). #}
+          <button type="button" class="town-hud-button town-hud-icon town-hud-sound" data-sound-toggle aria-pressed="true" aria-label="Sound" title="Sound on: click to mute">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>
+          </button>
           <button type="button" class="town-hud-button town-hud-icon" data-fullscreen aria-label="Full screen" title="Full screen (F)" hidden>
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
           </button>
@@ -86,6 +93,10 @@
           <button type="button" class="town-hud-menu-item" data-menu-fullscreen>
             <span>Full screen</span>
           </button>
+          <label class="town-hud-menu-sound">
+            <span>Sound volume</span>
+            <input type="range" min="0" max="100" step="5" value="60" data-sound-volume>
+          </label>
           {% if town.staff %}
             <p class="town-hud-menu-group">Staff testing</p>
             {# Staff testing (world.test_mode): Wait any time and go anywhere; off, staff play by the real rules. #}
@@ -181,6 +192,22 @@
           <ul class="town-stock" data-gift-stock></ul>
         </div>
       </section>
+      {# One card from the beaten CPU's deck (world_town.js openPick). It stays until it's taken or a later win replaces it. #}
+      <section class="town-map town-pick" id="town-pick" data-pick hidden aria-labelledby="town-pick-title">
+        <div class="town-map-head">
+          <h2 id="town-pick-title" data-pick-title>Choose a card</h2>
+          <button type="button" class="button-small secondary" data-pick-close>Decide later</button>
+        </div>
+        <p class="small muted town-map-note" data-pick-note></p>
+        <ul class="town-pick-list" data-pick-list aria-label="Cards in their deck"></ul>
+        <div class="town-pick-confirm" data-pick-confirm hidden role="group" aria-label="Confirm the card">
+          <p data-pick-confirm-text></p>
+          <div class="town-pick-confirm-buttons">
+            <button type="button" class="button-small" data-pick-take>Take it</button>
+            <button type="button" class="button-small secondary" data-pick-back>Back</button>
+          </div>
+        </div>
+      </section>
       {# Pages from the menu, shown here without leaving the town (world_town.js openSheet): the page itself, framed. #}
       <section class="town-sheet" data-sheet hidden aria-labelledby="town-sheet-title">
         <div class="town-sheet-head">
@@ -209,4 +236,6 @@
   {{ result|json_script:"town-result" }}
   <script src="{% static 'weiss/backdrops.js' %}" defer></script>
   <script src="{% static 'weiss/world_town.js' %}" defer></script>
+  <script src="{% static 'weiss/score.js' %}" defer></script>
+  <script src="{% static 'weiss/world_audio.js' %}" defer></script>
 {% endblock %}

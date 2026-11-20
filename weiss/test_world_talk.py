@@ -281,6 +281,7 @@ class TalkTests(TestCase):
         self.save.save()
         page = self.client.get(reverse("weiss:world_scene", args=[1]))
         self.assertContains(page, "I never told anyone this.")
+        self.client.post(reverse("weiss:world_scene_done", args=[1]), {"state": '{"flags": [], "buffs": []}'})  # played to its end
         self.assertRedirects(self.client.get(reverse("weiss:world_scene", args=[1])), reverse("weiss:world_town", args=[1]))  # once
 
     def test_talking_from_the_page(self):
