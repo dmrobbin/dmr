@@ -18,7 +18,7 @@
 
   {# The way in: open the packs, build a deck, then the town. Each step says where it's at. #}
   <ol class="world-steps">
-    <li class="world-step{% if step == 'packs' %} current{% else %} done{% endif %}">
+    <li class="world-step{% if step == 'packs' %} current{% else %} done{% endif %}" id="packs">
       <h2>Open your packs</h2>
       {% if save.packs %}
         <p>{{ save.packs }} pack{{ save.packs|pluralize }} of {{ save.set_name }} to open. You've opened {{ save.opened }} so far ({{ pool_count }} cards).</p>
@@ -94,7 +94,7 @@
       {% else %}
         <p class="muted">You can look around now, but you'll need a deck that's ready to duel anyone.</p>
       {% endif %}
-      <a class="button-small{% if step != 'ready' %} secondary{% endif %}{% if tutorial.step == 'deck' and tutorial.legal %} tutorial-target{% endif %}" href="{% url 'weiss:world_town' save.slot %}">Go to the town</a>
+      <a class="button-small{% if step != 'ready' %} secondary{% endif %}{% if tutorial and tutorial.step != 'deck' or tutorial.legal %} tutorial-target{% endif %}" href="{% url 'weiss:world_town' save.slot %}">Go to the town</a>
     </li>
   </ol>
 {% endblock %}

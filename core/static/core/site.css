@@ -3150,6 +3150,8 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .world-delete input { width: 8rem; }
 .world-set-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: .75rem; margin: 0; padding: 0; list-style: none; }
 .world-sets fieldset { margin: 0; padding: 0; border: 0; }
+.world-sets-foot { position: sticky; bottom: 0; z-index: 2; display: flex; justify-content: flex-end; margin-top: .75rem; padding: .6rem 0;
+  background: var(--bg); border-top: 1px solid var(--border); }
 .world-set { position: relative; display: flex; flex-direction: column; gap: .3rem; height: 100%; padding: .5rem; border: 1px solid var(--border); border-radius: .6rem; background: var(--surface); cursor: pointer; }
 .world-set input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
 .world-set img, .world-set .set-cover-missing { width: 100%; aspect-ratio: 5 / 7; object-fit: cover; border-radius: .35rem; }

@@ -138,27 +138,32 @@ TUTORIAL = {
         },
         "talk": {
             "*": [
+                "them: The people you know decide what you can do and where you can go. Better than being alone here.",
                 "them: Let's talk about making friends. You can talk to anyone in town once a day, and each talk helps you get closer.",
                 "them: Friendship runs from Stranger, through Acquaintance and Friend, all the way to Best friend.",
                 "them: Each step unlocks something, and the best friends have a story to tell.",
                 "them: Go on, press Talk and say hello to me.",
             ],
             "Aang": [
+                "them (pleased): Here's why it matters: the people you know decide where you can go. And it's way more fun than wandering alone.",
                 "them (pleased): Friends are the best part of this place! Talk to someone once a day, and you'll get closer to them.",
                 "them: Stranger, Acquaintance, Friend, all the way up to Best friend. Each one's a step closer.",
                 "them: Go on, press Talk and say hi!",
             ],
             "Chisato Nishikigi": [
+                "them (pleased): Okay, the important bit! The people you know decide what you can do here, and it's more fun with friends.",
                 "them (pleased): Okay, so, talking! Once a day with anyone, and you get closer. It's like a little café chat.",
                 "them: There are ranks, from Stranger all the way to Best friend. Each one's a bit more special.",
                 "them (pleased): Go on, press Talk and tell me something cool!",
             ],
             "Asuna Yuuki": [
+                "them: Before I explain, here's why it matters. The people you know open doors here. Alone, you'd get nowhere.",
                 "them: Talking to people is how you make friends. Once a day, with anyone, and each talk brings you closer.",
                 "them: The ranks go from Stranger up to Best friend. The closer you get, the more they'll look out for you.",
                 "them: Go on, press Talk, and tell me how your day's going.",
             ],
             "Erza Scarlet": [
+                "them: Why this matters: the people you know decide what you can do here. Alone in a strange town, you'd struggle.",
                 "them: Friendship is built one talk at a time. Once a day with anyone, and the ranks climb from Stranger to Best friend.",
                 "them: Each rank means more trust. You'll need it.",
                 "them: Press Talk.",
@@ -166,27 +171,32 @@ TUTORIAL = {
         },
         "gift": {
             "*": [
+                "them: Friends notice what you give them. Gifts are the easiest way to show it.",
                 "them: Gifts are the other way in. Everyone loves some things, likes others, and dislikes a few.",
                 "them: A loved gift does the most good. A liked one helps. A disliked one can set someone back.",
                 "them: You can give each person one gift a day, so make it count.",
                 "them: Go on, press Give a gift, and pick something for me.",
             ],
             "Aang": [
+                "them (pleased): Okay, next thing! Gifts are how you show a friend you care.",
                 "them (pleased): Here's a tip: I love cute things, and I like sweet and calm ones. Spicy things, not so much!",
                 "them: Gifts that someone loves do the most good. Liked ones help. Disliked ones can set someone back.",
                 "them: You can give one gift a day to each person. Go on, press Give a gift!",
             ],
             "Chisato Nishikigi": [
+                "them (pleased): And gifts! Showing you care is the best part, honestly.",
                 "them (pleased): Gifts make everyone happy! Things people love make them happiest, things they like help too.",
                 "them: Only one gift a day per person, so choose carefully.",
                 "them (pleased): Go on, press Give a gift and surprise me!",
             ],
             "Asuna Yuuki": [
+                "them: Gifts are how you show someone you were thinking of them.",
                 "them: A gift is a way of showing you know someone. Loved things do the most good, liked things help, disliked things don't.",
                 "them: One gift a day per person. Think about what they'd really enjoy.",
                 "them: Go on, press Give a gift, and pick one for me.",
             ],
             "Erza Scarlet": [
+                "them: Gifts show you were paying attention. Friends notice that.",
                 "them: Gifts. Each person loves some things, likes others, and dislikes some. Know the difference.",
                 "them: One gift a day per person. Do not waste them.",
                 "them: Press Give a gift.",
@@ -194,27 +204,32 @@ TUTORIAL = {
         },
         "map": {
             "*": [
+                "them: Let's move on. You'll want to find people, so the map comes next.",
                 "them: Now let's look at the map. Every place in town is on it, and you can see who's there.",
                 "them: People come and go. Some are only out at certain times of day.",
                 "them: Anyone with a name is somewhere in town. Click them to talk, give a gift, or duel.",
                 "them: Let's go to the card shop. Open the map and choose the shop.",
             ],
             "Aang": [
+                "them (pleased): Let's keep going! To find people, you'll need the map.",
                 "them (pleased): Okay, the map! Every place in town is on it, and it shows who's there right now.",
                 "them: People come and go, so check it every time you want someone.",
                 "them: Let's go to the card shop! Open the map and pick the shop.",
             ],
             "Chisato Nishikigi": [
+                "them: Okay, next up is getting around. Let's look at the map.",
                 "them (pleased): This is the map! All the places are on here, and little pictures show who's around.",
                 "them: Everyone's got their own days, so the map helps you find them.",
                 "them (pleased): Let's go to the card shop! Open the map and tap it.",
             ],
             "Asuna Yuuki": [
+                "them: Now let's get you around town. Knowing the map helps.",
                 "them: The map shows every place in town, and who's in each one.",
                 "them: People keep their own times, so check it before you go looking.",
                 "them: We're going to the card shop. Open the map and choose the shop.",
             ],
             "Erza Scarlet": [
+                "them: Next, navigation. A commander always knows the map.",
                 "them: The map. Every place is marked, and who is in it.",
                 "them: Some people only appear at certain times of day. Know where they are.",
                 "them: Open the map and choose the card shop.",
@@ -222,27 +237,32 @@ TUTORIAL = {
         },
         "shop": {
             "*": [
+                "them: Speaking of getting around, the shop is where the cards are.",
                 "them: This is the card shop. Packs are the main thing: each one has a handful of cards from a set.",
                 "them: There are specialty packs, single cards, and gifts too. Everything you pick goes in the basket until you check out.",
                 "them: Specialty packs have better odds for one kind of card. Single cards are on the rack, a few rares a day.",
                 "them: Let's buy you a pack. Press Add 1 on a set, then Check out.",
             ],
             "Aang": [
+                "them (pleased): Next stop, the card shop! Cards are how you get stronger.",
                 "them (pleased): The shop! Packs are the big thing here. Each one has cards from a set.",
                 "them: Everything you pick goes in the basket, and nothing's bought until you check out.",
                 "them: Press Add 1 on a set, then Check out. Let's go!",
             ],
             "Chisato Nishikigi": [
+                "them (pleased): And the shop! It's my favourite place in town!",
                 "them (pleased): Ooh, the shop! Packs, single cards, and gifts, all in one place.",
                 "them: Whatever you pick goes in your basket. You only pay when you check out.",
                 "them (pleased): Add 1 on a set, then check out! My treat for the first one.",
             ],
             "Asuna Yuuki": [
+                "them: The card shop's next. Everything here starts with cards.",
                 "them: The card shop. Packs have cards from a set, and there are specialty packs and single cards too.",
                 "them: Your basket keeps everything you pick, until you check out and pay.",
                 "them: Press Add 1 on a set to buy a pack, then Check out.",
             ],
             "Erza Scarlet": [
+                "them: The shop. Cards are your strength. Get them.",
                 "them: Packs, specialty packs, single cards, gifts. Pick what you need, and check it in the basket.",
                 "them: Nothing is bought until you check out.",
                 "them: Add 1 on a set. Then check out.",
@@ -250,26 +270,31 @@ TUTORIAL = {
         },
         "quests": {
             "*": [
+                "them: Enough shopping. Let's see what people here need from you.",
                 "them: Some people in town have quests for you. Look for the ! over someone's head.",
                 "them: Quests are kept in the quest log. The notice board has the weekly notices too.",
                 "them: Press Quests and open the log, so you can see what's there.",
             ],
             "Aang": [
+                "them (pleased): Now, quests! People here have things they need help with.",
                 "them (pleased): See the ! over someone's head? That means they've got a quest for you!",
                 "them: The quest log keeps everything, and the notice board has the weekly ones.",
                 "them: Press Quests and have a look!",
             ],
             "Chisato Nishikigi": [
+                "them: Okay, quests next! People always have things to ask for.",
                 "them (pleased): Quests! If someone's got one, you'll see a ! over them.",
                 "them: The quest log is where they're all kept. The notice board has the weekly ones too.",
                 "them (pleased): Press Quests and take a peek!",
             ],
             "Asuna Yuuki": [
+                "them: Next, people's requests. Quests are how you help.",
                 "them: If someone's got a quest for you, there's a ! above them.",
                 "them: The quest log keeps them, and the notice board has the weekly notices.",
                 "them: Press Quests and open the log.",
             ],
             "Erza Scarlet": [
+                "them: Next, assignments. Quests are how you prove yourself.",
                 "them: A quest is marked with a ! above someone.",
                 "them: The log keeps them. The notice board has the weekly ones.",
                 "them: Press Quests.",
@@ -277,27 +302,32 @@ TUTORIAL = {
         },
         "time": {
             "*": [
+                "them: Everything takes time, so let's talk about the clock.",
                 "them: Time matters here. Each day has four parts: morning, noon, evening and night.",
                 "them: Talking to someone or duelling uses up that part of the day. You can't do it twice.",
                 "them: When there's nothing left to do, pass time. The town carries on without you.",
                 "them: Go on, press Pass time.",
             ],
             "Aang": [
+                "them (pleased): And time! Everything you do here uses it up.",
                 "them (pleased): Time moves in four parts: morning, noon, evening and night.",
                 "them: Talking or duelling uses that part of the day, so choose well!",
                 "them: When you're done, press Pass time to move on.",
             ],
             "Chisato Nishikigi": [
+                "them: Time next! It goes faster than you'd think.",
                 "them (pleased): Okay, so there are four parts of the day: morning, noon, evening and night!",
                 "them: Chatting or duelling spends that part of the day. Then you pass time to move on.",
                 "them (pleased): Press Pass time when you're ready!",
             ],
             "Asuna Yuuki": [
+                "them: Now, time. Every choice you make here uses some of it.",
                 "them: Each day has four parts: morning, noon, evening and night.",
                 "them: When you talk to someone or duel, that part of the day is used. Then you pass time to move on.",
                 "them: Press Pass time when you're ready.",
             ],
             "Erza Scarlet": [
+                "them: Time. Every action spends it. Remember that.",
                 "them: Four parts of the day. Morning, noon, evening, night.",
                 "them: Talking or duelling spends one. Pass time when there's nothing more to do.",
                 "them: Press Pass time.",
@@ -305,27 +335,32 @@ TUTORIAL = {
         },
         "deck": {
             "*": [
+                "them: Before the duel, your deck, since that's what you'll play with.",
                 "them: Now your deck. You build decks only from cards you've opened, and you can have several.",
                 "them: The equipped one is the deck you duel with.",
                 "them: To be legal it needs 50 cards, 8 climaxes, and at most 4 of any one card.",
                 "them: Go on, open Decks and build a legal one.",
             ],
             "Aang": [
+                "them (pleased): Almost there! Your deck is what you'll duel with.",
                 "them (pleased): Decks! You can only use cards you've opened, so open a few packs first.",
                 "them: You can have several decks. The equipped one is the one you duel with.",
                 "them: A legal deck needs 50 cards, 8 climaxes, and no more than 4 of one card. Press Decks!",
             ],
             "Chisato Nishikigi": [
+                "them (pleased): Almost time to duel! Decks come first.",
                 "them (pleased): Decks are made from the cards you've opened, so the more you open, the better!",
                 "them: You can have lots of decks. The one you've equipped is the one you duel with.",
                 "them (pleased): Legal means 50 cards, 8 climaxes, and at most 4 of each card. Press Decks!",
             ],
             "Asuna Yuuki": [
+                "them: Before the duel, your deck. It's what you'll play with.",
                 "them: Your decks are built from the cards you've opened. You can keep several, but only one is equipped to duel.",
                 "them: A legal deck has 50 cards, 8 climaxes, and at most 4 of any one card.",
                 "them: Open the decks, and build one that's legal.",
             ],
             "Erza Scarlet": [
+                "them: Your deck comes before any duel. Get it right.",
                 "them: Build decks only from cards you have opened. Keep several if you like. One is equipped.",
                 "them: Legal means 50 cards, 8 climaxes, at most 4 of one card.",
                 "them: Press Decks.",
@@ -334,22 +369,27 @@ TUTORIAL = {
         # The minigame step (after the deck): the guide asks the player to play, and doesn't say how. Either result finishes it.
         "minigame": {
             "*": [
+                "them: Before the duel, let's have some fun with a quick game.",
                 "them: Want to play a game with me? Pick one and we'll have a little fun.",
                 "them: No pressure. It's just a game.",
             ],
             "Aang": [
+                "them (pleased): Before the duel, how about a quick game for fun?",
                 "them (pleased): Hey, {player}, want to play a game? Just for fun, no pressure!",
                 "them: I've got a few in mind. Pick one and let's go!",
             ],
             "Chisato Nishikigi": [
+                "them (pleased): Hey, before the duel, let's play a game!",
                 "them (pleased): Oh! Want to play a game with me? It'll be super fun!",
                 "them: Pick one, and I'll be your opponent. Okay?",
             ],
             "Asuna Yuuki": [
+                "them: Before we duel, a quick game first. Just for fun.",
                 "them: Would you like to play a game with me? It's a nice way to finish the lesson.",
                 "them: Pick whichever you like. I'll take it easy on you.",
             ],
             "Erza Scarlet": [
+                "them: A game before the duel. Warm up.",
                 "them: Let's play a game. Choose one, and we'll see who's sharper.",
                 "them: Don't overthink it. Pick one and begin.",
             ],
@@ -369,24 +409,37 @@ TUTORIAL = {
             "Asuna Yuuki": ["them: I won that one. You'll get the next one, I'm sure."],
             "Erza Scarlet": ["them: I won. Play again when you're ready."],
         },
+        # Talking to someone who isn't the guide, during the tutorial: only the guide is here for now.
+        "not_here": {
+            "*": ["them: Only I'm here for now, {player}. The others will be around later."],
+            "Aang": ["them (pleased): Only me for now, {player}! The others will turn up later."],
+            "Chisato Nishikigi": ["them (pleased): Only me for now! Everyone else is out, but they'll be back."],
+            "Asuna Yuuki": ["them: Only I'm here for now. The others will be around later."],
+            "Erza Scarlet": ["them: Only I am here for now. Stay with me."],
+        },
         "duel": {
             "*": [
+                "them: That's the whole tour. Now, the real test.",
                 "them: Let's see what you've got. I'll go easy on you.",
                 "them: Press Duel when you're ready.",
             ],
             "Aang": [
+                "them (pleased): That's the tour! Now let's see what you've got in a real duel.",
                 "them (pleased): Okay, let's see what you've got! I'll go easy on you, promise.",
                 "them: Press Duel when you're ready!",
             ],
             "Chisato Nishikigi": [
+                "them (pleased): That's everything! Now the real thing, a duel!",
                 "them (pleased): Time for a duel! I'll go easy on you, okay?",
                 "them: Press Duel, and let's have fun!",
             ],
             "Asuna Yuuki": [
+                "them: That's the tour. Now a proper duel, if you're ready.",
                 "them: Let's see what you can do. I'll go easy on you.",
                 "them: Press Duel when you're ready.",
             ],
             "Erza Scarlet": [
+                "them: That's the tour. Now, a duel. Show me.",
                 "them: Let's see what you've got. I'll go easy on you.",
                 "them: Press Duel.",
             ],

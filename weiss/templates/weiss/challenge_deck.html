@@ -23,7 +23,9 @@
     <p class="muted small">Only the cards you've pulled can go in, as many copies as you pulled. Click a card's picture to read it.</p>
   {% endif %}
   {% if not cards %}
-    <p class="empty">You haven't pulled any cards yet. <a href="{{ back_url }}">Open some packs first.</a></p>
+    {# A deck is built only from cards you've opened: say so, and link to where packs are opened (a world save's packs step). #}
+    <p class="empty">Your pool is empty: a deck is built only from the cards you've opened, and you haven't opened any yet.
+      {% if run.slot %}<a href="{% url 'weiss:world_save' run.slot %}#packs">Open your starting packs</a>, then come back to build.{% else %}<a href="{{ back_url }}">Open some packs first.</a>{% endif %}</p>
   {% else %}
   {# The partner's deck on the left (co-op), the pool in the middle, and this player's deck on the right, as the card lists' side panel shows a deck. #}
   <div class="deck-builder{% if partner %} with-partner{% endif %}">
@@ -115,7 +117,7 @@
         </div>
         <button type="button" class="button-small secondary" data-deck-clear>Empty the deck</button>
         {% if not partner %}<button type="submit" class="button-small">Save deck</button>{% endif %}
-        <a class="button-small secondary{% if tutorial.legal %} tutorial-target{% endif %}" href="{{ back_url }}">{{ back_button }}</a>
+        <a class="button-small secondary{% if tutorial and tutorial.step != 'deck' or tutorial.legal %} tutorial-target{% endif %}" href="{{ back_url }}">{{ back_button }}</a>
       </div>
       <ul class="pool-grid">
         {% for item in cards %}{% with card=item.card %}

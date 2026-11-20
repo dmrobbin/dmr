@@ -1084,7 +1084,7 @@
       });
       return;
     }
-    tutGoalText.textContent = tut.title;
+    tutGoalText.textContent = tut.step === "deck" && town.deck_ready ? "Your deck is legal" : tut.title;
     // Everything in the step's own list stays live; the rest are held.
     for (const el of root.querySelectorAll("[data-tutorial]")) {
       let blocked = tutGate(el.dataset.tutorial).blocked;
@@ -1117,8 +1117,12 @@
     // While the guide is still talking, nothing is spotlit: the step's control isn't on yet.
     const target = tutPlaying || tut.lines.length ? null : tutTargetEl();
     spotlight(target);
-    tutHint.hidden = !tut.hint || Boolean(tutPlaying);
-    tutHint.textContent = tut.hint || "";
+    // A deck that's legal already: the deck step says so, rather than telling the player to build one (the same as the
+    // pages outside the town, tutorial_guide.html).
+    const legalDeck = tut.step === "deck" && town.deck_ready;
+    const hintText = legalDeck ? `Your deck is legal. ${tut.guide ? tut.guide.name : "Your guide"} is waiting to show you what's next.` : tut.hint;
+    tutHint.hidden = !hintText || Boolean(tutPlaying);
+    tutHint.textContent = hintText || "";
     if (target && !tutHint.hidden) placeHint(target);
     // Focus moves to the target, once the guide has finished talking, so the keyboard lands on what to press.
     if (target && !tutPlaying && typeof target.focus === "function" && !tut.lines.length) {

@@ -325,6 +325,14 @@ def engaged(save):
     return save.today.get("engaged") == save.turn
 
 
+def town_engaged(save):
+    """Whether the town holds the map shut and offers Pass time: spent with someone here. The tutorial walks the map and
+    the time itself, so it's only the time step that the town shows as spent."""
+    if tutorial.active(save) and tutorial.step(save) != "time":
+        return False
+    return engaged(save) and not test_mode(save) or tutorial.active(save) and tutorial.step(save) == "time"
+
+
 def engage(save):
     save.today["engaged"] = save.turn
 
@@ -801,7 +809,7 @@ def finish_minigame(save, result):
             save.rewards = [*save.rewards, {"key": secrets.token_hex(6), "buff": "lucky_pack", "source": f"Minigame: {cpu.name}", "set": set_id}]
             said.append(f"A lucky pack from {cpu.name}'s set: claim it from your save.")
         else:
-            said.append("No set has enough pictured cards for a pack today.")
+            said.append("No pack this time: the card sets need their pictures before a game can give one.")
     save.today.pop("minigame")
     save.today.setdefault("minigames", []).append(cpu.pk)
     save.flags["last_minigame"] = {"cpu": cpu.pk, "game": pending["game"], "result": result}
@@ -1208,7 +1216,7 @@ def buy_packs(save, expansion_id, count, rng=random):
         events.used_sale(save, sale, cheap)
     save.last_opening = {**packs.opening(pool, opened), "set_id": expansion_id, "bought": True}
     tutorial.did(save, "buy_pack")
-    changed(save, "pool", "money", "last_opening", "events")
+    changed(save, "pool", "money", "last_opening", "events", "flags")
     return save.last_opening
 
 
@@ -1508,6 +1516,8 @@ def someone_here(save, cpu_id):
         raise ValueError("Time has moved on: choose where to go first.")
     cpu = next((cpu for cpu, _ in present(save) if str(cpu.pk) == str(cpu_id)), None)
     if not cpu:
+        if tutorial.active(save) and tutorial.guide(save):  # in the tutorial, only the guide is about
+            raise ValueError(tutorial.refusal(save))
         raise ValueError("They aren't here now.")
     return cpu
 
@@ -1876,7 +1886,7 @@ def town(save):
         "shop": shop(save) if here and here.shop else None,
         "deck_ready": deck_problem(save) is None,
         # Spending the time: once the player's spent it with someone here, they stay till they pass it.
-        "engaged": engaged(save) and not test_mode(save), "can_wait": can_wait(save)[0], "wait_why": can_wait(save)[1],
+        "engaged": town_engaged(save), "can_wait": can_wait(save)[0], "wait_why": can_wait(save)[1],
         "choose": choice_pending(save), "choose_required": choosing(save), "test_mode": test_mode(save), "staff": save.user.is_staff,
         "next_time": WorldSave.TIMES[(save.turn + 1) % len(WorldSave.TIMES)],
         "duel": {"url": reverse("weiss:play_room", args=[duel.pk]), "cpu": duel.cpu_name} if duel else None,

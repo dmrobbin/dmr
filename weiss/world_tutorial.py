@@ -11,7 +11,7 @@ from . import chatter, world
 from .models import CpuProfile, GiftItem, TutorialLine
 
 STEPS = ("arrive", "approach", "talk", "gift", "map", "shop", "quests", "time", "deck", "minigame", "duel")
-RESULT_LINES = ("minigame_win", "minigame_lose")  # the guide's answer to the game's result (by the player's), not steps
+RESULT_LINES = ("minigame_win", "minigame_lose", "not_here")  # the guide's lines for a result or a refusal (not steps)
 GUIDES = ("Aang", "Chisato Nishikigi", "Asuna Yuuki", "Erza Scarlet")  # until the story pack sets them
 DONE_FLAG = "tutorial_done"
 
@@ -50,6 +50,7 @@ DEFAULT_LINES = {
     "minigame": ["them: Want to play a game with me? Pick one and we'll have a little fun."],
     "minigame_win": ["them: Good game, {player}. Well played."],
     "minigame_lose": ["them: I won that one. Play again whenever you like."],
+    "not_here": ["them: Only your guide is here for now."],
     "duel": ["them (pleased): Let's see what you've got. I'll go easy on you."],
 }
 
@@ -120,7 +121,7 @@ def view(save):
     cpu = guide(save)
     title, hint, highlight, _ = INFO[name]
     who = cpu.name if cpu else "Your guide"
-    if name == "time" and world.choice_pending(save):  # the map's open: every place is an answer, staying too
+    if name in ("time", "duel") and world.choice_pending(save):  # the map must be answered first: every place is an answer, staying too
         highlight = [f"place-{place.key}" for place in world.places(save)]
         hint = "Choose where to go next: anywhere's fine, staying too."
     return {"step": name, "title": title.format(guide=who), "hint": hint.format(guide=who), "highlight": highlight,
@@ -166,12 +167,13 @@ def advance(save):
     name = STEPS[index]
     save.flags["tutorial"] = {"step": name, "said": False}
     cpu = guide(save)
-    if name == "gift" and cpu:  # the guide hands over something they love, to give back
-        loved = set((cpu.gift_tastes or {}).get("loves", []))
+    if name == "gift":  # the guide hands over a gift to give back: always one, so the step can be done (a game with no gifts has nothing to do here: the step's passed)
+        loved = set((cpu.gift_tastes or {}).get("loves", [])) if cpu else set()
         items = list(GiftItem.objects.filter(staff_only=False))
         item = next((item for item in items if loved & set(item.tags or [])), None) or (items[0] if items else None)
-        if item:
-            save.gifts[item.key] = save.gifts.get(item.key, 0) + 1
+        if item is None:
+            return advance(save)
+        save.gifts[item.key] = save.gifts.get(item.key, 0) + 1
     if name == "shop" and save.money < world.pack_price():  # enough for a pack
         save.money = world.pack_price()
 
@@ -195,6 +197,12 @@ def did(save, action):
     """The player did something: if it's what the step was waiting for, the tutorial moves on."""
     if active(save) and INFO[step(save)][3] == action:
         advance(save)
+
+
+def refusal(save):
+    """What the guide says when the player asks someone who isn't here, during the tutorial (the "not_here" line)."""
+    found = lines(save, "not_here")
+    return found[0]["say"] if found else "Only your guide is here for now."
 
 
 def minigame_done(save, won):

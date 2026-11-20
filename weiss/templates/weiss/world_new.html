@@ -25,7 +25,10 @@
           {% endfor %}
         </ul>
       </fieldset>
-      <p><button type="submit" class="button-small">Start with this set</button></p>
+      {# Sticky at the bottom of the form: the confirm stays in view while the set list is long (and on a phone). #}
+      <div class="world-sets-foot">
+        <button type="submit" class="button-small">Start with this set</button>
+      </div>
     </form>
   {% else %}
     <p class="empty">No set has the {{ min_cards }} cards in packs a new save needs yet.</p>

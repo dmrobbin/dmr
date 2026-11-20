@@ -1,9 +1,13 @@
-{# The tutorial's guide banner (docs/world-tutorial-plan.md): what to do on this page. Shows only while the save's tutorial
-   is on, with the server's tutorial context (weiss.world_views). The thing to press is marked with the tutorial-target
-   class on the page itself. #}
+{% comment %}
+  The tutorial's guide banner (docs/world-tutorial-plan.md): what to do on this page. Shows only while the save's tutorial
+  is on, with the server's tutorial context (weiss.world_views). The thing to press is marked with the tutorial-target
+  class on the page itself. Once the deck is legal, the deck step says to go back to the town (the highlighted button).
+{% endcomment %}
 {% if tutorial %}
   <aside class="tutorial-guide" aria-label="Tutorial" data-tutorial-guide aria-live="polite">
     <p class="tutorial-guide-title"><span class="tutorial-guide-step">Tutorial</span>{{ tutorial.title }}</p>
-    {% if tutorial.hint %}<p class="small">{{ tutorial.hint }}</p>{% endif %}
+    {% if tutorial.step == "deck" and tutorial.legal %}
+      <p class="small">Your deck is legal. Go back to the town{% if tutorial.guide %}, where {{ tutorial.guide }} is waiting to show you what's next{% endif %}.</p>
+    {% elif tutorial.hint %}<p class="small">{{ tutorial.hint }}</p>{% endif %}
   </aside>
 {% endif %}
