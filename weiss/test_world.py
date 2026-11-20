@@ -282,6 +282,21 @@ class WorldPageTests(TestCase):
         self.assertEqual((theirs.deck.name, mine.deck_id != theirs.deck_id), ("Deck 1", True))
         self.assertTrue(CardList.objects.filter(pk=theirs.deck_id).exists())
 
+    def test_packs_open_into_the_panel_as_json_and_the_form_still_goes_to_the_reveal(self):
+        save = world.start(self.user, 1, SET)  # 2 packs
+        url = reverse("weiss:world_open", args=[1])
+        response = self.client.post(url, {"count": 1}, HTTP_ACCEPT="application/json")
+        self.assertEqual(response.status_code, 200)
+        answer = response.json()
+        self.assertEqual(answer["error"], None)
+        self.assertEqual(len(answer["opening"]["packs"]), 1)
+        self.assertEqual(answer["again"]["count"], 1)  # one pack left
+        self.assertEqual(answer["again"]["url"], url)
+        self.assertEqual(self.client.post(url, {"count": 9}, HTTP_ACCEPT="application/json").status_code, 400)
+        self.assertRedirects(self.client.post(url, {"count": 1}), reverse("weiss:world_opened", args=[1]))  # no script: as before
+        save.refresh_from_db()
+        self.assertEqual(save.packs, 0)
+
     def test_more_packs_open_from_the_reveal_without_going_back_to_the_save(self):
         save = world.start(self.user, 1, SET)  # 2 packs
         opened_url = reverse("weiss:world_opened", args=[1])

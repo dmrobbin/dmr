@@ -1,0 +1,20 @@
+{% comment %} The pack panel: packs open here, on this page (packs.js), instead of on a page of their own. The reveal, its sound and
+   its buttons are the same as the reveal page's. Include it once on a page that opens packs, with a card dialog on the page
+   (the card list's dialog, as in challenge_deck.html). {% endcomment %}
+<section class="pack-sheet" data-pack-sheet hidden role="dialog" aria-modal="true" aria-labelledby="pack-sheet-title">
+  <div class="pack-sheet-inner">
+    <h2 class="pack-sheet-title" id="pack-sheet-title">Opening your packs</h2>
+    <p class="pack-sheet-error small panel-error" data-pack-error role="alert" hidden></p>
+    <div class="pack-table" data-pack-table>
+      <p class="muted small" data-pack-hint></p>
+      <div class="pack-row"></div>
+    </div>
+    <section class="pack-results" data-pack-results hidden>
+      <h2 data-pack-total></h2>
+      <ul class="pack-tally" data-pack-tally></ul>
+      <ul class="pack-grid" data-pack-grid></ul>
+      <div class="list-actions" data-pack-actions></div>
+    </section>
+  </div>
+  <template data-pack-art>{% include "weiss/pack_art.html" %}</template>
+</section>

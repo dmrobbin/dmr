@@ -962,7 +962,8 @@
   // A control that's outside the step is disabled, not hidden. Its title says what the guide's waiting for.
   function tutGate(id) {
     const tut = town.tutorial;
-    if (!tut || !id || id === "back") return { blocked: false };
+    // Quests is always open: a new player reads it at any step, and it only looks at the save (no time spent).
+    if (!tut || !id || id === "back" || id === "quests") return { blocked: false };
     if (tut.highlight.includes(id)) return { blocked: false };
     return { blocked: true, title: `Not yet: ${tut.title}` };
   }

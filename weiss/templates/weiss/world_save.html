@@ -1,4 +1,5 @@
 {% extends "core/dashboard_base.html" %}
+{% load static %}
 
 {% block title %}Slot {{ save.slot }} · World mode{% endblock %}
 
@@ -22,7 +23,7 @@
       <h2>Open your packs</h2>
       {% if save.packs %}
         <p>{{ save.packs }} pack{{ save.packs|pluralize }} of {{ save.set_name }} to open. You've opened {{ save.opened }} so far ({{ pool_count }} cards).</p>
-        <form method="post" action="{% url 'weiss:world_open' save.slot %}" class="cpu-form world-open">
+        <form method="post" action="{% url 'weiss:world_open' save.slot %}" class="cpu-form world-open" data-open-packs>
           {% csrf_token %}
           <label class="small">Packs
             <select name="count">
@@ -97,4 +98,12 @@
       <a class="button-small{% if step != 'ready' %} secondary{% endif %}{% if tutorial and tutorial.step != 'deck' or tutorial.legal %} tutorial-target{% endif %}" href="{% url 'weiss:world_town' save.slot %}">Go to the town</a>
     </li>
   </ol>
+  {# The pack panel: the packs open here, on this page (packs.js); a card's details open in this dialog. #}
+  {% include "weiss/pack_sheet.html" %}
+  <dialog class="card-popup" data-card-popup-dialog aria-label="Card details">
+    <form method="dialog"><button class="card-popup-close" aria-label="Close">×</button></form>
+    <div data-card-popup-body></div>
+  </dialog>
+  <script src="{% static 'weiss/packs.js' %}" defer></script>
+  <script src="{% static 'weiss/lists.js' %}" defer></script>
 {% endblock %}

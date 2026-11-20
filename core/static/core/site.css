@@ -2936,7 +2936,7 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .town-hud-icon svg { width: 1.15rem; height: 1.15rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .town-hud-icon[aria-pressed="true"] { color: var(--accent); }
 .town-hud-alert::after { content: ""; position: absolute; top: -.25rem; right: -.25rem; width: .6rem; height: .6rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px #0b0a10; }
-.town-hud-menu { position: absolute; top: 3.4rem; left: .8rem; z-index: 9; width: min(19rem, calc(100% - 1.6rem)); max-height: calc(100% - 4.4rem); overflow-y: auto; overscroll-behavior: contain;
+.town-hud-menu { position: absolute; top: 3.4rem; left: .8rem; z-index: 45; /* above the tutorial's veil and hint, so the menu is never dimmed or covered */ width: min(19rem, calc(100% - 1.6rem)); max-height: calc(100% - 4.4rem); overflow-y: auto; overscroll-behavior: contain;
   padding: .4rem; background: rgb(14 13 20 / .97); border: 1px solid rgb(212 175 55 / .5); border-radius: .6rem; box-shadow: 0 .6rem 1.6rem rgb(0 0 0 / .55); }
 .town-hud-menu[hidden] { display: none; }
 .town-hud-menu-list { display: flex; flex-direction: column; gap: .15rem; }
@@ -3169,6 +3169,9 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .world-step h2 { margin: 0 0 .4rem; font-size: 1.1rem; }
 .world-step p { margin: 0 0 .5rem; }
 .world-open { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .5rem; }
+/* The deck page's packs control (challenge_deck.html): the count select keeps a readable width on a phone. */
+.deck-packs .world-open label { min-width: 0; }
+.deck-packs .world-open select { min-width: 4.5rem; }
 .world-decks { display: flex; flex-direction: column; gap: .5rem; margin: .5rem 0 .9rem; padding: 0; list-style: none; }
 .world-deck { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; padding: .6rem .8rem;
   border: 1px solid var(--border); border-radius: .5rem; }
@@ -3732,3 +3735,13 @@ form[data-minigame-form] label { display: grid; gap: .25rem; font-size: .85rem; 
 .run-key:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
 .run-key[aria-pressed="true"] { color: var(--accent); }
 .run-hint { margin: 0; color: var(--muted); text-align: center; }
+/* The pack panel (weiss/templates/weiss/pack_sheet.html): packs open on the page, over it, as the reveal does. The reveal's
+   own overlay (.pk-overlay) sits above the panel while the packs are being opened. */
+.pack-sheet { position: fixed; inset: 0; z-index: 50; display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; padding: 1rem; background: rgb(8 8 12 / .72); overflow-y: auto; box-sizing: border-box; }
+.pack-sheet[hidden] { display: none; }
+.pack-sheet-inner { width: min(44rem, 100%); min-width: 0; box-sizing: border-box; max-height: 100%; overflow-y: auto; padding: 1rem 1.1rem 1.2rem; background: var(--bg); border: 1px solid var(--border); border-radius: .75rem; }
+.pack-sheet-title { margin: 0 0 .6rem; font-size: 1.15rem; }
+.pack-sheet-error { margin: 0 0 .6rem; }
+.pack-sheet .pack-table { margin-bottom: 1rem; }
+.pack-sheet .pack-row { justify-content: center; }
+.pack-sheet .list-actions { margin-bottom: 0; }

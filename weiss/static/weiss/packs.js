@@ -3,12 +3,9 @@
    themselves, and the end shows every card pulled. "Skip to the end" goes straight there. "2× speed" (remembered in
    this browser) runs it all twice as fast, except an SR or rarer card's reveal: that one still takes its time.
    The page gives {set, grades: [name per grade], packs: [[card, ...], ...]}, each pack in reveal order. */
-(() => {
-  const source = document.getElementById("pack-opening");
-  const table = document.querySelector("[data-pack-table]");
-  const results = document.querySelector("[data-pack-results]");
-  if (!source || !table || !results) return;
-  const data = JSON.parse(source.textContent);
+// One opening, on a table of packs with its results beneath: on the reveal page, and in the pack panel on the save and
+// deck pages (window.PackOpening.mount). Mounting is one opening; a second mount on the same table is a second opening.
+function mountPacks(table, results, data) {
   const packs = data.packs;
 
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -359,5 +356,105 @@
     if (overlay) return;
     buildOverlay();
     openPack(0);
+  });
+}
+
+// The reveal page carries its opening in #pack-opening: it opens as it always has.
+window.PackOpening = { mount: mountPacks };
+(() => {
+  const source = document.getElementById("pack-opening");
+  const table = document.querySelector("[data-pack-table]");
+  const results = document.querySelector("[data-pack-results]");
+  if (source && table && results) mountPacks(table, results, JSON.parse(source.textContent));
+})();
+
+// The pack panel (weiss/templates/weiss/pack_sheet.html) and the forms that open packs into it (data-open-packs). The form
+// posts as usual but asks for the opening as JSON, and the packs are revealed on this page. Without this script, the form
+// posts and the reveal page opens as it always has.
+(() => {
+  const sheet = document.querySelector("[data-pack-sheet]");
+  if (!sheet || !window.PackOpening) return;
+  // At the top of the page: the page's own containers can move a fixed panel off the screen, so it isn't left in them.
+  document.body.append(sheet);
+  const table = sheet.querySelector("[data-pack-table]");
+  const results = sheet.querySelector("[data-pack-results]");
+  const actions = sheet.querySelector("[data-pack-actions]");
+  const error = sheet.querySelector("[data-pack-error]");
+  const art = sheet.querySelector("template[data-pack-art]");
+  const csrf = () => { const field = document.querySelector("input[name=csrfmiddlewaretoken]"); return field ? field.value : ""; };
+
+  function close() {
+    sheet.hidden = true;
+    // The page's own numbers (the packs left, the cards) are as the server has them now: reload to show them.
+    window.location.reload();
+  }
+
+  // The panel for one opening: a pack to open, a button for each, and the results once they're all seen.
+  function showOpening(json) {
+    const count = json.opening.packs.length;
+    error.hidden = true;
+    table.hidden = false;
+    results.hidden = true;
+    table.querySelector("[data-pack-hint]").textContent = `${count} pack${count === 1 ? "" : "s"}. Click ${count === 1 ? "it" : "the first"} to open.`;
+    const row = table.querySelector(".pack-row");
+    row.replaceChildren();
+    for (let i = 0; i < count; i++) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "pack-button";
+      button.dataset.pack = String(i);
+      button.disabled = i > 0;
+      button.setAttribute("aria-label", `Open pack ${i + 1} of ${count}`);
+      button.append(art.content.cloneNode(true));
+      row.append(button);
+    }
+    actions.replaceChildren();
+    if (json.again) {
+      const again = document.createElement("button");
+      again.type = "button";
+      again.className = "button-small";
+      again.textContent = json.again.label;
+      again.addEventListener("click", () => openPacks(json.again.url, json.again.count));
+      actions.append(again);
+    }
+    const done = document.createElement("button");
+    done.type = "button";
+    done.className = "button-small secondary";
+    done.textContent = "Close";
+    done.addEventListener("click", close);
+    actions.append(done);
+    sheet.hidden = false;
+    window.PackOpening.mount(table, results, json.opening);
+    table.querySelector('[data-pack="0"]').focus({ preventScroll: true });
+  }
+
+  async function openPacks(url, count) {
+    const body = new FormData();
+    body.set("count", String(count));
+    body.set("csrfmiddlewaretoken", csrf());
+    try {
+      const response = await fetch(url, { method: "POST", body, headers: { Accept: "application/json" }, credentials: "same-origin" });
+      const json = await response.json().catch(() => null);
+      if (!response.ok || !json || json.error) {
+        error.textContent = (json && json.error) || "Those packs couldn't be opened. Check your connection and try again.";
+        error.hidden = false;
+        sheet.hidden = false;
+        table.hidden = true;
+        results.hidden = true;
+        return;
+      }
+      showOpening(json);
+    } catch {
+      error.textContent = "Those packs couldn't be opened. Check your connection and try again.";
+      error.hidden = false;
+      sheet.hidden = false;
+    }
+  }
+
+  document.addEventListener("submit", (event) => {
+    const form = event.target;
+    if (!form.matches || !form.matches("form[data-open-packs]")) return;
+    event.preventDefault();
+    openPacks(form.action, new FormData(form).get("count") || "1");
   });
 })();

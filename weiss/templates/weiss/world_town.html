@@ -86,6 +86,10 @@
           <button type="button" class="town-hud-menu-item" data-sheet-open data-title="Quests" data-url="{% url 'weiss:world_quests' save.slot %}" data-quests data-tutorial="quests">
             <span>Quests<span class="town-hud-menu-count" data-quests-count></span></span>
           </button>
+          {# The packs to open, in the town's own sheet (so it stays reachable in full screen, where the page's links are out of view). #}
+          <button type="button" class="town-hud-menu-item" data-sheet-open data-title="Open packs" data-url="{% url 'weiss:world_save' save.slot %}#packs">
+            <span>Open packs<span class="town-hud-menu-hint">the packs you've been given to open</span></span>
+          </button>
           <button type="button" class="town-hud-menu-item" data-open-map data-tutorial="map" aria-expanded="false" aria-controls="town-map">
             <span>Map</span><span class="town-hud-menu-hint" data-map-hint hidden>Pass time to go somewhere else</span>
           </button>

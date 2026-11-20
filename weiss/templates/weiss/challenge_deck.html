@@ -39,6 +39,8 @@
       </aside>
     {% endif %}
     <div class="deck-builder-pool">
+    {# A world deck opens its packs here, into the pack panel (open_packs_form.html; packs.js): at the top of the pool, outside the deck form. #}
+    {% if open_packs %}<div class="deck-packs">{% if pack_counts %}{% include "weiss/open_packs_form.html" %}{% else %}<p class="small muted">No packs to open.</p>{% endif %}</div>{% endif %}
     {# The set pages' filters, on the page: the pool's small, and the deck's changes aren't saved yet (challenge_deck.js). #}
     <form class="lead-filters pool-filters" data-pool-filters role="search" aria-label="Filter your pool">
       <label>Name <input type="search" name="name" placeholder="e.g. Rapi"></label>
@@ -117,7 +119,9 @@
         </div>
         <button type="button" class="button-small secondary" data-deck-clear>Empty the deck</button>
         {% if not partner %}<button type="submit" class="button-small">Save deck</button>{% endif %}
-        <a class="button-small secondary{% if tutorial and tutorial.step != 'deck' or tutorial.legal %} tutorial-target{% endif %}" href="{{ back_url }}">{{ back_button }}</a>
+        {# The save page's packs step: the fallback for opening packs (a world deck's form is above the deck, not in it). #}
+        {% if run.slot %}<a class="button-small secondary" href="{% url 'weiss:world_save' run.slot %}#packs">{% if open_packs %}Packs on your save{% else %}Open packs{% endif %}</a>{% endif %}
+        <a class="button-small secondary{% if from_town and tutorial and tutorial.step != 'deck' or from_town and tutorial.legal %} tutorial-target{% endif %}" href="{{ back_url }}">{{ back_button }}</a>
       </div>
       <ul class="pool-grid">
         {% for item in cards %}{% with card=item.card %}
@@ -157,6 +161,10 @@
     <div data-card-popup-body></div>
   </dialog>
   <script src="{% static 'weiss/lists.js' %}" defer></script>
+  {% if open_packs %}{# A world deck: packs open into the pack panel here (open_packs_form.html is for the page's button). #}
+    {% include "weiss/pack_sheet.html" %}
+    <script src="{% static 'weiss/packs.js' %}" defer></script>
+  {% endif %}
   {% if tutorial %}
     {# The tutorial's live line mirrors the builder's own totals (challenge_deck.js), so the count moves as cards do. #}
     <script>

@@ -1,0 +1,11 @@
+{% comment %} A form that opens packs into the pack panel (see pack_sheet.html), on the page. Without the script it posts and the
+   reveal page opens instead. Needs open_packs_url, pack_counts and pack_default (from the world views). {% endcomment %}
+<form method="post" action="{{ open_packs_url }}" class="cpu-form world-open" data-open-packs>
+  {% csrf_token %}
+  <label class="small">Packs
+    <select name="count">
+      {% for count in pack_counts %}<option value="{{ count }}"{% if count == pack_default %} selected{% endif %}>{{ count }}</option>{% endfor %}
+    </select>
+  </label>
+  <button type="submit" class="button-small">Open them</button>
+</form>

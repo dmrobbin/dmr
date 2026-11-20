@@ -196,13 +196,21 @@ def world_open(request, slot):
     save, away = save_or_home(request, slot)
     if away:
         return away
+    wants_json = "application/json" in request.headers.get("Accept", "")  # the pack panel on the page, not a page of its own
     try:
         with transaction.atomic():
             save = WorldSave.objects.select_for_update().get(pk=save.pk)
             world.open_packs(save, int(request.POST.get("count") or 1))
     except ValueError as error:
+        if wants_json:
+            return JsonResponse({"error": str(error) if str(error)[:1].isupper() else "Choose how many packs."}, status=400)
         messages.error(request, str(error) if str(error)[:1].isupper() else "Choose how many packs.")
         return redirect("weiss:world_save", slot=slot)
+    if wants_json:
+        save = WorldSave.objects.get(pk=save.pk)
+        size = min(save.packs, 10)  # the save page's default
+        again = {"label": f"Open {size} more", "url": reverse("weiss:world_open", args=[slot]), "count": size} if save.packs else None
+        return JsonResponse({"opening": save.last_opening, "again": again, "error": None})
     return redirect("weiss:world_opened", slot=slot)
 
 
@@ -310,6 +318,9 @@ def world_deck(request, slot, deck=None):
         "heading": f"Build “{chosen.name}”", "equipped": equipped, "from_town": town_flow,
         # Equipping from here, so the deck's own page is where it's both built and chosen to duel with.
         "equip_url": None if equipped else reverse("weiss:world_deck_equip", args=[slot, chosen.pk]),
+        # The pack panel on this page (weiss/pack_sheet.html): packs open here, without leaving the builder.
+        "open_packs": True, "open_packs_url": reverse("weiss:world_open", args=[slot]),
+        "pack_counts": sorted({n for n in (1, 5, 10, save.packs) if 0 < n <= save.packs}), "pack_default": min(save.packs, 10),
     })
 
 
