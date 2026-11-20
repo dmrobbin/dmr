@@ -8,6 +8,9 @@
 {% block content %}
   <p class="back"><a href="{{ back_url }}">&larr; {{ back_label }}</a></p>
   <h1>{{ heading|default:"Build your deck" }}</h1>
+  {% include "weiss/tutorial_guide.html" %}
+  {% if tutorial %}<p class="tutorial-rules small">A legal deck is {{ deck_size }} cards, {{ climax_target }} climaxes, and at most {{ copy_limit }} of a card.
+    <span class="tutorial-count" data-tutorial-live>{{ deck_size }} cards to go.</span></p>{% endif %}
   {% if equipped is not None %}<p class="small{% if not equipped %} muted{% endif %}">{% if equipped %}★ Equipped: the deck you duel with.{% elif equip_url %}Not equipped: this isn't the deck you duel with.{% else %}Not equipped: equip it on your save's page to duel with it.{% endif %}</p>{% endif %}
   {% if equip_url %}
     <form method="post" action="{{ equip_url }}" class="world-equip">{% csrf_token %}<input type="hidden" name="next" value="builder">{% if from_town %}<input type="hidden" name="from" value="town">{% endif %}<button type="submit" class="button-small">Equip this deck</button></form>
@@ -112,7 +115,7 @@
         </div>
         <button type="button" class="button-small secondary" data-deck-clear>Empty the deck</button>
         {% if not partner %}<button type="submit" class="button-small">Save deck</button>{% endif %}
-        <a class="button-small secondary" href="{{ back_url }}">{{ back_button }}</a>
+        <a class="button-small secondary{% if tutorial.legal %} tutorial-target{% endif %}" href="{{ back_url }}">{{ back_button }}</a>
       </div>
       <ul class="pool-grid">
         {% for item in cards %}{% with card=item.card %}
@@ -152,4 +155,22 @@
     <div data-card-popup-body></div>
   </dialog>
   <script src="{% static 'weiss/lists.js' %}" defer></script>
+  {% if tutorial %}
+    {# The tutorial's live line mirrors the builder's own totals (challenge_deck.js), so the count moves as cards do. #}
+    <script>
+      (() => {
+        const total = document.querySelector("[data-deck-total]");
+        const warnings = document.querySelector("[data-deck-warnings]");
+        const live = document.querySelector("[data-tutorial-live]");
+        if (!total || !live) return;
+        const show = () => {
+          const problems = warnings ? warnings.textContent.trim() : "";
+          live.textContent = `On this deck: ${total.textContent}${problems ? `. ${problems}` : ". Ready to save."}`;
+        };
+        new MutationObserver(show).observe(total, { childList: true, characterData: true, subtree: true });
+        if (warnings) new MutationObserver(show).observe(warnings, { childList: true, characterData: true, subtree: true });
+        show();
+      })();
+    </script>
+  {% endif %}
 {% endblock %}

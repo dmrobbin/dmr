@@ -193,6 +193,8 @@ class StoryFileTests(StoryBase):
         from pathlib import Path
         data = json.loads((Path(__file__).resolve().parent.parent / "world_pack" / "00_story.json").read_text(encoding="utf-8"))
         names = [line.split(" as ", 1)[1] for scene in data["scenes"] for line in scene["script"] if line.startswith("cast ") and "{mentor}" not in line]
+        tutorial = data.get("tutorial") or {}  # and the tutorial's guides
+        names += list(tutorial.get("guides", [])) + [who for lines in tutorial.get("lines", {}).values() for who in lines if who != "*"]
         result = import_world_pack([data], known=names)[0]  # checked against the CPUs its scenes cast, as the pack checker does
         self.assertEqual(result.problems, [])
 

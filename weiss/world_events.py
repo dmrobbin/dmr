@@ -254,6 +254,7 @@ def fee(event):
 
 def enter(save):
     """Enter this week's tournament at its place: the fee's taken now, and the bracket drawn. Raises ValueError."""
+    world.tutorial.allows(save, "tournament")
     event = tournament(save)
     if not event:
         raise ValueError("There's no tournament this week.")

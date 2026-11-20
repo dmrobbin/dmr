@@ -61,7 +61,7 @@
       banner.append(back);
     }
     paintTime();
-    $("[data-deck-notice]").hidden = town.deck_ready;
+    $("[data-deck-notice]").hidden = town.deck_ready || Boolean(town.tutorial && town.tutorial.step !== "deck");
     $("[data-deck-hint]").textContent = town.deck_ready ? "" : "Not ready to duel yet";
     paintQuests();
     const waiting = $("[data-scene-waiting]");
@@ -75,6 +75,7 @@
     town.news = [];
     paintPeople();
     paintPick();
+    renderTutorial();
     announce();
     if (!map.hidden) listPlaces();
     if (!shop.hidden) listStock();
@@ -137,7 +138,8 @@
         badge.title = marker.label;
         button.append(badge);
       }
-      button.addEventListener("click", () => meet(person));
+      button.dataset.tutorial = "person";
+      button.addEventListener("click", () => (town.tutorial && town.tutorial.step === "arrive" ? approach(person) : meet(person)));
       people.append(button);
     });
     empty.hidden = here.length > 0;
@@ -436,9 +438,11 @@
       button.textContent = label;
       if (extra.title) button.title = extra.title;
       button.disabled = Boolean(extra.disabled);
+      button.dataset.tutorial = extra.tut || tutLabel(label) || (extra.quiet ? "back" : "other");
       button.addEventListener("click", act);
       menu.append(button);
     }
+    renderTutorial();
     menu.querySelector("button:not(:disabled)")?.focus({ preventScroll: true });
   }
 
@@ -576,7 +580,7 @@
     }
     list.push(["Leave", leave, { quiet: true }]);
     options(list);
-    if (why) note(why, !town.deck_ready && !town.duel ? { href: root.dataset.decksUrl, text: "Your decks", title: "Your deck" } : null);
+    if (why && !(town.tutorial && town.tutorial.step !== "deck")) note(why, !town.deck_ready && !town.duel ? { href: root.dataset.decksUrl, text: "Your decks", title: "Your deck" } : null);
   }
 
   // ---- Quests in the talk box (weiss.world.quest_act): offers, talking them through, handing cards over, endings ----
@@ -748,7 +752,7 @@
     textEl.textContent = "What will you give them?";
     const held = (town.gifts || []).filter((item) => item.have > 0);
     options([
-      ...held.map((item) => [`${item.icon} ${item.name}${item.have > 1 ? ` (${item.have})` : ""}`, () => give(item)]),
+      ...held.map((item) => [`${item.icon} ${item.name}${item.have > 1 ? ` (${item.have})` : ""}`, () => give(item), { tut: "gift-item" }]),
       ["Back", choices, { quiet: true }],
     ]);
   }
@@ -856,7 +860,8 @@
         : ["Duel", () => duel(false), { disabled: Boolean(why), title: why }],
       ["Not now", choices, { quiet: true }],
     ]);
-    if (why) note(why, !town.deck_ready && !town.duel ? { href: root.dataset.decksUrl, text: "Your decks", title: "Your deck" } : null);
+    // The deck's note waits for the deck step (the guide handles it there); the note's own link is the same.
+    if (why && !(town.tutorial && town.tutorial.step !== "deck")) note(why, !town.deck_ready && !town.duel ? { href: root.dataset.decksUrl, text: "Your decks", title: "Your deck" } : null);
   }
 
   async function duel(stakes) {
@@ -891,6 +896,256 @@
     if (person && refocus) people.querySelector(`[data-cpu="${person.id}"]`)?.focus({ preventScroll: true });
   }
 
+  // ---- The tutorial (docs/world-tutorial-plan.md): the first chapter's guide walks the player through the town. The
+  // server keeps the step and says what to press (town.tutorial); the page plays the guide's lines, spotlights the
+  // target, shows the goal, and holds everything else until the step is done. ----
+  const tutGoal = $("[data-goal]");
+  const tutGoalText = $("[data-goal-text]");
+  const tutHint = $("[data-tutorial-hint]");
+  const tutSkip = $("[data-tutorial-skip]");
+  let tutPlaying = false; // the guide's lines are on, and their "said" hasn't been sent yet
+  const tutVeil = $("[data-tutorial-veil]");
+  let tutTarget = null; // the spotlit element, and whether its position was changed to show the ring
+  let tutRepositioned = false;
+  let tutLifted = []; // the containers raised above the veil with the target: [element, its old z-index]
+
+  // The steps that open the talk menu: after the guide's lines, the menu is the thing to press.
+  const TALK_STEPS = ["talk", "gift", "duel"];
+
+  // A control that's outside the step is disabled, not hidden. Its title says what the guide's waiting for.
+  function tutGate(id) {
+    const tut = town.tutorial;
+    if (!tut || !id || id === "back") return { blocked: false };
+    if (tut.highlight.includes(id)) return { blocked: false };
+    return { blocked: true, title: `Not yet: ${tut.title}` };
+  }
+
+  // Is an element on screen (laid out, and not inside a hidden panel)?
+  const onScreen = (el) => Boolean(el) && el.getClientRects().length > 0;
+
+  // The first highlight that's on screen. The Menu button is the way in to the things kept in the menu (the quest
+  // log, the decks, passing time), so when one of those is the step's, the menu's button is spotlit until it's open.
+  function tutTargetEl() {
+    const tut = town.tutorial;
+    for (const id of tut.highlight) {
+      const el = root.querySelector(`[data-tutorial="${id}"]`);
+      if (onScreen(el)) return el;
+    }
+    return tut.highlight.length ? root.querySelector("[data-open-menu]") : null;
+  }
+
+  // Which people can be clicked: in arrive, the candidates (clicking one asks them to show you round); later, the guide.
+  function tutPersonAllowed(person) {
+    const tut = town.tutorial;
+    if (!tut) return true;
+    if (tut.step === "arrive") return tut.candidates.includes(person.id);
+    return Boolean(tut.guide) && tut.guide.id === person.id;
+  }
+
+  // Marks the spotlit element: it's raised and ringed, and the rest of the stage is dimmed behind it.
+  function spotlight(el) {
+    if (tutTarget === el) return;
+    if (tutTarget) {
+      tutTarget.classList.remove("town-tut-target");
+      if (tutRepositioned) tutTarget.style.position = "";
+    }
+    for (const [box, z] of tutLifted) box.style.zIndex = z;
+    tutLifted = [];
+    tutTarget = el;
+    tutRepositioned = false;
+    tutVeil.hidden = !el;
+    if (!el) return;
+    if (getComputedStyle(el).position === "static") {
+      el.style.position = "relative";
+      tutRepositioned = true;
+    }
+    // The veil sits over the stage, so the target and every panel it's in (the talk box, the HUD, the map) are raised
+    // above it, by their stacking order, to stay bright.
+    for (let node = el; node && node !== stage; node = node.parentElement) {
+      const cs = getComputedStyle(node);
+      if (cs.position !== "static" && cs.zIndex !== "auto") {
+        tutLifted.push([node, node.style.zIndex]);
+        node.style.zIndex = "36";
+      }
+    }
+    // The people and the talk box stay bright too: the one being talked to, and the candidates, are the people.
+    for (const panel of [people, box]) {
+      if (!panel.hidden && !tutLifted.some(([node]) => node === panel)) {
+        tutLifted.push([panel, panel.style.zIndex]);
+        panel.style.zIndex = "36";
+      }
+    }
+    el.classList.add("town-tut-target");
+  }
+
+  // Puts the hint by the spotlit element: above it (or below, when there's no room above), kept inside the stage. A
+  // target in the talk box puts the hint beside the speaker's name, so the name stays visible.
+  function placeHint(el) {
+    if (!el) return;
+    const sb = stage.getBoundingClientRect();
+    const eb = el.getBoundingClientRect();
+    const hw = tutHint.offsetWidth;
+    const hh = tutHint.offsetHeight;
+    const inBox = el.closest("[data-box]");
+    const nameBox = inBox && !nameEl.hidden ? nameEl.getBoundingClientRect() : null;
+    tutHint.classList.toggle("town-tut-hint-left", Boolean(nameBox));
+    tutHint.classList.remove("town-tut-hint-below");
+    let left;
+    let top;
+    if (nameBox) {
+      left = Math.min(nameBox.right - sb.left + 12, sb.width - hw - 8);
+      top = inBox.getBoundingClientRect().top - sb.top - 8;
+    } else if (!box.hidden) {
+      // A target with the talk box open (the candidates, in arrive): the hint sits just above the box, out of the way.
+      const center = eb.left + eb.width / 2 - sb.left;
+      left = Math.max(hw / 2 + 8, Math.min(sb.width - hw / 2 - 8, center));
+      top = box.getBoundingClientRect().top - sb.top - 8;
+    } else {
+      const center = eb.left + eb.width / 2 - sb.left;
+      left = Math.max(hw / 2 + 8, Math.min(sb.width - hw / 2 - 8, center));
+      if (eb.top - sb.top - 8 - hh >= 8) {
+        top = eb.top - sb.top - 8;
+      } else {
+        top = eb.bottom - sb.top + 8;
+        tutHint.classList.add("town-tut-hint-below");
+      }
+    }
+    tutHint.style.left = `${Math.max(8, left)}px`;
+    tutHint.style.top = `${top}px`;
+  }
+
+  function renderTutorial() {
+    const tut = town.tutorial;
+    root.classList.toggle("town-tutorial-on", Boolean(tut));
+    tutGoal.hidden = !tut;
+    tutSkip.hidden = !(tut && town.staff && town.test_mode);
+    const help = root.querySelector(".town-help"); // the free-play paragraph under the stage
+    if (help) help.hidden = Boolean(tut);
+    $("[data-deck-notice]").hidden = town.deck_ready || Boolean(tut && tut.step !== "deck");
+    if (!tut) {
+      spotlight(null);
+      tutHint.hidden = true;
+      root.querySelectorAll(".town-tut-blocked").forEach((el) => {
+        el.classList.remove("town-tut-blocked");
+        el.removeAttribute("aria-disabled");
+        if (el.dataset.tutDisabled) el.disabled = false;
+        delete el.dataset.tutDisabled;
+        el.removeAttribute("title");
+      });
+      return;
+    }
+    tutGoalText.textContent = tut.title;
+    // Everything in the step's own list stays live; the rest are held.
+    for (const el of root.querySelectorAll("[data-tutorial]")) {
+      let blocked = tutGate(el.dataset.tutorial).blocked;
+      if (el.dataset.cpu !== undefined) {
+        const person = town.people.find((p) => p.id === Number(el.dataset.cpu));
+        blocked = !person || !tutPersonAllowed(person);
+      }
+      el.classList.toggle("town-tut-blocked", blocked);
+      if (blocked) {
+        if (el.tagName === "BUTTON" && !el.disabled) el.dataset.tutDisabled = "1";
+        if (el.tagName === "BUTTON") el.disabled = true;
+        el.setAttribute("aria-disabled", "true");
+        el.title = `Not yet: ${tut.title}`;
+      } else {
+        if (el.dataset.tutDisabled) el.disabled = false;
+        delete el.dataset.tutDisabled;
+        el.removeAttribute("aria-disabled");
+        el.removeAttribute("title");
+      }
+    }
+    // Once the guide's lines are done: the talk steps open the guide's talk menu; the others close the talk, so the
+    // map, shop or quest button can be reached.
+    if (!tutPlaying && !tut.lines.length) {
+      if (TALK_STEPS.includes(tut.step) && tut.guide && !talking) openGuideMenu();
+      // The guide's talk is open (their lines set it) but its menu isn't: open it. A menu already showing a talk
+      // option or a gift is left as it is.
+      else if (TALK_STEPS.includes(tut.step) && talking && !menu.querySelector("[data-tutorial='talk'], [data-tutorial='gift'], [data-tutorial='gift-item'], [data-tutorial='duel']")) choices();
+      else if (!TALK_STEPS.includes(tut.step) && talking && tut.step !== "arrive") closeTalk(false);
+    }
+    // While the guide is still talking, nothing is spotlit: the step's control isn't on yet.
+    const target = tutPlaying || tut.lines.length ? null : tutTargetEl();
+    spotlight(target);
+    tutHint.hidden = !tut.hint || Boolean(tutPlaying);
+    tutHint.textContent = tut.hint || "";
+    if (target && !tutHint.hidden) placeHint(target);
+    // Focus moves to the target, once the guide has finished talking, so the keyboard lands on what to press.
+    if (target && !tutPlaying && typeof target.focus === "function" && !tut.lines.length) {
+      target.focus({ preventScroll: true });
+    }
+    tutSkip.disabled = busy;
+    playTutorialLines();
+  }
+
+  // Plays the guide's lines in the talk box (the guide as "them", the player as "player", narration with no name),
+  // then sends "said": the server marks them and moves on if the step's already done.
+  function playTutorialLines() {
+    const tut = town.tutorial;
+    if (!tut || !tut.lines.length || tutPlaying) return;
+    tutPlaying = true;
+    const guide = tut.guide ? town.people.find((p) => p.id === tut.guide.id) || tut.guide : null;
+    const list = tut.lines.slice();
+    let i = 0;
+    const next = async () => {
+      if (i >= list.length) {
+        tutPlaying = false;
+        const data = await post(root.dataset.tutorialUrl, { act: "said" });
+        if (data) {
+          paint();
+          return;
+        }
+        renderTutorial();
+        return;
+      }
+      const line = list[i++];
+      if (guide) talking = guide;
+      if (talking) applyTalkFocus();
+      box.hidden = false;
+      nameEl.textContent = line.who === "them" && guide ? guide.name : line.who === "player" ? root.dataset.player || "You" : "";
+      nameEl.hidden = !nameEl.textContent;
+      nameEl.classList.toggle("vn-name-player", line.who === "player");
+      if (talking && line.who === "them") theirMood(line.mood || "main");
+      lines([line.say], next);
+    };
+    next();
+  }
+
+  // Dims and rings the target, and keeps the hint and the goal in step with it when the page moves.
+  window.addEventListener("resize", () => { if (town.tutorial && tutTarget) placeHint(tutTarget); });
+
+  // Talking to the guide (in the talk steps, once their lines are done): the talk menu opens for them.
+  function openGuideMenu() {
+    const guide = town.people.find((p) => p.id === town.tutorial.guide?.id);
+    if (!guide || talking) return;
+    talking = guide;
+    applyTalkFocus();
+    announce();
+    box.hidden = false;
+    speaker("them");
+    choices();
+  }
+
+  // Approaching a candidate in "arrive": they become the guide, and their answer's lines play.
+  async function approach(person) {
+    const data = await post(root.dataset.tutorialUrl, { act: "approach", cpu: person.id });
+    if (data) paint();
+  }
+
+  async function skipTutorial() {
+    const data = await post(root.dataset.tutorialUrl, { act: "skip" });
+    if (data) paint();
+  }
+  tutSkip.addEventListener("click", skipTutorial);
+
+  // Which talk-menu option a label is, for the tutorial's highlights ("Talk", "Give a gift", "Duel").
+  function tutLabel(label) {
+    if (label.startsWith("Talk")) return "talk";
+    if (label.startsWith("Give a gift")) return "gift";
+    if (label.startsWith("Duel")) return "duel";
+    return "";
+  }
+
   // ---- The map ----
 
   function listPlaces() {
@@ -905,6 +1160,7 @@
       button.innerHTML = `<span class="town-place-art">${window.SceneBackdrops ? SceneBackdrops.draw(place.backdrop, town.time) : ""}</span>
         <span class="town-place-name"></span><span class="town-place-who small"></span>`;
       button.querySelector(".town-place-name").textContent = place.name;
+      button.dataset.tutorial = `place-${place.key}`;
       if (place.events && place.events.length) {  // an event on there now (weiss.world_events.at_places)
         const mark = el("span", "town-place-event", ` ${place.events.map((event) => event.icon).join("")}`);
         mark.title = place.events.map((event) => event.name).join(", ");
@@ -983,6 +1239,7 @@
     map.hidden = false;
     mapButton.setAttribute("aria-expanded", "true");
     if (!skipPassage) $("[data-places] button:not(:disabled)")?.focus({ preventScroll: true });
+    renderTutorial();
   }
 
   // Closing the map: after time passes (test mode, where it can be closed), that's staying where the player is.
@@ -1004,6 +1261,7 @@
     map.hidden = true;
     mapButton.setAttribute("aria-expanded", "false");
     if (refocus) menuButton.focus({ preventScroll: true }); // the map's button lives in the menu, which is shut
+    renderTutorial();
   }
 
   // ---- The card shop ----
@@ -1061,6 +1319,7 @@
     const button = buyButton(label, cost, onAdd, secondary, was);
     button.disabled = false;
     button.removeAttribute("title");
+    button.dataset.tutorial = label === "Add 1" ? "add-pack" : "other";
     return button;
   }
 
@@ -1417,12 +1676,14 @@
     shop.hidden = false;
     shopButton.setAttribute("aria-expanded", "true");
     $(`[data-shop-tab="${shopTab}"]`).focus({ preventScroll: true });
+    renderTutorial();
   }
 
   function closeShop(refocus = true) {
     shop.hidden = true;
     shopButton.setAttribute("aria-expanded", "false");
     if (refocus) menuButton.focus({ preventScroll: true }); // likewise the shop's
+    renderTutorial();
   }
 
   // ---- The card pick: after a win, one card from the beaten CPU's deck (town.card_pick, weiss.world_rewards). It waits
@@ -1673,7 +1934,7 @@
 
   box.tabIndex = -1;
   box.addEventListener("click", (event) => {
-    if (advance && !event.target.closest("button, a")) advance();
+    if (advance && !event.target.closest?.("button, a")) advance();
   });
   stage.addEventListener("click", (event) => {
     if (advance && !event.target.closest("button, a, [data-box], [data-sheet]")) advance();
@@ -1739,7 +2000,7 @@
     const key = event.key.toLowerCase();
     if (!sheet.hidden && key !== "escape") return; // a panel's open: its page has the keys
     if (!pick.hidden && key !== "escape") return; // the card pick has its own keys
-    if ((key === "enter" || key === " ") && advance && !event.target.closest("button, a")) {
+    if ((key === "enter" || key === " ") && advance && !event.target.closest?.("button, a")) {
       event.preventDefault();
       advance();
     } else if (key === "escape") {

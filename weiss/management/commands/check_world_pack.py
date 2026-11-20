@@ -31,9 +31,11 @@ class Command(BaseCommand):
                 if result.missing:
                     self.stderr.write(f"  - not in the export: {', '.join(result.missing)}")
             else:
-                cpus = [name for name, _ in result.done if name != "The story"]
+                cpus = [name for name, _ in result.done if name not in ("The story", "The tutorial")]
                 story = next((words for name, words in result.done if name == "The story"), "")
-                said = ", ".join(filter(None, [f"{len(cpus)} CPUs" if cpus or not story else "", f"the story ({story})" if story else ""]))
+                taught = next((words for name, words in result.done if name == "The tutorial"), "")
+                said = ", ".join(filter(None, [f"{len(cpus)} CPUs" if cpus or not (story or taught) else "",
+                                               f"the story ({story})" if story else "", f"the tutorial ({taught})" if taught else ""]))
                 self.stdout.write(self.style.SUCCESS(f"{path}: {said}, no problems found"))
         if failed:
             raise CommandError(f"{failed} file{'s' if failed != 1 else ''} with problems.")

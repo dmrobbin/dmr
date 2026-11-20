@@ -33,7 +33,7 @@ from django.db import transaction
 from . import abilities, buffs, chatter, cpu, quests, scenes
 from .cpu_views import MAX_TEXT, TEXT_FIELDS, deck_problem, scene_uses
 from .express import ANCHORS, build_deck, cpu_anchor_choices, series_pool
-from .models import Card, CardList, CardListEntry, Chatter, CpuProfile, CpuSchedule, GiftItem, Quest, Scene, WorldPlace
+from .models import Card, CardList, CardListEntry, Chatter, CpuProfile, CpuSchedule, GiftItem, Quest, Scene, WorldPlace, WorldSettings, TutorialLine
 from .views import series_code
 
 PROFILE_FIELDS = ("name", "model", "aggression", "boss", *TEXT_FIELDS)
@@ -717,6 +717,14 @@ def import_world_pack(files, dry_run=False, user=None, known=None):
                                names=quest_context(info, set(pack_scenes), cpus=names.values(), quest_keys=pack_keys, offline=known is not None))
             result.problems[before:] = [f"{names[name.lower()]}: {problem}" for problem in result.problems[before:]]
             wanted.append((names[name.lower()], found, result))
+    tutorial_parts = []  # (guides, [(step, cpu name or None, script)], its file's result): a story file's TUTORIAL
+    for data, result in zip(files, results):
+        raw = data.get("tutorial")
+        if raw is None:
+            continue
+        found = read_tutorial(raw, result.problems, names)
+        if found:
+            tutorial_parts.append((*found, result))
     chapters = {}
     for fields, result in story:
         chapters.setdefault(id(result), [result, 0])[1] += 1
@@ -725,6 +733,8 @@ def import_world_pack(files, dry_run=False, user=None, known=None):
             result.done.append((name, done_words(rules, lines, found_quests)))
         for result, count in chapters.values():
             result.done.append(("The story", f"{count} chapter{'s' if count != 1 else ''}"))
+        for guides, lines, result in tutorial_parts:
+            result.done.append(("The tutorial", f"{len(guides)} guides, {len(lines)} scripts"))
         return results
     with transaction.atomic():
         for name, script, _ in pack_scenes.values():
@@ -742,9 +752,50 @@ def import_world_pack(files, dry_run=False, user=None, known=None):
             result.done.append((name, done_words(rules, lines, found_quests)))
         for order, (fields, _) in enumerate(story, 1):  # the story's chapters, by key: saves keep their place in them
             quests.save_quest(fields, order=order)
+        for guides, lines, _ in tutorial_parts:  # the tutorial: its guides, and every step's lines replaced
+            WorldSettings.objects.update_or_create(pk=1, defaults={"tutorial_guides": guides})
+            TutorialLine.objects.all().delete()
+            for step, cpu_name, script in lines:
+                TutorialLine.objects.create(step=step, cpu=CpuProfile.objects.filter(name__iexact=cpu_name).first() if cpu_name else None,
+                                            script=script)
         for result, count in chapters.values():
             result.done.append(("The story", f"{count} chapter{'s' if count != 1 else ''}"))
+        for guides, lines, result in tutorial_parts:
+            result.done.append(("The tutorial", f"{len(guides)} guides, {len(lines)} scripts"))
     return results
+
+
+def read_tutorial(raw, problems, names):
+    """A story file's TUTORIAL, checked: ([guide names], [(step, cpu name or None, script)]), or None. Each script is
+    chatter with plain lines only (them, player, narrator): the tutorial (weiss.world_tutorial) does the rest."""
+    from . import world_tutorial
+    if not isinstance(raw, dict) or not isinstance(raw.get("lines"), dict):
+        problems.append('tutorial: write it as {"guides": [...], "lines": {step: {"*" or a guide: [lines]}}}.')
+        return None
+    guides = []
+    for name in raw.get("guides") or []:
+        if str(name).lower() not in names:
+            problems.append(f"tutorial: there's no CPU called “{name}” to be a guide.")
+        else:
+            guides.append(names[str(name).lower()])
+    if not guides:
+        problems.append("tutorial: name at least one guide.")
+    lines = []
+    for step, by_guide in raw["lines"].items():
+        if step not in world_tutorial.STEPS:
+            problems.append(f"tutorial: there's no step “{step}” (the steps are {', '.join(world_tutorial.STEPS)}).")
+            continue
+        for who, script in (by_guide or {}).items():
+            if who != "*" and str(who).lower() not in names:
+                problems.append(f"tutorial {step}: there's no CPU called “{who}”.")
+                continue
+            text = joined(script)
+            compiled, errors = chatter.compile_chatter(text)
+            problems += [f"tutorial {step} ({who}), line {line}: {error}" for line, error in errors]
+            if any(s["do"] != "say" for s in compiled["steps"]):
+                problems.append(f"tutorial {step} ({who}): only lines (them, player, narrator); no choices, points or gifts.")
+            lines.append((step, None if who == "*" else names[str(who).lower()], text))
+    return guides, lines
 
 
 def done_words(rules, lines, found_quests):

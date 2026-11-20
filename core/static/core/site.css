@@ -3068,6 +3068,41 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .town-pick-confirm[hidden] { display: none; }
 .town-pick-confirm p { margin: 0 0 .5rem; font-weight: 600; }
 .town-pick-confirm-buttons { display: flex; flex-wrap: wrap; gap: .5rem; }
+/* The first chapter's tutorial (docs/world-tutorial-plan.md; world_town.js renderTutorial). The goal sits above the
+   stage; the spotlight dims everything behind its target (a box-shadow the size of the stage, clipped by it) and rings
+   the target; the hint sits by the target; anything outside the step is held (disabled and dimmed, not hidden). */
+.town-goal { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .4rem .8rem; margin: .5rem 0; padding: .55rem .9rem;
+  border: 1px solid rgb(212 175 55 / .6); border-radius: .5rem; background: rgb(40 34 18 / .85); }
+.town-goal[hidden] { display: none; }
+.town-goal p { margin: 0; }
+.town-goal-label { font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-right: .3rem; }
+.town-tut-hint { position: absolute; z-index: 40; max-width: min(18rem, calc(100% - 1.6rem)); margin: 0; padding: .45rem .7rem; font-size: .85rem; line-height: 1.35;
+  color: #1b1508; background: #f0d27a; border-radius: .45rem; box-shadow: 0 .3rem .9rem rgb(0 0 0 / .55); translate: -50% -100%; pointer-events: none; }
+.town-tut-hint[hidden] { display: none; }
+.town-tut-hint-below { translate: -50% 0; }
+/* Beside the speaker's name (a target in the talk box): anchored at its left, with no arrow. */
+.town-tut-hint-left { translate: 0 -100%; }
+.town-tut-hint-left::after { display: none; }
+.town-tut-hint::after { content: ""; position: absolute; left: 50%; translate: -50% 0; border: .4rem solid transparent; }
+.town-tut-hint:not(.town-tut-hint-below)::after { top: 100%; border-top-color: #f0d27a; }
+.town-tut-hint.town-tut-hint-below::after { bottom: 100%; border-bottom-color: #f0d27a; }
+.town-tut-veil { position: absolute; inset: 0; z-index: 35; background: rgb(8 6 12 / .62); pointer-events: none; }
+.town-tut-veil[hidden] { display: none; }
+.town-tut-target { z-index: 36; border-radius: .5rem; outline: 3px solid #ffd98a; outline-offset: 3px;
+  box-shadow: 0 0 1.4rem rgb(255 217 138 / .6); }
+.town-person.town-tut-target { border-radius: .5rem; }
+.town-person.town-tut-target .town-picture { filter: drop-shadow(0 0 .8rem rgb(255 217 138 / .8)) drop-shadow(0 .6rem 1.2rem rgb(0 0 0 / .6)); }
+.town-tut-blocked { opacity: .45; filter: grayscale(.5); cursor: not-allowed; }
+.town-tut-blocked:not(button) { pointer-events: none; }
+.town-hud-decks { white-space: nowrap; }
+@media (prefers-reduced-motion: no-preference) {
+  .town-tut-target { animation: town-tut-pulse 1.8s ease-in-out infinite; }
+}
+@keyframes town-tut-pulse { 0%, 100% { outline-color: #ffd98a; } 50% { outline-color: rgb(255 217 138 / .35); } }
+@media (max-width: 40rem) {
+  .town-goal { font-size: .9rem; }
+  .town-tut-hint { font-size: .8rem; max-width: calc(100% - 16px); }
+}
 .town-place.town-place-here { border-color: rgb(212 175 55 / .6); }
 /* Staff testing controls in the town's bar: dashed, so they never look like part of the game. */
 .button-small.town-staff { border-style: dashed; color: var(--muted); }
@@ -3087,7 +3122,7 @@ button.spire-node-face:disabled { cursor: not-allowed; }
   /* A phone: a taller stage, so the people and the words both fit. */
   .town-stage { aspect-ratio: 3 / 4; max-height: none; }
   .town-picture { max-width: 58vw; }
-  .town-person { height: 70%; bottom: 22%; }
+  .town-person { height: 36%; bottom: 38%; } /* lower and smaller: clear of the date line and the talk box */
   .town-box { left: 2%; right: 2%; bottom: 2%; padding: .9rem .9rem 1rem; }
   .town-option { flex: 1 1 40%; }
   .town-tag { opacity: 1; }
@@ -3490,3 +3525,20 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .town-hud-menu-sound { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .55rem .7rem; font-size: .95rem; color: #f3efe7; }
 .town-hud-menu-sound input[type="range"] { flex: 0 1 9rem; min-width: 0; accent-color: var(--accent); cursor: pointer; }
 .town-hud-menu-sound:focus-within { box-shadow: inset 0 0 0 1px var(--accent); border-radius: .4rem; }
+/* World mode's tutorial on the pages outside the town (weiss/templates/weiss/tutorial_guide.html): the guide banner,
+   the thing to press (tutorial-target, pulsing), and the deck's live rules line. The town's spotlight is Sam's. */
+.tutorial-guide { display: flex; flex-direction: column; gap: .25rem; margin: 0 0 1rem; padding: .7rem .9rem; border: 1px solid var(--accent); border-left-width: .3rem; border-radius: .5rem; background: var(--accent-soft); }
+.tutorial-guide p { margin: 0; }
+.tutorial-guide-title { font-weight: 600; }
+.tutorial-guide-step { margin-right: .5rem; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.tutorial-rules { margin: -.4rem 0 1rem; }
+.tutorial-count { color: var(--accent); font-weight: 600; }
+.tutorial-count strong { color: inherit; }
+.tutorial-target { position: relative; animation: tutorial-pulse 1.6s ease-out infinite; }
+@keyframes tutorial-pulse {
+  0% { box-shadow: 0 0 0 2px var(--accent), 0 0 0 0 rgb(212 175 55 / .55); }
+  70%, 100% { box-shadow: 0 0 0 2px var(--accent), 0 0 0 .7rem rgb(212 175 55 / 0); }
+}
+@media (prefers-reduced-motion: reduce) { .tutorial-target { animation: none; box-shadow: 0 0 0 2px var(--accent); } }
+/* The town's panels: the back link to the town stays when it's the thing to press (the tutorial's), as it closes the panel. */
+.in-frame p.back:has(.tutorial-target) { display: block; }

@@ -53,6 +53,7 @@ urlpatterns = [
     path("world/<int:slot>/events/enter/", world_views.world_event_enter, name="world_event_enter"),
     path("world/<int:slot>/events/board/", world_views.world_board, name="world_board"),
     path("world/<int:slot>/town/jump/", world_views.world_jump, name="world_jump"),
+    path("world/<int:slot>/town/tutorial/", world_views.world_tutorial, name="world_tutorial"),
     path("world/events/", world_staff_views.world_events_staff, name="world_events_staff"),
     path("world/<int:slot>/scene/", world_views.world_scene, name="world_scene"),
     path("world/<int:slot>/scene/done/", world_views.world_scene_done, name="world_scene_done"),

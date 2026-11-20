@@ -10,6 +10,11 @@
       <p class="muted">{{ save.full_date }} · {{ save.time_of_day|lower }} · {{ save.money }} coins</p>
     </div>
   </div>
+  {% include "weiss/tutorial_guide.html" %}
+  {% if tutorial %}{% for item in decks %}{% if item.equipped %}
+    <p class="tutorial-count small" data-tutorial-count>Your equipped deck: <strong>{{ item.count }}</strong> cards.
+      {% if item.problem %}{{ item.problem }}{% else %}Legal: it's ready to duel.{% endif %}</p>
+  {% endif %}{% endfor %}{% endif %}
 
   {# The way in: open the packs, build a deck, then the town. Each step says where it's at. #}
   <ol class="world-steps">
@@ -89,7 +94,7 @@
       {% else %}
         <p class="muted">You can look around now, but you'll need a deck that's ready to duel anyone.</p>
       {% endif %}
-      <a class="button-small{% if step != 'ready' %} secondary{% endif %}" href="{% url 'weiss:world_town' save.slot %}">Go to the town</a>
+      <a class="button-small{% if step != 'ready' %} secondary{% endif %}{% if tutorial.step == 'deck' and tutorial.legal %} tutorial-target{% endif %}" href="{% url 'weiss:world_town' save.slot %}">Go to the town</a>
     </li>
   </ol>
 {% endblock %}

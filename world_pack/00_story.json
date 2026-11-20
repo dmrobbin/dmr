@@ -3,97 +3,19 @@
  "cpus": [],
  "story": [
   {
-   "key": "c1-guide",
-   "title": "Choose your guide",
-   "story": true,
-   "chapter": 1,
-   "about": "You've just arrived in town. Someone's offered to show you around: choose who.",
-   "scene": "World: Story, C1 Welcome",
-   "stages": [
-    {
-     "text": "Choose your guide",
-     "objectives": [
-      {
-       "do": "flag",
-       "flag": "mentor_chosen",
-       "text": "Choose who'll show you around"
-      }
-     ]
-    }
-   ],
-   "endings": [
-    {
-     "key": "done",
-     "title": "A guide chosen"
-    }
-   ]
-  },
-  {
    "key": "c1-tutorial",
    "title": "Learning the ropes",
    "story": true,
    "chapter": 1,
-   "requires": {
-    "quests": [
-     "c1-guide"
-    ]
-   },
-   "about": "{mentor} is showing you how things work in town: where to go, how to get cards, how to make friends, and how to duel.",
-   "scene": "World: Story, C1 Meet your guide",
+   "about": "Someone's showing you how things work here: making friends, the card shop, quests, time, your deck, and a first duel.",
    "stages": [
     {
-     "text": "Meet {mentor} in the plaza",
+     "text": "Follow your guide's lead",
      "objectives": [
       {
-       "do": "visit",
-       "place": "plaza",
-       "scene": "World: Story, C1 The town",
-       "rewards": [
-        {
-         "coins": 100
-        }
-       ]
-      }
-     ]
-    },
-    {
-     "text": "Go to the card shop with {mentor}",
-     "objectives": [
-      {
-       "do": "visit",
-       "place": "shop",
-       "scene": "World: Story, C1 The card shop",
-       "rewards": [
-        {
-         "coins": 200
-        }
-       ]
-      }
-     ]
-    },
-    {
-     "text": "Hear {mentor} out about making friends",
-     "objectives": [
-      {
-       "do": "talk",
-       "to": "{mentor}",
-       "script": [
-        "them: Friendship here is simple. Talk to people every day, even if it's only a hello.",
-        "them (pleased): Gifts matter. Everyone loves something different, so look for what makes them smile.",
-        "them: Duels make friends too. Win or lose, you'll both remember who played fair.",
-        "them: Ranks run from Stranger up to Best friend. Each step is a bit closer, and some of them unlock things.",
-        "them (pleased): Be someone's friend, and they'll be yours. That's the whole trick."
-       ]
-      }
-     ]
-    },
-    {
-     "text": "Duel {mentor} (they'll go easy on you)",
-     "objectives": [
-      {
-       "do": "duel",
-       "cpu": "{mentor}",
-       "model": "easy"
+       "do": "flag",
+       "flag": "tutorial_done",
+       "text": "Finish the tour with your guide"
       }
      ]
     }
@@ -200,82 +122,6 @@
  ],
  "scenes": [
   {
-   "name": "World: Story, C1 Welcome",
-   "script": [
-    "cast g0 as Aang",
-    "cast g1 as Chisato Nishikigi",
-    "cast g2 as Asuna Yuuki",
-    "cast g3 as Erza Scarlet",
-    "background sakura",
-    "narrator: You step off the road into the town square. It's busy, and everyone seems to know someone.",
-    "g0 enters far-left with slide",
-    "g1 enters left with fade",
-    "g2 enters right with fade",
-    "g3 enters far-right with slide",
-    "narrator: Four people come over at once. Each of them wants to show you around.",
-    "g0 (lose): Hi! I'm Aang. You look like you've just got off a long trip. I can show you where everything is.",
-    "g1: Chisato, from the café. I know where the best coffee is, the best cards, and the shortcuts nobody else uses.",
-    "g2: Asuna. I'll make you lunch first, and then I'll show you the arena, if you can handle it.",
-    "g3: Erza. I don't talk much, but I know how to win. And how to keep a friend.",
-    "player: Four of you, all offering at once. Who should I trust?",
-    "g0 (lose): Trust whoever you like best. That's kind of the point of this town.",
-    "g3: Don't overthink it. Pick the one you'd want to spend the afternoon with.",
-    "narrator: Choose who'll show you around.",
-    "choice Who will show you around?",
-    "- Aang: Let's start with the fun stuff. (set mentor_g0)",
-    "- Chisato: Show me the café and the cards. (set mentor_g1)",
-    "- Asuna: Lunch first, then the arena. (set mentor_g2)",
-    "- Erza: Teach me to win, and to make friends. (set mentor_g3)"
-   ]
-  },
-  {
-   "name": "World: Story, C1 Meet your guide",
-   "script": [
-    "cast guide as {mentor}",
-    "background sakura",
-    "guide enters center with fade",
-    "guide (lose): Welcome to town. I'm glad it's you I'm showing around.",
-    "player: Thanks. What's the first thing I should know?",
-    "guide: Three things. The plaza is where everyone meets. The card shop is where you get cards. And friends are why you keep coming back.",
-    "player: Friends?",
-    "guide (lose): The more time you spend with people here, the closer you get. Talk to them, give them gifts, duel them.",
-    "guide: Let's start with the plaza. Ready?"
-   ]
-  },
-  {
-   "name": "World: Story, C1 The town",
-   "script": [
-    "cast guide as {mentor}",
-    "background sakura",
-    "guide enters left with fade",
-    "guide: This is the plaza. People come and go, and they're not always here. Check the map to see who's where.",
-    "player: Who's here right now?",
-    "guide: Press M for the map. Anyone with a name is somewhere in town. Click them to talk, give a gift, or duel.",
-    "guide (lose): Everyone has their own days, so come back at different times to find someone new.",
-    "player: And the time?",
-    "guide: Time runs in four parts of the day: morning, noon, evening and night. Each talk or duel uses up that part of the day.",
-    "guide: When there's nothing left to do, pass time with W. The town carries on without you.",
-    "player: And the days?",
-    "guide: Seven days a week, and then Monday again. Most people keep a routine, so learn theirs."
-   ]
-  },
-  {
-   "name": "World: Story, C1 The card shop",
-   "script": [
-    "cast guide as {mentor}",
-    "background shop",
-    "guide enters right with slide",
-    "guide: This is the card shop. Packs are the main thing. Each one gives you a handful of cards from a set.",
-    "player: How do I get better cards?",
-    "guide: Specialty packs have better odds for one kind of card, like climaxes or a colour. They cost more, but they're worth it.",
-    "guide: Single cards are on the rack, a few rares a day. Those are for when you know exactly what you want.",
-    "guide (lose): Gifts are on their own tab. Everyone you talk to has tastes, so bring them something they'll love.",
-    "player: And the basket?",
-    "guide: Everything you pick, from any tab, goes in the basket. You can add more, or empty it, before you pay. Nothing is bought until you check out.",
-    "guide: Right. Let's go and get you some money to spend. Come and find me after the duel."
-   ]
-  },
-  {
    "name": "World: Story, C1 After the lesson",
    "script": [
     "cast guide as {mentor}",
@@ -324,5 +170,273 @@
     "guide: That's what friends are for. See you around."
    ]
   }
- ]
+ ],
+ "tutorial": {
+  "guides": [
+   "Aang",
+   "Chisato Nishikigi",
+   "Asuna Yuuki",
+   "Erza Scarlet"
+  ],
+  "lines": {
+   "arrive": {
+    "*": [
+     "narrator: The town square is busy and bright. Nobody here seems to be in a hurry.",
+     "narrator: You don't recognise anyone. The sign on the gate is in a language you can read, but the place feels strange.",
+     "narrator: A few people are standing around the plaza. Some are chatting, some are reading, one is hitting a training dummy with great enthusiasm.",
+     "narrator: You could wander around and hope to work it out. Or you could ask someone.",
+     "narrator: You decide to ask someone."
+    ]
+   },
+   "approach": {
+    "*": [
+     "player: Excuse me... where am I?",
+     "them: Oh! You're new, {player}, aren't you? I can always tell. Don't worry, it's like this for everyone when they first get here.",
+     "player: But where is here?",
+     "them: Here is... here. The best place to start. Come on, I'll show you around."
+    ],
+    "Aang": [
+     "player: Excuse me... where am I?",
+     "them (pleased): Whoa, you're new! Don't worry, it's like this for everyone when they first get here.",
+     "player: But where is here?",
+     "them: Ha! That's the question everyone asks. Let's just say here is wherever you're standing. Come on, I'll show you around!"
+    ],
+    "Chisato Nishikigi": [
+     "player: Excuse me... where am I?",
+     "them (pleased): Oh, hi! You're new, right? It's totally normal, everyone looks like that on their first day.",
+     "player: But where is here?",
+     "them: Here? It's the best place in the world, obviously! Let me show you round, it'll be fun."
+    ],
+    "Asuna Yuuki": [
+     "player: Excuse me... where am I?",
+     "them: You're new here, I can tell. It's like this for everyone at first, don't worry about it.",
+     "player: But where is here?",
+     "them (pleased): That's a long story, and I'd rather show you than tell you. Come on, let me show you around."
+    ],
+    "Erza Scarlet": [
+     "player: Excuse me... where am I?",
+     "them: New arrival. Obvious. It's the same for everyone who first comes here, so don't be alarmed.",
+     "player: But where is here?",
+     "them: Here is where you start. Walk with me, I'll show you the way."
+    ]
+   },
+   "talk": {
+    "*": [
+     "them: Let's talk about making friends. You can talk to anyone in town once a day, and each talk helps you get closer.",
+     "them: Friendship runs from Stranger, through Acquaintance and Friend, all the way to Best friend.",
+     "them: Each step unlocks something, and the best friends have a story to tell.",
+     "them: Go on, press Talk and say hello to me."
+    ],
+    "Aang": [
+     "them (pleased): Friends are the best part of this place! Talk to someone once a day, and you'll get closer to them.",
+     "them: Stranger, Acquaintance, Friend, all the way up to Best friend. Each one's a step closer.",
+     "them: Go on, press Talk and say hi!"
+    ],
+    "Chisato Nishikigi": [
+     "them (pleased): Okay, so, talking! Once a day with anyone, and you get closer. It's like a little café chat.",
+     "them: There are ranks, from Stranger all the way to Best friend. Each one's a bit more special.",
+     "them (pleased): Go on, press Talk and tell me something cool!"
+    ],
+    "Asuna Yuuki": [
+     "them: Talking to people is how you make friends. Once a day, with anyone, and each talk brings you closer.",
+     "them: The ranks go from Stranger up to Best friend. The closer you get, the more they'll look out for you.",
+     "them: Go on, press Talk, and tell me how your day's going."
+    ],
+    "Erza Scarlet": [
+     "them: Friendship is built one talk at a time. Once a day with anyone, and the ranks climb from Stranger to Best friend.",
+     "them: Each rank means more trust. You'll need it.",
+     "them: Press Talk."
+    ]
+   },
+   "gift": {
+    "*": [
+     "them: Gifts are the other way in. Everyone loves some things, likes others, and dislikes a few.",
+     "them: A loved gift does the most good. A liked one helps. A disliked one can set someone back.",
+     "them: You can give each person one gift a day, so make it count.",
+     "them: Go on, press Give a gift, and pick something for me."
+    ],
+    "Aang": [
+     "them (pleased): Here's a tip: I love cute things, and I like sweet and calm ones. Spicy things, not so much!",
+     "them: Gifts that someone loves do the most good. Liked ones help. Disliked ones can set someone back.",
+     "them: You can give one gift a day to each person. Go on, press Give a gift!"
+    ],
+    "Chisato Nishikigi": [
+     "them (pleased): Gifts make everyone happy! Things people love make them happiest, things they like help too.",
+     "them: Only one gift a day per person, so choose carefully.",
+     "them (pleased): Go on, press Give a gift and surprise me!"
+    ],
+    "Asuna Yuuki": [
+     "them: A gift is a way of showing you know someone. Loved things do the most good, liked things help, disliked things don't.",
+     "them: One gift a day per person. Think about what they'd really enjoy.",
+     "them: Go on, press Give a gift, and pick one for me."
+    ],
+    "Erza Scarlet": [
+     "them: Gifts. Each person loves some things, likes others, and dislikes some. Know the difference.",
+     "them: One gift a day per person. Do not waste them.",
+     "them: Press Give a gift."
+    ]
+   },
+   "map": {
+    "*": [
+     "them: Now let's look at the map. Every place in town is on it, and you can see who's there.",
+     "them: People come and go. Some are only out at certain times of day.",
+     "them: Anyone with a name is somewhere in town. Click them to talk, give a gift, or duel.",
+     "them: Let's go to the card shop. Open the map and choose the shop."
+    ],
+    "Aang": [
+     "them (pleased): Okay, the map! Every place in town is on it, and it shows who's there right now.",
+     "them: People come and go, so check it every time you want someone.",
+     "them: Let's go to the card shop! Open the map and pick the shop."
+    ],
+    "Chisato Nishikigi": [
+     "them (pleased): This is the map! All the places are on here, and little pictures show who's around.",
+     "them: Everyone's got their own days, so the map helps you find them.",
+     "them (pleased): Let's go to the card shop! Open the map and tap it."
+    ],
+    "Asuna Yuuki": [
+     "them: The map shows every place in town, and who's in each one.",
+     "them: People keep their own times, so check it before you go looking.",
+     "them: We're going to the card shop. Open the map and choose the shop."
+    ],
+    "Erza Scarlet": [
+     "them: The map. Every place is marked, and who is in it.",
+     "them: Some people only appear at certain times of day. Know where they are.",
+     "them: Open the map and choose the card shop."
+    ]
+   },
+   "shop": {
+    "*": [
+     "them: This is the card shop. Packs are the main thing: each one has a handful of cards from a set.",
+     "them: There are specialty packs, single cards, and gifts too. Everything you pick goes in the basket until you check out.",
+     "them: Specialty packs have better odds for one kind of card. Single cards are on the rack, a few rares a day.",
+     "them: Let's buy you a pack. Press Add 1 on a set, then Check out."
+    ],
+    "Aang": [
+     "them (pleased): The shop! Packs are the big thing here. Each one has cards from a set.",
+     "them: Everything you pick goes in the basket, and nothing's bought until you check out.",
+     "them: Press Add 1 on a set, then Check out. Let's go!"
+    ],
+    "Chisato Nishikigi": [
+     "them (pleased): Ooh, the shop! Packs, single cards, and gifts, all in one place.",
+     "them: Whatever you pick goes in your basket. You only pay when you check out.",
+     "them (pleased): Add 1 on a set, then check out! My treat for the first one."
+    ],
+    "Asuna Yuuki": [
+     "them: The card shop. Packs have cards from a set, and there are specialty packs and single cards too.",
+     "them: Your basket keeps everything you pick, until you check out and pay.",
+     "them: Press Add 1 on a set to buy a pack, then Check out."
+    ],
+    "Erza Scarlet": [
+     "them: Packs, specialty packs, single cards, gifts. Pick what you need, and check it in the basket.",
+     "them: Nothing is bought until you check out.",
+     "them: Add 1 on a set. Then check out."
+    ]
+   },
+   "quests": {
+    "*": [
+     "them: Some people in town have quests for you. Look for the ! over someone's head.",
+     "them: Quests are kept in the quest log. The notice board has the weekly notices too.",
+     "them: Press Quests and open the log, so you can see what's there."
+    ],
+    "Aang": [
+     "them (pleased): See the ! over someone's head? That means they've got a quest for you!",
+     "them: The quest log keeps everything, and the notice board has the weekly ones.",
+     "them: Press Quests and have a look!"
+    ],
+    "Chisato Nishikigi": [
+     "them (pleased): Quests! If someone's got one, you'll see a ! over them.",
+     "them: The quest log is where they're all kept. The notice board has the weekly ones too.",
+     "them (pleased): Press Quests and take a peek!"
+    ],
+    "Asuna Yuuki": [
+     "them: If someone's got a quest for you, there's a ! above them.",
+     "them: The quest log keeps them, and the notice board has the weekly notices.",
+     "them: Press Quests and open the log."
+    ],
+    "Erza Scarlet": [
+     "them: A quest is marked with a ! above someone.",
+     "them: The log keeps them. The notice board has the weekly ones.",
+     "them: Press Quests."
+    ]
+   },
+   "time": {
+    "*": [
+     "them: Time matters here. Each day has four parts: morning, noon, evening and night.",
+     "them: Talking to someone or duelling uses up that part of the day. You can't do it twice.",
+     "them: When there's nothing left to do, pass time. The town carries on without you.",
+     "them: Go on, press Pass time."
+    ],
+    "Aang": [
+     "them (pleased): Time moves in four parts: morning, noon, evening and night.",
+     "them: Talking or duelling uses that part of the day, so choose well!",
+     "them: When you're done, press Pass time to move on."
+    ],
+    "Chisato Nishikigi": [
+     "them (pleased): Okay, so there are four parts of the day: morning, noon, evening and night!",
+     "them: Chatting or duelling spends that part of the day. Then you pass time to move on.",
+     "them (pleased): Press Pass time when you're ready!"
+    ],
+    "Asuna Yuuki": [
+     "them: Each day has four parts: morning, noon, evening and night.",
+     "them: When you talk to someone or duel, that part of the day is used. Then you pass time to move on.",
+     "them: Press Pass time when you're ready."
+    ],
+    "Erza Scarlet": [
+     "them: Four parts of the day. Morning, noon, evening, night.",
+     "them: Talking or duelling spends one. Pass time when there's nothing more to do.",
+     "them: Press Pass time."
+    ]
+   },
+   "deck": {
+    "*": [
+     "them: Now your deck. You build decks only from cards you've opened, and you can have several.",
+     "them: The equipped one is the deck you duel with.",
+     "them: To be legal it needs 50 cards, 8 climaxes, and at most 4 of any one card.",
+     "them: Go on, open Decks and build a legal one."
+    ],
+    "Aang": [
+     "them (pleased): Decks! You can only use cards you've opened, so open a few packs first.",
+     "them: You can have several decks. The equipped one is the one you duel with.",
+     "them: A legal deck needs 50 cards, 8 climaxes, and no more than 4 of one card. Press Decks!"
+    ],
+    "Chisato Nishikigi": [
+     "them (pleased): Decks are made from the cards you've opened, so the more you open, the better!",
+     "them: You can have lots of decks. The one you've equipped is the one you duel with.",
+     "them (pleased): Legal means 50 cards, 8 climaxes, and at most 4 of each card. Press Decks!"
+    ],
+    "Asuna Yuuki": [
+     "them: Your decks are built from the cards you've opened. You can keep several, but only one is equipped to duel.",
+     "them: A legal deck has 50 cards, 8 climaxes, and at most 4 of any one card.",
+     "them: Open the decks, and build one that's legal."
+    ],
+    "Erza Scarlet": [
+     "them: Build decks only from cards you have opened. Keep several if you like. One is equipped.",
+     "them: Legal means 50 cards, 8 climaxes, at most 4 of one card.",
+     "them: Press Decks."
+    ]
+   },
+   "duel": {
+    "*": [
+     "them: Let's see what you've got. I'll go easy on you.",
+     "them: Press Duel when you're ready."
+    ],
+    "Aang": [
+     "them (pleased): Okay, let's see what you've got! I'll go easy on you, promise.",
+     "them: Press Duel when you're ready!"
+    ],
+    "Chisato Nishikigi": [
+     "them (pleased): Time for a duel! I'll go easy on you, okay?",
+     "them: Press Duel, and let's have fun!"
+    ],
+    "Asuna Yuuki": [
+     "them: Let's see what you can do. I'll go easy on you.",
+     "them: Press Duel when you're ready."
+    ],
+    "Erza Scarlet": [
+     "them: Let's see what you've got. I'll go easy on you.",
+     "them: Press Duel."
+    ]
+   }
+  }
+ }
 }

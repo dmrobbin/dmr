@@ -11,7 +11,7 @@
        data-duel-url="{% url 'weiss:world_duel' save.slot %}" data-buy-card-url="{% url 'weiss:world_buy_card' save.slot %}" data-pick-card-url="{% url 'weiss:world_pick_card' save.slot %}" data-request-set-url="{% url 'weiss:world_request_set' save.slot %}" data-checkout-url="{% url 'weiss:world_checkout' save.slot %}" data-slot="{{ save.slot }}"
        data-buy-gift-url="{% url 'weiss:world_buy_gift' save.slot %}" data-talk-url="{% url 'weiss:world_talk' save.slot %}"
        data-answer-url="{% url 'weiss:world_answer' save.slot %}" data-give-url="{% url 'weiss:world_give' save.slot %}" data-level-url="{% url 'weiss:world_level' save.slot %}" data-decks-url="{% url 'weiss:world_deck' save.slot %}?from=town"
-       data-quest-url="{% url 'weiss:world_quest' save.slot %}" data-jump-url="{% url 'weiss:world_jump' save.slot %}" data-test-mode-url="{% url 'weiss:world_test_mode' save.slot %}"
+       data-quest-url="{% url 'weiss:world_quest' save.slot %}" data-jump-url="{% url 'weiss:world_jump' save.slot %}" data-tutorial-url="{% url 'weiss:world_tutorial' save.slot %}" data-test-mode-url="{% url 'weiss:world_test_mode' save.slot %}"
        data-town-url="{% url 'weiss:world_town' save.slot %}" data-player="{{ request.user.username }}">
     {% csrf_token %}
     <p class="small town-notice" data-duel-banner hidden></p>
@@ -34,18 +34,28 @@
     <p class="small town-notice" data-deck-notice{% if town.deck_ready %} hidden{% endif %}>Your equipped deck isn't ready to duel yet.
       <a href="{% url 'weiss:world_deck' save.slot %}?from=town" data-sheet-open data-title="Your deck">Finish it</a> before you challenge anyone.</p>
 
+    {# The first chapter's goal (docs/world-tutorial-plan.md): shown above the stage while the tutorial is on. #}
+    <div class="town-goal" data-goal hidden role="status">
+      <p class="town-goal-text"><span class="town-goal-label">Goal</span> <span data-goal-text></span></p>
+      <button type="button" class="button-small secondary" data-tutorial-skip hidden>Skip the tutorial</button>
+    </div>
     <div class="vn-stage town-stage" data-stage>
       <div class="vn-bg" data-backdrop></div>
       <div class="town-light" data-light></div>
       <div class="town-people" data-people role="group" aria-label="Who's here"></div>
       {# The card shop's counter on the backdrop: the sign and the counter itself open the shop (world_town.js). #}
-      <button type="button" class="town-shop-hotspot" data-open-shop aria-expanded="false" aria-controls="town-shop" hidden>
+      <button type="button" class="town-shop-hotspot" data-open-shop data-tutorial="shop" aria-expanded="false" aria-controls="town-shop" hidden>
         <span class="town-shop-sign">Card shop</span>
       </button>
       <div class="town-empty" data-empty hidden>
         <p>Nobody's here right now.</p>
         <p class="small">Try the map, or wait a while.</p>
       </div>
+
+      {# The veil the spotlight dims the stage with (world_town.js renderTutorial): under the target and its panel. #}
+      <div class="town-tut-veil" data-tutorial-veil hidden></div>
+      {# What to press, next to the spotlit control (world_town.js renderTutorial). #}
+      <p class="town-tut-hint" data-tutorial-hint role="status" aria-live="polite" hidden></p>
 
       {# The game's own bar, over the stage: the menu, where and when, and passing time once the time's spent here. #}
       <div class="town-hud">
@@ -58,11 +68,12 @@
         </div>
         <div class="town-hud-side town-hud-end">
           {# Shown once the player has spent this time here (weiss.world.engaged): the one thing left to do is pass it. #}
-          <button type="button" class="town-hud-button town-hud-wait" data-wait hidden>Pass time: {{ town.next_time|lower }}</button>
+          <button type="button" class="town-hud-button town-hud-wait" data-wait data-tutorial="wait" hidden>Pass time: {{ town.next_time|lower }}</button>
           {# Sound on or off, the duel's setting too (world_audio.js). #}
           <button type="button" class="town-hud-button town-hud-icon town-hud-sound" data-sound-toggle aria-pressed="true" aria-label="Sound" title="Sound on: click to mute">
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>
           </button>
+          <button type="button" class="town-hud-button town-hud-decks" data-tutorial="decks" data-sheet-open data-title="Decks" data-url="{% url 'weiss:world_deck' save.slot %}?from=town">Decks</button>
           <button type="button" class="town-hud-button town-hud-icon" data-fullscreen aria-label="Full screen" title="Full screen (F)" hidden>
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
           </button>
@@ -72,10 +83,10 @@
       {# Everything the town offers, in one place. Closes once an item's chosen (its page or panel opens). #}
       <section class="town-hud-menu" id="town-hud-menu" data-menu-panel hidden aria-label="Town menu">
         <div class="town-hud-menu-list">
-          <button type="button" class="town-hud-menu-item" data-sheet-open data-title="Quests" data-url="{% url 'weiss:world_quests' save.slot %}" data-quests>
+          <button type="button" class="town-hud-menu-item" data-sheet-open data-title="Quests" data-url="{% url 'weiss:world_quests' save.slot %}" data-quests data-tutorial="quests">
             <span>Quests<span class="town-hud-menu-count" data-quests-count></span></span>
           </button>
-          <button type="button" class="town-hud-menu-item" data-open-map aria-expanded="false" aria-controls="town-map">
+          <button type="button" class="town-hud-menu-item" data-open-map data-tutorial="map" aria-expanded="false" aria-controls="town-map">
             <span>Map</span><span class="town-hud-menu-hint" data-map-hint hidden>Pass time to go somewhere else</span>
           </button>
           <button type="button" class="town-hud-menu-item" data-sheet-open data-title="Your deck" data-url="{% url 'weiss:world_deck' save.slot %}?from=town">
@@ -149,7 +160,7 @@
           <ul class="town-basket-lines" data-basket-lines></ul>
           <div class="town-basket-foot" data-basket-foot hidden>
             <p class="town-basket-total" data-basket-total aria-live="polite"></p>
-            <button type="button" class="button-small" data-checkout>Check out</button>
+            <button type="button" class="button-small" data-checkout data-tutorial="checkout">Check out</button>
           </div>
         </section>
         <div class="town-shop-tabs" role="tablist" aria-label="What the shop sells">

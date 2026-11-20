@@ -1,0 +1,9 @@
+{# The tutorial's guide banner (docs/world-tutorial-plan.md): what to do on this page. Shows only while the save's tutorial
+   is on, with the server's tutorial context (weiss.world_views). The thing to press is marked with the tutorial-target
+   class on the page itself. #}
+{% if tutorial %}
+  <aside class="tutorial-guide" aria-label="Tutorial" data-tutorial-guide aria-live="polite">
+    <p class="tutorial-guide-title"><span class="tutorial-guide-step">Tutorial</span>{{ tutorial.title }}</p>
+    {% if tutorial.hint %}<p class="small">{{ tutorial.hint }}</p>{% endif %}
+  </aside>
+{% endif %}

@@ -122,6 +122,9 @@ def main():
         if hasattr(module, "STORY"):
             pack["story"] = module.STORY
             pack["scenes"] = [{"name": scene["name"], "script": list(scene["lines"])} for scene in getattr(module, "STORY_SCENES", [])]
+        # TUTORIAL: the tutorial's guides and each step's lines (weiss.world_tutorial; docs/world-tutorial-plan.md).
+        if hasattr(module, "TUTORIAL"):
+            pack["tutorial"] = module.TUTORIAL
         # ARRIVALS: a newcomer's arrival scenes (docs/world-arrivals-plan.md), filed under the newcomer; the newcomer is "me".
         by_name = {cpu["name"]: cpu for cpu in pack["cpus"]}
         for arrival in getattr(module, "ARRIVALS", []):

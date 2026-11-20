@@ -3,7 +3,8 @@
 {% block title %}Quests · slot {{ save.slot }}{% endblock %}
 
 {% block content %}
-  <p class="back"><a href="{% url 'weiss:world_town' save.slot %}">← Back to the town</a></p>
+  <p class="back"><a href="{% url 'weiss:world_town' save.slot %}"{% if tutorial %} class="tutorial-target"{% endif %}>← Back to the town</a></p>
+  {% include "weiss/tutorial_guide.html" %}
   <div class="challenge-head">
     <div>
       <h1>Quests</h1>

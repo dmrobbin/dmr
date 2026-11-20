@@ -20,6 +20,7 @@ from . import world_calendar as calendar
 from . import world_events as events
 from . import world_rewards
 from . import world_roster as roster
+from . import world_tutorial as tutorial
 from .lists import CLIMAX_COUNT, COPY_LIMIT, DECK_SIZE, climax_problem, is_climax, unlimited, unplayable
 from .models import (Card, CardList, CardListEntry, CpuProfile, CpuSchedule, GameRoom, GiftItem, Scene, WorldPlace, WorldSave,
                      WorldSettings, default_ranks)
@@ -80,7 +81,7 @@ def changed(save, *fields):
     save.save(update_fields=list(dict.fromkeys([*fields, "version", "played"])))
 
 
-def start(user, slot, expansion_id, rng=random):
+def start(user, slot, expansion_id, rng=random, tutorial_on=False):
     """A new save in an empty slot: its packs and specialty packs to open, its coins, and an empty deck. Raises
     ValueError saying why it can't."""
     if slot not in WorldSave.SLOTS:
@@ -99,8 +100,10 @@ def start(user, slot, expansion_id, rng=random):
         save.deck = CardList.objects.create(user=user, name="Deck 1", world_save=save)
         save.save(update_fields=["deck"])
         roster.ensure(save)  # who's in town: a small cast to start, more each week
-        if quests.begin_story(save):  # the story's first chapter, and its opening scene for the first visit to the town
-            save.save(update_fields=["quests", "flags", "roster"])
+        if tutorial_on:  # a new game (world_views.world_new): a guide shows them round, step by step, the first time in town
+            tutorial.start(save)
+        quests.begin_story(save)  # the story's first chapter
+        save.save(update_fields=["quests", "flags", "roster"])
     return save
 
 
@@ -380,12 +383,16 @@ def travel(save, key):
     place = next((place for place in places(save) if place.key == key), None)
     if not place:
         raise ValueError("You can't go there.")
-    if engaged(save) and place.key != save.place and not test_mode(save):
+    if engaged(save) and place.key != save.place and not test_mode(save) and not tutorial.active(save):
         raise ValueError(f"You've spent {this_time(save)} here: pass time before you go somewhere else.")
+    if place.key != save.place:  # while the tutorial's on, it says where the player can go (not the time spent)
+        tutorial.allows(save, "travel", place=place.key)
     chose = save.flags.pop("choose", None) is not None
     if place.key != save.place or chose:  # arriving, or staying for a new time of day: visits done here
         save.place = place.key
         quests.arrived(save)
+        if place.key == "shop":
+            tutorial.did(save, "travel_shop")
         changed(save, "place", *TALK_FIELDS, "rewards")
     return place
 
@@ -397,9 +404,14 @@ def wait(save, staff=False):
     allowed, why = can_wait(save)
     if staff and test_mode(save):
         allowed, why = (False, "You're in a duel: finish it first.") if live_duel(save) else (True, "")
+    else:
+        tutorial.allows(save, "wait")
+        if tutorial.step(save) == "time":  # the tutorial's step: time can pass, spent or not
+            allowed, why = (False, "You're in a duel: finish it first.") if live_duel(save) else (True, "")
     if not allowed:
         raise ValueError(why)
     time_passed(save)
+    tutorial.did(save, "time")
     changed(save, "turn", "today", "quests", "flags", "events", "money")
 
 
@@ -483,6 +495,11 @@ def whereabouts(save, turn=None):
     """{cpu id: the haunt it's at} now (or at this turn): the day's draw (day_cast), less any CPU there by a haunt the
     player doesn't know it well enough for yet, and any a quest sent away."""
     turn = save.turn if turn is None else turn
+    shown = tutorial.cast(save) if turn == save.turn else None  # the tutorial: its guide (or the candidates), no one else
+    if shown is not None:
+        places_by_key = {place.key: place for place in WorldPlace.objects.filter(key__in=set(shown.values()))}
+        return {cpu_id: CpuSchedule(cpu_id=cpu_id, place=places_by_key[key], days=[], times=[], weight=0)
+                for cpu_id, key in shown.items() if key in places_by_key}
     cast = day_cast(save, turn // len(WorldSave.TIMES))[turn % len(WorldSave.TIMES)]
     away = quests.gone(save)  # sent away for good by a quest's ending: the day's draw keeps their place empty
     found = {cpu_id: rule for cpu_id, rule in cast.items()
@@ -618,6 +635,7 @@ def start_duel(save, cpu_id, high_stakes=False):
     if not found:
         raise ValueError("They aren't here now.")
     cpu, rule = found
+    tutorial.allows(save, "duel", cpu=cpu)
     if high_stakes and events.opponent(save) == cpu.pk:
         raise ValueError("A tournament round isn't played for stakes.")
     offered = offered_stake(save, cpu.pk)
@@ -633,6 +651,8 @@ def start_duel(save, cpu_id, high_stakes=False):
     seat_cpu(room, cpu)
     if (model := quests.duel_model(save, cpu)):  # a quest's duel sets how it plays (the story's lesson: easy)
         room.state["cpu_model"] = model
+    if tutorial.easy(save, cpu):  # the tutorial's duel with the guide: they go easy
+        room.state["cpu_model"] = "easy"
     room.save()
     events.round_started(save, room)  # the player's tournament opponent, at their round's time: it's that round
     quests.duel_started(save, room)
@@ -688,6 +708,8 @@ def game_finished(room, over):
                                    "before": {"time": save.turn % len(WorldSave.TIMES), "label": f"{calendar.date_label(save.turn)}, {save.time_of_day.lower()}",
                                               "day": save.day}}
         quests.duel_finished(save, room, won)
+        if tutorial.easy(save, cpu) if cpu else False:  # the tutorial's duel, won or lost: it's over, and normal play opens
+            tutorial.did(save, "duel")
         time_passed(save)
         changed(save, "money", "today", "flags", "turn", "relations", "pool", "gifts", "last_opening", "quests", "events", "rewards")
 
@@ -768,6 +790,7 @@ def request_words(save, asked):
 def request_set(save, expansion_id):
     """Ask the card shop to stock a set: it's on the shelves from tomorrow for REQUEST_DAYS days. One at a time: the
     next can be asked for once it's gone. Raises ValueError saying why it can't."""
+    tutorial.allows(save, "shop")
     here = place_of(save)
     if not here or not here.shop:
         raise ValueError("You need to be at the card shop.")
@@ -837,6 +860,7 @@ def shop_cards(save):
 
 def buy_card(save, card_id):
     """Buy one of the day's single cards: a copy goes in the save's cards. One of each a day. Raises ValueError."""
+    tutorial.allows(save, "shop")
     here = place_of(save)
     if not here or not here.shop:
         raise ValueError("You need to be at the card shop.")
@@ -858,6 +882,7 @@ def buy_card(save, card_id):
 def buy_specialty(save, buff_id, data, rng=random):
     """Buy a specialty pack (SHOP_SPECIALS) of one of the day's sets, with its level or color as chosen (`data`, as
     posted), and open it into the save's cards. Raises ValueError saying why it can't."""
+    tutorial.allows(save, "shop")
     here = place_of(save)
     if not here or not here.shop:
         raise ValueError("You need to be at the card shop.")
@@ -975,6 +1000,7 @@ def checkout(save, items, expected=None, rng=random):
     nothing is, since the caller's transaction is undone. `expected`: the total the page showed; if prices have moved
     since (a sale ended), nothing's bought and the player's told. The packs opened are revealed together.
     Returns {"packs": how many packs were opened, "bought": [what was bought, in words]}."""
+    tutorial.allows(save, "shop")
     here = place_of(save)
     if not here or not here.shop:
         raise ValueError("You need to be at the card shop.")
@@ -1050,6 +1076,7 @@ def shop(save):
 
 def buy_packs(save, expansion_id, count, rng=random):
     """Buy packs at the shop (where the save is) and open them into its cards. Raises ValueError saying why it can't."""
+    tutorial.allows(save, "shop")
     here = place_of(save)
     if not here or not here.shop:
         raise ValueError("You need to be at the card shop.")
@@ -1071,6 +1098,7 @@ def buy_packs(save, expansion_id, count, rng=random):
     if cheap:
         events.used_sale(save, sale, cheap)
     save.last_opening = {**packs.opening(pool, opened), "set_id": expansion_id, "bought": True}
+    tutorial.did(save, "buy_pack")
     changed(save, "pool", "money", "last_opening", "events")
     return save.last_opening
 
@@ -1448,11 +1476,13 @@ def duel_intro(save, cpu):
 def talk(save, cpu_id):
     """Talk to someone here: the day's first talk with them brings points."""
     cpu = someone_here(save, cpu_id)
+    tutorial.allows(save, "talk", cpu=cpu)
     rel = relation(save, cpu.pk)
     if rel.get("talked_turn") == save.turn:
         raise ValueError(f"You've talked with {cpu.name} {this_time(save)} already.")
     rel["talked_turn"] = save.turn
     engage(save)
+    tutorial.did(save, "talk")
     cold = quests.estranged(save, cpu.pk)  # a choice closed this friendship: they say so (their own lines, or the built-in)
     if rel.get("talked") == save.day:
         return converse(save, cpu, talk_line(save, cpu.pk, cold, first=False))
@@ -1507,6 +1537,7 @@ def quest_then(save, cpu, then):
 def quest_act(save, cpu_id, act, key, data):
     """Something the player does about a quest with someone here: hear its offer, take it, talk about it, hand a card
     over, or choose how it ends. What the town gets: {"talk": {...}}, as converse."""
+    tutorial.allows(save, "quest")
     cpu = someone_here(save, cpu_id)
     quest = quests.find_quest(save, key)
     engage(save)
@@ -1564,6 +1595,7 @@ def inventory(save):
 
 
 def buy_gift(save, key):
+    tutorial.allows(save, "shop")
     here = place_of(save)
     if not here or not here.shop:
         raise ValueError("You need to be at the card shop.")
@@ -1583,6 +1615,7 @@ def buy_gift(save, key):
 def give(save, cpu_id, key):
     """Give someone here a gift: once a day each. Their points change by how they take it, and they say so."""
     cpu = someone_here(save, cpu_id)
+    tutorial.allows(save, "give", cpu=cpu)
     item = gift_items(save).filter(key=key).first()
     if not item or save.gifts.get(key, 0) < 1:
         raise ValueError("You don't have that to give.")
@@ -1601,6 +1634,7 @@ def give(save, cpu_id, key):
         del save.gifts[key]
     rel["gifted"] = save.day
     quests.gift_given(save, cpu, item)
+    tutorial.did(save, "gift")
     reaction = taste(cpu, item)
     world = Talk(save, cpu, "gift")
     gained = world.points(gain(cpu, GIFT_POINTS[reaction]))
@@ -1700,6 +1734,8 @@ def town_news(save):
 def town(save):
     """The town as the page shows it: when and where it is, the save's coins, who's here, the shop and the map."""
     roster.ensure(save)
+    if tutorial.refresh(save):  # a step done by itself (a deck made legal on its own page)
+        changed(save, "flags", "gifts", "money")
     known = places(save)
     here = place_of(save, known)
     time = save.turn % len(WorldSave.TIMES)
@@ -1738,6 +1774,7 @@ def town(save):
         # A scene still to watch (a rank-up's, a quest's): kept until it's seen, wherever the player went in between.
         "scene": scene_waiting(save),
         "card_pick": world_rewards.card_pick_view(save),
+        "tutorial": tutorial.view(save),  # the guide showing a new player round (docs/world-tutorial-plan.md), or None
     }
 
 

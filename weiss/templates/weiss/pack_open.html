@@ -8,6 +8,7 @@
 {% block content %}
   {# Expects back_url and back_label, and actions: [(label, url, primary)] for once every card's been seen. #}
   <p class="back"><a href="{{ back_url }}">&larr; {{ back_label }}</a></p>
+  {% include "weiss/tutorial_guide.html" %}
   <h1>{{ set_name }}</h1>
   <div class="pack-table" data-pack-table>
     <p class="muted small" data-pack-hint>{{ count }} pack{{ count|pluralize }}. Click {% if count == 1 %}it{% else %}the first{% endif %} to open.</p>
@@ -24,7 +25,7 @@
     <ul class="pack-grid" data-pack-grid></ul>
     <div class="list-actions">
       {% if again %}<form method="post" action="{{ again.url }}">{% csrf_token %}<input type="hidden" name="count" value="{{ again.count }}"><button type="submit" class="button-small">{{ again.label }}</button></form>{% endif %}
-      {% for label, url, primary in actions %}<a class="button-small{% if not primary %} secondary{% endif %}" href="{{ url }}">{{ label }}</a>{% endfor %}
+      {% for label, url, primary in actions %}<a class="button-small{% if not primary %} secondary{% else %}{% if tutorial %} tutorial-target{% endif %}{% endif %}" href="{{ url }}">{{ label }}</a>{% endfor %}
     </div>
   </section>
   {{ opening|json_script:"pack-opening" }}

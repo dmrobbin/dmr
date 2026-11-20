@@ -29,6 +29,7 @@ from . import world_calendar
 from . import world_events as events
 from . import world_rewards
 from . import world_roster as roster
+from . import world_tutorial as tutorial
 from .cpu_views import MAX_LOADOUT, MAX_START_PACKS, back_to, staff_required
 from .lists import CLIMAX_COUNT, COPY_LIMIT, DECK_GROUPS, DECK_SIZE, unlimited
 from .models import CardList, CpuProfile, CpuSchedule, Scene, WorldPlace, WorldSave, WorldSettings
@@ -140,7 +141,7 @@ def world_new(request, slot):
         return redirect("weiss:world_save", slot=slot)
     if request.method == "POST":
         try:
-            world.start(request.user, slot, int(request.POST.get("set") or 0))
+            world.start(request.user, slot, int(request.POST.get("set") or 0), tutorial_on=True)
         except ValueError as error:
             messages.error(request, str(error) if str(error)[:1].isupper() else "Choose a set.")
             return redirect("weiss:world_new", slot=slot)
@@ -185,6 +186,7 @@ def world_save(request, slot):
         context["climaxes"] = buffs.climax_choices(save)
     if any(r["buff"].pack == "wild" for r in rewards):
         context["all_sets"] = packs.pack_sets()
+    context["tutorial"] = tutorial.banner(save, "save")  # the tutorial's guide, while it's on (docs/world-tutorial-plan.md)
     return render(request, "weiss/world_save.html", context)
 
 
@@ -228,6 +230,7 @@ def world_opened(request, slot):
     return render(request, "weiss/pack_open.html", {
         "set_id": opening["set_id"], "set_name": opening["set"], "count": len(opening["packs"]), "pack_size": packs.PACK_SIZE,
         "opening": opening, "back_url": back, "back_label": f"Slot {slot}", "actions": actions, "again": again,
+        "tutorial": tutorial.banner(save, "reveal"),
     })
 
 
@@ -299,6 +302,7 @@ def world_deck(request, slot, deck=None):
     town_flow = from_town(request)
     equipped = chosen.pk == save.deck_id
     return render(request, "weiss/challenge_deck.html", {
+        "tutorial": tutorial.banner(save, "deck"),
         "run": save, "cards": cards, "deck_size": DECK_SIZE, "climax_target": CLIMAX_COUNT, "climax_min": CLIMAX_COUNT,
         "copy_limit": COPY_LIMIT, "over_size_ok": False, "options": options, "partner": None, "deck_groups": groups, "state_url": "",
         "back_url": reverse("weiss:world_town", args=[slot]) if town_flow else reverse("weiss:world_save", args=[slot]),
@@ -533,9 +537,12 @@ def world_quests(request, slot):
     save, away = save_or_home(request, slot)
     if away:
         return away
+    if tutorial.step(save) == "quests":  # the tutorial's step: the player's found the quest log
+        tutorial.did(save, "quests")
+        world.changed(save, "flags")
     found = quests.journal(save)
     tab = request.GET.get("show") if request.GET.get("show") in ("done", "failed") else "active"
-    return render(request, "weiss/world_quests.html", {"save": save, "journal": found, "tab": tab,
+    return render(request, "weiss/world_quests.html", {"save": save, "journal": found, "tab": tab, "tutorial": tutorial.banner(save, "quests"),
                                                        "tabs": [("active", "Under way", len(found["active"]) + len(found["offered"])
                                                                  + sum(1 for chapter in found["story"] if chapter.get("stages"))),
                                                                 ("done", "Finished", len(found["done"])),
@@ -586,6 +593,7 @@ def world_board(request, slot):
     try:
         with transaction.atomic():
             save = WorldSave.objects.select_for_update().get(pk=save.pk)
+            tutorial.allows(save, "board")
             if request.POST.get("act") == "take":
                 quests.accept(save, None, key)
                 said = "Taken. It's in your quest log, and here on the board."
@@ -599,6 +607,25 @@ def world_board(request, slot):
     else:
         messages.success(request, said)
     return redirect("weiss:world_events", slot=slot)
+
+
+@town_move
+def world_tutorial(request, save):
+    """The tutorial (weiss.world_tutorial): its lines have been played ("said"), a new player approaches someone to ask
+    where they are ("approach": they become the guide), or staff skip it in test mode ("skip")."""
+    act = request.POST.get("act", "")
+    if act == "said":
+        tutorial.said(save)
+    elif act == "approach":
+        cpu = tutorial.approach(save, request.POST.get("cpu", ""))
+        world.changed(save, "flags", "roster", "gifts", "money", "quests")
+        return {"said": f"You ask {cpu.name} where you are."}
+    elif act == "skip":
+        tutorial.skip(save)
+    else:
+        raise ValueError("That isn't part of the tutorial.")
+    world.changed(save, "flags", "gifts", "money", "quests")
+    return ""
 
 
 @town_move

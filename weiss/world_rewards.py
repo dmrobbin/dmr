@@ -34,6 +34,7 @@ def pick_card(save, card_id):
     """Takes the offer's card: a copy goes in the save's cards, and the offer's gone. Raises ValueError."""
     from . import world  # weiss.world imports this module
 
+    world.tutorial.allows(save, "pick")  # not in its table: refused with the guide's waiting message, while it's on
     offer = save.flags.get("card_pick")
     if not offer:
         raise ValueError("There's no card to choose.")

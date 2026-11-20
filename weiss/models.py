@@ -706,6 +706,7 @@ class WorldSettings(models.Model):
     weekly_cast = models.PositiveSmallIntegerField(default=4, help_text="More CPUs arriving each week after (those a quest ties together arrive together)")
     arrival_coins = models.PositiveIntegerField(default=200, help_text="Coins a newcomer's arrival scene gives, unless the choice made gives a pack")
     arrival_points = models.PositiveSmallIntegerField(default=8, help_text="Friendship points with the character the player sides with in an arrival scene")
+    tutorial_guides = models.JSONField(default=list, blank=True, help_text="The CPUs (by name) a new player can ask to be their guide in the tutorial")
     ranks = models.JSONField(default=default_ranks, help_text="Friendship ranks with each CPU: [{name, points}], from the first (0 points)")
     updated = models.DateTimeField(auto_now=True)
     updated_by = models.ForeignKey("auth.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
@@ -842,6 +843,21 @@ class WorldEvent(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class TutorialLine(models.Model):
+    """What the guide says at one of the tutorial's steps (weiss.world_tutorial), as chatter (them, player, narrator):
+    for one guide, or (cpu empty) for any. Imported from the story pack's TUTORIAL."""
+
+    step = models.CharField(max_length=20)
+    cpu = models.ForeignKey(CpuProfile, null=True, blank=True, on_delete=models.CASCADE, related_name="tutorial_lines")
+    script = models.TextField()
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["step", "cpu"], name="tutorial_line_once")]
+
+    def __str__(self):
+        return f"{self.step} ({self.cpu.name if self.cpu_id else 'any guide'})"
 
 
 class GiftItem(models.Model):
