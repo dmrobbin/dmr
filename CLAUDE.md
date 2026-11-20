@@ -7,10 +7,10 @@ back to it (SendMessage to "World Planner") when you're done or stuck: what you 
 
 | Session | Role | Gets |
 |---|---|---|
-| World Planner | Coordinator and lead developer | Plans, groundwork, difficult or cross-cutting code |
+| World Planner | Coordinator, designer and reviewer | Plans, contracts, design decisions; reviews everyone's work |
+| Tucker JR | Developer | Most of the coding: server, models, tests, and small mechanical tasks |
 | Sam Front End, Sam 2 Front End | Front-end developers | Visual and UI changes: templates, CSS, the page scripts |
 | Danny Writer | Writer | Scenes, dialogue (chatter), quests and other in-game text |
-| Tucker JR | Junior developer | Small, contained tasks that need no creative decisions |
 
 ## Ground rules
 

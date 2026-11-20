@@ -393,6 +393,8 @@ def travel(save, key):
         quests.arrived(save)
         if place.key == "shop":
             tutorial.did(save, "travel_shop")
+        if chose:  # the map after time passed is answered: that's the tutorial's "time" step
+            tutorial.did(save, "time")
         changed(save, "place", *TALK_FIELDS, "rewards")
     return place
 
@@ -411,7 +413,6 @@ def wait(save, staff=False):
     if not allowed:
         raise ValueError(why)
     time_passed(save)
-    tutorial.did(save, "time")
     changed(save, "turn", "today", "quests", "flags", "events", "money")
 
 

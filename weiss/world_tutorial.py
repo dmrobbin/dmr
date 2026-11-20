@@ -19,7 +19,7 @@ INFO = {
     "arrive": ("Ask someone where you are", "Click one of the people here to ask them.", ["person"], "approach"),
     "approach": ("Listen", "", [], None),
     "talk": ("Talk to {guide}", "Press Talk.", ["talk"], "talk"),
-    "gift": ("Give {guide} a gift", "Press Give a gift, then choose the gift.", ["gift"], "gift"),
+    "gift": ("Give {guide} a gift", "Press Give a gift, then choose the gift.", ["gift", "gift-item"], "gift"),
     "map": ("Go to the card shop", "Open the map and choose the card shop.", ["map", "place-shop"], "travel_shop"),
     "shop": ("Buy a pack", "Open the shop counter, add a pack to your basket, then check out.", ["shop", "add-pack", "checkout"], "buy_pack"),
     "quests": ("Look at your quests", "Press Quests to open your quest log.", ["quests"], "quests"),
@@ -115,6 +115,9 @@ def view(save):
     cpu = guide(save)
     title, hint, highlight, _ = INFO[name]
     who = cpu.name if cpu else "Your guide"
+    if name == "time" and world.choice_pending(save):  # the map's open: every place is an answer, staying too
+        highlight = [f"place-{place.key}" for place in world.places(save)]
+        hint = "Choose where to go next: anywhere's fine, staying too."
     return {"step": name, "title": title.format(guide=who), "hint": hint.format(guide=who), "highlight": highlight,
             "lines": [] if found.get("said") else lines(save, name),
             "guide": {"id": cpu.pk, "name": cpu.name} if cpu else None,

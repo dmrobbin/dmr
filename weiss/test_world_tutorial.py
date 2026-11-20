@@ -138,7 +138,27 @@ class StepTests(TutorialBase):
     def test_passing_time_only_at_its_step(self):
         save = self.through("time")
         world.wait(save)
+        self.assertEqual(self.step(), "time")  # the map's open: the step waits for an answer
+        world.travel(save, world.place_of(save).key)
         self.assertEqual(self.step(), "deck")
+
+    def test_the_map_after_passing_time_lets_every_place_through(self):
+        save = self.through("time")
+        world.wait(save)
+        view = tutorial.view(save)
+        self.assertEqual(view["highlight"], [f"place-{place.key}" for place in world.places(save)])
+        self.assertIn(f"place-{world.place_of(save).key}", view["highlight"])  # staying put is an answer too
+
+    def test_going_somewhere_else_answers_the_map_too(self):
+        save = self.through("time")
+        world.wait(save)
+        other = next(place.key for place in world.places(save) if place.key != save.place)
+        world.travel(save, other)
+        self.assertEqual(self.step(), "deck")
+
+    def test_the_gift_step_lets_the_player_pick_a_gift(self):
+        save = self.through("gift")
+        self.assertIn("gift-item", tutorial.view(save)["highlight"])
 
     def test_the_deck_step_waits_for_a_legal_deck(self):
         save = self.through("deck")
