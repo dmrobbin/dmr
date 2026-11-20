@@ -927,7 +927,10 @@
   // log, the decks, passing time), so when one of those is the step's, the menu's button is spotlit until it's open.
   function tutTargetEl() {
     const tut = town.tutorial;
+    // While a panel is open, its button (the counter, the map) is behind it: the spotlight goes to what's inside.
+    const behind = [!shop.hidden && "shop", !map.hidden && "map"].filter(Boolean);
     for (const id of tut.highlight) {
+      if (behind.includes(id)) continue;
       const el = root.querySelector(`[data-tutorial="${id}"]`);
       if (onScreen(el)) return el;
     }
@@ -1180,6 +1183,7 @@
       item.append(button);
       list.append(item);
     }
+    renderTutorial(); // the places and the stock are built now: the spotlight can find them
   }
 
   // Who's at a place, for its card on the map: their circle pictures and names, a few at most and how many more.
@@ -1460,6 +1464,7 @@
     listCards();
     listGifts();
     paintBasket();
+    renderTutorial(); // the places and the stock are built now: the spotlight can find them
   }
 
   function listGifts() {
