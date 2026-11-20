@@ -109,9 +109,32 @@ def entry(spec):
     return {"name": name, "world": world, "scenes": scenes}
 
 
+def minigame_lines(source):
+    """MINIGAME_LINES: the minigames' lines, read by weiss.minigame_views (docs/minigames-plan.md), not a cast. The world
+    game's per-CPU lines (WORLD_LINES in minigame_world_lines.py) go in under each CPU's "world" key."""
+    module_spec = importlib.util.spec_from_file_location(source.stem, source)
+    module = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(module)
+    data = module.MINIGAME_LINES
+    world_source = HERE / "src" / "minigame_world_lines.py"
+    if world_source.exists():
+        world_spec = importlib.util.spec_from_file_location(world_source.stem, world_source)
+        world_module = importlib.util.module_from_spec(world_spec)
+        world_spec.loader.exec_module(world_module)
+        for name, moments in world_module.WORLD_LINES.items():
+            data.setdefault(name, {})["world"] = moments
+    (HERE / "minigame_lines.json").write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    print("minigame_lines.json written")
+
+
 def main():
     built = 0
     for source in sorted((HERE / "src").glob("*.py")):
+        if source.stem == "minigame_lines":
+            minigame_lines(source)
+            continue
+        if source.stem == "minigame_world_lines":  # merged into minigame_lines.json
+            continue
         module_spec = importlib.util.spec_from_file_location(source.stem, source)
         module = importlib.util.module_from_spec(module_spec)
         module.cpu = cpu

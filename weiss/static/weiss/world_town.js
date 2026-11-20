@@ -578,9 +578,55 @@
         : "Testing: a rank at once.";
       list.push(["⬆ Raise a rank (staff)", raiseLevel, { disabled: top, title: hint }]);
     }
+    // A game with them: the points it gives (twice the talk's, three times on a win), or that it's been played today.
+    const game = person.minigame || {};
+    if (game.allowed || game.played) {
+      const label = game.played ? "Play a game · played today" : `Play a game (${game.points} points, ${game.win_points} on a win)`;
+      list.push([label, () => gamePick(person), { disabled: !game.allowed, title: game.played ? "You've played a game with them today." : "" }]);
+    }
     list.push(["Leave", leave, { quiet: true }]);
     options(list);
     if (why && !(town.tutorial && town.tutorial.step !== "deck")) note(why, !town.deck_ready && !town.duel ? { href: root.dataset.decksUrl, text: "Your decks", title: "Your deck" } : null);
+  }
+
+  // "Play a game" (world_minigame_pick.html, cloned from the town's template): pick one of the five, then the game's page
+  // (world_minigame_play, the same page as the path's game). Back returns to the talk menu.
+  function gamePick(person) {
+    const game = person.minigame || {};
+    menu.replaceChildren();
+    gamePanel.replaceChildren(document.getElementById("town-minigame-template").content.cloneNode(true));
+    gamePanel.querySelector("[data-pick-name]").textContent = person.name;
+    gamePanel.querySelector("[data-pick-points]").textContent = `A game gives ${game.points} points, and ${game.win_points} on a win.`;
+    gamePanel.hidden = false;
+    const heading = gamePanel.querySelector("h2");
+    // Back and Escape both close the chooser and put focus back on the talk menu's first choice.
+    const closeGamePick = () => {
+      gamePanel.hidden = true;
+      gamePanel.replaceChildren();
+      if (talking) {
+        choices();
+        (menu.querySelector("button:not(:disabled)") || menuButton).focus({ preventScroll: true });
+      } else {
+        menuButton.focus({ preventScroll: true });
+      }
+    };
+    gamePanel.querySelector("[data-pick-back]").addEventListener("click", closeGamePick);
+    gamePanel.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeGamePick();
+    });
+    gamePanel.querySelector("[data-pick-play]").addEventListener("click", async () => {
+      const picked = gamePanel.querySelector('input[name="game"]:checked');
+      const data = await post(root.dataset.minigameUrl, { cpu: person.id, game: picked ? picked.value : "" });
+      if (data && data.go) {
+        window.location.href = data.go;
+        return;
+      }
+      gamePanel.querySelector("[data-pick-note]").textContent = data && data.error ? data.error : "";
+    });
+    heading.focus({ preventScroll: false });
   }
 
   // ---- Quests in the talk box (weiss.world.quest_act): offers, talking them through, handing cards over, endings ----
@@ -595,6 +641,7 @@
 
   // A panel under the words, for an offer or the endings: built from text nodes only (quest text is staff-written).
   const panelEl = $("[data-quest-panel]");
+  const gamePanel = $("[data-minigame-panel]");
   function clearPanel() {
     panelEl.replaceChildren();
     panelEl.hidden = true;

@@ -1,0 +1,87 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}{{ game }} · Infinite challenge{% endblock %}
+
+{% block content %}
+  {% comment %}
+    The minigame space on an infinite challenge's path (challenge_views.challenge_minigame), and the town's game (world_views.
+    world_minigame_play, with run=None). Context: run, game (the display title), data_url, done_url, player_name, back_url.
+    A co-op challenge also passes coop, partner, and the state (waiting, result, lucky_pack, pack_pick, pick_key, packs); the
+    partial challenge_minigame_result.html shows those states. The game plays here, and its result is posted to done_url:
+    solo answers with a redirect back to the path or the town, and co-op answers with the state, so the page reloads.
+  {% endcomment %}
+  <p class="back"><a href="{{ back_url }}">← {% if run %}Back to the path{% else %}Back to the town{% endif %}</a></p>
+  <h1>{{ game }}</h1>
+  <div hidden data-csrf>{% csrf_token %}</div>
+  {% if waiting or result or pack_pick %}
+    {% include "weiss/challenge_minigame_result.html" %}
+  {% else %}
+    <p class="muted small" data-minigame-status aria-live="polite"></p>
+    <div class="minigame-stage" data-minigame-stage data-data-url="{{ data_url }}" data-done-url="{{ done_url }}"
+         data-back-url="{{ back_url }}" data-player-name="{{ player_name }}"{% if coop %} data-coop{% endif %}></div>
+  {% endif %}
+
+  <script src="{% static 'weiss/minigames/audio.js' %}" defer></script>
+  <script src="{% static 'weiss/minigames/shell.js' %}" defer></script>
+  <script src="{% static 'weiss/minigames/memory.js' %}" defer></script>
+  <script src="{% static 'weiss/minigames/cups.js' %}" defer></script>
+  <script src="{% static 'weiss/minigames/invaders.js' %}" defer></script>
+  <script src="{% static 'weiss/minigames/higher_lower.js' %}" defer></script>
+  <script src="{% static 'weiss/minigames/runner.js' %}" defer></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const token = document.querySelector("[data-csrf] input").value;
+
+      // Waiting for the partner: the server says when they've posted, so the page checks again by reloading.
+      if (document.querySelector("[data-waiting]")) setTimeout(() => location.reload(), 6000);
+
+      // The winner's pick: posted here, then on to the redirect.
+      const pickForm = document.querySelector("[data-pick-form]");
+      if (pickForm) {
+        pickForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const error = pickForm.querySelector("[data-pick-error]");
+          error.hidden = true;
+          const posted = await fetch(pickForm.action, { method: "POST", headers: { "X-CSRFToken": token }, body: new FormData(pickForm) });
+          const answer = await posted.json();
+          if (!posted.ok) {
+            error.textContent = answer.error || "That didn't go through.";
+            error.hidden = false;
+            return;
+          }
+          location.assign(answer.redirect);
+        });
+      }
+
+      const stage = document.querySelector("[data-minigame-stage]");
+      if (!stage) return;  // a waiting, result or pick state: nothing to play
+      const status = document.querySelector("[data-minigame-status]");
+      const response = await fetch(stage.dataset.dataUrl, { headers: { Accept: "application/json" } });
+      const data = await response.json();
+      if (!response.ok) {
+        status.textContent = data.error || "That didn't load.";
+        return;
+      }
+      // The game's end: the result, and this player's score (a co-op challenge counts the score, a solo one the result).
+      const finish = async (result, scores) => {
+        const body = new URLSearchParams({ result, score: String(scores ? scores.player : 0) });
+        const posted = await fetch(stage.dataset.doneUrl, { method: "POST", headers: { "X-CSRFToken": token }, body });
+        const answer = await posted.json();
+        if (!posted.ok) {
+          status.textContent = answer.error || "That didn't go through.";
+          return;
+        }
+        // Co-op: the server decides what's shown now (waiting, the result, or the pick), so the page reloads.
+        if (stage.hasAttribute("data-coop")) return location.reload();
+        // A win's lucky pack is said here, and the path lists it to claim: hold the page a moment so it can be read.
+        if (answer.rewards && answer.rewards.length) {
+          status.textContent = answer.rewards.join(" ");
+          await new Promise((resolve) => setTimeout(resolve, 1800));
+        }
+        location.assign(answer.redirect);
+      };
+      MinigameShell.start(stage, data, { playerName: stage.dataset.playerName, seed: data.seed, onEnd: finish });
+    });
+  </script>
+{% endblock %}

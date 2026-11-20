@@ -787,8 +787,8 @@ def read_tutorial(raw, problems, names):
         problems.append("tutorial: name at least one guide.")
     lines = []
     for step, by_guide in raw["lines"].items():
-        if step not in world_tutorial.STEPS:
-            problems.append(f"tutorial: there's no step “{step}” (the steps are {', '.join(world_tutorial.STEPS)}).")
+        if step not in world_tutorial.STEPS + world_tutorial.RESULT_LINES:
+            problems.append(f"tutorial: there's no step “{step}” (the steps are {', '.join(world_tutorial.STEPS)}, and the game's answers {', '.join(world_tutorial.RESULT_LINES)}).")
             continue
         for who, script in (by_guide or {}).items():
             if who != "*" and str(who).lower() not in names:

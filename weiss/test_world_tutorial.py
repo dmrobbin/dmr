@@ -5,7 +5,7 @@ import json
 from django.test import TestCase
 from django.urls import reverse
 
-from . import quests, world, world_tutorial as tutorial
+from . import challenge, quests, world, world_tutorial as tutorial
 from .cpu_corpus import read_tutorial
 from .models import GiftItem, TutorialLine
 from .test_world import SET, everywhere_rule, give_cpu, make_set, staff_user
@@ -73,6 +73,14 @@ class TutorialBase(TestCase):
             elif current == "deck":
                 self.legal_deck()
                 tutorial.said(save)
+            elif current == "minigame":
+                tutorial.said(save)
+                world.start_minigame(save, self.aang.pk, "cups")
+                save.today["minigame"]["started"] -= challenge.MINIGAME_MIN_SECONDS + 1
+                save.save()
+                world.finish_minigame(save, "win")
+                if world.choosing(save):  # time's passed: where to spend it
+                    world.travel(save, world.place_of(save).key)
         save.save()  # as the tutorial's town move would
         return save
 
@@ -167,7 +175,7 @@ class StepTests(TutorialBase):
         self.assertFalse(tutorial.banner(save)["legal"])
         self.legal_deck()
         world.town(save)  # the town sees it's legal now
-        self.assertEqual(self.step(), "duel")
+        self.assertEqual(self.step(), "minigame")
 
     def test_the_duel_is_with_the_guide_on_easy_and_ends_the_tutorial(self):
         save = self.through("duel")

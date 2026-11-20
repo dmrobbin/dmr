@@ -59,6 +59,7 @@ BUFFS = {buff.id: buff for buff in (
     Buff("trade_in", "Trade-in", f"Give up {TRADE_IN} cards from your pool for a new pack.", "trade_in"),
     Buff("wild_pack", "Wild pack", "Open a pack from any set at all, even one this challenge doesn't use.", "pack", "wild"),
     Buff("climax_pick", "Climax pick", f"Choose any climax from this challenge's sets: {CLIMAX_COPIES} copies go in your pool.", "climax"),
+    Buff("minigame_pick", "A pack to choose", "Choose one of three specialty packs, won in a co-op minigame.", "minigame_pick", special=True),
     # Pacts: something for something.
     Buff("reforge", "Reforge", f"Up to {REFORGE_CARDS} random cards from your pool that aren't in your deck are melted down: open {REFORGE_PACKS} new packs.", pact=True),
     Buff("sacrifice", "Sacrifice", "Every copy of a random card in your deck leaves your pool for good. In return: a lucky pack and a climax pick.", pact=True),

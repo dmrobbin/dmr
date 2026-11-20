@@ -1,0 +1,48 @@
+{% comment %}
+  The co-op minigame's waiting and result states, and the winner's pick (docs/minigames-integration-plan.md, section 2).
+  A partial: challenge_minigame.html includes it. The server decides the state on each GET (challenge_views.challenge_minigame):
+  waiting (this player has posted, the partner hasn't), result {title, scores {you, partner}} (both have posted), lucky_pack
+  (a loss or a draw), and pack_pick with pick_key and packs [{key, name, text}] (a winner who hasn't chosen yet).
+  The partner's score only comes once both have posted.
+{% endcomment %}
+<section class="minigame-run" aria-live="polite">
+  {% if waiting %}
+    {# The page checks again while it waits (challenge_minigame.html reloads it): the server says when the partner has posted. #}
+    <div class="minigame-wait" role="status" data-waiting>
+      <p class="minigame-wait-title">Waiting for your partner</p>
+      <p class="muted small">{{ partner|default:"Your partner" }} hasn't played this game yet. Your score stays hidden until you've both played, and then the path goes on. This page checks again in a few seconds.</p>
+    </div>
+    <p class="minigame-run-actions"><a class="button-small secondary" href="{{ back_url|default:'' }}">{% if run %}Back to the path{% else %}Back to the town{% endif %}</a></p>
+
+  {% elif result %}
+    <div class="minigame-result">
+      <h2 class="minigame-result-title" tabindex="-1" data-minigame-result>{{ result.title }}</h2>
+      {% if result.scores %}<p class="minigame-result-score">You {{ result.scores.you }} · {{ partner|default:"Your partner" }} {{ result.scores.partner }}</p>{% endif %}
+
+      {% if pack_pick %}
+        {# The winner's pick: one of three specialty packs, the same look as the curse and augment pick. The page posts it (challenge_minigame.html). #}
+        <form method="post" action="{% url 'weiss:arcade_challenge_minigame_pick' %}" class="minigame-pick-form" data-pick-form>
+          {% csrf_token %}
+          <input type="hidden" name="key" value="{{ pick_key }}">
+          <fieldset class="augment-choices">
+            <legend class="small">Pick one specialty pack, for the rest of the run</legend>
+            {% for pack in packs %}
+              <label class="augment-choice">
+                <input type="radio" name="choice" value="{{ pack.key }}" required{% if forloop.first %} checked{% endif %}>
+                <span class="augment-name">{{ pack.name }}</span>
+                <span class="small">{{ pack.text }}</span>
+              </label>
+            {% empty %}<p class="muted small">There are no packs left for you to pick.</p>{% endfor %}
+          </fieldset>
+          <p class="panel-error small" data-pick-error role="alert" hidden></p>
+          <button type="submit" class="button-small"{% if not packs %} disabled{% endif %}>Take it</button>
+        </form>
+      {% elif lucky_pack %}
+        <p class="challenge-augments minigame-lucky"><span class="minigame-lucky-kicker">✦ Lucky pack</span>
+          <span class="small">A lucky pack is in your rewards. Claim it from the path.</span></p>
+      {% endif %}
+
+      <p class="minigame-run-actions"><a class="button-small" href="{{ back_url|default:'' }}">{% if run %}Back to the path{% else %}Back to the town{% endif %}</a></p>
+    </div>
+  {% endif %}
+</section>

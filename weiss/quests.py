@@ -73,6 +73,8 @@ OBJECTIVES = {  # do: (fields it can have, what it's for: the reference's words)
     "flag": ({"flag", "text"}, "Have a flag (a chatter choice or an ending sets them): say what it means in `text`."),
     "event": ({"event", "result", "count"}, "Take part in an event (WorldEvent, by key): `result` is enter (the default), round "
               "(win a tournament round) or win (win it); `count` times."),
+    "minigame": ({"result", "game", "cpu", "count"}, "Play a minigame (`result`: any, the default, or win), `count` times; "
+                 "`game` is one of the five, `cpu` the CPU it's against."),
 }
 COMMON = {"do", "text"}
 AT_TIME = ("in the morning", "at noon", "in the evening", "at night")  # "Go to the Beach at night"
@@ -102,6 +104,10 @@ def known_context(extra_keys=(), loose=False):
 
 
 EVENT_RESULTS = ("enter", "round", "win")
+MINIGAME_NAMES = {"memory": "Memory", "cups": "Three cups", "invaders": "Climax Invaders", "runner": "Runner",
+                  "higher_lower": "Higher or Lower"}  # the minigames (as weiss.challenge.MINIGAME_GAMES and minigame_views.GAMES)
+MINIGAMES = tuple(MINIGAME_NAMES)
+MINIGAME_RESULTS = ("any", "win")
 DUEL_RESULTS = ("any", "win", "loss")
 DUEL_MODELS = ("easy", "standard", "focused", "strategic", "hard")  # weiss.cpu.MODELS
 MENTOR = "{mentor}"  # in a quest or scene, the CPU the player chose as their guide (the story's first chapter)
@@ -371,6 +377,12 @@ def check(data, context=None, giver=None):
                 problems.append(f"{at} (event): event is an event's key (see the Events page).")
             if raw.get("result", "enter") not in EVENT_RESULTS:
                 problems.append(f"{at} (event): result is one of {', '.join(EVENT_RESULTS)}.")
+            whole("count", 1, 20, 1)
+        if do == "minigame":
+            if raw.get("result", "any") not in MINIGAME_RESULTS:
+                problems.append(f"{at} (minigame): result is one of {', '.join(MINIGAME_RESULTS)}.")
+            if "game" in raw and raw["game"] not in MINIGAMES:
+                problems.append(f"{at} (minigame): game is one of {', '.join(MINIGAMES)}.")
             whole("count", 1, 20, 1)
         if do == "talk":
             if not joined(raw.get("script")).strip():
@@ -717,7 +729,7 @@ def need(obj):
     return {"defeat": len(obj.get("cpus", [])), "combo": obj.get("count", 1), "streak": obj.get("wins", 1),
             "beat_different": obj.get("count", 1), "have_card": obj.get("copies", 1), "give_card": 1,
             "collect": obj.get("count", 1), "rank": obj.get("rank", 1), "event": obj.get("count", 1),
-            "duel": obj.get("count", 1)}.get(obj["do"], 1)
+            "duel": obj.get("count", 1), "minigame": obj.get("count", 1)}.get(obj["do"], 1)
 
 
 def held(save, obj):
@@ -906,6 +918,25 @@ def duel_finished(save, room, won):
                     and (not obj.get("cpus") or cpu.name.lower() in {n.lower() for n in obj["cpus"]}):
                 counted = tick(save, quest, key, cpu.name)
             if counted:
+                have, wanted = progress(save, quest, key, obj)
+                news(save, f"{describe(save, obj)}: {'done' if have >= wanted else f'{have}/{wanted}'}.", quest)
+    advance(save)
+
+
+def minigame_finished(save, cpu, game, won):
+    """A minigame in a world save is over (against `cpu`, or None): what it did for the minigame objectives under way.
+    Infinite and co-op minigames are counted elsewhere, if they're to count at all: they have no save."""
+    for quest in quests(save).values():
+        for key, obj in current(save, quest):
+            if obj["do"] != "minigame" or met(save, quest, key, obj):
+                continue
+            if obj.get("result", "any") == "win" and not won:
+                continue
+            if obj.get("game") and obj["game"] != game:
+                continue
+            if obj.get("cpu") and (cpu is None or cpu.name.lower() != obj["cpu"].lower()):
+                continue
+            if tick(save, quest, key):
                 have, wanted = progress(save, quest, key, obj)
                 news(save, f"{describe(save, obj)}: {'done' if have >= wanted else f'{have}/{wanted}'}.", quest)
     advance(save)
@@ -1469,6 +1500,12 @@ def describe(save, obj):
         how = {"win": "Beat", "loss": "Lose to"}.get(obj.get("result", "any"), "Duel")
         times = f" {obj['count']} times" if obj.get("count", 1) > 1 else ""
         return f"{how} {obj['cpu']}{times}"
+    if do == "minigame":
+        what = "Win a minigame" if obj.get("result", "any") == "win" else "Play a minigame"
+        game = f" ({MINIGAME_NAMES[obj['game']]})" if obj.get("game") else ""
+        vs_cpu = f" against {obj['cpu']}" if obj.get("cpu") else ""
+        times = f" {obj['count']} times" if obj.get("count", 1) > 1 else ""
+        return f"{what}{game}{vs_cpu}{times}"
     if do == "talk":
         return f"Talk to {obj['to']}"
     if do == "event":

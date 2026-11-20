@@ -20,7 +20,7 @@
             {% for obj in stage.objectives %}
               <li class="quest-objective{% if obj.done %} done{% endif %}">
                 <span class="quest-box" aria-hidden="true">{% if obj.done %}✓{% endif %}</span>
-                <span>{{ obj.text }}{% if obj.done %}<span class="visually-hidden"> (done)</span>{% endif %}</span>
+                <span>{{ obj.text }}{% if obj.minigame %} <span class="deck-tag quest-game-tag">Game</span>{% endif %}{% if obj.done %}<span class="visually-hidden"> (done)</span>{% endif %}</span>
                 {% if obj.card %}{% include "weiss/world_card_facts.html" with card=obj.card %}{% endif %}
                 {% if obj.need > 1 %}
                   <span class="quest-count small">{{ obj.have }}/{{ obj.need }}</span>

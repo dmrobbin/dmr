@@ -10,7 +10,8 @@ something, and moves the tutorial on if it's what the step was waiting for.
 from . import chatter, world
 from .models import CpuProfile, GiftItem, TutorialLine
 
-STEPS = ("arrive", "approach", "talk", "gift", "map", "shop", "quests", "time", "deck", "duel")
+STEPS = ("arrive", "approach", "talk", "gift", "map", "shop", "quests", "time", "deck", "minigame", "duel")
+RESULT_LINES = ("minigame_win", "minigame_lose")  # the guide's answer to the game's result (by the player's), not steps
 GUIDES = ("Aang", "Chisato Nishikigi", "Asuna Yuuki", "Erza Scarlet")  # until the story pack sets them
 DONE_FLAG = "tutorial_done"
 
@@ -25,6 +26,7 @@ INFO = {
     "quests": ("Look at your quests", "Press Quests to open your quest log.", ["quests"], "quests"),
     "time": ("Pass time", "Press Pass time, then choose where to go.", ["wait"], "time"),
     "deck": ("Make your deck legal", "Press Decks and build a legal deck: 50 cards, 8 climaxes, at most 4 of a card.", ["decks"], "deck"),
+    "minigame": ("Play a game with {guide}", "Press Play a game, then choose one. {guide} will go easy on you.", ["minigame"], "minigame"),
     "duel": ("Duel {guide}", "Press Duel. {guide} will go easy on you.", ["duel"], "duel"),
 }
 
@@ -45,6 +47,9 @@ DEFAULT_LINES = {
              "them: Press Pass time."],
     "deck": ["them: Your decks are built only from cards you've opened. You can have several; the equipped one duels.",
              "them: Make yours legal: 50 cards, 8 climaxes. Press Decks."],
+    "minigame": ["them: Want to play a game with me? Pick one and we'll have a little fun."],
+    "minigame_win": ["them: Good game, {player}. Well played."],
+    "minigame_lose": ["them: I won that one. Play again whenever you like."],
     "duel": ["them (pleased): Let's see what you've got. I'll go easy on you."],
 }
 
@@ -119,7 +124,7 @@ def view(save):
         highlight = [f"place-{place.key}" for place in world.places(save)]
         hint = "Choose where to go next: anywhere's fine, staying too."
     return {"step": name, "title": title.format(guide=who), "hint": hint.format(guide=who), "highlight": highlight,
-            "lines": [] if found.get("said") else lines(save, name),
+            "lines": [] if found.get("said") else [*(lines(save, found["reply"]) if found.get("reply") else []), *lines(save, name)],
             "guide": {"id": cpu.pk, "name": cpu.name} if cpu else None,
             "candidates": [c.pk for c in candidates()] if name == "arrive" else []}
 
@@ -192,6 +197,15 @@ def did(save, action):
         advance(save)
 
 
+def minigame_done(save, won):
+    """The game in the minigame step is over, won by the player or not: the step's done, and the guide answers the
+    result (its line plays before the next step's)."""
+    if not active(save) or step(save) != "minigame":
+        return
+    advance(save)
+    save.flags["tutorial"]["reply"] = "minigame_win" if won else "minigame_lose"
+
+
 def refresh(save):
     """The town's being shown: a step that's done by itself (a deck made legal on its page) moves on. Returns whether
     anything changed."""
@@ -240,7 +254,10 @@ def allows(save, move, cpu=None, place=None):
     if name == "arrive":
         waiting = "First, ask someone where you are: click one of the people here."
     is_guide = cpu is not None and cpu_obj is not None and getattr(cpu, "pk", cpu) == cpu_obj.pk
+    if name == "minigame" and move != "minigame":  # until the game's played, nothing else is open
+        raise ValueError(waiting)
     ok = {
+        "minigame": is_guide and name == "minigame",
         "talk": is_guide and at(save, "talk"),
         "give": is_guide and at(save, "gift"),
         "duel": is_guide and name == "duel",

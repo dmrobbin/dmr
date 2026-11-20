@@ -8,7 +8,7 @@
 
   <div class="town" data-world-town data-state-url="{% url 'weiss:world_town_state' save.slot %}"
        data-travel-url="{% url 'weiss:world_travel' save.slot %}" data-wait-url="{% url 'weiss:world_wait' save.slot %}"
-       data-duel-url="{% url 'weiss:world_duel' save.slot %}" data-buy-card-url="{% url 'weiss:world_buy_card' save.slot %}" data-pick-card-url="{% url 'weiss:world_pick_card' save.slot %}" data-request-set-url="{% url 'weiss:world_request_set' save.slot %}" data-checkout-url="{% url 'weiss:world_checkout' save.slot %}" data-slot="{{ save.slot }}"
+       data-duel-url="{% url 'weiss:world_duel' save.slot %}" data-minigame-url="{% url 'weiss:world_minigame' save.slot %}" data-buy-card-url="{% url 'weiss:world_buy_card' save.slot %}" data-pick-card-url="{% url 'weiss:world_pick_card' save.slot %}" data-request-set-url="{% url 'weiss:world_request_set' save.slot %}" data-checkout-url="{% url 'weiss:world_checkout' save.slot %}" data-slot="{{ save.slot }}"
        data-buy-gift-url="{% url 'weiss:world_buy_gift' save.slot %}" data-talk-url="{% url 'weiss:world_talk' save.slot %}"
        data-answer-url="{% url 'weiss:world_answer' save.slot %}" data-give-url="{% url 'weiss:world_give' save.slot %}" data-level-url="{% url 'weiss:world_level' save.slot %}" data-decks-url="{% url 'weiss:world_deck' save.slot %}?from=town"
        data-quest-url="{% url 'weiss:world_quest' save.slot %}" data-jump-url="{% url 'weiss:world_jump' save.slot %}" data-tutorial-url="{% url 'weiss:world_tutorial' save.slot %}" data-test-mode-url="{% url 'weiss:world_test_mode' save.slot %}"
@@ -204,6 +204,9 @@
         </div>
       </section>
       {# One card from the beaten CPU's deck (world_town.js openPick). It stays until it's taken or a later win replaces it. #}
+      {# The "Play a game" chooser: world_town.js clones it into the panel below when a CPU's talk menu offers a game. #}
+      <template id="town-minigame-template">{% include "weiss/world_minigame_pick.html" %}</template>
+      <section class="town-map town-minigame" data-minigame-panel hidden></section>
       <section class="town-map town-pick" id="town-pick" data-pick hidden aria-labelledby="town-pick-title">
         <div class="town-map-head">
           <h2 id="town-pick-title" data-pick-title>Choose a card</h2>

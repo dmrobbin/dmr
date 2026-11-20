@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import challenge_views, cpu_import_views, cpu_views, express, lists, pack_views, play, profiles, scene_views, sleeve_views, views, world_staff_views, world_views
+from . import challenge_views, cpu_import_views, cpu_views, express, lists, pack_views, play, profiles, scene_views, sleeve_views, views, minigame_views, world_staff_views, world_views
 
 app_name = "weiss"
 
@@ -36,6 +36,10 @@ urlpatterns = [
     path("world/<int:slot>/town/travel/", world_views.world_travel, name="world_travel"),
     path("world/<int:slot>/town/wait/", world_views.world_wait, name="world_wait"),
     path("world/<int:slot>/town/duel/", world_views.world_duel, name="world_duel"),
+    path("world/<int:slot>/town/minigame/", world_views.world_minigame, name="world_minigame"),
+    path("world/<int:slot>/minigame/", world_views.world_minigame_play, name="world_minigame_play"),
+    path("world/<int:slot>/minigame/data/", world_views.world_minigame_data, name="world_minigame_data"),
+    path("world/<int:slot>/minigame/done/", world_views.world_minigame_done, name="world_minigame_done"),
     path("world/<int:slot>/town/buy/", world_views.world_buy, name="world_buy"),
     path("world/<int:slot>/town/buy-card/", world_views.world_buy_card, name="world_buy_card"),
     path("world/<int:slot>/town/pick-card/", world_views.world_pick_card, name="world_pick_card"),
@@ -55,6 +59,8 @@ urlpatterns = [
     path("world/<int:slot>/town/jump/", world_views.world_jump, name="world_jump"),
     path("world/<int:slot>/town/tutorial/", world_views.world_tutorial, name="world_tutorial"),
     path("world/events/", world_staff_views.world_events_staff, name="world_events_staff"),
+    path("world/minigames/", minigame_views.world_minigames, name="world_minigames"),
+    path("world/minigames/data/", minigame_views.world_minigame_data, name="world_minigame_data"),
     path("world/<int:slot>/scene/", world_views.world_scene, name="world_scene"),
     path("world/<int:slot>/scene/done/", world_views.world_scene_done, name="world_scene_done"),
     path("world/places/", world_staff_views.world_places, name="world_places"),
@@ -96,6 +102,10 @@ urlpatterns = [
     path("arcade/challenge/fight/", challenge_views.challenge_fight, name="arcade_challenge_fight"),
     path("arcade/challenge/event/", challenge_views.challenge_event, name="arcade_challenge_event"),
     path("arcade/challenge/event/done/", challenge_views.challenge_event_done, name="arcade_challenge_event_done"),
+    path("arcade/challenge/minigame/", challenge_views.challenge_minigame, name="arcade_challenge_minigame"),
+    path("arcade/challenge/minigame/data/", challenge_views.challenge_minigame_data, name="arcade_challenge_minigame_data"),
+    path("arcade/challenge/minigame/done/", challenge_views.challenge_minigame_done, name="arcade_challenge_minigame_done"),
+    path("arcade/challenge/minigame/pick/", challenge_views.challenge_minigame_pick, name="arcade_challenge_minigame_pick"),
     path("arcade/challenge/reset/", challenge_views.challenge_reset, name="arcade_challenge_reset"),
     path("arcade/challenge/end/", challenge_views.challenge_end, name="arcade_challenge_end"),
     path("arcade/challenge/close/", challenge_views.challenge_close, name="arcade_challenge_close"),

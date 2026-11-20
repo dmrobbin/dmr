@@ -20,7 +20,13 @@
             <form method="post" action="{% url 'weiss:arcade_challenge_fight' %}">
               {% csrf_token %}
               <input type="hidden" name="node" value="{{ node.node }}">
-              {% if node.event %}
+              {% if node.minigame %}
+                <button type="submit" class="spire-node-face" title="A game: play it against {{ node.cpu.name|default:'the CPU' }}. A win gives a lucky pack">
+                  <span class="avatar spire-portrait spire-minigame" aria-hidden="true">▶</span>
+                  <span class="spire-name">Game</span>
+                  <span class="spire-act">{% if minigame_due %}Back to the game{% else %}Play{% endif %}</span>
+                </button>
+              {% elif node.event %}
                 <button type="submit" class="spire-node-face" title="An event: something happens, mostly a bargain with a price">
                   <span class="avatar spire-portrait spire-event" aria-hidden="true">?</span>
                   <span class="spire-name">Event</span>
@@ -34,6 +40,12 @@
                 </button>
               {% endif %}
             </form>
+          {% elif node.minigame %}
+            <span class="spire-node-face" title="A game: {% if node.state == 'won' %}won, a lucky pack was given{% else %}played{% endif %}">
+              <span class="avatar spire-portrait spire-minigame" aria-hidden="true">▶</span>
+              <span class="spire-name">Game</span>
+              {% if node.state == "won" %}<span class="spire-act">Done</span>{% endif %}
+            </span>
           {% elif node.event %}
             <span class="spire-node-face" title="An event: something happens, mostly a bargain with a price">
               <span class="avatar spire-portrait spire-event" aria-hidden="true">?</span>

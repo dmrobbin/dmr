@@ -1,0 +1,85 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Minigames{% endblock %}
+
+{% block content %}
+  {# The minigame prototypes (weiss.minigame_views; docs/minigames-plan.md): choose a game, a CPU and a difficulty. #}
+  <h1>Minigames</h1>
+  <p class="muted">Prototypes: four small games against a CPU, who talks during the match. Nothing here touches a save.</p>
+
+  <form method="get" data-minigame-form>
+    <label>Game
+      <select name="game" data-minigame-game>
+        {% for key, title in games %}<option value="{{ key }}">{{ title }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>CPU opponent
+      <select name="cpu" data-minigame-cpu>
+        {% for cpu in cpus %}<option value="{{ cpu.pk }}">{{ cpu.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Difficulty
+      <select name="difficulty" data-minigame-difficulty>
+        {% for level in difficulties %}<option value="{{ level }}"{% if level == "normal" %} selected{% endif %}>{{ level|capfirst }}</option>{% endfor %}
+      </select>
+    </label>
+    <button type="submit">Play</button>
+  </form>
+
+  <div class="minigame-sound-row">
+    <button type="button" class="minigame-sound" data-minigame-sound aria-pressed="true">Sound: on</button>
+    <p class="muted small" data-minigame-status aria-live="polite"></p>
+  </div>
+  <div class="minigame-stage" data-minigame-stage data-data-url="{{ data_url }}" data-player-name="{{ user.username }}"></div>
+
+  <script src="{% static 'weiss/minigames/audio.js' %}" defer></script>
+  <script src="{% static 'weiss/minigames/shell.js' %}" defer></script>
+  <script src="{% static 'weiss/minigames/memory.js' %}" defer></script>
+  <script src="{% static 'weiss/minigames/cups.js' %}" defer></script>
+  <script src="{% static 'weiss/minigames/invaders.js' %}" defer></script>
+  <script src="{% static 'weiss/minigames/higher_lower.js' %}" defer></script>
+  <script src="{% static 'weiss/minigames/runner.js' %}" defer></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.querySelector("[data-minigame-form]");
+      const stage = document.querySelector("[data-minigame-stage]");
+      const status = document.querySelector("[data-minigame-status]");
+      const soundButton = document.querySelector("[data-minigame-sound]");
+      // The sound setting is shared with world mode ("weiss-music": "on" or "off"), so the page starts where the site was left.
+      const SOUND_KEY = "weiss-music";
+      const readSound = () => {
+        try { return localStorage.getItem(SOUND_KEY) !== "off"; } catch { return true; }
+      };
+      const writeSound = (on) => {
+        try { localStorage.setItem(SOUND_KEY, on ? "on" : "off"); } catch { /* only this visit, then */ }
+      };
+      const paintSound = (on) => {
+        soundButton.textContent = on ? "Sound: on" : "Sound: off";
+        soundButton.setAttribute("aria-pressed", String(on));
+        window.MinigameAudio?.setMuted?.(!on);
+      };
+      paintSound(readSound());
+      soundButton.addEventListener("click", () => {
+        const on = soundButton.getAttribute("aria-pressed") !== "true";
+        writeSound(on);
+        paintSound(on);
+      });
+      let running = null;
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        status.textContent = "Loading…";
+        const params = new URLSearchParams(new FormData(form));
+        const response = await fetch(`${stage.dataset.dataUrl}?${params}`, { headers: { Accept: "application/json" } });
+        const data = await response.json();
+        if (!response.ok) {
+          status.textContent = data.error || "That didn't load.";
+          return;
+        }
+        status.textContent = "";
+        running?.stop();
+        running = MinigameShell.start(stage, data, { playerName: stage.dataset.playerName });
+      });
+    });
+  </script>
+{% endblock %}

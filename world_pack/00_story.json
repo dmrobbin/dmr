@@ -415,6 +415,62 @@
      "them: Press Decks."
     ]
    },
+   "minigame": {
+    "*": [
+     "them: Want to play a game with me? Pick one and we'll have a little fun.",
+     "them: No pressure. It's just a game."
+    ],
+    "Aang": [
+     "them (pleased): Hey, {player}, want to play a game? Just for fun, no pressure!",
+     "them: I've got a few in mind. Pick one and let's go!"
+    ],
+    "Chisato Nishikigi": [
+     "them (pleased): Oh! Want to play a game with me? It'll be super fun!",
+     "them: Pick one, and I'll be your opponent. Okay?"
+    ],
+    "Asuna Yuuki": [
+     "them: Would you like to play a game with me? It's a nice way to finish the lesson.",
+     "them: Pick whichever you like. I'll take it easy on you."
+    ],
+    "Erza Scarlet": [
+     "them: Let's play a game. Choose one, and we'll see who's sharper.",
+     "them: Don't overthink it. Pick one and begin."
+    ]
+   },
+   "minigame_win": {
+    "*": [
+     "them: Good game, {player}. Well played."
+    ],
+    "Aang": [
+     "them (pleased): You got me! Good game, {player}!"
+    ],
+    "Chisato Nishikigi": [
+     "them (pleased): Yay, you won! You're really good at games!"
+    ],
+    "Asuna Yuuki": [
+     "them: You won! Well played, {player}."
+    ],
+    "Erza Scarlet": [
+     "them: Well won. Good game."
+    ]
+   },
+   "minigame_lose": {
+    "*": [
+     "them: I won that one. Play again whenever you like."
+    ],
+    "Aang": [
+     "them (pleased): Ha, I won that one! Want a rematch sometime?"
+    ],
+    "Chisato Nishikigi": [
+     "them (pleased): Aw, I won! Better luck next time, okay?"
+    ],
+    "Asuna Yuuki": [
+     "them: I won that one. You'll get the next one, I'm sure."
+    ],
+    "Erza Scarlet": [
+     "them: I won. Play again when you're ready."
+    ]
+   },
    "duel": {
     "*": [
      "them: Let's see what you've got. I'll go easy on you.",

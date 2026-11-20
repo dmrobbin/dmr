@@ -13,7 +13,7 @@ from django.views.decorators.http import require_POST
 
 from core.access import weiss_access_required
 
-from . import arcade, augments, buffs, challenge, coop, curses, game, packs, play, sleeves
+from . import arcade, augments, buffs, challenge, coop, curses, game, minigame_views, packs, play, sleeves
 from .lists import CLIMAX_COUNT, DECK_GROUPS, DECK_SIZE, unlimited
 from .models import ArcadeRun, ArcadeScenario, Card, ChallengeRun, CoopRun, CpuProfile, GameRoom, NarrativeChallenge, PlayerProfile
 from .play import deal, not_begun, seat_cpu, snapshot_groups
@@ -161,7 +161,7 @@ def path_view(run):
             if pk is None:  # a gap in the path
                 continue
             x, y = place(f, i)
-            nodes.append({"cpu": cpus.get(pk), "event": pk == challenge.EVENT, "boss": boss, "flash": challenge.is_flash(path, f, i), "node": i, "x": x, "y": y, "state": state(f, i),
+            nodes.append({"cpu": cpus.get(pk), "event": pk == challenge.EVENT, "boss": boss, "flash": challenge.is_flash(path, f, i), "minigame": challenge.is_minigame(path, f, i), "node": i, "x": x, "y": y, "state": state(f, i),
                           "my_vote": f == at and my_vote == i, "their_vote": f == at and their_vote == i})
         view_floors.append({"number": f + 1, "tier": "Boss" if boss else challenge.tier(f), "boss": boss, "current": f == at, "nodes": nodes})
         if f + 1 < last:
@@ -385,7 +385,7 @@ def challenge_fight(request):
     if not run or run.status != ChallengeRun.Status.ACTIVE:
         return redirect("weiss:arcade_challenge")
     endless = run.kind == ChallengeRun.Kind.INFINITE
-    heading, node = None, None
+    heading, node, minigame = None, None, False
     if endless:
         # Where next is the player's choice, on the path: a CPU it leads to, or an event.
         path, at = challenge.path_of(run), challenge.floor_at(run)
@@ -395,16 +395,17 @@ def challenge_fight(request):
         if at < len(path["picks"]):
             node = path["picks"][at]
         heading = path["floors"][at][node] if node in options else None
+        minigame = node in options and challenge.is_minigame(path, at, node)
     if run.coop_id and (problem := coop.duel_due(run)):  # an event too waits for it
         messages.error(request, problem)
         return redirect("weiss:arcade_coop_duel")
-    if heading != challenge.EVENT and (not run.deck or not run.deck.entries.exists()):  # an event needs no deck
+    if heading != challenge.EVENT and not minigame and (not run.deck or not run.deck.entries.exists()):  # an event or a minigame needs no deck
         messages.error(request, "Your deck is empty: open some packs and build it first.")
         return redirect("weiss:arcade_challenge")
-    if heading != challenge.EVENT and (problem := challenge.deck_ready(run)):
+    if heading != challenge.EVENT and not minigame and (problem := challenge.deck_ready(run)):
         messages.error(request, problem)
         return redirect("weiss:arcade_challenge")
-    if heading != challenge.EVENT and (problem := challenge.curse_due(run)):
+    if heading != challenge.EVENT and not minigame and (problem := challenge.curse_due(run)):
         messages.error(request, problem)
         return redirect("weiss:arcade_challenge")
     if endless and run.coop_id and run.coop.status == CoopRun.Status.WAITING:
@@ -422,6 +423,9 @@ def challenge_fight(request):
         if not chosen:
             messages.error(request, "Choose who to fight next on the path." if options else "There are no CPUs to fight right now.")
             return redirect("weiss:arcade_challenge")
+        if challenge.is_minigame(path, at, node):  # the space is a minigame against its CPU, not a fight
+            challenge.start_minigame(run)
+            return redirect("weiss:arcade_challenge_minigame")
         if chosen == challenge.EVENT:
             if not challenge.start_event(run):
                 messages.info(request, "Nothing happened there: on up the path.")
@@ -537,6 +541,93 @@ def challenge_event_done(request):
     if not said:
         messages.success(request, "The event's over: on up the path.")
     return redirect("weiss:arcade_challenge")
+
+
+def minigame_under_way(request):
+    """This player's run and its minigame, if one's on the path (under way, or decided in co-op and kept for both
+    pages), for an active run."""
+    run = challenge.current(request.user)
+    pending = run and (run.path or {}).get("minigame")
+    return (run, pending) if pending and run.status == ChallengeRun.Status.ACTIVE else (run, None)
+
+
+@challenge_access
+def challenge_minigame(request):
+    """An infinite challenge's minigame space: the game, against its column's CPU, played on the page; the page posts
+    its result (challenge_minigame_done). In co-op, the page shows the state instead: waiting for the partner, the
+    result, and the pack to choose or the lucky pack (challenge.coop_minigame_state)."""
+    run, pending = minigame_under_way(request)
+    if not pending:
+        return redirect("weiss:arcade_challenge")
+    context = {
+        "run": run, "game": minigame_views.GAMES[pending["game"]], "data_url": reverse("weiss:arcade_challenge_minigame_data"),
+        "done_url": reverse("weiss:arcade_challenge_minigame_done"), "player_name": request.user.username,
+        "back_url": reverse("weiss:arcade_challenge"),
+    }
+    if run.coop_id:
+        partner = run.coop.partner_of(request.user)
+        context.update(coop=True, partner=partner and partner.username, **challenge.coop_minigame_state(run, request.user.pk))
+    elif pending.get("decided"):
+        return redirect("weiss:arcade_challenge")
+    return render(request, "weiss/challenge_minigame.html", context)
+
+
+@challenge_access
+def challenge_minigame_data(request):
+    """The minigame under way, as the minigames page plays it (minigame_views.game_data), with its seed."""
+    run, pending = minigame_under_way(request)
+    if not pending or pending.get("decided"):
+        return JsonResponse({"error": "There's no minigame to play."}, status=400)
+    cpu = CpuProfile.objects.filter(pk=pending["cpu"]).first()
+    data = cpu and minigame_views.game_data(pending["game"], cpu, "normal", request.user.username, seed=pending["seed"])
+    if not data:
+        return JsonResponse({"error": "That minigame can't be played right now."}, status=400)
+    return JsonResponse({**data, "seed": pending["seed"]})
+
+
+@challenge_access
+@require_POST
+def challenge_minigame_done(request):
+    """A minigame's result is posted. Solo: the result (win, lose or draw). Co-op: this player's score (`score`), which
+    waits for the partner's (challenge.post_coop_minigame)."""
+    run, pending = minigame_under_way(request)
+    back = reverse("weiss:arcade_challenge")
+    if not pending and not (run and run.coop_id and (run.path or {}).get("minigame")):
+        return JsonResponse({"error": "There's no minigame to finish.", "redirect": back}, status=400)
+    try:
+        if run.coop_id:
+            with transaction.atomic():
+                outcome = challenge.post_coop_minigame(run, int(request.POST.get("score", "")))
+            if outcome["waiting"]:
+                return JsonResponse({"waiting": True, "redirect": back})
+            me = str(request.user.pk)
+            result = "draw" if outcome["tie"] else "win" if outcome["winner"] == me else "lose"
+            return JsonResponse({"result": result, "scores": outcome["scores"], "rewards": [], "redirect": back})
+        result = request.POST.get("result", "")
+        if result not in ("win", "lose", "draw"):
+            return JsonResponse({"error": "That isn't a result."}, status=400)
+        with transaction.atomic():
+            run = ChallengeRun.objects.select_for_update().get(pk=run.pk)
+            if not (run.path or {}).get("minigame"):  # posted already, from another page
+                return JsonResponse({"error": "That minigame is over.", "redirect": back}, status=400)
+            said = challenge.end_minigame(run, result)
+    except ValueError as error:
+        return JsonResponse({"error": str(error)}, status=400)
+    return JsonResponse({"result": result, "rewards": said, "redirect": back})
+
+
+@challenge_access
+@require_POST
+def challenge_minigame_pick(request):
+    """The co-op minigame's winner chooses one of the three packs on offer (challenge.pick_minigame_pack)."""
+    run = challenge.current(request.user)
+    if not run or not run.coop_id:
+        return JsonResponse({"error": "There's no pack to choose."}, status=400)
+    try:
+        chosen = challenge.pick_minigame_pack(run, request.POST.get("key", ""), request.POST.get("choice", ""))
+    except ValueError as error:
+        return JsonResponse({"error": str(error)}, status=400)
+    return JsonResponse({"choice": chosen, "redirect": reverse("weiss:arcade_challenge")})
 
 
 @challenge_access

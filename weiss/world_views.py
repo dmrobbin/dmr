@@ -434,6 +434,57 @@ def world_duel(request, save):
     return {"go": reverse("weiss:play_room", args=[room.pk])}
 
 
+@town_move
+def world_minigame(request, save):
+    """Play one of the minigames with someone here: off to the game (world_minigame_play)."""
+    world.start_minigame(save, request.POST.get("cpu", ""), request.POST.get("game", ""))
+    return {"go": reverse("weiss:world_minigame_play", args=[save.slot])}
+
+
+@staff_required
+def world_minigame_play(request, slot):
+    """The game under way in the town: the game plays, and its result is posted (world_minigame_done)."""
+    save, away = save_or_home(request, slot)
+    if away:
+        return away
+    pending = world.minigame_under_way(save)
+    if not pending:
+        return redirect("weiss:world_town", slot=slot)
+    from . import minigame_views  # weiss.minigame_views uses this module
+    return render(request, "weiss/challenge_minigame.html", {
+        "run": None, "game": minigame_views.GAMES[pending["game"]], "data_url": reverse("weiss:world_minigame_data", args=[slot]),
+        "done_url": reverse("weiss:world_minigame_done", args=[slot]), "player_name": request.user.username,
+        "back_url": reverse("weiss:world_town", args=[slot]),
+    })
+
+
+@staff_required
+def world_minigame_data(request, slot):
+    save, away = save_or_home(request, slot)
+    if away:
+        return JsonResponse({"error": f"Slot {slot} has no save."}, status=404)
+    try:
+        return JsonResponse(world.minigame_data(save, request.user.username))
+    except ValueError as error:
+        return JsonResponse({"error": str(error)}, status=400)
+
+
+@staff_required
+@require_POST
+def world_minigame_done(request, slot):
+    """The game's result is posted: points, a win's pack and time, through world.finish_minigame."""
+    save, away = save_or_home(request, slot)
+    if away:
+        return JsonResponse({"error": f"Slot {slot} has no save."}, status=404)
+    try:
+        with transaction.atomic():
+            save = WorldSave.objects.select_for_update().get(pk=save.pk)
+            done = world.finish_minigame(save, request.POST.get("result", ""))
+    except ValueError as error:
+        return JsonResponse({"error": str(error)}, status=400)
+    return JsonResponse({**done, "redirect": reverse("weiss:world_town", args=[slot])})
+
+
 @staff_required
 @require_POST
 def world_buy(request, slot):

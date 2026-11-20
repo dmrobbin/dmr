@@ -22,6 +22,8 @@ starts again from nothing, deck and all. At the end, cleared or lost, the player
 their lists) or discards it; until then it's kept out of their lists (CardList.challenge).
 """
 import random
+import secrets
+import time
 
 from django.db import transaction
 from django.utils import timezone
@@ -49,6 +51,10 @@ PATH_AHEAD = 3  # floors of the path laid out past the one being fought
 COLUMNS = 3  # the path's width: left, middle and right; each space leads only to those beside it (see links)
 EVENT = "event"  # a space on the path that plays an event scene instead of a fight
 FLASH_CHANCE = .15  # that a fight on the path (not a boss's) is a flash battle (see is_flash); until staff set it
+MINIGAME_GAMES = ("memory", "cups", "invaders", "runner", "higher_lower")
+MINIGAME_CHANCE = .12  # that a fight on the path (not a boss's, nor the first floor's) is a minigame (see is_minigame)
+SPECIALTY_PACKS = ("climax_pack", "color_pack", "level_pack", "lucky_pack", "wild_pack")  # a co-op minigame's winner picks one of three
+MINIGAME_MIN_SECONDS = 20  # a posted result counts only this long after its game started on the server (see minigame_result_trusted)
 EVENT_CHANCE = .6  # that a floor (after the first) has an event among its spaces, if there are event scenes; until staff set it (see event_chance)
 INFINITE_START_PACKS = 20  # what an infinite challenge starts with, until staff set it (see infinite_start_packs)
 LOADOUT_BUFFS = ("climax_pack", "level_pack", "color_pack", "lucky_pack", "wild_pack", "climax_pick")  # what staff can start it with besides
@@ -184,6 +190,11 @@ def is_flash(path, f, node):
     return [f, node] in (path or {}).get("flash", [])
 
 
+def is_minigame(path, f, node):
+    """Whether the space in column `node` of floor `f` is a minigame against its CPU, rather than a fight."""
+    return [f, node] in (path or {}).get("minigames", [])
+
+
 def flash_now(run):
     """Whether the fight this player's on is a flash battle: the space picked on their floor."""
     path, at = run.path or {}, floor_at(run)
@@ -303,6 +314,8 @@ def path_of(run, rng=random):
     del floors[first_empty:]
     if path.get("flash"):
         path["flash"] = [space for space in path["flash"] if space[0] < first_empty]  # those floors are laid again
+    if path.get("minigames"):
+        path["minigames"] = [space for space in path["minigames"] if space[0] < first_empty]
     flash = flash_chance()
     chance = event_chance() if events and len(floors) < furthest + 1 + PATH_AHEAD else 0
     while found and len(floors) < furthest + 1 + PATH_AHEAD:
@@ -317,6 +330,10 @@ def path_of(run, rng=random):
                 spaces = [[f, c] for c, pk in enumerate(floors[f]) if pk not in (None, EVENT) and rng.random() < flash]
                 if spaces:
                     path["flash"] = [*path.get("flash", []), *spaces]
+            if f:
+                spaces = [[f, c] for c, pk in enumerate(floors[f]) if pk not in (None, EVENT) and rng.random() < MINIGAME_CHANCE]
+                if spaces:
+                    path["minigames"] = [*path.get("minigames", []), *spaces]
     if path != run.path:
         run.path = path
         run.save(update_fields=["path"])
@@ -416,6 +433,148 @@ def end_event(run, picks, rng=random):
     path["done"] += 1
     run.path = path
     return grant(run, given(payload, picks), source, rng)
+
+
+def minigame_result_trusted(pending, now=None):
+    """Whether a posted minigame result counts: its game has run at least MINIGAME_MIN_SECONDS on the server since it
+    started (`started`, recorded when it began). The one check for every minigame: the user's choice on how results are
+    trusted goes here, and only here."""
+    return (time.time() if now is None else now) - pending["started"] >= MINIGAME_MIN_SECONDS
+
+
+@coop.sharing
+def start_minigame(run, rng=random):
+    """The minigame space just picked: one of the five games at random, against its column's CPU, kept on the path
+    (`minigame`) until its result is posted. In co-op both players play it, from the same seed, each from when they
+    began (`starts`): see post_coop_minigame."""
+    path = path_of(run)
+    at = floor_at(run)
+    column = path["picks"][at]
+    if not path.get("minigame") or path["minigame"].get("decided"):
+        path["minigame"] = {"game": rng.choice(MINIGAME_GAMES), "cpu": path["floors"][at][column], "floor": at, "column": column,
+                            "seed": rng.randrange(1, 2 ** 31)}
+        if run.coop_id:
+            path["minigame"].update(scores={}, starts={})
+        else:
+            path["minigame"]["started"] = time.time()
+    if run.coop_id:
+        path["minigame"]["starts"].setdefault(str(run.user_id), time.time())
+    run.path = path
+    if not run.coop_id:
+        run.save(update_fields=["path"])
+    return path["minigame"]
+
+
+@coop.sharing
+def end_minigame(run, result, rng=random):
+    """A minigame's result is posted: a win gives a lucky pack (source "minigame"), a loss or draw nothing. The space is
+    cleared and the path moves on a floor. Returns what happened, for the player (see buffs.grant). Raises ValueError
+    if the game ended too quickly to count (the game stays to be played again)."""
+    from .buffs import grant  # weiss.buffs uses this module
+    path = path_of(run)
+    pending = path.get("minigame")
+    if not pending:
+        return []
+    if not minigame_result_trusted(pending):
+        raise ValueError("That game ended too quickly to count.")
+    path.pop("minigame")
+    path["minigames"] = [space for space in path.get("minigames", []) if space != [pending["floor"], pending["column"]]]
+    path["done"] += 1
+    run.path = path
+    if result != "win":
+        return []
+    grant(run, ["lucky_pack"], "minigame", rng)
+    return ["You won a lucky pack: claim it with your rewards."]
+
+
+@coop.sharing
+def post_coop_minigame(run, score, rng=random):
+    """One player's score in the co-op minigame, posted. It counts once the game has run long enough (for this player).
+    Until both have posted, {"waiting": True}. Then the higher score wins (a tie: each gets a lucky pack), the winner
+    gets a pack to choose (see pick_minigame_pack), the loser a lucky pack, and the floor is done for both."""
+    from .buffs import grant  # weiss.buffs uses this module
+    path = path_of(run)
+    pending = path.get("minigame")
+    if not pending or not run.coop_id:
+        raise ValueError("There's no minigame to finish.")
+    user = str(run.user_id)
+    if pending.get("decided"):
+        if user in pending["scores"]:  # posted again, after the partner's: the same answer, nothing else changes
+            return {"waiting": False, "scores": pending["scores"], "winner": pending["winner"], "tie": pending["tie"]}
+        raise ValueError("That minigame is over.")
+    if user in pending["scores"]:
+        raise ValueError("You've posted your score already.")
+    started = pending["starts"].get(user)
+    if started is None or not minigame_result_trusted({"started": started}):
+        raise ValueError("That game ended too quickly to count.")
+    pending["scores"][user] = int(score)
+    players = [str(pk) for pk in coop.players(run.coop)]
+    run.path = path
+    if any(pk not in pending["scores"] for pk in players):
+        return {"waiting": True}
+    scores = pending["scores"]
+    tie = scores[players[0]] == scores[players[1]]
+    winner = None if tie else max(players, key=lambda pk: scores[pk])
+    picks = rng.sample(SPECIALTY_PACKS, 3)
+
+    def award(target):
+        if tie or str(target.user_id) != winner:
+            grant(target, ["lucky_pack"], "minigame", rng)
+        else:
+            target.rewards = [*target.rewards, {"key": secrets.token_hex(6), "buff": "minigame_pick", "source": "minigame", "options": picks}]
+            target.save(update_fields=["rewards"])
+
+    pending.update(decided=True, winner=winner, tie=tie)  # kept on the path: both pages say how it went
+    path["minigames"] = [space for space in path.get("minigames", []) if space != [pending["floor"], pending["column"]]]
+    run.path = path
+    coop.finish_floor(run, coop.players(run.coop))
+    award(run)
+    coop.for_partner(run, award)
+    return {"waiting": False, "scores": scores, "winner": winner, "tie": tie}
+
+
+def coop_minigame_state(run, user_id):
+    """What a co-op minigame's page shows this player: {"waiting"} until the partner has posted; then {"waiting": False,
+    "result": {title, scores}}, with "pack_pick" and "packs" (the three on offer, each with its key, name and text) and
+    "pick_key" for a winner who hasn't chosen yet, and "lucky_pack" for a loser or a draw. {} if there's no co-op game."""
+    from .buffs import BUFFS  # weiss.buffs uses this module
+    pending = (run.path or {}).get("minigame") if run.coop_id else None
+    if not pending:
+        return {}
+    user = str(user_id)
+    if not pending.get("decided"):
+        return {"waiting": user in pending["scores"]}
+    scores = pending["scores"]
+    partner = next((pk for pk in scores if pk != user), None)
+    outcome = "draw" if pending["tie"] else "win" if pending["winner"] == user else "lose"
+    title = {"win": "You won the game!", "lose": "You lost the game.", "draw": "It's a draw."}[outcome]
+    state = {"waiting": False, "result": {"title": title, "scores": {"you": scores.get(user), "partner": scores.get(partner)}}}
+    pick = next((r for r in run.rewards if r["buff"] == "minigame_pick"), None)
+    if pick:
+        state.update(pack_pick=True, pick_key=pick["key"],
+                     packs=[{"key": buff, "name": BUFFS[buff].name, "text": BUFFS[buff].description} for buff in pick["options"]])
+    else:
+        state["pack_pick"] = False
+    state["lucky_pack"] = outcome != "win"
+    return state
+
+
+def pick_minigame_pack(run, key, choice):
+    """The winner of a co-op minigame chooses one of its three specialty packs: that reward becomes the pack. The run
+    is locked and its reward read again under the lock, so two picks at once can't both take it. Raises ValueError if
+    it isn't a choice on offer, or it's been chosen already."""
+    from .buffs import reward_of  # weiss.buffs uses this module
+    with transaction.atomic():
+        locked = ChallengeRun.objects.select_for_update().get(pk=run.pk)
+        reward = reward_of(locked, key)
+        if not reward or reward["buff"] != "minigame_pick":
+            raise ValueError("That isn't a pack to choose.")
+        if choice not in reward["options"]:
+            raise ValueError("Choose one of the three packs on offer.")
+        locked.rewards = [{"key": key, "buff": choice, "source": "minigame"} if r["key"] == key else r for r in locked.rewards]
+        locked.save(update_fields=["rewards"])
+    run.rewards = locked.rewards
+    return choice
 
 
 def infinite_style(arcade_run, profile):

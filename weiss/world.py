@@ -9,6 +9,7 @@ weiss.challenge); a save has the fields they read (pool, packs, rewards, last_op
 import random
 import re
 import secrets
+import time
 from collections import Counter
 from types import SimpleNamespace
 
@@ -133,7 +134,10 @@ def claim(save, key, data, rng=random):
     buff = buffs.BUFFS.get(reward["buff"])
     opened = False
     if buff and buff.claim == "pack":
-        pool, expansion_id = buffs.reward_pack(save, buff, data)
+        if reward.get("set"):  # a pack the reward itself fixes (a minigame's: from its CPU's deck set)
+            pool, expansion_id = packs.Pool.for_set(reward["set"]), reward["set"]
+        else:
+            pool, expansion_id = buffs.reward_pack(save, buff, data)
         pack = packs.open_pack(pool, rng, packs.BOOSTED_PACK if buff.pack == "lucky" else packs.PACK)
         for pull in pack:
             buffs.add_to_pool(save, pull.card.pk, 1)
@@ -372,6 +376,8 @@ def can_wait(save):
     in town to spend it with. Not while a duel's under way."""
     if live_duel(save):
         return False, "You're in a duel: finish it first."
+    if minigame_under_way(save):
+        return False, "You're in a game: finish it first."
     if engaged(save) or not anyone_out(save):
         return True, ""
     return False, "Spend this time with someone first: talk, give a gift or duel. Or travel to find someone."
@@ -713,6 +719,108 @@ def game_finished(room, over):
             tutorial.did(save, "duel")
         time_passed(save)
         changed(save, "money", "today", "flags", "turn", "relations", "pool", "gifts", "last_opening", "quests", "events", "rewards")
+
+
+def minigame_under_way(save):
+    """The minigame the save is playing now (who with, which game, its seed and when it started), or None."""
+    return (save.today or {}).get("minigame")
+
+
+def start_minigame(save, cpu_id, game):
+    """Play one of the minigames with someone here: once a day with each CPU, who must know the player at least a little
+    and not be cold to them. Playing spends the time of day (when the result is posted). Raises ValueError."""
+    if minigame_under_way(save):
+        raise ValueError("Finish the game you're in first.")
+    if choosing(save):
+        raise ValueError("Time has moved on: choose where to go first.")
+    if game not in quests.MINIGAMES:
+        raise ValueError("There's no game like that.")
+    cpu = someone_here(save, cpu_id)
+    tutorial.allows(save, "minigame", cpu=cpu)
+    if tutorial.step(save) != "minigame" and (rank_of(save, cpu.pk) < 1 or quests.estranged(save, cpu.pk)):
+        raise ValueError(f"{cpu.name} doesn't want to play a game with you yet.")
+    if cpu.pk in save.today.get("minigames", []):
+        raise ValueError(f"You've played a game with {cpu.name} today already.")
+    save.today["minigame"] = {"cpu": cpu.pk, "game": game, "seed": random.randrange(1, 2 ** 31), "started": time.time()}
+    engage(save)
+    changed(save, "today", "quests")
+    return save.today["minigame"]
+
+
+def minigame_offer(save, cpu):
+    """What the town's talk menu says about a game with this CPU: whether it's on offer now (acquaintance or above, not
+    cold to the player, not played today, only the tutorial's guide during its step), whether it's been played today,
+    and the points a game gives (2x the talk's base on a play, 3x on a win)."""
+    base = talk_points()
+    played = cpu.pk in save.today.get("minigames", [])
+    if tutorial.active(save):
+        allowed = tutorial.step(save) == "minigame" and tutorial.guide(save) is not None and tutorial.guide(save).pk == cpu.pk
+    else:
+        allowed = rank_of(save, cpu.pk) >= 1 and not quests.estranged(save, cpu.pk)
+    allowed = allowed and not played and not minigame_under_way(save) and not choosing(save)
+    return {"allowed": allowed, "played": played, "base": gain(cpu, base), "points": gain(cpu, base * 2), "win_points": gain(cpu, base * 3)}
+
+
+def minigame_data(save, username):
+    """What the game under way plays from (minigame_views.game_data), with its seed. Raises ValueError."""
+    from . import minigame_views  # weiss.minigame_views uses this module
+    pending = minigame_under_way(save)
+    if not pending:
+        raise ValueError("There's no game to play.")
+    cpu = CpuProfile.objects.filter(pk=pending["cpu"]).first()
+    difficulty = "easy" if tutorial.step(save) == "minigame" else "normal"  # the tutorial's guide goes easy
+    data = cpu and minigame_views.game_data(pending["game"], cpu, difficulty, username)
+    if not data:
+        raise ValueError("That game can't be played right now.")
+    lines = minigame_views.lines_for(cpu.name, "world", username, minigame_views.WORLD_MOMENTS)
+    return {**data, "seed": pending["seed"], "lines": lines, "again": bool(save.today.get("minigames"))}
+
+
+def finish_minigame(save, result):
+    """The game under way is over (win, lose or draw): points (2x the talk's base, 3x on a win), a win's lucky pack from
+    the CPU's deck set, the quests' minigame objectives, and time passes. Raises ValueError (and nothing changes) if the
+    result is no result, or if the game ended too quickly to count (challenge.minigame_result_trusted)."""
+    from . import minigame_views  # weiss.minigame_views uses this module
+    pending = minigame_under_way(save)
+    if not pending:
+        raise ValueError("There's no game to finish.")
+    if result not in ("win", "lose", "draw"):
+        raise ValueError("That isn't a result.")
+    if not challenge.minigame_result_trusted(pending):
+        raise ValueError("That game ended too quickly to count.")
+    cpu = CpuProfile.objects.filter(pk=pending["cpu"]).first()
+    won = result == "win"
+    points = gain(cpu, talk_points() * (3 if won else 2))
+    before, after = add_points(save, cpu.pk, points)
+    said = [f"+{points} ♥ with {cpu.name}."]
+    up = rank_up_said(save, cpu, after) if after > before else {}
+    said += [text for text, _ in reward_ranks(save, cpu, after)] if up else []
+    if won:
+        set_id = minigame_views.game_set(cpu)
+        if set_id is not None:
+            save.rewards = [*save.rewards, {"key": secrets.token_hex(6), "buff": "lucky_pack", "source": f"Minigame: {cpu.name}", "set": set_id}]
+            said.append(f"A lucky pack from {cpu.name}'s set: claim it from your save.")
+        else:
+            said.append("No set has enough pictured cards for a pack today.")
+    save.today.pop("minigame")
+    save.today.setdefault("minigames", []).append(cpu.pk)
+    save.flags["last_minigame"] = {"cpu": cpu.pk, "game": pending["game"], "result": result}
+    tutorial.minigame_done(save, won)
+    quests.minigame_finished(save, cpu, pending["game"], won)
+    time_passed(save)
+    changed(save, "money", "today", "flags", "turn", "relations", "pool", "gifts", "last_opening", "quests", "events", "rewards")
+    return {"result": result, "rewards": said, **up}
+
+
+def rank_up_said(save, cpu, rank):
+    """A rank reached with a CPU, as a duel's result says it: the rank's name, its line in the result, or its scene to
+    watch (saved to the save, as the rank-up scene is for a duel)."""
+    found = chatter.pick(cpu, "rank_up", rank)
+    if found and found[2]:
+        save.flags["scene"] = {"scene": found[2].pk, "cpu": cpu.pk}
+        return {"rank_up": rank_names()[rank], "rank_line": "", "scene": reverse("weiss:world_scene", args=[save.slot])}
+    line = next((filler(save, cpu)(step["text"]) for step in found[1]["steps"] if step["do"] == "say"), "") if found else ""
+    return {"rank_up": rank_names()[rank], "rank_line": line, "scene": ""}
 
 
 def duel_result(save):
@@ -1761,7 +1869,7 @@ def town(save):
                     "intro": duel_intro(save, cpu),
                     "duelled": cpu.pk in save.today.get("duelled", []), "relation": standing(save, cpu.pk),
                     "offer": offered_stake(save, cpu.pk), "quests": quests.actions(save, cpu),
-                    "tournament": events.round_label(save, cpu.pk)} for cpu, rule in people],
+                    "tournament": events.round_label(save, cpu.pk), "minigame": minigame_offer(save, cpu)} for cpu, rule in people],
         "quests": {**quests.counts(save), "url": reverse("weiss:world_quests", args=[save.slot])},
         "news": town_news(save),
         "gifts": inventory(save),

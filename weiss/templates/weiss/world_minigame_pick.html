@@ -1,0 +1,41 @@
+{% comment %}
+  The town's "Play a game" chooser (world_town.html keeps it in a <template>; world_town.js clones it into the town's panel).
+  Five games, one picked; the points note is filled in by the script from the server's numbers (talk points, 2x and 3x).
+{% endcomment %}
+<section class="minigame-pick" aria-labelledby="minigame-pick-title">
+  <h2 id="minigame-pick-title" class="minigame-pick-title" tabindex="-1">Play a game with <span data-pick-name>them</span></h2>
+  <p class="small muted minigame-pick-points" data-pick-points>A game gives double the talk points, and triple on a win. You can play one with each CPU once a day.</p>
+  <fieldset class="augment-choices minigame-choices">
+    <legend class="small">Choose a game</legend>
+    <label class="augment-choice minigame-choice">
+      <input type="radio" name="game" value="memory" required checked>
+      <span class="augment-name">Memory</span>
+      <span class="small">Find the pairs. A match keeps your turn; a miss passes it.</span>
+    </label>
+    <label class="augment-choice minigame-choice">
+      <input type="radio" name="game" value="cups">
+      <span class="augment-name">Three cups</span>
+      <span class="small">Find the card under the right cup. Three right of five wins.</span>
+    </label>
+    <label class="augment-choice minigame-choice">
+      <input type="radio" name="game" value="invaders">
+      <span class="augment-name">Climax Invaders</span>
+      <span class="small">Shoot the cards before they reach you. Three waves, three lives.</span>
+    </label>
+    <label class="augment-choice minigame-choice">
+      <input type="radio" name="game" value="runner">
+      <span class="augment-name">Runner</span>
+      <span class="small">Jump the low cards, slide under the high ones, and collect the coins.</span>
+    </label>
+    <label class="augment-choice minigame-choice">
+      <input type="radio" name="game" value="higher_lower">
+      <span class="augment-name">Higher or Lower</span>
+      <span class="small">Is the next card's power higher or lower? First to five.</span>
+    </label>
+  </fieldset>
+  <p class="small muted minigame-pick-note" data-pick-note></p>
+  <div class="minigame-pick-buttons">
+    <button type="button" class="minigame-pick-play" data-pick-play>Play</button>
+    <button type="button" class="button-small secondary" data-pick-back>Back</button>
+  </div>
+</section>

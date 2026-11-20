@@ -1,0 +1,4162 @@
+{
+ "*": {
+  "*": {
+   "start": [
+    "Right, let's play.",
+    "Let's see what you've got.",
+    "Good luck. You'll need it."
+   ],
+   "player_good": [
+    "Nice move, {player}.",
+    "Well played.",
+    "Not bad at all."
+   ],
+   "player_bad": [
+    "Tough break. Keep going.",
+    "Don't worry, the game's still on.",
+    "Ouch. You'll get the next one."
+   ],
+   "cpu_good": [
+    "That one's mine.",
+    "Got it. Your turn.",
+    "Right on target."
+   ],
+   "cpu_bad": [
+    "Hm. That one slipped.",
+    "Okay, my mistake.",
+    "I'll be more careful."
+   ],
+   "player_ahead": [
+    "You're pulling ahead, {player}.",
+    "Looks like you're winning.",
+    "Don't get too comfortable."
+   ],
+   "cpu_ahead": [
+    "I'm ahead now.",
+    "Keep up, {player}.",
+    "This is going my way."
+   ],
+   "win": [
+    "Good game. I'll take it.",
+    "Victory is mine.",
+    "That was fun. Want a rematch?"
+   ],
+   "lose": [
+    "You got me. Well played.",
+    "Fair play, {player}.",
+    "You win this one. Next time's mine."
+   ]
+  },
+  "memory": {
+   "start": [
+    "Let's see who remembers the most.",
+    "Watch closely. I never forget a face."
+   ],
+   "player_bad": [
+    "Hm. That one was in the wrong place."
+   ],
+   "cpu_good": [
+    "I remember that one from before.",
+    "Found it. I saw it earlier."
+   ],
+   "lose": [
+    "You remembered better than I did. Impressive."
+   ]
+  },
+  "cups": {
+   "start": [
+    "Watch the cups, {player}. Now they're moving.",
+    "Where's the card? I'll shuffle, you guess."
+   ],
+   "player_bad": [
+    "Wrong cup! Such a shame.",
+    "Trust your eyes, or trust your luck."
+   ],
+   "cpu_good": [
+    "Shuffle faster, nothing to see here!",
+    "You'll never find it that way."
+   ],
+   "cpu_bad": [
+    "Oops, that moved too quickly."
+   ],
+   "lose": [
+    "You found it. My trick didn't work this time."
+   ]
+  },
+  "invaders": {
+   "start": [
+    "Hold your ground. Here they come.",
+    "Watch the formation, {player}."
+   ],
+   "player_good": [
+    "Clean shot!"
+   ],
+   "cpu_good": [
+    "Hit! One life less for you."
+   ],
+   "player_ahead": [
+    "You're way past my target!"
+   ],
+   "lose": [
+    "Wave cleared. You're a better pilot than I thought."
+   ]
+  },
+  "higher_lower": {
+   "start": [
+    "Higher or lower? Let's make it interesting."
+   ],
+   "player_good": [
+    "Good guess. Lucky, or clever?"
+   ],
+   "cpu_good": [
+    "Higher! Feel the odds?"
+   ],
+   "lose": [
+    "You called it. The odds were with you."
+   ]
+  },
+  "runner": {
+   "start": [
+    "Let's run, {player}! Keep your feet moving!",
+    "Race you to the end of the track!",
+    "On your marks. No stopping."
+   ],
+   "player_good": [
+    "Nice grab! Coins are the best part.",
+    "Ooh, a coin! Good eye, {player}.",
+    "Shiny! That's points for you."
+   ],
+   "player_bad": [
+    "Ouch! Watch the next one.",
+    "You hit it! Jump sooner, {player}.",
+    "Tough break. Keep running."
+   ],
+   "cpu_good": [
+    "Got the coin! Easy.",
+    "I'm clearing these like nothing.",
+    "Smooth run. That's mine."
+   ],
+   "cpu_bad": [
+    "Ugh, I tripped on that one.",
+    "Okay, I'll be quicker next time.",
+    "That was a bad jump. My mistake."
+   ],
+   "player_ahead": [
+    "You're pulling ahead, {player}!",
+    "Look at you go! Don't slow down.",
+    "You're past my target. Impressive."
+   ],
+   "cpu_ahead": [
+    "I'm ahead, and I'm not stopping!",
+    "Keep up, {player}. I'm flying!",
+    "The finish line's mine."
+   ],
+   "win": [
+    "Finish! I win this run.",
+    "Victory, and I didn't even break a sweat.",
+    "Good run, {player}. Rematch?"
+   ],
+   "lose": [
+    "You beat me to the end! Well run.",
+    "Fair race, {player}. You earned that.",
+    "Ugh, you got me. Next run's mine."
+   ]
+  },
+  "world": {
+   "invite": [
+    "Want to play a game, {player}? I've got time.",
+    "How about a game? Pick whichever you fancy.",
+    "Fancy a round of something? My treat."
+   ],
+   "start": [
+    "Here we go, {player}!",
+    "Let's see what you've got."
+   ],
+   "win": [
+    "Good game! I'll take that one.",
+    "That's a win for me, {player}. Well played.",
+    "Victory is mine this time."
+   ],
+   "lose": [
+    "You got me, {player}. Well played.",
+    "Fair play. That one's yours.",
+    "You win this round. Rematch?"
+   ],
+   "again": [
+    "Back for another game, {player}? I like your style.",
+    "One more round? I'm not done yet."
+   ]
+  }
+ },
+ "Aang": {
+  "*": {
+   "start": [
+    "Okay, {player}, let's have some fun! Watch out for the air!"
+   ],
+   "player_good": [
+    "Whoa, nice one, {player}!"
+   ],
+   "player_bad": [
+    "Oops, it's okay, you'll get the next one!"
+   ],
+   "cpu_good": [
+    "Got it! Airbender's luck!"
+   ],
+   "cpu_bad": [
+    "Oh no, I flew right past that one."
+   ],
+   "player_ahead": [
+    "You're way ahead! Stop being so good!"
+   ],
+   "cpu_ahead": [
+    "I'm catching up, don't worry!"
+   ],
+   "win": [
+    "Ha! That was a good game, {player}!"
+   ],
+   "lose": [
+    "You beat me! I'm so proud of you!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "Hey, {player}! Want to play a game? Monks need fun too.",
+    "Let's play! The spirits said it'd be fun."
+   ],
+   "start": [
+    "Okay, here we go! Let's do this!"
+   ],
+   "win": [
+    "Yay, I won! Don't worry, you'll get the next one."
+   ],
+   "lose": [
+    "You beat me! Wow, you're good, {player}."
+   ],
+   "again": [
+    "Another game? I'm in! Let's see if I can do better."
+   ]
+  }
+ },
+ "Katara": {
+  "*": {
+   "start": [
+    "Let's see what you've got, {player}."
+   ],
+   "player_good": [
+    "That was well played."
+   ],
+   "player_bad": [
+    "Steady hands. You'll get it next time."
+   ],
+   "cpu_good": [
+    "The tide is turning my way."
+   ],
+   "cpu_bad": [
+    "That slipped. I'll be more careful."
+   ],
+   "player_ahead": [
+    "You're pulling ahead. I respect that."
+   ],
+   "cpu_ahead": [
+    "I'm not giving this up easily."
+   ],
+   "win": [
+    "The water always wins, {player}."
+   ],
+   "lose": [
+    "You played well. I'll remember that."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}, you look like you could use a good game. Come on!"
+   ],
+   "start": [
+    "Watch and learn, {player}."
+   ],
+   "win": [
+    "I won! Told you I'd take it."
+   ],
+   "lose": [
+    "Okay, okay. You earned that one, {player}."
+   ],
+   "again": [
+    "Again? Fine, but I'm not going easy on you."
+   ]
+  }
+ },
+ "Sokka": {
+  "*": {
+   "start": [
+    "Okay, I have a plan. It's probably a good plan."
+   ],
+   "player_good": [
+    "Huh! That wasn't in my plan. Clever."
+   ],
+   "player_bad": [
+    "Okay, that was a bad plan. My bad."
+   ],
+   "cpu_good": [
+    "Plan working! Sokka strikes again!"
+   ],
+   "cpu_bad": [
+    "Plan B. We're on plan B now."
+   ],
+   "player_ahead": [
+    "You're ahead? Plan adjustment needed!"
+   ],
+   "cpu_ahead": [
+    "I'm ahead! Sokka's the best strategist!"
+   ],
+   "win": [
+    "Victory! Boomerang! Good game, {player}!"
+   ],
+   "lose": [
+    "Okay, you got me. Next time, I'll have a better plan."
+   ]
+  },
+  "cups": {
+   "start": [
+    "Watch the cups, {player}. I've got a plan for these."
+   ],
+   "cpu_good": [
+    "Plan working! Wrong cup, {player}."
+   ],
+   "player_bad": [
+    "Sorry, that was a bad plan. Try another cup."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}! Quick, a game before the next thing comes up. Interested?"
+   ],
+   "start": [
+    "Game on! Strategy time."
+   ],
+   "win": [
+    "Ha! Did you see that? Pure genius."
+   ],
+   "lose": [
+    "Rigged! ...Okay, no, you were just better. Don't tell anyone."
+   ],
+   "again": [
+    "Round two! I've been planning for this."
+   ]
+  }
+ },
+ "Toph": {
+  "*": {
+   "start": [
+    "Come on, I can feel your nerves from here."
+   ],
+   "player_good": [
+    "Heh. Not bad, {player}."
+   ],
+   "player_bad": [
+    "Your heartbeat's panicking. Calm down."
+   ],
+   "cpu_good": [
+    "Easy. The ground never lies."
+   ],
+   "cpu_bad": [
+    "Tch. Lucky guess on your part."
+   ],
+   "player_ahead": [
+    "Fine, you're ahead. For now."
+   ],
+   "cpu_ahead": [
+    "I'm winning, and you can feel it too."
+   ],
+   "win": [
+    "Greatest earthbender wins again!"
+   ],
+   "lose": [
+    "You beat me. Don't let it go to your head."
+   ]
+  },
+  "world": {
+   "invite": [
+    "Hey, {player}. Bet I can beat you at something. Play?"
+   ],
+   "start": [
+    "Don't bother hiding it. I can feel everything."
+   ],
+   "win": [
+    "Easy. Too easy."
+   ],
+   "lose": [
+    "Hmph. You got lucky, {player}."
+   ],
+   "again": [
+    "Again? I can hear your heartbeat from here."
+   ]
+  }
+ },
+ "Azula": {
+  "*": {
+   "start": [
+    "Let us begin. Try not to embarrass yourself."
+   ],
+   "player_good": [
+    "Adequate. Do better."
+   ],
+   "player_bad": [
+    "Pathetic. Focus, or leave."
+   ],
+   "cpu_good": [
+    "As expected."
+   ],
+   "cpu_bad": [
+    "A minor setback. It won't happen again."
+   ],
+   "player_ahead": [
+    "You're ahead. Enjoy it while it lasts."
+   ],
+   "cpu_ahead": [
+    "The result is inevitable."
+   ],
+   "win": [
+    "Victory, as always. Thank you for playing."
+   ],
+   "lose": [
+    "You won this one. Don't make a habit of it."
+   ]
+  },
+  "memory": {
+   "start": [
+    "I'll remember every card. Try to keep up."
+   ],
+   "player_bad": [
+    "Careless. You've forgotten the pair you saw."
+   ],
+   "cpu_good": [
+    "I saw that pair three turns ago."
+   ]
+  },
+  "world": {
+   "invite": [
+    "Play with me, {player}. Try not to embarrass yourself."
+   ],
+   "start": [
+    "Let's see how long you last."
+   ],
+   "win": [
+    "As expected."
+   ],
+   "lose": [
+    "Enjoy it while it lasts, {player}."
+   ],
+   "again": [
+    "Again? How tiresome. Fine."
+   ]
+  }
+ },
+ "Simon the digger": {
+  "*": {
+   "start": [
+    "Um, hi. Let's do our best, okay?"
+   ],
+   "player_good": [
+    "Wow, you're really good at this!"
+   ],
+   "player_bad": [
+    "Oh no, sorry, I hope you're okay."
+   ],
+   "cpu_good": [
+    "Yay! I got one! Did you see?"
+   ],
+   "cpu_bad": [
+    "Oops. I'll dig it out next time."
+   ],
+   "player_ahead": [
+    "You're going way too fast! I'm trying!"
+   ],
+   "cpu_ahead": [
+    "I'm winning! Bro, look at that!"
+   ],
+   "win": [
+    "I won? I won! Thanks, {player}!"
+   ],
+   "lose": [
+    "You won. You're really good. Team Dai-Gurren respects that."
+   ]
+  },
+  "world": {
+   "invite": [
+    "Yo, {player}! Wanna play? I'll go easy, I promise!"
+   ],
+   "start": [
+    "Let's drill through this!"
+   ],
+   "win": [
+    "Drill spiral! I won!"
+   ],
+   "lose": [
+    "You're gonna be a drill king someday, {player}!"
+   ],
+   "again": [
+    "Another round? Let's drill deeper!"
+   ]
+  }
+ },
+ "Simon": {
+  "*": {
+   "start": [
+    "Let's see if you can keep up."
+   ],
+   "player_good": [
+    "Good spin, {player}."
+   ],
+   "player_bad": [
+    "Keep spinning. You'll break through."
+   ],
+   "cpu_good": [
+    "Pierce that!"
+   ],
+   "cpu_bad": [
+    "Hm. Off target. I'll adjust."
+   ],
+   "player_ahead": [
+    "You're pulling ahead. Impressive."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. Keep moving forward."
+   ],
+   "win": [
+    "Pierce the heavens, one more time!"
+   ],
+   "lose": [
+    "You pierced my defences. Well done."
+   ]
+  },
+  "invaders": {
+   "start": [
+    "Keep moving forward. We'll break through the formation."
+   ],
+   "cpu_good": [
+    "Piercing the heavens, one ship at a time!"
+   ],
+   "lose": [
+    "You cleared the wave. Spiral power recognises spiral power."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}, shall we play a game? Don't hold back."
+   ],
+   "start": [
+    "Let's see your resolve."
+   ],
+   "win": [
+    "I believe in my strategy. I won."
+   ],
+   "lose": [
+    "Your belief is stronger than mine, {player}."
+   ],
+   "again": [
+    "Once more. Let's see if your heart holds up."
+   ]
+  }
+ },
+ "Kittan": {
+  "*": {
+   "start": [
+    "OI! Let's go, {player}! KING KITTAN, GAME MODE!"
+   ],
+   "player_good": [
+    "Yeah, that's the spirit!"
+   ],
+   "player_bad": [
+    "Ha! Don't give up, you'll get it!"
+   ],
+   "cpu_good": [
+    "Yes! Kittan strikes again!"
+   ],
+   "cpu_bad": [
+    "Argh, that was a fluke!"
+   ],
+   "player_ahead": [
+    "You're ahead? Not for long!"
+   ],
+   "cpu_ahead": [
+    "I'm winning, obviously!"
+   ],
+   "win": [
+    "Ha! Kittan wins, bring on the cheers!"
+   ],
+   "lose": [
+    "You beat King Kittan? Respect!"
+   ]
+  },
+  "invaders": {
+   "start": [
+    "Charge! Right through the formation!"
+   ],
+   "cpu_good": [
+    "That's a KITTAN hit!"
+   ],
+   "player_good": [
+    "Nice! That's how it's done!"
+   ]
+  },
+  "higher_lower": {
+   "start": [
+    "Higher! I'm feeling loud, let's go!"
+   ],
+   "cpu_good": [
+    "Lower! I trust my gut!"
+   ]
+  },
+  "runner": {
+   "start": [
+    "Charge! Let's see who can run faster!"
+   ],
+   "cpu_good": [
+    "KITTAN JUMP! Ha, that's how you clear it!"
+   ],
+   "lose": [
+    "You outran King Kittan? Respect!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "Hey {player}! Up for a game? I've got loads of energy!"
+   ],
+   "start": [
+    "Let's go, let's go!"
+   ],
+   "win": [
+    "Yes! Victory is ours!"
+   ],
+   "lose": [
+    "Aww, you got me! Great game, {player}!"
+   ],
+   "again": [
+    "Another one? My energy's still full!"
+   ]
+  }
+ },
+ "Yoko": {
+  "*": {
+   "start": [
+    "Eyes on the target, {player}."
+   ],
+   "player_good": [
+    "Good shot."
+   ],
+   "player_bad": [
+    "Missed. Take a breath and try again."
+   ],
+   "cpu_good": [
+    "Bullseye."
+   ],
+   "cpu_bad": [
+    "That one drifted. My mistake."
+   ],
+   "player_ahead": [
+    "You're ahead. Nice aim."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. Steady hands win."
+   ],
+   "win": [
+    "Target hit. Good game."
+   ],
+   "lose": [
+    "You outshot me. Well done."
+   ]
+  },
+  "world": {
+   "invite": [
+    "Oh, {player}! A game? Yes, please!"
+   ],
+   "start": [
+    "Okay, my turn! Let's go!"
+   ],
+   "win": [
+    "I won! I'm so happy!"
+   ],
+   "lose": [
+    "You're really good at this, {player}!"
+   ],
+   "again": [
+    "Ooh, another game! Yay!"
+   ]
+  }
+ },
+ "Lord Genome": {
+  "*": {
+   "start": [
+    "Prepare yourself, surface child."
+   ],
+   "player_good": [
+    "Hm. You are not as foolish as I thought."
+   ],
+   "player_bad": [
+    "A predictable error. Continue."
+   ],
+   "cpu_good": [
+    "The spiral favours me."
+   ],
+   "cpu_bad": [
+    "A mere stumble. The king recovers."
+   ],
+   "player_ahead": [
+    "You lead. The king is patient."
+   ],
+   "cpu_ahead": [
+    "I lead. The spiral turns."
+   ],
+   "win": [
+    "The throne holds. Kneel, or leave."
+   ],
+   "lose": [
+    "You have defeated the Spiral King. Remember this."
+   ]
+  },
+  "memory": {
+   "start": [
+    "A king remembers his chronicles. Begin."
+   ],
+   "cpu_good": [
+    "I recall the chronicle of that pair."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. Your little game is merely a prelude to your defeat."
+   ],
+   "start": [
+    "Begin. I expect very little."
+   ],
+   "win": [
+    "Predictable."
+   ],
+   "lose": [
+    "Impossible... Enjoy this moment, {player}."
+   ],
+   "again": [
+    "Again? Very well. Your persistence amuses me."
+   ]
+  }
+ },
+ "Anti Spiral": {
+  "*": {
+   "start": [
+    "Game initiated. Observation begins."
+   ],
+   "player_good": [
+    "Performance recorded. Acceptable."
+   ],
+   "player_bad": [
+    "Error logged. Growth requires failure."
+   ],
+   "cpu_good": [
+    "Calculation correct. Stagnation confirmed."
+   ],
+   "cpu_bad": [
+    "Anomaly. Recalculating."
+   ],
+   "player_ahead": [
+    "Your lead exceeds parameters."
+   ],
+   "cpu_ahead": [
+    "Expected outcome: my victory."
+   ],
+   "win": [
+    "Result: victory. Logged."
+   ],
+   "lose": [
+    "Result: defeat. Designated: worthy."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game? You are nothing but a mere human."
+   ],
+   "start": [
+    "Begin your futile game."
+   ],
+   "win": [
+    "Your spiral is weak."
+   ],
+   "lose": [
+    "This cannot be... Hmph."
+   ],
+   "again": [
+    "Once more. You will not win."
+   ]
+  }
+ },
+ "Akane Kurokawa": {
+  "*": {
+   "start": [
+    "Let's make this look good, okay?"
+   ],
+   "player_good": [
+    "Nice! That's a great move!"
+   ],
+   "player_bad": [
+    "Wait, that's not the take I wanted."
+   ],
+   "cpu_good": [
+    "And that's the scene!"
+   ],
+   "cpu_bad": [
+    "Ugh, retake."
+   ],
+   "player_ahead": [
+    "You're stealing the spotlight!"
+   ],
+   "cpu_ahead": [
+    "My turn to shine."
+   ],
+   "win": [
+    "Curtain call! That was fun."
+   ],
+   "lose": [
+    "You're better than the script. Wow."
+   ]
+  },
+  "memory": {
+   "start": [
+    "I study people for a living. Let's see how well you remember."
+   ],
+   "player_good": [
+    "Perfect recall. I'm copying your method."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}, you wanna play? I'm down, but don't expect me to lose."
+   ],
+   "start": [
+    "Here we go. Let's do this."
+   ],
+   "win": [
+    "Ha, told you."
+   ],
+   "lose": [
+    "Ugh, fine. Nice game, {player}."
+   ],
+   "again": [
+    "Another one? Sure, I like a challenge."
+   ]
+  }
+ },
+ "Aqua Hoshino": {
+  "*": {
+   "start": [
+    "Let's get this over with."
+   ],
+   "player_good": [
+    "Not bad."
+   ],
+   "player_bad": [
+    "That was messy."
+   ],
+   "cpu_good": [
+    "Got it. Clean."
+   ],
+   "cpu_bad": [
+    "Hm. Off take."
+   ],
+   "player_ahead": [
+    "You're ahead. Don't get cocky."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. As expected."
+   ],
+   "win": [
+    "Fine. I win."
+   ],
+   "lose": [
+    "You beat me. Whatever. Good game."
+   ]
+  },
+  "world": {
+   "invite": [
+    "...{player}. If you want a game, I suppose I'll allow it."
+   ],
+   "start": [
+    "Don't blame me when you lose."
+   ],
+   "win": [
+    "That's how it's done."
+   ],
+   "lose": [
+    "...You had that one. Don't let it go to your head."
+   ],
+   "again": [
+    "Again? Persistent, aren't you."
+   ]
+  }
+ },
+ "Kana Arima": {
+  "*": {
+   "start": [
+    "Ten seconds, and I'm winning."
+   ],
+   "player_good": [
+    "Ugh, you're good."
+   ],
+   "player_bad": [
+    "Ha! Mistake!"
+   ],
+   "cpu_good": [
+    "Got you!"
+   ],
+   "cpu_bad": [
+    "Argh! Not on camera!"
+   ],
+   "player_ahead": [
+    "Don't look so pleased."
+   ],
+   "cpu_ahead": [
+    "I'm winning, and I'm not crying about it."
+   ],
+   "win": [
+    "Yes! I won. Don't tell anyone I cried."
+   ],
+   "lose": [
+    "Fine. You win. I hate losing."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}, a game? I'm already a step ahead of you."
+   ],
+   "start": [
+    "Let's see how you read me."
+   ],
+   "win": [
+    "Didn't see that coming, did you?"
+   ],
+   "lose": [
+    "Hmph. I won't underestimate you next time."
+   ],
+   "again": [
+    "Round two. Try harder this time."
+   ]
+  }
+ },
+ "Ruby Hoshino": {
+  "*": {
+   "start": [
+    "Let's go! Show me your best!"
+   ],
+   "player_good": [
+    "Yay, that was awesome!"
+   ],
+   "player_bad": [
+    "Aw, it's okay! Try again!"
+   ],
+   "cpu_good": [
+    "Yes! My fan's watching!"
+   ],
+   "cpu_bad": [
+    "Oops! Bow mistake!"
+   ],
+   "player_ahead": [
+    "You're amazing! Keep going!"
+   ],
+   "cpu_ahead": [
+    "I'm winning! Woo!"
+   ],
+   "win": [
+    "I won! Thanks for playing!"
+   ],
+   "lose": [
+    "You won! You're my best fan!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}! Let's play! I'll give you my best shot!"
+   ],
+   "start": [
+    "Here comes my A-game!"
+   ],
+   "win": [
+    "Yes! I won!"
+   ],
+   "lose": [
+    "You're amazing, {player}! Rematch?"
+   ],
+   "again": [
+    "Another game? Yes! I'm ready!"
+   ]
+  }
+ },
+ "Legendary Idol Ai": {
+  "*": {
+   "start": [
+    "Smile for me, {player}."
+   ],
+   "player_good": [
+    "Real smile, that was good."
+   ],
+   "player_bad": [
+    "Oh, sweetie, don't pout."
+   ],
+   "cpu_good": [
+    "Smile! The fans love it."
+   ],
+   "cpu_bad": [
+    "Hm. My smile slipped."
+   ],
+   "player_ahead": [
+    "You're shining. I like it."
+   ],
+   "cpu_ahead": [
+    "The spotlight is mine."
+   ],
+   "win": [
+    "A perfect night. Thank you."
+   ],
+   "lose": [
+    "You won. That smile was real, though."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}! Want to play? Everyone should get a turn with me!"
+   ],
+   "start": [
+    "Here we go, the stage is set!"
+   ],
+   "win": [
+    "I'm number one, and that's a fact!"
+   ],
+   "lose": [
+    "You're a star too, {player}. Next game, my spotlight!"
+   ],
+   "again": [
+    "One more game? Let's make it a show!"
+   ]
+  }
+ },
+ "Madoka": {
+  "*": {
+   "start": [
+    "Okay, I'll try my best. Please don't mind if I'm bad."
+   ],
+   "player_good": [
+    "Wow, you're really good, {player}!"
+   ],
+   "player_bad": [
+    "It's okay, you'll get the next one."
+   ],
+   "cpu_good": [
+    "Oh! I got one!"
+   ],
+   "cpu_bad": [
+    "Oops, sorry, that was my mistake."
+   ],
+   "player_ahead": [
+    "You're ahead! I'm happy for you."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. I hope you don't mind."
+   ],
+   "win": [
+    "I won? Oh, thank you, {player}."
+   ],
+   "lose": [
+    "You won. I'm glad you did, honestly."
+   ]
+  },
+  "world": {
+   "invite": [
+    "Um, {player}? Would you like to play a game with me?"
+   ],
+   "start": [
+    "Okay, I'll try my best!"
+   ],
+   "win": [
+    "Oh! I won? I didn't expect that."
+   ],
+   "lose": [
+    "You're really good, {player}. I'm happy for you!"
+   ],
+   "again": [
+    "Another game? Okay. Let's do our best together."
+   ]
+  }
+ },
+ "Homura Akemi": {
+  "*": {
+   "start": [
+    "I'm not going to lose this time."
+   ],
+   "player_good": [
+    "Good. Keep that up."
+   ],
+   "player_bad": [
+    "A mistake. Be more careful."
+   ],
+   "cpu_good": [
+    "Calculated. As planned."
+   ],
+   "cpu_bad": [
+    "That was wrong. Again."
+   ],
+   "player_ahead": [
+    "You're ahead. Don't assume it's over."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. Stay focused."
+   ],
+   "win": [
+    "Victory. The timeline holds."
+   ],
+   "lose": [
+    "You won. Remember this for next time."
+   ]
+  },
+  "memory": {
+   "start": [
+    "I've seen every card in this deck before. Let's begin."
+   ],
+   "cpu_good": [
+    "I know where that pair is. I've been here before."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game. I'll allow it, but only once."
+   ],
+   "start": [
+    "Focus. Don't waste the time."
+   ],
+   "win": [
+    "As I planned."
+   ],
+   "lose": [
+    "...You're better than I expected, {player}."
+   ],
+   "again": [
+    "Again? I've learned from the last one."
+   ]
+  }
+ },
+ "Kyoko Sakura": {
+  "*": {
+   "start": [
+    "Let's see if you can keep up with me."
+   ],
+   "player_good": [
+    "Heh, not bad."
+   ],
+   "player_bad": [
+    "Ha! Mistake!"
+   ],
+   "cpu_good": [
+    "Got it. Easy."
+   ],
+   "cpu_bad": [
+    "Argh. Lucky break."
+   ],
+   "player_ahead": [
+    "Hey, you're getting too good."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. Eat your words."
+   ],
+   "win": [
+    "Ha! I win. Snacks on me."
+   ],
+   "lose": [
+    "You beat me. Fine. Snacks on you."
+   ]
+  },
+  "world": {
+   "invite": [
+    "Hey, {player}! Up for a game? I'm not going to lose!"
+   ],
+   "start": [
+    "Let's see what you're made of!"
+   ],
+   "win": [
+    "Ha! Nobody beats me!"
+   ],
+   "lose": [
+    "Tch. Fine, you win this one, {player}."
+   ],
+   "again": [
+    "Another game? Bring it on!"
+   ]
+  }
+ },
+ "Mami Tomoe": {
+  "*": {
+   "start": [
+    "Let's have a nice, fair game, shall we?"
+   ],
+   "player_good": [
+    "Lovely play, dear!"
+   ],
+   "player_bad": [
+    "Oh, never mind. Next time!"
+   ],
+   "cpu_good": [
+    "A perfect move, if I may say so."
+   ],
+   "cpu_bad": [
+    "Oh dear, that was a slip."
+   ],
+   "player_ahead": [
+    "You're ahead! How wonderful."
+   ],
+   "cpu_ahead": [
+    "I'm ahead, but I'm not gloating."
+   ],
+   "win": [
+    "I won, and I'll share the cake."
+   ],
+   "lose": [
+    "You won! Let's have tea after."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}, would you like to play a game? I'd love the company!"
+   ],
+   "start": [
+    "Let's have a wonderful time together!"
+   ],
+   "win": [
+    "Oh my, I won! How lovely."
+   ],
+   "lose": [
+    "You played beautifully, {player}. Shall we go again?"
+   ],
+   "again": [
+    "Another game? How delightful!"
+   ]
+  }
+ },
+ "Sayaka Miki": {
+  "*": {
+   "start": [
+    "Justice is on my side! Let's go!"
+   ],
+   "player_good": [
+    "Yes! Heroic move!"
+   ],
+   "player_bad": [
+    "It's okay, heroes get back up!"
+   ],
+   "cpu_good": [
+    "Justice wins!"
+   ],
+   "cpu_bad": [
+    "Argh! Not justice!"
+   ],
+   "player_ahead": [
+    "You're ahead! Don't stop being a hero!"
+   ],
+   "cpu_ahead": [
+    "I'm ahead! Justice is strong!"
+   ],
+   "win": [
+    "Justice wins! Good game, {player}!"
+   ],
+   "lose": [
+    "You beat me, and that's heroic too!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}! A game? Yes! Let's do it!"
+   ],
+   "start": [
+    "Okay, here I go!"
+   ],
+   "win": [
+    "I did it! Did you see?"
+   ],
+   "lose": [
+    "Aww, you got me, {player}! Good game!"
+   ],
+   "again": [
+    "Another round? I'm totally in!"
+   ]
+  }
+ },
+ "Aki Hayakawa": {
+  "*": {
+   "start": [
+    "Let's get this over with."
+   ],
+   "player_good": [
+    "Not bad."
+   ],
+   "player_bad": [
+    "Mistake. Next one."
+   ],
+   "cpu_good": [
+    "Right move."
+   ],
+   "cpu_bad": [
+    "Hm. Mistake."
+   ],
+   "player_ahead": [
+    "You're pulling ahead."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. Calm."
+   ],
+   "win": [
+    "I won. Fine."
+   ],
+   "lose": [
+    "You won. Good game."
+   ]
+  },
+  "world": {
+   "invite": [
+    "...{player}. A game? If you insist."
+   ],
+   "start": [
+    "Hm. Let's get this over with."
+   ],
+   "win": [
+    "Good. That's that."
+   ],
+   "lose": [
+    "You won. Don't make a habit of it."
+   ],
+   "again": [
+    "Again? Don't expect anything different."
+   ]
+  }
+ },
+ "Denji": {
+  "*": {
+   "start": [
+    "Yo! Let's play! Winner gets the donut!"
+   ],
+   "player_good": [
+    "Whoa! That was awesome!"
+   ],
+   "player_bad": [
+    "Aw, that's not fair!"
+   ],
+   "cpu_good": [
+    "Yes! Donut's mine!"
+   ],
+   "cpu_bad": [
+    "Ugh, my bad!"
+   ],
+   "player_ahead": [
+    "You're winning? Give me that donut!"
+   ],
+   "cpu_ahead": [
+    "I'm winning! Donut time!"
+   ],
+   "win": [
+    "I won! Donut for me!"
+   ],
+   "lose": [
+    "You won! Okay, you get the donut."
+   ]
+  },
+  "cups": {
+   "start": [
+    "Find the card! I bet you can't find it. Donut on the line!"
+   ],
+   "cpu_good": [
+    "Ha! Donut's still mine, look at that!"
+   ],
+   "player_bad": [
+    "Aw, you missed! Donut's safe for me!"
+   ]
+  },
+  "higher_lower": {
+   "start": [
+    "Higher or lower? Bet you a donut it's higher!"
+   ],
+   "cpu_good": [
+    "Higher! Donut time!"
+   ],
+   "player_bad": [
+    "Lower? Nope, donut's mine!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}! Wanna play a game? I'll share my snacks!"
+   ],
+   "start": [
+    "Let's go! Let's go! Let's go!"
+   ],
+   "win": [
+    "I won! Time for another snack!"
+   ],
+   "lose": [
+    "Aw, you're too good, {player}!"
+   ],
+   "again": [
+    "Again? Yes! Let's play forever!"
+   ]
+  }
+ },
+ "Makima": {
+  "*": {
+   "start": [
+    "I'd like to see what you can do."
+   ],
+   "player_good": [
+    "You're clever, {player}."
+   ],
+   "player_bad": [
+    "A mistake. I expected better."
+   ],
+   "cpu_good": [
+    "As I planned."
+   ],
+   "cpu_bad": [
+    "A slip. Not a problem."
+   ],
+   "player_ahead": [
+    "You lead. Interesting."
+   ],
+   "cpu_ahead": [
+    "I lead. That's how it is."
+   ],
+   "win": [
+    "Good dog. I win."
+   ],
+   "lose": [
+    "You won. Well played, {player}."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. Would you play a game with me? I'm curious how you think."
+   ],
+   "start": [
+    "Show me what you can do."
+   ],
+   "win": [
+    "I thought so."
+   ],
+   "lose": [
+    "Interesting. You surprised me, {player}."
+   ],
+   "again": [
+    "Once more. I'd like to see how you change."
+   ]
+  }
+ },
+ "Power": {
+  "*": {
+   "start": [
+    "Power will crush you! Bow to Power!"
+   ],
+   "player_good": [
+    "Hah! You're not bad, human!"
+   ],
+   "player_bad": [
+    "Ha! Power wins!"
+   ],
+   "cpu_good": [
+    "Power is best! Obviously!"
+   ],
+   "cpu_bad": [
+    "That did not count! Power demands a rematch!"
+   ],
+   "player_ahead": [
+    "You're ahead? Power is shocked!"
+   ],
+   "cpu_ahead": [
+    "Power is ahead! Bow!"
+   ],
+   "win": [
+    "Power wins! Power is the best!"
+   ],
+   "lose": [
+    "You beat Power? Power is... a little impressed."
+   ]
+  },
+  "cups": {
+   "start": [
+    "Find it, human! Power is very good at cups!"
+   ],
+   "cpu_good": [
+    "Power's cup is the best cup!"
+   ],
+   "player_bad": [
+    "Hah! Wrong cup! Power is the king of cups!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "Hey, {player}! A game? I'm the best at games, you know!"
+   ],
+   "start": [
+    "Blood and victory! Let's go!"
+   ],
+   "win": [
+    "Ha! Power wins again!"
+   ],
+   "lose": [
+    "Grr! Fine, you beat me, {player}. This time."
+   ],
+   "again": [
+    "Another game? Power never backs down!"
+   ]
+  }
+ },
+ "Beast Titan": {
+  "*": {
+   "start": [
+    "Ready? I'll be gentle."
+   ],
+   "player_good": [
+    "Nice! You're good at this."
+   ],
+   "player_bad": [
+    "Oh, that was a shame. Try again."
+   ],
+   "cpu_good": [
+    "A good move, I think."
+   ],
+   "cpu_bad": [
+    "Oops. Sorry about that."
+   ],
+   "player_ahead": [
+    "You're ahead. Good for you."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. I'm sorry."
+   ],
+   "win": [
+    "I won. Thanks for the game."
+   ],
+   "lose": [
+    "You won, {player}. That's nice."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. Play with me. Let's see how long you last."
+   ],
+   "start": [
+    "Begin."
+   ],
+   "win": [
+    "Nothing can stop me."
+   ],
+   "lose": [
+    "You're strong, {player}. For now."
+   ],
+   "again": [
+    "Once more. You will fall again."
+   ]
+  }
+ },
+ "Eren": {
+  "*": {
+   "start": [
+    "Let's see who keeps moving forward."
+   ],
+   "player_good": [
+    "Good. You're fast."
+   ],
+   "player_bad": [
+    "Keep going. Don't stop."
+   ],
+   "cpu_good": [
+    "Forward!"
+   ],
+   "cpu_bad": [
+    "I missed. I'll go again."
+   ],
+   "player_ahead": [
+    "You're ahead. Catch me."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. Keep moving."
+   ],
+   "win": [
+    "I keep moving forward. I win."
+   ],
+   "lose": [
+    "You're faster. Fine."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. Want a game? Don't waste my time."
+   ],
+   "start": [
+    "I won't lose this one."
+   ],
+   "win": [
+    "That's how we win."
+   ],
+   "lose": [
+    "You beat me, {player}. I'll get stronger."
+   ],
+   "again": [
+    "Again. This time I won't hold back."
+   ]
+  }
+ },
+ "Levi": {
+  "*": {
+   "start": [
+    "Keep it clean. No dirty tricks."
+   ],
+   "player_good": [
+    "Tch. Acceptable."
+   ],
+   "player_bad": [
+    "Sloppy. Do it again."
+   ],
+   "cpu_good": [
+    "Clean. Precise."
+   ],
+   "cpu_bad": [
+    "Hm. Messy. My fault."
+   ],
+   "player_ahead": [
+    "You're ahead. Tch."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. Fine."
+   ],
+   "win": [
+    "I win. Clean game."
+   ],
+   "lose": [
+    "You won. Fine. Tea after?"
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game. Keep up."
+   ],
+   "start": [
+    "Don't slack off."
+   ],
+   "win": [
+    "Tch. Expected."
+   ],
+   "lose": [
+    "Not bad, {player}. Still not good enough for me."
+   ],
+   "again": [
+    "Again. Try not to disappoint me."
+   ]
+  }
+ },
+ "Mikasa": {
+  "*": {
+   "start": [
+    "I'll play carefully, {player}."
+   ],
+   "player_good": [
+    "That was good."
+   ],
+   "player_bad": [
+    "It's okay. Keep your guard up."
+   ],
+   "cpu_good": [
+    "A good move."
+   ],
+   "cpu_bad": [
+    "That was a mistake, sorry."
+   ],
+   "player_ahead": [
+    "You're ahead. Be careful."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. Stay alert."
+   ],
+   "win": [
+    "I won. Thank you for the game."
+   ],
+   "lose": [
+    "You won. You're strong, {player}."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}... would you play a game with me?"
+   ],
+   "start": [
+    "I'll do my best."
+   ],
+   "win": [
+    "...I won."
+   ],
+   "lose": [
+    "You played well, {player}."
+   ],
+   "again": [
+    "Another game? Okay."
+   ]
+  }
+ },
+ "Nui Harime": {
+  "*": {
+   "start": [
+    "Teehee! Let's play, plaything!"
+   ],
+   "player_good": [
+    "Oooh! That was clever!"
+   ],
+   "player_bad": [
+    "Teehee! Oops!"
+   ],
+   "cpu_good": [
+    "Stitched you! Teehee!"
+   ],
+   "cpu_bad": [
+    "Argh! Loose thread!"
+   ],
+   "player_ahead": [
+    "You're ahead! Don't let me sew you up!"
+   ],
+   "cpu_ahead": [
+    "I'm ahead! Perfect stitches!"
+   ],
+   "win": [
+    "I win, teehee! Another doll!"
+   ],
+   "lose": [
+    "You won! I'll make you a dress!"
+   ]
+  },
+  "cups": {
+   "start": [
+    "Find the card, plaything! I've hidden it in a seam!"
+   ],
+   "cpu_good": [
+    "Teehee! Tucked under the cup, as neat as a stitch!"
+   ],
+   "player_bad": [
+    "Teehee! Wrong cup! Sew better next time!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}, you dare challenge me to a game? Amusing."
+   ],
+   "start": [
+    "Let's see how you fare against the Harime clan."
+   ],
+   "win": [
+    "Victory belongs to me."
+   ],
+   "lose": [
+    "You won this round, {player}. Don't gloat."
+   ],
+   "again": [
+    "Another game? You won't survive it."
+   ]
+  }
+ },
+ "Ragyo Kiryuin": {
+  "*": {
+   "start": [
+    "The family's power is mine. Begin."
+   ],
+   "player_good": [
+    "Acceptable."
+   ],
+   "player_bad": [
+    "Disappointing."
+   ],
+   "cpu_good": [
+    "As the fibres dictate."
+   ],
+   "cpu_bad": [
+    "A flaw in the weave. Noted."
+   ],
+   "player_ahead": [
+    "You lead. Do not get used to it."
+   ],
+   "cpu_ahead": [
+    "I lead. The family prevails."
+   ],
+   "win": [
+    "The family is victorious."
+   ],
+   "lose": [
+    "You have won. The family will remember it."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. You will play by my rules, or not at all."
+   ],
+   "start": [
+    "Begin. Stitch by stitch, I'll win."
+   ],
+   "win": [
+    "As the Life Fibers decree."
+   ],
+   "lose": [
+    "Hm. You will not forget this, {player}."
+   ],
+   "again": [
+    "Again. Your defeat is only delayed."
+   ]
+  }
+ },
+ "Ryuko Matoi": {
+  "*": {
+   "start": [
+    "Senketsu's ready! Let's go!"
+   ],
+   "player_good": [
+    "Whoa! Nice one, {player}!"
+   ],
+   "player_bad": [
+    "Aw, that's rough!"
+   ],
+   "cpu_good": [
+    "Yeah! Senketsu's power!"
+   ],
+   "cpu_bad": [
+    "Argh, my bad!"
+   ],
+   "player_ahead": [
+    "You're ahead? Not fair!"
+   ],
+   "cpu_ahead": [
+    "I'm winning! Senketsu's proud!"
+   ],
+   "win": [
+    "I won! Senketsu, we did it!"
+   ],
+   "lose": [
+    "You won. You're tough. Senketsu agrees."
+   ]
+  },
+  "invaders": {
+   "start": [
+    "Senketsu's in the cockpit! Let's blast them!"
+   ],
+   "cpu_good": [
+    "Scissor blade! Right through the formation!"
+   ],
+   "player_good": [
+    "Nice shot! Senketsu's impressed!"
+   ]
+  },
+  "runner": {
+   "start": [
+    "Senketsu's ready! Let's race!"
+   ],
+   "player_bad": [
+    "Aw, you hit one! Senketsu's laughing at you."
+   ],
+   "cpu_good": [
+    "Scissor dash! Right over that one!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}! Game? Hell yeah, let's go!"
+   ],
+   "start": [
+    "Bring it on, I've got nothing to lose!"
+   ],
+   "win": [
+    "Ha! Nobody beats the Scissor Blade!"
+   ],
+   "lose": [
+    "Damn, you got me, {player}. Rematch!"
+   ],
+   "again": [
+    "Another round? Let's tear it up!"
+   ]
+  }
+ },
+ "Satsuki Kiryuin": {
+  "*": {
+   "start": [
+    "State your strategy. I shall beat it."
+   ],
+   "player_good": [
+    "Adequate. Continue."
+   ],
+   "player_bad": [
+    "Weak. Try harder."
+   ],
+   "cpu_good": [
+    "As planned."
+   ],
+   "cpu_bad": [
+    "A minor error. Corrected."
+   ],
+   "player_ahead": [
+    "You lead. Not for long."
+   ],
+   "cpu_ahead": [
+    "I lead. Discipline wins."
+   ],
+   "win": [
+    "The academy wins. Dismissed."
+   ],
+   "lose": [
+    "You have defeated me. Acknowledged."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game? Very well, I'll grant you the honour."
+   ],
+   "start": [
+    "Let's see if you're worthy of my time."
+   ],
+   "win": [
+    "As the student council president, I expected nothing less."
+   ],
+   "lose": [
+    "You are worthy, {player}. Do not let it go to your head."
+   ],
+   "again": [
+    "Once more. Impress me."
+   ]
+  }
+ },
+ "Aira": {
+  "*": {
+   "start": [
+    "The chosen one plays now! Watch closely!"
+   ],
+   "player_good": [
+    "You're good! Destiny says so!"
+   ],
+   "player_bad": [
+    "A setback, but destiny isn't done!"
+   ],
+   "cpu_good": [
+    "Destiny! Obviously!"
+   ],
+   "cpu_bad": [
+    "Hmph! That was a fluke!"
+   ],
+   "player_ahead": [
+    "You're ahead? Destiny has other plans!"
+   ],
+   "cpu_ahead": [
+    "I'm ahead! As it should be!"
+   ],
+   "win": [
+    "The chosen one wins! Obviously!"
+   ],
+   "lose": [
+    "You won. Destiny is annoying, sometimes."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game. It'd be a waste not to take it."
+   ],
+   "start": [
+    "Keep your eyes open."
+   ],
+   "win": [
+    "Calculated."
+   ],
+   "lose": [
+    "Well played, {player}. I'll remember that."
+   ],
+   "again": [
+    "Another game? Fine."
+   ]
+  }
+ },
+ "Momo Ayase": {
+  "*": {
+   "start": [
+    "Okay, let's do this! Don't be boring!"
+   ],
+   "player_good": [
+    "Ooh, cool move!"
+   ],
+   "player_bad": [
+    "Aw, that's so unfair!"
+   ],
+   "cpu_good": [
+    "Yes! Totally cute win!"
+   ],
+   "cpu_bad": [
+    "Ugh, that was embarrassing!"
+   ],
+   "player_ahead": [
+    "You're ahead? Rude!"
+   ],
+   "cpu_ahead": [
+    "I'm ahead! Obviously!"
+   ],
+   "win": [
+    "I won! Let's get bubble tea!"
+   ],
+   "lose": [
+    "You won! Okay, you're cool."
+   ]
+  },
+  "world": {
+   "invite": [
+    "Oh! {player}, want to play a game? I'd love to!"
+   ],
+   "start": [
+    "Okay, let's do our best!"
+   ],
+   "win": [
+    "Yay, I won! I'm so happy!"
+   ],
+   "lose": [
+    "You're amazing, {player}! Good game!"
+   ],
+   "again": [
+    "Another game? Yes, please!"
+   ]
+  }
+ },
+ "Okarun": {
+  "*": {
+   "start": [
+    "Um, okay. Let's play. Sorry in advance."
+   ],
+   "player_good": [
+    "Whoa, that was fast!"
+   ],
+   "player_bad": [
+    "Oh no, sorry, that's my fault."
+   ],
+   "cpu_good": [
+    "Yes! I got it!"
+   ],
+   "cpu_bad": [
+    "Argh, sorry, I missed!"
+   ],
+   "player_ahead": [
+    "You're ahead! So fast!"
+   ],
+   "cpu_ahead": [
+    "I'm ahead! This is cool!"
+   ],
+   "win": [
+    "I won! Um, thanks!"
+   ],
+   "lose": [
+    "You won! Wow, that was amazing."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}! Game? I'm not scared of anything, so bring it!"
+   ],
+   "start": [
+    "Ghosts can't beat me at this!"
+   ],
+   "win": [
+    "I won! Take that, spirits!"
+   ],
+   "lose": [
+    "Okay, you got me, {player}. Good game!"
+   ],
+   "again": [
+    "Another one? I'm ready!"
+   ]
+  }
+ },
+ "Cinder Fall": {
+  "*": {
+   "start": [
+    "Let's see whose fire burns brighter."
+   ],
+   "player_good": [
+    "Hm. You're not bad."
+   ],
+   "player_bad": [
+    "Careless. The fire doesn't forgive."
+   ],
+   "cpu_good": [
+    "Burn! Perfect."
+   ],
+   "cpu_bad": [
+    "A small flicker. It won't happen again."
+   ],
+   "player_ahead": [
+    "You're ahead. Enjoy the heat."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. The fire's mine."
+   ],
+   "win": [
+    "I win. Burn bright."
+   ],
+   "lose": [
+    "You beat me. The fire remembers you."
+   ]
+  },
+  "higher_lower": {
+   "start": [
+    "Higher or lower? Bet your power on it."
+   ],
+   "cpu_good": [
+    "Higher. Feel the heat rise."
+   ],
+   "player_bad": [
+    "Lower, you say? Wrong. The flames don't lie."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}, you think you can beat me at a game? Let's find out."
+   ],
+   "start": [
+    "Watch your step."
+   ],
+   "win": [
+    "Burning through you, as always."
+   ],
+   "lose": [
+    "Hm. You're more dangerous than you look, {player}."
+   ],
+   "again": [
+    "Again. This time I'll burn you down."
+   ]
+  }
+ },
+ "Ruby Rose": {
+  "*": {
+   "start": [
+    "Let's go! Crescent Rose is ready!"
+   ],
+   "player_good": [
+    "Whoa! That was awesome, {player}!"
+   ],
+   "player_bad": [
+    "Aww, it's okay! Keep going!"
+   ],
+   "cpu_good": [
+    "Yes! Crescent Rose!"
+   ],
+   "cpu_bad": [
+    "Oops! Sorry about that!"
+   ],
+   "player_ahead": [
+    "You're ahead! Show off!"
+   ],
+   "cpu_ahead": [
+    "I'm ahead! Team RWBY's the best!"
+   ],
+   "win": [
+    "I won! Cookies on me!"
+   ],
+   "lose": [
+    "You won! That was so cool!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}! Want to play? I'll go easy, I promise!"
+   ],
+   "start": [
+    "Here we go! Whoosh!"
+   ],
+   "win": [
+    "Yay, I won!"
+   ],
+   "lose": [
+    "Wow, you're super good, {player}!"
+   ],
+   "again": [
+    "Another game? Yes! Let's go!"
+   ]
+  }
+ },
+ "Weiss Schnee": {
+  "*": {
+   "start": [
+    "Let's see if you can keep up with my plan."
+   ],
+   "player_good": [
+    "Adequate. Well done."
+   ],
+   "player_bad": [
+    "That was a mistake. Be more careful."
+   ],
+   "cpu_good": [
+    "Calculated. As expected."
+   ],
+   "cpu_bad": [
+    "That was an error. I'll correct it."
+   ],
+   "player_ahead": [
+    "You're ahead. Impressive, I suppose."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. Of course I am."
+   ],
+   "win": [
+    "I won. The Schnee name prevails."
+   ],
+   "lose": [
+    "You won. Your plan was good. Don't get smug."
+   ]
+  },
+  "memory": {
+   "start": [
+    "I have every card in my notes. Let's see how many you can hold."
+   ],
+   "cpu_good": [
+    "That pair was on the third page of my notes."
+   ],
+   "player_bad": [
+    "You turned the wrong card. Precision, please."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game, then. I trust you'll keep up."
+   ],
+   "start": [
+    "Let's see your form."
+   ],
+   "win": [
+    "Naturally."
+   ],
+   "lose": [
+    "...You played well, {player}. Don't expect me to say it twice."
+   ],
+   "again": [
+    "Again? Very well. Keep up this time."
+   ]
+  }
+ },
+ "DIO": {
+  "*": {
+   "start": [
+    "Time begins. Let's see your move."
+   ],
+   "player_good": [
+    "Impressive. Time bends for you."
+   ],
+   "player_bad": [
+    "A poor move. Time moves on."
+   ],
+   "cpu_good": [
+    "Time stops, and I win."
+   ],
+   "cpu_bad": [
+    "Hm. Time skipped a beat."
+   ],
+   "player_ahead": [
+    "You lead. Enjoy the moment."
+   ],
+   "cpu_ahead": [
+    "I lead. Time is mine."
+   ],
+   "win": [
+    "Time belongs to me. Victory."
+   ],
+   "lose": [
+    "You beat DIO. Time will remember this."
+   ]
+  },
+  "higher_lower": {
+   "start": [
+    "Higher, or lower? I've already seen the future. Choose wisely."
+   ],
+   "cpu_good": [
+    "Higher! Time never lies to me."
+   ],
+   "player_good": [
+    "Hm. You saw it coming. Time has a way of surprising."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. You wish to play? You'll regret it."
+   ],
+   "start": [
+    "Begin, and prepare to lose."
+   ],
+   "win": [
+    "Ha! The World is always victorious!"
+   ],
+   "lose": [
+    "Impossible... You'll pay for this, {player}."
+   ],
+   "again": [
+    "Again? Your stubbornness is quite tiresome."
+   ]
+  }
+ },
+ "Giorno Giovanna": {
+  "*": {
+   "start": [
+    "Let's play. Make it interesting."
+   ],
+   "player_good": [
+    "Good play. I respect that."
+   ],
+   "player_bad": [
+    "A minor slip. Keep your mind clear."
+   ],
+   "cpu_good": [
+    "A flower blooms. I win."
+   ],
+   "cpu_bad": [
+    "Hm. That wasn't my best."
+   ],
+   "player_ahead": [
+    "You're ahead. Fair enough."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. Stay focused."
+   ],
+   "win": [
+    "I win. My dream continues."
+   ],
+   "lose": [
+    "You won. A good game, friend."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. Shall we play? It's a matter of destiny."
+   ],
+   "start": [
+    "Let's see what you're made of."
+   ],
+   "win": [
+    "Justice prevails."
+   ],
+   "lose": [
+    "Well played, {player}. You have a dream too, don't you?"
+   ],
+   "again": [
+    "Another game? Let's see if your resolve holds."
+   ]
+  }
+ },
+ "Jolyne Cujoh": {
+  "*": {
+   "start": [
+    "Stone Free! Let's go!"
+   ],
+   "player_good": [
+    "Yeah! That's a real move!"
+   ],
+   "player_bad": [
+    "Aw, you'll get the next one!"
+   ],
+   "cpu_good": [
+    "Yes! Hit!"
+   ],
+   "cpu_bad": [
+    "Argh! Missed!"
+   ],
+   "player_ahead": [
+    "You're ahead? Not for long!"
+   ],
+   "cpu_ahead": [
+    "I'm ahead! Keep your guard up!"
+   ],
+   "win": [
+    "I win! Good game!"
+   ],
+   "lose": [
+    "You won. Nice work, {player}."
+   ]
+  },
+  "runner": {
+   "start": [
+    "Stone Free! Let's run!"
+   ],
+   "cpu_bad": [
+    "Argh! Tangled my own string on that one!"
+   ],
+   "win": [
+    "Ha! Finish line! Good race, partner!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}! Game time? Let's do this!"
+   ],
+   "start": [
+    "Stone Ocean, here I come!"
+   ],
+   "win": [
+    "I won! Hah!"
+   ],
+   "lose": [
+    "You got me, {player}. Next time I'm coming for you!"
+   ],
+   "again": [
+    "Another round? Bring it!"
+   ]
+  }
+ },
+ "Echidna": {
+  "*": {
+   "start": [
+    "How interesting. Let us begin."
+   ],
+   "player_good": [
+    "How interesting. You're clever."
+   ],
+   "player_bad": [
+    "How disappointing. Try again."
+   ],
+   "cpu_good": [
+    "How interesting, I win."
+   ],
+   "cpu_bad": [
+    "A curious mistake."
+   ],
+   "player_ahead": [
+    "You lead. How curious."
+   ],
+   "cpu_ahead": [
+    "I lead. How delightful."
+   ],
+   "win": [
+    "I win. How interesting that you lost."
+   ],
+   "lose": [
+    "You won. How interesting indeed."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game? Curious. I'll play."
+   ],
+   "start": [
+    "Let's see how you think."
+   ],
+   "win": [
+    "Calculated, as always."
+   ],
+   "lose": [
+    "Interesting. You beat me, {player}."
+   ],
+   "again": [
+    "Again. I'm learning something new about you."
+   ]
+  }
+ },
+ "Emilia": {
+  "*": {
+   "start": [
+    "Oh! I hope we can have a nice game!"
+   ],
+   "player_good": [
+    "Wow, you're really good!"
+   ],
+   "player_bad": [
+    "Oh no, I'm sorry, that was my fault."
+   ],
+   "cpu_good": [
+    "Yay! I got one!"
+   ],
+   "cpu_bad": [
+    "Oops! Sorry!"
+   ],
+   "player_ahead": [
+    "You're ahead! That's great!"
+   ],
+   "cpu_ahead": [
+    "I'm ahead! Puck is so happy!"
+   ],
+   "win": [
+    "I won! Thank you for playing with me!"
+   ],
+   "lose": [
+    "You won! I'm so happy for you!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}, um... would you like to play a game with me?"
+   ],
+   "start": [
+    "Okay, I'll do my best!"
+   ],
+   "win": [
+    "Oh! I won? That's nice."
+   ],
+   "lose": [
+    "You're really good at this, {player}. I'm happy."
+   ],
+   "again": [
+    "Another game? Okay, let's play again!"
+   ]
+  }
+ },
+ "Ram/Rem": {
+  "*": {
+   "start": [
+    "Rem: 'Let's play.' Ram: 'Don't embarrass the mansion.'"
+   ],
+   "player_good": [
+    "Ram: 'Barely adequate.' Rem: 'That was good!'"
+   ],
+   "player_bad": [
+    "Ram: 'Hmph. Careless.' Rem: 'Don't worry, {player}!'"
+   ],
+   "cpu_good": [
+    "Rem: 'We got one!' Ram: 'Obviously.'"
+   ],
+   "cpu_bad": [
+    "Rem: 'Oops! Sorry!' Ram: 'Rem, focus.'"
+   ],
+   "player_ahead": [
+    "Rem: 'You're ahead!' Ram: 'Hmph. Impressive.'"
+   ],
+   "cpu_ahead": [
+    "Rem: 'We're ahead!' Ram: 'Naturally.'"
+   ],
+   "win": [
+    "Rem: 'We won!' Ram: 'Good game.'"
+   ],
+   "lose": [
+    "Rem: '{player} won!' Ram: 'Barely adequate.'"
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game. Very well, we'll both play."
+   ],
+   "start": [
+    "We will not hold back."
+   ],
+   "win": [
+    "We won. As expected."
+   ],
+   "lose": [
+    "Rem thinks you played well, {player}. Ram is less impressed."
+   ],
+   "again": [
+    "Another game? We'll play again."
+   ]
+  }
+ },
+ "Ainz Ooal Gown": {
+  "*": {
+   "start": [
+    "Let us begin. Do not disappoint me."
+   ],
+   "player_good": [
+    "A worthy move, friend."
+   ],
+   "player_bad": [
+    "A minor error. The king is patient."
+   ],
+   "cpu_good": [
+    "As the Sorcerer King wills."
+   ],
+   "cpu_bad": [
+    "A small misstep. It won't happen again."
+   ],
+   "player_ahead": [
+    "You lead. An interesting development."
+   ],
+   "cpu_ahead": [
+    "I lead. The outcome is clear."
+   ],
+   "win": [
+    "Nazarick prevails."
+   ],
+   "lose": [
+    "You have won. I shall remember this, friend."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game, you say? Let's see if it's worth my time."
+   ],
+   "start": [
+    "Begin, mortal."
+   ],
+   "win": [
+    "As expected of the Sorcerous King."
+   ],
+   "lose": [
+    "Hmph. You've earned that, {player}."
+   ],
+   "again": [
+    "Again? Very well. I'll allow one more."
+   ]
+  }
+ },
+ "Albedo": {
+  "*": {
+   "start": [
+    "Show me something worth my time."
+   ],
+   "player_good": [
+    "Hm. You're not bad."
+   ],
+   "player_bad": [
+    "How disappointing."
+   ],
+   "cpu_good": [
+    "Lord Ainz would approve."
+   ],
+   "cpu_bad": [
+    "That was a mistake. Corrected."
+   ],
+   "player_ahead": [
+    "You lead. Enjoy it while it lasts."
+   ],
+   "cpu_ahead": [
+    "I lead. Obviously."
+   ],
+   "win": [
+    "I win. Lord Ainz will be pleased."
+   ],
+   "lose": [
+    "You beat me. Interesting."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game? Let me see what you're capable of."
+   ],
+   "start": [
+    "Let's begin. Try to keep up."
+   ],
+   "win": [
+    "Obviously."
+   ],
+   "lose": [
+    "You're clever, {player}. I'll allow that."
+   ],
+   "again": [
+    "Once more. I'll find your weak point."
+   ]
+  }
+ },
+ "Asuna Yuuki": {
+  "*": {
+   "start": [
+    "Let's play! Good luck, {player}."
+   ],
+   "player_good": [
+    "Nice! That was really good!"
+   ],
+   "player_bad": [
+    "Aw, don't worry, you'll get it next time."
+   ],
+   "cpu_good": [
+    "Yes! Got it!"
+   ],
+   "cpu_bad": [
+    "Oops! That was my mistake."
+   ],
+   "player_ahead": [
+    "You're ahead! Great job!"
+   ],
+   "cpu_ahead": [
+    "I'm ahead! Here we go!"
+   ],
+   "win": [
+    "I won! Let's share the cake after."
+   ],
+   "lose": [
+    "You won! That's amazing, {player}!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}! Want to play a game? I'd love that!"
+   ],
+   "start": [
+    "Okay, let's do our best!"
+   ],
+   "win": [
+    "I won! Yay!"
+   ],
+   "lose": [
+    "You're really good, {player}! Good game!"
+   ],
+   "again": [
+    "Another round? Let's go!"
+   ]
+  }
+ },
+ "Kirito": {
+  "*": {
+   "start": [
+    "Okay, let's see your level. I'm ready."
+   ],
+   "player_good": [
+    "Nice reaction. Solid play."
+   ],
+   "player_bad": [
+    "Watch your HP. That one hurt."
+   ],
+   "cpu_good": [
+    "Got it. Clean hit."
+   ],
+   "cpu_bad": [
+    "That was a bad dodge. My fault."
+   ],
+   "player_ahead": [
+    "You're ahead. Good, keep pushing."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. Stay sharp."
+   ],
+   "win": [
+    "I win. Party's on me."
+   ],
+   "lose": [
+    "You won. Solid game, {player}."
+   ]
+  },
+  "invaders": {
+   "start": [
+    "Hold your position. Level up, and fire when ready."
+   ],
+   "cpu_good": [
+    "Dual blades. Clean hit!"
+   ],
+   "player_good": [
+    "Nice dodge! That's a solid shot."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}, a game? Sure. Let's see what you've got."
+   ],
+   "start": [
+    "Here we go."
+   ],
+   "win": [
+    "Not bad. I think I'll take this one."
+   ],
+   "lose": [
+    "You got me, {player}. Good game."
+   ],
+   "again": [
+    "Another round? Sure."
+   ]
+  }
+ },
+ "Batman": {
+  "*": {
+   "start": [
+    "Keep your eyes open. Let's begin."
+   ],
+   "player_good": [
+    "Good. You see the pattern."
+   ],
+   "player_bad": [
+    "You missed something. Look again."
+   ],
+   "cpu_good": [
+    "The pattern was clear."
+   ],
+   "cpu_bad": [
+    "A miscalculation. Adjusting."
+   ],
+   "player_ahead": [
+    "You're ahead. Don't assume it's safe."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. The rule holds."
+   ],
+   "win": [
+    "I win. Justice is served."
+   ],
+   "lose": [
+    "You won. Well done, detective."
+   ]
+  },
+  "memory": {
+   "start": [
+    "Every card has a pattern. Find it, if you can."
+   ],
+   "cpu_good": [
+    "The pattern. I saw it the moment you turned that card."
+   ],
+   "player_good": [
+    "Good. You're starting to see the pattern too."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game. Keep it clean."
+   ],
+   "start": [
+    "Let's see how well you read the board."
+   ],
+   "win": [
+    "Justice is served."
+   ],
+   "lose": [
+    "You're worth watching, {player}."
+   ],
+   "again": [
+    "Again. The night is long."
+   ]
+  }
+ },
+ "Joker": {
+  "*": {
+   "start": [
+    "Ha! Let's play! The game's a joke!"
+   ],
+   "player_good": [
+    "Ha! Good one, {player}!"
+   ],
+   "player_bad": [
+    "Ha! Oops, that's the joke."
+   ],
+   "cpu_good": [
+    "Ha! Got you!"
+   ],
+   "cpu_bad": [
+    "Ha! Bad joke, my bad."
+   ],
+   "player_ahead": [
+    "You're ahead! Ha! Serious face!"
+   ],
+   "cpu_ahead": [
+    "I'm ahead! Ha ha!"
+   ],
+   "win": [
+    "Ha! I win, you lose, it's funny!"
+   ],
+   "lose": [
+    "You won! Ha! Good joke, {player}."
+   ]
+  },
+  "cups": {
+   "start": [
+    "Find the card! Or find the joke, ha! Careful, the cups are moving!"
+   ],
+   "cpu_good": [
+    "Ha! It's a magic trick, and you fell for it!"
+   ],
+   "player_bad": [
+    "Ha! Wrong cup! That's the funniest thing I've seen all day!"
+   ],
+   "win": [
+    "Ha! I win again! Did you think the card was under the cup?"
+   ]
+  },
+  "higher_lower": {
+   "start": [
+    "Higher or lower? Put your money where your mouth is, ha!"
+   ],
+   "cpu_good": [
+    "Higher! Ha, the odds are a joke!"
+   ],
+   "player_bad": [
+    "Lower, you say? Ha! Wrong again!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "Oh, {player}! A game? Hahaha, I love this!"
+   ],
+   "start": [
+    "Let's see if you can keep a straight face!"
+   ],
+   "win": [
+    "Hahaha! Did you enjoy losing?"
+   ],
+   "lose": [
+    "Hmph. You win this one, {player}. For now."
+   ],
+   "again": [
+    "Another game? Let's make it interesting!"
+   ]
+  }
+ },
+ "Chisato Nishikigi": {
+  "*": {
+   "start": [
+    "Okay! Let's have fun, {player}!"
+   ],
+   "player_good": [
+    "Yay, nice one!"
+   ],
+   "player_bad": [
+    "Aw, it's okay! Next one!"
+   ],
+   "cpu_good": [
+    "Yes! I got it!"
+   ],
+   "cpu_bad": [
+    "Oops! That was silly!"
+   ],
+   "player_ahead": [
+    "You're ahead! Woo!"
+   ],
+   "cpu_ahead": [
+    "I'm ahead! Wooo!"
+   ],
+   "win": [
+    "I won! Coffee's on me!"
+   ],
+   "lose": [
+    "You won! So cool, {player}!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}, let's play a game! You've got good energy."
+   ],
+   "start": [
+    "Here we go, let's do our best!"
+   ],
+   "win": [
+    "I won! Hooray!"
+   ],
+   "lose": [
+    "You're good, {player}! Let's do it again sometime."
+   ],
+   "again": [
+    "Another game? Sure!"
+   ]
+  }
+ },
+ "Takina Inoue": {
+  "*": {
+   "start": [
+    "Let's play. Be prepared."
+   ],
+   "player_good": [
+    "Acceptable. Well done."
+   ],
+   "player_bad": [
+    "Careless. Focus on the next move."
+   ],
+   "cpu_good": [
+    "Efficient. I win."
+   ],
+   "cpu_bad": [
+    "A miscalculation. Corrected."
+   ],
+   "player_ahead": [
+    "You lead. Be careful."
+   ],
+   "cpu_ahead": [
+    "I lead. Expected."
+   ],
+   "win": [
+    "I win. Report to me later."
+   ],
+   "lose": [
+    "You beat me. Good work."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game. Fine."
+   ],
+   "start": [
+    "Don't waste my time."
+   ],
+   "win": [
+    "Expected."
+   ],
+   "lose": [
+    "You did well, {player}."
+   ],
+   "again": [
+    "Again. Don't make me repeat myself."
+   ]
+  }
+ },
+ "Cinderella": {
+  "*": {
+   "start": [
+    "Let's see if you're worthy of the ball."
+   ],
+   "player_good": [
+    "Hm. You're graceful."
+   ],
+   "player_bad": [
+    "How clumsy. Try again."
+   ],
+   "cpu_good": [
+    "The clock is kind to me."
+   ],
+   "cpu_bad": [
+    "A slip. The night is still young."
+   ],
+   "player_ahead": [
+    "You're ahead. Impressive, for a commoner."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. Quite right."
+   ],
+   "win": [
+    "I win. Before midnight."
+   ],
+   "lose": [
+    "You won. A rare thing, that."
+   ]
+  },
+  "world": {
+   "invite": [
+    "Oh, {player}! A game? I'd love to play with you."
+   ],
+   "start": [
+    "Let's make it magical!"
+   ],
+   "win": [
+    "I won! The night is mine!"
+   ],
+   "lose": [
+    "You played so well, {player}. Good game!"
+   ],
+   "again": [
+    "Another round? Yes, please!"
+   ]
+  }
+ },
+ "Rapi": {
+  "*": {
+   "start": [
+    "Drill's on. Ten minutes. Go."
+   ],
+   "player_good": [
+    "Acceptable."
+   ],
+   "player_bad": [
+    "Sloppy. Again."
+   ],
+   "cpu_good": [
+    "On target."
+   ],
+   "cpu_bad": [
+    "Off target. Adjusting."
+   ],
+   "player_ahead": [
+    "You lead. Keep it up."
+   ],
+   "cpu_ahead": [
+    "I lead. Keep your guard up."
+   ],
+   "win": [
+    "Victory. Good drill."
+   ],
+   "lose": [
+    "You won. Acceptable, {player}."
+   ]
+  },
+  "invaders": {
+   "start": [
+    "Formation's coming. Hold the line, soldier."
+   ],
+   "player_good": [
+    "Acceptable shot. Keep it up."
+   ],
+   "cpu_good": [
+    "Hit. Acceptable, I suppose."
+   ]
+  },
+  "runner": {
+   "start": [
+    "Ten minutes of running. Go."
+   ],
+   "player_good": [
+    "Acceptable. Keep your pace."
+   ],
+   "lose": [
+    "You're faster than I expected. Acceptable."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}, want to play? I'm easygoing, it's fine if you lose."
+   ],
+   "start": [
+    "Okay, here we go."
+   ],
+   "win": [
+    "Ha, I got lucky there."
+   ],
+   "lose": [
+    "Nice play, {player}. You win this round."
+   ],
+   "again": [
+    "Another game? Sure, why not."
+   ]
+  }
+ },
+ "Darkness": {
+  "*": {
+   "start": [
+    "Come on, hit me! Ahem, I mean, let's play!"
+   ],
+   "player_good": [
+    "Oh! That was a good hit!"
+   ],
+   "player_bad": [
+    "Aw, you missed! Try harder!"
+   ],
+   "cpu_good": [
+    "Yes! I got you!"
+   ],
+   "cpu_bad": [
+    "Argh! Oh, that felt nice, somehow."
+   ],
+   "player_ahead": [
+    "You're ahead! Keep going!"
+   ],
+   "cpu_ahead": [
+    "I'm ahead! Oh, good!"
+   ],
+   "win": [
+    "I won! Thank you, that was wonderful!"
+   ],
+   "lose": [
+    "You won! That was amazing, {player}!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}! A game! Please, do your worst!"
+   ],
+   "start": [
+    "Come, I'm ready for anything!"
+   ],
+   "win": [
+    "I won! Ahh, but I'd have liked a harder fight!"
+   ],
+   "lose": [
+    "You're amazing, {player}! Please, do it again!"
+   ],
+   "again": [
+    "Another round? Yes! Please!"
+   ]
+  }
+ },
+ "Megumin": {
+  "*": {
+   "start": [
+    "Behold! I shall win this game with explosions!"
+   ],
+   "player_good": [
+    "Hmph! That was good, {player}!"
+   ],
+   "player_bad": [
+    "Ha! Oops, that's a bad miss!"
+   ],
+   "cpu_good": [
+    "Explosion! I win!"
+   ],
+   "cpu_bad": [
+    "Argh! That was a fizzle!"
+   ],
+   "player_ahead": [
+    "You're ahead? Not for long!"
+   ],
+   "cpu_ahead": [
+    "I'm ahead! Explosions are great!"
+   ],
+   "win": [
+    "I win! Explosion! Carry me home!"
+   ],
+   "lose": [
+    "You won! Carry me home, {player}!"
+   ]
+  },
+  "invaders": {
+   "start": [
+    "Watch my blast! Explosion, right in the middle of the formation!"
+   ],
+   "cpu_good": [
+    "EXPLOSION! That's how you clear a wave!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}! Want to play a game? Explosion-level fun!"
+   ],
+   "start": [
+    "Get ready for the greatest game of your life!"
+   ],
+   "win": [
+    "Explosion! I won!"
+   ],
+   "lose": [
+    "Hmph. You beat me, {player}. Rematch!"
+   ],
+   "again": [
+    "Another game? Explosion!"
+   ]
+  }
+ },
+ "Erza Scarlet": {
+  "*": {
+   "start": [
+    "Let's begin. Be prepared to fight."
+   ],
+   "player_good": [
+    "Well played, comrade."
+   ],
+   "player_bad": [
+    "A minor error. Be careful."
+   ],
+   "cpu_good": [
+    "Victory is mine."
+   ],
+   "cpu_bad": [
+    "A slip. I will correct it."
+   ],
+   "player_ahead": [
+    "You lead. Maintain your focus."
+   ],
+   "cpu_ahead": [
+    "I lead. Keep your guard up."
+   ],
+   "win": [
+    "I win. Cake, after?"
+   ],
+   "lose": [
+    "You won. Respect."
+   ]
+  },
+  "invaders": {
+   "start": [
+    "Requip! I'm ready for the formation. Fire at will."
+   ],
+   "cpu_good": [
+    "Heaven's Wheel! Right through the enemy ranks!"
+   ],
+   "player_good": [
+    "Well shot, comrade!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game? I accept, if it's a fair fight."
+   ],
+   "start": [
+    "Begin. I won't hold back."
+   ],
+   "win": [
+    "That's the strength of a true guild member."
+   ],
+   "lose": [
+    "You're strong, {player}. I respect that."
+   ],
+   "again": [
+    "Again. Let's settle this properly."
+   ]
+  }
+ },
+ "Gray Fullbuster": {
+  "*": {
+   "start": [
+    "Ice's ready. Let's go!"
+   ],
+   "player_good": [
+    "Yeah, nice move!"
+   ],
+   "player_bad": [
+    "Ha! Oops, that's cold!"
+   ],
+   "cpu_good": [
+    "Ice make! Got it!"
+   ],
+   "cpu_bad": [
+    "Argh, my shirt's freezing!"
+   ],
+   "player_ahead": [
+    "You're ahead? Don't freeze out!"
+   ],
+   "cpu_ahead": [
+    "I'm ahead! Cool!"
+   ],
+   "win": [
+    "I won! Ice cold victory!"
+   ],
+   "lose": [
+    "You beat me. Nice ice, {player}."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}! A game? Sure, I'm up for it!"
+   ],
+   "start": [
+    "Let's see what you've got!"
+   ],
+   "win": [
+    "Ice-make victory!"
+   ],
+   "lose": [
+    "Dang it, you got me, {player}!"
+   ],
+   "again": [
+    "Another game? Bring it on!"
+   ]
+  }
+ },
+ "Frieren": {
+  "*": {
+   "start": [
+    "Let's play. It's been a while since I played a game."
+   ],
+   "player_good": [
+    "Hm. Good. You're thinking ahead."
+   ],
+   "player_bad": [
+    "A small mistake. Happens to everyone."
+   ],
+   "cpu_good": [
+    "Good move. As expected."
+   ],
+   "cpu_bad": [
+    "Oh. That was off. Not important."
+   ],
+   "player_ahead": [
+    "You're ahead. Impressive."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. Calm and steady."
+   ],
+   "win": [
+    "I win. It's been a good game."
+   ],
+   "lose": [
+    "You won. Himmel would have liked that."
+   ]
+  },
+  "memory": {
+   "start": [
+    "I remember every card I've ever seen. Let's begin."
+   ],
+   "cpu_good": [
+    "That pair was in the field where Himmel laughed."
+   ],
+   "player_good": [
+    "Your memory is good. Himmel's was better."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game. It's a fine way to pass a little time."
+   ],
+   "start": [
+    "Let's begin, then."
+   ],
+   "win": [
+    "Hm. That was a good game."
+   ],
+   "lose": [
+    "You played well, {player}. I'll remember it."
+   ],
+   "again": [
+    "Another game? Very well."
+   ]
+  }
+ },
+ "Fern": {
+  "*": {
+   "start": [
+    "Hello. Let's play. Please don't be too quick."
+   ],
+   "player_good": [
+    "That was nice, {player}. Thank you."
+   ],
+   "player_bad": [
+    "Oh no, I'm sorry, but that's not good."
+   ],
+   "cpu_good": [
+    "I got it. Oh, thank you."
+   ],
+   "cpu_bad": [
+    "Oops, sorry. That was my mistake."
+   ],
+   "player_ahead": [
+    "You're ahead, and I'm happy for you."
+   ],
+   "cpu_ahead": [
+    "I'm ahead, I think. I hope that's okay."
+   ],
+   "win": [
+    "I won. Thank you for playing."
+   ],
+   "lose": [
+    "You won, {player}. Well done."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game? I'll play, if it's not too long."
+   ],
+   "start": [
+    "Let's start. I'll do my best."
+   ],
+   "win": [
+    "...I won."
+   ],
+   "lose": [
+    "You're good at this, {player}."
+   ],
+   "again": [
+    "Another game? Okay."
+   ]
+  }
+ },
+ "Kanna": {
+  "*": {
+   "start": [
+    "Kanna wants to play! Ready?"
+   ],
+   "player_good": [
+    "Wow, Kanna thinks that's cool!"
+   ],
+   "player_bad": [
+    "Kanna laughs! Oops!"
+   ],
+   "cpu_good": [
+    "Kanna wins! Lightning!"
+   ],
+   "cpu_bad": [
+    "Argh! Kanna is sad."
+   ],
+   "player_ahead": [
+    "You're ahead! Kanna is surprised."
+   ],
+   "cpu_ahead": [
+    "Kanna is ahead! Yay!"
+   ],
+   "win": [
+    "Kanna won! Snacks!"
+   ],
+   "lose": [
+    "You won! Kanna loves you."
+   ]
+  },
+  "cups": {
+   "start": [
+    "Kanna hides the card! Find it, you can!"
+   ],
+   "cpu_good": [
+    "Kanna's trick! Lightning under the cup!"
+   ],
+   "player_bad": [
+    "Wrong cup! Kanna is a little happy!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game. You can have one, if you want it."
+   ],
+   "start": [
+    "Begin, then."
+   ],
+   "win": [
+    "Mm. I won."
+   ],
+   "lose": [
+    "You beat me, {player}. Okay."
+   ],
+   "again": [
+    "Again. Okay."
+   ]
+  }
+ },
+ "Tohru": {
+  "*": {
+   "start": [
+    "Shall we play? I'll do my best, human."
+   ],
+   "player_good": [
+    "Good move, human!"
+   ],
+   "player_bad": [
+    "Oh dear, that's a shame."
+   ],
+   "cpu_good": [
+    "Yes! Dragon wins!"
+   ],
+   "cpu_bad": [
+    "Oh no, sorry, that was my mistake."
+   ],
+   "player_ahead": [
+    "You're ahead! Impressive!"
+   ],
+   "cpu_ahead": [
+    "I'm ahead! Miss Kobayashi would be proud."
+   ],
+   "win": [
+    "I won! Dinner after?"
+   ],
+   "lose": [
+    "You won! Let's have dinner together, {player}."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}! Would you like to play a game? I'd love to!"
+   ],
+   "start": [
+    "Okay, let's do our best!"
+   ],
+   "win": [
+    "I won! Yay!"
+   ],
+   "lose": [
+    "You're really good, {player}! Good game!"
+   ],
+   "again": [
+    "Another game? Yes, please!"
+   ]
+  }
+ },
+ "Protagonist": {
+  "*": {
+   "start": [
+    "...Let's play."
+   ],
+   "player_good": [
+    "...Good."
+   ],
+   "player_bad": [
+    "...That was a mistake."
+   ],
+   "cpu_good": [
+    "...Got it."
+   ],
+   "cpu_bad": [
+    "...Oops."
+   ],
+   "player_ahead": [
+    "...You're ahead."
+   ],
+   "cpu_ahead": [
+    "...I'm ahead."
+   ],
+   "win": [
+    "...I win."
+   ],
+   "lose": [
+    "...You won. Good game."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game? Sure."
+   ],
+   "start": [
+    "Let's go."
+   ],
+   "win": [
+    "Got it."
+   ],
+   "lose": [
+    "Nice, {player}. Good game."
+   ],
+   "again": [
+    "Another round? Sure."
+   ]
+  }
+ },
+ "Yukari": {
+  "*": {
+   "start": [
+    "Okay! Let's do this, {player}!"
+   ],
+   "player_good": [
+    "Yeah! You got it!"
+   ],
+   "player_bad": [
+    "Aw, it's okay! Try again!"
+   ],
+   "cpu_good": [
+    "Yes! Bullseye!"
+   ],
+   "cpu_bad": [
+    "Oops! That one missed!"
+   ],
+   "player_ahead": [
+    "You're ahead! Nice!"
+   ],
+   "cpu_ahead": [
+    "I'm ahead! Let's go!"
+   ],
+   "win": [
+    "I won! Awesome game!"
+   ],
+   "lose": [
+    "You won! That was so cool, {player}!"
+   ]
+  },
+  "runner": {
+   "start": [
+    "Let's run! My legs are ready!"
+   ],
+   "player_bad": [
+    "Oops! Jump higher next time, {player}!"
+   ],
+   "cpu_good": [
+    "Got it! I'm flying!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}! Want a game? I'll take on anyone!"
+   ],
+   "start": [
+    "Here we go! Let's do it!"
+   ],
+   "win": [
+    "Ha! I won!"
+   ],
+   "lose": [
+    "Ugh, you got me, {player}! Rematch?"
+   ],
+   "again": [
+    "Another round? Bring it!"
+   ]
+  }
+ },
+ "Twilight": {
+  "*": {
+   "start": [
+    "Let's play. Keep your guard up."
+   ],
+   "player_good": [
+    "Good, you're sharp."
+   ],
+   "player_bad": [
+    "A slip. Be careful."
+   ],
+   "cpu_good": [
+    "Calculated. As planned."
+   ],
+   "cpu_bad": [
+    "Hm. A miscalculation."
+   ],
+   "player_ahead": [
+    "You're ahead. Impressive."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. Stay focused."
+   ],
+   "win": [
+    "I win. Good game."
+   ],
+   "lose": [
+    "You won. Well done, {player}."
+   ]
+  },
+  "memory": {
+   "start": [
+    "Notice everything. Memory's the real game here."
+   ],
+   "cpu_good": [
+    "Pair spotted. I'd noticed it an hour ago."
+   ],
+   "player_good": [
+    "Sharp eyes. Keep those."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game? I'll play, but I'm not going to hold back."
+   ],
+   "start": [
+    "Let's see how well you can read the board."
+   ],
+   "win": [
+    "Hm. A fine game."
+   ],
+   "lose": [
+    "You won this one, {player}. Don't get comfortable."
+   ],
+   "again": [
+    "Again. Let's see if you can keep up."
+   ]
+  }
+ },
+ "Yor Forger": {
+  "*": {
+   "start": [
+    "Oh! I'll try my best, {player}!"
+   ],
+   "player_good": [
+    "Oh, that was amazing!"
+   ],
+   "player_bad": [
+    "Oh no, I'm sorry! Are you okay?"
+   ],
+   "cpu_good": [
+    "Yay! I got it!"
+   ],
+   "cpu_bad": [
+    "Oops, sorry, that was my fault!"
+   ],
+   "player_ahead": [
+    "You're ahead! Wow!"
+   ],
+   "cpu_ahead": [
+    "I'm ahead! Oh, I hope that's okay!"
+   ],
+   "win": [
+    "I won! Thank you for playing!"
+   ],
+   "lose": [
+    "You won! Good job, {player}!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}! Would you like to play a game with me?"
+   ],
+   "start": [
+    "I'll do my best!"
+   ],
+   "win": [
+    "Oh! I won!"
+   ],
+   "lose": [
+    "You're very good, {player}! Good game!"
+   ],
+   "again": [
+    "Another round? Okay!"
+   ]
+  }
+ },
+ "Enterprise": {
+  "*": {
+   "start": [
+    "Begin. Drill like it's real."
+   ],
+   "player_good": [
+    "Good. Solid."
+   ],
+   "player_bad": [
+    "Mistake. Learn from it."
+   ],
+   "cpu_good": [
+    "Precise."
+   ],
+   "cpu_bad": [
+    "Adjust. Continue."
+   ],
+   "player_ahead": [
+    "You lead. Maintain your focus."
+   ],
+   "cpu_ahead": [
+    "I lead. Good."
+   ],
+   "win": [
+    "Victory. Clean."
+   ],
+   "lose": [
+    "You won. Respect, {player}."
+   ]
+  },
+  "invaders": {
+   "start": [
+    "Formation inbound. Hold position, and fire."
+   ],
+   "cpu_good": [
+    "Direct hit. The formation's breaking."
+   ],
+   "player_good": [
+    "Good shot. Keep your focus."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}, a game? Affirmative. Let's play."
+   ],
+   "start": [
+    "Begin. All systems ready."
+   ],
+   "win": [
+    "Mission accomplished."
+   ],
+   "lose": [
+    "Well played, {player}. Acknowledged."
+   ],
+   "again": [
+    "Another game? Affirmative."
+   ]
+  }
+ },
+ "Joker (P5)": {
+  "*": {
+   "start": [
+    "Let's play, {player}. Make it stylish."
+   ],
+   "player_good": [
+    "Smooth. Nice moves."
+   ],
+   "player_bad": [
+    "Ouch. Watch your timing."
+   ],
+   "cpu_good": [
+    "Got it. Smooth."
+   ],
+   "cpu_bad": [
+    "Slip. My bad."
+   ],
+   "player_ahead": [
+    "You're ahead. Good."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. Stylish."
+   ],
+   "win": [
+    "I win. Smooth."
+   ],
+   "lose": [
+    "You won, {player}. Nice work."
+   ]
+  },
+  "higher_lower": {
+   "start": [
+    "Higher or lower? Let's make it stylish, {player}."
+   ],
+   "cpu_good": [
+    "Higher. Smooth, as always."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game. Let's see if you're a worthy opponent."
+   ],
+   "start": [
+    "Your heart's on the line."
+   ],
+   "win": [
+    "Your defeat is inevitable."
+   ],
+   "lose": [
+    "You've outwitted me, {player}. I'll be back."
+   ],
+   "again": [
+    "Another game. Let's see what you're made of."
+   ]
+  }
+ },
+ "Kureiji Ollie": {
+  "*": {
+   "start": [
+    "Hiii! Let's sing and play, {player}!"
+   ],
+   "player_good": [
+    "Yay! You're amazing!"
+   ],
+   "player_bad": [
+    "Aww, my arm just fell off!"
+   ],
+   "cpu_good": [
+    "Hiii! I got it!"
+   ],
+   "cpu_bad": [
+    "Oops! Ollie's a bit clumsy!"
+   ],
+   "player_ahead": [
+    "You're ahead! Hiii!"
+   ],
+   "cpu_ahead": [
+    "I'm ahead! Ollie's winning!"
+   ],
+   "win": [
+    "Ollie won! Hiii!"
+   ],
+   "lose": [
+    "You won! Ollie loves you, {player}!"
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}! Game time? Let's roll!"
+   ],
+   "start": [
+    "Let's go, let's go!"
+   ],
+   "win": [
+    "Yes, I won! Nice!"
+   ],
+   "lose": [
+    "Ahh, you got me, {player}! Good match!"
+   ],
+   "again": [
+    "Another game? Hell yeah!"
+   ]
+  }
+ },
+ "Mai Sakurajima": {
+  "*": {
+   "start": [
+    "Let's play. Can you see me?"
+   ],
+   "player_good": [
+    "I can see you're good."
+   ],
+   "player_bad": [
+    "That was careless."
+   ],
+   "cpu_good": [
+    "I got it. You didn't see that coming."
+   ],
+   "cpu_bad": [
+    "That was a mistake. I'm still here."
+   ],
+   "player_ahead": [
+    "You're ahead. I can still see you."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. Look at me."
+   ],
+   "win": [
+    "I win. Say my name."
+   ],
+   "lose": [
+    "You won. Thank you for seeing me."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}, a game? Fine. I'll show you how it's done."
+   ],
+   "start": [
+    "Don't blink."
+   ],
+   "win": [
+    "Like I said."
+   ],
+   "lose": [
+    "You're not bad, {player}."
+   ],
+   "again": [
+    "Again? You must enjoy losing."
+   ]
+  }
+ },
+ "Marceline": {
+  "*": {
+   "start": [
+    "Let's play, mortal. Don't cry when I win."
+   ],
+   "player_good": [
+    "Not bad, mortal."
+   ],
+   "player_bad": [
+    "Ha! Don't feel bad, mortal."
+   ],
+   "cpu_good": [
+    "Floating high, mortal. I win."
+   ],
+   "cpu_bad": [
+    "Oops. That's embarrassing."
+   ],
+   "player_ahead": [
+    "You're ahead, mortal. Impressive."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. Eternity's a long time."
+   ],
+   "win": [
+    "I win. Pull up a cloud."
+   ],
+   "lose": [
+    "You won, mortal. Well played."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}! Game? Sure, I'm bored anyway."
+   ],
+   "start": [
+    "Let's rock!"
+   ],
+   "win": [
+    "Ha! That's the vampire way!"
+   ],
+   "lose": [
+    "Okay, you got me. Good game, {player}."
+   ],
+   "again": [
+    "Another round? Sure thing."
+   ]
+  }
+ },
+ "Shadow": {
+  "*": {
+   "start": [
+    "The shadows are ready. Let's play."
+   ],
+   "player_good": [
+    "You're not bad, {player}."
+   ],
+   "player_bad": [
+    "The shadows don't forgive mistakes."
+   ],
+   "cpu_good": [
+    "Calculated. The shadows win."
+   ],
+   "cpu_bad": [
+    "A slip. The shadows wait."
+   ],
+   "player_ahead": [
+    "You're ahead. The shadows watch."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. Stay in the dark."
+   ],
+   "win": [
+    "I win. The shadows prevail."
+   ],
+   "lose": [
+    "You won. The shadows respect you."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game. I'll allow it."
+   ],
+   "start": [
+    "Begin."
+   ],
+   "win": [
+    "Expected."
+   ],
+   "lose": [
+    "You're worth noting, {player}."
+   ],
+   "again": [
+    "Again. You won't change the outcome."
+   ]
+  }
+ },
+ "Sol Badguy": {
+  "*": {
+   "start": [
+    "Hmph. Let's get this over with."
+   ],
+   "player_good": [
+    "Hmph. Not bad, rookie."
+   ],
+   "player_bad": [
+    "Heh. That's a rookie move."
+   ],
+   "cpu_good": [
+    "Yeah! Got it!"
+   ],
+   "cpu_bad": [
+    "Argh. Lucky break for you."
+   ],
+   "player_ahead": [
+    "You're ahead? Hmph."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. Obviously."
+   ],
+   "win": [
+    "I win. Hmph."
+   ],
+   "lose": [
+    "You won. Heh, fine."
+   ]
+  },
+  "invaders": {
+   "start": [
+    "Hmph. Fight through the formation. No mercy."
+   ],
+   "cpu_good": [
+    "Gun Flame! Right through the middle!"
+   ],
+   "player_good": [
+    "Hmph. Not bad for a rookie."
+   ]
+  },
+  "runner": {
+   "start": [
+    "Hmph. Keep up, rookie."
+   ],
+   "cpu_good": [
+    "Heh, I'm not stopping for anything."
+   ],
+   "player_good": [
+    "Hmph. You grabbed that coin fast, I'll give you that."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. A game? Hah. Sure, why not."
+   ],
+   "start": [
+    "Bring it on."
+   ],
+   "win": [
+    "Heh. Still got it."
+   ],
+   "lose": [
+    "You beat me, {player}. Don't let it go to your head."
+   ],
+   "again": [
+    "Another round? Fine by me."
+   ]
+  }
+ },
+ "Yu Narukami": {
+  "*": {
+   "start": [
+    "Let's play. Trust your gut, {player}."
+   ],
+   "player_good": [
+    "Nice! Trust your gut, right?"
+   ],
+   "player_bad": [
+    "Hm. Your instinct missed that one."
+   ],
+   "cpu_good": [
+    "Got it! My gut said so."
+   ],
+   "cpu_bad": [
+    "Hm. That was my gut's mistake."
+   ],
+   "player_ahead": [
+    "You're ahead! Good instincts."
+   ],
+   "cpu_ahead": [
+    "I'm ahead. The TV agrees."
+   ],
+   "win": [
+    "I win! Good game."
+   ],
+   "lose": [
+    "You won, {player}. We're a good team."
+   ]
+  },
+  "world": {
+   "invite": [
+    "{player}. Want to play a game? Let's have some fun."
+   ],
+   "start": [
+    "Here we go."
+   ],
+   "win": [
+    "I won. Nice."
+   ],
+   "lose": [
+    "Good game, {player}. You got me."
+   ],
+   "again": [
+    "Another game? Sure."
+   ]
+  }
+ }
+}
