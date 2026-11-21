@@ -524,6 +524,13 @@
     box.hidden = false;
     speaker("them");
     showRelation(person.relation);
+    // The tutorial's pending lines come before the greeting and the talk menu. A click during a playing sequence could have
+    // replaced its callbacks, so the flag is reset before they play again.
+    if (town.tutorial && town.tutorial.lines.length && town.tutorial.guide && person.id === town.tutorial.guide.id) {
+      tutPlaying = false;
+      playTutorialLines();
+      return;
+    }
     const hello = person.hello || "Hm? Oh, hello.";
     lines([hello], choices);
   }
@@ -957,7 +964,7 @@
   let tutLifted = []; // the containers raised above the veil with the target: [element, its old z-index]
 
   // The steps that open the talk menu: after the guide's lines, the menu is the thing to press.
-  const TALK_STEPS = ["talk", "gift", "duel"];
+  const TALK_STEPS = ["talk", "gift", "duel", "minigame"];
 
   // A control that's outside the step is disabled, not hidden. Its title says what the guide's waiting for.
   function tutGate(id) {
@@ -1066,6 +1073,8 @@
   }
 
   function renderTutorial() {
+    // During the shop step the counter sits above the guide's figure, so a click on it reaches the counter (town.css).
+    root.classList.toggle("town-tut-shop", Boolean(town.tutorial && town.tutorial.step === "shop"));
     const tut = town.tutorial;
     root.classList.toggle("town-tutorial-on", Boolean(tut));
     tutGoal.hidden = !tut;
@@ -1112,7 +1121,7 @@
       if (TALK_STEPS.includes(tut.step) && tut.guide && !talking) openGuideMenu();
       // The guide's talk is open (their lines set it) but its menu isn't: open it. A menu already showing a talk
       // option or a gift is left as it is.
-      else if (TALK_STEPS.includes(tut.step) && talking && !menu.querySelector("[data-tutorial='talk'], [data-tutorial='gift'], [data-tutorial='gift-item'], [data-tutorial='duel']")) choices();
+      else if (TALK_STEPS.includes(tut.step) && talking && !menu.querySelector("[data-tutorial='talk'], [data-tutorial='gift'], [data-tutorial='gift-item'], [data-tutorial='duel'], [data-tutorial='minigame']")) choices();
       else if (!TALK_STEPS.includes(tut.step) && talking && tut.step !== "arrive") closeTalk(false);
     }
     // While the guide is still talking, nothing is spotlit: the step's control isn't on yet.
@@ -1198,6 +1207,7 @@
     if (label.startsWith("Talk")) return "talk";
     if (label.startsWith("Give a gift")) return "gift";
     if (label.startsWith("Duel")) return "duel";
+    if (label.startsWith("Play a game")) return "minigame";
     return "";
   }
 

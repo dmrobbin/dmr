@@ -122,7 +122,8 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+            # DJANGO_SQLITE_PATH points a run (the browser tests, a scratch copy) at its own file; the dev database by default
+            "NAME": os.environ.get("DJANGO_SQLITE_PATH", BASE_DIR / "db.sqlite3"),
         }
     }
 

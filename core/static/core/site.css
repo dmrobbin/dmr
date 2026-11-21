@@ -2955,6 +2955,8 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .town-stage:fullscreen { width: 100vw; height: 100vh; max-height: none; aspect-ratio: auto; border: 0; border-radius: 0; }
 .town-stage:-webkit-full-screen { width: 100vw; height: 100vh; max-height: none; aspect-ratio: auto; border: 0; border-radius: 0; }
 /* The card shop's counter on the backdrop (weiss/static/weiss/backdrops.js draws it at x 31–69%, y 72–86%). */
+/* In the tutorial's shop step the counter is lifted above the guide's figure, so the whole counter is clickable. */
+.town-tut-shop .town-shop-hotspot { z-index: 50; }
 .town-shop-hotspot { position: absolute; left: 31%; width: 38%; top: 70%; height: 18%; z-index: 1; padding: 0; background: transparent; cursor: pointer;
   border: 2px solid transparent; border-radius: .6rem; transition: border-color .2s ease, box-shadow .2s ease, background .2s ease; }
 .town-shop-hotspot[hidden] { display: none; }

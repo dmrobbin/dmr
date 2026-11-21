@@ -53,6 +53,38 @@
   // In the order the page came in: level, then type, then number.
   const listed = (copiesOf) => tiles.filter((tile) => copiesOf(tile) > 0);
 
+  // The side panel's and the partner's rows: a card keeps its row, and only its count changes, so its picture isn't set
+  // again on every click. A row is added when a card joins the deck and removed when it leaves.
+  const sideRows = new Map();
+  const partnerRows = new Map();
+  function syncRows(container, rows, list, copiesOf, controls) {
+    const keep = new Set();
+    for (const tile of list) {
+      const key = tile.dataset.card;
+      const copies = copiesOf(tile);
+      keep.add(key);
+      let row = rows.get(key);
+      if (!row) {
+        const template = document.createElement("template");
+        template.innerHTML = entry(tile, copies, controls);
+        row = template.content.firstElementChild;
+        rows.set(key, row);
+      } else {
+        const qty = row.querySelector(".qty");
+        if (qty) qty.textContent = controls ? copies : `×${copies}`;
+        const plus = row.querySelector("[data-side-delta='1']");
+        if (plus) plus.disabled = copies >= Number(tile.dataset.pulled);
+      }
+      container.append(row); // in the order of the list
+    }
+    for (const [key, row] of rows) {
+      if (!keep.has(key)) {
+        row.remove();
+        rows.delete(key);
+      }
+    }
+  }
+
   function summarize() {
     const mine = listed(count);
     const total = mine.reduce((sum, tile) => sum + count(tile), 0);
@@ -93,13 +125,13 @@
     sideColors.innerHTML = Object.entries(colors).sort((a, b) => b[1] - a[1]).map(([color, n]) =>
       `<li class="color-${esc(color.toLowerCase())}" title="${n} ${esc(color)}"><strong>${n}</strong> ${esc(color)}</li>`).join("");
     sideColors.hidden = !mine.some((tile) => tile.dataset.color);
-    document.querySelector("[data-side-entries]").innerHTML = mine.map((tile) => entry(tile, count(tile), true)).join("");
+    syncRows(document.querySelector("[data-side-entries]"), sideRows, mine, count, true);
     document.querySelector("[data-side-empty]").hidden = mine.length > 0;
 
     const partner = document.querySelector("[data-partner-entries]");
     if (partner) {
       const theirDeck = listed(theirs);
-      partner.innerHTML = theirDeck.map((tile) => entry(tile, theirs(tile), false)).join("");
+      syncRows(partner, partnerRows, theirDeck, theirs, false);
       document.querySelector("[data-partner-total]").textContent = theirDeck.reduce((sum, tile) => sum + theirs(tile), 0);
       document.querySelector("[data-partner-empty]").hidden = theirDeck.length > 0;
     }

@@ -39,3 +39,11 @@ class TutorialFixTests(TutorialBase):
         found = tutorial.view(save)
         self.assertTrue(found["highlight"][0].startswith("place-"))
         self.assertIn("Choose where to go next", found["hint"])
+
+    def test_a_legal_deck_saved_then_back_in_the_town_moves_on_to_the_minigame(self):
+        save = self.through("deck")  # the deck step, its lines not yet said
+        self.assertEqual(self.step(), "deck")
+        self.legal_deck()
+        world.town(save)  # back in the town: the deck's step is done without its lines being said
+        save.refresh_from_db()
+        self.assertEqual(self.step(), "minigame")

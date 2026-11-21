@@ -215,10 +215,11 @@ def minigame_done(save, won):
 
 
 def refresh(save):
-    """The town's being shown: a step that's done by itself (a deck made legal on its page) moves on. Returns whether
-    anything changed."""
+    """The town's being shown: a step that's done by itself moves on: a deck made legal on its own page, whether or not
+    its lines were said (they're about the deck, now done). Other steps move on once their lines are said. Returns
+    whether anything changed."""
     found = state(save)
-    if found and found.get("said") and ready(save):
+    if found and ready(save) and (found.get("said") or found["step"] == "deck"):
         advance(save)
         return True
     return False
