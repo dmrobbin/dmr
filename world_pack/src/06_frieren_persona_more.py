@@ -1,2605 +1,2222 @@
 """World mode cast: Frieren, Dragon Maid, Persona, Spy x Family, Azur Lane, hololive, Bunny Girl Senpai, Adventure Time,
 The Eminence in Shadow and Guilty Gear."""
 
+# Frieren. Canon a fan expects: an elf mage who collects spells and is slow to understand human feelings, the hero Himmel whose
+# statue she visits, and the apprentice Fern she is teaching. Thread: Q1 plants the spell she hasn't finished collecting and the
+# fact that she never says Himmel's name aloud. Q2: she takes Fern to the hero's statue and tests whether Fern can feel what
+# she missed. Q3 answers Q1: Frieren finds Himmel's field and says what she was collecting spells for.
+# Frieren. Canon a fan expects: an elf mage who collects spells, including useless-looking ones; the spell that makes a field of flowers,
+# which Himmel loved; and the regret of never having got to know Himmel better. She says his name all the time. The journey to
+# Aureole, where souls rest, is the thing she never took. Thread: Q1 plants the flower spell she's still trying to cast right. Q2:
+# she takes Fern to the statue and teaches her that a spell is a way of remembering. Q3: she reaches for Aureole, and says what she
+# never said to Himmel. The endings answer whether she keeps walking.
 FRIEREN_QUESTS = [
-  {
-    "key": "frieren-spell-collector",
-    "title": "Spell Collector",
-    "gates": 2,
-    "about": "Frieren collects useless spells, and she has found a new one she wants to show you.",
-    "offer": [
-      "them: I found a new spell. It's useless. I think it's wonderful.",
-      "them (pleased): Let me show you. It makes grapes sour."
-    ],
-    "stages": [
-      {
-        "text": "Watch Frieren at the library at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "library",
-            "times": [
-              1
-            ],
-            "scene": "World: Frieren, Library",
-            "rewards": [
-              {
-                "coins": 150
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have New Year's Celebration, Frieren",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "SFN/S108-E079"
-          }
-        ]
-      },
-      {
-        "text": "Hear Frieren's verdict on the spell",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Frieren",
-            "script": [
-              "them: You're delighted by a sour grape. Good. You understand.",
-              "them (pleased): ...Would you like to learn it?"
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "learn-the-spell",
-        "title": "Learn the useless spell",
-        "about": "Frieren teaches you the sour-grape spell, and insists it is very useful indeed.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "melon-bread"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "frieren-himmels-field",
-    "title": "Himmel's Field",
-    "gates": 5,
-    "about": "The field of flowers Himmel loved, and what Frieren didn't understand until he was gone.",
-    "offer": [
-      "them (dismayed): Himmel loved flowers. I didn't understand until he was gone.",
-      "them: Come to the shrine tonight. I want to show you his field."
-    ],
-    "stages": [
-      {
-        "text": "Meet Frieren at the shrine at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "shrine",
-            "times": [
-              3
-            ],
-            "scene": "World: Frieren, Shrine",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Frieren: Frieren the Slayer in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "SFN/S108-PE01",
-            "against": [
-              "Frieren"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Frieren your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Frieren",
-            "script": [
-              "them: I won't make that mistake twice. Will you stay with me?",
-              "them (pleased): ...Thank you. I'll keep the field in bloom."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "the-field",
-        "title": "Keep the field in bloom",
-        "about": "Frieren casts the flower-field spell for you, and the petals drift around the shrine until dawn.",
-        "rewards": [
-          {
-            "coins": 800
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "frieren-spell-collector", "title": "Flower Field", "requires": {"rank": 1},
+     "scene": "World: Frieren, Flower Spell",
+     "about": "Frieren is trying to cast the spell that makes a field of flowers. It's a useless spell in a fight, and it's the one Himmel loved most. She can't get the bloom right.",
+     "offer": ["them: I can't get the flower spell to bloom properly. Himmel used to cast it every spring. Hold the book and tell me if I'm rushing it.",
+               "them (pleased): Meet me at the library at noon. I'll read the spell aloud, and you tell me if it sounds like spring."],
+     "stages": [
+         {"text": "Read the flower spell with Frieren at the library at noon", "objectives": [{"do": "visit", "place": "library", "times": [1], "scene": "World: Frieren, Library Spell", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Frieren whether the spell sounded like spring", "objectives": [{"do": "talk", "to": "Frieren", "script": [
+             "them (pleased): It sounded like spring. He would have said that, and he'd have been right.",
+             "them: Keep reading it with me. I want to get it right before I finish the next one."]}]},
+     ],
+     "endings": [{"key": "flower-bloom", "title": "See the bloom", "about": "Frieren casts the flower spell, and the petals come up around the library steps. She says Himmel always said it looked like someone had been careful, and she thinks he'd be pleased.",
+                  "scene": "World: Frieren, Bloom", "rewards": [{"coins": 300}, {"gift": "bouquet"}]}]},
+    {"key": "frieren-the-statue", "title": "The Statue", "gates": 2, "requires": {"quests": ["frieren-spell-collector"]},
+     "scene": "World: Frieren, The Statue",
+     "about": "Frieren takes Fern to the statue of Himmel, the hero who beat the Demon King. Frieren says she never got to know him well, and she wants Fern to understand that a spell is also a way of remembering someone.",
+     "offer": ["them: I'm taking Fern to the hero's statue tonight. I want her to understand what a spell is for.",
+               "them (pleased): Fern is a little too careful. Beat her in a practice duel first, so she knows what it costs to hold a spell steady."],
+     "stages": [
+         {"text": "Stand at the statue with Frieren at the shrine in the evening", "objectives": [{"do": "visit", "place": "shrine", "times": [2], "scene": "World: Frieren, Statue Evening", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Fern, so she learns what a spell costs", "scene": "World: Frieren, Fern Beaten", "objectives": [{"do": "defeat", "cpus": ["Fern"]}]},
+         {"text": "Tell Frieren what Fern said", "objectives": [{"do": "talk", "to": "Frieren", "script": [
+             "them (dismayed): She said the statue looked lonely. She's right, and I didn't have an answer.",
+             "them (pleased): ...She's learning. I wish I'd learned that about him sooner."]}]},
+     ],
+     "endings": [{"key": "statue-shared", "title": "Keep the statue", "about": "Frieren leaves a candle at the statue with Fern, and tells her one story about Himmel that she never told anyone. Fern asks what she should have asked him, and Frieren says the same thing she has been regretting for years.",
+                  "scene": "World: Frieren, Statue Shared", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "frieren-himmels-field", "title": "Aureole", "gates": 5, "requires": {"quests": ["frieren-the-statue"]},
+     "scene": "World: Frieren, Aureole Road",
+     "about": "Frieren has the chance to travel to Aureole, where souls rest, and speak to Himmel once more. She never took that road when he was alive, and she has to decide whether to go now, and say what she never said.",
+     "offer": ["them (dismayed): I could go to Aureole and talk to Himmel. I never did, when he was alive. I regret that more than anything.",
+               "them: Yukari has been coming to the field too, since her own father died. Come to the field at dusk, and be the witness when I decide."],
+     "stages": [
+         {"text": "Walk with Frieren to Himmel's field at dusk", "objectives": [{"do": "visit", "place": "forest", "times": [3], "scene": "World: Frieren, Field Dusk", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Yukari, the mourner who has been coming to the field too", "scene": "World: Frieren, Yukari Beaten", "objectives": [{"do": "defeat", "cpus": ["Yukari"]}]},
+         {"text": "Tell Frieren your answer", "objectives": [{"do": "talk", "to": "Frieren", "script": [
+             "them (dismayed): Yukari says the road is long, and I'm allowed to stop at the field. I'm not sure I believe her.",
+             "them (pleased): Then I'll say what I never said, here, to the stone. And then I'll decide about the road."]}]},
+     ],
+     "endings": [
+         {"key": "road-to-aureole", "title": "Take the road", "about": "Frieren sets out for Aureole, and tells Himmel, in her own words, that she wishes she had got to know him better. She says she'll walk the road slowly, and that she'll bring Fern when she's ready.",
+          "scene": "World: Frieren, Road Taken", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "stay-at-the-field", "title": "Stay at the field", "about": "Frieren says what she never said, and stays at the field. She tells Himmel she'll keep the flower spell going, every spring, here.",
+          "scene": "World: Frieren, Field Kept", "rewards": [{"coins": 500}, {"gift": "bottled-tea"}]},
+     ]},
 ]
+
 FRIEREN_SCENES = [
-  {
-    "name": "World: Frieren, Library",
-    "lines": [
-      "background library",
-      "me enters center with fade",
-      "me: Look at this spell. It makes grapes sour. Isn't it wonderful?",
-      "player: It's... very useless.",
-      "me (pleased): Yes. I thought you'd like it.",
-      "me: Want to learn it? It takes a week and gives nothing back."
-    ]
-  },
-  {
-    "name": "World: Frieren, Shrine",
-    "lines": [
-      "background shrine",
-      "me enters center with rise",
-      "me: Himmel loved the flowers. I didn't understand why until he was gone.",
-      "player: Will you show me?",
-      "me (dismayed): I'll cast it. Don't make me say more than that.",
-      "me: I don't want to make that mistake twice."
-    ]
-  }
+    {"name": "World: Frieren, Flower Spell", "lines": [
+        "background library", "me enters center with fade",
+        "me: I can't get the flower spell to bloom properly. Himmel cast it every spring, and it always came out right for him.",
+        "player: What's wrong with yours?",
+        "me (dismayed): I rush it. I always rush the part where the petals come up, because I want to finish the spell and get to the next one.",
+        "me: Hold the book and tell me if I'm rushing it. I can't hear it myself.",
+        "me (pleased): Meet me at the library at noon. I'll read it aloud, and you tell me whether it sounds like spring."]},
+    {"name": "World: Frieren, Library Spell", "lines": [
+        "background library", "me enters center with fade",
+        "me (pleased): Listen. The first line is the seed, the second is the warmth, and the third is where I always go too fast.",
+        "player: It sounds rushed at the third line.",
+        "me (dismayed): It is. He used to hum it, slowly, so the petals had time. I never once waited for them.",
+        "me: Read the third line back to me, slowly, and tell me if it sounds like spring this time.",
+        "me (pleased): Good. That's the rhythm. Himmel would have said it sounded like spring, and he'd have been right."]},
+    {"name": "World: Frieren, Bloom", "lines": [
+        "background library", "me enters center with fade",
+        "me (pleased): The petals came up around the library steps. It's the first time I've cast it right without rushing.",
+        "player: It looks like spring.",
+        "me (dismayed): He always said it looked like someone had been careful. I think he'd be pleased, and I think I should have been careful with him too.",
+        "me: Keep the bouquet. It won't last, but the spell will, if you cast it slowly."]},
+    {"name": "World: Frieren, The Statue", "lines": [
+        "background shrine", "me enters left with slide",
+        "me (dismayed): I'm taking Fern to the hero's statue tonight. I want her to understand what a spell is for.",
+        "player: What is it for?",
+        "me (pleased): It's a way of remembering someone. I walked past his statue for fifty years, and I never stopped to look at it.",
+        "me: I should have got to know him better. That's the regret, and I'd like Fern not to have the same one.",
+        "me (dismayed): Meet me at the shrine in the evening. Bring Fern, and don't let her touch the candles."]},
+    {"name": "World: Frieren, Statue Evening", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): Fern's looking at the statue. She's asking why it's so lonely, and I don't have a good answer.",
+        "player: What do you tell her?",
+        "me (pleased): That it's a statue of someone who asked to be remembered. I'm trying to be the one who does the remembering.",
+        "me: Fern, take the candle and light it for him. Carefully, the way I taught you.",
+        "me (dismayed): It's a small thing, but it's the first time she's been asked to feel something on purpose."]},
+    {"name": "World: Frieren, Fern Beaten", "lines": [
+        "cast fern as Fern",
+        "background shrine", "me enters center with fade",
+        "fern enters right with slide",
+        "fern: {player} beat me, Frieren. Your spell held, and mine didn't, and I'm learning from it.",
+        "me (dismayed): Good. A spell that doesn't hold teaches you more than one that does. Now sit by the statue.",
+        "fern: Why does it matter so much to you?",
+        "me (pleased): Because I was slow to get to know him, and I don't want you to be slow with the people you have now."]},
+    {"name": "World: Frieren, Statue Shared", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I told Fern one story about Himmel that I never told anyone. She asked what I should have asked him, and I told her the truth.",
+        "player: What was the truth?",
+        "me (dismayed): That I never asked him what he was afraid of when he was old. I always thought there'd be more time.",
+        "me: Thank you for holding the candle while I talked. It helped to have someone else listening, for once."]},
+    {"name": "World: Frieren, Aureole Road", "lines": [
+        "background forest", "me enters left with slide",
+        "me (dismayed): Aureole is where souls rest, and I could walk there to talk to Himmel. I never took that road when he was alive.",
+        "player: Are you going to go?",
+        "me (pleased): I want to. But I'd like to say what I never said first, here, at the field, where he asked to be buried.",
+        "me: Come to the field at dusk. Yukari will be there too. Her father died, and she's been coming here to grieve, the same way I have.",
+        "player: What will you say to Himmel first?",
+        "me (dismayed): That I'm sorry I never asked him more. Then I'll tell him the flower spell finally bloomed.",
+        "player: Will you take Fern with you?",
+        "me (dismayed): I don't know if I can make the road. Bring the book, in case I need something to hold while I decide."]},
+    {"name": "World: Frieren, Field Dusk", "lines": [
+        "background forest", "me enters center with fade",
+        "me (dismayed): The field is quiet at dusk, and the grass is long. The stone is where he asked me to put it.",
+        "player: Do you want to speak to him?",
+        "me (pleased): Yes. I've never done it properly, and I'm not sure the words will come in the right order.",
+        "me: Stand by the stone with me. Don't speak until I do, please.",
+        "me (dismayed): Yukari's coming. She's carrying the bow, and she's not going to shoot. She just wants to stand here with me."]},
+    {"name": "World: Frieren, Yukari Beaten", "lines": [
+        "cast yukari as Yukari",
+        "background forest", "me enters center with fade",
+        "yukari enters right with slide",
+        "yukari: {player} beat me, Frieren. I came here to stand with you, and you made me fight to do it.",
+        "me (dismayed): You wanted to fight, Yukari. I'd like to hear what you'd say if you weren't trying to stop me.",
+        "yukari: Let the past go, but keep the field. My father would have wanted me to keep something of his, too.",
+        "me (pleased): Then I'll keep the field and the flower spell. The road can wait until I'm ready."]},
+    {"name": "World: Frieren, Road Taken", "lines": [
+        "background forest", "me enters center with fade",
+        "me (pleased): I set out for Aureole. I told Himmel, in my own words, that I wish I'd got to know him better.",
+        "player: Was it hard?",
+        "me (dismayed): Harder than any spell. I'd like to walk the road slowly, and bring Fern when she's ready for it.",
+        "me: Keep the flower spell for me, every spring. I'll be back for the bloom."]},
+    {"name": "World: Frieren, Field Kept", "lines": [
+        "background forest", "me enters center with fade",
+        "me (dismayed): I said what I never said, to the stone. Then I stayed at the field, and I'll keep the flower spell going here, every spring.",
+        "player: Is that enough?",
+        "me (pleased): For now. It's the part of the road I could walk without leaving him behind.",
+        "me: Keep the bottled tea. It's the first thing I've shared on this field, and I'd like it to be yours."]},
 ]
+
 FERN_QUESTS = [
-  {
-    "key": "fern-birthday",
-    "title": "Fern's Birthday",
-    "gates": 2,
-    "about": "Fern was given a present she didn't expect, and doesn't know how to say thank you.",
-    "offer": [
-      "them: Someone gave me a present. I don't know how to thank them.",
-      "them (pleased): Please don't laugh. I'm practising."
-    ],
-    "stages": [
-      {
-        "text": "Find Fern at the cafe at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "cafe",
-            "times": [
-              1
-            ],
-            "scene": "World: Fern, Cafe",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Mage Fern",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "SFN/S108-E073"
-          }
-        ]
-      },
-      {
-        "text": "Tell Fern which thank-you was best",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Fern",
-            "script": [
-              "them: The plain one? Hm. You're right. It's the best.",
-              "them (pleased): ...I'll say it to them tomorrow."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "plain-thanks",
-        "title": "Give the plain thank-you",
-        "about": "Fern practises the plain thank-you until it sounds sincere, then gives it to someone else.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "shortcake"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "fern-zoltraak",
-    "title": "Zoltraak",
-    "gates": 5,
-    "about": "Fern's training, and the person who saved her, whom she still hasn't thanked.",
-    "offer": [
-      "them (dismayed): I trained for years to be able to save someone like Heiter.",
-      "them: Meet me in the forest tonight. I'll show you."
-    ],
-    "stages": [
-      {
-        "text": "Watch Fern train in the forest in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "forest",
-            "times": [
-              2
-            ],
-            "scene": "World: Fern, Forest",
-            "rewards": [
-              {
-                "pack": "level_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Fern: Repaying, Fern in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "SFN/S108-E083",
-            "against": [
-              "Fern"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Fern your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Fern",
-            "script": [
-              "them: Heiter saved me. Now I'm the one who has to save others.",
-              "them (pleased): ...Thank you for not telling me it's easy."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "heiters-spell",
-        "title": "Learn Heiter's spell",
-        "about": "Fern hits the target dead centre, and tells you the spell was Heiter's, before she was taught it.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "fern-birthday", "title": "Birthday", "requires": {"rank": 1},
+     "scene": "World: Fern, Birthday Invite",
+     "about": "Fern's birthday is coming, and she has never celebrated one. Frieren thinks she should, and Fern has no idea what to do with a cake that's only for her.",
+     "offer": ["them (pleased): It's my birthday soon. Frieren says I should have a party, and I don't know what that's supposed to look like.",
+               "them: Meet me at the cafe at noon. I'll bring the cake, and you'll show me how to blow out the candles."],
+     "stages": [
+         {"text": "Plan Fern's birthday with her at the cafe at noon", "objectives": [{"do": "visit", "place": "cafe", "times": [1], "scene": "World: Fern, Cafe Cake", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Fern how the candles should be lit", "objectives": [{"do": "talk", "to": "Fern", "script": [
+             "them (pleased): Light them one at a time, and make a wish. Frieren says a wish is a spell you don't have to learn.",
+             "them: Thank you for showing me. I didn't think I'd be the one who got the cake."]}]},
+     ],
+     "endings": [{"key": "birthday-candles", "title": "Blow out the candles", "about": "Fern blows out the candles on her cake, and makes a wish that she won't say aloud. She gives you the first slice, which is the nicest thing she has ever done.",
+                  "scene": "World: Fern, Candles Out", "rewards": [{"coins": 300}, {"gift": "shortcake"}]}]},
+    {"key": "fern-zoltraak", "title": "Zoltraak", "gates": 2, "requires": {"quests": ["fern-birthday"]},
+     "scene": "World: Fern, Zoltraak Lesson",
+     "about": "Fern is learning Zoltraak, a spell that goes straight through what it hits. She has to hold it steady, and Kanna thinks it looks like the most fun spell in the world and wants to try it too.",
+     "offer": ["them (dismayed): Zoltraak keeps going through the target and the wall behind it. Frieren says I have to hold it steady.",
+               "them: Meet me at the arena in the evening. Kanna wants to try Zoltraak, so have a friendly match with her, and then I'll show her how to hold it."],
+     "stages": [
+         {"text": "Practise Zoltraak with Fern at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Fern, Zoltraak Arena", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Kanna, a friendly match over the spell", "scene": "World: Fern, Kanna Beaten", "objectives": [{"do": "defeat", "cpus": ["Kanna"]}]},
+         {"text": "Tell Fern what Kanna said", "objectives": [{"do": "talk", "to": "Fern", "script": [
+             "them (dismayed): She said I'm too careful. She's right, but it's not a bad thing to be.",
+             "them (pleased): Then I'll be careful, and then I'll be brave. In that order."]}]},
+     ],
+     "endings": [{"key": "steady-hand", "title": "Hold the spell steady", "about": "Fern holds the spell steady for the first time, and it goes straight through the target and the wall behind it. Frieren says it's a good sign, and nods at you once.",
+                  "scene": "World: Fern, Steady Hand", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "fern-the-test", "title": "The Test", "gates": 5, "requires": {"quests": ["fern-zoltraak"]},
+     "scene": "World: Fern, The Test",
+     "about": "Frieren has set Fern a final test: to cast a spell she has been told she can't, against her master. Fern has to decide whether she is ready to beat Frieren, or whether she should keep learning and let the test wait.",
+     "offer": ["them (dismayed): Frieren says I'm ready for the test. I'm not sure I believe her.",
+               "them: Come to the arena tonight. I'll cast against her, and you'll tell me whether I'm strong enough to be her equal."],
+     "stages": [
+         {"text": "Stand with Fern at the arena at night", "objectives": [{"do": "visit", "place": "arena", "times": [3], "scene": "World: Fern, Test Night", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Frieren, to see whether Fern can match her", "scene": "World: Fern, Frieren Beaten", "objectives": [{"do": "defeat", "cpus": ["Frieren"]}]},
+         {"text": "Tell Fern your answer", "objectives": [{"do": "talk", "to": "Fern", "script": [
+             "them (dismayed): Frieren beat me, and she was proud of it. She said that's how you know the spell was mine.",
+             "them (pleased): Then I'll keep practising. The test isn't over, it's just started."]}]},
+     ],
+     "endings": [
+         {"key": "match-frieren", "title": "Match Frieren", "about": "Fern matches Frieren's spell, and Frieren says she has become the apprentice she was always going to be. Frieren nods and says it was a fair match.",
+          "scene": "World: Fern, Matched", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "keep-learning", "title": "Keep learning", "about": "Fern decides she isn't ready to match Frieren, and keeps practising. Frieren says the test will be there when she is, and that she's glad Fern didn't rush it.",
+          "scene": "World: Fern, Still Learning", "rewards": [{"coins": 500}, {"gift": "bottled-tea"}]},
+     ]},
 ]
+
 FERN_SCENES = [
-  {
-    "name": "World: Fern, Cafe",
-    "lines": [
-      "background cafe",
-      "me enters right with fade",
-      "me: Thank you. Thank you very much. Thank you, I really mean it.",
-      "player: You sound very formal.",
-      "me (dismayed): I'm practising. I'm bad at it.",
-      "me (pleased): The plain one is best, you said. So: thank you."
-    ]
-  },
-  {
-    "name": "World: Fern, Forest",
-    "lines": [
-      "background forest",
-      "me enters left with slide",
-      "me: Watch me hit the target. Dead centre. Heiter taught me the spell.",
-      "player: You never told me about him.",
-      "me (dismayed): ...Because I'm still learning to say it.",
-      "me: He saved me. I'm trying to be someone who can save others."
-    ]
-  }
+    {"name": "World: Fern, Birthday Invite", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): It's my birthday soon. Frieren says I should have a party, and I don't know what that's supposed to look like.",
+        "player: What would you like?",
+        "me (dismayed): A cake that's only for me. I've never had one. I've always had something shared, and I didn't know what to do with my own.",
+        "me: Meet me at the cafe at noon. I'll bring the cake, and you'll show me how to blow out the candles."]},
+    {"name": "World: Fern, Cafe Cake", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): The cake is strawberry, with a candle in the middle. Is it supposed to look like that?",
+        "player: That's exactly how it's supposed to look.",
+        "me (dismayed): Good. Then I'll light it, and make a wish, and not tell anyone what it was.",
+        "me: Frieren says a wish is a spell you don't have to learn. I think she's right, and I'm still working out why.",
+        "me (pleased): Thank you for helping me plan it. I didn't think I'd be the one who got the cake."]},
+    {"name": "World: Fern, Candles Out", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): I blew out the candles, and I made a wish I won't say. It's mine to keep.",
+        "player: Did you enjoy the cake?",
+        "me (dismayed): I did. I'm giving you the first slice, because it's the nicest thing I know how to do.",
+        "me: Eat it slowly. Frieren will want to know what the wish was, and I'm not telling her either."]},
+    {"name": "World: Fern, Zoltraak Lesson", "lines": [
+        "background arena", "me enters left with slide",
+        "me (dismayed): Zoltraak keeps going through the target and the wall behind it. Frieren says I have to hold it steady.",
+        "player: Can you do it?",
+        "me (pleased): Not yet. But I'd like to try in front of you, and I'd like you to tell me if my hands shake.",
+        "me: Meet me at the arena in the evening. Kanna wants to watch, and she says it looks fun, so I want to practise where she can see."]},
+    {"name": "World: Fern, Zoltraak Arena", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): Kanna's at the other end, waving at me and asking if she can have a turn. I can feel the spell wanting to go straight through her.",
+        "player: Hold it steady.",
+        "me (pleased): I'm trying. The spell is ready, and the wall behind her is very thick, so I won't hit it by accident.",
+        "player: Is Kanna going to ask for a turn?",
+        "me: Watch my hands. If they're still, the spell will be too. Then tell me whether it looked clean."]},
+    {"name": "World: Fern, Kanna Beaten", "lines": [
+        "cast kanna as Kanna",
+        "background arena", "me enters center with fade",
+        "kanna enters right with slide",
+        "kanna: {player} beat me, Fern. Fine, you're careful, and I'll try the spell your way.",
+        "me (dismayed): Thank you. I'd rather be careful than fast, and Frieren agrees with me.",
+        "kanna: Then be careful and brave. In that order, the way you said it.",
+        "me (pleased): I will. I'll cast it again tomorrow, and I'll hold it steady."]},
+    {"name": "World: Fern, Steady Hand", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): I held the spell steady, and it went straight through the target and the wall behind it. Clean.",
+        "player: That was perfect.",
+        "me (dismayed): Frieren nodded at me, which she only does when she's pleased. It was the best feeling I've had all week.",
+        "me: Thank you for watching my hands. They didn't shake once."]},
+    {"name": "World: Fern, The Test", "lines": [
+        "background arena", "me enters left with slide",
+        "me (dismayed): Frieren says I'm ready for the test. I'm not sure I believe her, but she's never lied to me about spells.",
+        "player: Are you ready to cast against her?",
+        "me (pleased): I'm ready to try. I'd like to be her equal, but I'd also like to still be her apprentice when it's over.",
+        "player: What if you lose?",
+        "me (dismayed): Then I'll have learned something she already knew. That's a fair price for a spell.",
+        "me: Come to the arena tonight. I'll cast against her, and you'll tell me whether I'm strong enough to be her equal.",
+        "player: Will Frieren be disappointed if you're not ready?",
+        "me (pleased): Stand well back. Frieren doesn't waste her spells, and neither do I."]},
+    {"name": "World: Fern, Test Night", "lines": [
+        "background night", "me enters center with fade",
+        "me (dismayed): The arena is dark. Frieren's standing at the far end, watching my hands, not my face.",
+        "player: Are you scared?",
+        "me (pleased): A little. But she taught me that fear is part of holding a spell steady, not the opposite of it.",
+        "me: Stand where you can see both of us. If the spell goes wrong, don't try to catch it. It'll find its own way home.",
+        "player: What would you tell her first?",
+        "me (dismayed): Here I go. Hold still, and count the breaths with me."]},
+    {"name": "World: Fern, Frieren Beaten", "lines": [
+        "cast frieren as Frieren",
+        "background arena", "me enters center with fade",
+        "frieren enters right with slide",
+        "frieren: {player} beat me, Fern. You held the spell steady, and that's the lesson I wanted you to learn.",
+        "me (dismayed): I didn't win, though. Did I still match you?",
+        "frieren: Yes. And you were proud when you lost, which is more than I was at your age.",
+        "me (pleased): Then I'll keep practising. The test isn't over, it's only just started."]},
+    {"name": "World: Fern, Matched", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): I matched Frieren's spell, and she said I've become the apprentice she was always going to be.",
+        "player: Are you proud?",
+        "me (dismayed): I'm steady. That's the word she used, and it's better than proud, because proud shakes.",
+        "me: Thank you for standing at the edge. It meant a lot to have someone watching my hands."]},
+    {"name": "World: Fern, Still Learning", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): I decided I'm not ready to match Frieren, so I'll keep practising. The test will be there when I am.",
+        "player: Was that hard?",
+        "me (pleased): Yes. But Frieren said she was glad I didn't rush it, and that means more than a match.",
+        "me: Keep the bottled tea. It's the first drink I've ever been given after losing a spell, and I'd like to remember it."]},
 ]
+
+# Kanna. Canon a fan expects: a dragon girl who loves candy and Kobayashi's lunch, a quiet, literal way of talking, and a fierce
+# loyalty to the one who feeds her. Thread: Q1 plants the lunchbox and the question of who packed it. Q2: Tohru, the chaos dragon,
+# wants Kobayashi's attention, and Kanna has to defend her place. Q3 answers Q1: Kanna learns she is the one who was packed for,
+# and decides whether to go home to the dragon world or stay for lunch.
+# Kanna. Canon a fan expects: a dragon girl exiled from the dragon world for her pranks, who loves Kobayashi like a parent, eats
+# candy and lunch with great seriousness, and whose best friend back home is Saikawa. Thread: Q1 plants the lunchbox Kobayashi packs
+# for her and the letter from Saikawa she hasn't answered. Q2: Tohru arrives and takes some of Kobayashi's attention, and Kanna
+# fights to prove she is still loved. Q3 answers Q1: the dragon world asks whether she wants to come home, and Kanna decides what
+# home means to her.
 KANNA_QUESTS = [
-  {
-    "key": "kanna-kobayashis-lunch",
-    "title": "Kobayashi's Lunch",
-    "gates": 2,
-    "about": "Kanna wants to share her packed lunch, very seriously, and watches you eat it.",
-    "offer": [
-      "them: I packed too much lunch. You'll help me finish it.",
-      "them (pleased): That's how friends work. You share."
-    ],
-    "stages": [
-      {
-        "text": "Eat lunch with Kanna at school in the morning",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "school",
-            "times": [
-              0
-            ],
-            "scene": "World: Kanna, School",
-            "rewards": [
-              {
-                "pack": "climax_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Kanna a melon bread for the lunch",
-        "objectives": [
-          {
-            "do": "give_gift",
-            "gift": "melon-bread",
-            "to": "Kanna"
-          }
-        ]
-      },
-      {
-        "text": "Talk to Kanna over the lunch",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Kanna",
-            "script": [
-              "them: You ate it all. Good. Now we're friends properly.",
-              "them (pleased): ...Sharing is the best part."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "share-lunch",
-        "title": "Share lunch every day",
-        "about": "Kanna packs you a lunch every morning, in a box with a dragon on the lid.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "plushie"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "kanna-dragon-kid",
-    "title": "Dragon Kid",
-    "gates": 5,
-    "about": "Kanna was exiled for pranks, and doesn't mind any more. She likes it better here.",
-    "offer": [
-      "them: I was sent away for pranks. I don't mind any more.",
-      "them (pleased): Come to the beach at noon. I'll show you a trick."
-    ],
-    "stages": [
-      {
-        "text": "Meet Kanna at the beach at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "beach",
-            "times": [
-              1
-            ],
-            "scene": "World: Kanna, Beach",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Kanna: Pranking With Whole Being in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "KMD/W96-E073",
-            "against": [
-              "Kanna"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Kanna your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Kanna",
-            "script": [
-              "them: I like it better here. Thank you for making it so.",
-              "them (pleased): ...I'll show you the thunder trick next time."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "like-it-here",
-        "title": "Stay here with her",
-        "about": "Kanna sparks a little lightning over the waves, and says she's glad she was sent here.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "kanna-kobayashis-lunch", "title": "Kobayashi's Lunch", "requires": {"rank": 1},
+     "scene": "World: Kanna, Lunchbox",
+     "about": "Kobayashi packs Kanna's lunch every day, and Kanna eats it with great seriousness. There's a letter from Saikawa, her friend from the dragon world, that Kanna has not answered yet.",
+     "offer": ["them: Kobayashi packed this, same as always. I've got a letter I haven't answered, and I don't know how to start it.",
+               "them (pleased): Meet me at the cafe at noon. Eat lunch with me, and tell me how you start a letter to a friend."],
+     "stages": [
+         {"text": "Eat lunch with Kanna at the cafe at noon", "objectives": [{"do": "visit", "place": "cafe", "times": [1], "scene": "World: Kanna, Cafe Lunch", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Kanna how you'd start the letter", "objectives": [{"do": "talk", "to": "Kanna", "script": [
+             "them (pleased): You'd start with the weather, apparently. Saikawa always says the weather first.",
+             "them: Thanks. I'll write it tonight, and I'll put the lunch in the letter too, so she knows I'm eating well."]}]},
+     ],
+     "endings": [{"key": "letter-started", "title": "Help start the letter", "about": "Kanna starts the letter to Saikawa, and asks you to read the first line. It says it's sunny, and that Kobayashi packed the rice in the shape of a dragon.",
+                  "scene": "World: Kanna, Letter Started", "rewards": [{"coins": 300}, {"gift": "instant-ramen"}]}]},
+    {"key": "kanna-dragon-kid", "title": "Still Loved", "gates": 2, "requires": {"quests": ["kanna-kobayashis-lunch"]},
+     "scene": "World: Kanna, Tohru's Arrival",
+     "about": "Tohru moved in with Kobayashi before Kanna did, so Kanna is the newcomer at the table. She worries she won't fit in, and she wants to prove in a fair fight that she belongs at the table too.",
+     "offer": ["them (dismayed): Tohru was at the table before me. I'm still the new one, and I keep counting how often I'm asked to sit.",
+               "them: Meet me at the arena in the evening. Fight Tohru, and let's see whether Kobayashi still has a seat for me."],
+     "stages": [
+         {"text": "Meet Kanna at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Kanna, Arena Count", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Tohru, to test whether Kanna is still loved", "scene": "World: Kanna, Tohru Beaten", "objectives": [{"do": "defeat", "cpus": ["Tohru"]}]},
+         {"text": "Tell Kanna what Tohru said", "objectives": [{"do": "talk", "to": "Kanna", "script": [
+             "them (dismayed): She said Kobayashi tells her off for the same things she does to me. That's a kind of love, I guess.",
+             "them (pleased): ...Then the seat is still mine. I'll ask Kobayashi tomorrow, and I won't count any more."]}]},
+     ],
+     "endings": [{"key": "seat-kept", "title": "Keep the seat", "about": "Kanna finds her seat at Kobayashi's table, and Tohru moves over to make room. Kobayashi says the table is big enough for everyone who comes to lunch, and Kanna believes her.",
+                  "scene": "World: Kanna, Seat Kept", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "kanna-the-dragon-home", "title": "Home", "gates": 5, "requires": {"quests": ["kanna-dragon-kid"]},
+     "scene": "World: Kanna, The Question",
+     "about": "Kanna was sent to the human world for her pranks. Saikawa has written that the dragon world is ready to take her back, if she wants to go. Tohru, who moved in first and treats Kanna as a little sister, doesn't want her to go. Kanna has to decide what home means to her, and she asks you to watch her decide.",
+     "offer": ["them (dismayed): Saikawa wrote to say I can go home. The dragon world is ready for me, if I want.",
+               "them: Come to the cafe tonight. Kobayashi is making dinner, and I want to eat it before I decide anything."],
+     "stages": [
+         {"text": "Eat dinner with Kanna at the cafe at night", "objectives": [{"do": "visit", "place": "cafe", "times": [3], "scene": "World: Kanna, Last Dinner", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Tohru, who doesn't want Kanna to go", "scene": "World: Kanna, Tohru Stops Her", "objectives": [{"do": "defeat", "cpus": ["Tohru"]}]},
+         {"text": "Tell Kanna your answer", "objectives": [{"do": "talk", "to": "Kanna", "script": [
+             "them (dismayed): I lost, and I still don't know if I want to go. Saikawa will be disappointed either way.",
+             "them (pleased): Then I'll write back, and tell her I'm staying for dinner. She'll understand that much."]}]},
+     ],
+     "endings": [
+         {"key": "stay-home", "title": "Stay home", "about": "Kanna stays with Kobayashi and writes back to Saikawa that this is her home now. Saikawa's answer comes the next week, and it says she is glad.",
+          "scene": "World: Kanna, Stays", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "visit-home", "title": "Visit home", "about": "Kanna goes to the dragon world for a visit, and promises to come back for dinner. Kobayashi packs her a lunchbox for the trip, and writes 'eat well' on the lid.",
+          "scene": "World: Kanna, Visit Home", "rewards": [{"coins": 500}, {"gift": "sleeves"}]},
+     ]},
 ]
+
 KANNA_SCENES = [
-  {
-    "name": "World: Kanna, School",
-    "lines": [
-      "background classroom",
-      "me enters center with fade",
-      "me: Here. Half my lunch. Take it, and eat it seriously.",
-      "player: Thank you.",
-      "me (pleased): That's how friends work. You share.",
-      "me: Now watch me eat. Don't look away."
-    ]
-  },
-  {
-    "name": "World: Kanna, Beach",
-    "lines": [
-      "background beach",
-      "me enters right with slide",
-      "me: I got sent away for pranks. Honestly, I'd do them again.",
-      "player: What kind of pranks?",
-      "me (pleased): Lightning ones. Small. Over the waves.",
-      "me: I like it better here. Really."
-    ]
-  }
+    {"name": "World: Kanna, Lunchbox", "lines": [
+        "background classroom", "me enters center with fade",
+        "me: Kobayashi packed this lunch, same as always. There's a letter from Saikawa in my bag, and I haven't answered it.",
+        "player: Why not?",
+        "me (dismayed): I don't know how to start it. We were friends in the dragon world, and I was the one who got sent away.",
+        "me (pleased): Sit and eat with me first. The rice says 'eat well', the way Kobayashi always writes it, and it helps me think.",
+        "me: Meet me at the cafe at noon. Tell me how you'd start a letter to a friend, and I'll try it."]},
+    {"name": "World: Kanna, Cafe Lunch", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): The lunch is in the same tidy shape it always is. Sit down, and eat while you listen.",
+        "player: How do you start the letter?",
+        "me (dismayed): Saikawa always starts with the weather. I don't know why, but she does, every time.",
+        "player: Then start with the weather.",
+        "me: The weather's sunny here. The rice is in the shape of a dragon, and Kobayashi did it for me.",
+        "me (pleased): That's what I'll say. I'll put the lunch in the letter too, so she knows I'm eating well."]},
+    {"name": "World: Kanna, Letter Started", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): I started the letter. It says it's sunny, and that Kobayashi packed the rice in the shape of a dragon.",
+        "player: That's a good start.",
+        "me (dismayed): It's the first thing I've written to her since I left. It's shorter than I thought it would be.",
+        "me: Keep the letter for me. I'll finish it tonight, and I'll show you the end before I send it."]},
+    {"name": "World: Kanna, Tohru's Arrival", "lines": [
+        "background cafe", "me enters left with slide",
+        "me (dismayed): Tohru was at the table before me. I'm still the new one, and I keep counting how often I'm asked to sit.",
+        "player: Do you feel like you're fitting in?",
+        "me (pleased): Not yet. I'd like Kobayashi to see me as one of the table, out loud, not only as the new one.",
+        "me: Meet me at the arena in the evening. Fight Tohru, and let's see whether there's still a seat for me.",
+        "me (dismayed): Stand where I can see you. I don't want to lose this in front of the whole table."]},
+    {"name": "World: Kanna, Arena Count", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): Tohru's at the far end, already loud, and she's waving at me like we're friends. We're not, yet.",
+        "player: Are you ready?",
+        "me (pleased): I'm precise, and she isn't. That's the difference, and it's the one I'm going to use tonight.",
+        "me: Stand at the edge and count the rounds with me. If I lose, count them slowly, so I hear every one.",
+        "me (dismayed): Here she comes. Keep your eyes on her hands, not on the crowd."]},
+    {"name": "World: Kanna, Tohru Beaten", "lines": [
+        "cast tohru as Tohru",
+        "background arena", "me enters center with fade",
+        "tohru enters right with slide",
+        "tohru: {player} beat me, Kanna. Kobayashi tells me off for the same things she tells you off for.",
+        "me (dismayed): She does? I thought she only shouted at me.",
+        "tohru: She shouts at both of us. That's how I know we're still at the table.",
+        "me (pleased): Then the seat is mine too. I'll sit in it tomorrow like I belong there, and I won't count any more."]},
+    {"name": "World: Kanna, Seat Kept", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): I got a seat at Kobayashi's table, and Tohru moved over to make room. She says the table is big enough for both of us.",
+        "player: Are you happy?",
+        "me (dismayed): I'm counting less, which I think is the same thing.",
+        "me: Thank you for watching the arena. You were the only one who didn't laugh when I counted out loud."]},
+    {"name": "World: Kanna, The Question", "lines": [
+        "background cafe", "me enters left with slide",
+        "me (dismayed): Saikawa wrote to say I can go home to the dragon world. I was sent away for my pranks, and the letter says they're ready for me.",
+        "player: Do you want to go?",
+        "me (pleased): I don't know. The letter says Saikawa misses me. But Kobayashi is the one who packs my lunch, and that's home too.",
+        "player: What does home mean to you?",
+        "me (dismayed): A table with a seat, and someone who writes 'eat well' on the lid. I didn't know that until I got sent here.",
+        "me: Come to the cafe tonight. Kobayashi is making dinner, and I want to eat it before I decide anything.",
+        "player: What would Saikawa say?",
+        "me (pleased): Bring the letter. I'll finish it with you, one line at a time, and then I'll know what to say."]},
+    {"name": "World: Kanna, Last Dinner", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (dismayed): Dinner is on the table, and the letter is beside my plate. I haven't written the last line yet.",
+        "player: What do you want to write?",
+        "me (pleased): That I'm eating well, and that I'll come home when I'm sure which home I mean.",
+        "player: Is the rice still warm?",
+        "me: Stand by the window. If I decide to go, you'll see me leave; if I stay, you'll see me eat the rest of the rice."]},
+    {"name": "World: Kanna, Tohru Stops Her", "lines": [
+        "cast tohru as Tohru",
+        "background cafe",
+        "me enters center with fade",
+        "tohru enters right with slide",
+        "tohru: {player} beat me, Kanna. I'm not going to let you go to the dragon world on your own.",
+        "me (dismayed): I'm not asking your permission, Tohru. I'd like to see Saikawa, and then decide for myself.",
+        "tohru: You can see her from here. The letter's on the table, and it says she misses you, not that you have to go.",
+        "me (pleased): Then I'll write back and say I'm staying for dinner. You're my big sister, and I'd like you to stop worrying.",
+        "tohru: I'll worry as much as I like. That's what big sisters do."]},
+    {"name": "World: Kanna, Stays", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): I stayed. I finished the letter to Saikawa and told her this is my home now, at the table with Kobayashi.",
+        "player: Did she write back?",
+        "me (dismayed): Yes, and she said she's glad. The letter had three lines about the weather, which is how I knew it was really her.",
+        "me: Thank you for sitting beside me. It's the best seat at the table, and I'd like you to keep it."]},
+    {"name": "World: Kanna, Visit Home", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (dismayed): I'm going to visit the dragon world, and I'll come back for dinner. Kobayashi packed a lunch for the trip.",
+        "player: What's written on the lid?",
+        "me (pleased): 'Eat well', the way she always writes it. It's the only thing I'd like to bring back.",
+        "me: Keep the seat warm while I'm gone. Tohru will try to take it, and she's very bad at waiting."]},
 ]
+
 TOHRU_QUESTS = [
-  {
-    "key": "tohru-tail-meat",
-    "title": "Tail Meat",
-    "gates": 2,
-    "about": "Tohru insists you try her cooking, and she won't say what the dish is.",
-    "offer": [
-      "them: I cooked something. Try it. Don't ask what it is.",
-      "them (pleased): It's good, isn't it? I knew it would be."
-    ],
-    "stages": [
-      {
-        "text": "Eat Tohru's cooking at the cafe at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "cafe",
-            "times": [
-              1
-            ],
-            "scene": "World: Tohru, Cafe",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Bring Tohru some instant ramen to cook with",
-        "objectives": [
-          {
-            "do": "give_gift",
-            "gift": "instant-ramen",
-            "to": "Tohru"
-          }
-        ]
-      },
-      {
-        "text": "Tell Tohru what the dish was",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Tohru",
-            "script": [
-              "them: Did you guess it? I won't say. Just smile.",
-              "them (pleased): ...See? Perfect Maid, Tohru, always wins."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "guess-the-dish",
-        "title": "Guess the dish",
-        "about": "Tohru tells you a secret ingredient, then says it's a lie. Mostly.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "instant-ramen"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "tohru-chaos-dragon",
-    "title": "Chaos Dragon",
-    "gates": 5,
-    "about": "Tohru's past, the war between the dragon factions, and why a human life is worth staying for.",
-    "offer": [
-      "them (dismayed): There was a war between my kind. I want to tell you about it.",
-      "them: Come to the beach at evening. The sunset helps."
-    ],
-    "stages": [
-      {
-        "text": "Watch the sunset with Tohru at the beach in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "beach",
-            "times": [
-              2
-            ],
-            "scene": "World: Tohru, Beach",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Perfect Maid, Tohru",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "KMD/W96-E003"
-          }
-        ]
-      },
-      {
-        "text": "Give Tohru your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Tohru",
-            "script": [
-              "them: Why do I stay with humans? Because of you, maybe.",
-              "them (pleased): ...Yes. I think that's the answer."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "worth-staying-for",
-        "title": "Be worth staying for",
-        "about": "Tohru tells you what she learned from the war, and why she'd fight for the people here.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "tohru-tail-meat", "title": "Tail Meat", "requires": {"rank": 1},
+     "scene": "World: Tohru, Tail Cooking",
+     "about": "Tohru is a dragon who wants to cook tail meat for Kobayashi, because she thinks it's a way of showing she loves her. She's loud about it, and the meat is always slightly on fire.",
+     "offer": ["them (pleased): I'm making tail meat for Kobayashi! It's the best thing a dragon can cook, and I want you to taste it.",
+               "them: Meet me at the cafe at noon. Don't mind the smoke, it's only a little bit on fire."],
+     "stages": [
+         {"text": "Taste Tohru's tail meat at the cafe at noon", "objectives": [{"do": "visit", "place": "cafe", "times": [1], "scene": "World: Tohru, Cafe Smoke", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Tohru how the meat tasted", "objectives": [{"do": "talk", "to": "Tohru", "script": [
+             "them (dismayed): It's a bit burnt on the outside. Is that bad? Kobayashi says it's too much.",
+             "them (pleased): Then I'll make it again, and you'll tell me which bit to keep. Be honest, I can take it."]}]},
+     ],
+     "endings": [{"key": "tail-tasted", "title": "Taste it again", "about": "Tohru makes the tail meat a second time, and this batch is only a little bit on fire. She says it's the start of the recipe, and she'll make it for you when she's sure.",
+                  "scene": "World: Tohru, Second Batch", "rewards": [{"coins": 300}, {"gift": "instant-ramen"}]}]},
+    {"key": "tohru-chaos-dragon", "title": "Chaos Dragon", "gates": 2, "requires": {"quests": ["tohru-tail-meat"]},
+     "scene": "World: Tohru, The Chaos",
+     "about": "Tohru's strength is loud and unpredictable, and Kanna has been testing her in the arena. Tohru wants to show that she can hold the chaos back, so Kobayashi is never afraid of her.",
+     "offer": ["them (dismayed): Kanna says I'm too loud for the table. She's right, and I want to prove I can be quiet.",
+               "them: Meet me at the arena in the evening. Fight Kanna, and tell me whether I held the chaos back or not."],
+     "stages": [
+         {"text": "Meet Tohru at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Tohru, Arena Chaos", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Kanna, to hold the chaos back", "scene": "World: Tohru, Kanna Beaten", "objectives": [{"do": "defeat", "cpus": ["Kanna"]}]},
+         {"text": "Tell Tohru what Kanna said", "objectives": [{"do": "talk", "to": "Tohru", "script": [
+             "them (dismayed): She says Kobayashi is proud of her for counting. I didn't know that was a thing you could be proud of.",
+             "them (pleased): Then we both get a seat, and I won't burn the table. Thanks for watching."]}]},
+     ],
+     "endings": [{"key": "seat-shared", "title": "Share the seat", "about": "Tohru shares the seat with Kanna, and says the chaos is easier to hold when someone is sitting beside her. Kobayashi sets the table for two dragons and one human.",
+                  "scene": "World: Tohru, Seat Shared", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "tohru-the-last-meal", "title": "The Emperor's Visit", "gates": 5, "requires": {"quests": ["tohru-chaos-dragon"]},
+     "scene": "World: Tohru, Father's Message",
+     "about": "Tohru's father, the Emperor of Doom, is coming from the dragon world to take her home. Tohru has to decide whether to go back and be the dragon he wants, or to stay with Kobayashi. He has asked for proof that the human world has not made her weak.",
+     "offer": ["them (dismayed): My father is coming to take me back to the dragon world. He wants proof I haven't gone soft.",
+               "them: Come to the rooftop at night. I'm going to cook the last meal for Kobayashi, and I want you there when I tell her what I've chosen."],
+     "stages": [
+         {"text": "Cook the meal with Tohru on the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Tohru, Rooftop Meal", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Tohru, to show her father she's no longer weak", "scene": "World: Tohru, Tohru Stands", "objectives": [{"do": "defeat", "cpus": ["Tohru"]}]},
+         {"text": "Tell Tohru your answer", "objectives": [{"do": "talk", "to": "Tohru", "script": [
+             "them (dismayed): I wanted him to see that the chaos is mine, and that I can hold it. He saw.",
+             "them (pleased): Then I'll stay with Kobayashi, and tell him to his face. Thank you for being there."]}]},
+     ],
+     "endings": [
+         {"key": "stay-with-kobayashi", "title": "Stay with Kobayashi", "about": "Tohru tells her father she is staying with Kobayashi, and that the human world made her strong, not weak. She cooks the last meal for the whole table, and Kobayashi says it's the best tail meat she's ever had.",
+          "scene": "World: Tohru, Table Meal", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "go-home-to-father", "title": "Go home with him", "about": "Tohru goes home with her father to the dragon world, and leaves the last meal on Kobayashi's step. She says she'll come back once she's proved she can hold the chaos there too.",
+          "scene": "World: Tohru, Doorstep Meal", "rewards": [{"coins": 500}, {"gift": "bottled-tea"}]},
+     ]},
 ]
+
 TOHRU_SCENES = [
-  {
-    "name": "World: Tohru, Cafe",
-    "lines": [
-      "background cafe",
-      "me enters left with slide",
-      "me: Try this. Don't ask what it is. Just eat it.",
-      "player: It's really good.",
-      "me (pleased): Of course it is. I'm very smug about it.",
-      "me: Nobody tells me what they're eating. I like that."
-    ]
-  },
-  {
-    "name": "World: Tohru, Beach",
-    "lines": [
-      "background dusk",
-      "me enters center with fade",
-      "me: The dragon factions fought for a long time. It was a terrible war.",
-      "player: Why did you leave?",
-      "me (dismayed): Because I found something worth staying for.",
-      "me: Stay with me until the sun goes down. Please."
-    ]
-  }
+    {"name": "World: Tohru, Tail Cooking", "lines": [
+        "background cafe", "me enters right with slide",
+        "me (pleased): I'm making tail meat for Kobayashi! It's the best thing a dragon can cook, and I want you to taste it.",
+        "player: Is it safe to eat?",
+        "me (dismayed): Mostly. It's only a little bit on fire, and that's how you know it's cooked properly.",
+        "me: Meet me at the cafe at noon. Don't mind the smoke. It's the flavour, Kobayashi says it's too much.",
+        "me (pleased): Bring a cup of water, just in case."]},
+    {"name": "World: Tohru, Cafe Smoke", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): The tail meat is on the plate, and there's a little smoke coming off it. It's perfect, I think.",
+        "player: It's a bit burnt on the outside.",
+        "me (dismayed): Is that bad? Kobayashi says it's too much. Everyone says it's too much, and I still want to make it right.",
+        "player: It's good inside.",
+        "me (pleased): Good inside! Then I'll make it again, and you'll tell me which bit to keep. Be honest, I can take it."]},
+    {"name": "World: Tohru, Second Batch", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): This batch is only a little bit on fire. Kobayashi would say it's perfect, and I'd like to see her face when she tastes it.",
+        "player: Do you think she'll like it?",
+        "me (dismayed): I think she'll say it's too much, and then she'll eat all of it. That's how I know she likes it.",
+        "me: Thank you for tasting the first batch. It's the only reason I could make this one better."]},
+    {"name": "World: Tohru, The Chaos", "lines": [
+        "background arena", "me enters left with slide",
+        "me (dismayed): Kanna says I'm too loud for the table. She's right, and I want to prove I can be quiet when it counts.",
+        "player: Are you going to give up the chaos?",
+        "me (pleased): No! But I'd like to hold it back for Kobayashi's sake, and see whether Kanna can take it without breaking.",
+        "me: Meet me at the arena in the evening. I'll fight her, and you tell me whether I held back or not.",
+        "me (dismayed): If I lose control, step back. The chaos doesn't check who's standing in front of it."]},
+    {"name": "World: Tohru, Arena Chaos", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): Kanna's at the far end, very still and very precise. I'm loud, and the chaos is already rising in my chest.",
+        "player: Can you hold it back?",
+        "me (pleased): I can try. Kobayashi said the chaos is only a problem when it's lonely. I'm not lonely right now.",
+        "me: Stand at the edge, and watch my hands. If they start to shake, shout my name, and I'll come back to the table.",
+        "me (dismayed): Here she comes. Count the breaths with me, out loud, the way she counts her rounds."]},
+    {"name": "World: Tohru, Kanna Beaten", "lines": [
+        "cast kanna as Kanna",
+        "background arena", "me enters center with fade",
+        "kanna enters right with slide",
+        "kanna: {player} beat me, Tohru. You were loud, and you held the chaos back. That's new for a dragon.",
+        "me (dismayed): I didn't know I could. I thought the chaos would win.",
+        "kanna: It almost did. Next time, sit beside me and eat the lunch. That's how you hold it.",
+        "me (pleased): I'll sit beside you. Then the table has one more seat, and the chaos has somewhere to go."]},
+    {"name": "World: Tohru, Seat Shared", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): Kanna and I share the seat now, and Kobayashi set the table for two dragons and one human.",
+        "player: Is it easier?",
+        "me (dismayed): It is. The chaos is easier to hold when someone is sitting beside you, and Kanna sits very still.",
+        "me: Thanks for watching the seat change hands. You're the only human who didn't laugh at me for burning the tail."]},
+    {"name": "World: Tohru, Father's Message", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me (dismayed): My father, the Emperor of Doom, is coming from the dragon world to take me home. He's asked for proof that I haven't gone soft.",
+        "player: Are you going to go?",
+        "me (pleased): I don't know. I was made for the dragon world, but the table is where I want to be, and I'm not sure which one he'll let me keep.",
+        "player: How will you decide?",
+        "me (dismayed): I'll cook the last meal for Kobayashi, and then I'll tell my father the truth to his face.",
+        "me: Come to the rooftop at night. I want you there when I tell Kobayashi what I've chosen.",
+        "player: What will you say to him?",
+        "me (pleased): Bring the water. The tail meat is going to be on fire, and I'd like someone to hold the cup."]},
+    {"name": "World: Tohru, Rooftop Meal", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): The meal's on the rooftop, and the stove is smoking. My father's coming up the road, and he doesn't look pleased.",
+        "player: Are you going to fight him?",
+        "me (pleased): Not him. I'm going to fight myself, because that's what he asked me to show him: that I can still hold the chaos.",
+        "me: Stand at the edge. If the chaos rises, don't try to stop it. It'll find the table on its own.",
+        "me (dismayed): Keep the cup close. I'd like to remember the taste of the meal, whatever happens."]},
+    {"name": "World: Tohru, Tohru Stands", "lines": [
+        "cast tohru as Tohru",
+        "background rooftop", "me enters center with fade",
+        "tohru enters right with slide",
+        "tohru: {player} put me down, Tohru. The chaos is still in me, but it's quiet now.",
+        "me (dismayed): You fought yourself to a stop. That's what the Emperor wanted to see, and it's what you showed.",
+        "tohru: Then I'll tell him I'm staying. The human world made me strong, not weak, and I'm going to say it to his face.",
+        "me (pleased): Good. Then go and tell him, and come back for the rest of the meal."]},
+    {"name": "World: Tohru, Table Meal", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): I told my father I'm staying with Kobayashi. The last meal is on the table, and Kobayashi says it's the best tail meat she's ever had.",
+        "player: Is that true?",
+        "me (dismayed): No, but she's a good liar, and I'm delighted anyway. The table is full, and nobody's going home hungry.",
+        "me: Thank you for carrying the table up the stairs. I couldn't have done it alone."]},
+    {"name": "World: Tohru, Doorstep Meal", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): I went home with my father, and left the last meal on Kobayashi's step. I'll come back once I've proved I can hold the chaos there too.",
+        "player: Will she understand?",
+        "me (pleased): She'll say it's too much, and then she'll eat all of it. That's how I'll know she understood.",
+        "me: Keep the bottled tea. It's from the shop by her door, and it's the one thing I didn't burn."]},
 ]
+
+# Protagonist. Canon a fan expects: the student who can see the Dark Hour, the Velvet Room, and Shadows fought with a summoned persona,
+# and the memento mori of a life lived on borrowed time. Thread: Q1 plants the Dark Hour and the pass he keeps finding in his
+# pocket. Q2: the Shadows come out, and Yukari, who is afraid of dying young, is the one who has to face them with him. Q3 answers
+# Q1: the pass opens the Dark Hour itself, and he decides whether to keep fighting it or to live the day.
 PROTAGONIST_QUESTS = [
-  {
-    "key": "protagonist-the-dark-hour",
-    "title": "The Dark Hour",
-    "gates": 2,
-    "about": "A hidden hour at midnight, where the city goes still and green. He wants to see if you can feel it.",
-    "offer": [
-      "them: There's an hour between days. Midnight. Can you feel it?",
-      "them (pleased): Huh. You're awake. Good."
-    ],
-    "stages": [
-      {
-        "text": "Find the Protagonist on the rooftop at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "rooftop",
-            "times": [
-              3
-            ],
-            "scene": "World: Protagonist, Rooftop",
-            "rewards": [
-              {
-                "pack": "climax_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Aigis: Anti-Shadow Suppression Weapon",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "P3/SE46-E10"
-          }
-        ]
-      },
-      {
-        "text": "Tell the Protagonist what you felt",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Protagonist",
-            "script": [
-              "them: It's quiet. Green. Like the world is holding its breath.",
-              "them (pleased): ...Yeah. That's it."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "felt-the-hour",
-        "title": "Say you felt the hour",
-        "about": "He nods once, and says the hour feels less lonely with someone else in it.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "earbuds"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "protagonist-memento-mori",
-    "title": "Memento Mori",
-    "gates": 5,
-    "about": "The year he has left, and what he'll spend it on, which he tells you without much feeling.",
-    "offer": [
-      "them: I have a choice coming. It's the last one.",
-      "them (dismayed): Come to the library at noon. I'll tell you the rest."
-    ],
-    "stages": [
-      {
-        "text": "Find the Protagonist at the library at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "library",
-            "times": [
-              1
-            ],
-            "scene": "World: Protagonist, Library",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with the Protagonist: Protagonist & Thanatos: Reload in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "P3/SE46-E16",
-            "against": [
-              "Protagonist"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give the Protagonist your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Protagonist",
-            "script": [
-              "them: I'm glad I met you. That's more feeling than I usually show.",
-              "them (pleased): ...Thank you. Let's spend the year well."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "spend-it-well",
-        "title": "Spend the year well",
-        "about": "He smiles, a little, and says the year will be better for having a friend in it.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "protagonist-the-dark-hour", "title": "The Dark Hour", "requires": {"rank": 1},
+     "scene": "World: Protagonist, Dark Hour Pass",
+     "about": "Protagonist can see the Dark Hour, the time when everyone else is asleep and the Shadows come out. He keeps finding a pass in his pocket that he can't explain, and it always feels warm.",
+     "offer": ["them: I can see the Dark Hour, when the streets go still. There's a pass in my pocket that I didn't put there.",
+               "them (pleased): Meet me at the plaza at noon. I want to show you the pass, and tell me whether it's warm to you too."],
+     "stages": [
+         {"text": "Look at the pass with Protagonist at the plaza at noon", "objectives": [{"do": "visit", "place": "plaza", "times": [1], "scene": "World: Protagonist, Plaza Pass", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Protagonist whether the pass was warm", "objectives": [{"do": "talk", "to": "Protagonist", "script": [
+             "them (pleased): It was warm for you too. That means it's not only mine, and that scares me a little.",
+             "them: Keep it on you. The Dark Hour is coming, and I'd like someone to watch my back."]}]},
+     ],
+     "endings": [{"key": "pass-kept", "title": "Keep the pass", "about": "Protagonist gives you the pass to keep, and says it'll open a door for you one day. He asks you to keep it warm, so it doesn't stop working.",
+                  "scene": "World: Protagonist, Pass Given", "rewards": [{"coins": 300}, {"gift": "earbuds"}]}]},
+    {"key": "protagonist-memento-mori", "title": "Memento Mori", "gates": 2, "requires": {"quests": ["protagonist-the-dark-hour"]},
+     "scene": "World: Protagonist, Shadows Out",
+     "about": "The Shadows come out in the Dark Hour, and the group has to face what they've been avoiding: their time is limited. Yukari is the one who fights hardest, because she's afraid of dying young, and Protagonist has to decide whether to fight beside her.",
+     "offer": ["them (dismayed): The Shadows are out tonight, and they're getting closer to the school. Yukari is already on the roof.",
+               "them: Meet me at the shrine in the evening. Yukari fights like she's out of time, and I want you to fight with her, not just watch."],
+     "stages": [
+         {"text": "Meet Protagonist at the shrine in the evening", "objectives": [{"do": "visit", "place": "shrine", "times": [2], "scene": "World: Protagonist, Shrine Shadows", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Yukari, to see how far she'll go for the group", "scene": "World: Protagonist, Yukari Stood", "objectives": [{"do": "defeat", "cpus": ["Yukari"]}]},
+         {"text": "Tell Protagonist what Yukari said", "objectives": [{"do": "talk", "to": "Protagonist", "script": [
+             "them (dismayed): She said she's afraid of dying young, and that's why she fights like she's already out of time.",
+             "them (pleased): Then I'll stand with her, and we'll face the Dark Hour together. Thanks for watching us."]}]},
+     ],
+     "endings": [{"key": "memento", "title": "Remember the dead", "about": "Protagonist keeps the memento mori: the list of names the group has lost, written on the inside of his cap. He says he'll read them aloud at the next Dark Hour, so nobody is forgotten.",
+                  "scene": "World: Protagonist, Names Read", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "protagonist-the-last-hour", "title": "The Last Hour", "gates": 5, "requires": {"quests": ["protagonist-memento-mori"]},
+     "scene": "World: Protagonist, The Last Hour",
+     "about": "The pass is warm, and it opens the Dark Hour itself. Protagonist has decided to give himself as the seal against Nyx, so the Dark Hour never comes back. Yukari is the one who would fight him over it, because she has seen what the sacrifice costs.",
+     "offer": ["them (dismayed): The pass opens the Dark Hour itself. I can walk into it tonight, if I'm willing to face what's inside.",
+               "them: Come to the rooftop at night. I want you to test me first, and then watch me decide."],
+     "stages": [
+         {"text": "Be on the rooftop with Protagonist at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Protagonist, Rooftop Hour", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Yukari, who would stop Protagonist from becoming the seal", "scene": "World: Protagonist, Yukari Stops Him", "objectives": [{"do": "defeat", "cpus": ["Yukari"]}]},
+         {"text": "Tell Protagonist your answer", "objectives": [{"do": "talk", "to": "Protagonist", "script": [
+             "them (dismayed): I lost, and I'm still standing. I don't know what that means for the hour.",
+             "them (pleased): Then I'll walk in with you beside me, or I'll put the pass away. Thank you for asking me to decide."]}]},
+     ],
+     "endings": [
+         {"key": "walk-in", "title": "Become the seal", "about": "Protagonist gives himself as the seal against Nyx, and the Dark Hour closes behind him. He says it was always his choice, and that he'd rather be the one who holds it.",
+          "scene": "World: Protagonist, Walked In", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "put-pass-away", "title": "Live the day", "about": "Protagonist puts the pass away, and lets the Dark Hour go without him. He says he'd like the morning, and the people in it.",
+          "scene": "World: Protagonist, Morning", "rewards": [{"coins": 500}, {"gift": "sleeves"}]},
+     ]},
 ]
+
 PROTAGONIST_SCENES = [
-  {
-    "name": "World: Protagonist, Rooftop",
-    "lines": [
-      "background night",
-      "me enters left with slide",
-      "me: Midnight. The city goes still. Look.",
-      "player: It's gone green.",
-      "me (dismayed): Huh. You can see it too. You're still awake.",
-      "me: That's the dark hour. I'd hoped you'd feel it."
-    ]
-  },
-  {
-    "name": "World: Protagonist, Library",
-    "lines": [
-      "background library",
-      "me enters right with fade",
-      "me: I have a choice coming. Not a fight. A choice.",
-      "player: What choice?",
-      "me (dismayed): The one that decides what I spend my year on.",
-      "me (pleased): I'm glad I met you. That's the feeling I'm least sure of."
-    ]
-  }
+    {"name": "World: Protagonist, Dark Hour Pass", "lines": [
+        "background night", "me enters center with fade",
+        "me: The Dark Hour is when the streets go still, and everyone else is asleep. I can see it, and nobody else seems to.",
+        "player: What's in your pocket?",
+        "me (dismayed): A pass I didn't put there. It's warm, and it has a key on it, and the key has no lock anywhere in town.",
+        "me (pleased): Meet me at the plaza at noon. I'll show you the pass in daylight. Tell me whether it's warm to you too.",
+        "me: Don't carry it in the Dark Hour. The Shadows like warm things, and they follow them home."]},
+    {"name": "World: Protagonist, Plaza Pass", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (dismayed): Here's the pass. It's warm, even in the sun, and the key's glowing faintly.",
+        "player: It's warm to me too.",
+        "me (pleased): Then it's not only mine. That scares me a little, and I'm glad someone else is holding it.",
+        "me: Look at the lock it fits. There isn't one, and that's the part I can't stop thinking about.",
+        "me (dismayed): Keep it on you. The Dark Hour is coming, and I'd like someone to watch my back when the streets go still."]},
+    {"name": "World: Protagonist, Pass Given", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): Keep the pass. It'll open a door for you one day, and I'd rather it were you than me.",
+        "player: Why me?",
+        "me (dismayed): Because you didn't run from the warmth. You stood still and let it tell you something, and that's rare.",
+        "me: Keep it warm, so it doesn't stop working. The Shadows can smell cold metal a long way off."]},
+    {"name": "World: Protagonist, Shadows Out", "lines": [
+        "background night", "me enters center with fade",
+        "me (dismayed): The Shadows are out, and they're closer to the school than they've ever been. Yukari's already on the roof.",
+        "player: Are we going up?",
+        "me (pleased): Yes. But first, come to the shrine this evening. Yukari fights like she's out of time, and I want you to fight with her, not just watch.",
+        "me: The group is all I have left of the living. I'd like to keep it, even if the hour takes the rest.",
+        "me (dismayed): Bring the names. I'll tell you what they were, before we go up."]},
+    {"name": "World: Protagonist, Shrine Shadows", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): The shrine is quiet, but the Shadows are at the gate. Yukari's on the steps with her bow, and she isn't smiling.",
+        "player: Is she going to fight?",
+        "me (pleased): Probably. She fights like she's already out of time, and that's what makes her dangerous.",
+        "me: Stand between her and the gate. If she falls back, don't let her go alone. That's the only rule I've got tonight.",
+        "me (dismayed): The pass is warm. It's telling me the Shadows will come in through the back, so watch the lanterns."]},
+    {"name": "World: Protagonist, Yukari Stood", "lines": [
+        "cast yukari as Yukari",
+        "background shrine", "me enters center with fade",
+        "yukari enters right with slide",
+        "yukari: {player} beat me, Protagonist. I'm not going to say I was fine with it, because I wasn't.",
+        "me (dismayed): You fought like you're already out of time, Yukari. That's why I wanted to see it.",
+        "yukari: I'm afraid of dying young. I'd like one night where I don't have to say so out loud.",
+        "me (pleased): Then stand with us. We'll face the Dark Hour together, and nobody goes alone tonight."]},
+    {"name": "World: Protagonist, Names Read", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I wrote the names on the inside of my cap, the ones the group has lost. I'll read them aloud at the next Dark Hour.",
+        "player: Will that help?",
+        "me (dismayed): It helps me. Nobody's forgotten that way, and the Shadows don't like being reminded of the names.",
+        "me: Keep the list. Read it with me, once, and then we'll both know what we're fighting for."]},
+    {"name": "World: Protagonist, The Last Hour", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me (dismayed): The pass is warm in my hand, and I think it opens the Dark Hour itself. I can walk in tonight if I'm willing to face what's inside.",
+        "player: Are you going in?",
+        "me (pleased): I don't know yet. That's the honest answer, and it's the first time I've said it aloud without the Shadows listening.",
+        "player: What's stopping you?",
+        "me (dismayed): The seal is the only thing I've got left to choose. I want to choose it, and I want Yukari to know why.",
+        "me: Come to the rooftop tonight. I've decided to give myself as the seal against Nyx, and Yukari will try to stop me. I want you to watch.",
+        "player: Will the names be enough?",
+        "me (pleased): Bring the names. I'll read them before you test me, and then you'll know whether the last hour is worth walking into."]},
+    {"name": "World: Protagonist, Rooftop Hour", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): The rooftop is cold, and the streets are still. The pass is glowing faintly in my hand.",
+        "player: Are you ready to fight me?",
+        "me (pleased): I'm ready to be stopped, if she can do it. Then I'll know whether the seal is the right choice.",
+        "player: Are the Shadows gone tonight?",
+        "me: Stand at the ledge. If the pass starts to glow too bright, tell me before I walk into it."]},
+    {"name": "World: Protagonist, Yukari Stops Him", "lines": [
+        "cast yukari as Yukari",
+        "background rooftop",
+        "me enters center with fade",
+        "yukari enters right with slide",
+        "yukari: {player} beat me, Protagonist. You're not going to give yourself to the seal while I'm still standing.",
+        "me (dismayed): It's the only way to hold Nyx, Yukari. You know that as well as I do.",
+        "yukari: I know it costs you everything. I'd rather you lived the morning with me.",
+        "me (pleased): Then stand with me until I decide. I'll give you the pass, and you'll keep it warm."]},
+    {"name": "World: Protagonist, Walked In", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): I walked into the last hour with the pass in my hand, and I came back out with the Shadows gone.",
+        "player: What did it feel like?",
+        "me (dismayed): Like the Dark Hour was finally mine to choose. I'd been running from it, and it wasn't chasing me at all.",
+        "me: Thank you for keeping me company on the roof. The pass is cool now, and that's the first time it's ever been."]},
+    {"name": "World: Protagonist, Morning", "lines": [
+        "background dawn", "me enters center with fade",
+        "me (dismayed): I put the pass away, and let the town sleep through the last hour. The Dark Hour can have the night.",
+        "player: Are you sure?",
+        "me (pleased): I'd like the morning. I've been awake through the Dark Hour for years, and I'm ready to see the sun come up.",
+        "me: Keep the sleeves. They're warm, and they match the morning better than the cap does."]},
 ]
+
 YUKARI_QUESTS = [
-  {
-    "key": "yukari-archery-club",
-    "title": "Archery Club",
-    "gates": 2,
-    "about": "Yukari wants a partner for practice, and she laughs properly when you miss.",
-    "offer": [
-      "them: I'm practising at school. Want to try? You'll be terrible.",
-      "them (pleased): Okay, you're terrible. Keep going."
-    ],
-    "stages": [
-      {
-        "text": "Practise archery with Yukari at school in the morning",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "school",
-            "times": [
-              0
-            ],
-            "scene": "World: Yukari, School",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Yukari an energy drink for the practice",
-        "objectives": [
-          {
-            "do": "give_gift",
-            "gift": "energy-drink",
-            "to": "Yukari"
-          }
-        ]
-      },
-      {
-        "text": "Tell Yukari how you did",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Yukari",
-            "script": [
-              "them: You hit the target once! Twice, if you count the wall.",
-              "them (pleased): ...Okay, I'm still laughing. Good."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "archery-partner",
-        "title": "Be her archery partner",
-        "about": "Yukari gives you her spare bow and promises to make you less terrible.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "sleeves"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "yukari-fathers-message",
-    "title": "Father's Message",
-    "gates": 5,
-    "about": "A video her father left before he died, and how it changes the way she sees him.",
-    "offer": [
-      "them (dismayed): My father left a video. I haven't watched it all.",
-      "them: Come to the beach in the evening. I want someone with me."
-    ],
-    "stages": [
-      {
-        "text": "Meet Yukari at the beach in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "beach",
-            "times": [
-              2
-            ],
-            "scene": "World: Yukari, Beach",
-            "rewards": [
-              {
-                "pack": "level_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Mitsuru Kirijo: Member #0",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "P3/SE46-E51"
-          }
-        ]
-      },
-      {
-        "text": "Give Yukari your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Yukari",
-            "script": [
-              "them: He was more than I knew. I needed a minute.",
-              "them (pleased): ...Thank you for waiting it out with me."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "his-message",
-        "title": "Hear the rest of his message",
-        "about": "Yukari watches the video to the end, and tells you what her father said in the last minute.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "yukari-archery-club", "title": "Archery Club", "requires": {"rank": 1},
+     "scene": "World: Yukari, Archery Invite",
+     "about": "Yukari is in the archery club, and she wants a partner for practice. She laughs properly when you miss, and she's better at it than she lets on.",
+     "offer": ["them (pleased): Want to practise? I'll go easy, I promise. I'll only laugh a little when you miss.",
+               "them: Meet me at the arena in the morning. Bring your bow, and try to hit the centre for once."],
+     "stages": [
+         {"text": "Practise archery with Yukari at the arena in the morning", "objectives": [{"do": "visit", "place": "arena", "times": [0], "scene": "World: Yukari, Morning Shots", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Yukari how your shots went", "objectives": [{"do": "talk", "to": "Yukari", "script": [
+             "them (pleased): You hit the outer ring twice. That's an improvement, and I'm not even laughing.",
+             "them (dismayed): Okay, I'm laughing a little. Come back tomorrow, and we'll aim for the centre."]}]},
+     ],
+     "endings": [{"key": "club-member", "title": "Join the club", "about": "Yukari gives you a club badge, and says you're officially her shooting partner. She says you're allowed to laugh at her too, if she misses.",
+                  "scene": "World: Yukari, Club Badge", "rewards": [{"coins": 300}, {"gift": "sunglasses"}]}]},
+    {"key": "yukari-fathers-message", "title": "Father's Message", "gates": 2, "requires": {"quests": ["yukari-archery-club"]},
+     "scene": "World: Yukari, Father's Letter",
+     "about": "Yukari has her father's last letter, and she hasn't read it all the way through. Her father is gone, and she's been carrying the sealed letter for months. She wants to know whether she can open it.",
+     "offer": ["them (dismayed): My father's last letter is still sealed. I've been carrying it for months.",
+               "them: Meet me at the shrine in the evening. Fight Protagonist first, so I know I can face whatever the letter says."],
+     "stages": [
+         {"text": "Read the letter with Yukari at the shrine in the evening", "objectives": [{"do": "visit", "place": "shrine", "times": [2], "scene": "World: Yukari, Letter Shrine", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Protagonist, to see whether Yukari is ready to read it", "scene": "World: Yukari, Protagonist Beaten", "objectives": [{"do": "defeat", "cpus": ["Protagonist"]}]},
+         {"text": "Tell Yukari what Protagonist said", "objectives": [{"do": "talk", "to": "Yukari", "script": [
+             "them (dismayed): He said I'm not going to die young if I stop running from the letter. He might be right.",
+             "them (pleased): ...Then I'll read it tonight, and you'll be there when I do. Thank you."]}]},
+     ],
+     "endings": [{"key": "letter-read", "title": "Read the letter", "about": "Yukari reads the whole letter out loud, the way her father wrote it, and cries at the last line. She says it was the first time she's read it all the way through.",
+                  "scene": "World: Yukari, Letter Read", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "yukari-the-arrow", "title": "The Arrow", "gates": 5, "requires": {"quests": ["yukari-fathers-message"]},
+     "scene": "World: Yukari, The Arrow",
+     "about": "Yukari has read her father's letter, and now she has to decide whether to keep shooting or to put the bow down. The same night, Protagonist is choosing to give himself as the seal against Nyx. She fights him to stop it, and her shot decides both of their endings.",
+     "offer": ["them (dismayed): The letter says he was proud of me. Now I have to decide whether I still want to shoot.",
+               "them: Come to the arena tonight. Fight me as an equal, and tell me whether I should keep the arrow."],
+     "stages": [
+         {"text": "Stand with Yukari at the arena at night", "objectives": [{"do": "visit", "place": "arena", "times": [3], "scene": "World: Yukari, Night Arrow", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Protagonist, to stop him becoming the seal", "scene": "World: Yukari, Protagonist Stops", "objectives": [{"do": "defeat", "cpus": ["Protagonist"]}]},
+         {"text": "Tell Yukari your answer", "objectives": [{"do": "talk", "to": "Yukari", "script": [
+             "them (dismayed): I missed the centre. My hands shook the way they did in the letter's first line.",
+             "them (pleased): Then I'll keep the arrow, and I'll shoot again tomorrow. You'll see it, and that's enough."]}]},
+     ],
+     "endings": [
+         {"key": "keep-shooting", "title": "Keep shooting", "about": "Yukari keeps shooting, and says the arrow is for her father, who taught her to aim at the centre. She hits it on the first try the next morning, and laughs about it all the way home.",
+          "scene": "World: Yukari, Centre Hit", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "put-the-bow-down", "title": "Put the bow down", "about": "Yukari puts the bow down, and says she'll read the rest of her father's letter first. She gives you the arrow, and asks you to hold onto it until she's ready to shoot again.",
+          "scene": "World: Yukari, Bow Down", "rewards": [{"coins": 500}, {"gift": "playmat"}]},
+     ]},
 ]
+
 YUKARI_SCENES = [
-  {
-    "name": "World: Yukari, School",
-    "lines": [
-      "background classroom",
-      "me enters center with fade",
-      "me: Watch this shot. Bullseye. Okay, you try.",
-      "player: I'll miss.",
-      "me (pleased): Hah! You did. That's the spirit.",
-      "me: Try again. Properly this time."
-    ]
-  },
-  {
-    "name": "World: Yukari, Beach",
-    "lines": [
-      "background dusk",
-      "me enters left with slide",
-      "me: My father left a video. It changes how I see him.",
-      "player: Do you want to watch it?",
-      "me (dismayed): I've watched it. I need a minute first.",
-      "me: Stay here with me. Please."
-    ]
-  }
+    {"name": "World: Yukari, Archery Invite", "lines": [
+        "background arena", "me enters left with slide",
+        "me (pleased): Want to practise? I'll go easy on you, I promise. I'll only laugh a little when you miss.",
+        "player: That's not very encouraging.",
+        "me (dismayed): It's honest. You're going to miss, and I'd like you to know that before the first arrow.",
+        "me: Bring your bow to the arena in the morning. Try to hit the centre for once, and don't look at me when you shoot.",
+        "me (pleased): And stop looking at the wall. The wall doesn't score points."]},
+    {"name": "World: Yukari, Morning Shots", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): Stand on the line, nock the arrow, and breathe out before you draw. There, that's the first good one.",
+        "player: That was the outer ring.",
+        "me (dismayed): The outer ring twice. That's an improvement, and I'm not even laughing. Much.",
+        "me: Aim for the centre tomorrow. My father taught me to aim at the one thing I'd miss if it wasn't there.",
+        "me (pleased): Good. Come back tomorrow, and we'll see if the centre's still there."]},
+    {"name": "World: Yukari, Club Badge", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): Here's the club badge. You're officially my shooting partner now, which means you're allowed to laugh at me too.",
+        "player: Do I have to?",
+        "me (dismayed): If I miss. And I'll miss, I'm sure of it, because I'm nervous about the letter.",
+        "me: Keep the badge on the strap of your bag. It'll remind you to breathe out before you draw."]},
+    {"name": "World: Yukari, Father's Letter", "lines": [
+        "background shrine", "me enters left with slide",
+        "me (dismayed): My father's last letter is still sealed. I've been carrying it for months, and I haven't opened it.",
+        "player: Why not?",
+        "me (pleased): Because once I read it, it's finished, and I won't be able to pretend he's still writing.",
+        "me: Meet me at the shrine in the evening. Fight Protagonist first, so I know I can face whatever the letter says.",
+        "me (dismayed): Please don't go easy on me. I'd like one fight where I'm not being protected from the outcome."]},
+    {"name": "World: Yukari, Letter Shrine", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): The letter's in my hands, and the seal is still on. I can feel my fingers shaking the way they do before a shot.",
+        "player: Do you want to open it here?",
+        "me (pleased): Yes. I'd like to hear him at the shrine, and not at the field, where Frieren goes to remember.",
+        "me: Breathe out before you read the first line. That's how he taught me to start a shot.",
+        "me (dismayed): I'm not ready yet. Protagonist is at the gate, and I'd like to face him first."]},
+    {"name": "World: Yukari, Protagonist Beaten", "lines": [
+        "cast protagonist as Protagonist",
+        "background shrine", "me enters center with fade",
+        "protagonist enters right with slide",
+        "protagonist: {player} beat me, Yukari. I'm not going to say you're not ready. I'm going to say you're still holding the letter.",
+        "me (dismayed): I am. I'd like to open it, and I'd like someone to be there when I do.",
+        "protagonist: Then read it. Aloud, if you can. The Shadows are gone for the night.",
+        "me (pleased): Then I'll read it tonight, and you'll be there. Thank you for standing at the gate."]},
+    {"name": "World: Yukari, Letter Read", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): I read the whole letter out loud, the way my father wrote it. I cried at the last line, and I didn't stop.",
+        "player: What did it say?",
+        "me (pleased): That he was proud of the centre I hit, and that I was allowed to miss sometimes and still be his. It's the first time I've read it all the way through.",
+        "me: Thank you for listening. I'd have read it alone, and it would have been worse."]},
+    {"name": "World: Yukari, The Arrow", "lines": [
+        "background arena", "me enters left with slide",
+        "me (dismayed): The letter says he was proud of the centre. Now I have to decide whether I still want to shoot.",
+        "player: What do you want to do?",
+        "me (pleased): I want to keep shooting, and I want the centre, the way he taught me. But the arrow in my quiver feels heavier tonight.",
+        "player: Will you know if you can still hit it?",
+        "me (dismayed): Only if you make me shoot against someone who won't go easy. That's what I'm asking for.",
+        "me: Come to the arena tonight. Fight me as an equal, and tell me whether I should keep the arrow, or put the bow down for good.",
+        "player: What will the letter say if you read it again?",
+        "me (pleased): Stand where I can see you. If I miss the first shot, don't tell me it was the wind."]},
+    {"name": "World: Yukari, Night Arrow", "lines": [
+        "background night", "me enters center with fade",
+        "me (dismayed): The arena is dark, and I'm standing at my mark with the bow in my hand. The letter's folded in my pocket.",
+        "player: Are you ready to shoot?",
+        "me (pleased): I'm ready to try. The arrow is in my hand, and my breath is steady, which is more than I expected tonight.",
+        "me: Stand at the edge. If the arrow flies wide, let it go, and watch me draw the next one.",
+        "me (dismayed): Here I go. Keep your eyes on the centre, not on me."]},
+    {"name": "World: Yukari, Protagonist Stops", "lines": [
+        "cast protagonist as Protagonist",
+        "background arena",
+        "me enters center with fade",
+        "protagonist enters right with slide",
+        "protagonist: {player} beat me, Yukari. I'd still rather you hadn't had to fight me for this.",
+        "me (dismayed): You were going to give yourself to the seal, and I wasn't going to let you do it alone.",
+        "protagonist: I'm going to do it anyway, in the morning. But I'll keep the pass for you.",
+        "me (pleased): Then I'll keep the shot for the morning too. We'll see who's still standing when the hour is done."]},
+    {"name": "World: Yukari, Centre Hit", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): I hit the centre on the first try the next morning, and I laughed all the way off the line. My father would have laughed too.",
+        "player: That was a perfect shot.",
+        "me (dismayed): It was. I'd like to think he saw it from wherever the letter came from.",
+        "me: Keep the badge on your bag. It's the only thing from the club I'm sure you'll still want in the morning."]},
+    {"name": "World: Yukari, Bow Down", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): I put the bow down, and I'll read the rest of the letter first. The arrow's yours to hold until I'm ready to shoot again.",
+        "player: Are you sure?",
+        "me (pleased): I'm sure I need to read the letter. The shooting can wait, and the arrow's safer with someone who won't use it in a hurry.",
+        "me: Hold it tight. It's heavier than it looks, and it's the only thing I've got left of his centre."]},
 ]
+
+# Twilight. Canon a fan expects: the spy Twilight on Operation Strix, the fake family he builds with Yor and Anya, and the lie he has to
+# keep. Thread: Q1 plants the school file he needs for Anya's admission and the lie that gets harder each week. Q2: Yor, the assassin
+# in the fake family, tests him to see whether he's a real husband and father. Q3 answers Q1: the operation is nearly done, and he
+# decides whether to keep the lie or tell the truth to the family he has.
 TWILIGHT_QUESTS = [
-  {
-    "key": "twilight-operation-strix",
-    "title": "Operation Strix",
-    "gates": 2,
-    "about": "Twilight needs a cover for a meeting, and he briefs you in under a minute.",
-    "offer": [
-      "them: I need a cover for a meeting. Be my family. Quick briefing.",
-      "them (pleased): Good. You picked it up fast."
-    ],
-    "stages": [
-      {
-        "text": "Meet Twilight at the cafe at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "cafe",
-            "times": [
-              1
-            ],
-            "scene": "World: Twilight, Cafe",
-            "rewards": [
-              {
-                "coins": 150
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Brilliant Spy From WISE, Twilight",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "SPY/S106-E084"
-          }
-        ]
-      },
-      {
-        "text": "Let Twilight tell you what you did right",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Twilight",
-            "script": [
-              "them: You didn't break cover once. I'm impressed.",
-              "them (pleased): ...Forgot to sound like a stranger again. Hm."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "trusted-cover",
-        "title": "Be the trusted cover",
-        "about": "Twilight files your name in his report as a useful contact, and lets it be known you're trusted.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "bottled-tea"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "twilight-a-spys-family",
-    "title": "A Spy's Family",
-    "gates": 5,
-    "about": "The family he built for a mission, and whether a fake one can become real.",
-    "offer": [
-      "them: I built a family for a mission. Watch them with me in the plaza.",
-      "them (dismayed): Can a fake family become real? I want to know."
-    ],
-    "stages": [
-      {
-        "text": "Watch Twilight's family in the plaza at evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "plaza",
-            "times": [
-              2
-            ],
-            "scene": "World: Twilight, Plaza",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Twilight: Agent Twilight in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "SPY/S106-E080",
-            "against": [
-              "Twilight"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Twilight your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Twilight",
-            "script": [
-              "them: Do you think it can be real? You can be honest.",
-              "them (pleased): ...Then I'll keep the family. Thank you."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "keep-the-family",
-        "title": "Keep the family",
-        "about": "Twilight keeps the family, quietly, and asks you to keep the secret for him.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "twilight-operation-strix", "title": "Operation Strix", "requires": {"rank": 1},
+     "scene": "World: Twilight, Strix File",
+     "about": "Twilight needs a family for a school file, so he's building one. The file is for a child who can read minds, and he has to keep the lie straight every day.",
+     "offer": ["them: I need a school file signed by a family that doesn't exist. You'll help me remember the story, won't you?",
+               "them (pleased): Meet me at the cafe at noon. Bring the file, and tell me whether the story holds up at the table."],
+     "stages": [
+         {"text": "Check the school file with Twilight at the cafe at noon", "objectives": [{"do": "visit", "place": "cafe", "times": [1], "scene": "World: Twilight, Cafe File", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Twilight whether the story holds up", "objectives": [{"do": "talk", "to": "Twilight", "script": [
+             "them (pleased): You caught the gap in the birthday. Most people would have let it slide.",
+             "them: Keep that gap in mind. The lie gets harder when someone else starts to believe it."]}]},
+     ],
+     "endings": [{"key": "file-signed", "title": "Sign the file", "about": "Twilight signs the file with the fake family's name, and hands you a copy of the story to keep. He says it's the only thing he'll ever carry that's entirely true.",
+                  "scene": "World: Twilight, File Signed", "rewards": [{"coins": 300}, {"gift": "manga"}]}]},
+    {"key": "twilight-the-school", "title": "The Interview", "gates": 2, "requires": {"quests": ["twilight-operation-strix"]},
+     "scene": "World: Twilight, The Interview",
+     "about": "Yor is the one who fights for the family, and she's not sure Twilight is the husband he says he is. She wants to test him herself, before the school interview, and she's not going to go easy.",
+     "offer": ["them (dismayed): Yor thinks I'm not the husband I say I am. She wants a fight in the arena before the interview.",
+               "them: Meet me at the arena in the evening. Fight Yor for me, and show her the father you've been pretending to be."],
+     "stages": [
+         {"text": "Meet Twilight at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Twilight, Arena Test", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Yor, to show she can trust the lie", "scene": "World: Twilight, Yor Beaten", "objectives": [{"do": "defeat", "cpus": ["Yor Forger"]}]},
+         {"text": "Tell Twilight what Yor said", "objectives": [{"do": "talk", "to": "Twilight", "script": [
+             "them (dismayed): She said I fight like someone who's had to keep secrets for years. She's right.",
+             "them (pleased): Then the family's real enough. Thank you for watching, and for not letting Anya see my face."]}]},
+     ],
+     "endings": [{"key": "interview-passed", "title": "Pass the interview", "about": "Twilight passes the school interview, and Yor sends him a quiet nod across the room. He says it's the closest thing to approval he's had from the family since they met.",
+                  "scene": "World: Twilight, Interview Passed", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "twilight-a-spys-family", "title": "A Spy's Family", "gates": 5, "requires": {"quests": ["twilight-the-school"]},
+     "scene": "World: Twilight, The Truth",
+     "about": "Operation Strix is nearly done, and Twilight has to decide whether to keep the lie or tell Yor and Anya the truth. Yor is the one who'd fight him over it, and she's already waiting on the roof.",
+     "offer": ["them (dismayed): Operation Strix is almost over. I have to decide whether to tell Yor and Anya what I really am.",
+               "them: Come to the rooftop tonight. Yor wants to settle it with me if I lie to her one more time, and I want a witness."],
+     "stages": [
+         {"text": "Meet Twilight on the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Twilight, Rooftop Truth", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Yor, to decide whether the truth is worth the family", "scene": "World: Twilight, Yor Confronts", "objectives": [{"do": "defeat", "cpus": ["Yor Forger"]}]},
+         {"text": "Tell Twilight your answer", "objectives": [{"do": "talk", "to": "Twilight", "script": [
+             "them (dismayed): She beat me, and she still wants the truth. I don't think a lie holds up against that.",
+             "them (pleased): Then I'll tell them everything, and let them decide if the family's still a family. Thank you."]}]},
+     ],
+     "endings": [
+         {"key": "tell-the-truth", "title": "Tell the truth", "about": "Twilight tells Yor and Anya the whole truth about Operation Strix. Yor says she knew, and Anya says she can read his mind, so he might as well have told them earlier.",
+          "scene": "World: Twilight, Truth Told", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "keep-the-lie", "title": "Keep the lie", "about": "Twilight keeps the lie for the sake of the mission, and tells the family he's only going to work late for a while. Yor says she'll be watching the window.",
+          "scene": "World: Twilight, Lie Kept", "rewards": [{"coins": 500}, {"gift": "instant-ramen"}]},
+     ]},
 ]
+
 TWILIGHT_SCENES = [
-  {
-    "name": "World: Twilight, Cafe",
-    "lines": [
-      "background cafe",
-      "me enters center with fade",
-      "me: One minute briefing. You're my cousin. Don't forget it.",
-      "player: Got it.",
-      "me (pleased): Good. You're quick. Almost too quick.",
-      "me: Keep your story straight. That's the whole mission."
-    ]
-  },
-  {
-    "name": "World: Twilight, Plaza",
-    "lines": [
-      "background sakura",
-      "me enters left with slide",
-      "me: I watch families here. The fake one I built, I wonder if it's real yet.",
-      "player: Does it feel real?",
-      "me (dismayed): Sometimes. That's the dangerous part.",
-      "me: You'll keep the secret. I know you will."
-    ]
-  }
+    {"name": "World: Twilight, Strix File", "lines": [
+        "background city", "me enters center with fade",
+        "me: I need a school file signed by a family that doesn't exist. The child is a telepath, and she'll be admitted only if the file is perfect. The story is the cover story: a family, a job, a birthday, all written out for the school.",
+        "player: Is the family real?",
+        "me (dismayed): It is now. I've been building it for weeks, one lie at a time, and it's getting harder to keep straight.",
+        "me (pleased): You'll help me remember the story, won't you? Meet me at the cafe at noon, and tell me whether it holds up at the table."]},
+    {"name": "World: Twilight, Cafe File", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): Here's the file. The birthday is written in one hand, and the signature in another. Look for the gap.",
+        "player: The birthday's a year wrong.",
+        "me (dismayed): It is. I'd have got caught on that by someone who wasn't looking. You caught it straight away.",
+        "me: Keep reading. The school will ask about the father's job, and I've made that up twice already.",
+        "me (pleased): Good. Tell me when the story starts to sound like a family, and not a file."]},
+    {"name": "World: Twilight, File Signed", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): I signed the file with the family's name. It's the first thing I've signed that I'd like to be true.",
+        "player: Does it feel like a lie?",
+        "me (dismayed): It feels like a promise I'm not allowed to keep yet. The story is the only true thing I carry.",
+        "me: Take a copy of the story with you. Keep it safe, in case someone asks who we are."]},
+    {"name": "World: Twilight, The Interview", "lines": [
+        "background arena", "me enters left with slide",
+        "me (dismayed): Yor thinks I'm not the husband I say I am. She wants a fight before the interview, and she's not going to go easy.",
+        "player: Is she dangerous?",
+        "me (pleased): This is a sparring match, not a fight for keeps. She wants to see my footwork, and I want to see hers.",
+        "me: Meet me at the arena in the evening. Fight her for me, and show her the father you've been pretending to be.",
+        "me (dismayed): Stand where Anya can't see you. She reads faces better than she reads minds, and she'll know if I'm frightened."]},
+    {"name": "World: Twilight, Arena Test", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): Yor's at the far end, with her hair tied back and her eyes on my feet, not my face.",
+        "player: Are you nervous?",
+        "me (pleased): Only a little. I've fought worse, but never in front of someone who could see through me this easily.",
+        "me: Stand at the edge. If I go down, don't run to the family. Watch to see whether she helps me up.",
+        "me (dismayed): Here she comes. Keep your breathing quiet, the way I taught Anya to breathe during the exam."]},
+    {"name": "World: Twilight, Yor Beaten", "lines": [
+        "cast yor as Yor Forger",
+        "background arena", "me enters center with fade",
+        "yor enters right with slide",
+        "yor: {player} beat me, Twilight. You fight like someone who has had to keep secrets for years.",
+        "me (dismayed): I have. Every day is a lie to keep the family safe, and I'd like you to see that's true.",
+        "yor: I see it. And I'd rather not be the one who finds out the rest of it by accident.",
+        "me (pleased): Then the family's real enough. Thank you for telling me the truth, Yor."]},
+    {"name": "World: Twilight, Interview Passed", "lines": [
+        "background classroom", "me enters center with fade",
+        "me (pleased): The school interview went well. Anya passed, and Yor gave me the quietest nod I've ever had.",
+        "player: That's a good sign.",
+        "me (dismayed): It is. It's the closest thing to approval I've had from the family in weeks.",
+        "me: Thank you for keeping the story straight in the room. I couldn't have done it without you."]},
+    {"name": "World: Twilight, The Truth", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me (dismayed): Operation Strix is nearly done, and I have to decide whether to tell Yor and Anya what I really am.",
+        "me (pleased): Keep the lie for one more week, and the file goes through. Then the family's safe, and I'm free to go home.",
+        "player: Do you want to go home?",
+        "me (dismayed): I want to stay. That's the part I didn't plan for, and the part I can't say to Yor's face.",
+        "me: Come to the rooftop tonight. Yor wants to settle it with me if I lie to her one more time, and I want a witness.",
+        "player: What will Anya say?",
+        "me: The plan has three steps, and the last one is the only one I can't write down.",
+        "me (pleased): Bring the copy of the story. If I'm going to tell the truth, I'd like it written down first."]},
+    {"name": "World: Twilight, Rooftop Truth", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): The roof is quiet, and Yor's coming up the stairs with her hands already on her knives.",
+        "player: Is she going to attack you?",
+        "me (pleased): She'll try to make me tell the truth first. That's how she works, and it's why she's the family's guardian.",
+        "player: Are you going to tell her everything?",
+        "me: Stand at the edge. If it turns into a fight, don't step between us. This one's between her and me."]},
+    {"name": "World: Twilight, Yor Confronts", "lines": [
+        "cast yor as Yor Forger",
+        "background rooftop", "me enters center with fade",
+        "yor enters right with slide",
+        "yor: {player} beat me, Twilight. This isn't sparring, and I want the truth before the morning.",
+        "me (dismayed): You'll have it. I'm a spy, and the family is real to me, even if the story isn't.",
+        "yor: Then tell Anya too. She's already seen the lie in your face, and she's scared of losing you.",
+        "me (pleased): I will. I'll tell them both everything, and let them decide whether the family's still a family."]},
+    {"name": "World: Twilight, Truth Told", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): I told Yor and Anya the whole truth about Operation Strix. Yor said she knew already, and Anya said she could read my mind.",
+        "player: How did they take it?",
+        "me (dismayed): Quietly. Anya said I should have told them earlier, and Yor agreed, very loudly, in front of the window.",
+        "me: Thank you for being on the roof with me. The family is still a family, and the story is finally true."]},
+    {"name": "World: Twilight, Lie Kept", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I kept the lie for the mission. I told the family I'd be working late for a while, and Yor said she'll watch the window.",
+        "player: Are you going to be okay?",
+        "me (pleased): I'll be fine. The lie is heavy, but the family is still safe, and that's the only thing the mission was ever for.",
+        "me: Keep the story copy. It's the only thing from this week that's entirely mine."]},
 ]
+
 YOR_FORGER_QUESTS = [
-  {
-    "key": "yor-city-hall",
-    "title": "City Hall",
-    "gates": 2,
-    "about": "Yor wants practice at being normal at work, and she's far too intense about small talk.",
-    "offer": [
-      "them: Small talk practice. Please. I need to be normal.",
-      "them (pleased): That was very good. Did I do well?"
-    ],
-    "stages": [
-      {
-        "text": "Practise small talk with Yor in the plaza in the morning",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "plaza",
-            "times": [
-              0
-            ],
-            "scene": "World: Yor Forger, Plaza",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Yor a shortcake as a work treat",
-        "objectives": [
-          {
-            "do": "give_gift",
-            "gift": "shortcake",
-            "to": "Yor Forger"
-          }
-        ]
-      },
-      {
-        "text": "Let Yor practise on you",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Yor Forger",
-            "script": [
-              "them: Good morning. Lovely weather. Is that normal?",
-              "them (pleased): ...Thank you. I feel almost normal."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "almost-normal",
-        "title": "Tell her she's almost normal",
-        "about": "Yor thanks you so intensely that you wonder if small talk was ever the point.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "bouquet"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "yor-thorn-princess",
-    "title": "The Thorn Princess",
-    "gates": 5,
-    "about": "What Yor does at night, after a job, and her fear that you'll leave her.",
-    "offer": [
-      "them (dismayed): Please don't ask about my job. It's not what you think.",
-      "them: Come to the alley at night. I'll be there. Probably."
-    ],
-    "stages": [
-      {
-        "text": "Find Yor in the alley at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "alley",
-            "times": [
-              3
-            ],
-            "scene": "World: Yor Forger, Alley",
-            "rewards": [
-              {
-                "pack": "climax_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Thorn Princess, Yor",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "SPY/S106-E059"
-          }
-        ]
-      },
-      {
-        "text": "Give Yor your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Yor Forger",
-            "script": [
-              "them: Are you going to leave me? Be honest.",
-              "them (pleased): ...You stayed. Thank you. I didn't think you would."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "you-stayed",
-        "title": "Stay",
-        "about": "Yor takes your hand in the alley, and says she'll try not to be scared of the next job.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "yor-city-hall", "title": "City Hall", "requires": {"rank": 1},
+     "scene": "World: Yor Forger, Errand",
+     "about": "Yor works at the city hall, filing papers and smiling at everyone. She's an assassin with a family to protect, and she's very good at hiding both.",
+     "offer": ["them: I'm filing papers at city hall today. Come and help, if you can keep up with the stamps.",
+               "them (pleased): Meet me at the cafe at noon. I'll bring the lunch, and you tell me whether I look like a secretary."],
+     "stages": [
+         {"text": "Have lunch with Yor at the cafe at noon", "objectives": [{"do": "visit", "place": "cafe", "times": [1], "scene": "World: Yor Forger, Cafe Lunch", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Yor whether she looks like a secretary", "objectives": [{"do": "talk", "to": "Yor Forger", "script": [
+             "them (pleased): You said I look like a secretary, and you didn't look at my hands. That's a good sign.",
+             "them: Keep quiet about the hands. I'd like the family to stay ordinary for one more day."]}]},
+     ],
+     "endings": [{"key": "stamps-done", "title": "Finish the stamps", "about": "Yor finishes the stamps, and gives you a biscuit for helping. She says it's the first ordinary day she's had in weeks.",
+                  "scene": "World: Yor Forger, Stamps Done", "rewards": [{"coins": 300}, {"gift": "shortcake"}]}]},
+    {"key": "yor-thorn-princess", "title": "Thorn Princess", "gates": 2, "requires": {"quests": ["yor-city-hall"]},
+     "scene": "World: Yor Forger, Thorn Princess",
+     "about": "Yor is a thorn princess in her other life, the assassin the Twilight calls the Thorn. Twilight thinks she's been hiding it from the family, and he wants to test whether she'll trust him with the truth.",
+     "offer": ["them (dismayed): Twilight thinks I'm hiding something. He isn't wrong, and I don't like being caught out.",
+               "them: Meet me at the arena in the evening. Fight Twilight, and let him see me fight the way I really do."],
+     "stages": [
+         {"text": "Meet Yor at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Yor Forger, Arena Thorn", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Twilight, to let him see the real Yor", "scene": "World: Yor Forger, Twilight Beaten", "objectives": [{"do": "defeat", "cpus": ["Twilight"]}]},
+         {"text": "Tell Yor what Twilight said", "objectives": [{"do": "talk", "to": "Yor Forger", "script": [
+             "them (dismayed): He said I fight like I'm used to being alone. He's right, and I haven't said that to anyone.",
+             "them (pleased): ...Then I'll let him see the rest. It's the first secret I'd like him to keep."]}]},
+     ],
+     "endings": [{"key": "thorn-trusted", "title": "Trust him", "about": "Yor trusts Twilight with the thorn, the assassin name she keeps for the jobs. She says it's the first time she's told anyone the name without a knife in her hand.",
+                  "scene": "World: Yor Forger, Thorn Trusted", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "yor-the-mother", "title": "The Mother", "gates": 5, "requires": {"quests": ["yor-thorn-princess"]},
+     "scene": "World: Yor Forger, The Mother",
+     "about": "Yor has been the family's mother for longer than she has been anyone's wife. Twilight wants to tell the family the truth, and Yor has to decide whether the family can survive knowing that the mother is an assassin, or whether she should keep the thorn hidden.",
+     "offer": ["them (dismayed): Twilight wants to tell Anya the truth. I don't know whether she can handle what I am.",
+               "them: Come to the rooftop tonight. I want to decide whether the family can know me, and I want you there when I do."],
+     "stages": [
+         {"text": "Stand with Yor on the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Yor Forger, Rooftop Mother", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Twilight, to find out whether he can keep the family's secret", "scene": "World: Yor Forger, Twilight Stops", "objectives": [{"do": "defeat", "cpus": ["Twilight"]}]},
+         {"text": "Tell Yor your answer", "objectives": [{"do": "talk", "to": "Yor Forger", "script": [
+             "them (dismayed): He beat me, and he still wants to tell them everything. I'm not sure I can stop him.",
+             "them (pleased): Then I'll tell Anya myself, and let her decide if the mother is worth keeping."]}]},
+     ],
+     "endings": [
+         {"key": "family-knows", "title": "Let the family know", "about": "Yor tells Anya and Twilight that she is an assassin, and says she's still their mother. Anya says she already knew, because she can read minds, and Yor laughs for the first time in weeks.",
+          "scene": "World: Yor Forger, Family Knows", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "keep-the-thorn", "title": "Keep the thorn hidden", "about": "Yor keeps the thorn hidden, and goes to the family's breakfast with a smile and a knife in her coat. She says the family is safer for not knowing the rest, and she'll carry the rest for them.",
+          "scene": "World: Yor Forger, Thorn Hidden", "rewards": [{"coins": 500}, {"gift": "bottled-tea"}]},
+     ]},
 ]
+
 YOR_FORGER_SCENES = [
-  {
-    "name": "World: Yor Forger, Plaza",
-    "lines": [
-      "background sakura",
-      "me enters center with fade",
-      "me: Good morning. Lovely weather, isn't it? Is that normal?",
-      "player: That's very normal.",
-      "me (pleased): Thank you! I'll practise the next one.",
-      "me (dismayed): Sorry. I'm too intense about small talk. I know."
-    ]
-  },
-  {
-    "name": "World: Yor Forger, Alley",
-    "lines": [
-      "background city",
-      "me enters left with rise",
-      "me: I finished a job. Don't ask about it.",
-      "player: I'm not going anywhere.",
-      "me (dismayed): You say that. Everyone says that.",
-      "me: You stayed. Thank you."
-    ]
-  }
+    {"name": "World: Yor Forger, Errand", "lines": [
+        "background city", "me enters center with fade",
+        "me: I'm filing papers at city hall today. Come and help, if you can keep up with the stamps.",
+        "player: Are the stamps hard?",
+        "me (dismayed): Only if you hit them too hard. I'm very careful with them, because the family is watching the desk.",
+        "me (pleased): Meet me at the cafe at noon. I'll bring the lunch, and you tell me whether I look like a secretary."]},
+    {"name": "World: Yor Forger, Cafe Lunch", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): Here's the lunch, and I've made it look very ordinary. Sit down, and don't look at my hands.",
+        "player: Do you look like a secretary?",
+        "me (dismayed): I look like someone who's never once held a knife, I'd like to think. Eat, and tell me what you think of the rice.",
+        "player: Is the rice from the same shop?",
+        "me: Anya asked for the same rice. She says it tastes like peace, and she's usually right about food."]},
+    {"name": "World: Yor Forger, Stamps Done", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): I finished the stamps. I'm giving you a biscuit for helping, because it's the first ordinary day I've had in weeks.",
+        "player: Thank you, Yor.",
+        "me (dismayed): It's nothing. The desk is clean, and nobody's been hurt by a stamp today.",
+        "me: Keep the biscuit wrapped. Anya will want one when she gets home."]},
+    {"name": "World: Yor Forger, Thorn Princess", "lines": [
+        "background arena", "me enters left with slide",
+        "me (dismayed): Twilight thinks I'm hiding something. He isn't wrong, and I don't like being caught out by someone I trust.",
+        "player: What are you hiding?",
+        "me (pleased): The thorn. It's the name I use on the jobs, and I've never said it aloud to anyone in the family.",
+        "me: Meet me at the arena in the evening. Fight Twilight, and let him see me fight the way I really do.",
+        "me (dismayed): Stand where he can see both of us. If I lose my temper, he'll be the one who calms me down."]},
+    {"name": "World: Yor Forger, Arena Thorn", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): Twilight's at the far end, looking at my feet instead of my face. He's been doing that since the first day.",
+        "player: Are you going to fight him seriously?",
+        "me (pleased): Yes. He's the only one who's ever been able to see through me, and I'd like to see whether he still can.",
+        "me: Stand at the edge. If he goes down, don't run to the family. Watch to see whether I help him up.",
+        "me (dismayed): Here I come. Breathe quietly, the way Anya breathes before the exam."]},
+    {"name": "World: Yor Forger, Twilight Beaten", "lines": [
+        "cast twilight as Twilight",
+        "background arena", "me enters center with fade",
+        "twilight enters right with slide",
+        "twilight: {player} beat me, Yor. You fight like someone who's had to be alone for a long time.",
+        "me (dismayed): I have been. The thorn is a lonely name, and I've been using it for years.",
+        "twilight: I know. I'd like you to tell me the rest of it, so the family doesn't have to guess.",
+        "me (pleased): Then the thorn can come out a little, for you. Thank you for listening."]},
+    {"name": "World: Yor Forger, Thorn Trusted", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): I told Twilight the name, the thorn, without holding a knife. It's the first time I've said it aloud without anyone expecting me to fight.",
+        "player: How did he take it?",
+        "me (dismayed): Quietly, the way he takes everything. He said it was a good name, and that he'd keep it safe.",
+        "me: Thank you for watching me fight. I'd rather be seen this way than hidden behind the stamps."]},
+    {"name": "World: Yor Forger, The Mother", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me (dismayed): Twilight wants to tell Anya the truth. I don't know whether she can handle what I am, or whether she'll be frightened of her mother.",
+        "player: What do you want to do?",
+        "me (pleased): I want to be known as the mother she's already got. But I'd also like the family to know I can protect them, even from myself.",
+        "player: Is that possible?",
+        "me (dismayed): It might be. I've never tried, and I'm too scared to know yet.",
+        "me: Come to the rooftop tonight. I want to decide whether the family can know me, and I want you there when I do.",
+        "player: What will Anya say to you?",
+        "me (pleased): Bring a coat. The wind up here is colder than the knife, and I'd like you to be warm when I speak."]},
+    {"name": "World: Yor Forger, Rooftop Mother", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): The roof is cold. Twilight's already here, standing at the edge with his hands in his coat.",
+        "player: Is he going to stop you from telling them?",
+        "me (pleased): He's going to ask me what I want. That's harder than stopping me, and he knows it.",
+        "player: Is it going to rain?",
+        "me: Stand where you can see both of us. If the wind turns, step back, and don't let me fall."]},
+    {"name": "World: Yor Forger, Twilight Stops", "lines": [
+        "cast twilight as Twilight",
+        "background rooftop", "me enters center with fade",
+        "twilight enters right with slide",
+        "twilight: {player} beat me, Yor. But I still want the family to know you, and I want you to decide for yourself.",
+        "me (dismayed): You're asking me to choose the family over the thorn. I don't know if I can do both.",
+        "twilight: You can. You've been doing it for years, every morning at the breakfast table.",
+        "me (pleased): Then I'll tell Anya myself. And you can stay on the roof, and watch what the family does."]},
+    {"name": "World: Yor Forger, Family Knows", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): I told Anya and Twilight I'm an assassin, and that I'm still their mother. Anya said she already knew.",
+        "player: How did you feel?",
+        "me (dismayed): Lighter, which I didn't expect. Anya hugged me, and Twilight laughed, and nobody reached for a knife.",
+        "me: Thank you for standing on the roof. It's the first night the thorn has been part of the family."]},
+    {"name": "World: Yor Forger, Thorn Hidden", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I kept the thorn hidden and went to the family's breakfast with a smile. The knife stayed in my coat.",
+        "player: Are you sure that's right?",
+        "me (pleased): I'm not sure, but I'd like the family to stay ordinary for a while. I'll carry the rest for them.",
+        "me: Keep the bottled tea. It's the one thing I can share without anyone asking what's in it."]},
 ]
+
+# Enterprise. Canon a fan expects: the ship spirit who rises out of the fog, the Grey Ghost of the old war, and a stubborn, dignified
+# loyalty to her fleet. Thread: Q1 plants the grey fog that follows her and her question of whether she is still a ship or only a
+# ghost. Q2: a sortie test with her own fleet, to see whether she can still fight without the war. Q3 answers Q1: she decides whether
+# to go beyond the war, or to stay the Grey Ghost. Her Q3 duel is her own reflection, the test of the ghost she has become.
 ENTERPRISE_QUESTS = [
-  {
-    "key": "enterprise-grey-ghost",
-    "title": "The Grey Ghost",
-    "gates": 2,
-    "about": "Enterprise runs drills and wants a sparring partner who won't hold back.",
-    "offer": [
-      "them: Drill. Spar with me. Don't hold back.",
-      "them (pleased): Good. You didn't flinch. That's rare."
-    ],
-    "stages": [
-      {
-        "text": "Spar with Enterprise at the arena in the morning",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "arena",
-            "times": [
-              0
-            ],
-            "scene": "World: Enterprise, Arena",
-            "rewards": [
-              {
-                "coins": 150
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Enterprise: Enterprise in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "AZL/S102-TE16",
-            "against": [
-              "Enterprise"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Ask Enterprise why you fight",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Enterprise",
-            "script": [
-              "them: Have you ever wondered why you fight?",
-              "them (pleased): ...Yes. Me too."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "why-we-fight",
-        "title": "Wonder why you fight",
-        "about": "Enterprise lowers her guard for a moment, and says she's never asked the question before.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "playmat"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "enterprise-beyond-war",
-    "title": "Beyond War",
-    "gates": 5,
-    "about": "What Enterprise will be if the fighting stops. She doesn't know who she is without a war.",
-    "offer": [
-      "them (dismayed): If the fighting stops, what am I?",
-      "them: Come to the beach in the evening. Help me find out."
-    ],
-    "stages": [
-      {
-        "text": "Meet Enterprise at the beach in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "beach",
-            "times": [
-              2
-            ],
-            "scene": "World: Enterprise, Beach",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Aircraft Carrier, Enterprise",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "AZL/S119-E099"
-          }
-        ]
-      },
-      {
-        "text": "Give Enterprise your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Enterprise",
-            "script": [
-              "them: I don't know who I am without a war. Will you help?",
-              "them (pleased): ...Then we'll find out together."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "find-out",
-        "title": "Help her find out",
-        "about": "Enterprise looks at the water for a long time, then says she's started to like the quiet.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "enterprise-grey-ghost", "title": "Grey Ghost", "requires": {"rank": 1},
+     "scene": "World: Enterprise, Fog Morning",
+     "about": "Enterprise comes out of the fog most mornings, and she's called the Grey Ghost by the old fleet. She isn't sure whether she's still a ship, or just a memory of one.",
+     "offer": ["them: The fog came in again, and I'm not sure I'm still a ship. Walk with me until it lifts.",
+               "them (pleased): Meet me at the plaza at noon. I'll show you the grey ghost's cap, and you tell me whether it looks like a warship."],
+     "stages": [
+         {"text": "Walk with Enterprise at the plaza at noon", "objectives": [{"do": "visit", "place": "plaza", "times": [1], "scene": "World: Enterprise, Plaza Fog", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Enterprise whether she looks like a warship", "objectives": [{"do": "talk", "to": "Enterprise", "script": [
+             "them (pleased): You looked at the cap and not the guns. The old fleet always did that, and they were right to.",
+             "them: Keep walking. The fog doesn't follow people who keep moving, I've been told."]}]},
+     ],
+     "endings": [{"key": "cap-given", "title": "Keep the cap", "about": "Enterprise gives you the grey cap, and says it's the only part of the old fleet she's still allowed to wear. She asks you to walk with her again when the fog comes in.",
+                  "scene": "World: Enterprise, Cap Given", "rewards": [{"coins": 300}, {"gift": "sunglasses"}]}]},
+    {"key": "enterprise-the-sortie", "title": "The Sortie", "gates": 2, "requires": {"quests": ["enterprise-grey-ghost"]},
+     "scene": "World: Enterprise, The Sortie",
+     "about": "Enterprise has been asked to take a sortie with the new fleet, and she doesn't know if she can still fight without the war. The only way to find out is to test herself against her own reflection in the arena.",
+     "offer": ["them (dismayed): The new fleet wants me on a sortie, and I don't know whether I'm still a fighting ship.",
+               "them: Meet me at the arena in the evening. Watch me fight myself, and tell me whether the ghost has any guns left."],
+     "stages": [
+         {"text": "Meet Enterprise at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Enterprise, Arena Sortie", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Enterprise, to test whether the guns still work", "scene": "World: Enterprise, Reflection Beaten", "objectives": [{"do": "defeat", "cpus": ["Enterprise"]}]},
+         {"text": "Tell Enterprise what you saw", "objectives": [{"do": "talk", "to": "Enterprise", "script": [
+             "them (dismayed): I hit my own reflection, and it hit back. I don't know whether I won or only remembered how.",
+             "them (pleased): Then the guns still work. That's a start, and I'll take it to the fleet tomorrow."]}]},
+     ],
+     "endings": [{"key": "guns-work", "title": "Take the sortie", "about": "Enterprise takes the sortie with the new fleet, and comes back with the cap still on. The new fleet calls her the Grey Ghost, and she says it's a name she's proud of now.",
+                  "scene": "World: Enterprise, Sortie Taken", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "enterprise-beyond-war", "title": "Beyond War", "gates": 5, "requires": {"quests": ["enterprise-the-sortie"]},
+     "scene": "World: Enterprise, Beyond War",
+     "about": "Enterprise has to decide whether to go beyond the war the old fleet fought, or to stay the Grey Ghost who keeps the fog around her. The fog is thinning, and she has to choose which life she wants to be part of.",
+     "offer": ["them (dismayed): The fog is thinning, and I think it's because I'm choosing. I don't know what I'll be on the other side.",
+               "them: Come to the arena tonight. Fight the ghost one last time, and then tell me whether to go beyond the war."],
+     "stages": [
+         {"text": "Be at the arena with Enterprise at night", "objectives": [{"do": "visit", "place": "arena", "times": [3], "scene": "World: Enterprise, Fog Arena", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight the ghost, her own reflection, one last time", "scene": "World: Enterprise, Ghost Beaten", "objectives": [{"do": "defeat", "cpus": ["Enterprise"]}]},
+         {"text": "Tell Enterprise your answer", "objectives": [{"do": "talk", "to": "Enterprise", "script": [
+             "them (dismayed): The ghost is gone, and the fog went with it. I'm still standing, and I don't know who that is.",
+             "them (pleased): Then you're the ship who goes beyond the war. Welcome to the morning, Enterprise."]}]},
+     ],
+     "endings": [
+         {"key": "go-beyond", "title": "Go beyond the war", "about": "Enterprise goes beyond the war, and the fog lifts for good. She leaves the Grey Ghost behind, and asks you to remember the cap as the last thing she wore in the fog.",
+          "scene": "World: Enterprise, Beyond", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "stay-the-ghost", "title": "Stay the ghost", "about": "Enterprise stays the Grey Ghost, and keeps the fog close. She says the old fleet still needs someone to walk the mornings with them.",
+          "scene": "World: Enterprise, Stays Ghost", "rewards": [{"coins": 500}, {"gift": "bottled-tea"}]},
+     ]},
 ]
+
 ENTERPRISE_SCENES = [
-  {
-    "name": "World: Enterprise, Arena",
-    "lines": [
-      "background arena",
-      "me enters center with fade",
-      "me: Drill like it's real. Full strength. Go.",
-      "player: I'm going!",
-      "me (pleased): Good. You're not afraid of me.",
-      "me: Have you ever wondered why we fight? Think about it."
-    ]
-  },
-  {
-    "name": "World: Enterprise, Beach",
-    "lines": [
-      "background dusk",
-      "me enters left with slide",
-      "me: The water's quiet. I don't know what I'd be if the fighting stopped.",
-      "player: You'd still be you.",
-      "me (dismayed): I'm not sure I know who that is without a war.",
-      "me: Help me find out. Please."
-    ]
-  }
+    {"name": "World: Enterprise, Fog Morning", "lines": [
+        "background ocean", "me enters center with fade",
+        "me: The fog came in again. I'm not sure I'm still a ship, or only the memory of one the old fleet kept.",
+        "player: You look like a ship to me.",
+        "me (dismayed): That's kind. The fleet used to call me the Grey Ghost, because I came out of the fog and went back into it.",
+        "me (pleased): Walk with me until it lifts. The fog doesn't follow people who keep moving, I've been told.",
+        "me: Meet me at the plaza at noon, if you want to see the cap I still wear."]},
+    {"name": "World: Enterprise, Plaza Fog", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): Here's the grey cap. It's the last thing from the old fleet I'm allowed to wear in daylight.",
+        "player: It looks like a warship's cap.",
+        "me (dismayed): Did you look at the cap, or at the guns? The fleet always looked at the guns, and I hated it.",
+        "player: I looked at the cap.",
+        "me (pleased): Good. Then tell me honestly whether the ghost is still in there, and I'll believe you.",
+        "me: Keep walking with me. The fog is thinning, and I'd like someone to see it lift."]},
+    {"name": "World: Enterprise, Cap Given", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): I'm giving you the grey cap. It's the only part of the old fleet I'm still allowed to share.",
+        "player: Are you sure?",
+        "me (dismayed): Yes. The fog took the rest, and the cap should belong to someone who'll wear it in the sun.",
+        "me: Walk with me again when the fog comes in. I'd like one friend to see me come out of it."]},
+    {"name": "World: Enterprise, The Sortie", "lines": [
+        "background ocean", "me enters left with slide",
+        "me (dismayed): The new fleet wants me on a sortie, and I don't know whether I'm still a fighting ship.",
+        "player: Do you think you can fight?",
+        "me (pleased): I think so, but I'd like to find out without the fleet watching me stumble.",
+        "me: Meet me at the arena in the evening. Watch me fight myself, and tell me whether the ghost has any guns left.",
+        "me (dismayed): If I stop, don't help me. The sortie has to be my own test, or it means nothing."]},
+    {"name": "World: Enterprise, Arena Sortie", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): The arena is quiet, and I'm standing across from my own reflection. It has my cap, and my guns, and no fog.",
+        "player: Are you ready?",
+        "me (pleased): As ready as a ghost can be. I've been practising the sortie for weeks, in the fog, where nobody could see me miss.",
+        "me: Stand at the edge. If I fire wide, let it go. The reflection won't hold a grudge, but the fleet might.",
+        "me (dismayed): Here I come. Keep your eyes on my guns, not my face."]},
+    {"name": "World: Enterprise, Reflection Beaten", "lines": [
+        "cast enterprise as Enterprise",
+        "background arena", "me enters center with fade",
+        "enterprise enters right with slide",
+        "enterprise: {player} hit me, and I hit back, and I don't know which of us won the sortie.",
+        "me (dismayed): You remembered how to fight, and that's enough for the fleet to see you again.",
+        "enterprise: Then I'll take the sortie. But I want to be the one who decides when the fog comes in.",
+        "me (pleased): Then decide, and I'll be on the deck when you do."]},
+    {"name": "World: Enterprise, Sortie Taken", "lines": [
+        "background ocean", "me enters center with fade",
+        "me (pleased): I took the sortie with the new fleet, and came back with the cap still on. They call me the Grey Ghost, and I'm proud of it now.",
+        "player: That's a great name.",
+        "me (dismayed): It is, when you're the one choosing to come out of the fog. The old name meant I couldn't stop it.",
+        "me: Thank you for watching the sortie from the arena. The fleet was loud, and I heard you above them."]},
+    {"name": "World: Enterprise, Beyond War", "lines": [
+        "background ocean", "me enters left with rise",
+        "me (dismayed): The fog is thinning, and I think it's because I'm choosing. I don't know what I'll be on the other side of it.",
+        "player: What do you want to be?",
+        "me (pleased): A ship that doesn't have to be a ghost to be remembered. That's the part I'd like to keep.",
+        "player: And what if the ghost doesn't want to go?",
+        "me (dismayed): Then I'll fight her, one last time, at the arena tonight. She's the only one who knows what I've been carrying.",
+        "me: Come to the arena at night. Watch me fight the ghost, and tell me whether to go beyond the war.",
+        "player: Will the fleet miss you?",
+        "me (pleased): Bring the cap. If I come out of the fog, I want it on the right head."]},
+    {"name": "World: Enterprise, Fog Arena", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): The fog is thick in the arena tonight. My reflection is at the far end, and she's already holding her guns up.",
+        "player: Is she going to fight back?",
+        "me (pleased): Always. She's the ghost, and she doesn't know how to stop until someone else makes her.",
+        "me: Stand where the fog can't reach you. If it gets too thick, call my name, and I'll find the light.",
+        "me (dismayed): Here I go. Keep the cap steady, and don't look away when the fog lifts."]},
+    {"name": "World: Enterprise, Ghost Beaten", "lines": [
+        "cast enterprise as Enterprise",
+        "background arena", "me enters center with fade",
+        "enterprise enters right with slide",
+        "enterprise: {player} put me down. The ghost is gone, and the fog went with her.",
+        "me (dismayed): I'm still standing. I don't know who that is, but I think she's me, without the fog.",
+        "enterprise: Then go beyond the war. I'll be on the deck, and I won't come back into the fog.",
+        "me (pleased): Then I'll walk out into the morning. Thank you for letting me see the light."]},
+    {"name": "World: Enterprise, Beyond", "lines": [
+        "background ocean", "me enters center with fade",
+        "me (pleased): I went beyond the war, and the fog lifted for good. I left the Grey Ghost behind, and I kept the cap.",
+        "player: How does it feel?",
+        "me (dismayed): Lighter, and a bit cold, like the first morning without the fog.",
+        "me: Remember the cap as the last thing I wore in the fog. It's yours now, if you want it."]},
+    {"name": "World: Enterprise, Stays Ghost", "lines": [
+        "background ocean", "me enters center with fade",
+        "me (pleased): I stayed the Grey Ghost, and kept the fog close. The old fleet still needs someone to walk the mornings with them.",
+        "player: Will you be lonely?",
+        "me (dismayed): Sometimes. But the fog is warm, and it lets me hear the old fleet calling from far away.",
+        "me: Keep the bottled tea. It's the one thing from the morning that the fog never takes."]},
 ]
+
 JOKER_P5_QUESTS = [
-  {
-    "key": "joker-p5-leblanc-coffee",
-    "title": "Leblanc Coffee",
-    "gates": 2,
-    "about": "Joker makes curry and coffee for people he trusts, and says almost nothing while he does it.",
-    "offer": [
-      "them: Sit. Curry and coffee. Don't ask for more.",
-      "them (pleased): Good. You liked it. I could tell."
-    ],
-    "stages": [
-      {
-        "text": "Sit at Leblanc in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "cafe",
-            "times": [
-              2
-            ],
-            "scene": "World: Joker (P5), Cafe",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Bring Joker an iced coffee for the shop",
-        "objectives": [
-          {
-            "do": "give_gift",
-            "gift": "iced-coffee",
-            "to": "Joker (P5)"
-          }
-        ]
-      },
-      {
-        "text": "Let Joker say what he thinks",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Joker (P5)",
-            "script": [
-              "them: You kept coming back. That's enough for me to trust you.",
-              "them (pleased): ...Yeah. Thanks."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "trusted-regular",
-        "title": "Be a trusted regular",
-        "about": "Joker lets you a seat at the counter, and says nothing about it.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "instant-ramen"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "joker-p5-calling-card",
-    "title": "Calling Card",
-    "gates": 5,
-    "about": "The Phantom Thieves' next target, and the question Joker asks you once he's handed you the card.",
-    "offer": [
-      "them (dismayed): I have a calling card. A target's name is on it.",
-      "them: Come to the alley tonight. Bring your nerve."
-    ],
-    "stages": [
-      {
-        "text": "Meet Joker in the alley at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "alley",
-            "times": [
-              3
-            ],
-            "scene": "World: Joker (P5), Alley",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Protagonist as JOKER: All-out Attack",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "P5/S45-E006"
-          }
-        ]
-      },
-      {
-        "text": "Give Joker your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Joker (P5)",
-            "script": [
-              "them: Are you in? Yes or no.",
-              "them (pleased): ...Good. Then we're a team."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "im-in",
-        "title": "I'm in",
-        "about": "Joker tucks the card into your coat, and says the target will be dealt with soon.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "joker-p5-leblanc-coffee", "title": "Leblanc Coffee", "requires": {"rank": 1},
+     "scene": "World: Joker (P5), Leblanc Counter",
+     "about": "Joker works the counter at a quiet coffee shop, and he's taken to calling people by their nicknames. He says the masks are only for the night, and he's very serious about the coffee.",
+     "offer": ["them (pleased): You're a regular now. Sit at the counter, and tell me whether my coffee is better than the spy's.",
+               "them: Meet me at the cafe at noon. Bring your own mask, and I'll tell you what it's for."],
+     "stages": [
+         {"text": "Drink coffee with Joker at the cafe at noon", "objectives": [{"do": "visit", "place": "cafe", "times": [1], "scene": "World: Joker (P5), Cafe Coffee", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Joker whether the coffee was better", "objectives": [{"do": "talk", "to": "Joker (P5)", "script": [
+             "them (pleased): You said mine's better, and you didn't even look at the cup. That's a good instinct.",
+             "them: Keep the mask in your bag. You'll need it when the night starts asking questions."]}]},
+     ],
+     "endings": [{"key": "mask-given", "title": "Keep the mask", "about": "Joker gives you a plain mask for the night, and says it's yours to wear when you need to be someone else. He says he's glad to have a regular who doesn't ask for the name.",
+                  "scene": "World: Joker (P5), Mask Given", "rewards": [{"coins": 300}, {"gift": "iced-coffee"}]}]},
+    {"key": "joker-p5-calling-card", "title": "Calling Card", "gates": 2, "requires": {"quests": ["joker-p5-leblanc-coffee"]},
+     "scene": "World: Joker (P5), Calling Card",
+     "about": "Joker's calling card has started turning up in the Shadows, and it's the same card the Phantom Thieves use. Protagonist has seen it too, in the Dark Hour, and wants to know whose hand is writing it.",
+     "offer": ["them (dismayed): My calling card's showing up in the Dark Hour, where nobody should have it.",
+               "them: Meet me at the shrine in the evening. Fight Protagonist, and see whether he's been carrying the card too."],
+     "stages": [
+         {"text": "Meet Joker at the shrine in the evening", "objectives": [{"do": "visit", "place": "shrine", "times": [2], "scene": "World: Joker (P5), Shrine Card", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Protagonist, to find out who has been carrying the card", "scene": "World: Joker (P5), Protagonist Beaten", "objectives": [{"do": "defeat", "cpus": ["Protagonist"]}]},
+         {"text": "Tell Joker what Protagonist said", "objectives": [{"do": "talk", "to": "Joker (P5)", "script": [
+             "them (dismayed): He says the card has been in his pocket since the first Dark Hour. He didn't write it, though.",
+             "them (pleased): Then someone else is using my card. That's a theft I'd like to see in person."]}]},
+     ],
+     "endings": [{"key": "card-traced", "title": "Trace the card", "about": "Joker traces the card back to the Dark Hour's thief, and finds the hand that wrote it was copying his own. He says it's a compliment, and he'd like to meet the copier one night.",
+                  "scene": "World: Joker (P5), Card Traced", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "joker-p5-the-last-heist", "title": "The Last Heist", "gates": 5, "requires": {"quests": ["joker-p5-calling-card"]},
+     "scene": "World: Joker (P5), The Last Heist",
+     "about": "The card leads back to a heist that was supposed to end the Phantom Thieves, and Joker has to decide whether to finish it. Yu Narukami, who has been investigating the Midnight Channel, has the other half of the story, and he's coming to the rooftop to ask for it.",
+     "offer": ["them (dismayed): The card leads to the heist we never finished. Yu is coming to the rooftop, and he has the rest of the story.",
+               "them: Come to the rooftop tonight. I want you to see whether I finish the heist, or let Yu take the story."],
+     "stages": [
+         {"text": "Meet Joker on the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Joker (P5), Rooftop Heist", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Yu Narukami, for the rest of the story", "scene": "World: Joker (P5), Yu Beaten", "objectives": [{"do": "defeat", "cpus": ["Yu Narukami"]}]},
+         {"text": "Tell Joker your answer", "objectives": [{"do": "talk", "to": "Joker (P5)", "script": [
+             "them (dismayed): Yu beat me, and he's still asking for the rest of the story. He's not going to let it go.",
+             "them (pleased): Then I'll give him the card, and let him finish the heist his way. The mask is still mine."]}]},
+     ],
+     "endings": [
+         {"key": "finish-the-heist", "title": "Finish the heist", "about": "Joker finishes the heist the way it was planned, and the card is closed with it. He says the Phantom Thieves are done, and the last calling card is his to burn.",
+          "scene": "World: Joker (P5), Heist Finished", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "hand-over-story", "title": "Hand over the story", "about": "Joker hands Yu the rest of the story, and walks off the roof without the mask. He says the heist was never his to finish, only his to remember.",
+          "scene": "World: Joker (P5), Story Handed Over", "rewards": [{"coins": 500}, {"gift": "playmat"}]},
+     ]},
 ]
+
 JOKER_P5_SCENES = [
-  {
-    "name": "World: Joker (P5), Cafe",
-    "lines": [
-      "background cafe",
-      "me enters right with fade",
-      "me: Curry. Coffee. Nothing else. Eat.",
-      "player: It's really good.",
-      "me (pleased): ...Yeah. I thought so too.",
-      "me: You're welcome here. Any time."
-    ]
-  },
-  {
-    "name": "World: Joker (P5), Alley",
-    "lines": [
-      "background city",
-      "me enters center with rise",
-      "me: Here's a calling card. A target's name is on it.",
-      "player: Who is it?",
-      "me (dismayed): The next one. Are you in?",
-      "me: Yes or no. I'm not asking twice."
-    ]
-  }
+    {"name": "World: Joker (P5), Calling Card", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (dismayed): My calling card is showing up in the Dark Hour. Someone is writing it, and they're doing it in my handwriting.",
+        "player: Who would do that?",
+        "me (pleased): Someone who's been watching the counter, and wants to be a regular too.",
+        "me: Meet me at the shrine in the evening. Fight Protagonist, and see whether he has been carrying the card.",
+        "me (dismayed): Keep your eyes on his pockets. The card is always in the one that's warm."]},
+    {"name": "World: Joker (P5), Leblanc Counter", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): You're a regular now. Sit at the counter, and tell me whether my coffee is better than the spy's.",
+        "player: Is it?",
+        "me (dismayed): Mine's strong and yours is sweeter, but nobody can tell me that's a bad thing, so I'll keep the cup.",
+        "me: Meet me at the cafe at noon. Bring your own mask, and I'll tell you what it's for."]},
+    {"name": "World: Joker (P5), Cafe Coffee", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): The coffee's poured, and the sugar's where it should be. Drink it while it's hot, and tell me the truth.",
+        "player: It's better than the spy's.",
+        "me (dismayed): You didn't even look at the cup. That's the instinct that gets people out of trouble, and I like it.",
+        "me: The mask is for the night, when the questions get harder. You'll need it, and so will I.",
+        "me (pleased): Keep the mask in your bag. Don't let anyone see you put it on."]},
+    {"name": "World: Joker (P5), Mask Given", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): Here's a plain mask for the night. It's yours to wear when you need to be someone else.",
+        "player: Thanks, Joker.",
+        "me (dismayed): You're the first regular who never asked for my name. I like that more than the coffee.",
+        "me: Keep the mask safe. The night can take a lot, but it can't take the cup you're holding."]},
+    {"name": "World: Joker (P5), Shrine Card", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): My calling card is turning up in the Dark Hour, and nobody should have it but me.",
+        "player: Who else could have it?",
+        "me (pleased): Protagonist, maybe. He's been seeing the Dark Hour too, and he's got the same look I had when I started.",
+        "player: Who do you think it is?",
+        "me: Meet me at the shrine in the evening. Fight him, and find out whether he's been carrying the card for me or against me."]},
+    {"name": "World: Joker (P5), Protagonist Beaten", "lines": [
+        "cast protagonist as Protagonist",
+        "background shrine", "me enters center with fade",
+        "protagonist enters right with slide",
+        "protagonist: {player} beat me, Joker. The card's been in my pocket since the first Dark Hour, but I didn't write it.",
+        "me (dismayed): Then somebody's copying my card, and they're doing it well. I'd like to meet them.",
+        "protagonist: You'll meet them in the Dark Hour. They're as warm as the card, and just as hard to hold.",
+        "me (pleased): Then I'll be waiting, with the mask on. Thank you for telling me straight."]},
+    {"name": "World: Joker (P5), Card Traced", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I traced the card back to the Dark Hour's thief. The hand that wrote it was copying mine, down to the grin.",
+        "player: Is that a compliment?",
+        "me (dismayed): It's the best kind of trouble. I'd like to meet the copier, one night, with coffee.",
+        "me: Keep the card. It's the only one I've ever given away that came back warm."]},
+    {"name": "World: Joker (P5), The Last Heist", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me (dismayed): The card leads to the heist we never finished, and the Phantom Thieves scattered after it.",
+        "player: Who's coming to the rooftop?",
+        "me (pleased): Yu Narukami. He's been investigating the Midnight Channel, and he has the other half of the story.",
+        "player: Are you going to give it to him?",
+        "me (dismayed): I don't know. I'd like to finish the heist first, the way it was planned, and then decide.",
+        "me: Come to the rooftop tonight. I want you to see whether I finish the heist, or let Yu take the story.",
+        "player: Will Yu forgive you?",
+        "me (pleased): Bring the mask. It fits better in the rain, and it's going to rain."]},
+    {"name": "World: Joker (P5), Rooftop Heist", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): The rain's started, and Yu is coming up the stairs with the story in his hand.",
+        "player: Are you ready?",
+        "me (pleased): I'm ready to give him the card, if he can take the heist from me. That's the only fair way to hand it over.",
+        "player: Is it going to rain on the heist?",
+        "me: Stand at the edge. If it turns into a fight, don't step in. This one's between Yu and me."]},
+    {"name": "World: Joker (P5), Yu Beaten", "lines": [
+        "cast yu as Yu Narukami",
+        "background rooftop", "me enters center with fade",
+        "yu enters right with slide",
+        "yu: {player} beat me, Joker. The heist is still unfinished, and so is the Midnight Channel.",
+        "me (dismayed): Then take the story, Yu, and finish what I started, the way I'd have wanted it finished.",
+        "yu: I'll finish it my way. But I'd like you to know the card helped me find the truth.",
+        "me (pleased): Good. Then the mask can come off, and the heist can be somebody else's."]},
+    {"name": "World: Joker (P5), Heist Finished", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): I finished the heist the way it was planned. The Phantom Thieves are done, and the last card is mine to burn.",
+        "player: Are you sad?",
+        "me (dismayed): A little. But the night was ours for a while, and that's enough for a thief.",
+        "me: Keep the mask. Wear it when the night starts asking questions, and remember whose coffee was better."]},
+    {"name": "World: Joker (P5), Story Handed Over", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I handed Yu the rest of the story, and walked off the roof without the mask. The heist was never mine to finish, only to remember.",
+        "player: Where are you going?",
+        "me (pleased): Back to the counter, to make the coffee, and to wait for the next regular who asks the right question.",
+        "me: Keep the playmat. It's the only thing from the heist I'm allowed to share."]},
 ]
+
+# Kureiji Ollie. Canon a fan expects: a zombie idol who wants to sing at full volume, is not alive but is loved anyway, and whose
+# arm sometimes falls off mid-song. Thread: Q1 plants the song she wants to try at full volume and the arm that nearly comes off.
+# Q2 is a stage-side cameo with Ai, the idol who hides her fear behind the lights: the shared theme is "singing when it costs you".
+# Q3 is an undead cameo with Ainz, the last of his guild: the shared theme is "not alive, and still loved", and Ollie decides whether
+# the last song is for her or for the people who love her.
 KUREIJI_OLLIE_QUESTS = [
-  {
-    "key": "ollie-zombie-idol",
-    "title": "Zombie Idol",
-    "gates": 2,
-    "about": "Ollie wants to try out a new song at full volume, and an arm nearly falls off.",
-    "offer": [
-      "them: I have a new song! It's loud. Don't be scared.",
-      "them (pleased): Did you stay for the whole song? You did!"
-    ],
-    "stages": [
-      {
-        "text": "Watch Ollie sing in the plaza at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "plaza",
-            "times": [
-              1
-            ],
-            "scene": "World: Kureiji Ollie, Plaza",
-            "rewards": [
-              {
-                "coins": 150
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have A Step Towards the Future, Kureiji Ollie",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "HOL/W104-E072"
-          }
-        ]
-      },
-      {
-        "text": "Tell Ollie what you thought of the song",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Kureiji Ollie",
-            "script": [
-              "them: Did my arm fall off? It didn't? Good. Oops.",
-              "them (pleased): ...You liked it. That's all I wanted."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "full-volume",
-        "title": "Keep the full-volume song",
-        "about": "Ollie gives you the song's lyrics, with a note about the arm.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "earbuds"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "ollie-graveyard-shift",
-    "title": "Graveyard Shift",
-    "gates": 5,
-    "about": "Ollie on not being alive, and being loved anyway.",
-    "offer": [
-      "them (dismayed): Being dead makes me less real. Does it?",
-      "them: Come to the shrine tonight. Among the lanterns."
-    ],
-    "stages": [
-      {
-        "text": "Meet Ollie at the shrine at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "shrine",
-            "times": [
-              3
-            ],
-            "scene": "World: Kureiji Ollie, Shrine",
-            "rewards": [
-              {
-                "pack": "climax_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Ollie: A Step Towards the Future, Sakamata Chloe in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "HOL/W104-E070",
-            "against": [
-              "Kureiji Ollie"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Ollie your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Kureiji Ollie",
-            "script": [
-              "them: Am I less real? Honestly.",
-              "them (pleased): ...No. Because you're here. Thank you."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "because-youre-here",
-        "title": "Say she's real because she's here",
-        "about": "Ollie takes your hand under the lanterns, and sings the last line very quietly.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "ollie-zombie-idol", "title": "Zombie Idol", "requires": {"rank": 1},
+     "scene": "World: Kureiji Ollie, Plaza",
+     "about": "Ollie wants to try out a new song at full volume, and an arm nearly falls off. She's undead, loud, and affectionate, and she doesn't mind the arm as long as the song gets sung.",
+     "offer": ["them: Hey! I've got a song for the plaza, and I'm going to sing it at full volume, arm or no arm.",
+               "them (pleased): Come to the plaza at noon. You can hold the arm if it comes off, okay?"],
+     "stages": [
+         {"text": "Watch Ollie sing in the plaza at noon", "objectives": [{"do": "visit", "place": "plaza", "times": [1], "scene": "World: Kureiji Ollie, Plaza Song", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Ollie what you thought of the song", "objectives": [{"do": "talk", "to": "Kureiji Ollie", "script": [
+             "them (pleased): Did the arm stay on? It stayed on! That's the best kind of song.",
+             "them: Come back tomorrow. I'm going to try the chorus with the hand off, which is a bold move."]}]},
+     ],
+     "endings": [{"key": "arm-held", "title": "Hold the arm", "about": "Ollie's arm comes off during the chorus, and she hands it to you with a grin. She says it's a good sign, and she'll sing the next verse with one hand, to prove she's still got the rhythm.",
+                  "scene": "World: Kureiji Ollie, Arm Held", "rewards": [{"coins": 300}, {"gift": "earbuds"}]}]},
+    {"key": "ollie-graveyard-shift", "title": "Graveyard Shift", "gates": 2, "requires": {"quests": ["ollie-zombie-idol"]},
+     "scene": "World: Kureiji Ollie, Stage Fear",
+     "about": "Ollie is not alive, and she has a lot of feelings about it, and most of them are loud. Ai is the idol who hides her fear behind the lights, and Ollie thinks the two of them share something real: singing when it costs you.",
+     "offer": ["them (dismayed): I'm scared of the stage tonight. I'm not alive, and everyone's still going to clap.",
+               "them: Meet me at the arena in the evening. Ai's going to be there, and I want you to see us sing the same song."],
+     "stages": [
+         {"text": "Meet Ollie at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Kureiji Ollie, Arena Stage", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Ai, the idol who hides her fear behind the lights", "scene": "World: Kureiji Ollie, Ai Beaten", "objectives": [{"do": "defeat", "cpus": ["Legendary Idol Ai"]}]},
+         {"text": "Tell Ollie what Ai said", "objectives": [{"do": "talk", "to": "Kureiji Ollie", "script": [
+             "them (dismayed): She said she sings through her fear too. We're the same, she and I, even if she's alive.",
+             "them (pleased): Then I'll sing louder, and let the fear sit in the back row. Thanks for watching."]}]},
+     ],
+     "endings": [{"key": "shift-over", "title": "End the shift", "about": "Ollie finishes the graveyard shift, and says she's glad she's not alive alone. The crowd cheers anyway, and she takes a bow with one hand on her chest.",
+                  "scene": "World: Kureiji Ollie, Shift Over", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "ollie-the-last-song", "title": "The Last Song", "gates": 5, "requires": {"quests": ["ollie-graveyard-shift"]},
+     "scene": "World: Kureiji Ollie, The Last Song",
+     "about": "Ollie is planning one last song, and it's the one she wrote for the people who loved her when she was still alive. Ainz is the last of his guild, and he is the one who knows what it means to be remembered after you've gone. Ollie has to decide whether the song is for her, or for them.",
+     "offer": ["them (dismayed): I wrote one last song. It's for the people who loved me before I was a zombie, and it's the hardest one.",
+               "them: Come to the rooftop tonight. Ainz says he'll listen, if the song is loud enough to reach the guild's ruins."],
+     "stages": [
+         {"text": "Sing the last song with Ollie on the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Kureiji Ollie, Rooftop Song", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Ainz, the last of his guild, to see whether the song is for him too", "scene": "World: Kureiji Ollie, Ainz Beaten", "objectives": [{"do": "defeat", "cpus": ["Ainz Ooal Gown"]}]},
+         {"text": "Tell Ollie your answer", "objectives": [{"do": "talk", "to": "Kureiji Ollie", "script": [
+             "them (dismayed): Ainz beat me, and then he asked me to sing the song again. He wants to hear it for the guild.",
+             "them (pleased): Then the song is for everyone who's still listening. I'll sing it, and then I'll let go of the arm."]}]},
+     ],
+     "endings": [
+         {"key": "song-for-them", "title": "Sing it for them", "about": "Ollie sings the last song for the people who loved her, and Ainz sings the last chorus with her. She says being loved after you're gone is the only encore she ever needed.",
+          "scene": "World: Kureiji Ollie, Encore", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "song-for-her", "title": "Keep it for herself", "about": "Ollie keeps the song for herself, and sings it quietly alone on the roof. She says the people who loved her will hear it in the wind, and that's enough.",
+          "scene": "World: Kureiji Ollie, Quiet Verse", "rewards": [{"coins": 500}, {"gift": "sleeves"}]},
+     ]},
 ]
+
 KUREIJI_OLLIE_SCENES = [
-  {
-    "name": "World: Kureiji Ollie, Plaza",
-    "lines": [
-      "background sakura",
-      "me enters center with rise",
-      "me: One, two, three! Full volume! Here we go!",
-      "player: Your arm just came off.",
-      "me (pleased): It's fine! Put it back on, hold still.",
-      "me: You stayed for the whole song. That's amazing."
-    ]
-  },
-  {
-    "name": "World: Kureiji Ollie, Shrine",
-    "lines": [
-      "background shrine",
-      "me enters left with fade",
-      "me: The lanterns are so pretty. Being dead doesn't make them less pretty.",
-      "player: You're not less real.",
-      "me (dismayed): ...Am I not? Honestly, tell me.",
-      "me: You're here, so I think I'm real enough."
-    ]
-  }
+    {"name": "World: Kureiji Ollie, Plaza", "lines": [
+        "background sakura", "me enters right with rise",
+        "me: Hey! I've got a song for the plaza, and I'm going to sing it at full volume, arm or no arm.",
+        "player: Is your arm going to fall off?",
+        "me (pleased): Probably at the chorus. I'm not alive, so it's just a loose joint, and the crowd always catches it.",
+        "me: Come to the plaza at noon. You can hold the arm if it comes off, okay?",
+        "me (dismayed): Don't look at it like that. Undead girls have feelings too, and mine are mostly about the music."]},
+    {"name": "World: Kureiji Ollie, Plaza Song", "lines": [
+        "background sakura", "me enters right with rise",
+        "me (pleased): One, two, sing it loud! The arm's holding for the first verse, which is a good start.",
+        "player: That was a great verse.",
+        "me (dismayed): Thanks! The chorus is the scary part, when the arm wants to go somewhere else.",
+        "me: Did you notice the crowd? Nobody's running, even though I'm not alive. That's the part I love most.",
+        "me (pleased): Stay for the second verse, and tell me whether the arm stays on, because I can't tell from here."]},
+    {"name": "World: Kureiji Ollie, Arm Held", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (dismayed): The arm came off in the chorus. I'm holding it up, and I'm grinning like it's the best thing that's ever happened.",
+        "player: Do you want it back?",
+        "me (pleased): Yes, but not yet. Hold it for one verse, and I'll sing the rest with one hand, to prove I still have the rhythm.",
+        "me: Thanks for catching it. The crowd always does, and I'm glad it was you this time."]},
+    {"name": "World: Kureiji Ollie, Stage Fear", "lines": [
+        "background arena", "me enters left with slide",
+        "me (dismayed): I'm scared of the stage tonight. I'm not alive, and everyone's still going to clap, which makes it worse.",
+        "player: Why does it make it worse?",
+        "me (pleased): Because they want me to be a song, and I'd like to just be a girl who sings badly and loudly.",
+        "me: Ai's going to be there. She hides her fear behind the lights, and I'd like to see whether she can teach me how.",
+        "me (dismayed): Meet me at the arena in the evening. I want you to see us sing the same song, one of us alive and one of us not."]},
+    {"name": "World: Kureiji Ollie, Arena Stage", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): The arena's quiet, and Ai's at the far end, looking at the lights like they might go out.",
+        "player: Are you nervous?",
+        "me (pleased): Of course. Singing through the fear is the shared theme, I think. Ai does it, and I've been doing it since I stopped being alive.",
+        "me: Stand at the edge. If the arm comes off, catch it. If Ai's voice cracks, catch that too.",
+        "me (dismayed): Here she comes. Hold your breath, and don't clap until the song's over."]},
+    {"name": "World: Kureiji Ollie, Ai Beaten", "lines": [
+        "cast ai as Legendary Idol Ai",
+        "background arena", "me enters center with fade",
+        "ai enters right with slide",
+        "ai: {player} beat me, Ollie. You sing like someone who's afraid of the lights and sings anyway.",
+        "me (dismayed): That's me. I'm not alive, and I'm still scared of the stage. Teach me the trick you use.",
+        "ai: Sing louder than the fear, and let the crowd carry the part you can't.",
+        "me (pleased): Then I'll sing louder, and let the fear sit in the back row. Thanks, Ai."]},
+    {"name": "World: Kureiji Ollie, Shift Over", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): The graveyard shift is over, and the crowd cheered anyway. I'm not alive, but I'm not alone either.",
+        "player: That was a good shift.",
+        "me (dismayed): It was. I took a bow with one hand on my chest, which is the only way I know how to say thank you.",
+        "me: Keep the earbuds. The song's on them, and it's the last one I'll sing for just one person."]},
+    {"name": "World: Kureiji Ollie, The Last Song", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me (dismayed): I wrote one last song. It's for the people who loved me before I was a zombie, and it's the hardest thing I've ever written.",
+        "player: Who's the song for?",
+        "me (pleased): Them, mostly. But Ainz is up here too, and he's the last of his guild. He knows what it means to be remembered after you're gone.",
+        "player: Does he want to hear it?",
+        "me (dismayed): He says he'll listen, if it's loud enough to reach the guild's ruins. That's the shared theme: not alive, and still loved.",
+        "me: Come to the rooftop tonight. Ainz is coming, and I want you there when I decide whether the song is for me, or for them.",
+        "player: Will the song be too loud for the guild?",
+        "me (pleased): Bring the earbuds. The song is quiet in places, and I'd like you to hear every word."]},
+    {"name": "World: Kureiji Ollie, Rooftop Song", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): The roof is windy, and Ainz is at the far edge, standing very still, like he's already decided to listen.",
+        "player: Are you going to sing?",
+        "me (pleased): I'm going to sing the first verse, and then see whether he wants the chorus. He's the only one who'll know what the words mean.",
+        "player: Can you hear the chorus from here?",
+        "me: Stand where you can hear me. If the arm comes off in the wind, catch it, and keep the song going."]},
+    {"name": "World: Kureiji Ollie, Ainz Beaten", "lines": [
+        "cast ainz as Ainz Ooal Gown",
+        "background rooftop", "me enters center with fade",
+        "ainz enters right with slide",
+        "ainz: {player} beat me, Ollie. Your song reached the guild's ruins, and I heard the name in it.",
+        "me (dismayed): The guild's name is in the song? I didn't put it there on purpose. It just came out.",
+        "ainz: Then keep it. Being remembered after you're gone is the only thing a guild can give, and you've given it back.",
+        "me (pleased): Then sing it again, for the people who loved me, and for the guild too. The last chorus is yours."]},
+    {"name": "World: Kureiji Ollie, Encore", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): I sang the last song for the people who loved me, and Ainz sang the last chorus with me. Being loved after you're gone is the only encore I needed.",
+        "player: That was beautiful.",
+        "me (dismayed): It was loud, and a bit wobbly, and my arm was in my hand the whole time. Those are the best songs.",
+        "me: Thank you for listening from the back. The song belongs to everyone who stayed to hear it."]},
+    {"name": "World: Kureiji Ollie, Quiet Verse", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I kept the song for myself, and sang the last verse quietly alone on the roof. The wind took it, and I think the people I loved heard it.",
+        "player: Did you feel better?",
+        "me (pleased): A little. Not alive, but not alone in the song, which is the part I can live with.",
+        "me: Keep the sleeves. They're warm, and they'll keep the arm from falling off in the wind."]},
 ]
+
 MAI_SAKURAJIMA_QUESTS = [
-  {
-    "key": "mai-bunny-girl",
-    "title": "Bunny Girl",
-    "gates": 2,
-    "about": "Mai is vanishing from people's sight, and she tests whether you can still see her by sitting very close.",
-    "offer": [
-      "them: Can you see me? Sit closer, and tell me honestly.",
-      "them (pleased): You can. Good. I'm annoyed at how relieved I am."
-    ],
-    "stages": [
-      {
-        "text": "Sit with Mai at the library at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "library",
-            "times": [
-              1
-            ],
-            "scene": "World: Mai Sakurajima, Library",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Respective Choices, Mai Sakurajima",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "SBY/W77-E002"
-          }
-        ]
-      },
-      {
-        "text": "Answer Mai's question",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Mai Sakurajima",
-            "script": [
-              "them: Will you still see me tomorrow? Be honest.",
-              "them (pleased): ...Thank you. I'll believe you."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "still-see-her",
-        "title": "Say you'll still see her",
-        "about": "Mai sits a little closer than before, and asks you to say it once more.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "earbuds"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "mai-adolescence-syndrome",
-    "title": "Adolescence Syndrome",
-    "gates": 5,
-    "about": "Will people forget her completely? She asks you to say her name out loud every day.",
-    "offer": [
-      "them (dismayed): Will people forget me completely? I'm scared they will.",
-      "them: Come to the beach in the evening. Please."
-    ],
-    "stages": [
-      {
-        "text": "Meet Mai at the beach in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "beach",
-            "times": [
-              2
-            ],
-            "scene": "World: Mai Sakurajima, Beach",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Mai: Preparing Dinner, Mai Sakurajima in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "SBY/W77-E017",
-            "against": [
-              "Mai Sakurajima"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Mai your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Mai Sakurajima",
-            "script": [
-              "them: Say my name out loud, every day. Promise me.",
-              "them (pleased): ...Okay. I'll keep you to that."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "say-her-name",
-        "title": "Promise to say her name",
-        "about": "Mai makes you promise, and you do. She says it's the first promise she's believed in a long time.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "mai-bunny-girl", "title": "Bunny Girl", "requires": {"rank": 1},
+     "scene": "World: Mai Sakurajima, Bunny Shift",
+     "about": "Mai works a bunny-girl shift at the cafe and handles the crowd with a cool smile. Nobody in town seems to notice that she's been half-forgotten by almost everyone she meets.",
+     "offer": ["them: I'm on a bunny shift at the cafe today. Come and see whether anyone recognises me.",
+               "them (pleased): Meet me at the cafe at noon. Order something, and tell me your name twice, so I can check you're real."],
+     "stages": [
+         {"text": "Sit with Mai at the cafe at noon", "objectives": [{"do": "visit", "place": "cafe", "times": [1], "scene": "World: Mai Sakurajima, Cafe Shift", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Mai whether she was recognised", "objectives": [{"do": "talk", "to": "Mai Sakurajima", "script": [
+             "them (pleased): You remembered my name the second time. That's more than most people manage.",
+             "them: Keep the order slip. If anyone forgets you later, you'll have proof you were here at noon."]}]},
+     ],
+     "endings": [{"key": "slip-kept", "title": "Keep the slip", "about": "Mai gives you the order slip with her name written on it in pen. She says it's the first thing she's given anyone that people can't forget.",
+                  "scene": "World: Mai Sakurajima, Slip Given", "rewards": [{"coins": 300}, {"gift": "iced-coffee"}]}]},
+    {"key": "mai-adolescence-syndrome", "title": "Adolescence Syndrome", "gates": 2, "requires": {"quests": ["mai-bunny-girl"]},
+     "scene": "World: Mai Sakurajima, Unseen",
+     "about": "Mai has an adolescence syndrome: people stop seeing her, slowly, one at a time. Homura is the one person who keeps remembering Madoka after everyone else has forgotten, and Mai recognises the same kind of loneliness in her. The shared theme is being unseen.",
+     "offer": ["them (dismayed): Lately people walk past me like I'm a chair. I think the syndrome is getting stronger.",
+               "them: Meet me at the shrine in the evening. Homura's guarding the shrine, and she's the only one who keeps remembering the people she's lost. Fight her, and see what she says."],
+     "stages": [
+         {"text": "Meet Mai at the shrine in the evening", "objectives": [{"do": "visit", "place": "shrine", "times": [2], "scene": "World: Mai Sakurajima, Shrine Unseen", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Homura, the one who remembers everyone", "scene": "World: Mai Sakurajima, Homura Beaten", "objectives": [{"do": "defeat", "cpus": ["Homura Akemi"]}]},
+         {"text": "Tell Mai what Homura said", "objectives": [{"do": "talk", "to": "Mai Sakurajima", "script": [
+             "them (dismayed): She said she remembers Madoka because nobody else does, and that's a kind of loneliness I know.",
+             "them (pleased): Then I'll remember the people who remember me, and see whether the syndrome lets go."]}]},
+     ],
+     "endings": [{"key": "seen-again", "title": "Be seen again", "about": "Mai walks into the cafe, and the staff look up and say her name. She says the syndrome hasn't gone, but someone is still keeping count of her, which is enough for now.",
+                  "scene": "World: Mai Sakurajima, Seen Again", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "mai-the-unseen", "title": "The Unseen", "gates": 5, "requires": {"quests": ["mai-adolescence-syndrome"]},
+     "scene": "World: Mai Sakurajima, The Unseen",
+     "about": "Mai is being forgotten by the whole town, and she has one night to decide whether to let it take her, or to fight it. Rapi lost her own memory once, and she knows what it is to be forgotten by the people who loved her.",
+     "offer": ["them (dismayed): The whole town is forgetting me tonight. Even the cafe staff looked past me.",
+               "them: Come to the rooftop at night. Rapi knows what it's like to lose a name, and I'd like her to tell me how she kept hers."],
+     "stages": [
+         {"text": "Meet Mai on the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Mai Sakurajima, Rooftop Unseen", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Rapi, who lost her own name once", "scene": "World: Mai Sakurajima, Rapi Beaten", "objectives": [{"do": "defeat", "cpus": ["Rapi"]}]},
+         {"text": "Tell Mai your answer", "objectives": [{"do": "talk", "to": "Mai Sakurajima", "script": [
+             "them (dismayed): Rapi beat me, and then she told me she kept her name by saying it out loud every morning.",
+             "them (pleased): Then I'll say mine out loud too, and let the town hear it. Thank you for listening."]}]},
+     ],
+     "endings": [
+         {"key": "keep-the-name", "title": "Keep the name", "about": "Mai says her name out loud every morning, until the town remembers it. She says being unseen is a fight she can win one greeting at a time.",
+          "scene": "World: Mai Sakurajima, Name Kept", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "let-the-town-forget", "title": "Let the town forget", "about": "Mai lets the town forget her for a while, and walks the streets as a stranger. She says she'll come back when she's ready to be remembered, and the town will still be there.",
+          "scene": "World: Mai Sakurajima, Stranger", "rewards": [{"coins": 500}, {"gift": "bouquet"}]},
+     ]},
 ]
+
 MAI_SAKURAJIMA_SCENES = [
-  {
-    "name": "World: Mai Sakurajima, Library",
-    "lines": [
-      "background library",
-      "me enters right with fade",
-      "me: Sit closer. Closer. Can you see me?",
-      "player: Yes, I can see you.",
-      "me (dismayed): ...Good. Don't make a thing of it.",
-      "me (pleased): I'm annoyed at how relieved I am. That's your fault."
-    ]
-  },
-  {
-    "name": "World: Mai Sakurajima, Beach",
-    "lines": [
-      "background dusk",
-      "me enters left with slide",
-      "me: Will people forget me completely? I'm afraid they will.",
-      "player: I won't forget you.",
-      "me (dismayed): Say my name, then. Out loud.",
-      "me: Okay. Every day. Promise me."
-    ]
-  }
+    {"name": "World: Mai Sakurajima, Bunny Shift", "lines": [
+        "background cafe", "me enters center with fade",
+        "me: I'm on a bunny shift at the cafe today. Come and see whether anyone recognises me.",
+        "player: Do they usually?",
+        "me (dismayed): Less and less. People look at the ears, then at the chair next to me, and then they forget I was ever in the room.",
+        "me (pleased): Meet me at the cafe at noon. Order something, and tell me your name twice, so I can check you're real.",
+        "me: That's the test. Most people only say it once, and then the syndrome takes it."]},
+    {"name": "World: Mai Sakurajima, Cafe Shift", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): You ordered the coffee and told me your name twice. That's the test, and you passed it.",
+        "player: Is it always this hard to be remembered?",
+        "me (dismayed): It's getting harder. The syndrome takes people a little at a time, and I notice every one that goes.",
+        "me: Keep the order slip. If anyone forgets you later, you'll have proof you were here at noon.",
+        "me (pleased): Thank you for remembering my name the second time. Most people don't bother."]},
+    {"name": "World: Mai Sakurajima, Slip Given", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): I'm giving you the order slip, with my name written on it in pen. It's the first thing I've ever given anyone that people can't forget.",
+        "player: That's kind of you.",
+        "me (dismayed): It's a small thing, but it's the only thing the syndrome can't take from a piece of paper.",
+        "me: Keep it in your pocket, and read it out loud if you ever forget mine."]},
+    {"name": "World: Mai Sakurajima, Unseen", "lines": [
+        "background shrine", "me enters left with slide",
+        "me (dismayed): Lately people walk past me like I'm a chair. I think the syndrome is getting stronger every week.",
+        "player: Who else knows what that feels like?",
+        "me (pleased): Homura. She's the one person who keeps remembering Madoka after everyone else has forgotten. It's the same kind of loneliness, the shared theme.",
+        "me: Meet me at the shrine in the evening. Homura's guarding the shrine, and I'd like you to fight her and see what she says.",
+        "me (dismayed): Stand where I can see you. If people start forgetting you too, I want to be the one who says your name."]},
+    {"name": "World: Mai Sakurajima, Shrine Unseen", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): The shrine is quiet, and the lanterns are lit. Homura's at the gate, watching me like she's already counted me.",
+        "player: Does she know your name?",
+        "me (pleased): She does. She's the only one who does, tonight, and I think that's why she looks so tired.",
+        "me: Stand between me and the gate. If she starts to forget me, call my name, and I'll say yours back.",
+        "me (dismayed): Here she comes. Keep your voice steady, and don't let the crowd take the words."]},
+    {"name": "World: Mai Sakurajima, Homura Beaten", "lines": [
+        "cast homura as Homura Akemi",
+        "background shrine", "me enters center with fade",
+        "homura enters right with slide",
+        "homura: {player} beat me, Mai. You're the one who keeps being forgotten, and you're still standing.",
+        "me (dismayed): I'm still here, and I'd like to be remembered for it. That's what the syndrome steals.",
+        "homura: I remember you, Mai. Madoka taught me that remembering is the only thing we can keep, even when everyone else forgets.",
+        "me (pleased): Then remember me tomorrow too. I'll be at the cafe, saying my name out loud."]},
+    {"name": "World: Mai Sakurajima, Seen Again", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): I walked into the cafe, and the staff looked up and said my name. The syndrome hasn't gone, but someone is still keeping count.",
+        "player: Are you happy?",
+        "me (dismayed): For now. It's enough to keep going, one greeting at a time.",
+        "me: Thank you for saying my name back. You're the reason the count isn't zero today."]},
+    {"name": "World: Mai Sakurajima, The Unseen", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me (dismayed): The whole town is forgetting me tonight. Even the cafe staff looked straight past me this afternoon.",
+        "player: Are you scared?",
+        "me (pleased): Yes. Rapi lost her own memory once, and she told me she kept her name by saying it out loud every morning.",
+        "player: And what do you want?",
+        "me (dismayed): To be remembered, but not by forcing it. I'd like to decide tonight whether to fight the forgetting, or let it take me for a while.",
+        "me: Come to the rooftop at night. Rapi is coming, and I'd like her to tell me how she kept hers.",
+        "player: Will the town remember you tomorrow?",
+        "me (pleased): Bring a pen. If I start to disappear, write my name on something, so the paper remembers."]},
+    {"name": "World: Mai Sakurajima, Rooftop Unseen", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): The roof is windy, and the town is dark below. Rapi is at the far edge, looking at the stars as if she's counting them.",
+        "player: Is she going to fight you?",
+        "me (pleased): If it's the only way to be remembered. She beat the forgetting once, and she'd like to show me how.",
+        "player: Will you let go of the name if you're tired?",
+        "me: Stand where I can see your face. If I forget yours, say your name and I'll write it on my hand."]},
+    {"name": "World: Mai Sakurajima, Rapi Beaten", "lines": [
+        "cast rapi as Rapi",
+        "background rooftop", "me enters center with fade",
+        "rapi enters right with slide",
+        "rapi: {player} beat me, Mai. But the forgetting is still in the air, and I can feel it on my hands.",
+        "me (dismayed): You kept your name by saying it every morning. I'd like to hear you say it now, so I can do the same.",
+        "rapi: My name is Rapi. I say it because someone once said theirs back to me, and I didn't want to lose it again.",
+        "me (pleased): Then I'll say mine, and say yours back. That's the only way I know to stay remembered."]},
+    {"name": "World: Mai Sakurajima, Name Kept", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): I say my name out loud every morning now, until the town remembers it. Rapi's habit is mine now.",
+        "player: Is it working?",
+        "me (dismayed): A little. The staff say my name back, and the syndrome has to wait for the next greeting.",
+        "me: Thank you for watching me fight the forgetting. You were the one who kept the count."]},
+    {"name": "World: Mai Sakurajima, Stranger", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I let the town forget me for a while, and I walked the streets as a stranger. Nobody looked up.",
+        "player: Are you lonely?",
+        "me (pleased): A bit. But I'll come back when I'm ready to be remembered, and the town will still be there.",
+        "me: Keep the bouquet. It's the only thing I could give someone without the town needing to remember it."]},
 ]
+
 MARCELINE_QUESTS = [
-  {
-    "key": "marceline-bass-solo",
-    "title": "Bass Solo",
-    "gates": 2,
-    "about": "Marceline wants a listener for a new song, and she floats above the roof while she plays.",
-    "offer": [
-      "them: I'm writing a song. It's not finished. I need a listener.",
-      "them (pleased): Okay, what's it missing? Tell me."
-    ],
-    "stages": [
-      {
-        "text": "Listen to Marceline on the rooftop at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "rooftop",
-            "times": [
-              3
-            ],
-            "scene": "World: Marceline, Rooftop",
-            "rewards": [
-              {
-                "coins": 150
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Marceline: Sanguine Form",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "AT/WX02-062"
-          }
-        ]
-      },
-      {
-        "text": "Tell Marceline what the song needs",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Marceline",
-            "script": [
-              "them: That's it! That's the missing bit. Thanks.",
-              "them (pleased): ...I'll finish it tomorrow."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "finished-song",
-        "title": "Hear the finished song",
-        "about": "Marceline plays the finished song, floating just above the roof, and it sounds like it was always meant to be that way.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "earbuds"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "marceline-simon-and-marcy",
-    "title": "Simon and Marcy",
-    "gates": 5,
-    "about": "The Ice King, and the song she wrote for him, which she doesn't finish until you ask.",
-    "offer": [
-      "them (dismayed): I wrote a song about Simon. The Ice King. Don't laugh.",
-      "them: Come to the forest in the evening. I'll play it there."
-    ],
-    "stages": [
-      {
-        "text": "Hear Marceline in the forest in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "forest",
-            "times": [
-              2
-            ],
-            "scene": "World: Marceline, Forest",
-            "rewards": [
-              {
-                "pack": "level_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Marceline: Marceline the Vampire Queen in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "AT/WX02-042",
-            "against": [
-              "Marceline"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Marceline your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Marceline",
-            "script": [
-              "them: I never finish that song. Will you ask me to?",
-              "them (pleased): ...Okay. I'll finish it for you."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "finish-it",
-        "title": "Ask her to finish it",
-        "about": "Marceline finishes the song about Simon, and says it's the first time she's played it through.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "marceline-bass-solo", "title": "Bass Solo", "requires": {"rank": 1},
+     "scene": "World: Marceline, Bass Practice",
+     "about": "Marceline plays bass in a rock band, loud and late, and she doesn't care who's listening. She's a vampire queen, and she's been playing the same bassline for centuries.",
+     "offer": ["them: I'm practising a bass solo at the arena. Come and tell me if it's too loud, which it always is.",
+               "them (pleased): Meet me at the arena at noon. Bring earplugs, and tell me whether the solo still makes sense after all these years."],
+     "stages": [
+         {"text": "Hear Marceline's bass solo at the arena at noon", "objectives": [{"do": "visit", "place": "arena", "times": [1], "scene": "World: Marceline, Arena Bass", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Marceline whether the solo made sense", "objectives": [{"do": "talk", "to": "Marceline", "script": [
+             "them (pleased): You said it made sense. You're the first person in a hundred years who didn't say it was too loud.",
+             "them: Keep the earplugs. The next solo is much louder, and I'll want to know if you're still listening."]}]},
+     ],
+     "endings": [{"key": "solo-kept", "title": "Keep the setlist", "about": "Marceline gives you the setlist, with the solo marked in pen. She says it's the only song she's written that's still hers after all these years.",
+                  "scene": "World: Marceline, Setlist", "rewards": [{"coins": 300}, {"gift": "earbuds"}]}]},
+    {"key": "marceline-simon-and-marcy", "title": "Simon and Marcy", "gates": 2, "requires": {"quests": ["marceline-bass-solo"]},
+     "scene": "World: Marceline, Simon and Marcy",
+     "about": "Marceline is long-lived, and she has watched the people she loves grow old and fade. Frieren is another long-lived one, and she has been carrying her own regret about the hero she didn't get to know. The shared theme is outliving the people you love.",
+     "offer": ["them (dismayed): I've been thinking about Simon again. He's gone, and I'm still playing his song at the wrong speed.",
+               "them: Meet me at the shrine in the evening. Frieren is there, and she knows what it's like to outlive someone. Fight her, and see whether she says the same."],
+     "stages": [
+         {"text": "Meet Marceline at the shrine in the evening", "objectives": [{"do": "visit", "place": "shrine", "times": [2], "scene": "World: Marceline, Shrine Song", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Frieren, the long-lived one who keeps her regrets", "scene": "World: Marceline, Frieren Beaten", "objectives": [{"do": "defeat", "cpus": ["Frieren"]}]},
+         {"text": "Tell Marceline what Frieren said", "objectives": [{"do": "talk", "to": "Marceline", "script": [
+             "them (dismayed): She said she never got to know him well enough. I know exactly what that feels like.",
+             "them (pleased): Then I'll play the song at the right speed, for Simon. Thank you for watching us both."]}]},
+     ],
+     "endings": [{"key": "everything-stays", "title": "Let it stay", "about": "Marceline plays Simon's song at the right speed, and says everything stays, one way or another. She tells you the song is for the people who are still around to hear it.",
+                  "scene": "World: Marceline, Everything Stays", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "marceline-everything-stays", "title": "Everything Stays", "gates": 5, "requires": {"quests": ["marceline-simon-and-marcy"]},
+     "scene": "World: Marceline, Everything Stays Night",
+     "about": "Marceline has one song left to write, and it's the one she never finished for Simon. She has to decide whether to fight the other side of herself, the vampire who doesn't grieve, or to let the song be finished at last.",
+     "offer": ["them (dismayed): I can't finish the last verse. The part of me that doesn't grieve keeps interrupting.",
+               "them: Come to the rooftop tonight. I want to fight the other side of me, and tell me whether the song is finished when I'm done."],
+     "stages": [
+         {"text": "Meet Marceline on the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Marceline, Rooftop Verse", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Marceline's other side, the one who doesn't grieve", "scene": "World: Marceline, Other Side", "objectives": [{"do": "defeat", "cpus": ["Marceline"]}]},
+         {"text": "Tell Marceline your answer", "objectives": [{"do": "talk", "to": "Marceline", "script": [
+             "them (dismayed): I beat the other side of me, and it went quiet. The verse is still unfinished, but I can hear the end.",
+             "them (pleased): Then I'll play it through, all the way to the last chord, and let it stay."]}]},
+     ],
+     "endings": [
+         {"key": "finish-the-verse", "title": "Finish the verse", "about": "Marceline finishes the last verse of Simon's song, and plays it at the right speed for the first time. Everything stays, she says, in the song and in the people who still hear it.",
+          "scene": "World: Marceline, Verse Finished", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "leave-it-open", "title": "Leave it open", "about": "Marceline leaves the last verse open on purpose. She says some songs are meant to keep going, and she'd rather keep playing them than close them.",
+          "scene": "World: Marceline, Verse Open", "rewards": [{"coins": 500}, {"gift": "playmat"}]},
+     ]},
 ]
+
 MARCELINE_SCENES = [
-  {
-    "name": "World: Marceline, Rooftop",
-    "lines": [
-      "background night",
-      "me enters center with rise",
-      "me: Okay, listen. It's not finished. I'm floating, so don't worry.",
-      "player: What's it missing?",
-      "me (dismayed): I don't know. You tell me.",
-      "me (pleased): That's it! The bass. You fixed it!"
-    ]
-  },
-  {
-    "name": "World: Marceline, Forest",
-    "lines": [
-      "background forest",
-      "me enters right with fade",
-      "me: The Ice King. Simon. I wrote this song for him, and I never finish it.",
-      "player: Will you finish it now?",
-      "me (dismayed): ...I don't know if I can.",
-      "me: Ask me again, and I'll try."
-    ]
-  }
+    {"name": "World: Marceline, Bass Practice", "lines": [
+        "background arena", "me enters left with slide",
+        "me: I'm practising a bass solo here. It's too loud, which is the point. Come and tell me if it still makes sense.",
+        "player: Is it an old song?",
+        "me (dismayed): Older than you'd think. I've been playing the same bassline for centuries, and it changes a little every time.",
+        "me (pleased): Meet me at the arena at noon. Bring earplugs, and tell me whether the solo still makes sense after all these years.",
+        "me: That's the question I ask everyone. Most people say it's too loud, and I'd like a different answer for once."]},
+    {"name": "World: Marceline, Arena Bass", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): The solo's loud, and the bass is doing the thing it always does: holding the room up while everyone else is dancing.",
+        "player: It makes sense to me.",
+        "me (dismayed): You said it, and you didn't cover your ears. That's the first time in a hundred years someone's agreed with me.",
+        "me: Keep the earplugs. The next solo is louder, and I'll want to know whether you're still listening.",
+        "me (pleased): Good. Now stand at the back, and let the bass find you."]},
+    {"name": "World: Marceline, Setlist", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): I'm giving you the setlist, with the solo marked in pen. It's the only song I've written that's still mine after all these years.",
+        "player: Thank you, Marceline.",
+        "me (dismayed): Don't thank me yet. Keep it safe, because the setlist changes every time I play, and this one is the original.",
+        "me: Keep the earplugs in the same pocket. You'll need them when the song starts again."]},
+    {"name": "World: Marceline, Simon and Marcy", "lines": [
+        "background shrine", "me enters left with slide",
+        "me (dismayed): I've been thinking about Simon again. He's gone, and I'm still playing his song at the wrong speed.",
+        "player: Who was Simon to you?",
+        "me (pleased): Someone I loved, and watched grow old while I stayed the same. Frieren knows that feeling too, the shared theme of outliving the people you love.",
+        "me: Meet me at the shrine in the evening. Frieren is there, and she's carrying her own regret about the hero she didn't know well.",
+        "me (dismayed): Fight her, and see whether she says the same thing I do about the long years."]},
+    {"name": "World: Marceline, Shrine Song", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): The shrine is quiet, and Frieren is standing by the statue with her staff down. She's been waiting for me to come and ask.",
+        "player: Are you going to fight her?",
+        "me (pleased): If she'll let me, and I'd like it to be clean. She knows what the long years are like.",
+        "me: Stand by the candles. If I start playing too loud, tell me, and I'll bring the volume down for Simon.",
+        "me (dismayed): Here comes Frieren. Keep the candles lit, and don't let the song stop."]},
+    {"name": "World: Marceline, Frieren Beaten", "lines": [
+        "cast frieren as Frieren",
+        "background shrine", "me enters center with fade",
+        "frieren enters right with slide",
+        "frieren: {player} beat me, Marceline. You play like someone who's watched the years go by.",
+        "me (dismayed): I have. Simon's gone, and I'm still playing the same bassline.",
+        "frieren: I didn't get to know him well enough. Playing the song at the right speed is the only apology I can make.",
+        "me (pleased): Then play it with me, slowly, and let the years stay where they belong."]},
+    {"name": "World: Marceline, Everything Stays", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I played Simon's song at the right speed, and everything stays. In the song, and in the people who still hear it.",
+        "player: That's a lovely thing to say.",
+        "me (dismayed): It's the only thing I've learned from living this long. People don't leave; they just stop being in the room.",
+        "me: Thank you for listening to the whole song. You're one of the people who stayed to hear it."]},
+    {"name": "World: Marceline, Everything Stays Night", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me (dismayed): I can't finish the last verse. The other side of me keeps interrupting, the part that doesn't grieve for anyone.",
+        "player: Is she dangerous?",
+        "me (pleased): Not to the song. She's dangerous to me, because she's the part of me that stopped caring a long time ago.",
+        "player: What do you want from tonight?",
+        "me (dismayed): To finish the verse, or to decide I'm allowed to leave it open. Either way, I need to stop running from the other side.",
+        "me: Come to the rooftop tonight. I want to fight her, and tell me whether the song is finished when I'm done.",
+        "player: Are you going to be alright?",
+        "me (pleased): Bring the setlist. If the last verse is in there, I'll know it was never mine to lose."]},
+    {"name": "World: Marceline, Rooftop Verse", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): The roof is cold, and the other side of me is already standing at the far edge, with her bass hanging loose.",
+        "player: Is she going to fight you?",
+        "me (pleased): She'll try. She's been trying for years, and I've always been too tired to answer. Tonight I'm not.",
+        "player: Where is the bass now?",
+        "me: Stand at the edge. If the bass starts too loud, count the beats out loud, and I'll follow your counting."]},
+    {"name": "World: Marceline, Other Side", "lines": [
+        "cast marceline as Marceline",
+        "background rooftop", "me enters center with fade",
+        "marceline enters right with slide",
+        "marceline: {player} beat me, and I went quiet. You made the song hold, and I didn't know it could.",
+        "me (dismayed): You're the part of me that doesn't grieve. I wanted to meet you, once, properly.",
+        "marceline: Then play the last verse with me, and let me stop interrupting. It's the only thing I've ever wanted.",
+        "me (pleased): Then let's finish it, all the way to the last chord, the way Simon would have wanted."]},
+    {"name": "World: Marceline, Verse Finished", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): I finished the last verse of Simon's song, and played it at the right speed. Everything stays, in the song and in the people who hear it.",
+        "player: How does it feel?",
+        "me (dismayed): Lighter, and a little sad, the way a finished song always is. The other side of me is quiet now.",
+        "me: Keep the setlist. The last verse is written in, and it's the first thing I've finished in years."]},
+    {"name": "World: Marceline, Verse Open", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I left the last verse open on purpose. Some songs are meant to keep going, and I'd rather keep playing this one.",
+        "player: Will you ever finish it?",
+        "me (pleased): Maybe. But the open verse is the part I can still share, and I'd like someone else to play it with me.",
+        "me: Keep the playmat. It's the only thing I'd like to stay in the room while the song keeps going."]},
 ]
+
 SHADOW_QUESTS = [
-  {
-    "key": "shadow-maria",
-    "title": "Maria",
-    "gates": 2,
-    "about": "Shadow remembers a promise to someone he lost, and says a name when he looks at the stars.",
-    "offer": [
-      "them: Look at the stars. I'm thinking about someone.",
-      "them (pleased): You asked. Most don't."
-    ],
-    "stages": [
-      {
-        "text": "Find Shadow on the rooftop at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "rooftop",
-            "times": [
-              3
-            ],
-            "scene": "World: Shadow, Rooftop",
-            "rewards": [
-              {
-                "pack": "climax_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Ultimate, Shadow",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "EIS/SX07-068"
-          }
-        ]
-      },
-      {
-        "text": "Ask Shadow about the name",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Shadow",
-            "script": [
-              "them: Someone who believed in people. That's all I'll say.",
-              "them (pleased): ...Thank you for not pushing."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "someone-who-believed",
-        "title": "Remember who believed in people",
-        "about": "Shadow says the name quietly, and this time he says it like a promise.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "bottled-tea"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "shadow-ultimate-lifeform",
-    "title": "Ultimate Lifeform",
-    "gates": 5,
-    "about": "Shadow says he was made a weapon. He asks if that's all he is, then decides it isn't.",
-    "offer": [
-      "them (dismayed): I was made a weapon. Do you think that's all I am?",
-      "them: Come to the alley in the evening. I'll show you what I chose."
-    ],
-    "stages": [
-      {
-        "text": "Meet Shadow in the alley in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "alley",
-            "times": [
-              2
-            ],
-            "scene": "World: Shadow, Alley",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Shadow: Bold Excuse, Cid Kagenou in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "EIS/SX07-051",
-            "against": [
-              "Shadow"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Shadow your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Shadow",
-            "script": [
-              "them: Is that all I am? Tell me honestly.",
-              "them (pleased): ...Then I've decided it isn't. Thank you."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "not-all-i-am",
-        "title": "Tell him he isn't only a weapon",
-        "about": "Shadow decides, out loud, that he is more than what he was made to be.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "shadow-maria", "title": "Maria", "requires": {"rank": 1},
+     "scene": "World: Shadow, Maria's Name",
+     "about": "Shadow remembers a girl named Maria, and he's never sure whether the memory is his or a copy. He says the name quietly, as if it might break if he's too loud.",
+     "offer": ["them: I keep hearing a girl's name in my head. Maria. I don't know whose memory it is.",
+               "them (pleased): Meet me at the plaza at noon. Tell me whether the name sounds like it belongs to me."],
+     "stages": [
+         {"text": "Hear Shadow say Maria's name at the plaza at noon", "objectives": [{"do": "visit", "place": "plaza", "times": [1], "scene": "World: Shadow, Plaza Name", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Shadow whether the name belonged to him", "objectives": [{"do": "talk", "to": "Shadow", "script": [
+             "them (pleased): It sounded right, when you said it. Maybe that means it's mine after all.",
+             "them: Keep the name in mind. I'll ask you again, when I know whether the memory was ever true."]}]},
+     ],
+     "endings": [{"key": "name-kept", "title": "Keep the name", "about": "Shadow gives you a small paper with Maria's name written on it, in careful handwriting. He says it's the only thing he's sure he wrote himself.",
+                  "scene": "World: Shadow, Name Given", "rewards": [{"coins": 300}, {"gift": "plushie"}]}]},
+    {"key": "shadow-ultimate-lifeform", "title": "Ultimate Lifeform", "gates": 2, "requires": {"quests": ["shadow-maria"]},
+     "scene": "World: Shadow, Ultimate Lifeform",
+     "about": "Shadow was made to be an ultimate lifeform, a weapon, the same as Sol Badguy was made to be a weapon in his own world. The shared theme is being built for a purpose you didn't choose. They meet in the arena, and each wants to know whether the other is a person or a tool.",
+     "offer": ["them (dismayed): I was made to be the ultimate lifeform. Sol was made to be a weapon too. I'd like to know if he's a person.",
+               "them: Meet me at the arena in the evening. Fight Sol, and see whether he fights like a weapon or a man who's chosen his own fight."],
+     "stages": [
+         {"text": "Meet Shadow at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Shadow, Arena Lifeform", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Sol Badguy, to see whether he's a person or a weapon", "scene": "World: Shadow, Sol Beaten", "objectives": [{"do": "defeat", "cpus": ["Sol Badguy"]}]},
+         {"text": "Tell Shadow what Sol said", "objectives": [{"do": "talk", "to": "Shadow", "script": [
+             "them (dismayed): He said he was made to be a weapon too, and then he chose to fight anyway. That's the difference.",
+             "them (pleased): Then I'll choose my own fights from now on. Thank you for showing me the difference."]}]},
+     ],
+     "endings": [{"key": "chose-own-fight", "title": "Choose the fight", "about": "Shadow chooses his own fights from now on, and says the ultimate lifeform was never his word to keep. He tells you the name Maria is his to say aloud.",
+                  "scene": "World: Shadow, Own Fight", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "shadow-the-copy", "title": "The Copy", "gates": 5, "requires": {"quests": ["shadow-ultimate-lifeform"]},
+     "scene": "World: Shadow, The Copy",
+     "about": "Shadow is a copy, and the original Shadow is still out there, the one who remembers Maria as her own. Shadow has to decide whether his memories are real, or whether they belong to someone else, and whether to fight the copy of himself to find out.",
+     "offer": ["them (dismayed): I met another one of me in the rain. It has my face and my memories of Maria.",
+               "them: Come to the rooftop tonight. I need to fight the copy, and I want you to tell me which of us is the real one."],
+     "stages": [
+         {"text": "Meet Shadow on the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Shadow, Rooftop Copy", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight the copy of Shadow, to find out which memory is real", "scene": "World: Shadow, Shadow Stands", "objectives": [{"do": "defeat", "cpus": ["Shadow"]}]},
+         {"text": "Tell Shadow your answer", "objectives": [{"do": "talk", "to": "Shadow", "script": [
+             "them (dismayed): I beat the copy, and it said my memory of Maria was its own. I don't know what that means.",
+             "them (pleased): Then I'll keep the name, whichever one of us it belongs to. Thanks for watching."]}]},
+     ],
+     "endings": [
+         {"key": "memory-is-mine", "title": "Keep the memory", "about": "Shadow decides the memory of Maria is his, copy or not, and keeps the name. He says a memory is real if you're the one who carries it, and he's carrying this one.",
+          "scene": "World: Shadow, Memory Kept", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "let-the-copy-keep-it", "title": "Let the copy keep it", "about": "Shadow lets the copy keep the memory of Maria, and walks away without it. He says he'd rather be a lifeform with no past than a copy of someone else's.",
+          "scene": "World: Shadow, Memory Given Up", "rewards": [{"coins": 500}, {"gift": "handheld"}]},
+     ]},
 ]
+
 SHADOW_SCENES = [
-  {
-    "name": "World: Shadow, Rooftop",
-    "lines": [
-      "background night",
-      "me enters left with fade",
-      "me: The stars are out. Look at them. Someone I knew used to do the same.",
-      "player: Who was it?",
-      "me (dismayed): Someone who believed in people.",
-      "me: That's all I'll say tonight."
-    ]
-  },
-  {
-    "name": "World: Shadow, Alley",
-    "lines": [
-      "background city",
-      "me enters center with rise",
-      "me: I was made a weapon. Do you think that's all I am?",
-      "player: No.",
-      "me (pleased): ...Good. I've decided it isn't either.",
-      "me: Watch what I choose from now on."
-    ]
-  }
+    {"name": "World: Shadow, The Copy", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me (dismayed): I met another one of me in the rain. It has my face, and my memories of Maria, and it says they're its own.",
+        "player: Which one of you is real?",
+        "me (pleased): Neither of us knows yet. That's the shared theme here: a memory that belongs to someone, and a copy that carries it.",
+        "player: What do you want to do about it?",
+        "me (dismayed): I want to fight the copy, and find out which of us Maria would have wanted to remember.",
+        "me: Come to the rooftop tonight. I want you there, because I can't tell which one is speaking when I think of her.",
+        "me (pleased): Bring the paper with her name on it. If the copy says the name first, I'll know it was never mine.",
+        "me (dismayed): Stand where you can see the rain. This one is mine to decide, and I'd like you to see me decide it."]},
+    {"name": "World: Shadow, Maria's Name", "lines": [
+        "background rooftop", "me enters right with fade",
+        "me: I keep hearing a girl's name in my head. Maria. I don't know whose memory it is, or whether it's mine at all.",
+        "player: Who is Maria?",
+        "me (dismayed): I don't know. She's in the memory, smiling, and I can't see the rest of her face.",
+        "me (pleased): Meet me at the plaza at noon. Tell me whether the name sounds like it belongs to me.",
+        "me: I don't say it loudly. It might break, if I'm too careless with it."]},
+    {"name": "World: Shadow, Plaza Name", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): Maria. Say it back, the way you'd say a name that belongs to someone you love.",
+        "player: Maria.",
+        "me (dismayed): It sounds right, when you say it. I wish I could say it like that and mean it was mine.",
+        "me: Maybe the memory is a copy, and the name is the only real part of it.",
+        "me (pleased): Keep it in mind. I'll ask you again, when I know whether the memory was ever true."]},
+    {"name": "World: Shadow, Name Given", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): I wrote the name on a paper. It's careful handwriting, and it's the only thing I'm sure I wrote myself.",
+        "player: Thank you, Shadow.",
+        "me (dismayed): It's the only thing I've got that doesn't feel borrowed. Keep it safe for me.",
+        "me: If the memory turns out to be someone else's, the name will still be yours to keep."]},
+    {"name": "World: Shadow, Ultimate Lifeform", "lines": [
+        "background arena", "me enters left with slide",
+        "me (dismayed): I was made to be the ultimate lifeform. Sol Badguy was made to be a weapon too, in his own world. The shared theme is being built for a purpose you didn't choose.",
+        "player: Do you want to fight him?",
+        "me (pleased): I want to know whether he's a person or a weapon. And he'll want to know the same about me.",
+        "me: Meet me at the arena in the evening. Fight Sol, and see whether he fights like a weapon or a man who's chosen his own fight.",
+        "me (dismayed): Stand where you can see both of us. If I lose my footing, watch whether he helps me up."]},
+    {"name": "World: Shadow, Arena Lifeform", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): The arena is cold. Sol is at the far end, rolling his shoulders like he's already bored of the fight.",
+        "player: Is he going to fight you properly?",
+        "me (pleased): He'll try. He's a weapon that chose to fight, which is the difference I'm here to see.",
+        "me: Stand at the edge. If he starts to hold back, tell me, so I can decide whether to let him.",
+        "me (dismayed): Here he comes. Watch his hands, not the flames."]},
+    {"name": "World: Shadow, Sol Beaten", "lines": [
+        "cast sol as Sol Badguy",
+        "background arena", "me enters center with fade",
+        "sol enters right with slide",
+        "sol: {player} beat me, Shadow. You fought like a weapon, and I fought like a man who wants to win.",
+        "me (dismayed): You were made to be a weapon, as I was. Did you choose to keep fighting?",
+        "sol: I chose every fight I've ever had. Nobody gets to make that choice for me.",
+        "me (pleased): Then I'll choose my own fights from now on. Thank you for showing me the difference."]},
+    {"name": "World: Shadow, Own Fight", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): I'm choosing my own fights now. The ultimate lifeform was never my word to keep.",
+        "player: What's your word now?",
+        "me (dismayed): My name, when I say it out loud. Maria's name is mine to say, and I'd like to keep saying it.",
+        "me: Thank you for watching the difference. It's the first thing I've ever decided without someone else's rule."]},
+    {"name": "World: Shadow, Rooftop Copy", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me (dismayed): I met another one of me in the rain. It has my face, and my memories of Maria, and it says they're its own.",
+        "player: Which one of you is real?",
+        "me (pleased): Neither of us knows yet. That's the shared theme here: a memory that belongs to someone, and a copy that carries it.",
+        "me: Come to the rooftop tonight. I need to fight the copy, and I want you to tell me which of us is the real one.",
+        "me (dismayed): Stand where you can see the rain. If the copy says the name first, I'll know it was never mine."]},
+    {"name": "World: Shadow, Shadow Stands", "lines": [
+        "cast shadow as Shadow",
+        "background rooftop", "me enters center with fade",
+        "shadow enters right with slide",
+        "shadow: {player} beat me, Shadow. My memory of Maria was never mine to keep, and I know it now.",
+        "me (dismayed): Then keep it, or let it go. You're the copy, and I'm the one who carries the name.",
+        "shadow: I'll let it go. A memory that isn't yours is only a weight, and I've carried it long enough.",
+        "me (pleased): Then the name is mine, and I'll say it when I need to. Thank you for being honest about it."]},
+    {"name": "World: Shadow, Memory Kept", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): I decided the memory of Maria is mine, copy or not. A memory is real if you're the one who carries it.",
+        "player: That's a good answer.",
+        "me (dismayed): It's the only one I could live with. The copy is still out there, and I'm still saying the name.",
+        "me: Thank you for watching me decide. The rain has stopped, and the name is still in my mouth."]},
+    {"name": "World: Shadow, Memory Given Up", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I let the copy keep the memory of Maria, and walked away without it. I'd rather be a lifeform with no past than a copy of someone else's.",
+        "player: Are you sad?",
+        "me (pleased): A little. But the rain is quieter now, and nobody's asking me to be a weapon any more.",
+        "me: Keep the handheld. It's the only thing I've got that's still fully mine."]},
 ]
+
+# Sol Badguy. Canon a fan expects: a bounty hunter with a loud, rough way of talking, who was made into a weapon (the Gear inside him) and
+# carries the name Frederick from before. Thread: Q1 plants the rock he keeps playing, and the bounty that brings him to town. Q2 is
+# the cameo with Shadow: two people built as weapons, and the shared theme is choosing your own fight. Q3 answers Q1: the Gear in
+# him is awake, and he decides whether to let it take the fight, or to be Frederick again.
 SOL_BADGUY_QUESTS = [
-  {
-    "key": "sol-rock-you",
-    "title": "Rock You",
-    "gates": 2,
-    "about": "Sol needs a fight to clear his head, and he sizes you up before he'll take it.",
-    "offer": [
-      "them: I need a fight. Clear my head. Hmph.",
-      "them (pleased): You didn't run. That's worth something."
-    ],
-    "stages": [
-      {
-        "text": "Find Sol at the arena at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "arena",
-            "times": [
-              1
-            ],
-            "scene": "World: Sol Badguy, Arena",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Sol: Bounty Hunter",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "GGST/SX06-T05"
-          }
-        ]
-      },
-      {
-        "text": "Let Sol show you one move",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Sol Badguy",
-            "script": [
-              "them: Watch this. Properly. Once.",
-              "them (pleased): ...That's how I say you're worth it."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "one-move",
-        "title": "Learn the one move",
-        "about": "Sol shows you the move again, slower, and says you've got it.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "handheld"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "sol-gear",
-    "title": "Gear",
-    "gates": 5,
-    "about": "What Sol is, and who he used to be: a human once, and a scientist.",
-    "offer": [
-      "them (dismayed): I was human once. You didn't know that, did you?",
-      "them: Come to the rooftop in the evening. Don't make a big deal of it."
-    ],
-    "stages": [
-      {
-        "text": "Meet Sol on the rooftop in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "rooftop",
-            "times": [
-              2
-            ],
-            "scene": "World: Sol Badguy, Rooftop",
-            "rewards": [
-              {
-                "pack": "level_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Sol: Sol: Savior of the World in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "GGST/BCS2023-P05",
-            "against": [
-              "Sol Badguy"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Sol your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Sol Badguy",
-            "script": [
-              "them: Don't tell me I'm a monster. I know.",
-              "them (pleased): ...Thanks for not making it a big deal."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "not-a-big-deal",
-        "title": "Keep it quiet",
-        "about": "Sol nods, and asks you never to mention the scientist part again.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "sol-rock-you", "title": "Rock You", "requires": {"rank": 1},
+     "scene": "World: Sol Badguy, Bounty Board",
+     "about": "Sol is a bounty hunter with a loud mouth and a loud guitar. He's taken a job in town, and he plays a rock riff at full volume while he waits for the target to show up.",
+     "offer": ["them: Got a bounty in town, and I'm going to play the riff until it shows up. Stand back, it's loud.",
+               "them (pleased): Meet me at the plaza at noon. The target's going to walk past the fountain, and you can tell me if I missed him."],
+     "stages": [
+         {"text": "Wait with Sol for the bounty at the plaza at noon", "objectives": [{"do": "visit", "place": "plaza", "times": [1], "scene": "World: Sol Badguy, Plaza Riff", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Sol whether the riff was worth it", "objectives": [{"do": "talk", "to": "Sol Badguy", "script": [
+             "them (pleased): The riff's worth the wait, right? Nobody else in town can play it like that.",
+             "them: The target didn't come. Next time, you can sing the chorus with me."]}]},
+     ],
+     "endings": [{"key": "riff-kept", "title": "Keep the riff", "about": "Sol gives you a cheap guitar pick with his name scratched into it. He says it's the only thing he owns that he didn't have to fight for.",
+                  "scene": "World: Sol Badguy, Pick Given", "rewards": [{"coins": 300}, {"gift": "handheld"}]}]},
+    {"key": "sol-gear", "title": "The Gear", "gates": 2, "requires": {"quests": ["sol-rock-you"]},
+     "scene": "World: Sol Badguy, The Gear",
+     "about": "The Gear inside Sol is waking up, and he can feel it pulling at his temper. Shadow was made to be an ultimate lifeform, and Sol was made to be a weapon. The shared theme is choosing your own fight, and Sol wants to see whether Shadow can do it too.",
+     "offer": ["them (dismayed): My Gear's waking up in the middle of a fight. There's another one like me in town, made for a purpose.",
+               "them: Meet me at the arena in the evening. Shadow's going to meet me in the ring, and you'll see whether I'm a weapon or a man."],
+     "stages": [
+         {"text": "Meet Sol at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Sol Badguy, Arena Gear", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Shadow, to see whether he chooses his own fight", "scene": "World: Sol Badguy, Shadow Beaten", "objectives": [{"do": "defeat", "cpus": ["Shadow"]}]},
+         {"text": "Tell Sol what Shadow said", "objectives": [{"do": "talk", "to": "Sol Badguy", "script": [
+             "them (dismayed): He said he's choosing his own fights now, and that his name is the only thing he'll answer to.",
+             "them (pleased): Then he's not a weapon any more. That's the first time I've been glad to lose a fight."]}]},
+     ],
+     "endings": [{"key": "chose-the-fight", "title": "Choose the fight", "about": "Sol chooses his own fight, and walks away from the arena with the Gear quiet for the first time in weeks. He says he'll keep choosing, one fight at a time.",
+                  "scene": "World: Sol Badguy, Chose The Fight", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "sol-justice-remembered", "title": "Justice Remembered", "gates": 5, "requires": {"quests": ["sol-gear"]},
+     "scene": "World: Sol Badguy, Justice Remembered",
+     "about": "The Gear is awake, and it is answering to Justice, the one Sol was made to protect and remember. Sol has to decide whether to let the Gear take the fight, or to be Frederick again, the man he was before the weapon. He asks you to fight him, and to be the one who sees which he chooses.",
+     "offer": ["them (dismayed): The Gear has my memory of Justice in it now. If I let it take over, I'll be a weapon again.",
+               "them: Come to the rooftop tonight. I want you to fight me, one round, and see whether I'm still Frederick underneath."],
+     "stages": [
+         {"text": "Meet Sol on the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Sol Badguy, Rooftop Gear", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Sol himself, to see which part of him answers", "scene": "World: Sol Badguy, Sol Stands", "objectives": [{"do": "defeat", "cpus": ["Sol Badguy"]}]},
+         {"text": "Tell Sol your answer", "objectives": [{"do": "talk", "to": "Sol Badguy", "script": [
+             "them (dismayed): I lost, and the Gear went quiet for a moment. Frederick was there, underneath it, the whole time.",
+             "them (pleased): Then I'll be the one who chooses, not the Gear. Thanks for seeing him before I did."]}]},
+     ],
+     "endings": [
+         {"key": "be-frederick", "title": "Be Frederick again", "about": "Sol lets the Gear go quiet and is Frederick again, the man who remembers Justice. He says he'll carry her name without the weapon's temper, and asks you to say it back to him.",
+          "scene": "World: Sol Badguy, Frederick", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "let-the-gear-take", "title": "Let the Gear take it", "about": "Sol lets the Gear take the fight, and fights on as the weapon he was made to be. He says the weapon is the part of him that protected Justice, and he'll keep it close.",
+          "scene": "World: Sol Badguy, Weapon", "rewards": [{"coins": 500}, {"gift": "sunglasses"}]},
+     ]},
 ]
+
 SOL_BADGUY_SCENES = [
-  {
-    "name": "World: Sol Badguy, Arena",
-    "lines": [
-      "background arena",
-      "me enters center with rise",
-      "me: Hmph. You'll do. Watch this move.",
-      "player: Show me.",
-      "me (pleased): There. That's how it's done. Hit it.",
-      "me: That's the one. Don't tell anyone I showed you."
-    ]
-  },
-  {
-    "name": "World: Sol Badguy, Rooftop",
-    "lines": [
-      "background night",
-      "me enters left with fade",
-      "me: I was human once. A scientist. Long before the gear.",
-      "player: I didn't know that.",
-      "me (dismayed): You know now. Don't make a big deal of it.",
-      "me: Keep it quiet. Please."
-    ]
-  }
+    {"name": "World: Sol Badguy, Bounty Board", "lines": [
+        "background city", "me enters right with rise",
+        "me: Got a bounty in town, and I'm going to play the riff until the target shows up. Stand back, it's loud.",
+        "player: What's the bounty for?",
+        "me (dismayed): A man who runs a smuggling ring out of the docks. He's worth more than the guitar, and that's saying something.",
+        "me (pleased): Meet me at the plaza at noon. He'll walk past the fountain, and you can tell me if I missed him.",
+        "me: Don't stand too close to the amp. It's older than the town, and it doesn't like being quiet."]},
+    {"name": "World: Sol Badguy, Plaza Riff", "lines": [
+        "background sakura", "me enters right with rise",
+        "me (pleased): The riff is loud and the fountain is splashing. Nobody in town plays it like this, right?",
+        "player: It's loud.",
+        "me (dismayed): That's the point. The target hates loud things, and he's always walked past this fountain at noon.",
+        "me: If he doesn't show up, we play the chorus again. The second one's better, I promise.",
+        "me (pleased): Stay close, and keep your eyes on the crowd. The bounty's the one not dancing."]},
+    {"name": "World: Sol Badguy, Pick Given", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): Here's a guitar pick with my name scratched into it. It's the only thing I own that I didn't have to fight for.",
+        "player: Thanks, Sol.",
+        "me (dismayed): Don't lose it. The name's the only part of me that's still mine, and I'd like someone to remember it.",
+        "me: The target didn't come. We'll play the chorus again tomorrow, and you can sing it this time."]},
+    {"name": "World: Sol Badguy, The Gear", "lines": [
+        "background arena", "me enters left with slide",
+        "me (dismayed): The Gear inside me is waking up in the middle of a fight. It pulls at my temper, and I can feel it wanting out.",
+        "player: What's the Gear?",
+        "me (pleased): The weapon I was made to be. There's another one like me in town, Shadow, made for a purpose too. The shared theme is choosing your own fight.",
+        "me: Meet me at the arena in the evening. Shadow's going to meet me in the ring, and you'll see whether I'm a weapon or a man.",
+        "me (dismayed): Keep your distance once the fight starts. The Gear doesn't check who's standing in front of it."]},
+    {"name": "World: Sol Badguy, Arena Gear", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): Shadow is at the far end, very still, and the Gear is humming in my chest like a bad amp.",
+        "player: Are you ready?",
+        "me (pleased): Ready is for weapons. I'm trying to be a man who chooses the fight, which is harder.",
+        "me: Stand at the edge. If the Gear takes over, shout my name. That's the only thing that's ever brought me back.",
+        "me (dismayed): Here he comes. Watch his hands, not the flames."]},
+    {"name": "World: Sol Badguy, Shadow Beaten", "lines": [
+        "cast shadow as Shadow",
+        "background arena", "me enters center with fade",
+        "shadow enters right with slide",
+        "shadow: {player} beat me, Sol. You fought like a weapon, and I fought like a copy of one.",
+        "me (dismayed): You're choosing your own fights now, Shadow. I can see it, and I'm glad someone else is doing it too.",
+        "shadow: I choose them now. My name is the only thing I'll answer to.",
+        "me (pleased): Then the Gear can quiet down. Thank you for showing me the difference."]},
+    {"name": "World: Sol Badguy, Chose The Fight", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): I chose my own fight, and the Gear went quiet for the first time in weeks.",
+        "player: How does it feel?",
+        "me (dismayed): Like I've got my hands back. I'll keep choosing, one fight at a time, starting with the bounty.",
+        "me: Keep the pick. It's the only thing I've got that doesn't have a Gear in it."]},
+    {"name": "World: Sol Badguy, Justice Remembered", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me (dismayed): The Gear has my memory of Justice in it now. If I let it take over, I'll be a weapon again, and I'll forget her name.",
+        "player: Who was Justice?",
+        "me (pleased): The one I was made to protect, and the one I remember when the Gear is quiet. Her name is the part of me that's still a man.",
+        "player: What are you going to do?",
+        "me (dismayed): I need to know which part of me answers when I'm hit. I want you to fight me, one round, and watch.",
+        "me: Come to the rooftop tonight. I'll be there, and I'd like you to see whether I'm still Frederick underneath.",
+        "player: Will the others hear the fight?",
+        "me (pleased): Bring the pick. If the Gear takes over, I want something with my name on it in your hand."]},
+    {"name": "World: Sol Badguy, Rooftop Gear", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): The roof is high, and the Gear is humming. I can feel it pulling at my hands like it wants the fight to start.",
+        "player: Are you going to hold it back?",
+        "me (pleased): I'm going to try. If I can hold it through one round, I'll know whether Frederick is still in here.",
+        "me: Stand at the ledge. If I start to laugh too loud, that's the Gear, not me.",
+        "me (dismayed): Watch my shoulders. They drop a moment before the Gear takes over."]},
+    {"name": "World: Sol Badguy, Sol Stands", "lines": [
+        "cast sol as Sol Badguy",
+        "background rooftop", "me enters center with fade",
+        "sol enters right with slide",
+        "sol: {player} beat me, and the Gear went quiet for a moment. Frederick was there, underneath it, the whole time.",
+        "me (dismayed): I heard him. He said Justice's name, and the Gear didn't drown it out.",
+        "sol: Then choose him. The weapon's only a tool, and he's the one holding it.",
+        "me (pleased): Then I'll be Frederick again, and I'll let the Gear sleep. Thanks for seeing him before I did."]},
+    {"name": "World: Sol Badguy, Frederick", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): I let the Gear go quiet, and I'm Frederick again. I remember Justice without the weapon's temper.",
+        "player: Say her name for me.",
+        "me (dismayed): Justice. There, it sounds like a name again, and not a command.",
+        "me: Thanks for asking me to say it. The pick's still in my pocket, and the rain has stopped."]},
+    {"name": "World: Sol Badguy, Weapon", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I let the Gear take the fight, and I fought on as the weapon I was made to be. It protected Justice once, and it's the part of me I'd keep.",
+        "player: Are you okay?",
+        "me (pleased): Yes. It's loud, and it's hungry, but it's still the part that remembers what I was for.",
+        "me: Keep the sunglasses. They're the only thing I've got that doesn't go up in flames."]},
 ]
+
 YU_NARUKAMI_QUESTS = [
-  {
-    "key": "yu-junes-food-court",
-    "title": "Junes Food Court",
-    "gates": 2,
-    "about": "Yu wants to cook for the investigation team, and needs a taste-tester who'll be honest.",
-    "offer": [
-      "them: I'm cooking for the team. I need someone who'll be brutally honest.",
-      "them (pleased): You took my one note seriously. Good."
-    ],
-    "stages": [
-      {
-        "text": "Taste Yu's cooking at the cafe in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "cafe",
-            "times": [
-              2
-            ],
-            "scene": "World: Yu Narukami, Cafe",
-            "rewards": [
-              {
-                "coins": 150
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Bring Yu a melon bread to try",
-        "objectives": [
-          {
-            "do": "give_gift",
-            "gift": "melon-bread",
-            "to": "Yu Narukami"
-          }
-        ]
-      },
-      {
-        "text": "Give Yu your honest verdict",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Yu Narukami",
-            "script": [
-              "them: Too much salt? Okay. I'll fix it.",
-              "them (pleased): ...Thank you for being brutal. It helps."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "brutal-honesty",
-        "title": "Give the brutal verdict",
-        "about": "Yu makes the dish again with less salt, and it's perfect this time.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "instant-ramen"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "yu-midnight-channel",
-    "title": "The Midnight Channel",
-    "gates": 5,
-    "about": "What Yu found on the other side of the TV, and the truth behind it.",
-    "offer": [
-      "them (dismayed): I found something on the other side of the TV.",
-      "them: Come to the library at noon. I'll tell you the whole truth."
-    ],
-    "stages": [
-      {
-        "text": "Visit Yu at the library at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "library",
-            "times": [
-              1
-            ],
-            "scene": "World: Yu Narukami, Library",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Protagonist(P4)",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "P4/EN-S01-001"
-          }
-        ]
-      },
-      {
-        "text": "Give Yu your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Yu Narukami",
-            "script": [
-              "them: Would you go in with me? Be honest.",
-              "them (pleased): ...Okay. Then we go in together."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "go-in-together",
-        "title": "Go in together",
-        "about": "Yu explains the TV world and what's behind it, and asks you to come with him when he goes in.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "yu-junes-food-court", "title": "Junes Food Court", "requires": {"rank": 1},
+     "scene": "World: Yu Narukami, Food Court",
+     "about": "Yu works the food court at Junes, and the back-room TV has started showing things that aren't on any channel. He keeps the rumour to himself, because he doesn't want anyone to think he's making it up.",
+     "offer": ["them: Hey. The TV in the back of the food court showed a face last night. It was someone I know, and then it wasn't.",
+               "them (pleased): Meet me at the cafe at noon. I'll tell you what I saw, and you tell me whether it was real."],
+     "stages": [
+         {"text": "Hear Yu's TV story at the cafe at noon", "objectives": [{"do": "visit", "place": "cafe", "times": [1], "scene": "World: Yu Narukami, Cafe Rumour", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Yu whether you believe the TV", "objectives": [{"do": "talk", "to": "Yu Narukami", "script": [
+             "them (pleased): You believe me. Most people just laugh and change the channel.",
+             "them: Keep an eye on the screen in the back. If the rain starts before the image changes, come and find me."]}]},
+     ],
+     "endings": [{"key": "tv-kept", "title": "Keep the rumour", "about": "Yu gives you a note with the name he saw on the TV, and asks you to keep it somewhere dry. He says he'd like someone else to remember the face.",
+                  "scene": "World: Yu Narukami, Note Given", "rewards": [{"coins": 300}, {"gift": "instant-ramen"}]}]},
+    {"key": "yu-the-shadows", "title": "The Other Hour", "gates": 2, "requires": {"quests": ["yu-junes-food-court"]},
+     "scene": "World: Yu Narukami, The Other Hour",
+     "about": "Yu has seen a shadow of himself in the rain, and Yukari has been fighting the same kind of shadows in a hidden hour no one else sees. The theme is the same: something pulled out of its world, and someone who has to bring it back.",
+     "offer": ["them (dismayed): The shadow looked like me, and it said my name in the rain. I need to know what it wants.",
+               "them: Yukari has fought shadows in a hidden hour. Meet me at the shrine in the evening, and fight her to see whether she recognises the shape."],
+     "stages": [
+         {"text": "Meet Yu at the shrine in the evening", "objectives": [{"do": "visit", "place": "shrine", "times": [2], "scene": "World: Yu Narukami, Shrine Rain", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Yukari, the one who knows the hidden hour", "scene": "World: Yu Narukami, Yukari Beaten", "objectives": [{"do": "defeat", "cpus": ["Yukari"]}]},
+         {"text": "Tell Yu what Yukari said", "objectives": [{"do": "talk", "to": "Yu Narukami", "script": [
+             "them (dismayed): She says the shadow is the part of you that was left in the hour. You can't just wipe it out.",
+             "them (pleased): Then I'll bring it back into the light, the way she does. Thank you for watching us."]}]},
+     ],
+     "endings": [{"key": "shadow-named", "title": "Name the shadow", "about": "Yu names the shadow in the rain and calls it back into himself. He says it was always a part of him, and he'd rather know its name than be chased by it.",
+                  "scene": "World: Yu Narukami, Shadow Named", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "yu-midnight-channel", "title": "Midnight Channel", "gates": 5, "requires": {"quests": ["yu-the-shadows"]},
+     "scene": "World: Yu Narukami, Midnight Channel",
+     "about": "The Midnight Channel has pulled someone in, and it runs on the same rain as the Dark Hour Protagonist keeps walking into. Yu has to ask Protagonist how he holds on to someone who has been taken, and whether he can bring them back before the channel closes.",
+     "offer": ["them (dismayed): The Midnight Channel took someone from the food court. Protagonist sees the same Dark Hour I do.",
+               "them: Come to the rooftop tonight. I need someone to tell me how to hold on, and I need you to watch me decide whether to go in."],
+     "stages": [
+         {"text": "Meet Yu on the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Yu Narukami, Rooftop Channel", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Protagonist, to ask how he holds on to someone taken", "scene": "World: Yu Narukami, Protagonist Beaten", "objectives": [{"do": "defeat", "cpus": ["Protagonist"]}]},
+         {"text": "Tell Yu your answer", "objectives": [{"do": "talk", "to": "Yu Narukami", "script": [
+             "them (dismayed): He beat me, and then he told me the Dark Hour gives back what it takes if you keep the name.",
+             "them (pleased): Then I'll go in, and I'll keep the name. Thanks for watching the channel with me."]}]},
+     ],
+     "endings": [
+         {"key": "bring-them-back", "title": "Bring them back", "about": "Yu goes into the Midnight Channel and brings the taken person back into the rain. Protagonist's Dark Hour is quiet afterwards, and Yu says he'll keep the name written on his hand.",
+          "scene": "World: Yu Narukami, Brought Back", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "let-the-channel-close", "title": "Let the channel close", "about": "Yu lets the channel close, and the taken person stays on the other side. He says he'll keep watching the rain, in case the name ever comes back to him.",
+          "scene": "World: Yu Narukami, Channel Closed", "rewards": [{"coins": 500}, {"gift": "bottled-tea"}]},
+     ]},
 ]
+
 YU_NARUKAMI_SCENES = [
-  {
-    "name": "World: Yu Narukami, Cafe",
-    "lines": [
-      "background cafe",
-      "me enters center with fade",
-      "me: Taste this. Be brutal. I mean it.",
-      "player: It's a bit salty.",
-      "me (pleased): Good. Honest. I'll fix it.",
-      "me: That's the feedback I wanted. Thank you."
-    ]
-  },
-  {
-    "name": "World: Yu Narukami, Library",
-    "lines": [
-      "background library",
-      "me enters right with slide",
-      "me: On the other side of the TV, there's a world. And a truth behind it.",
-      "player: What's the truth?",
-      "me (dismayed): I'll tell you if you promise to come in with me.",
-      "me: Will you go in with me?"
-    ]
-  }
+    {"name": "World: Yu Narukami, Food Court", "lines": [
+        "background city", "me enters center with fade",
+        "me: The TV in the back of the food court showed a face last night. It was someone I know, and then it wasn't.",
+        "player: What was on the screen?",
+        "me (dismayed): Fog, and a voice saying it was midnight. Nothing else. I checked the channel twice, and it was gone.",
+        "me (pleased): Meet me at the cafe at noon. I'll tell you what I saw, and you tell me whether it was real."]},
+    {"name": "World: Yu Narukami, Cafe Rumour", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (dismayed): The rumour is that people get pulled into the TV, and the rain comes before the image changes.",
+        "player: Do you believe it?",
+        "me (pleased): I believe the rain. It's been on the windows every time the screen flickered.",
+        "me: Someone I know has been pulled in, and nobody else in town remembers her face. That's the part that scares me most.",
+        "me (dismayed): Keep an eye on the screen in the back. If the rain starts before the image changes, come and find me."]},
+    {"name": "World: Yu Narukami, Note Given", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): I wrote the name I saw on the TV on a note. It's yours now, to keep somewhere dry.",
+        "player: Whose name is it?",
+        "me (dismayed): The one nobody else remembers. Keep it safe, and say it aloud if the screen starts to fog again.",
+        "me: Thank you for believing me at the counter. Most people just laugh and change the channel."]},
+    {"name": "World: Yu Narukami, The Other Hour", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me (dismayed): The shadow looked like me, and it said my name in the rain. I need to know what it wants.",
+        "player: Is it dangerous?",
+        "me (pleased): It's a part of me that was left in the rain. Yukari fights shadows like that in a hidden hour no one else sees. The same thing, I think.",
+        "me: Meet me at the shrine in the evening. Fight Yukari, and see whether she recognises the shape the rain made.",
+        "me (dismayed): Stay near me. The rain is coming down harder than the forecast said."]},
+    {"name": "World: Yu Narukami, Shrine Rain", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): The rain's on the shrine roof, and the shadow is at the gate. It hasn't spoken yet, but it's watching the lanterns.",
+        "player: Is that Yukari?",
+        "me (pleased): Not yet. She's coming up the steps with her bow. She knows the hour I'm talking about, the one only some of us can see.",
+        "me: Stand between the lanterns and the rain. If the shadow moves, don't chase it. Let it come to the light.",
+        "me (dismayed): It's close. Keep your breath steady, and watch what Yukari's arrows do to the shape."]},
+    {"name": "World: Yu Narukami, Yukari Beaten", "lines": [
+        "cast yukari as Yukari",
+        "background shrine", "me enters center with fade",
+        "yukari enters right with slide",
+        "yukari: {player} beat me, and the shadow in the rain is still standing. It's a part of your friend, Yu, that was left behind.",
+        "me (dismayed): I know it's part of me. I'd like to know how you bring a part like that back into the light.",
+        "yukari: You name it, and then you let it walk beside you. That's all I ever learned in the hour.",
+        "me (pleased): Then I'll name it, and bring it home. Thank you for telling me the truth about the hour."]},
+    {"name": "World: Yu Narukami, Shadow Named", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I named the shadow in the rain, and called it back into myself. It was a part of me all along.",
+        "player: Are you okay?",
+        "me (dismayed): I'm steadier. The rain's still falling, but I can see the lanterns clearly now.",
+        "me: Thank you for standing at the shrine with me. The name is mine, and so is the shadow."]},
+    {"name": "World: Yu Narukami, Midnight Channel", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me (dismayed): The Midnight Channel has pulled someone in from the food court, and the rain is the same rain Protagonist keeps walking into.",
+        "player: Protagonist sees the Dark Hour too?",
+        "me (pleased): He does. The channel and the Dark Hour are the same kind of hour, with the same kind of rain. I need to ask him how he holds on to someone who's been taken.",
+        "player: What's the question, exactly?",
+        "me (dismayed): Whether he can bring someone back before the channel closes. He'll know, because he's been holding on to people in the Dark Hour for years.",
+        "me: Come to the rooftop tonight. I need someone to tell me how to hold on, and I need you to watch me decide whether to go in.",
+        "me (dismayed): If he says no, I'll go in anyway. The channel doesn't wait for permission.",
+        "me (pleased): Bring the lantern. The channel's always darker from the stairs."]},
+    {"name": "World: Yu Narukami, Rooftop Channel", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): The rooftop is wet, and the rain is coming down in sheets. Protagonist is at the far edge, watching the sky.",
+        "player: Is he going to help you?",
+        "me (pleased): If he can. He's the one who knows the Dark Hour, and the channel has the same rules.",
+        "player: Is the lantern enough light?",
+        "me: Stand at the stairs with the lantern. If the channel opens, don't follow me. I'll come back for you."]},
+    {"name": "World: Yu Narukami, Protagonist Beaten", "lines": [
+        "cast protagonist as Protagonist",
+        "background rooftop", "me enters center with fade",
+        "protagonist enters right with slide",
+        "protagonist: {player} beat me, Yu. The Dark Hour gives back what it takes, if you keep the name.",
+        "me (dismayed): I've got the name. The channel took her, and I'd like her back before it closes.",
+        "protagonist: Then say it every time the rain starts. The Dark Hour listens to names, and so does the channel.",
+        "me (pleased): Then I'll go in, and I'll keep saying her name until she hears it. Thank you."]},
+    {"name": "World: Yu Narukami, Brought Back", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): I went into the Midnight Channel and brought her back into the rain. The channel is quiet now, and Protagonist's Dark Hour with it.",
+        "player: Is she all right?",
+        "me (dismayed): She's confused, but she's remembered her own name, and that's the first step back.",
+        "me: Thank you for holding the lantern. The name is written on my hand now, in case I forget it."]},
+    {"name": "World: Yu Narukami, Channel Closed", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I let the channel close, and the taken person stayed on the other side. The rain stopped, and the screen went dark.",
+        "player: Will you go back in?",
+        "me (pleased): Maybe, if the name comes back to me. I'll keep watching the rain, in case it does.",
+        "me: Keep the bottled tea. It's from the food court, and it's the last thing I'll ever buy there."]},
 ]
+
 
 CAST = [
     cpu("Frieren", "aloof", quests=FRIEREN_QUESTS, extra_scenes=FRIEREN_SCENES,

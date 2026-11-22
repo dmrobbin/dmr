@@ -8039,3 +8039,41 @@ class DragonMaidTests(PersonaTests):
         self.assertEqual([s["do"] for s in maids], ["stock_to_deck", "top", "choose", "move_it"])
         kanna = abilities.parse(self.card_text("move it to another open position of your opponent's stage"))[1]["steps"][0]["then"]
         self.assertEqual([s["do"] for s in kanna], ["choose", "place", "buff"])
+
+
+class TwoNamedTargetsTests(TestCase):
+    """"All of your other "A" and "B" get +500 power": each of the named cards gets it (Occultic Girl, Aira; KGL/S79-E032;
+    the Colossal Titans AOT/S35-E092 and -E093). The "and" was read as needing both names at once, so nothing got it."""
+    AIRA = ('【CONT】 All of your other "Because I\'m the Chosen One, Aira" and "Acrobatic Pretty Girl, Aira" get +500 power and the following '
+            'ability. "【AUTO】 When this card attacks, look at the top card of your deck, and put it on the top of your deck or into your '
+            'waiting room."【ACT】 Brainstorm [(1) 【REST】 this card] Flip over 4 cards from the top of your deck, and put them into your '
+            'waiting room. For each climax revealed among those cards, choose up to 1 《Human》 or 《Strange》 character in your waiting room, '
+            'and return it to your hand.')
+    TITAN = ('【CONT】 If this card is in the left position of your center stage, all of your other ""Enormous Stature" Colossal Titan" and '
+             '""Broken Wall" Colossal Titan" get +1000 power.')
+
+    def test_both_names_are_read(self):
+        effect = abilities.parse(self.AIRA)[0]["effects"][0]
+        self.assertEqual(effect["target"]["filter"]["any"], [{"name": "Because I'm the Chosen One, Aira"}, {"name": "Acrobatic Pretty Girl, Aira"}])
+        self.assertEqual((effect["power"], len(effect["grant"])), (500, 1))
+        names = [alt["name"] for alt in abilities.parse(self.TITAN)[0]["effects"][0]["target"]["filter"]["any"]]
+        self.assertEqual(names, ['"Enormous Stature" Colossal Titan', '"Broken Wall" Colossal Titan'])
+
+    def test_and_between_names_in_a_condition_still_means_both(self):
+        cond = abilities.parse('【CONT】 If you have other "Ann" and "Bea", this card gets +1000 power.')[0]["cond"][0]
+        self.assertEqual((cond["type"], cond["filters"]), ("have_each", [{"any": [{"name": "Ann"}]}, {"any": [{"name": "Bea"}]}]))
+
+    def test_each_named_card_gets_the_power_and_the_ability_on_the_board(self):
+        t = Table()
+        t.card(2000, name="Occultic Girl, Aira", text=self.AIRA)
+        t.card(2001, name="Because I'm the Chosen One, Aira", power=3000)
+        t.card(2002, name="Acrobatic Pretty Girl, Aira", power=2000)
+        t.card(2003, name="Someone Else", power=2000)
+        t.seat(t.me, "C2", 2000)
+        chosen, acrobat, other = t.seat(t.me, "C1", 2001), t.seat(t.me, "C3", 2002), t.seat(t.me, "B1", 2003)
+        game.refresh_stats(t.state, game.SimpleNamespace(info=t.info, name=lambda pk: t.info(pk)["name"]))
+        stats = t.state["stats"]
+        self.assertEqual((stats[chosen["uid"]]["power"], stats[acrobat["uid"]]["power"], stats[other["uid"]]["power"]), (3500, 2500, 2000))
+        granted = t.state.get("granted") or {}
+        self.assertTrue(granted.get(chosen["uid"]) and granted.get(acrobat["uid"]))
+        self.assertFalse(granted.get(other["uid"]))

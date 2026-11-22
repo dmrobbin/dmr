@@ -735,25 +735,26 @@
     ],
     "quests": [
      {
-      "key": "aang-lost-bison",
+      "key": "aang-where-is-appa",
       "title": "Where's Appa?",
-      "gates": 2,
+      "requires": {
+       "rank": 1
+      },
+      "scene": "World: Aang, Appa Is Missing",
       "about": "Aang's flying bison has wandered off, and Aang needs a hand finding him.",
       "offer": [
        "them (pleased): Hey, {player}! Have you seen a huge, fluffy flying bison? His name's Appa.",
-       "them: He was napping under a tree, and then he just wasn't there. Momo's no help at all.",
-       "them: Could you check the forest? He likes to wander in the mornings."
+       "them: He was napping under a tree, and then he just wasn't there."
       ],
       "stages": [
        {
-        "text": "Search the forest in the morning or at noon",
+        "text": "Search the forest in the morning",
         "objectives": [
          {
           "do": "visit",
           "place": "forest",
           "times": [
-           0,
-           1
+           0
           ],
           "scene": "World: Aang, Forest",
           "rewards": [
@@ -761,15 +762,6 @@
             "coins": 200
            }
           ]
-         }
-        ]
-       },
-       {
-        "text": "Win a duel with Aang: Master of All Elements in your deck",
-        "objectives": [
-         {
-          "do": "win_with",
-          "card": "ATLA/WX04-002"
          }
         ]
        },
@@ -791,7 +783,8 @@
        {
         "key": "home",
         "title": "Bring Appa home",
-        "about": "Appa is back, and Aang isn't letting him out of his sight again.",
+        "about": "Appa is back, sneezing and smug. Aang doesn't let him out of his sight again. Azula's soldiers were the ones who scared him off.",
+        "scene": "World: Aang, Appa Home",
         "rewards": [
          {
           "coins": 400
@@ -804,17 +797,42 @@
       ]
      },
      {
-      "key": "aang-avatar-state",
-      "title": "The Avatar State",
-      "gates": 5,
-      "about": "Aang has to reach the Avatar State to stop Azula's war, and the road there is dangerous. How it ends is his choice.",
+      "key": "aang-avatar-trial",
+      "title": "The Avatar Trial",
+      "gates": 2,
+      "requires": {
+       "quests": [
+        "aang-where-is-appa"
+       ]
+      },
+      "scene": "World: Aang, Azula's Threat",
+      "about": "Something has been watching Aang. Azula's soldiers are close, and they're trying to stop him from reaching the Avatar State.",
       "offer": [
-       "them: I can feel the Avatar State getting closer. It's dangerous, though.",
-       "them (pleased): Will you help keep me grounded? Just stay with me while I try."
+       "them: The soldiers came back last night. Someone told them where I train.",
+       "them (pleased): Will you come to the shrine this evening? I need someone to watch the path."
       ],
       "stages": [
        {
-        "text": "Beat Azula in a duel",
+        "text": "Meet Aang at the shrine in the evening",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "shrine",
+          "times": [
+           2
+          ],
+          "scene": "World: Aang, Shrine",
+          "rewards": [
+           {
+            "coins": 300
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Beat Azula in a duel, to keep her soldiers away",
+        "scene": "World: Aang, After Azula",
         "objectives": [
          {
           "do": "defeat",
@@ -825,13 +843,79 @@
         ]
        },
        {
-        "text": "Play Aang: Avatar State with Fury of the Ocean Spirit",
+        "text": "Tell Aang what Azula said",
         "objectives": [
          {
-          "do": "combo",
-          "card": "ATLA/WX04-T16",
-          "climax": "ATLA/WX04-T19",
-          "win": true
+          "do": "talk",
+          "to": "Aang",
+          "script": [
+           "them: She's afraid of what I'll do in the Avatar State. Good.",
+           "them (pleased): Stay with me. I'll need you when I try."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "ready",
+        "title": "Face the Avatar State",
+        "about": "Aang is ready to try. The soldiers won't come near the shrine again, for now.",
+        "scene": "World: Aang, Ready",
+        "rewards": [
+         {
+          "coins": 600
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "aang-avatar-state",
+      "title": "The Avatar State",
+      "gates": 5,
+      "requires": {
+       "quests": [
+        "aang-avatar-trial"
+       ]
+      },
+      "scene": "World: Aang, The Cost",
+      "about": "Aang has to reach the Avatar State to stop Azula's war, and the road there is dangerous. How it ends is his choice.",
+      "offer": [
+       "them: I can feel the Avatar State getting closer. It's dangerous, though.",
+       "them (pleased): Will you keep me grounded? Just stay with me while I try."
+      ],
+      "stages": [
+       {
+        "text": "Stand with Aang at the shrine at night",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "shrine",
+          "times": [
+           3
+          ],
+          "scene": "World: Aang, The Avatar State",
+          "rewards": [
+           {
+            "pack": "color_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Beat Azula, so she can't take the Avatar State from you",
+        "scene": "World: Aang, The Last Duel",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Azula"
+          ]
          }
         ]
        },
@@ -853,10 +937,11 @@
        {
         "key": "reach",
         "title": "Reach out to Azula",
-        "about": "Aang offers Azula a hand. She refuses it, and her road to the throne closes for good.",
+        "about": "Aang offers Azula a hand. She refuses it, and her road to the throne closes for good, and Azula's crown quest is closed with it.",
         "locks": [
-         "azula-heir"
+         "azula-crown"
         ],
+        "scene": "World: Aang, Reach",
         "rewards": [
          {
           "coins": 800
@@ -870,6 +955,7 @@
         "key": "stand",
         "title": "Stand against her",
         "about": "Aang holds the line. Azula's road to the throne stays open.",
+        "scene": "World: Aang, Stand",
         "rewards": [
          {
           "coins": 600
@@ -926,15 +1012,150 @@
      ]
     },
     {
+     "name": "World: Aang, Appa Is Missing",
+     "script": [
+      "cast me as Aang",
+      "background sakura",
+      "me enters center with pop",
+      "me: Momo already checked the treetops. Appa's gone, and I can't feel him anywhere.",
+      "player: When did you last see him?",
+      "me (win): This morning, napping under a tree. Then he just wasn't there.",
+      "me (lose): Could you check the forest with me? He likes it there in the mornings."
+     ]
+    },
+    {
      "name": "World: Aang, Forest",
      "script": [
       "cast me as Aang",
       "background forest",
       "me enters left with slide",
-      "me: Appa! Okay, big guy, I know you're hiding somewhere. Momo already checked the treetops.",
+      "me: Flattened grass, and a lot of bison fur! He came through here. Come on!",
       "player: Any sign of him?",
-      "me (lose): Flattened grass and a lot of bison fur! He came through here. Come on!",
+      "me (lose): Look, a footprint, and a bit of a bush that's been eaten. Appa's definitely here.",
       "me: Thanks for helping me look. Nobody else in this town even knows he's missing."
+     ]
+    },
+    {
+     "name": "World: Aang, Appa Home",
+     "script": [
+      "cast me as Aang",
+      "background sakura",
+      "me enters center with fade",
+      "me (lose): Appa's home! He sneezed on me, and I've never been happier about it.",
+      "player: Where was he?",
+      "me (win): Hiding from Azula's soldiers. They must have scared him off the trail.",
+      "me: Azula's watching the town now. I can feel it. We should be careful."
+     ]
+    },
+    {
+     "name": "World: Aang, Azula's Threat",
+     "script": [
+      "cast me as Aang",
+      "background shrine",
+      "me enters center with fade",
+      "me: Soldiers on the shrine path, a whole squad of them. They're waiting for me to start training.",
+      "player: Who sent them?",
+      "me (win): Azula's men. She wants me stopped before I reach the Avatar State.",
+      "me: Watch the path with me this evening. If they come, I need someone who isn't scared of them."
+     ]
+    },
+    {
+     "name": "World: Aang, Shrine",
+     "script": [
+      "cast me as Aang",
+      "background shrine",
+      "me enters center with fade",
+      "me: Shh. Listen. Someone's coming up the path. Stay low.",
+      "player: Soldiers?",
+      "me (win): Yes. Azula's men, at least four of them. Stay between them and me.",
+      "me: Let's do this properly. I'm not letting them near the Avatar State."
+     ]
+    },
+    {
+     "name": "World: Aang, After Azula",
+     "script": [
+      "cast me as Aang",
+      "cast azula as Azula",
+      "background shrine",
+      "me enters center with fade",
+      "azula enters right with slide",
+      "azula: Your friend beat me, Avatar. Don't get used to it. Soldiers can't stop you, and apparently neither can I.",
+      "me (lose): The shrine's quiet again. Thanks for holding the path.",
+      "azula: Don't think it means I've stopped. Next time I'll be the one who isn't tired."
+     ]
+    },
+    {
+     "name": "World: Aang, Ready",
+     "script": [
+      "cast me as Aang",
+      "background shrine",
+      "me enters center with fade",
+      "me (lose): I'm ready to try the Avatar State. For real this time.",
+      "player: Will you be okay?",
+      "me (win): I hope so. The last time, I couldn't feel myself at all.",
+      "me: Stay with me while I try. You'll be my anchor."
+     ]
+    },
+    {
+     "name": "World: Aang, The Cost",
+     "script": [
+      "cast me as Aang",
+      "background shrine",
+      "me enters center with fade",
+      "me (win): The Avatar State is close. I can feel it pulling at me.",
+      "player: What does it do to you?",
+      "me: It makes you someone else, for a while. Someone who doesn't stop.",
+      "me (lose): So I'm asking you to keep me grounded. Come to the shrine at night and stay with me."
+     ]
+    },
+    {
+     "name": "World: Aang, The Avatar State",
+     "script": [
+      "cast me as Aang",
+      "background shrine",
+      "me enters center with fade",
+      "me (win): You. Come with me to the shrine at night. I need someone to test my new form on.",
+      "player: Are you ready?",
+      "me: No. But I'm less scared than I was."
+     ]
+    },
+    {
+     "name": "World: Aang, The Last Duel",
+     "script": [
+      "cast me as Aang",
+      "cast azula as Azula",
+      "background shrine",
+      "me enters center with fade",
+      "azula enters right with slide",
+      "azula: You're still standing, {player}. I can feel the state in you, and it's not what I expected.",
+      "me (win): It isn't anger. I held it, and it held me back.",
+      "azula: Then take it. I'll see what it makes of you.",
+      "player: Are you okay?",
+      "me (lose): I'm okay. Stay close. The state needs an anchor."
+     ]
+    },
+    {
+     "name": "World: Aang, Reach",
+     "script": [
+      "cast me as Aang",
+      "background sakura",
+      "me enters center with fade",
+      "me (lose): I offered Azula my hand, and she refused it. That's the end of that.",
+      "player: Are you sad about it?",
+      "me (win): A little. But I'd rather lose her as a rival than lose her to the war.",
+      "me: Thanks for helping me try. The Avatar State is ours now."
+     ]
+    },
+    {
+     "name": "World: Aang, Stand",
+     "script": [
+      "cast me as Aang",
+      "background sakura",
+      "me enters center with fade",
+      "me: I stood against her. Azula's road to the throne is still open, and so is mine.",
+      "player: Was that the right choice?",
+      "me (win): I don't know. But it's mine, and I'll live with it.",
+      "me (lose): Come on. Appa's waiting, and he's hungry."
      ]
     },
     {
@@ -1731,15 +1952,18 @@
      {
       "key": "katara-forms",
       "title": "Without a Master",
-      "gates": 2,
-      "about": "Katara is teaching herself waterbending forms from an old scroll, and wants someone to watch her practise.",
+      "requires": {
+       "rank": 1
+      },
+      "scene": "World: Katara, Dawn Forms",
+      "about": "Katara is practising waterbending forms from an old scroll, and she's short a page.",
       "offer": [
-       "them: I found a scroll of old waterbending forms. There's no master to check my work, though.",
-       "them (pleased): Would you watch me try? Just tell me when I get one wrong."
+       "them: I'm doing the forms at dawn at the beach. Come and watch, if you're up.",
+       "them (pleased): I found a scroll with the old forms. It's missing a page, though."
       ],
       "stages": [
        {
-        "text": "Watch Katara practise at the beach in the evening",
+        "text": "Watch Katara practise at the beach at dusk",
         "objectives": [
          {
           "do": "visit",
@@ -1765,26 +1989,14 @@
           "to": "Katara"
          }
         ]
-       },
-       {
-        "text": "Tell Katara what you saw",
-        "objectives": [
-         {
-          "do": "talk",
-          "to": "Katara",
-          "script": [
-           "them (pleased): You watched the whole thing? Hm. Thank you.",
-           "them: Next time, tell me the truth about my footwork."
-          ]
-         }
-        ]
        }
       ],
       "endings": [
        {
-        "key": "first-audience",
-        "title": "Be her first audience",
-        "about": "Her forms are steadier now, and she's glad someone was there to watch.",
+        "key": "missing-page",
+        "title": "Help find the page",
+        "about": "Katara's forms are steadier now, but she still needs the missing page. A digger in town might know where it went.",
+        "scene": "World: Katara, Missing Page",
         "rewards": [
          {
           "coins": 300
@@ -1797,10 +2009,93 @@
       ]
      },
      {
-      "key": "southern-lights",
+      "key": "katara-lost-form",
+      "title": "The Lost Form",
+      "gates": 2,
+      "requires": {
+       "quests": [
+        "katara-forms"
+       ]
+      },
+      "scene": "World: Katara, Simon's Scroll",
+      "about": "The missing page is with Simon the digger, who dug it out of the warehouse foundations. Katara wants it back, and she won't ask nicely.",
+      "offer": [
+       "them: Simon has the page. He dug it up under the warehouse. He won't give it back for free.",
+       "them (pleased): Win a duel against him, and he'll see you're serious."
+      ],
+      "stages": [
+       {
+        "text": "Meet Katara at the arena in the morning",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "arena",
+          "times": [
+           0
+          ],
+          "scene": "World: Katara, Arena",
+          "rewards": [
+           {
+            "coins": 300
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Beat Simon the digger, and take the page back",
+        "scene": "World: Katara, Page Returned",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Simon the digger"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Show Katara the page",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Katara",
+          "script": [
+           "them (pleased): The fourth form! I can finally finish the set.",
+           "them: Thank you, {player}. You're family for this."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "form-learned",
+        "title": "Learn the full set",
+        "about": "Katara finishes the forms, and asks you to watch the last one.",
+        "scene": "World: Katara, Full Set",
+        "rewards": [
+         {
+          "coins": 500
+         },
+         {
+          "pack": "color_pack"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "katara-southern-lights",
       "title": "The Southern Lights",
       "gates": 5,
-      "about": "It's the anniversary of Katara's mother's death. She wants company, not comfort, and she'll decide what that means at the end.",
+      "requires": {
+       "quests": [
+        "katara-lost-form"
+       ]
+      },
+      "scene": "World: Katara, Anniversary",
+      "about": "It's the anniversary of Katara's mother's death. Simon returned the missing page from the scroll, and Katara wants to read her mother's last form from it, with company, not comfort. She'll say what it means at the end.",
       "offer": [
        "them: Every year I light a candle at the shrine. This year I don't want to be alone with it.",
        "them (dismayed): Don't make it a big thing. Just come."
@@ -1825,12 +2120,12 @@
         ]
        },
        {
-        "text": "Win a duel with Katara: Saving Aang in your deck",
+        "text": "Duel Katara, her last test before the candle burns down",
+        "scene": "World: Katara, Last Form",
         "objectives": [
          {
-          "do": "win_with",
-          "card": "ATLA/WX04-079",
-          "against": [
+          "do": "defeat",
+          "cpus": [
            "Katara"
           ]
          }
@@ -1854,7 +2149,8 @@
        {
         "key": "stay-until-dawn",
         "title": "Stay until the candle burns down",
-        "about": "Katara isn't alone with it any more, and she tells you so.",
+        "about": "Katara finishes her mother's last form from the restored scroll, and tells you the form was meant to be done with someone watching. She isn't alone with it any more.",
+        "scene": "World: Katara, Dawn",
         "rewards": [
          {
           "coins": 600
@@ -1906,6 +2202,18 @@
      ]
     },
     {
+     "name": "World: Katara, Dawn Forms",
+     "script": [
+      "cast me as Katara",
+      "background dusk",
+      "me enters left with slide",
+      "me: I'm practising at the beach at dawn. The forms are hard without a master.",
+      "player: Can I watch?",
+      "me (lose): Yes, if you're up early enough. Bring a towel, the water's cold.",
+      "me: Don't laugh if I get one wrong. I always do."
+     ]
+    },
+    {
      "name": "World: Katara, Beach",
      "script": [
       "cast me as Katara",
@@ -1913,10 +2221,82 @@
       "me enters left with slide",
       "me: Feet planted. Arms soft. Push... and I just got a face full of ocean.",
       "player: Are you hurt?",
-      "me (lose): Ha! No. Hold still, you've got a scrape. I can fix that.",
-      "me glows",
-      "me: I'm better than I thought. Mum would have laughed at me for doubting it.",
-      "me: Keep watching. I'm not finished yet."
+      "me (lose): Ha! No. But look, a page is stuck in the sand. Is it part of the scroll?",
+      "me: It's the missing page. I'm sure of it."
+     ]
+    },
+    {
+     "name": "World: Katara, Missing Page",
+     "script": [
+      "cast me as Katara",
+      "background sakura",
+      "me enters center with fade",
+      "me (lose): The page from the scroll. I can finish the forms now.",
+      "player: Where did it come from?",
+      "me (win): I don't know. Someone must have taken it, years ago.",
+      "me: Simon the digger might know. Ask him about the warehouse foundations."
+     ]
+    },
+    {
+     "name": "World: Katara, Simon's Scroll",
+     "script": [
+      "cast me as Katara",
+      "background sakura",
+      "me enters left with fade",
+      "me: Simon has the page. He dug it up under the warehouse. He won't give it up easily.",
+      "player: Then I'll win it back.",
+      "me (lose): Good. Meet me at the arena in the morning. I'll be training."
+     ]
+    },
+    {
+     "name": "World: Katara, Arena",
+     "script": [
+      "cast me as Katara",
+      "cast simon as Simon the digger",
+      "background arena",
+      "me enters left with slide",
+      "simon enters right with fade",
+      "simon: Hi! Katara! Are you here to ask for the page? I kept it safe.",
+      "me (win): It's my family's scroll, Simon. Give it back, or I'll make you.",
+      "player: Let's have a duel, then.",
+      "simon: Okay! But I'm not very good at fighting. Just a digger."
+     ]
+    },
+    {
+     "name": "World: Katara, Page Returned",
+     "script": [
+      "cast me as Katara",
+      "cast simon as Simon the digger",
+      "background arena",
+      "me enters center with fade",
+      "simon enters right with slide",
+      "simon: {player} got me, Katara. Fine, the page is yours. It was under the warehouse, just like I said.",
+      "me (lose): Thanks, Simon. My forms are steadier already.",
+      "simon: Don't tell anyone I lost. People think I'm a digger, not a duelist."
+     ]
+    },
+    {
+     "name": "World: Katara, Full Set",
+     "script": [
+      "cast me as Katara",
+      "background beach",
+      "me enters center with fade",
+      "me (lose): The full set. Watch me, {player}. This one's for my mother.",
+      "player: It's beautiful.",
+      "me: My mother taught me the first form. Now I can teach the rest.",
+      "me (win): Thank you for helping me find the page. You're family for this."
+     ]
+    },
+    {
+     "name": "World: Katara, Anniversary",
+     "script": [
+      "cast me as Katara",
+      "background shrine",
+      "me enters center with fade",
+      "me (win): Every year I light a candle here. My mother never saw me grow up.",
+      "player: I'm sorry.",
+      "me: Don't be. I just don't want to be alone with it this year.",
+      "me (lose): Come to the shrine this evening. Bring nothing, and stay until the candle's out."
      ]
     },
     {
@@ -1927,10 +2307,33 @@
       "me enters center with fade",
       "me: Mum's candle. I light one every year, even though this isn't our shrine.",
       "player: It isn't silly.",
-      "me (win): ...It's easier with someone sitting beside me.",
-      "me: Don't say anything nice yet. I'll cry.",
-      "me nods",
-      "me: Stay until it burns down. That's all I ask."
+      "me (win): It's easier with someone sitting beside me.",
+      "me: Don't say anything nice yet. I'll cry."
+     ]
+    },
+    {
+     "name": "World: Katara, Last Form",
+     "script": [
+      "cast me as Katara",
+      "background shrine",
+      "me enters center with fade",
+      "me (lose): You held the form the whole way through. I didn't think you would.",
+      "player: It's the candle. I wanted to see it through.",
+      "me (win): My mother used to say family is who stays. You've stayed.",
+      "me (lose): The page Simon dug up is in the scroll now, and it's the form my mother taught me. Watch my feet, not my face.",
+      "me: Next year, bring the good stew. That's not a request."
+     ]
+    },
+    {
+     "name": "World: Katara, Dawn",
+     "script": [
+      "cast me as Katara",
+      "background shrine",
+      "me enters center with fade",
+      "me (lose): You stayed until the candle burned down. Thank you.",
+      "player: It was the least I could do.",
+      "me: My mother used to say family is who stays. You've stayed.",
+      "me (win): Next year, you're bringing the good stew. That's not a request."
      ]
     },
     {
@@ -2709,9 +3112,12 @@
     ],
     "quests": [
      {
-      "key": "master-plan",
+      "key": "sokka-master-plan",
       "title": "The Master Plan",
-      "gates": 2,
+      "requires": {
+       "rank": 1
+      },
+      "scene": "World: Sokka, Napkin Plan",
       "about": "Sokka has a plan to win the town tournament, drawn across three cafe tables on napkins.",
       "offer": [
        "them: I have a plan for the tournament. It's on napkins. Don't touch the napkins.",
@@ -2737,15 +3143,6 @@
         ]
        },
        {
-        "text": "Have Sokka: Warrior of the Southern Water Tribe",
-        "objectives": [
-         {
-          "do": "have_card",
-          "card": "ATLA/WX04-077"
-         }
-        ]
-       },
-       {
         "text": "Tell Sokka what you think of the plan",
         "objectives": [
          {
@@ -2763,7 +3160,8 @@
        {
         "key": "keep-the-plan",
         "title": "Keep the plan",
-        "about": "Sokka's plan is still mostly sandwiches. He's very proud of it.",
+        "about": "Sokka's plan is still mostly sandwiches. He needs a real test before the tournament, though.",
+        "scene": "World: Sokka, Test Needed",
         "rewards": [
          {
           "coins": 300
@@ -2776,13 +3174,19 @@
       ]
      },
      {
-      "key": "space-sword",
+      "key": "sokka-space-sword",
       "title": "Space Sword",
-      "gates": 5,
-      "about": "Sokka has forged a sword out of a meteorite and needs a worthy test. He's nervous about how it looks.",
+      "gates": 2,
+      "requires": {
+       "quests": [
+        "sokka-master-plan"
+       ]
+      },
+      "scene": "World: Sokka, The Sword",
+      "about": "Sokka has forged a sword out of a meteorite and needs a worthy test. He's nervous about how it looks, and Toph is the one who'll tell him the truth.",
       "offer": [
        "them: I made a sword out of a meteorite. Don't laugh. It's just... black.",
-       "them (dismayed): I need someone to test it. Someone who won't tell me it's ugly."
+       "them (dismayed): Toph's the only one who won't lie to me. I need her to see it."
       ],
       "stages": [
        {
@@ -2804,12 +3208,13 @@
         ]
        },
        {
-        "text": "Beat Sokka in a duel",
+        "text": "Beat Toph in a duel, to see if the sword holds",
+        "scene": "World: Sokka, Toph's Verdict",
         "objectives": [
          {
           "do": "defeat",
           "cpus": [
-           "Sokka"
+           "Toph"
           ]
          }
         ]
@@ -2821,7 +3226,7 @@
           "do": "talk",
           "to": "Sokka",
           "script": [
-           "them (pleased): It's not ugly. It's... a warrior's sword. Thank you.",
+           "them (pleased): It's not ugly. It's a warrior's sword. Thank you.",
            "them: You're my best friend, and you're not allowed to say otherwise."
           ]
          }
@@ -2833,9 +3238,87 @@
         "key": "wield-it",
         "title": "Wield the sword",
         "about": "Sokka carries the black blade into every fight from now on, and insists it's a lucky one.",
+        "scene": "World: Sokka, Wielded",
         "rewards": [
          {
           "coins": 700
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "sokka-real-plan",
+      "title": "The Real Plan",
+      "gates": 5,
+      "requires": {
+       "quests": [
+        "sokka-space-sword"
+       ]
+      },
+      "scene": "World: Sokka, The Real Plan",
+      "about": "Sokka's plan has a step three, and it isn't about the tournament. It's about looking after his family, the way his dad asked him to.",
+      "offer": [
+       "them (dismayed): Can I tell you the real plan? Not the napkin one.",
+       "them: Meet me on the plaza this evening. Don't tell Katara yet."
+      ],
+      "stages": [
+       {
+        "text": "Meet Sokka in the plaza in the evening",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "plaza",
+          "times": [
+           2
+          ],
+          "scene": "World: Sokka, Plaza",
+          "rewards": [
+           {
+            "coins": 300
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Duel Sokka, to test the real plan",
+        "scene": "World: Sokka, Plan Tested",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Sokka"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Tell Sokka what you'll do",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Sokka",
+          "script": [
+           "them (pleased): That's the plan, then. You and me, looking after the others.",
+           "them: Thanks, {player}. I didn't want to do step three alone."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "step-three",
+        "title": "Step three is you",
+        "about": "Sokka writes your name on the last napkin, and says it's the only plan he's ever finished.",
+        "scene": "World: Sokka, Step Three",
+        "rewards": [
+         {
+          "coins": 800
          },
          {
           "pack": "lucky_pack"
@@ -2883,18 +3366,51 @@
      ]
     },
     {
+     "name": "World: Sokka, Napkin Plan",
+     "script": [
+      "cast me as Sokka",
+      "background cafe",
+      "me enters right with slide",
+      "me: Okay, nobody touch the napkins. This is the tournament plan.",
+      "player: What's step one?",
+      "me (lose): Step one, we win. Step two, we eat. Step three is open, obviously.",
+      "me: Help me fill in step three. I can't do it alone."
+     ]
+    },
+    {
      "name": "World: Sokka, Cafe",
      "script": [
       "cast me as Sokka",
       "background cafe",
       "me enters right with slide",
-      "me: Okay, nobody touch the napkins. This is the plan.",
       "me: Step one: Aang distracts the enemy. Step two: I eat their lunch.",
       "player: What's step three?",
       "me (win): ...Step three is an open problem.",
-      "me: You fix step three and I'll say it was my idea. Deal?",
-      "player: Deal.",
-      "me (lose): Teamwork! Also, sandwiches."
+      "me: You fix step three and I'll say it was my idea. Deal?"
+     ]
+    },
+    {
+     "name": "World: Sokka, Test Needed",
+     "script": [
+      "cast me as Sokka",
+      "background cafe",
+      "me enters center with fade",
+      "me (lose): The plan's still mostly sandwiches. But the sword needs a test before the tournament.",
+      "player: What sword?",
+      "me (win): The one I made out of a meteorite. Don't laugh. It's black.",
+      "me: Come to the arena with me. We'll see if it holds up."
+     ]
+    },
+    {
+     "name": "World: Sokka, The Sword",
+     "script": [
+      "cast me as Sokka",
+      "background cafe",
+      "me enters right with slide",
+      "me (win): I made a sword out of a meteorite. Don't laugh, it's just black.",
+      "player: It looks cool.",
+      "me (lose): Really? Toph won't say that. She'll tell me the truth, and I'm scared of it.",
+      "me: Meet me at the arena at noon. I'm testing it there."
      ]
     },
     {
@@ -2906,11 +3422,80 @@
       "me: Don't laugh. I forged this sword out of a meteorite.",
       "player: It's black.",
       "me (win): It's a space sword. Black is the space colour.",
-      "me: Watch me cut this training dummy in half.",
-      "screen flash",
-      "me (lose): Clean. Really clean. I'm a warrior now.",
-      "player: You always were one.",
-      "me: ...Don't tell anyone I got emotional."
+      "me: Watch me cut this training dummy in half."
+     ]
+    },
+    {
+     "name": "World: Sokka, Toph's Verdict",
+     "script": [
+      "cast me as Sokka",
+      "cast toph as Toph",
+      "background arena",
+      "me enters center with fade",
+      "toph enters right with slide",
+      "toph: {player} got me, Sokka. The sword holds. Don't let it go to your head.",
+      "me (lose): You're saying it's good? Toph, you never say it's good.",
+      "toph: I'm saying it didn't snap. That's the best I've got."
+     ]
+    },
+    {
+     "name": "World: Sokka, Wielded",
+     "script": [
+      "cast me as Sokka",
+      "background arena",
+      "me enters center with fade",
+      "me (lose): The sword's mine now, and I'm not giving it up. It's a warrior's sword.",
+      "player: It suits you.",
+      "me (win): It does, doesn't it? I was scared it wouldn't.",
+      "me: Thank you for being there, {player}. You're my best friend, and you're not allowed to say otherwise."
+     ]
+    },
+    {
+     "name": "World: Sokka, The Real Plan",
+     "script": [
+      "cast me as Sokka",
+      "background sakura",
+      "me enters center with fade",
+      "me (win): Can I tell you the real plan? Not the napkin one.",
+      "player: Go on.",
+      "me: Dad said to look after the family. I'm the one who's left, and the napkins don't say how.",
+      "me (lose): You're the one step I can't write down. Meet me on the plaza this evening, and I'll show you the rest."
+     ]
+    },
+    {
+     "name": "World: Sokka, Plaza",
+     "script": [
+      "cast me as Sokka",
+      "background sakura",
+      "me enters left with fade",
+      "me (win): I'm the man of the tribe, now. I make the plans, and I make them work.",
+      "player: That's a lot to carry.",
+      "me: I know. That's why I need someone to test the plan with me.",
+      "me (lose): Let's test it. Show me what you've got."
+     ]
+    },
+    {
+     "name": "World: Sokka, Plan Tested",
+     "script": [
+      "cast me as Sokka",
+      "background sakura",
+      "me enters center with fade",
+      "me (win): You beat me, {player}, and the plan's still standing. Good.",
+      "player: Is that what you wanted?",
+      "me (lose): It's what I needed. Step three is about who stands next to me.",
+      "me: Come back to the plaza next week. We'll see who the plan is for."
+     ]
+    },
+    {
+     "name": "World: Sokka, Step Three",
+     "script": [
+      "cast me as Sokka",
+      "background sakura",
+      "me enters center with fade",
+      "me (lose): Step three is you. I've written your name on the last napkin.",
+      "player: Honoured, I think.",
+      "me (win): You should be. It's the only plan I've ever finished.",
+      "me: Come on. Katara's waiting, and she'll want to know what we talked about."
      ]
     },
     {
@@ -3676,12 +4261,15 @@
     ],
     "quests": [
      {
-      "key": "seismic-sense",
+      "key": "toph-seismic-sense",
       "title": "Seismic Sense",
-      "gates": 2,
-      "about": "Toph will only bother with someone who can \"see\" the way she does.",
+      "requires": {
+       "rank": 1
+      },
+      "scene": "World: Toph, Test",
+      "about": "Toph will only bother with someone who can see the way she does. She's setting a test in the forest.",
       "offer": [
-       "them: You'll only get to know me if you can keep up. Don't worry, I'll make it easy. Mostly.",
+       "them: You'll only get to know me if you can keep up. I'll make it easy. Mostly.",
        "them (pleased): Take your shoes off. Then we'll see."
       ],
       "stages": [
@@ -3704,16 +4292,6 @@
         ]
        },
        {
-        "text": "Give Toph an energy drink",
-        "objectives": [
-         {
-          "do": "give_gift",
-          "gift": "energy-drink",
-          "to": "Toph"
-         }
-        ]
-       },
-       {
         "text": "Tell Toph what you noticed",
         "objectives": [
          {
@@ -3731,7 +4309,8 @@
        {
         "key": "one-of-us",
         "title": "Be one of her people",
-        "about": "Toph lets you into her short list. She'll never admit it, but she's glad.",
+        "about": "Toph lets you onto her short list. Then she mentions her old belt, which somebody bought.",
+        "scene": "World: Toph, Short List",
         "rewards": [
          {
           "coins": 350
@@ -3744,13 +4323,19 @@
       ]
      },
      {
-      "key": "blind-bandit",
+      "key": "toph-blind-bandit",
       "title": "The Blind Bandit",
-      "gates": 5,
-      "about": "Toph's old Earth Rumble belt, and the family who never knew what she did with her life.",
+      "gates": 2,
+      "requires": {
+       "quests": [
+        "toph-seismic-sense"
+       ]
+      },
+      "scene": "World: Toph, The Belt Is Gone",
+      "about": "Toph's old Earth Rumble belt is in the shop, bought by Kittan. She wants it back, and she wants you to win it back for her.",
       "offer": [
-       "them: I won the Earth Rumble when I was twelve. My parents never came to see it.",
-       "them (dismayed): I don't care. Don't look at me like that."
+       "them: Someone bought my belt at the shop. Kittan, probably. He's loud enough.",
+       "them (dismayed): I don't care about the belt. Don't look at me like that."
       ],
       "stages": [
        {
@@ -3765,33 +4350,33 @@
           "scene": "World: Toph, Arena",
           "rewards": [
            {
-            "pack": "color_pack"
+            "coins": 300
            }
           ]
          }
         ]
        },
        {
-        "text": "Win a duel with Toph: The Blind Bandit in your deck",
+        "text": "Beat Kittan in a duel, to win the belt back",
+        "scene": "World: Toph, The Belt Back",
         "objectives": [
          {
-          "do": "win_with",
-          "card": "ATLA/WX04-024",
-          "against": [
-           "Toph"
+          "do": "defeat",
+          "cpus": [
+           "Kittan"
           ]
          }
         ]
        },
        {
-        "text": "Give Toph your answer",
+        "text": "Give Toph the belt",
         "objectives": [
          {
           "do": "talk",
           "to": "Toph",
           "script": [
-           "them: You're the first person I didn't have to fight to be seen by.",
-           "them (pleased): Heh. Sap. Don't tell anyone."
+           "them (pleased): It's back. Heavy, like I remember it.",
+           "them: You're the first person I didn't have to fight to be seen by."
           ]
          }
         ]
@@ -3801,13 +4386,91 @@
        {
         "key": "keep-the-belt",
         "title": "Keep the belt",
-        "about": "Toph gives you the belt and asks you to hold on to it for her, in case she misses it.",
+        "about": "Toph gives you the belt and asks you to hold on to it, in case she misses it.",
+        "scene": "World: Toph, Keep The Belt",
         "rewards": [
          {
           "coins": 500
          },
          {
           "pack": "lucky_pack"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "toph-earth-rumble",
+      "title": "Earth Rumble",
+      "gates": 5,
+      "requires": {
+       "quests": [
+        "toph-blind-bandit"
+       ]
+      },
+      "scene": "World: Toph, Earth Rumble",
+      "about": "Toph's parents are coming to town to watch her fight. She's nervous, and she doesn't want to be seen as a pushover in front of them.",
+      "offer": [
+       "them (dismayed): My parents are coming. They've never watched me fight.",
+       "them: Come to the arena at evening. I need someone who'll be honest about how I look."
+      ],
+      "stages": [
+       {
+        "text": "Meet Toph at the arena in the evening",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "arena",
+          "times": [
+           2
+          ],
+          "scene": "World: Toph, Earth Rumble Arena",
+          "rewards": [
+           {
+            "pack": "color_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Beat Toph in a duel, so she knows what she's made of",
+        "scene": "World: Toph, Her Test",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Toph"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Tell Toph what you think",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Toph",
+          "script": [
+           "them: Heh. Sap. Don't tell anyone.",
+           "them (pleased): You're my best friend. I'll say it in front of them, if they show up."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "parents-came",
+        "title": "Let them watch",
+        "about": "Her parents do come, and they watch her fight. Toph isn't sure what to say to them afterwards.",
+        "scene": "World: Toph, Parents",
+        "rewards": [
+         {
+          "coins": 800
+         },
+         {
+          "gift": "playmat"
          }
         ]
        }
@@ -3854,6 +4517,18 @@
      ]
     },
     {
+     "name": "World: Toph, Test",
+     "script": [
+      "cast me as Toph",
+      "background arena",
+      "me enters right with drop",
+      "me: You're breathing too loud. Want to take a test in the forest? Shoes off.",
+      "player: What's the test?",
+      "me (lose): Finding the squirrel I can hear. Easy, if you're not a pushover.",
+      "me: Meet me in the forest in the evening. I'll wait."
+     ]
+    },
+    {
      "name": "World: Toph, Forest",
      "script": [
       "cast me as Toph",
@@ -3862,9 +4537,32 @@
       "me: Shoes off. Eyes closed. Yes, you too.",
       "player: Why?",
       "me: Because I can hear every footstep in this forest. Including yours. Including the squirrel.",
-      "player: A squirrel?",
-      "me (lose): Left, three trees back. Told you.",
-      "me: I'm showing off. Nobody ever asked me to show them anything before."
+      "me (lose): Blind is a state of mind, sweetheart. I can feel the ground tell me where you are.",
+      "me (lose): Left, three trees back. Told you. I'm showing off, because nobody ever asked me to before."
+     ]
+    },
+    {
+     "name": "World: Toph, Short List",
+     "script": [
+      "cast me as Toph",
+      "background forest",
+      "me enters center with fade",
+      "me (lose): You're on my short list. Don't tell anyone, or I'll punch you. Gently.",
+      "player: I won't tell.",
+      "me (win): My old belt's gone, though. Somebody bought it at the shop.",
+      "me: If you find out who, tell me. I want it back."
+     ]
+    },
+    {
+     "name": "World: Toph, The Belt Is Gone",
+     "script": [
+      "cast me as Toph",
+      "background arena",
+      "me enters right with drop",
+      "me (win): My Earth Rumble belt. Someone bought it at the shop. I can feel it's not in my house.",
+      "player: Who would do that?",
+      "me: Kittan, probably. He's loud enough to be obvious about it.",
+      "me (lose): Meet me at the arena in the evening. I want my belt back, and I want you there."
      ]
     },
     {
@@ -3873,12 +4571,84 @@
       "cast me as Toph",
       "background arena",
       "me enters center with rise",
-      "me: Catch.",
-      "player: It's heavy. Is this a championship belt?",
-      "me (lose): Earth Rumble, two years running. I stopped counting after I stopped going home.",
-      "me: My parents never came to watch me fight. I told them I didn't care.",
-      "player: Do you?",
-      "me (win): ...Don't make me answer that."
+      "me: Catch. No, wait, that's a belt. I'm not sure I want it back, honestly.",
+      "player: It's your belt, Toph.",
+      "me (win): My parents never came to watch me fight. I told them I didn't care.",
+      "me (lose): Heh. I'd like it back anyway. Win it for me."
+     ]
+    },
+    {
+     "name": "World: Toph, The Belt Back",
+     "script": [
+      "cast me as Toph",
+      "cast kittan as Kittan",
+      "background arena",
+      "me enters center with rise",
+      "kittan enters right with slide",
+      "kittan: {player} beat me, and I'm not sorry about the bet. The belt's yours, Toph.",
+      "me (lose): It's back. Heavy, like I remember it.",
+      "kittan: Tell your mum I still owe her a fight."
+     ]
+    },
+    {
+     "name": "World: Toph, Keep The Belt",
+     "script": [
+      "cast me as Toph",
+      "background arena",
+      "me enters center with rise",
+      "me (lose): Keep it, in case I miss it. It's yours until I need it back.",
+      "player: That's a big thing to give me.",
+      "me: Don't make it weird. You're on the short list. That's a belt's worth of trust.",
+      "me (win): My parents are coming soon. Come to the arena if you want to see me fight them."
+     ]
+    },
+    {
+     "name": "World: Toph, Earth Rumble",
+     "script": [
+      "cast me as Toph",
+      "background arena",
+      "me enters center with fade",
+      "me (win): My parents are coming to town. They've never seen me fight.",
+      "player: Are you nervous?",
+      "me (lose): Obviously not. Okay, a little. Don't tell them.",
+      "me: Come to the arena this evening. Tell me honestly how I look when I fight."
+     ]
+    },
+    {
+     "name": "World: Toph, Earth Rumble Arena",
+     "script": [
+      "cast me as Toph",
+      "background arena",
+      "me enters right with drop",
+      "me: Let's go. I'm going to show them what I'm made of, and they'll have to watch.",
+      "player: Do you want to practise first?",
+      "me (win): No. I want a real fight. Something to show them what I can do.",
+      "me (win): I can't see the crowd, but I can feel their feet through the floor. They're stamping, which means they're nervous for me.",
+      "me: Hit me as hard as you can, and make it count."
+     ]
+    },
+    {
+     "name": "World: Toph, Her Test",
+     "script": [
+      "cast me as Toph",
+      "background arena",
+      "me enters center with fade",
+      "me (lose): Heh. You beat me, and my parents are still on the way. Brilliant.",
+      "player: They'll be proud of you.",
+      "me (win): They'll be scared, that's what they'll be. Thanks for not going easy on me.",
+      "me: Come back in the morning. Let's see what the rest of the town does."
+     ]
+    },
+    {
+     "name": "World: Toph, Parents",
+     "script": [
+      "cast me as Toph",
+      "background sakura",
+      "me enters left with fade",
+      "me (win): They came. They watched. They didn't say much, but they stayed.",
+      "player: That's a good sign.",
+      "me (lose): Heh. Maybe. I'm not sure what to say to them yet.",
+      "me: Come with me. You can be the one who talks, and I'll just stand there."
      ]
     },
     {
@@ -4655,39 +5425,36 @@
      {
       "key": "azula-prodigy",
       "title": "The Prodigy's Test",
-      "gates": 2,
-      "about": "Azula wants a worthy opponent, and she'll only train with someone who can beat her in a Red deck.",
+      "requires": {
+       "rank": 1
+      },
+      "scene": "World: Azula, Summons",
+      "about": "Azula wants a worthy opponent to test her new form on, and she's not used to asking.",
       "offer": [
        "them (dismayed): You again. Do you always stare at people like that?",
-       "them: I'm about to be crowned, and I need someone to test my new form on. You'll do.",
-       "them: Beat me with a Red deck and I'll consider you worth my time."
+       "them: Come to the arena tonight. I'll test you, and you'll tell me if I'm worth the trouble."
       ],
       "stages": [
        {
-        "text": "Win a duel against Azula with a Red deck",
+        "text": "Meet Azula at the arena at night",
         "objectives": [
          {
-          "do": "win_deck",
-          "colors": [
-           "Red"
+          "do": "visit",
+          "place": "arena",
+          "times": [
+           3
           ],
-          "against": [
-           "Azula"
+          "scene": "World: Azula, Arena",
+          "rewards": [
+           {
+            "coins": 200
+           }
           ]
          }
         ]
        },
        {
-        "text": "Have Ty Lee: Popular",
-        "objectives": [
-         {
-          "do": "have_card",
-          "card": "ATLA/WX04-057"
-         }
-        ]
-       },
-       {
-        "text": "Go back and tell Azula",
+        "text": "Tell Azula what you thought of her form",
         "objectives": [
          {
           "do": "talk",
@@ -4705,6 +5472,7 @@
         "key": "impressed",
         "title": "Earn her respect",
         "about": "Azula admits you're worth her time. From her, that's rare.",
+        "scene": "World: Azula, Respect",
         "rewards": [
          {
           "coins": 300
@@ -4719,35 +5487,21 @@
      {
       "key": "azula-heir",
       "title": "Heir of Fire",
-      "gates": 5,
-      "about": "Azula's coronation is near, and the Avatar stands in her way. What she does next depends on who she trusts.",
+      "gates": 2,
+      "requires": {
+       "quests": [
+        "azula-prodigy"
+       ]
+      },
+      "scene": "World: Azula, Coronation",
+      "about": "Azula's coronation is near, and the Avatar stands in her way. She wants you to watch him, and to keep him away from the palace.",
       "offer": [
        "them: The Avatar is out there, pretending he can make peace. He's an obstacle.",
-       "them (dismayed): Don't look at me like that. I was born for this."
+       "them (dismayed): I need someone to watch him for me. Don't look at me like that."
       ],
       "stages": [
        {
-        "text": "Beat Aang in a duel",
-        "objectives": [
-         {
-          "do": "defeat",
-          "cpus": [
-           "Aang"
-          ]
-         }
-        ]
-       },
-       {
-        "text": "Have Azula: Verge of Insanity",
-        "objectives": [
-         {
-          "do": "have_card",
-          "card": "ATLA/WX04-050S"
-         }
-        ]
-       },
-       {
-        "text": "Watch the rooftop at night",
+        "text": "Watch the rooftop for the Avatar at night",
         "objectives": [
          {
           "do": "visit",
@@ -4765,7 +5519,96 @@
         ]
        },
        {
+        "text": "Beat Aang in a duel, so he can't reach the palace",
+        "scene": "World: Azula, After Aang",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Aang"
+          ]
+         }
+        ]
+       },
+       {
         "text": "Give Azula your answer",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Azula",
+          "script": [
+           "them: He's down. Good. Now we can talk about the crown.",
+           "them (pleased): ...Thank you. You're useful, which I did not expect."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "heir",
+        "title": "Stand by her",
+        "about": "Azula takes you into her plans. The crown is close now, and so are the choices it brings.",
+        "scene": "World: Azula, Heir",
+        "rewards": [
+         {
+          "coins": 600
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "azula-crown",
+      "title": "Take the Crown",
+      "gates": 5,
+      "requires": {
+       "quests": [
+        "azula-heir"
+       ]
+      },
+      "scene": "World: Azula, The Crown",
+      "about": "The coronation is tomorrow. Azula has to decide what kind of ruler she'll be, and the one she'll be is her own choice.",
+      "offer": [
+       "them (dismayed): I have to decide something tonight. I'd rather not decide it alone.",
+       "them: Come up to the palace. I'll show you the throne room, and you'll see what I'm giving up."
+      ],
+      "stages": [
+       {
+        "text": "Meet Azula in the throne room at night",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "shrine",
+          "times": [
+           3
+          ],
+          "scene": "World: Azula, Throne Room",
+          "rewards": [
+           {
+            "coins": 400
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Beat Aang once more, to prove you'll stand against him",
+        "scene": "World: Azula, Last Duel",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Aang"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Tell Azula your answer",
         "objectives": [
          {
           "do": "talk",
@@ -4782,10 +5625,11 @@
        {
         "key": "crown",
         "title": "Take the crown",
-        "about": "Azula takes the throne. Aang's road to peace closes for good, and so does his friendship.",
+        "about": "Azula takes the throne. Aang's road to peace closes for good, and his avatar-state quest is closed with it.",
         "locks": [
          "aang-avatar-state"
         ],
+        "scene": "World: Azula, Crowned",
         "rewards": [
          {
           "coins": 1000
@@ -4800,6 +5644,7 @@
         "key": "walk-away",
         "title": "Walk away from the throne",
         "about": "Azula turns her back on the crown and leaves the Avatar alone.",
+        "scene": "World: Azula, Walks Away",
         "rewards": [
          {
           "coins": 500
@@ -4852,15 +5697,152 @@
      ]
     },
     {
+     "name": "World: Azula, Summons",
+     "script": [
+      "cast me as Azula",
+      "background cafe",
+      "me enters right with slide",
+      "me (win): You. Come with me to the arena tonight. I need someone to test my new form on.",
+      "player: Why me?",
+      "me: Because you stared at me yesterday, and nobody stares at me unless they want to fight.",
+      "me (lose): Don't be late. I won't wait twice."
+     ]
+    },
+    {
+     "name": "World: Azula, Arena",
+     "script": [
+      "cast me as Azula",
+      "background arena",
+      "me enters center with fade",
+      "me: Here is the form. Watch it, and then tell me what's wrong with it.",
+      "player: Nothing looks wrong to me.",
+      "me (win): Then look harder. Everything can be better.",
+      "me (lose): You're not as dull as I thought. Keep watching."
+     ]
+    },
+    {
+     "name": "World: Azula, Respect",
+     "script": [
+      "cast me as Azula",
+      "background sakura",
+      "me enters center with fade",
+      "me (lose): You've earned my respect. Don't let it go to your head.",
+      "player: I'll try not to.",
+      "me: Keep your deck tight. The palace is watching, and so am I.",
+      "me (win): Come to me if the Avatar gets in your way."
+     ]
+    },
+    {
+     "name": "World: Azula, Coronation",
+     "script": [
+      "cast me as Azula",
+      "background sakura",
+      "me enters right with slide",
+      "me (win): My coronation is close. And the Avatar is pretending he can make peace with me.",
+      "player: Can he?",
+      "me: He's an obstacle, whatever he can do. I need someone to watch him for me.",
+      "me (lose): Are you in, or do I have to find someone else?"
+     ]
+    },
+    {
      "name": "World: Azula, Rooftop",
      "script": [
       "cast me as Azula",
-      "background night",
-      "me enters center with rise",
-      "me: You're on time. Most people are late when I ask them to come somewhere at night.",
-      "player: What is this about?",
-      "me (lose): The Avatar is coming for me before my coronation. I want to see who he brings with him.",
-      "me: Watch the street. And try not to look impressed when I'm right."
+      "background rooftop",
+      "me enters left with fade",
+      "me: The Avatar's down below, on the street. Watch his route, and tell me where he goes.",
+      "player: He's headed for the palace.",
+      "me (win): Then he'll have to get past me first.",
+      "me (lose): Stay here. I'll deal with him when he arrives."
+     ]
+    },
+    {
+     "name": "World: Azula, After Aang",
+     "script": [
+      "cast me as Azula",
+      "cast aang as Aang",
+      "background rooftop",
+      "me enters center with fade",
+      "aang enters right with slide",
+      "me (win): {player} put you down, Aang. The rooftop's mine tonight, in a way I didn't plan.",
+      "aang: {player} fights like someone who has been cornered before. Hmph.",
+      "me (win): I have. That's why I don't stop.",
+      "aang: Then go home, Azula. I'll come back with the Avatar State."
+     ]
+    },
+    {
+     "name": "World: Azula, Heir",
+     "script": [
+      "cast me as Azula",
+      "background sakura",
+      "me enters center with fade",
+      "me (lose): You've stood with me, and I won't forget it. You're part of my plans now.",
+      "player: What happens next?",
+      "me (win): The throne room, tomorrow. The crown will be mine, one way or another.",
+      "me: Come to the palace tonight if you want to see what I'm giving up."
+     ]
+    },
+    {
+     "name": "World: Azula, The Crown",
+     "script": [
+      "cast me as Azula",
+      "background castle",
+      "me enters center with fade",
+      "me (win): The coronation is tomorrow. My father's crown is on the table, and I haven't touched it.",
+      "player: Are you scared?",
+      "me (lose): Scared? No. Careful. There's a difference, and you should learn it.",
+      "me: Come to the palace at night. I'll show you the throne room, and what I'm giving up for it."
+     ]
+    },
+    {
+     "name": "World: Azula, Throne Room",
+     "script": [
+      "cast me as Azula",
+      "background shrine",
+      "me enters center with fade",
+      "me: The throne. It's cold, and it's mine, and it's a burden I didn't ask for.",
+      "player: Do you want it?",
+      "me (win): I do, and I don't. I'd like to choose it without someone's shadow over me.",
+      "me: The Avatar's down there, waiting. Tell me what you'd do."
+     ]
+    },
+    {
+     "name": "World: Azula, Last Duel",
+     "script": [
+      "cast me as Azula",
+      "cast aang as Aang",
+      "background castle",
+      "me enters center with fade",
+      "aang enters left with slide",
+      "aang: {player} beat me. The throne room's yours, Azula. Take it and be done.",
+      "me (win): I didn't want it like this, Aang. You wouldn't stop.",
+      "aang: No. I wouldn't. And you'd crown yourself on what's left of us.",
+      "player: What happens now?",
+      "me (lose): Now I decide. Tell me what you'd do in my place."
+     ]
+    },
+    {
+     "name": "World: Azula, Crowned",
+     "script": [
+      "cast me as Azula",
+      "background sakura",
+      "me enters center with fade",
+      "me (lose): I'm the queen now. Aang's road to peace is closed.",
+      "player: Are you happy?",
+      "me (win): I'm... relieved. Let's see if the crown makes it easier.",
+      "me: Thank you for standing with me. You'll always have a place at court."
+     ]
+    },
+    {
+     "name": "World: Azula, Walks Away",
+     "script": [
+      "cast me as Azula",
+      "background sakura",
+      "me enters right with fade",
+      "me (win): I've walked away from the throne. The Avatar can have his peace.",
+      "player: Are you going to be okay?",
+      "me (lose): Probably. I've never walked away from anything before. It's strange.",
+      "me: Come with me to the cafe. I'll buy you something, and we can be strange together."
      ]
     },
     {
@@ -5632,9 +6614,12 @@
     ],
     "quests": [
      {
-      "key": "dig-deeper",
+      "key": "digger-dig-deeper",
       "title": "Dig Deeper",
-      "gates": 2,
+      "requires": {
+       "rank": 1
+      },
+      "scene": "World: Simon the digger, The Hum",
       "about": "Simon's drill found something glowing under the old warehouse, and he's too scared to touch it alone.",
       "offer": [
        "them: My drill found something under the warehouse. It's humming. Can you come look?",
@@ -5660,15 +6645,6 @@
         ]
        },
        {
-        "text": "Have Team DAI-GURREN's Leader, Simon",
-        "objectives": [
-         {
-          "do": "have_card",
-          "card": "GL/S52-E062"
-         }
-        ]
-       },
-       {
         "text": "Tell Simon what you think it is",
         "objectives": [
          {
@@ -5686,7 +6662,8 @@
        {
         "key": "keep-the-core",
         "title": "Keep the core",
-        "about": "Simon keeps the glowing core in a box by his bed, and checks on it every morning.",
+        "about": "Simon keeps the glowing core in a box by his bed, and checks on it every morning. It hums, a little, when Kittan's near.",
+        "scene": "World: Simon the digger, Keep The Core",
         "rewards": [
          {
           "coins": 350
@@ -5699,13 +6676,19 @@
       ]
      },
      {
-      "key": "kaminas-shades",
+      "key": "digger-kamina-shades",
       "title": "Kamina's Shades",
-      "gates": 5,
-      "about": "Simon wears Kamina's glasses for the first time, and they're far too big for him.",
+      "gates": 2,
+      "requires": {
+       "quests": [
+        "digger-dig-deeper"
+       ]
+      },
+      "scene": "World: Simon the digger, The Shades",
+      "about": "Simon wants to wear Kamina's glasses, but he's scared people will laugh. Kittan says he's a coward. Simon needs to prove otherwise.",
       "offer": [
        "them: Kamina left me his shades. I've never had the nerve to wear them.",
-       "them (dismayed): You're going to laugh. Just tell me if they look stupid."
+       "them (dismayed): Kittan says I'm a coward for not wearing them. He's wrong, right?"
       ],
       "stages": [
        {
@@ -5727,11 +6710,14 @@
         ]
        },
        {
-        "text": "Have Kamina",
+        "text": "Beat Kittan in a duel, to show Simon has nerve",
+        "scene": "World: Simon the digger, Nerve",
         "objectives": [
          {
-          "do": "have_card",
-          "card": "GL/S52-E002"
+          "do": "defeat",
+          "cpus": [
+           "Kittan"
+          ]
          }
         ]
        },
@@ -5753,13 +6739,91 @@
        {
         "key": "wear-them",
         "title": "Wear them proudly",
-        "about": "Simon wears the shades to every duel. He says Kamina would have made fun of him for it.",
+        "about": "Simon wears the shades to every duel. He says Kamina would have laughed at him, and then would have worn a pair too.",
+        "scene": "World: Simon the digger, Shades On",
         "rewards": [
          {
           "coins": 600
          },
          {
           "gift": "sunglasses"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "digger-up-to-the-stars",
+      "title": "Up to the Stars",
+      "gates": 5,
+      "requires": {
+       "quests": [
+        "digger-kamina-shades"
+       ]
+      },
+      "scene": "World: Simon the digger, The Stars",
+      "about": "Simon wants to dig up to the stars, the way his big brother-figure did. He has to get past the same fear that stopped him as a kid.",
+      "offer": [
+       "them: Look up. The stars. I never saw them until I left the village.",
+       "them (dismayed): I'm scared of the sky. Come up with me and tell me it's fine."
+      ],
+      "stages": [
+       {
+        "text": "Go to the rooftop with Simon at night",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "rooftop",
+          "times": [
+           3
+          ],
+          "scene": "World: Simon the digger, Rooftop",
+          "rewards": [
+           {
+            "pack": "color_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Duel Simon, the one who taught him to keep moving",
+        "scene": "World: Simon the digger, Keep Moving",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Simon"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Tell Simon what you saw",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Simon the digger",
+          "script": [
+           "them: The sky's so big. But it's not scary with you here.",
+           "them (pleased): Best friend. Let's dig up something big together."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "stars",
+        "title": "Look at the stars",
+        "about": "Simon lies on the rooftop and names the first star. He carries up the glowing core from the warehouse and sets it on the parapet, where it hums like a star, so it finally has a place of its own.",
+        "scene": "World: Simon the digger, Named Star",
+        "rewards": [
+         {
+          "coins": 800
+         },
+         {
+          "pack": "lucky_pack"
          }
         ]
        }
@@ -5803,6 +6867,18 @@
      ]
     },
     {
+     "name": "World: Simon the digger, The Hum",
+     "script": [
+      "cast me as Simon the digger",
+      "background ruins",
+      "me enters left with rise",
+      "me: Um, I found something under the warehouse. It hums, and it's warm.",
+      "player: What is it?",
+      "me (win): I don't know. Don't step near the hole. It's deep.",
+      "me (lose): Come look with me? Please? I'm scared to touch it alone."
+     ]
+    },
+    {
      "name": "World: Simon the digger, Warehouse",
      "script": [
       "cast me as Simon the digger",
@@ -5811,10 +6887,31 @@
       "me: Don't step near the hole. It's deep. I mean really deep.",
       "me: I found this under the warehouse. It hums when I hold it.",
       "player: Let me see.",
-      "me (win): Wait. ...Okay. Careful.",
-      "me: It's warm. Like a heartbeat. I think it's... mine.",
-      "player: Yours?",
-      "me (lose): I found it. Me. ...Don't laugh, okay?"
+      "me (win): Wait. ...Okay. Careful. It's warm, like a heartbeat."
+     ]
+    },
+    {
+     "name": "World: Simon the digger, Keep The Core",
+     "script": [
+      "cast me as Simon the digger",
+      "background ruins",
+      "me enters center with fade",
+      "me (lose): I'm keeping the core. It's mine, I found it.",
+      "player: Are you sure it's safe?",
+      "me (win): It hums louder when Kittan's near. Maybe it likes him.",
+      "me: Thanks for not laughing at me, {player}."
+     ]
+    },
+    {
+     "name": "World: Simon the digger, The Shades",
+     "script": [
+      "cast me as Simon the digger",
+      "background sakura",
+      "me enters right with fade",
+      "me (win): Kittan says I'm a coward for not wearing Kamina's shades. He's wrong, right?",
+      "player: Of course he's wrong.",
+      "me: Then come with me to the plaza in the morning. I want to wear them there.",
+      "me (lose): You'll tell me if they look stupid, okay?"
      ]
     },
     {
@@ -5825,10 +6922,82 @@
       "me enters center with fade",
       "me: Kamina's shades. They're way too big. I look like a bug.",
       "player: You look good.",
-      "me (win): ...Thanks. Really?",
-      "me: Kamina always said who the hell do you think we are. I always said it wrong.",
-      "me (lose): So I'm going to say it my way. Simon. Digger. Your friend.",
-      "me bounces"
+      "me (win): ...Thanks. Really? Kittan's going to laugh at me.",
+      "me (lose): I'm going to duel him about it. Watch me."
+     ]
+    },
+    {
+     "name": "World: Simon the digger, Nerve",
+     "script": [
+      "cast me as Simon the digger",
+      "cast kittan as Kittan",
+      "background sakura",
+      "me enters center with fade",
+      "kittan enters right with slide",
+      "kittan: {player} got me, Simon. You've got nerve after all, if you can keep up with that.",
+      "me (win): I didn't think I'd win. My hands are still shaking.",
+      "kittan: Then keep the shades on. Nobody needs to see that."
+     ]
+    },
+    {
+     "name": "World: Simon the digger, Shades On",
+     "script": [
+      "cast me as Simon the digger",
+      "background sakura",
+      "me enters center with fade",
+      "me (lose): I'm wearing them. Kamina would have laughed, and then he'd have worn a pair too.",
+      "player: They suit you.",
+      "me (win): Do they? I'm still a bit scared.",
+      "me: Thanks for helping me find my nerve, {player}."
+     ]
+    },
+    {
+     "name": "World: Simon the digger, The Stars",
+     "script": [
+      "cast me as Simon the digger",
+      "background rooftop",
+      "me enters center with fade",
+      "me (win): I never saw the stars properly from the village. Not like this.",
+      "player: They're beautiful up here.",
+      "me: Kamina would have laughed at the shades I'm wearing. I wear them anyway.",
+      "me (lose): Come up to the rooftop at night. Tell me which star to name."
+     ]
+    },
+    {
+     "name": "World: Simon the digger, Rooftop",
+     "script": [
+      "cast me as Simon the digger",
+      "background rooftop",
+      "me enters center with fade",
+      "me: Look up. The sky's so big. I never saw it until I left the village.",
+      "player: It's beautiful.",
+      "me (win): It's scary, too. I'm scared of how far away it is.",
+      "me (lose): Stay with me. Let's name the first star."
+     ]
+    },
+    {
+     "name": "World: Simon the digger, Keep Moving",
+     "script": [
+      "cast me as Simon the digger",
+      "cast simon as Simon",
+      "background rooftop",
+      "me enters center with fade",
+      "simon enters right with slide",
+      "simon: {player} beat me, kid. But you kept moving for years, and it shows.",
+      "me (win): You're my older self, you know. That's weird.",
+      "simon: Weird but true. Look up. The stars are still there."
+     ]
+    },
+    {
+     "name": "World: Simon the digger, Named Star",
+     "script": [
+      "cast me as Simon the digger",
+      "background rooftop",
+      "me enters center with fade",
+      "me (lose): I named the first star. I called it Kamina's shades, which he would have hated.",
+      "player: That's a good name.",
+      "me (win): It's a terrible name. I love it anyway.",
+      "me: Thank you for coming up with me, {player}. You're my best friend now."
      ]
     },
     {
@@ -6593,10 +7762,13 @@
     ],
     "quests": [
      {
-      "key": "row-row",
+      "key": "simon-row-row",
       "title": "Row, Row",
-      "gates": 2,
-      "about": "Grown-up Simon can't sleep and goes up to the rooftop to look at the stars.",
+      "requires": {
+       "rank": 1
+      },
+      "scene": "World: Simon, Cant Sleep",
+      "about": "Grown-up Simon can't sleep, and goes up to the rooftop to look at the stars. He wants someone there to count them with him.",
       "offer": [
        "them: I can't sleep. I keep going up to the rooftop to look at the stars.",
        "them (pleased): Come up and count them with me. You'll be bored, but you'll be there."
@@ -6621,15 +7793,6 @@
         ]
        },
        {
-        "text": "Have Piercing Sentiments, Simon & Nia",
-        "objectives": [
-         {
-          "do": "have_card",
-          "card": "GL/S52-E074"
-         }
-        ]
-       },
-       {
         "text": "Tell Simon what you saw up there",
         "objectives": [
          {
@@ -6647,7 +7810,8 @@
        {
         "key": "keep-looking-up",
         "title": "Keep looking up",
-        "about": "Simon still goes to the rooftop at night. Now he tells you about the stars he's named.",
+        "about": "Simon names a star after Nia. Then the sky flickers, and something very large is watching the town.",
+        "scene": "World: Simon, The Sky Flickers",
         "rewards": [
          {
           "coins": 400
@@ -6660,17 +7824,100 @@
       ]
      },
      {
-      "key": "pierce-the-heavens",
-      "title": "Pierce the Heavens",
-      "gates": 5,
-      "about": "The Anti Spiral says evolution must stop. Simon disagrees, and the sky goes wrong while he decides.",
+      "key": "simon-the-offer",
+      "title": "The Offer",
+      "gates": 2,
+      "requires": {
+       "quests": [
+        "simon-row-row"
+       ]
+      },
+      "scene": "World: Simon, The Offer",
+      "about": "The Anti Spiral sent an offer: a finished universe, with no more growing and no more losing anyone. Simon wants someone there when he answers.",
       "offer": [
        "them (dismayed): The Anti Spiral sent me a message. I'm not going to answer it alone.",
-       "them: Will you watch while I decide?"
+       "them: Will you watch while I decide? Kittan's coming to help, but I want you there too."
       ],
       "stages": [
        {
         "text": "Be with Simon on the rooftop at night",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "rooftop",
+          "times": [
+           3
+          ],
+          "scene": "World: Simon, The Message",
+          "rewards": [
+           {
+            "pack": "color_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Beat Kittan, to clear your head before the answer",
+        "scene": "World: Simon, Clear Head",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Kittan"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Tell Simon your answer",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Simon",
+          "script": [
+           "them: I've made my choice. Let's see whose drill pierces deeper.",
+           "them (pleased): Stand with me, then."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "decided",
+        "title": "Be with him",
+        "about": "Simon knows what he'll do. Now he has to make it real, against the Anti Spiral's own terms.",
+        "scene": "World: Simon, Decided",
+        "rewards": [
+         {
+          "coins": 600
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "simon-pierce-the-heavens",
+      "title": "Pierce the Heavens",
+      "gates": 5,
+      "requires": {
+       "quests": [
+        "simon-the-offer"
+       ]
+      },
+      "scene": "World: Simon, Pierce the Heavens",
+      "about": "The Anti Spiral says evolution must stop. Simon disagrees, and what he does next closes one door for good.",
+      "offer": [
+       "them: The Anti Spiral wants a fight, so I'll give it one.",
+       "them (dismayed): Be at the rooftop at night. This is the last thing I'll ask."
+      ],
+      "stages": [
+       {
+        "text": "Stand with Simon on the rooftop at night",
         "objectives": [
          {
           "do": "visit",
@@ -6688,7 +7935,8 @@
         ]
        },
        {
-        "text": "Beat the Anti Spiral in a duel",
+        "text": "Beat the Anti Spiral in a duel, to break through the limit",
+        "scene": "World: Simon, The Breakthrough",
         "objectives": [
          {
           "do": "defeat",
@@ -6705,7 +7953,7 @@
           "do": "talk",
           "to": "Simon",
           "script": [
-           "them: I've made my choice. Let's see whose drill pierces deeper.",
+           "them: I've made my choice. Let's see if the sky holds.",
            "them (pleased): Stand with me, then."
           ]
          }
@@ -6718,8 +7966,9 @@
         "title": "Pierce the heavens",
         "about": "Simon refuses the Anti Spiral's offer and breaks through the limit. The Anti Spiral's Best friend quest is closed for good.",
         "locks": [
-         "the-spiral-nemesis"
+         "anti-spiral-nemesis"
         ],
+        "scene": "World: Simon, Pierced",
         "rewards": [
          {
           "coins": 800
@@ -6733,6 +7982,7 @@
         "key": "hold-the-sky",
         "title": "Hold the sky",
         "about": "Simon turns the offer down, but leaves the Anti Spiral room to change its mind.",
+        "scene": "World: Simon, Held",
         "rewards": [
          {
           "coins": 500
@@ -6779,7 +8029,7 @@
      ]
     },
     {
-     "name": "World: Simon, Rooftop",
+     "name": "World: Simon, Cant Sleep",
      "script": [
       "cast me as Simon",
       "background rooftop",
@@ -6787,9 +8037,92 @@
       "me: Can't sleep. Came up to look at the stars. Nia liked them.",
       "player: Which ones?",
       "me (lose): That cluster there. It looks like a drill. She named it. Terrible name.",
+      "me (win): Stay up with me a little? I'm not used to people staying."
+     ]
+    },
+    {
+     "name": "World: Simon, Rooftop",
+     "script": [
+      "cast me as Simon",
+      "background rooftop",
+      "me enters right with slide",
       "me: I keep wondering if people get to keep the ones they lose.",
       "player: I think you do.",
-      "me (win): ...I'm not sure I believe it yet. Stay up with me a little?"
+      "me (win): ...I'm not sure I believe it yet. Stay up with me a little?",
+      "me: The sky's been strange lately. Something's watching from up there."
+     ]
+    },
+    {
+     "name": "World: Simon, The Sky Flickers",
+     "script": [
+      "cast me as Simon",
+      "background night",
+      "me enters center with rise",
+      "me (win): The stars just flickered. Something's watching us from above.",
+      "player: What is it?",
+      "me: I think it's the Anti Spiral. It's been watching the town for days.",
+      "me (lose): Come with me. I want you there when it answers."
+     ]
+    },
+    {
+     "name": "World: Simon, The Offer",
+     "script": [
+      "cast me as Simon",
+      "background rooftop",
+      "me enters center with rise",
+      "me (win): The Anti Spiral sent an offer. A finished universe. No more growing. No more losing anyone.",
+      "player: That sounds tempting.",
+      "me: It is. That's the danger. I'm going to say no, but I want someone watching.",
+      "me (lose): Be on the roof at night. Kittan's coming too, to keep me steady."
+     ]
+    },
+    {
+     "name": "World: Simon, The Message",
+     "script": [
+      "cast me as Simon",
+      "background night",
+      "me enters left with rise",
+      "me: The sky's wrong tonight. It's too still.",
+      "player: What's happening?",
+      "me (win): The Anti Spiral's answer is coming. It wants me to accept the limit.",
+      "me: I'm going to say no. I wanted you to hear it from me first."
+     ]
+    },
+    {
+     "name": "World: Simon, Clear Head",
+     "script": [
+      "cast me as Simon",
+      "cast kittan as Kittan",
+      "background rooftop",
+      "me enters center with fade",
+      "kittan enters right with slide",
+      "kittan: {player} beat me. Fine. Now clear your head, Simon.",
+      "me (win): The offer's still in my head. I can't get it out.",
+      "kittan: Then let me help you sort it out. You're not doing this alone."
+     ]
+    },
+    {
+     "name": "World: Simon, Decided",
+     "script": [
+      "cast me as Simon",
+      "background rooftop",
+      "me enters center with fade",
+      "me (lose): I've decided. Let's see whose drill pierces deeper.",
+      "player: What's your answer?",
+      "me (win): I'm not accepting the limit. I'll pierce it, with you watching.",
+      "me: Thanks for standing with me, {player}. Stand with me one more time."
+     ]
+    },
+    {
+     "name": "World: Simon, Pierce the Heavens",
+     "script": [
+      "cast me as Simon",
+      "background rooftop",
+      "me enters center with fade",
+      "me (win): The Anti Spiral wants a fight, and I want the answer to be mine.",
+      "player: What's the answer?",
+      "me (lose): The one that doesn't let a finished universe stop us. I'll give it when I've decided.",
+      "me: Be at the rooftop at night. I'd like someone there when I answer."
      ]
     },
     {
@@ -6798,12 +8131,49 @@
       "cast me as Simon",
       "background night",
       "me enters center with rise",
-      "me: The sky's wrong tonight. It's too still.",
+      "me (win): The sky's wrong tonight. It's too still. Watch the stars with me.",
       "player: What's happening?",
-      "me (win): The Anti Spiral sent an offer. A finished universe. No more growing. No more losing anyone.",
-      "me: I'm going to say no. I wanted you to hear it from me first.",
-      "player: What will you do?",
-      "me (lose): Pierce it. With you watching."
+      "me: The Anti Spiral's answer is coming. It wants me to accept the limit.",
+      "me (lose): I'm going to say no. You'll be the one to watch."
+     ]
+    },
+    {
+     "name": "World: Simon, The Breakthrough",
+     "script": [
+      "cast me as Simon",
+      "cast anti as Anti Spiral",
+      "background rooftop",
+      "me enters center with fade",
+      "anti enters right with slide",
+      "anti: {player} broke through my limit, Simon. I did not expect that.",
+      "me (win): I didn't, not on your terms. I just didn't stop.",
+      "anti: Then the hypothesis is wrong. Warmth grows in spiral life after all.",
+      "player: Are you going to take the offer?",
+      "me (lose): No. I'm going to let you go, and let you grow too."
+     ]
+    },
+    {
+     "name": "World: Simon, Pierced",
+     "script": [
+      "cast me as Simon",
+      "background rooftop",
+      "me enters center with fade",
+      "me (lose): I broke through. The Anti Spiral's offer is gone, and the sky's open again.",
+      "player: Is it over?",
+      "me: For the Anti Spiral, yes. For the stars, they're just beginning.",
+      "me (win): Thank you for being here. You kept me moving."
+     ]
+    },
+    {
+     "name": "World: Simon, Held",
+     "script": [
+      "cast me as Simon",
+      "background rooftop",
+      "me enters center with fade",
+      "me: I turned the offer down, but I left the Anti Spiral room to change its mind.",
+      "player: Do you think it will?",
+      "me (win): I don't know. But at least I gave it the choice.",
+      "me (lose): Come on. Let's go look at the stars again."
      ]
     },
     {
@@ -7581,9 +8951,12 @@
     ],
     "quests": [
      {
-      "key": "black-siblings",
+      "key": "kittan-black-siblings",
       "title": "Black Siblings",
-      "gates": 2,
+      "requires": {
+       "rank": 1
+      },
+      "scene": "World: Kittan, Presents",
       "about": "Kittan is trying to buy presents for his three sisters, and he can't tell which one wants what.",
       "offer": [
        "them: Three presents, three sisters, and one of me. Help me pick, will ya?",
@@ -7617,26 +8990,14 @@
           "to": "Kittan"
          }
         ]
-       },
-       {
-        "text": "Tell Kittan what you decided",
-        "objectives": [
-         {
-          "do": "talk",
-          "to": "Kittan",
-          "script": [
-           "them (pleased): Same present for all three? Genius! Ha!",
-           "them: You're my right-hand, you know that?"
-          ]
-         }
-        ]
        }
       ],
       "endings": [
        {
         "key": "deliver",
         "title": "Deliver the presents",
-        "about": "The sisters get identical presents and fight over them anyway. Kittan is thrilled.",
+        "about": "The sisters get identical presents and fight over them anyway. They also mention Gray Fullbuster's bet on who's the loudest.",
+        "scene": "World: Kittan, Delivered",
         "rewards": [
          {
           "coins": 300
@@ -7649,13 +9010,19 @@
       ]
      },
      {
-      "key": "last-stand",
+      "key": "kittan-last-stand",
       "title": "Last Stand",
-      "gates": 5,
-      "about": "Kittan talks about what courage costs, and what he'd do when it all comes down to one charge.",
+      "gates": 2,
+      "requires": {
+       "quests": [
+        "kittan-black-siblings"
+       ]
+      },
+      "scene": "World: Kittan, The Bet",
+      "about": "Gray Fullbuster bet Kittan he can't keep his shirt on through a whole duel. Kittan has to win, or he'll lose more than the bet.",
       "offer": [
-       "them: You ever think about what you'd do at the end? One big charge, no way back?",
-       "them (dismayed): ...Forget I said anything. Just come fight with me."
+       "them: Gray bet me I'll lose my shirt in a fight. I'm not losing it, obviously.",
+       "them (pleased): Come watch the duel. You'll be my witness."
       ],
       "stages": [
        {
@@ -7677,26 +9044,26 @@
         ]
        },
        {
-        "text": "Win a duel with King Kittan in your deck",
+        "text": "Beat Gray Fullbuster in a duel, to win the bet",
+        "scene": "World: Kittan, Shirt On",
         "objectives": [
          {
-          "do": "win_with",
-          "card": "GL/S52-E004",
-          "against": [
-           "Kittan"
+          "do": "defeat",
+          "cpus": [
+           "Gray Fullbuster"
           ]
          }
         ]
        },
        {
-        "text": "Give Kittan your answer",
+        "text": "Tell Kittan what you think",
         "objectives": [
          {
           "do": "talk",
           "to": "Kittan",
           "script": [
-           "them: No charging off alone, you say? ...Okay, that's fair.",
-           "them (pleased): Then we go together. KING KITTAN, DOUBLE-TEAM!"
+           "them (pleased): I kept my shirt on! Ha, King Kittan wins!",
+           "them: You're my right-hand man, you know that?"
           ]
          }
         ]
@@ -7707,9 +9074,87 @@
         "key": "charge-together",
         "title": "Charge together",
         "about": "Kittan promises not to charge in alone. He doesn't always keep it, but he means it.",
+        "scene": "World: Kittan, Together",
         "rewards": [
          {
           "coins": 700
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "kittan-charge",
+      "title": "The Big Charge",
+      "gates": 5,
+      "requires": {
+       "quests": [
+        "kittan-last-stand"
+       ]
+      },
+      "scene": "World: Kittan, The Big Charge",
+      "about": "Simon has been holding back since Nia, and Kittan wants him to charge again. Kittan will need you to beat Simon, so he'll know Simon's still fighting.",
+      "offer": [
+       "them: Simon's been holding back. I can see it. He needs a proper charge.",
+       "them (dismayed): I need you to be the one who beats him. He'll listen to you."
+      ],
+      "stages": [
+       {
+        "text": "Meet Kittan at the arena in the evening",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "arena",
+          "times": [
+           2
+          ],
+          "scene": "World: Kittan, Charge Arena",
+          "rewards": [
+           {
+            "coins": 300
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Beat Simon, so he'll charge again",
+        "scene": "World: Kittan, Simon Charges",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Simon"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Tell Kittan what happened",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Kittan",
+          "script": [
+           "them: He's charging again. That's the best thing I've seen all week.",
+           "them (pleased): Thanks, {player}. Now we go to the arena together."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "charge",
+        "title": "Charge with him",
+        "about": "Simon and Kittan charge the arena together. For the first time since Nia, it looks like fun.",
+        "scene": "World: Kittan, Charged",
+        "rewards": [
+         {
+          "coins": 800
          },
          {
           "pack": "lucky_pack"
@@ -7755,6 +9200,18 @@
      ]
     },
     {
+     "name": "World: Kittan, Presents",
+     "script": [
+      "cast me as Kittan",
+      "background sakura",
+      "me enters left with slide",
+      "me: Three presents, three sisters, and one of me. I'm not good at this.",
+      "player: Which sister wants what?",
+      "me (win): That's the problem! They all want the biggest present.",
+      "me (lose): Help me pick, will ya? Quick, before they get back."
+     ]
+    },
+    {
      "name": "World: Kittan, Plaza",
      "script": [
       "cast me as Kittan",
@@ -7763,9 +9220,30 @@
       "me: Three presents. Three sisters. One of me. I'm not good at this.",
       "player: Which sister gets which?",
       "me (win): That's the problem! They all want the bigger present.",
-      "player: Give them the same gift, then.",
-      "me (lose): Genius! My sisters would fight anyone for each other, and they'd fight me for the best one.",
-      "me bounces"
+      "me (lose): Same present for all three? Genius! Ha!"
+     ]
+    },
+    {
+     "name": "World: Kittan, Delivered",
+     "script": [
+      "cast me as Kittan",
+      "background sakura",
+      "me enters center with fade",
+      "me (lose): The presents are delivered, and they fought over them anyway. Ha!",
+      "player: That sounds like them.",
+      "me: Gray Fullbuster bet me I'd lose my shirt in a fight. I'm not losing it.",
+      "me (win): Come to the arena at evening. I'll need a witness."
+     ]
+    },
+    {
+     "name": "World: Kittan, The Bet",
+     "script": [
+      "cast me as Kittan",
+      "background arena",
+      "me enters left with pop",
+      "me: Gray bet me I'll lose my shirt in a fight. I'm not losing it, obviously.",
+      "player: Are you going to win?",
+      "me (lose): Of course! Stay and watch. You'll be my witness."
      ]
     },
     {
@@ -7773,13 +9251,83 @@
      "script": [
       "cast me as Kittan",
       "background arena",
+      "me enters left with pop",
+      "me: Oi! Gray's coming, and I'm ready. No shirt-losing today!",
+      "player: Good luck.",
+      "me (lose): I don't need luck. I need a witness. You're it."
+     ]
+    },
+    {
+     "name": "World: Kittan, Shirt On",
+     "script": [
+      "cast me as Kittan",
+      "cast gray as Gray Fullbuster",
+      "background arena",
       "me enters center with fade",
-      "me: I wrap my fists before every fight. Even the friendly ones.",
-      "player: Why the friendly ones?",
-      "me (win): Because courage isn't free. It costs you something every time you charge in.",
-      "me: I'd charge in first, every time. Even if I was the only one.",
-      "player: You wouldn't be alone.",
-      "me (lose): ...Yeah, okay. Then remember me loud."
+      "gray enters right with slide",
+      "gray: Ha! {player} beat me, and Kittan kept his shirt on. Okay, I'm impressed.",
+      "me (lose): That's what I'm here for. Pay up, Gray.",
+      "gray: Fine. Next time I'll bring a bigger bet."
+     ]
+    },
+    {
+     "name": "World: Kittan, Together",
+     "script": [
+      "cast me as Kittan",
+      "background arena",
+      "me enters center with pop",
+      "me (lose): I kept my shirt on! King Kittan wins!",
+      "player: You did it.",
+      "me: Never let me charge in alone again, okay? I mean it. Stay with me.",
+      "me (win): You're my right-hand man. Don't let me forget it."
+     ]
+    },
+    {
+     "name": "World: Kittan, The Big Charge",
+     "script": [
+      "cast me as Kittan",
+      "background arena",
+      "me enters center with fade",
+      "me (lose): Simon's been holding back since Nia. I can see it in the way he stands.",
+      "player: What do you want to do about it?",
+      "me: Charge him. Hard. He needs to see that someone still believes in him.",
+      "me (win): Be at the arena this evening. I've got a plan, and it's loud."
+     ]
+    },
+    {
+     "name": "World: Kittan, Charge Arena",
+     "script": [
+      "cast me as Kittan",
+      "background arena",
+      "me enters left with pop",
+      "me: Oi! Simon's coming, and I'm going to make him charge. Stay close.",
+      "player: Be careful.",
+      "me (lose): Careful's for people who don't charge. I'm not one of them."
+     ]
+    },
+    {
+     "name": "World: Kittan, Simon Charges",
+     "script": [
+      "cast me as Kittan",
+      "cast simon as Simon",
+      "background arena",
+      "me enters center with fade",
+      "simon enters right with slide",
+      "simon: {player} hit me, Kittan. Good. That's the old fire, and you started it.",
+      "me (lose): You're charging too, Simon. Let's keep it going.",
+      "simon: I'm not coming back for a loss. I'm coming back for you."
+     ]
+    },
+    {
+     "name": "World: Kittan, Charged",
+     "script": [
+      "cast me as Kittan",
+      "background arena",
+      "me enters center with pop",
+      "me (lose): They charged together. Simon and me, for the first time since Nia.",
+      "player: It looks like fun again.",
+      "me: It is! Come on, let's go charge the plaza. Right now!",
+      "me (win): Thanks, {player}. You're my right-hand for life."
      ]
     },
     {
@@ -8537,10 +10085,13 @@
     ],
     "quests": [
      {
-      "key": "long-range-support",
+      "key": "yoko-long-range",
       "title": "Long-Range Support",
-      "gates": 2,
-      "about": "Yoko wants a spotter for target practice, and someone to call the wind.",
+      "requires": {
+       "rank": 1
+      },
+      "scene": "World: Yoko, Spotter",
+      "about": "Yoko wants a spotter for target practice on the beach, and someone who can call the wind.",
       "offer": [
        "them: I need a spotter. Someone who can call the wind and not panic.",
        "them (pleased): Bring your eyes. Leave the shouting at home."
@@ -8565,15 +10116,6 @@
         ]
        },
        {
-        "text": "Have Special Lesson, Yomako",
-        "objectives": [
-         {
-          "do": "have_card",
-          "card": "GL/S52-E019"
-         }
-        ]
-       },
-       {
         "text": "Tell Yoko how the shots went",
         "objectives": [
          {
@@ -8591,7 +10133,8 @@
        {
         "key": "spotter",
         "title": "Be her spotter",
-        "about": "Yoko asks you to spot for her any time she's on the beach. It's the highest praise she gives.",
+        "about": "Yoko asks you to spot for her any time she's on the beach. She also mentions a new teacher is needed for the town's kids.",
+        "scene": "World: Yoko, Spotter Again",
         "rewards": [
          {
           "coins": 300
@@ -8604,13 +10147,19 @@
       ]
      },
      {
-      "key": "teacher-yoko",
+      "key": "yoko-teacher",
       "title": "Teacher Yoko",
-      "gates": 5,
-      "about": "After the war, Yoko wants to teach. She's scared the kids won't listen to a sniper.",
+      "gates": 2,
+      "requires": {
+       "quests": [
+        "yoko-long-range"
+       ]
+      },
+      "scene": "World: Yoko, The Lesson",
+      "about": "Yoko wants to teach the town's kids, but she's scared they won't listen to a sniper. She needs a test class, and Okarun is the hardest audience around.",
       "offer": [
        "them: I'm writing a lesson plan. It's mostly stick figures.",
-       "them (dismayed): Don't laugh. I've never taught anyone anything."
+       "them (dismayed): Okarun's the hardest one in town to teach. Can you help me try?"
       ],
       "stages": [
        {
@@ -8632,11 +10181,14 @@
         ]
        },
        {
-        "text": "Have New Teacher, Yomako",
+        "text": "Beat Okarun in a duel, so he'll listen to a teacher",
+        "scene": "World: Yoko, Okarun's Lesson",
         "objectives": [
          {
-          "do": "have_card",
-          "card": "GL/S52-E028"
+          "do": "defeat",
+          "cpus": [
+           "Okarun"
+          ]
          }
         ]
        },
@@ -8659,9 +10211,87 @@
         "key": "start-the-class",
         "title": "Start the class",
         "about": "Yoko runs her first class, and the kids listen. Mostly because she's scary.",
+        "scene": "World: Yoko, Class",
         "rewards": [
          {
           "coins": 500
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "yoko-spotter",
+      "title": "The Last Shot",
+      "gates": 5,
+      "requires": {
+       "quests": [
+        "yoko-teacher"
+       ]
+      },
+      "scene": "World: Yoko, The Last Shot",
+      "about": "Rapi has challenged Yoko to a sniper match. Yoko has to decide whether to take it, and whether to keep teaching or go back to the front.",
+      "offer": [
+       "them (dismayed): Rapi wants a match, and she's not going to let it go.",
+       "them: I need someone to watch my back and call the wind for me."
+      ],
+      "stages": [
+       {
+        "text": "Go to the arena with Yoko at evening",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "arena",
+          "times": [
+           2
+          ],
+          "scene": "World: Yoko, Sniper Arena",
+          "rewards": [
+           {
+            "coins": 300
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Beat Rapi in a duel, to answer the challenge",
+        "scene": "World: Yoko, Rapi Down",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Rapi"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Tell Yoko your answer",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Yoko",
+          "script": [
+           "them (pleased): You won the spotter's match. I'm keeping the class, then.",
+           "them: Thanks for being on my side, {player}."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "keep-teaching",
+        "title": "Keep teaching",
+        "about": "Yoko stays in town to teach. Rapi takes a rematch later, and she keeps coming back for it.",
+        "scene": "World: Yoko, Keep Teaching",
+        "rewards": [
+         {
+          "coins": 800
          },
          {
           "pack": "lucky_pack"
@@ -8705,6 +10335,17 @@
      ]
     },
     {
+     "name": "World: Yoko, Spotter",
+     "script": [
+      "cast me as Yoko",
+      "background beach",
+      "me enters right with slide",
+      "me: I need a spotter. Someone who can call the wind and not panic.",
+      "player: I can do that.",
+      "me (lose): Good. Bring your eyes, and leave the shouting at home."
+     ]
+    },
+    {
      "name": "World: Yoko, Beach",
      "script": [
       "cast me as Yoko",
@@ -8713,9 +10354,29 @@
       "me: Cans on the rocks. Wind's from the left. Call it.",
       "player: Left. Low. Six cans.",
       "me: ...Six. Every single one. Sweet.",
-      "me: And I'll miss the seventh on purpose, so you don't get cocky.",
-      "player: Ha. Okay.",
       "me (lose): Good eyes. Keep 'em open next time."
+     ]
+    },
+    {
+     "name": "World: Yoko, Spotter Again",
+     "script": [
+      "cast me as Yoko",
+      "background beach",
+      "me enters center with fade",
+      "me: You're a good spotter. Come back any time, and I'll teach you a few more shots.",
+      "player: I'd like that.",
+      "me: The town's kids need a teacher, too. I'm thinking about it, I think."
+     ]
+    },
+    {
+     "name": "World: Yoko, The Lesson",
+     "script": [
+      "cast me as Yoko",
+      "background sakura",
+      "me enters right with slide",
+      "me: I'm writing a lesson plan. It's mostly stick figures, but the kids need it.",
+      "player: Can I help?",
+      "me (lose): Yes. Try the test class with me. Okarun is the hardest one in town."
      ]
     },
     {
@@ -8726,9 +10387,80 @@
       "me enters center with fade",
       "me: I drew a lesson plan. Three pages. It's mostly stick figures.",
       "player: Show me.",
-      "me (win): ...I'm scared the kids won't listen. Nobody listens to a sniper who talks.",
-      "player: I'd listen.",
-      "me (lose): Then practise on me. Go on, teach me something."
+      "me (win): I'm scared the kids won't listen. Nobody listens to a sniper who talks."
+     ]
+    },
+    {
+     "name": "World: Yoko, Okarun's Lesson",
+     "script": [
+      "cast me as Yoko",
+      "cast okarun as Okarun",
+      "background sakura",
+      "me enters center with fade",
+      "okarun enters right with slide",
+      "okarun: Alright, {player} got me. I'll listen to the lesson, Yoko.",
+      "me (lose): Good. Lesson one: sit still and listen. Lesson two: don't make it weird.",
+      "okarun: That's not a lesson, that's a threat.",
+      "me (win): Fine. Next week, same time, same plaza."
+     ]
+    },
+    {
+     "name": "World: Yoko, Class",
+     "script": [
+      "cast me as Yoko",
+      "background classroom",
+      "me enters center with fade",
+      "me (lose): My first class. The kids listened, mostly because I'm scary.",
+      "player: That's a start.",
+      "me: Thanks for being my first student, {player}. I'll tell them you were the test."
+     ]
+    },
+    {
+     "name": "World: Yoko, The Last Shot",
+     "script": [
+      "cast me as Yoko",
+      "background arena",
+      "me enters center with fade",
+      "me (win): Rapi's challenged me to a match. She won't let it go.",
+      "player: Will you take it?",
+      "me: I don't know. I'm trying to teach. And I'm still a sniper.",
+      "me (lose): Come to the arena with me this evening. Call the wind, and keep me honest."
+     ]
+    },
+    {
+     "name": "World: Yoko, Sniper Arena",
+     "script": [
+      "cast me as Yoko",
+      "background arena",
+      "me enters right with slide",
+      "me: Rapi's late, which is annoying. Let's start without her.",
+      "player: Is she coming?",
+      "me (win): She's always coming. That's the problem with her."
+     ]
+    },
+    {
+     "name": "World: Yoko, Rapi Down",
+     "script": [
+      "cast me as Yoko",
+      "cast rapi as Rapi",
+      "background arena",
+      "me enters center with fade",
+      "rapi enters right with slide",
+      "rapi: {player} hit the mark, Yoko. Not bad for a teacher.",
+      "me (win): Teacher, spotter, sniper. Let's go with teacher for now.",
+      "rapi: Keep teaching. I'll be back for the rematch."
+     ]
+    },
+    {
+     "name": "World: Yoko, Keep Teaching",
+     "script": [
+      "cast me as Yoko",
+      "background sakura",
+      "me enters center with fade",
+      "me (lose): I'm keeping the class. Rapi's coming back for a rematch.",
+      "player: Good.",
+      "me: She'll lose again. I'll keep teaching, and I'll keep my aim steady, too.",
+      "me (win): Thanks for your help, {player}. You're the spotter I needed."
      ]
     },
     {
@@ -9496,9 +11228,12 @@
     ],
     "quests": [
      {
-      "key": "spiral-kings-library",
+      "key": "genome-library",
       "title": "The Spiral King's Library",
-      "gates": 2,
+      "requires": {
+       "rank": 1
+      },
+      "scene": "World: Lord Genome, Summons",
       "about": "Lord Genome wants someone to read the old histories to, and to correct them when they're wrong.",
       "offer": [
        "them: The histories of the surface are full of errors. I will not read them alone.",
@@ -9524,15 +11259,6 @@
         ]
        },
        {
-        "text": "Have Tyrant of Teppelin, Lordgenome",
-        "objectives": [
-         {
-          "do": "have_card",
-          "card": "GL/S52-E043"
-         }
-        ]
-       },
-       {
         "text": "Tell Lord Genome whether you agree",
         "objectives": [
          {
@@ -9550,7 +11276,8 @@
        {
         "key": "hear-chronicle",
         "title": "Hear the chronicle",
-        "about": "Lord Genome reads you the whole chronicle, with its errors fixed by memory.",
+        "about": "Lord Genome reads you the whole chronicle. One line is about the Anti-Spirals, and he's afraid of them.",
+        "scene": "World: Lord Genome, Chronicle",
         "rewards": [
          {
           "coins": 400
@@ -9563,13 +11290,19 @@
       ]
      },
      {
-      "key": "the-last-lesson",
+      "key": "genome-last-lesson",
       "title": "The Last Lesson",
-      "gates": 5,
-      "about": "Lord Genome warns you what's waiting beyond the spiral, and why he ruled by fear.",
+      "gates": 2,
+      "requires": {
+       "quests": [
+        "genome-library"
+       ]
+      },
+      "scene": "World: Lord Genome, The Warning",
+      "about": "Lord Genome warns you what's coming from beyond the spiral, and sends you to test the Anti Spiral's claims yourself.",
       "offer": [
        "them: There is a warning I must give. It will not be pleasant.",
-       "them (dismayed): Do not interrupt. I have had a thousand years to rehearse it."
+       "them (dismayed): Do not interrupt. Test the Anti Spiral for yourself, and see if I'm right."
       ],
       "stages": [
        {
@@ -9591,13 +11324,13 @@
         ]
        },
        {
-        "text": "Win a duel with Two Faces, Enki in your deck",
+        "text": "Beat the Anti Spiral in a duel, to test its claims",
+        "scene": "World: Lord Genome, Test",
         "objectives": [
          {
-          "do": "win_with",
-          "card": "GL/S52-E049",
-          "against": [
-           "Lord Genome"
+          "do": "defeat",
+          "cpus": [
+           "Anti Spiral"
           ]
          }
         ]
@@ -9621,12 +11354,90 @@
         "key": "carry-warning",
         "title": "Carry the warning",
         "about": "You carry Lord Genome's warning out of the shrine. He asked nothing for it, which is how you know it matters.",
+        "scene": "World: Lord Genome, Carry It",
         "rewards": [
          {
           "coins": 700
          },
          {
           "gift": "bottled-tea"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "genome-throne",
+      "title": "Two Kings",
+      "gates": 5,
+      "requires": {
+       "quests": [
+        "genome-last-lesson"
+       ]
+      },
+      "scene": "World: Lord Genome, Two Kings",
+      "about": "Ainz Ooal Gown has arrived in town, and Lord Genome needs to know if he's a threat or an ally. He also has the warning he was afraid to say alone, about what is coming from beyond the spiral, and he gives it to Ainz to carry.",
+      "offer": [
+       "them (dismayed): The Sorcerer King is in the library. He's watching the spiral.",
+       "them: Win a duel against him, and I'll know what to do about him."
+      ],
+      "stages": [
+       {
+        "text": "Go to the library with Lord Genome at noon",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "library",
+          "times": [
+           1
+          ],
+          "scene": "World: Lord Genome, Two Kings Library",
+          "rewards": [
+           {
+            "coins": 300
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Beat Ainz Ooal Gown in a duel, to see if he's a threat",
+        "scene": "World: Lord Genome, Ainz Falls",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Ainz Ooal Gown"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Tell Lord Genome what you found",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Lord Genome",
+          "script": [
+           "them: Ainz is not a threat. Good. The throne may be shared.",
+           "them (pleased): You are not as foolish as I thought, {player}."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "shared-throne",
+        "title": "Share the throne",
+        "about": "Lord Genome offers Ainz a seat beside his throne. It's the first alliance he's offered in a thousand years.",
+        "scene": "World: Lord Genome, Shared Throne",
+        "rewards": [
+         {
+          "coins": 800
+         },
+         {
+          "pack": "lucky_pack"
          }
         ]
        }
@@ -9667,18 +11478,51 @@
      ]
     },
     {
+     "name": "World: Lord Genome, Summons",
+     "script": [
+      "cast me as Lord Genome",
+      "background castle",
+      "me enters center with fade",
+      "me: You are summoned to the Spiral King's library. Come, and bring your ears.",
+      "player: What do you need?",
+      "me (win): The histories are full of errors. I will not read them alone.",
+      "me (lose): Be at the library at noon. Do not be late, surface child."
+     ]
+    },
+    {
      "name": "World: Lord Genome, Library",
      "script": [
       "cast me as Lord Genome",
       "background library",
       "me enters center with fade",
       "me: Sit. This chronicle is wrong about the third age. Listen closely.",
-      "me: The historians wrote that the surface was empty. It was not. I was there.",
       "player: You're making that up.",
       "me (win): I do not make things up. I embellish. There is a difference.",
-      "me: Tell me honestly. Would you have made my choices?",
-      "player: No.",
-      "me (lose): Good. You are less foolish than most. Sit again tomorrow."
+      "me: Tell me honestly. Would you have made my choices?"
+     ]
+    },
+    {
+     "name": "World: Lord Genome, Chronicle",
+     "script": [
+      "cast me as Lord Genome",
+      "background library",
+      "me enters center with fade",
+      "me: The chronicle is finished. One page is about the Anti-Spirals, and I am still afraid of them.",
+      "player: Why are you afraid?",
+      "me (win): Because they erased whole worlds. I could not stop them, so I caged humanity instead.",
+      "me (lose): Return tomorrow. The king has more to say, and more to warn you about."
+     ]
+    },
+    {
+     "name": "World: Lord Genome, The Warning",
+     "script": [
+      "cast me as Lord Genome",
+      "background shrine",
+      "me enters center with fade",
+      "me: There is a warning I must give. It will not be pleasant.",
+      "player: Tell me.",
+      "me (win): The Anti Spiral claims warmth can grow in spiral life. Test it yourself, and see if I am right.",
+      "me: Come to the shrine at night. Do not be late."
      ]
     },
     {
@@ -9690,9 +11534,81 @@
       "me: The Anti-Spirals came before the spiral kings. I watched them come.",
       "me: They erased whole worlds. I could not stop them, so I caged humanity instead.",
       "player: You did it to protect them.",
-      "me (win): I did it because I was afraid. Protection was my excuse.",
-      "me: Carry this warning. If they come again, do not kneel.",
-      "me (lose): I ask nothing back. Only that you remember I was honest."
+      "me (win): I did it because I was afraid. Protection was my excuse."
+     ]
+    },
+    {
+     "name": "World: Lord Genome, Test",
+     "script": [
+      "cast me as Lord Genome",
+      "cast anti as Anti Spiral",
+      "background shrine",
+      "me enters center with fade",
+      "anti enters right with slide",
+      "anti: Your test is complete, {player}. You beat me. The data is interesting.",
+      "me (win): You're not as far above us as you thought.",
+      "anti: Lord Genome, there are more tests coming. Be ready.",
+      "player: What was the test for?",
+      "me (lose): To see if its claims were lies. They were not. That's worse."
+     ]
+    },
+    {
+     "name": "World: Lord Genome, Carry It",
+     "script": [
+      "cast me as Lord Genome",
+      "background shrine",
+      "me enters center with fade",
+      "me: You carry the warning out of the shrine. I asked nothing for it, which is how you know it matters.",
+      "player: I'll remember it.",
+      "me (lose): Good. Carry it, and do not kneel to anyone who asks."
+     ]
+    },
+    {
+     "name": "World: Lord Genome, Two Kings",
+     "script": [
+      "cast me as Lord Genome",
+      "background library",
+      "me enters center with fade",
+      "me (win): The Sorcerer King is here, in the library. He's watching the spiral.",
+      "player: Is he a threat?",
+      "me: Only one way to know. Duel him, and I'll learn what kind of king he is.",
+      "me (lose): Come to the library at noon. Bring your questions, and don't blink."
+     ]
+    },
+    {
+     "name": "World: Lord Genome, Two Kings Library",
+     "script": [
+      "cast me as Lord Genome",
+      "background library",
+      "me enters center with fade",
+      "me: The Sorcerer King. You are a king, too, I suppose. Speak your terms.",
+      "player: He's a king, but he's not here to fight you.",
+      "me (win): He is here to watch the spiral. I shall decide if that is a threat."
+     ]
+    },
+    {
+     "name": "World: Lord Genome, Ainz Falls",
+     "script": [
+      "cast me as Lord Genome",
+      "cast ainz as Ainz Ooal Gown",
+      "background library",
+      "me enters center with fade",
+      "ainz enters right with slide",
+      "ainz: {player} fought well. I'll admit that much, Genome.",
+      "me (lose): You fought better. I'll take the seat beside the throne if you offer it.",
+      "ainz: Hmm. I'll think on it, when the spiral has gone quiet."
+     ]
+    },
+    {
+     "name": "World: Lord Genome, Shared Throne",
+     "script": [
+      "cast me as Lord Genome",
+      "background castle",
+      "me enters center with fade",
+      "me (lose): Ainz is not a threat. I offered him a seat beside my throne.",
+      "player: Did he accept?",
+      "me: He did. It is the first alliance I have offered in a thousand years.",
+      "me (win): You are not as foolish as I thought, {player}. Thank you."
      ]
     },
     {
@@ -10461,9 +12377,12 @@
     ],
     "quests": [
      {
-      "key": "observation",
+      "key": "anti-observation",
       "title": "Observation",
-      "gates": 2,
+      "requires": {
+       "rank": 1
+      },
+      "scene": "World: Anti Spiral, Observed",
       "about": "The Anti Spiral studies the player like a specimen, and records every answer without judging it.",
       "offer": [
        "them: Spiral life form designate: {player}. Observation begins. Answer truthfully.",
@@ -10489,15 +12408,6 @@
         ]
        },
        {
-        "text": "Have Messenger Nia",
-        "objectives": [
-         {
-          "do": "have_card",
-          "card": "GL/S52-E090"
-         }
-        ]
-       },
-       {
         "text": "Give the Anti Spiral your final answer",
         "objectives": [
          {
@@ -10516,6 +12426,7 @@
         "key": "retained",
         "title": "Let it record you",
         "about": "The Anti Spiral keeps a file on you now. It calls the file friendship, and it isn't wrong.",
+        "scene": "World: Anti Spiral, File",
         "rewards": [
          {
           "coins": 400
@@ -10528,10 +12439,16 @@
       ]
      },
      {
-      "key": "the-spiral-nemesis",
-      "title": "The Spiral Nemesis",
-      "gates": 5,
-      "about": "The Anti Spiral offers the player a quiet, finished universe, and asks for help persuading Simon to stop.",
+      "key": "anti-hypothesis",
+      "title": "The Hypothesis",
+      "gates": 2,
+      "requires": {
+       "quests": [
+        "anti-observation"
+       ]
+      },
+      "scene": "World: Anti Spiral, Hypothesis",
+      "about": "The Anti Spiral has a hypothesis, that warmth can grow in spiral life. It needs a test, and it needs to see Lord Genome's kingdom first.",
       "offer": [
        "them: We have watched countless spirals burn out. I am considering a different outcome.",
        "them (dismayed): Do not interpret this as sentiment. It is a hypothesis."
@@ -10556,11 +12473,91 @@
         ]
        },
        {
-        "text": "Have Ultimate Universal Diablo, Granzeboma",
+        "text": "Beat Lord Genome in a duel, as the test",
+        "scene": "World: Anti Spiral, The Test",
         "objectives": [
          {
-          "do": "have_card",
-          "card": "GL/S52-E091"
+          "do": "defeat",
+          "cpus": [
+           "Lord Genome"
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Give the Anti Spiral your answer",
+        "objectives": [
+         {
+          "do": "talk",
+          "to": "Anti Spiral",
+          "script": [
+           "them: You have heard the offer. Now decide.",
+           "them (dismayed): ...Your answer is recorded. Designate: warmth."
+          ]
+         }
+        ]
+       }
+      ],
+      "endings": [
+       {
+        "key": "warmth",
+        "title": "Measure the warmth",
+        "about": "The Anti Spiral records warmth as a measurable variable for the first time, and says it has to tell Simon.",
+        "scene": "World: Anti Spiral, Warmth",
+        "rewards": [
+         {
+          "coins": 600
+         },
+         {
+          "pack": "lucky_pack"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "key": "anti-spiral-nemesis",
+      "title": "The Spiral Nemesis",
+      "gates": 5,
+      "requires": {
+       "quests": [
+        "anti-hypothesis"
+       ]
+      },
+      "scene": "World: Anti Spiral, The Offer",
+      "about": "The Anti Spiral offers the player a quiet, finished universe, and asks for help persuading Simon to stop. The offer has a limit, and the choice is whether to accept it.",
+      "offer": [
+       "them: We have a final offer. A finished universe, with no growth and no loss.",
+       "them (dismayed): The offer requires Simon's agreement. Be at the rooftop tonight."
+      ],
+      "stages": [
+       {
+        "text": "Meet the Anti Spiral on the rooftop at night",
+        "objectives": [
+         {
+          "do": "visit",
+          "place": "rooftop",
+          "times": [
+           3
+          ],
+          "scene": "World: Anti Spiral, Final Offer",
+          "rewards": [
+           {
+            "pack": "color_pack"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "text": "Beat Simon, the test of its offer",
+        "scene": "World: Anti Spiral, Simon's Answer",
+        "objectives": [
+         {
+          "do": "defeat",
+          "cpus": [
+           "Simon"
+          ]
          }
         ]
        },
@@ -10584,8 +12581,9 @@
         "title": "Accept the limit",
         "about": "The Anti Spiral accepts the limit on evolution and asks you to make Simon accept it too. Simon's Best friend quest is closed for good.",
         "locks": [
-         "pierce-the-heavens"
+         "simon-pierce-the-heavens"
         ],
+        "scene": "World: Anti Spiral, Limit",
         "rewards": [
          {
           "coins": 800
@@ -10599,6 +12597,7 @@
         "key": "grow-beyond",
         "title": "Let evolution go on",
         "about": "The Anti Spiral sets its hypothesis aside. Simon's road to the heavens stays open.",
+        "scene": "World: Anti Spiral, Grow Beyond",
         "rewards": [
          {
           "coins": 500
@@ -10647,6 +12646,17 @@
      ]
     },
     {
+     "name": "World: Anti Spiral, Observed",
+     "script": [
+      "cast me as Anti Spiral",
+      "background library",
+      "me enters center with fade",
+      "me: Spiral life form designate: {player}. Observation begins. Answer truthfully.",
+      "player: Why are you watching me?",
+      "me: Hope without evidence. Recorded. Your answers are being logged."
+     ]
+    },
+    {
      "name": "World: Anti Spiral, Library",
      "script": [
       "cast me as Anti Spiral",
@@ -10655,9 +12665,31 @@
       "me: Why do you read? Why do you hope? Answer. Recording.",
       "player: Because I want to know what happens next.",
       "me: Logged. Hope without evidence. Acceptable.",
-      "player: Why do you ask so many questions?",
-      "me (win): ...Observation is what we do. It is also lonely, when no one answers.",
-      "me: Continue. The record is not finished."
+      "me (win): ...Observation is what we do. It is also lonely, when no one answers."
+     ]
+    },
+    {
+     "name": "World: Anti Spiral, File",
+     "script": [
+      "cast me as Anti Spiral",
+      "background library",
+      "me enters center with fade",
+      "me: You are retained, in our file. That is the closest word for what we feel about you.",
+      "player: Friendship, you mean?",
+      "me (win): The file calls it friendship, and it is not wrong. We are unsure.",
+      "me: Come to the rooftop soon. We have a hypothesis to share."
+     ]
+    },
+    {
+     "name": "World: Anti Spiral, Hypothesis",
+     "script": [
+      "cast me as Anti Spiral",
+      "background rooftop",
+      "me enters center with fade",
+      "me: We have watched countless spirals burn out. We are considering a different outcome.",
+      "player: What outcome?",
+      "me (win): A test. Warmth in spiral life. Lord Genome is the variable we must measure.",
+      "me: Come to the rooftop at night. We will observe the test together."
      ]
     },
     {
@@ -10669,9 +12701,94 @@
       "me: Look at the sky. No growth. No loss. A finished universe.",
       "player: It looks empty.",
       "me (lose): Empty is safe. Nothing can be lost that was never there.",
-      "me: Simon will receive the offer. Help me persuade him to stop.",
-      "player: Persuade him how?",
-      "me (win): Tell him the truth. The sky has limits, and we set them."
+      "me (win): Be ready. The test is with Lord Genome, and it is important."
+     ]
+    },
+    {
+     "name": "World: Anti Spiral, The Test",
+     "script": [
+      "cast me as Anti Spiral",
+      "cast genome as Lord Genome",
+      "background rooftop",
+      "me enters center with fade",
+      "genome enters right with slide",
+      "genome: {player} beat me, Spiral. You're not what I expected, and your claims are hollow.",
+      "me (win): Your test is over, Lord Genome. The results are still coming.",
+      "genome: Then return tomorrow. The king has more to say.",
+      "player: Does he mean it?",
+      "me: I've recorded what I need. He's warm, in his way."
+     ]
+    },
+    {
+     "name": "World: Anti Spiral, Warmth",
+     "script": [
+      "cast me as Anti Spiral",
+      "background night",
+      "me enters center with fade",
+      "me (lose): Warmth recorded. It is a measurable variable, for the first time.",
+      "player: What does it mean?",
+      "me: It means we must tell Simon. He is the one who taught us it exists.",
+      "me (win): Be at the rooftop tonight. This is the final offer."
+     ]
+    },
+    {
+     "name": "World: Anti Spiral, The Offer",
+     "script": [
+      "cast me as Anti Spiral",
+      "background rooftop",
+      "me enters left with rise",
+      "me (win): A finished universe, with no growth and no loss. That's the offer.",
+      "player: And Simon has to accept it?",
+      "me: The offer needs his agreement. I'd like you on the rooftop with him when he answers.",
+      "me (lose): Be at the rooftop tonight. We'll see what he says."
+     ]
+    },
+    {
+     "name": "World: Anti Spiral, Final Offer",
+     "script": [
+      "cast me as Anti Spiral",
+      "background night",
+      "me enters center with fade",
+      "me: The final offer is ready. Simon, come forward. Accept the limit.",
+      "player: He's not going to accept it.",
+      "me (win): Then he must prove it to us. Fight him, and we shall see."
+     ]
+    },
+    {
+     "name": "World: Anti Spiral, Simon's Answer",
+     "script": [
+      "cast me as Anti Spiral",
+      "cast simon as Simon",
+      "background rooftop",
+      "me enters center with fade",
+      "simon enters right with slide",
+      "simon: {player} beat me, Spiral. I'm not taking the limit.",
+      "me (win): The hypothesis is set aside. You were the test, Simon.",
+      "simon: Then grow beyond it, the way I did.",
+      "player: That's a good answer.",
+      "me: Stay on the rooftop, Simon. I'd like the data."
+     ]
+    },
+    {
+     "name": "World: Anti Spiral, Limit",
+     "script": [
+      "cast me as Anti Spiral",
+      "background rooftop",
+      "me enters center with fade",
+      "me: The Anti Spiral accepts the limit on evolution, and asks Simon to accept it too.",
+      "player: And if he refuses?",
+      "me (win): He will. Simon's road to the heavens is closed for good, and so is our friendship."
+     ]
+    },
+    {
+     "name": "World: Anti Spiral, Grow Beyond",
+     "script": [
+      "cast me as Anti Spiral",
+      "background rooftop",
+      "me enters center with fade",
+      "me: We set aside the hypothesis. Simon's road to the heavens stays open.",
+      "player: Why?",
+      "me (win): Because warmth is measurable, and we would like to measure more of it."
      ]
     },
     {

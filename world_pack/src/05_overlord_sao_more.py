@@ -1,2095 +1,1982 @@
 """World mode cast: Overlord, Sword Art Online, Batman Ninja, Lycoris Recoil, NIKKE, KonoSuba and Fairy Tail."""
 
-# Quests: Chisato and Takina lock each other. Takina's "mission" ending closes Chisato's rescue quest, and Chisato's "rescue" ending closes Takina's.
+# Quests: Chisato and Takina share one story, told in three quests each. Takina has been watching a figure on the rooftops at
+# night (it's Joker), and Chisato has noticed. Takina's last "mission" ending and Chisato's last "rescue" ending lock each
+# other: whoever's chosen closes the other's friendship for good.
 CHISATO_QUESTS = [
-    {"key": "chisato-cafe-lycoris", "title": "Cafe Lycoris", "gates": 2,
-     "about": "Chisato wants to show you LycoReco's favourite cake, and she's hoping for company over a morning coffee.",
-     "offer": ["them (pleased): Oh, hi! Have you tried the shortcake here? It's the best!",
-               "them: I'm giving mornings a try. Want to come along?"],
+    {"key": "chisato-missing-takina", "title": "Missing Takina", "requires": {"rank": 1},
+     "scene": "World: Chisato, Missing Takina",
+     "about": "Takina has been out at night all week, and Chisato doesn't know why. She wants a second pair of eyes at the cafe in the morning.",
+     "offer": ["them (dismayed): Takina's been sneaking out at night. Again. She thinks I don't notice.",
+               "them: Come to the cafe tomorrow morning. I want a second opinion on whatever she's up to."],
      "stages": [
          {"text": "Meet Chisato at the cafe in the morning", "objectives": [{"do": "visit", "place": "cafe", "times": [0], "scene": "World: Chisato, Cafe", "rewards": [{"coins": 200}]}]},
-         {"text": "Bring her a strawberry shortcake", "objectives": [{"do": "give_gift", "gift": "shortcake", "to": "Chisato Nishikigi"}]},
-         {"text": "Tell her about your morning", "objectives": [{"do": "talk", "to": "Chisato Nishikigi", "script": ["them (pleased): Ahh, that's perfect. Let's do this again!", "player: I'd like that."]}]},
+         {"text": "Tell Chisato what you've noticed", "objectives": [{"do": "talk", "to": "Chisato Nishikigi", "script": [
+             "them: Takina goes up to the roof every night. Every single night. Why?",
+             "player: Maybe you should ask her.",
+             "them (dismayed): I did. She said it was 'work'. Work at midnight?"]}]},
      ],
-     "endings": [{"key": "sweet", "title": "Share the cake", "about": "You and Chisato share the first slice. Takina pretends she isn't watching.",
-                  "rewards": [{"coins": 300}, {"card": "LRC/WE47-E41"}]}]},
-    {"key": "chisato-rescue", "title": "Bring Takina Back", "gates": 5,
-     "about": "Takina has gone off on a mission alone. Chisato wants her back, and how that happens is Chisato's choice.",
-     "offer": ["them (dismayed): Takina went out without telling anyone. Again.",
-               "them: I need someone to help me catch up with her. Please."],
+     "endings": [{"key": "follow-her", "title": "Follow Takina", "about": "Chisato decides to see for herself where Takina goes, and asks you to come along.",
+                  "scene": "World: Chisato, Follow Her", "rewards": [{"coins": 300}, {"gift": "shortcake"}]}]},
+    {"key": "chisato-watch-over-her", "title": "Watch Over Her", "gates": 2, "requires": {"quests": ["chisato-missing-takina"]},
+     "scene": "World: Chisato, The Alley",
+     "about": "Takina's job has turned dangerous. Chisato follows her into the alley at night, and when it comes to a fight, she needs to know you can hold your own.",
+     "offer": ["them: Takina's in trouble, I can feel it. I need someone to watch my back in the alley tonight.",
+               "them (pleased): You won't mind a fight, right? Takina will want to test you first."],
      "stages": [
-         {"text": "Beat Takina in a duel", "objectives": [{"do": "defeat", "cpus": ["Takina Inoue"]}]},
-         {"text": "Play Autumn Dyed in Red with Perfect Day for Camping", "objectives": [{"do": "combo", "card": "LRC/WE47-E41", "climax": "LRC/WE47-E53", "win": True}]},
-         {"text": "Talk to Chisato about it", "objectives": [{"do": "talk", "to": "Chisato Nishikigi", "script": ["them: Okay. I know what I need to do now.", "them (pleased): Thanks for being on my side, {player}."]}]},
+         {"text": "Follow Chisato into the alley at night", "objectives": [{"do": "visit", "place": "alley", "times": [3], "scene": "World: Chisato, Alley", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Beat Takina in a duel, to prove you can keep up", "scene": "World: Chisato, After the Sparring",
+          "objectives": [{"do": "defeat", "cpus": ["Takina Inoue"]}]},
+         {"text": "Tell Chisato what you saw", "objectives": [{"do": "talk", "to": "Chisato Nishikigi", "script": [
+             "them: Takina won't tell me what she's doing. But she trusts you, apparently.",
+             "them (pleased): So you'll come to the warehouse with me, then?"]}]},
+     ],
+     "endings": [{"key": "ready", "title": "Stand with her", "about": "Chisato decides you're worth trusting with her plans, and tells you where the warehouse is.",
+                  "scene": "World: Chisato, Ready", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "chisato-rescue", "title": "Bring Takina Home", "gates": 5, "requires": {"quests": ["chisato-watch-over-her"]},
+     "scene": "World: Chisato, Her Choice",
+     "about": "Takina is going into Joker's warehouse alone, and it's a trap. Chisato has to decide whether to drag her home, or let her finish what she started.",
+     "offer": ["them (dismayed): The warehouse, tonight. Takina's going in alone. I can't let her.",
+               "them: I need you with me. Please, {player}."],
+     "stages": [
+         {"text": "Go to the warehouse with Chisato", "objectives": [{"do": "visit", "place": "warehouse", "times": [3], "scene": "World: Chisato, Warehouse", "rewards": [{"coins": 400}]}]},
+         {"text": "Beat Joker, and stop the deal", "objectives": [{"do": "defeat", "cpus": ["Joker"]}]},
+         {"text": "Tell Chisato what you'll do", "objectives": [{"do": "talk", "to": "Chisato Nishikigi", "script": [
+             "them: I know what I need to do now.",
+             "them (pleased): Thanks for being on my side, {player}."]}]},
      ],
      "endings": [
-         {"key": "rescue", "title": "Drag her back to LycoReco", "about": "Chisato brings Takina home. The mission is shelved for good, and Takina won't forgive the interruption.",
-          "locks": ["takina-apart"], "rewards": [{"coins": 1000}, {"pack": "climax_pack"}]},
-         {"key": "trust", "title": "Let her go", "about": "Chisato trusts Takina to find her own way, and leaves her to it.",
-          "rewards": [{"coins": 500}, {"card": "LRC/W105-TE17", "copies": 2}]},
+         {"key": "rescue", "title": "Drag her back to LycoReco", "about": "Chisato brings Takina home. The mission is shelved for good, Takina's mission quest is closed with it, and Takina won't forgive the interruption.",
+          "locks": ["takina-apart"], "scene": "World: Chisato, Bring Her Home", "rewards": [{"coins": 1000}, {"pack": "climax_pack"}]},
+         {"key": "trust", "title": "Let her go", "about": "Chisato trusts Takina to finish the job her own way, and stays behind to watch the door.",
+          "scene": "World: Chisato, Let Her Go", "rewards": [{"coins": 500}, {"card": "LRC/W105-TE17", "copies": 2}]},
      ]},
 ]
 
 TAKINA_QUESTS = [
-    {"key": "takina-off-the-books", "title": "Off the Books", "gates": 2,
-     "about": "Takina has an errand LycoReco doesn't know about, and she needs someone to watch her back.",
-     "offer": ["them (dismayed): You're the one Chisato won't stop talking about. Stay out of my way.",
-               "them: I have a job tonight, off the books. I could use a second pair of eyes."],
+    {"key": "takina-off-the-books", "title": "Off the Books", "requires": {"rank": 1},
+     "scene": "World: Takina, Off the Books",
+     "about": "Takina has been watching a figure in a long coat on the rooftops at night. She lets you watch with her, and won't say why.",
+     "offer": ["them (dismayed): Stay out of my way. ...Actually, you can keep watch with me, if you're quiet.",
+               "them: I have a job tonight, off the books. Come up to the roof, if you can keep low."],
      "stages": [
-         {"text": "Watch the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Takina, Rooftop", "rewards": [{"pack": "climax_pack"}]}]},
-         {"text": "Have Lycoris, Takina & Chisato", "objectives": [{"do": "have_card", "card": "LRC/W105-TE17"}]},
-         {"text": "Report back to Takina", "objectives": [{"do": "talk", "to": "Takina Inoue", "script": ["them: You didn't get in the way. That's more than I expected.", "them (pleased): ...Thanks, I suppose."]}]},
+         {"text": "Watch the rooftop with Takina at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Takina, Rooftop", "rewards": [{"pack": "climax_pack"}]}]},
+         {"text": "Tell Takina what you saw", "objectives": [{"do": "talk", "to": "Takina Inoue", "script": [
+             "them: You kept your head down. That's more than I expected.",
+             "them (pleased): ...Fine. Ask me what you want to know."]}]},
      ],
-     "endings": [{"key": "trust", "title": "Cover her back", "about": "Takina gives you a small nod. For her, that's a lot.",
-                  "rewards": [{"coins": 300}, {"gift": "iced-coffee"}]}]},
-    {"key": "takina-apart", "title": "Lycoris, Apart", "gates": 5,
-     "about": "Takina's mission is at odds with LycoReco. She has to choose between the job and Chisato, and whichever she picks, someone is left behind.",
-     "offer": ["them: I need to ask you something. It's about Chisato, and about the mission.",
+     "endings": [{"key": "the-target", "title": "Learn who it is", "about": "Takina names the figure in the long coat: Joker.",
+                  "scene": "World: Takina, The Target", "rewards": [{"coins": 300}, {"gift": "iced-coffee"}]}]},
+    {"key": "takina-backup", "title": "Backup", "gates": 2, "requires": {"quests": ["takina-off-the-books"]},
+     "scene": "World: Takina, Backup",
+     "about": "Takina is going into Joker's warehouse to take his files, and she needs someone to hold the door while she works.",
+     "offer": ["them: Tonight I'm going in. Joker's men will be there, and I'll need backup.",
+               "them (dismayed): Don't tell Chisato. She'll only worry, and she'll try to stop me."],
+     "stages": [
+         {"text": "Hold the door at Joker's warehouse at night", "objectives": [{"do": "visit", "place": "warehouse", "times": [3], "scene": "World: Takina, Warehouse", "rewards": [{"coins": 300}]}]},
+         {"text": "Hold Joker off in a duel", "scene": "World: Takina, Joker Down", "objectives": [{"do": "defeat", "cpus": ["Joker"]}]},
+         {"text": "Tell Takina you got her out", "objectives": [{"do": "talk", "to": "Takina Inoue", "script": [
+             "them: You held the door. That's the only thing I needed.",
+             "them (pleased): ...Thanks, {player}. I owe you one."]}]},
+     ],
+     "endings": [{"key": "backed-up", "title": "Hold the door", "about": "Takina gets the files she came for. Joker's warning follows her out of the warehouse.",
+                  "scene": "World: Takina, Thanks", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "takina-apart", "title": "Lycoris, Apart", "gates": 5, "requires": {"quests": ["takina-backup"]},
+     "scene": "World: Takina, The Real Job",
+     "about": "Takina explains what the mission was really about. She has to choose between the job and Chisato, and whichever she picks, someone is left behind.",
+     "offer": ["them: I need to tell you what the job was. It's about Chisato, and about LycoReco.",
                "them (dismayed): I don't want to talk about this where she can hear."],
      "stages": [
-         {"text": "Beat Chisato in a duel", "objectives": [{"do": "defeat", "cpus": ["Chisato Nishikigi"]}]},
-         {"text": "Play Lycoris, Takina & Chisato with Combining Strengths", "objectives": [{"do": "combo", "card": "LRC/W105-TE17", "climax": "LRC/W105-TE19", "win": True}]},
-         {"text": "Tell Takina your answer", "objectives": [{"do": "talk", "to": "Takina Inoue", "script": ["them: So that's your answer. Fine.", "them (dismayed): ...Thank you for not making me say it twice."]}]},
+         {"text": "Meet Takina on the roof at dusk to hear the truth", "objectives": [{"do": "visit", "place": "rooftop", "times": [2], "scene": "World: Takina, Rooftop at Dusk", "rewards": [{"coins": 300}]}]},
+         {"text": "Duel Chisato, who won't let Takina go alone", "objectives": [{"do": "defeat", "cpus": ["Chisato Nishikigi"]}]},
+         {"text": "Tell Takina your answer", "objectives": [{"do": "talk", "to": "Takina Inoue", "script": [
+             "them: So that's your answer. Fine.",
+             "them (dismayed): ...Thank you for not making me say it twice."]}]},
      ],
      "endings": [
          {"key": "mission", "title": "Go on the mission", "about": "Takina goes alone. Her friendship with Chisato is closed for good, and Chisato keeps her distance.",
-          "locks": ["chisato-rescue"], "rewards": [{"coins": 1000}, {"pack": "lucky_pack"}]},
+          "locks": ["chisato-rescue"], "scene": "World: Takina, The Mission", "rewards": [{"coins": 1000}, {"pack": "lucky_pack"}]},
          {"key": "stay", "title": "Stay with Chisato", "about": "Takina stays at LycoReco and sends word that the mission goes on without her.",
-          "rewards": [{"coins": 600}, {"gift": "bouquet"}]},
+          "scene": "World: Takina, Staying", "rewards": [{"coins": 600}, {"gift": "bouquet"}]},
      ]},
 ]
 
-# Scenes a quest's visit plays (the quests above name them).
-CHISATO_SCENES = [{"name": "World: Chisato, Cafe", "lines": [
-    "background cafe",
-    "me enters center with pop",
-    "me: Morning! You're early. Perfect, I haven't opened the shortcake yet.",
-    "player: Am I your first customer?",
-    "me (pleased): First friend of the morning! Sit, sit. Takina says I'm too cheerful before noon. She's wrong, obviously.",
-    "me: I'll give you the good slice. Strawberry shortcake, my favourite.",
-]}]
-TAKINA_SCENES = [{"name": "World: Takina, Rooftop", "lines": [
-    "background rooftop",
-    "me enters left with fade",
-    "me (dismayed): You came. I was starting to think you'd sleep through the job.",
-    "player: You said off the books. This is the roof, so I'm guessing that's the job.",
-    "me: Off the books means nobody sees me up here. Keep low, and keep watch on the street.",
-    "narrator: Below, a figure in a long coat crosses the bridge and is gone between the lamps.",
-    "me: That's the one. Remember the face, and don't go after them. Not yet.",
-]}]
+# Scenes the quests play. The pack casts the CPU as "me" (its own name), and the other character as the handle named.
+CHISATO_SCENES = [
+    {"name": "World: Chisato, Missing Takina", "lines": [
+        "background cafe", "me enters center with pop",
+        "me (dismayed): Takina's out again. It's the third night this week, and she came back with mud on her boots.",
+        "player: Maybe she's just busy?",
+        "me: That's what she says. But she never tells me anything, and she always looks over her shoulder.",
+        "me (pleased): Will you come to the cafe tomorrow? I want a second pair of eyes on this.",
+    ]},
+    {"name": "World: Chisato, Cafe", "lines": [
+        "background cafe", "me enters center with pop",
+        "me: Morning! Perfect timing. Takina's out on the roof again, I think. Let's watch the window.",
+        "player: Do you know what she's doing?",
+        "me (dismayed): No. That's the problem. She goes up there every night, and comes down looking tired.",
+        "me: Ask her, if you like. I'd like to know too, honestly.",
+    ]},
+    {"name": "World: Chisato, Follow Her", "lines": [
+        "background sakura", "me enters left with slide",
+        "me: Okay. I've decided. I'll follow her tonight, and you come with me.",
+        "player: Are you sure you want to see this?",
+        "me (dismayed): No. But I'd rather know than wonder about her every night.",
+        "me: Meet me by the alley. Quietly, please. She has ears like a cat.",
+    ]},
+    {"name": "World: Chisato, The Alley", "lines": [
+        "background cafe",
+        "me enters left with slide",
+        "me: Takina's going out again tonight, I know it. I'm going to follow her to the alley.",
+        "player: Are you sure you want to follow her?",
+        "me (dismayed): No. But I'd rather know than wonder. Meet me by the alley at midnight, and keep quiet.",
+        "me: She has ears like a cat, so be careful."
+    ]},
+    {"name": "World: Chisato, Alley", "lines": [
+        "cast takina as Takina Inoue",
+        "background city",
+        "me enters center with fade",
+        "me: Shh. There's Takina, by the bins. She's holding a file.",
+        "takina enters right with fade",
+        "me (dismayed): Takina. I followed you. I'm not going home without you.",
+        "takina: Chisato, go home. This isn't yours. And if you want in, you'll have to beat me first.",
+        "player: What's in the file?",
+        "takina: Not your business. Settle it with me, and then we'll see."
+    ]},
+    {"name": "World: Chisato, After the Sparring", "lines": [
+        "background city",
+        "me enters left with slide",
+        "me: Wow. Takina's not holding back, is she? She wanted to see what you could do.",
+        "player: I think I passed.",
+        "me (pleased): You did. She doesn't say that lightly, you know.",
+        "me: Good. Then you can come with me to the warehouse, if she lets you."
+    ]},
+    {"name": "World: Chisato, Ready", "lines": [
+        "background cafe", "me enters right with fade",
+        "me: You held your own out there. I was wrong to doubt you, a bit.",
+        "player: Where's the warehouse?",
+        "me (dismayed): On the docks. It's where Joker's crew meets, and where Takina has been going.",
+        "me: Be careful, okay? I'm not losing another friend this month.",
+    ]},
+    {"name": "World: Chisato, Her Choice", "lines": [
+        "background cafe",
+        "me enters center with fade",
+        "me (dismayed): Takina's going into Joker's warehouse tonight. Alone. She told me, and that's worse.",
+        "player: Are you going to stop her?",
+        "me: That's what I need to decide. Bring her home, or let her finish.",
+        "me (pleased): Come with me to the docks at midnight. I'll explain on the way."
+    ]},
+    {"name": "World: Chisato, Warehouse", "lines": [
+        "background ruins", "me enters left with slide",
+        "me: Joker. You're behind this, aren't you? Let Takina go, and we'll talk.",
+        "narrator: Joker laughs, loud and bright, and steps out from behind the crates.",
+        "player: He's not going to just let us walk out.",
+        "me (dismayed): Then we'll make him listen. Beat him, and stop the deal.",
+    ]},
+    {"name": "World: Chisato, Bring Her Home", "lines": [
+        "background cafe", "me enters center with fade",
+        "me: You're coming home, Takina. Mission's over. The cafe is waiting.",
+        "player: She's not going to forgive you for this.",
+        "me (dismayed): I know. I'd rather she was angry with me and safe, than proud and gone.",
+        "me (pleased): Thank you for helping me bring her back, {player}. It means a lot.",
+    ]},
+    {"name": "World: Chisato, Let Her Go", "lines": [
+        "background sakura", "me enters right with fade",
+        "me: Go on, then, Takina. Finish it your way. I'll be right here if you need me.",
+        "player: That's a hard thing to say.",
+        "me (dismayed): It is. But she's been carrying this alone for too long. She deserves to choose.",
+        "me (pleased): Thank you for standing with me, {player}. Come by the cafe sometime.",
+    ]},
+]
+TAKINA_SCENES = [
+    {"name": "World: Takina, Off the Books", "lines": [
+        "background cafe",
+        "me enters center with fade",
+        "me (dismayed): Hey. I need you tonight. Off the books, so keep it to yourself.",
+        "player: What's the job?",
+        "me: Someone's been crossing the bridge by the docks every night. I want to see who.",
+        "me: Meet me on the roof after midnight. Keep low, and don't tell Chisato.",
+        "player: Why not Chisato?",
+        "me (dismayed): Because she'd come with me, and she'd get hurt. Don't be late."
+    ]},
+    {"name": "World: Takina, Rooftop", "lines": [
+        "background rooftop",
+        "me enters left with fade",
+        "me (dismayed): You came. Stay low, and don't stand against the lamp.",
+        "narrator: Below, a figure in a long coat crosses the bridge and is gone between the lamps.",
+        "player: Who's that?",
+        "me: Don't know yet. That's why we're watching. Remember the face, and don't go after them. Not yet."
+    ]},
+    {"name": "World: Takina, The Target", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me: The figure in the coat. It's Joker. He's been running a smuggling network out of the docks.",
+        "player: Joker? Chisato's not going to like this.",
+        "me (dismayed): Chisato doesn't need to know everything. Not yet.",
+        "me: I need someone to back me up at the warehouse. Are you in?",
+    ]},
+    {"name": "World: Takina, Backup", "lines": [
+        "background ruins", "me enters right with slide",
+        "me: The warehouse is watched. We go in quietly, and we get out fast.",
+        "player: And if Joker's men come after us?",
+        "me (dismayed): Then you hold the door. I'll do the rest.",
+        "me: Don't tell Chisato. She'll only try to stop me.",
+    ]},
+    {"name": "World: Takina, Warehouse", "lines": [
+        "background ruins", "me enters left with fade",
+        "me (dismayed): Hold the door. I'm going in for the files. Don't let anyone through.",
+        "narrator: Joker's voice echoes from the crates. He's laughing, and he's already seen you.",
+        "player: Takina, he's here.",
+        "me: I know. Hold the line, and let me work.",
+    ]},
+    {"name": "World: Takina, Joker Down", "lines": [
+        "background ruins", "me enters center with fade",
+        "me: You held the door. Good. Joker's men are running, and he's gone quiet.",
+        "player: For now, anyway.",
+        "me (dismayed): For now. He'll come back with a better plan, and a worse joke.",
+        "me: Grab the files. We're getting out of here.",
+    ]},
+    {"name": "World: Takina, Thanks", "lines": [
+        "background rooftop", "me enters right with fade",
+        "me: I got the files. Thank you. I mean it, even if I don't say it often.",
+        "player: What's in them?",
+        "me (dismayed): Names. Routes. The people who've been buying from Joker. It's all here.",
+        "me: Now I have to decide what to do with them. I'll tell you soon.",
+    ]},
+    {"name": "World: Takina, The Real Job", "lines": [
+        "background cafe",
+        "me enters center with fade",
+        "me (dismayed): I've got the rest of it. Meet me on the roof at dusk.",
+        "player: Why dusk?",
+        "me: Because I have to tell you what the job really was. Away from Chisato. Come alone."
+    ]},
+    {"name": "World: Takina, Rooftop at Dusk", "lines": [
+        "cast chisato as Chisato Nishikigi",
+        "background dusk",
+        "me enters left with fade",
+        "me (dismayed): You came. I'll tell you everything, but you have to promise not to repeat it.",
+        "player: I promise.",
+        "me: Joker's network runs out of the docks. LycoReco's own bosses have been paying him to keep it running.",
+        "me (dismayed): I was supposed to shut it down, quietly. Nobody was ever supposed to know the truth.",
+        "chisato enters right with fade",
+        "chisato: Takina. I followed you. Don't tell me you're going alone.",
+        "me (dismayed): Chisato, go home. This isn't yours to carry.",
+        "chisato: It's mine too. Beat me, and I'll step aside. Until then, I'm not moving."
+    ]},
+    {"name": "World: Takina, The Mission", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me: I'm going on the mission. Alone, the way I was told to. Don't follow me.",
+        "player: Takina, Chisato is going to be devastated.",
+        "me (dismayed): I know. She'll hate me for a while. That's a price I'm willing to pay.",
+        "me: Goodbye, {player}. Look after her, when she's ready to hear it.",
+    ]},
+    {"name": "World: Takina, Staying", "lines": [
+        "background cafe", "me enters right with fade",
+        "me (pleased): I'm staying. The mission goes on without me, and I'm sending word that I'm done.",
+        "player: Are you sure?",
+        "me (dismayed): No. But I'd rather be sure of Chisato than of LycoReco.",
+        "me: Come on, {player}. The shortcake's on her. She's been waiting for you all day.",
+    ]},
+]
 
+# Ainz Ooal Gown. Thread: he's the last of his guild in a world that doesn't know its name. He wants to know whether the town is real,
+# or whether he's the only real thing in it. Q1 plants the guild ring he won't take off and the name "Momonga" that nobody here
+# has said. Q2: Kirito, who arrived from another game and says the same things Ainz does, forces him to say the name. Q3: Albedo
+# wants him to be a supreme being, and Ainz decides whether he wants to be king of anything at all.
 AINZ_OOAL_GOWN_QUESTS = [
-  {
-    "key": "ainz-momonga",
-    "title": "Momonga",
-    "gates": 2,
-    "about": "Ainz misses the player characters who logged off, and he reads old guild rosters aloud.",
-    "offer": [
-      "them: I still have the old guild roster. Some of those names are players like you.",
-      "them (pleased): Hm. I forgot to sound like an overlord for a moment. Forget it."
-    ],
-    "stages": [
-      {
-        "text": "Find Ainz in the library at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "library",
-            "times": [
-              1
-            ],
-            "scene": "World: Ainz Ooal Gown, Library",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Ainz: All for the Sake of an Ideal World",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "OVL/SE51-E50"
-          }
-        ]
-      },
-      {
-        "text": "Hear the roster out",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Ainz Ooal Gown",
-            "script": [
-              "them: Did you know any of these names? Be honest.",
-              "them (pleased): ...No. But I'm glad you listened."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "guild-roster",
-        "title": "Read the roster with him",
-        "about": "Ainz reads you the rest of the roster, and lets his voice slip into something softer.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "manga"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "ainz-supreme-being",
-    "title": "Supreme Being",
-    "gates": 5,
-    "about": "Ainz must decide how far he can trust his guardians, and he's afraid of what he'll find.",
-    "offer": [
-      "them: Something is wrong with Albedo's loyalty. I can feel it.",
-      "them (dismayed): Meet me at the shrine tonight. Watch her for me."
-    ],
-    "stages": [
-      {
-        "text": "Meet Ainz at the shrine at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "shrine",
-            "times": [
-              3
-            ],
-            "scene": "World: Ainz Ooal Gown, Shrine",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Ainz: Momon in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "OVL/S62-E002",
-            "against": [
-              "Ainz Ooal Gown"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Ainz your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Ainz Ooal Gown",
-            "script": [
-              "them: Will you watch Albedo for me? I'm not sure I can.",
-              "them (pleased): ...Then I'll trust you. Don't make me regret it."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "trust-nazarick",
-        "title": "Trust Nazarick",
-        "about": "Ainz trusts his guardians, and asks you to keep an eye on Albedo. Albedo's Best friend quest is closed for good.",
-        "rewards": [
-          {
-            "coins": 800
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ],
-        "locks": [
-          "albedo-plot"
-        ]
-      },
-      {
-        "key": "doubt-nazarick",
-        "title": "Doubt Nazarick",
-        "about": "Ainz keeps his doubts, and watches his guardians more closely from now on.",
-        "rewards": [
-          {
-            "coins": 500
-          },
-          {
-            "gift": "bottled-tea"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "ainz-the-sorcerer-king", "title": "The Sorcerer King", "requires": {"rank": 1},
+     "scene": "World: Ainz Ooal Gown, Ring",
+     "about": "Ainz is the last of his guild, and he's been trying to decide whether the people in town are real. He wears a ring he won't take off, and he asks strangers about a name they never say.",
+     "offer": ["them (pleased): Greetings. I am the Sorcerer King, and you will answer a question for me, honestly.",
+               "them: Meet me at the library at noon. Bring a book you have read twice, so I can see what you think is real."],
+     "stages": [
+         {"text": "Sit with Ainz at the library at noon", "objectives": [{"do": "visit", "place": "library", "times": [1], "scene": "World: Ainz Ooal Gown, Library Question", "rewards": [{"coins": 150}]}]},
+         {"text": "Answer Ainz's question about the town", "objectives": [{"do": "talk", "to": "Ainz Ooal Gown", "script": [
+             "them (pleased): You answered without hesitation. Either you are very honest, or very well prepared.",
+             "them: Keep your answer. I may come back and ask you again, when I know which of us is the NPC."]}]},
+     ],
+     "endings": [{"key": "ring-stays", "title": "Let him keep the ring", "about": "Ainz keeps the ring on, and says the guild's name is still written inside it. He tells you the name only once, and then he goes quiet.",
+                  "scene": "World: Ainz Ooal Gown, Ring Stays", "rewards": [{"coins": 300}, {"gift": "bottled-tea"}]}]},
+    {"key": "ainz-the-guildmaster", "title": "The Guildmaster", "gates": 2, "requires": {"quests": ["ainz-the-sorcerer-king"]},
+     "scene": "World: Ainz Ooal Gown, Guildmaster",
+     "about": "Kirito has arrived from another game, and he says the same things Ainz does about being a player stuck in a world. Ainz wants to know whether Kirito is a threat, or the only other real thing he's met.",
+     "offer": ["them (dismayed): A swordsman in black has come to town, speaking the words of an old game. I must know what he is.",
+               "them: Test him in the arena this evening. If he beats you, I'll tell you the name I've been keeping."],
+     "stages": [
+         {"text": "Watch Ainz meet Kirito at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Ainz Ooal Gown, Kirito Arena", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Kirito, to find out what he is", "scene": "World: Ainz Ooal Gown, Kirito Falls", "objectives": [{"do": "defeat", "cpus": ["Kirito"]}]},
+         {"text": "Tell Ainz what Kirito said", "objectives": [{"do": "talk", "to": "Ainz Ooal Gown", "script": [
+             "them (dismayed): He called it a game. He said there were players, and that it isn't over.",
+             "them (pleased): Then I was not alone in it. Thank you for bringing me that word, {player}."]}]},
+     ],
+     "endings": [{"key": "the-name", "title": "Say the name", "about": "Ainz says the guild's name out loud, for the first time in this world. Momonga. Then he asks you to say it back, to be sure it's real.",
+                  "scene": "World: Ainz Ooal Gown, Momonga", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "ainz-supreme-being", "title": "Supreme Being", "gates": 5, "requires": {"quests": ["ainz-the-guildmaster"]},
+     "scene": "World: Ainz Ooal Gown, Supreme Being",
+     "about": "Albedo wants Ainz to be a supreme being: a ruler the whole town kneels to. Ainz has to decide whether he wants to be a king of anything, or just the one who keeps the name and the ring.",
+     "offer": ["them (dismayed): Albedo has written a plan. In it, I am the supreme being of this town. She wants me to read it aloud.",
+               "them: Come to the rooftop tonight. I want a witness when I decide whether to be her king, or only her friend."],
+     "stages": [
+         {"text": "Meet Ainz on the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Ainz Ooal Gown, Rooftop Plan", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Albedo, to test whether Ainz can refuse her", "scene": "World: Ainz Ooal Gown, Albedo Falls", "objectives": [{"do": "defeat", "cpus": ["Albedo"]}]},
+         {"text": "Tell Ainz your answer", "objectives": [{"do": "talk", "to": "Ainz Ooal Gown", "script": [
+             "them (dismayed): She fought well, and she still wants the crown. I don't know whether to laugh or to be afraid.",
+             "them (pleased): Then I'll be neither. I'll be the one who keeps the name, and the friend who reads the plan first."]}]},
+     ],
+     "endings": [
+         {"key": "supreme-being-declined", "title": "Refuse the crown", "about": "Ainz declines to be a supreme being. Albedo's plot, the one that made him a king, is closed for good, and Ainz asks you to keep his name safe.",
+          "locks": ["albedo-plot"], "scene": "World: Ainz Ooal Gown, Declined", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "supreme-being-accepted", "title": "Accept the crown, for now", "about": "Ainz accepts the crown for the town's sake, and promises to keep the name only for himself. He still wears the ring, and says it's the only honest thing about him.",
+          "scene": "World: Ainz Ooal Gown, Crowned For Now", "rewards": [{"coins": 500}, {"gift": "playmat"}]},
+     ]},
 ]
+
 AINZ_OOAL_GOWN_SCENES = [
-  {
-    "name": "World: Ainz Ooal Gown, Library",
-    "lines": [
-      "background library",
-      "me enters center with fade",
-      "me: Read this roster. Names from my old guild. Those were my friends.",
-      "player: Did they come back?",
-      "me (dismayed): No. They logged off. I still wait.",
-      "me: Hm. I forgot to sound like an overlord. Don't tell the guardians."
-    ]
-  },
-  {
-    "name": "World: Ainz Ooal Gown, Shrine",
-    "lines": [
-      "background shrine",
-      "me enters center with rise",
-      "me: Albedo's loyalty is off. Something in her has changed.",
-      "player: What do you think it is?",
-      "me (dismayed): I don't know. I'm afraid of what I'll find.",
-      "me: Watch her for me. I can't do it alone."
-    ]
-  }
+    {"name": "World: Ainz Ooal Gown, Ring", "lines": [
+        "background library", "me enters center with fade",
+        "me (pleased): Greetings. I am the Sorcerer King, and you will answer a question for me, honestly.",
+        "player: I'll try.",
+        "me (dismayed): Tell me, is this town real? The people in it. They never say the name I'm waiting to hear.",
+        "player: What name?",
+        "me: I'm not going to say it yet. I'll know if you're lying when you answer, and I don't trust the ring to tell me.",
+        "me (pleased): Meet me at the library at noon, and bring a book you've read twice. I'll see what you think is real."]},
+    {"name": "World: Ainz Ooal Gown, Library Question", "lines": [
+        "background library", "me enters center with fade",
+        "me (pleased): Sit. The book you brought is about a city that burned, and the people who stayed. Interesting choice.",
+        "player: I liked the ending.",
+        "me (dismayed): Your answer was quick. Either you're very honest, or you've been practising on someone else.",
+        "player: Which one do you think?",
+        "me: I'll find out. I have time, and so does the ring. Keep your answer ready for next week.",
+        "me (pleased): Good. A question that's answered too easily is a question that's still open."]},
+    {"name": "World: Ainz Ooal Gown, Ring Stays", "lines": [
+        "background library", "me enters center with fade",
+        "me (dismayed): The guild's name is still written inside the ring. I'm not taking it off, and I'm not telling you the name.",
+        "player: Why not?",
+        "me (pleased): Because you'd say it back to me like it means nothing. It means everything to the ones who gave it to me.",
+        "me: Thank you for answering. The ring is warm when I think of them, and that's enough for today."]},
+    {"name": "World: Ainz Ooal Gown, Guildmaster", "lines": [
+        "background arena", "me enters left with slide",
+        "me (dismayed): A swordsman in black has come to town, speaking the words of an old game. He calls it an MMO.",
+        "player: Is that bad?",
+        "me: It means he came from somewhere like I did. Players, not NPCs. Test him in the arena this evening, and tell me what he is.",
+        "me (pleased): If he beats you, I'll tell you the name I've been keeping. That's a fair price for a swordsman's honesty.",
+        "me: Don't let him win too easily. I want to see how he fights, not how he bows."]},
+    {"name": "World: Ainz Ooal Gown, Kirito Arena", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): The swordsman's here. He's already drawn his blade, and he's looking at me like I'm the only other real thing in the arena.",
+        "player: Are you ready?",
+        "me (pleased): I'm always ready. I'm the Sorcerer King. Ready is what I am, most of the time.",
+        "player: Why do you keep the ring on, if it hurts to remember them?",
+        "me (pleased): It doesn't hurt. It keeps the count honest, like a guild roster on my finger.",
+        "player: Do you think he'll say the name?",
+        "me (dismayed): If he's a player, he'll know the guild sign. Watch his hand. Players always touch their hilt before they speak.",
+        "me: Watch his feet. If he moves like a player, he's one of ours, and I'll have to decide what that means."]},
+    {"name": "World: Ainz Ooal Gown, Kirito Falls", "lines": [
+        "cast kirito as Kirito",
+        "background arena", "me enters center with fade",
+        "kirito enters right with slide",
+        "kirito: {player} beat me. You're not an NPC, are you? You fight like someone who's played before.",
+        "me (dismayed): I am a player. I have been a player for longer than you've been alive in this world.",
+        "kirito: Then tell me the name of your guild. I've been looking for someone to say it with.",
+        "me (pleased): Not yet. Come back tomorrow, and I'll give you the first letter."]},
+    {"name": "World: Ainz Ooal Gown, Momonga", "lines": [
+        "background library", "me enters center with fade",
+        "me (pleased): Momonga. That's the name, and I've said it. It's real, and it's mine, and it's been waiting for someone to hear it.",
+        "player: Momonga. It sounds good.",
+        "me (dismayed): Say it back to me, so I know it's real. Not as a joke, as the name of the guild that made me.",
+        "me: Thank you. The ring is warm, and I'm not alone in the town any more."]},
+    {"name": "World: Ainz Ooal Gown, Supreme Being", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): Albedo has written a plan. In it, I am the supreme being of this town, and she wants me to read it aloud.",
+        "player: Are you going to read it?",
+        "me (pleased): I'd like to know what it says first. Albedo is very thorough, and she's not always honest about her thoroughness.",
+        "player: What does it say?",
+        "me (dismayed): That the town kneels, and I'm the one it kneels to. She's written my name in the middle of the plan, and not the guild's.",
+        "player: What do you want me to do with it?",
+        "me (pleased): Nothing yet. Only come, and be the witness I asked for.",
+        "me: Come to the rooftop tonight. I want a witness when I decide whether to be her king, or just her friend."]},
+    {"name": "World: Ainz Ooal Gown, Rooftop Plan", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): The plan's on the parapet. Albedo's handwriting is perfect, and every line of it says the town belongs to me.",
+        "player: Are you going to take it?",
+        "me (pleased): I'll take the parts that keep people safe. The rest I'll burn, and she'll be furious.",
+        "player: Do you want me to hold the plan while you read it?",
+        "me (dismayed): No. I want to read it myself, slowly, and see which line she wrote in her own hand.",
+        "me (pleased): The last line is in ink she never uses. She must have written it at night, after a long day of guarding me.",
+        "player: Is that a good sign?",
+        "me: It means she loves the town as much as the crown. That is the part I can use.",
+        "me: Albedo's coming up the stairs now. Stand where you can see her face when I tell her no, or yes."]},
+    {"name": "World: Ainz Ooal Gown, Albedo Falls", "lines": [
+        "cast albedo as Albedo",
+        "background rooftop", "me enters center with fade",
+        "albedo enters right with slide",
+        "albedo: {player} beat me, Lord Ainz. I didn't think anyone could, not on this roof.",
+        "me (dismayed): Then you'll understand why I'm not sure the plan should stand. You wrote my name in the middle of it.",
+        "albedo: Because you are the centre of it. Everyone in this town knows that, even if they don't say it.",
+        "me (pleased): Then let them say it themselves. I'm not going to be a crown on a rooftop."]},
+    {"name": "World: Ainz Ooal Gown, Declined", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I declined the crown. The plan is burned, and Albedo's kneeling plan is closed for good.",
+        "player: Was that hard?",
+        "me (pleased): Harder than any fight I've had. Keep my name safe, when you talk about me to people.",
+        "me: The ring's still on. The name's still mine. I'd rather be a friend with a name than a king without one."]},
+    {"name": "World: Ainz Ooal Gown, Crowned For Now", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I accepted the crown, for now, for the town's sake. I'll keep the name for myself, though.",
+        "player: That sounds like a compromise.",
+        "me (pleased): It is. The town gets a king, and I get to remember who made me. Neither of us gets everything.",
+        "me: The ring's still warm. It's the only honest thing about me, and I'm glad someone else can see it."]},
 ]
+
 ALBEDO_QUESTS = [
-  {
-    "key": "albedo-guardian-overseer",
-    "title": "Guardian Overseer",
-    "gates": 2,
-    "about": "Albedo inspects the player as a possible servant of Nazarick, charming them, then horrifying them, then charming them again.",
-    "offer": [
-      "them: You may be worthy of Nazarick. I'll decide. Stand still.",
-      "them (pleased): Charming, you say? Thank you. I'm told I am."
-    ],
-    "stages": [
-      {
-        "text": "Be inspected by Albedo at the warehouse in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "warehouse",
-            "times": [
-              2
-            ],
-            "scene": "World: Albedo, Warehouse",
-            "rewards": [
-              {
-                "pack": "climax_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Boundless Obsessive Love, Albedo",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "OVL/S62-E028"
-          }
-        ]
-      },
-      {
-        "text": "Answer Albedo's question about Lord Ainz",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Albedo",
-            "script": [
-              "them: What do you think of Lord Ainz? Watch your face when you answer.",
-              "them (pleased): ...Good. You didn't blink. I like that."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "servant-of-nazarick",
-        "title": "Be her servant",
-        "about": "Albedo considers you worthy, for now. She smiles in a way that's hard to read.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "bouquet"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "albedo-plot",
-    "title": "Albedo's Plot",
-    "gates": 5,
-    "about": "Albedo's secret plan against the other Supreme Beings, which she shows you on the rooftop at night.",
-    "offer": [
-      "them (dismayed): I have something to show you. Something Lord Ainz can't see.",
-      "them: Meet me on the rooftop tonight. Please."
-    ],
-    "stages": [
-      {
-        "text": "Meet Albedo on the rooftop at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "rooftop",
-            "times": [
-              3
-            ],
-            "scene": "World: Albedo, Rooftop",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Albedo: A Woman's Battle in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "OVL/S62-E033",
-            "against": [
-              "Albedo"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Albedo your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Albedo",
-            "script": [
-              "them: Keep it from Ainz. Will you?",
-              "them (pleased): ...Then you're in the plot now. Welcome."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "keep-her-secret",
-        "title": "Keep her secret",
-        "about": "Albedo's plan goes on in the dark. Ainz's Best friend quest is closed for good.",
-        "rewards": [
-          {
-            "coins": 800
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ],
-        "locks": [
-          "ainz-supreme-being"
-        ]
-      },
-      {
-        "key": "tell-ainz",
-        "title": "Tell Ainz",
-        "about": "You tell Ainz what Albedo's been planning. Albedo is not pleased, and says so very politely.",
-        "rewards": [
-          {
-            "coins": 500
-          },
-          {
-            "gift": "playmat"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "albedo-the-guardian", "title": "The Guardian", "requires": {"rank": 1},
+     "scene": "World: Albedo, Guardian Walk",
+     "about": "Albedo is the guardian of a sorcerer king's city, and she'll walk with you only if you keep up. She is devoted, a little too much, and she takes notes on everyone who walks beside her.",
+     "offer": ["them (pleased): Oh, you are here. Please, walk beside me, and do not fall behind. Lord Ainz is watching.",
+               "them: Meet me at the cafe at noon. I have a list of questions, and you are going to answer every one."],
+     "stages": [
+         {"text": "Walk with Albedo to the cafe at noon", "objectives": [{"do": "visit", "place": "cafe", "times": [1], "scene": "World: Albedo, Cafe Walk", "rewards": [{"coins": 150}]}]},
+         {"text": "Answer Albedo's questions about Ainz", "objectives": [{"do": "talk", "to": "Albedo", "script": [
+             "them (pleased): You answered well. Lord Ainz would approve, I think, if he noticed.",
+             "them: I have a second list. It's for later, when you've earned it."]}]},
+     ],
+     "endings": [{"key": "guardians-list", "title": "Take her list", "about": "Albedo hands you her list, written in neat ink, with Ainz's name at the top. She says it's a privilege, and that you should keep it safe from anyone who might read it.",
+                  "scene": "World: Albedo, The List", "rewards": [{"coins": 300}, {"gift": "sleeves"}]}]},
+    {"key": "albedo-the-guardian-duty", "title": "Guardian's Duty", "gates": 2, "requires": {"quests": ["albedo-the-guardian"]},
+     "scene": "World: Albedo, Duty Call",
+     "about": "Albedo guards the sorcerer king's city, and Asuna has been trying to walk in and out of it without permission. Albedo won't hold the gate herself any more. She sends the player to hold it, and wants them to see what a guardian is.",
+     "offer": ["them (dismayed): A girl with a sword keeps walking past the gate. Lord Ainz is not to be disturbed.",
+               "them: Meet me at the shrine in the evening. You will hold the gate, and I will show you how a guardian does it."],
+     "stages": [
+         {"text": "Stand guard with Albedo at the shrine in the evening", "objectives": [{"do": "visit", "place": "shrine", "times": [2], "scene": "World: Albedo, Shrine Guard", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Asuna, to keep the gate closed", "scene": "World: Albedo, Asuna Falls", "objectives": [{"do": "defeat", "cpus": ["Asuna Yuuki"]}]},
+         {"text": "Tell Albedo what Asuna said", "objectives": [{"do": "talk", "to": "Albedo", "script": [
+             "them (dismayed): She wants to see Lord Ainz, and she says she has a right to. I do not agree.",
+             "them (pleased): ...You stood your ground at the gate. Lord Ainz will be told, when he is ready."]}]},
+     ],
+     "endings": [{"key": "gate-stays-shut", "title": "Keep the gate shut", "about": "Albedo keeps the gate shut, and Asuna goes away frowning. Albedo says the town is safer for it, and for the one who holds the gate.",
+                  "scene": "World: Albedo, Gate Shut", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "albedo-plot", "title": "The Plot", "gates": 5, "requires": {"quests": ["albedo-the-guardian-duty"]},
+     "scene": "World: Albedo, The Plot",
+     "about": "Albedo has written a plan to make Ainz a supreme being, with the whole town kneeling. She needs the player to tell her whether Ainz will accept it, or whether she has to fight him to make him.",
+     "offer": ["them (dismayed): Lord Ainz won't read the plan. I'm going to have to make him, if he won't.",
+               "them: Come to the rooftop tonight. I'll tell him, and you'll tell me whether I'm being cruel."],
+     "stages": [
+         {"text": "Meet Albedo on the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Albedo, Rooftop Plot", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Ainz, to see whether he will kneel", "scene": "World: Albedo, Ainz Refuses", "objectives": [{"do": "defeat", "cpus": ["Ainz Ooal Gown"]}]},
+         {"text": "Tell Albedo your answer", "objectives": [{"do": "talk", "to": "Albedo", "script": [
+             "them (dismayed): He beat me, and he still won't read the plan. He's not going to be my king.",
+             "them (pleased): ...Then I'll stop the plot, and let him be a friend. You were the one who made me see it."]}]},
+     ],
+     "endings": [
+         {"key": "plot-dropped", "title": "Drop the plot", "about": "Albedo drops the plot and tears up the parts that would have crowned Ainz. She keeps her place as his guardian, and the town hears nothing more of the crown.",
+          "scene": "World: Albedo, Plot Dropped", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "plot-kept", "title": "Keep the plot", "about": "Albedo keeps the plot in a drawer, behind Ainz's back, and says it's waiting for the right day to be read. Ainz's supreme-being quest is closed for good, because the crown can't be offered while the plot is still waiting.",
+          "locks": ["ainz-supreme-being"], "scene": "World: Albedo, Plot Kept", "rewards": [{"coins": 500}, {"gift": "handheld"}]},
+     ]},
 ]
+
 ALBEDO_SCENES = [
-  {
-    "name": "World: Albedo, Warehouse",
-    "lines": [
-      "background ruins",
-      "me enters right with slide",
-      "me: You're worthy of Nazarick. Probably. Stand still while I decide.",
-      "player: What do you think of Lord Ainz?",
-      "me (dismayed): He is perfect. Look at my face when I say it.",
-      "me (pleased): Good. You passed that test. Now the next one."
-    ]
-  },
-  {
-    "name": "World: Albedo, Rooftop",
-    "lines": [
-      "background night",
-      "me enters left with rise",
-      "me: The other Supreme Beings are to be hunted. That's the order I'm keeping.",
-      "player: Why are you showing me?",
-      "me (dismayed): Because you're the only one who won't tell Lord Ainz.",
-      "me: Keep it from him. Please."
-    ]
-  }
+    {"name": "World: Albedo, Guardian Walk", "lines": [
+        "background city", "me enters right with slide",
+        "me (pleased): Oh, you are here. Please walk beside me, and do not fall behind. Lord Ainz is watching from the window.",
+        "player: Where are we going?",
+        "me (dismayed): To the cafe, at noon. I have a list of questions, and you are going to answer every one of them, honestly.",
+        "me: Lord Ainz is the only person I answer to, and I take notes on everyone who walks beside me.",
+        "me (pleased): Do not be alarmed by the notes. They are for his benefit, not yours."]},
+    {"name": "World: Albedo, Cafe Walk", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): You are on time, which is the first good sign. Please, sit, and do not touch the cup until I say.",
+        "player: What's the first question?",
+        "me (dismayed): What do you think Lord Ainz wants from this town? Be exact, please. Vagueness is not respectful.",
+        "player: He wants to be left alone.",
+        "me: That is the wrong answer, but a useful one. I shall write it down under his name, and the correction under yours."]},
+    {"name": "World: Albedo, The List", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): I give you my list. It has Lord Ainz's name at the top. Keep it safe from anyone who might read it.",
+        "player: Why are you giving me this?",
+        "me (dismayed): Because you answered honestly, and few people do. It is a privilege, and I do not give privileges lightly.",
+        "me: Do not lose it. The ink is very expensive, and the handwriting is mine."]},
+    {"name": "World: Albedo, Duty Call", "lines": [
+        "background city", "me enters right with slide",
+        "me (dismayed): A girl with a sword keeps walking past the gate. She says she has a right to see Lord Ainz.",
+        "player: Does she?",
+        "me: No. Lord Ainz is not to be disturbed, and I am the one who decides which visitors are worth his time.",
+        "me (pleased): Meet me at the shrine this evening. I will show you how a guardian stops a visitor politely, and then not so politely."]},
+    {"name": "World: Albedo, Shrine Guard", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): I hold this path so that Lord Ainz can rest. The girl with the sword will try again tonight.",
+        "player: Are you going to fight her?",
+        "me (pleased): If she insists. I would rather not, but I will not leave the gate open for her.",
+        "player: Why does the gate matter so much to you?",
+        "me (dismayed): Because it is the only thing between Lord Ainz and the town. If the gate opens, he has to be the one who decides who comes in.",
+        "me (pleased): That is a burden I would not give anyone but myself, and I am glad to carry it.",
+        "player: Can I help hold it?",
+        "me: You may watch it. Holding the gate is a guardian's work, and you are not yet a guardian.",
+        "me: Stand behind me, and do not step into the path. The guardian goes first, always."]},
+    {"name": "World: Albedo, Asuna Falls", "lines": [
+        "cast asuna as Asuna Yuuki",
+        "background shrine", "me enters center with fade",
+        "asuna enters right with slide",
+        "asuna: {player} beat me, and now I can't get past. Fine, but I want to see Ainz.",
+        "me (dismayed): You may not. Lord Ainz is not to be disturbed by visitors who fight at the gate.",
+        "asuna: Then tell him I came. Tell him the girl with the sword wanted to say thank you.",
+        "me (pleased): I will tell him. The gate stays shut, but you have been heard."]},
+    {"name": "World: Albedo, Gate Shut", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): The gate is shut, and the girl has gone home. The town is safer for it, and so is Lord Ainz.",
+        "player: Was that hard?",
+        "me (dismayed): Not as hard as I expected. She fought honestly, and I respect that, even when I don't like it.",
+        "me: Remember this gate, and who guarded it. It matters more than the crown."]},
+    {"name": "World: Albedo, The Plot", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me (dismayed): Lord Ainz won't read the plan. He keeps saying he wants to be a friend, not a king.",
+        "player: What does the plan say?",
+        "me (pleased): That the town kneels, and he is the one it kneels to. I wrote it for him, not for me.",
+        "player: That sounds like it would hurt him.",
+        "me (dismayed): It would, a little, in the beginning. But kings get used to kneeling, and he should be one.",
+        "me: Come to the rooftop tonight. I'll tell him, and you'll tell me whether I'm being cruel.",
+        "player: Do you think he'll forgive you?",
+        "me (dismayed): If the plan fails, yes. If it works, he won't have to.",
+        "me (pleased): Bring the plan. I may need you to read it aloud, since he won't."]},
+    {"name": "World: Albedo, Rooftop Plot", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): The plan's on the parapet, under a stone. Lord Ainz is walking up the stairs, and he looks tired.",
+        "player: Will he read it?",
+        "me (pleased): He will, if I have to make him. I'd rather he chose it, but the plot doesn't wait for that.",
+        "player: Is he angry with you?",
+        "me (dismayed): He is not angry. He is tired, and that is worse, because I cannot fix tiredness with a plan.",
+        "me (pleased): Stand still, both of you. I will put the plan on the parapet, and let him see the first line himself.",
+        "player: What does the first line say?",
+        "me: It says he is the centre of the town. I wrote it before I understood what it would cost him.",
+        "me: Stand where you can see both of us. If I'm cruel, you'll know it's the plan talking, not me."]},
+    {"name": "World: Albedo, Ainz Refuses", "lines": [
+        "cast ainz as Ainz Ooal Gown",
+        "background rooftop", "me enters left with rise",
+        "ainz enters right with slide",
+        "ainz: {player} beat me, Albedo. Your plan is wrong, and you know it, even if you won't say so.",
+        "me (dismayed): It is not wrong. It keeps the town in order, and you are the one at the top of it.",
+        "ainz: I'm not the top of anything. I'm the one who keeps the name, and I won't be your crown.",
+        "me (pleased): Then I will put the plan away, and let you be a friend. You were always the better choice."]},
+    {"name": "World: Albedo, Plot Dropped", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I tore up the plan, and I let him be a friend. The part that crowned him is gone.",
+        "player: Are you upset?",
+        "me (pleased): I am, a little. But he is happier, and that is what the guardian is for.",
+        "me: Keep the torn pieces. The handwriting is still mine, and I'd like someone to remember it was once a good plan."]},
+    {"name": "World: Albedo, Plot Kept", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): I kept the plan in the drawer. It's waiting for the right day, and I'm very patient about that.",
+        "player: What if the day never comes?",
+        "me (dismayed): Then it stays in the drawer, and I stay his guardian. That is also a good outcome.",
+        "me: Don't read the drawer. It is only for Lord Ainz, when he asks."]},
 ]
+
+# Asuna Yuuki. Canon a fan expects: the Flash (her speed sword form), the Lambent Light sword, Kirito as her partner and the one she
+# wants to see again, and a fierce, kind way of saying what she means. Thread: Q1 plants the hairpin Kirito gave her and her
+# Flash practice in the morning. Q2: she tries to get through Albedo's gate to see Ainz, because Kirito has been there. Q3:
+# she finds Kirito, and the question from Q1 (will he remember her) gets its answer.
 ASUNA_YUUKI_QUESTS = [
-  {
-    "key": "asuna-lunch-with-the-lightning-flash",
-    "title": "Lunch with the Lightning Flash",
-    "gates": 2,
-    "about": "Asuna cooks for people she trusts, and she watches you take the first bite.",
-    "offer": [
-      "them: I packed a bento. I hope it's good. Don't tell me if it isn't.",
-      "them (pleased): You're smiling. That means it's good."
-    ],
-    "stages": [
-      {
-        "text": "Eat lunch with Asuna at the cafe at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "cafe",
-            "times": [
-              1
-            ],
-            "scene": "World: Asuna Yuuki, Cafe",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Asuna a melon bread to share",
-        "objectives": [
-          {
-            "do": "give_gift",
-            "gift": "melon-bread",
-            "to": "Asuna Yuuki"
-          }
-        ]
-      },
-      {
-        "text": "Ask Asuna what she thinks of you",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Asuna Yuuki",
-            "script": [
-              "them: I trust you with a bento. That's a big deal.",
-              "them (pleased): ...Thank you for liking my cooking."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "trusted-with-bento",
-        "title": "Be trusted with a bento",
-        "about": "Asuna packs you a lunch every time you visit, and writes a tiny note on it.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "shortcake"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "asuna-our-home",
-    "title": "Our Home",
-    "gates": 5,
-    "about": "Asuna's idea of home, after the game. A little house on the 22nd floor, and what home looks like for you.",
-    "offer": [
-      "them: I have a little house in my head. I'd like to tell you about it.",
-      "them (pleased): Come to the plaza in the morning. I'll bring the tea."
-    ],
-    "stages": [
-      {
-        "text": "Meet Asuna in the plaza in the morning",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "plaza",
-            "times": [
-              0
-            ],
-            "scene": "World: Asuna Yuuki, Plaza",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Asuna's Commanding Strength",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "SAO/S100-E010"
-          }
-        ]
-      },
-      {
-        "text": "Answer Asuna's question about home",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Asuna Yuuki",
-            "script": [
-              "them: What does home look like for you?",
-              "them (pleased): ...That sounds like a good house. Let's build it."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "our-home",
-        "title": "Build a home together",
-        "about": "Asuna talks about the house she'd build with you, room by room, until the tea goes cold.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "asuna-the-flash", "title": "The Flash", "requires": {"rank": 1},
+     "scene": "World: Asuna Yuuki, Flash Practice",
+     "about": "Asuna is practising the Flash, her speed sword form, at dawn in the arena. She keeps a hairpin in her hair that Kirito gave her, and she won't say why it matters.",
+     "offer": ["them: Watch my Flash. If you blink, you'll miss all seven of the thrusts, and I'll be insulted.",
+               "them (pleased): Come to the arena in the morning. I need someone to count the thrusts out loud."],
+     "stages": [
+         {"text": "Count Asuna's Flash in the arena in the morning", "objectives": [{"do": "visit", "place": "arena", "times": [0], "scene": "World: Asuna Yuuki, Morning Forms", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Asuna how many thrusts you counted", "objectives": [{"do": "talk", "to": "Asuna Yuuki", "script": [
+             "them (pleased): Seven. You counted all seven. Nobody's ever done that for me before.",
+             "them: The hairpin's from Kirito. He's the one who taught me the Flash, and he'll be furious if I lose it."]}]},
+     ],
+     "endings": [{"key": "hairpin", "title": "Take a hairpin's worth of trust", "about": "Asuna takes the hairpin out of her hair and shows you the small mark on it: Kirito's initial, scratched with a blade. She says if you ever see him, you'll know she's still looking.",
+                  "scene": "World: Asuna Yuuki, Hairpin", "rewards": [{"coins": 300}, {"gift": "earbuds"}]}]},
+    {"key": "asuna-the-gate", "title": "The Gate", "gates": 2, "requires": {"quests": ["asuna-the-flash"]},
+     "scene": "World: Asuna Yuuki, The Gate",
+     "about": "Kirito went through a gate guarded by Albedo, and he hasn't come back. Asuna wants to go through it herself, and Albedo has decided the gate stays shut.",
+     "offer": ["them (dismayed): Kirito went past a gate guarded by a girl with a very sharp face. He hasn't come back.",
+               "them: I'm going through it tonight. If she stops me, I'll be angry about it for a week."],
+     "stages": [
+         {"text": "Meet Asuna at the shrine in the evening", "objectives": [{"do": "visit", "place": "shrine", "times": [2], "scene": "World: Asuna Yuuki, Shrine Gate", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Albedo, to get through the gate", "scene": "World: Asuna Yuuki, Albedo Beaten", "objectives": [{"do": "defeat", "cpus": ["Albedo"]}]},
+         {"text": "Tell Asuna what Albedo said", "objectives": [{"do": "talk", "to": "Asuna Yuuki", "script": [
+             "them (dismayed): She said Kirito is inside, and that Ainz won't see anyone who fights his guardian.",
+             "them (pleased): ...Then I'll wait. Tell Kirito I didn't give up on the gate. He'll know what that means."]}]},
+     ],
+     "endings": [{"key": "walks-away-from-the-gate", "title": "Walk away from the gate", "about": "Asuna turns away from the gate, and says she'll come back when she can get through it properly. She asks you to remember that she was the one who knocked.",
+                  "scene": "World: Asuna Yuuki, Turned Back", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "asuna-kirito", "title": "Kirito", "gates": 5, "requires": {"quests": ["asuna-the-gate"]},
+     "scene": "World: Asuna Yuuki, Kirito Calls",
+     "about": "Kirito is somewhere in the town, and Asuna has to decide whether to go after him or let him come to her. The question she asked on the first day was whether he'd remember her. He has to answer it, one way or another.",
+     "offer": ["them (dismayed): Kirito's on the rooftop tonight. He's sent me a message, and it's only one word long.",
+               "them: Meet me on the rooftop. I want you to see whether he remembers me, or whether I'm just the girl with the hairpin."],
+     "stages": [
+         {"text": "Be on the rooftop with Asuna at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Asuna Yuuki, Rooftop Kirito", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Kirito, to see whether he still knows the Flash", "scene": "World: Asuna Yuuki, Kirito Beaten", "objectives": [{"do": "defeat", "cpus": ["Kirito"]}]},
+         {"text": "Tell Asuna your answer", "objectives": [{"do": "talk", "to": "Asuna Yuuki", "script": [
+             "them (dismayed): He remembered the Flash, and he remembered my name. He didn't say it, but he remembered.",
+             "them (pleased): Then I'll stop waiting at gates. Thank you for watching it happen."]}]},
+     ],
+     "endings": [
+         {"key": "found-him", "title": "Find him", "about": "Asuna finds Kirito on the roof, and tells him the Flash is still hers. He stays, and they start arguing about the hairpin in earnest.",
+          "scene": "World: Asuna Yuuki, Found Him", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "let-him-go", "title": "Let him go", "about": "Asuna lets Kirito go back to the game he came from, and keeps the hairpin. She says she'll remember him, even if he doesn't remember her.",
+          "scene": "World: Asuna Yuuki, Let Him Go", "rewards": [{"coins": 500}, {"gift": "playmat"}]},
+     ]},
 ]
+
 ASUNA_YUUKI_SCENES = [
-  {
-    "name": "World: Asuna Yuuki, Cafe",
-    "lines": [
-      "background cafe",
-      "me enters right with fade",
-      "me: I packed a bento. Try it. Tell me honestly.",
-      "player: It's really good.",
-      "me (pleased): You're relieved I can tell. Okay, don't say it again.",
-      "me: That's the first bite I cooked for someone outside the guild in ages."
-    ]
-  },
-  {
-    "name": "World: Asuna Yuuki, Plaza",
-    "lines": [
-      "background sakura",
-      "me enters left with slide",
-      "me: There was a little house on the 22nd floor. I think about it a lot.",
-      "player: What was it like?",
-      "me (dismayed): Quiet. Small. A place where nothing needed fighting for.",
-      "me: What does home look like for you?"
-    ]
-  }
+    {"name": "World: Asuna Yuuki, Flash Practice", "lines": [
+        "background arena", "me enters left with slide",
+        "me: Watch my Flash. If you blink, you'll miss all seven thrusts, and then I'll have to do it again, which I hate.",
+        "player: Seven? I only see one.",
+        "me (dismayed): That's because you're not looking properly. Do it again, slower, and count them out loud.",
+        "me (pleased): Good. Come to the arena in the morning, and bring your eyes. I need someone to count the thrusts.",
+        "me: I learned it from someone who never gets the thrusts right. I'm better at it than he ever was."]},
+    {"name": "World: Asuna Yuuki, Morning Forms", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): One, two, three, four, five, six, seven. Did you count them all?",
+        "player: All seven. The last one was the fastest.",
+        "me (dismayed): Yes, it always is. It's the one where I'm not thinking about the thrust, only about the person I'm doing it for.",
+        "me: Don't ask who. You'll see him one day, and you'll understand the hairpin.",
+        "me (pleased): Good. Now give me the tea bottle, and let's talk about something I can actually hit."]},
+    {"name": "World: Asuna Yuuki, Hairpin", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): The hairpin's yours to keep, for now. Look, there's a mark on it, scratched in with a blade.",
+        "player: That's an initial.",
+        "me (dismayed): K. Kirito's. He scratched it in the first week, when he was pretending it wasn't important.",
+        "me: If you ever see him, tell him I kept it. He'll know exactly what that means, and he'll be annoyed."]},
+    {"name": "World: Asuna Yuuki, The Gate", "lines": [
+        "background shrine", "me enters left with slide",
+        "me (dismayed): Kirito went through the gate, and he hasn't come back. Albedo's guarding it, and she won't move.",
+        "player: Can you get past her?",
+        "me: I'm going to try tonight, at the shrine. If she stops me, I'll be angry about it for a week.",
+        "me (pleased): Meet me at the shrine in the evening. Bring your patience, and watch the gate with me."]},
+    {"name": "World: Asuna Yuuki, Shrine Gate", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): The gate is closed, and Albedo's standing in front of it like a statue with a sword.",
+        "player: Are you going to fight her?",
+        "me (pleased): If she won't let me through. I came here to see Kirito, and I'm not going home without seeing him.",
+        "me: Stand behind me. If she starts talking about the rules, don't listen. She'll talk you out of it.",
+        "me (dismayed): I'm ready. The Flash is ready. The gate doesn't know what's coming."]},
+    {"name": "World: Asuna Yuuki, Albedo Beaten", "lines": [
+        "cast albedo as Albedo",
+        "background shrine", "me enters center with fade",
+        "albedo enters right with slide",
+        "albedo: {player} beat me at the gate. Lord Ainz's guardian doesn't lose to a sword like that.",
+        "me (dismayed): You lost to a girl with a sword, Albedo. Tell me where Kirito is, and I'll stop shouting.",
+        "albedo: He's inside, with Lord Ainz. He is safe, and he is not yours to take tonight.",
+        "me (pleased): Then I'll wait, and the gate will stay closed for now. Tell Ainz I knocked."]},
+    {"name": "World: Asuna Yuuki, Turned Back", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): I turned away from the gate. I'll come back when I can get through it properly.",
+        "player: That was hard.",
+        "me (pleased): It was. But I knocked, and I was heard. That's more than most people get at a gate.",
+        "me: Remember that I was the one who knocked, and tell Kirito, if you see him first."]},
+    {"name": "World: Asuna Yuuki, Kirito Calls", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me (dismayed): Kirito's on the rooftop, and he's sent one word. It's my name, and it's the only thing I've wanted to hear.",
+        "player: Are you going up?",
+        "me (pleased): Yes. I'm going up to see if he remembers me, or if the word was just a joke.",
+        "me: Meet me on the rooftop tonight. Be the witness, and tell me what his face does when he sees me.",
+        "player: I'll be there.",
+        "player: What will you say to him first?",
+        "me (pleased): My name, I think. Then the Flash, in case he forgot the order.",
+        "me (dismayed): Good. I've waited long enough, and the stairs are steep."]},
+    {"name": "World: Asuna Yuuki, Rooftop Kirito", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): He's here, with the black coat and the two blades. He hasn't looked at me once.",
+        "player: Are you going to say something?",
+        "me (pleased): I'm going to make him stand in the ring with me. The Flash is the only language he's never forgotten.",
+        "me: Stand where you can see both of us, and tell me if he flinches. He always flinches when he's about to lose.",
+        "player: Do you think he'll remember your name?",
+        "me (dismayed): He has to. Nobody forgets the first person who beat them with the Flash, and I'm the one who taught him to lose gracefully."]},
+    {"name": "World: Asuna Yuuki, Kirito Beaten", "lines": [
+        "cast kirito as Kirito",
+        "background rooftop", "me enters center with fade",
+        "kirito enters right with slide",
+        "kirito: {player} beat me, Asuna. You still fight like that, the same way you always did.",
+        "me (dismayed): I fight like someone who's been waiting. You didn't come back for three years, Kirito.",
+        "kirito: I know. I'm sorry. I didn't know how to come back without the game.",
+        "me (pleased): Then come back with me. The hairpin's still here. So am I."]},
+    {"name": "World: Asuna Yuuki, Found Him", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): I found Kirito on the roof. I told him the Flash is still mine, and he laughed for the first time in years.",
+        "player: Are you two going to be okay?",
+        "me (dismayed): We're going to argue about the hairpin for a week. That's how I know it's real.",
+        "me: Thank you for being the witness. I'd have been lost without someone to count the thrusts."]},
+    {"name": "World: Asuna Yuuki, Let Him Go", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I let Kirito go back to the game he came from. I kept the hairpin, and I'll remember him.",
+        "player: Will he remember you?",
+        "me (pleased): Maybe not. But I'll remember enough for both of us, and that's a fair trade.",
+        "me: Keep the hairpin. If he comes back, you'll know him by the mark."]},
 ]
+
 KIRITO_QUESTS = [
-  {
-    "key": "kirito-beater",
-    "title": "Beater",
-    "gates": 2,
-    "about": "Kirito wants a sparring partner who won't go easy on him.",
-    "offer": [
-      "them: I need a sparring partner. Don't go easy on me.",
-      "them (pleased): You got one good move in. That's the start."
-    ],
-    "stages": [
-      {
-        "text": "Spar with Kirito at the arena at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "arena",
-            "times": [
-              1
-            ],
-            "scene": "World: Kirito, Arena",
-            "rewards": [
-              {
-                "coins": 150
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Kirito: Kirito - For Someone Special in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "SAO/S20-E080",
-            "against": [
-              "Kirito"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Hear Kirito's verdict",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Kirito",
-            "script": [
-              "them: You'll be fine. Keep the move I showed you.",
-              "them (pleased): ...And don't let me win every time."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "good-move",
-        "title": "Keep the good move",
-        "about": "Kirito shows you the next move, the one that actually works, and says you'll be fine.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "handheld"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "kirito-the-dual-blades",
-    "title": "The Dual Blades",
-    "gates": 5,
-    "about": "The Moonlit Black Cats, the old guild, and the night Kirito hid his level.",
-    "offer": [
-      "them (dismayed): I used to be in a guild. The Moonlit Black Cats. Don't ask.",
-      "them: Meet me in the forest tonight. I'll tell you what I owe them."
-    ],
-    "stages": [
-      {
-        "text": "Meet Kirito in the forest at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "forest",
-            "times": [
-              3
-            ],
-            "scene": "World: Kirito, Forest",
-            "rewards": [
-              {
-                "pack": "level_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Kirito - Two Worlds",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "SAO/S26-E069"
-          }
-        ]
-      },
-      {
-        "text": "Give Kirito your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Kirito",
-            "script": [
-              "them: Tell me if I ever hide my level again. Promise.",
-              "them (pleased): ...Good. Now I can stop pretending."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "tell-me-if",
-        "title": "Promise to tell him",
-        "about": "Kirito admits he's hidden his level before, and asks you to stop him if he does it again.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "kirito-beater", "title": "The Beater", "requires": {"rank": 1},
+     "scene": "World: Kirito, Black Coat",
+     "about": "Kirito wears a black coat and carries two blades, and he calls himself a beater. He came from another game and still thinks of the town as one, and he's hiding the reason why.",
+     "offer": ["them: I'm a beater, if anyone asks. Don't ask what that means, it's a game thing.",
+               "them (pleased): Meet me at the plaza at noon. I'll show you the two blades, and you can tell me which one is heavier."],
+     "stages": [
+         {"text": "See Kirito's blades at the plaza at noon", "objectives": [{"do": "visit", "place": "plaza", "times": [1], "scene": "World: Kirito, Plaza Blades", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Kirito which blade is heavier", "objectives": [{"do": "talk", "to": "Kirito", "script": [
+             "them (pleased): The left one, and you were right. Most people guess the right one.",
+             "them: Don't tell anyone the real reason I'm here. It's a long story, and I'd rather not tell it twice."]}]},
+     ],
+     "endings": [{"key": "beater-name", "title": "Learn the beater's name", "about": "Kirito tells you his real name, Kazuto. Beater was the name he used in the game, and Kazuto is the one he's been hiding behind it. He asks you to call him by it when nobody else is listening.",
+                  "scene": "World: Kirito, Beater Name", "rewards": [{"coins": 300}, {"gift": "handheld"}]}]},
+    {"key": "kirito-the-game", "title": "The Game", "gates": 2, "requires": {"quests": ["kirito-beater"]},
+     "scene": "World: Kirito, The Game",
+     "about": "Kirito is still playing the game he came from, in a town that doesn't know it's a game. Ainz is the only other player he's found, and Kirito wants to know whether Ainz is a threat to the town.",
+     "offer": ["them (dismayed): There's a Sorcerer King here who calls himself a player. I need to know if he's dangerous.",
+               "them: Meet me at the cafe in the evening. If Ainz is what I think, I'll need you to be the one who keeps me honest."],
+     "stages": [
+         {"text": "Meet Kirito at the cafe in the evening", "objectives": [{"do": "visit", "place": "cafe", "times": [2], "scene": "World: Kirito, Cafe Game", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Ainz, to find out whether he's a threat", "scene": "World: Kirito, Ainz Beaten", "objectives": [{"do": "defeat", "cpus": ["Ainz Ooal Gown"]}]},
+         {"text": "Tell Kirito what Ainz said", "objectives": [{"do": "talk", "to": "Kirito", "script": [
+             "them (dismayed): He said he's been a player longer than I've been alive in this town. He's not wrong.",
+             "them (pleased): Then we're both players. I'll stop calling him a threat, and start calling him a rival."]}]},
+     ],
+     "endings": [{"key": "keep-playing", "title": "Keep playing", "about": "Kirito keeps playing, and says the game is still worth it, as long as he's not alone in it. He asks you to be the one who checks his blades every morning.",
+                  "scene": "World: Kirito, Keep Playing", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "kirito-the-last-game", "title": "The Last Game", "gates": 5, "requires": {"quests": ["kirito-the-game"]},
+     "scene": "World: Kirito, The Last Game",
+     "about": "Kirito has to decide whether to stay in this world, or to log out and go home. Asuna is the reason he's been putting it off, and she's asked him to meet her at the arena where they first fought.",
+     "offer": ["them (dismayed): Asuna's in town. I've been avoiding her, because I don't know what to say.",
+               "them: Meet me at the arena tonight. I want you to see her face, and then tell me whether I should log out."],
+     "stages": [
+         {"text": "Meet Kirito at the arena at night", "objectives": [{"do": "visit", "place": "arena", "times": [3], "scene": "World: Kirito, Arena Last", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Asuna, to decide whether to stay", "scene": "World: Kirito, Asuna Beaten", "objectives": [{"do": "defeat", "cpus": ["Asuna Yuuki"]}]},
+         {"text": "Tell Kirito your answer", "objectives": [{"do": "talk", "to": "Kirito", "script": [
+             "them (dismayed): She beat me, and she's still holding the hairpin. I don't know if I can leave her again.",
+             "them (pleased): Then I'll stay a while longer. Thank you for making me come to the arena."]}]},
+     ],
+     "endings": [
+         {"key": "log-out", "title": "Log out", "about": "Kirito logs out and goes home. He leaves the hairpin with Asuna, who has kept it all this time, and tells her to keep it a little longer.",
+          "scene": "World: Kirito, Log Out", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "stay-in-world", "title": "Stay in this world", "about": "Kirito stays in the town with Asuna, under his real name, Kazuto, which he can use in daylight.",
+          "scene": "World: Kirito, Stay", "rewards": [{"coins": 500}, {"gift": "sleeves"}]},
+     ]},
 ]
+
 KIRITO_SCENES = [
-  {
-    "name": "World: Kirito, Arena",
-    "lines": [
-      "background arena",
-      "me enters center with fade",
-      "me: Come on. Don't hold back. I'm not going to.",
-      "player: Here I come!",
-      "me (pleased): You lost. But that move in the middle was good.",
-      "me: You'll be fine. Trust me on that."
-    ]
-  },
-  {
-    "name": "World: Kirito, Forest",
-    "lines": [
-      "background forest",
-      "me enters left with rise",
-      "me: The Moonlit Black Cats. We were a guild, once. We hid our levels from each other.",
-      "player: Why did you hide yours?",
-      "me (dismayed): Because I was afraid they wouldn't want me once they knew.",
-      "me: Tell me if I ever hide my level again. Please."
-    ]
-  }
+    {"name": "World: Kirito, Black Coat", "lines": [
+        "background city", "me enters right with slide",
+        "me: I'm a beater, if anyone asks. Don't ask what that means, it's a game thing.",
+        "player: What's a beater?",
+        "me (dismayed): Someone who fights the monsters the others won't. It's a bit of a joke, and a bit of a warning.",
+        "me (pleased): Meet me at the plaza at noon. I'll show you the two blades, and you can tell me which one is heavier.",
+        "me: Bring your eyes. The left one's trickier than it looks."]},
+    {"name": "World: Kirito, Plaza Blades", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): Here, the two blades. Pick one up, and tell me which one feels heavier in your hand.",
+        "player: The left one.",
+        "me (dismayed): Good. Most people guess the right one, because it's the one I hold more often.",
+        "me: Don't tell anyone why I'm here. It's a long story, and I'd rather not tell it twice in the same town.",
+        "me (pleased): Keep the left blade in mind. You'll need it when someone asks you to beat me."]},
+    {"name": "World: Kirito, Beater Name", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (dismayed): My name is Kazuto. I used beater in the game, because it was the only name I was proud of. Call me Kazuto, when nobody else is listening.",
+        "player: Kazuto. Is it safe to say it here?",
+        "me (pleased): Safe enough. It's mine, and it's the only name I haven't had to fight for.",
+        "me: Thanks for the honest answer about the blade. Most people make a joke of it."]},
+    {"name": "World: Kirito, The Game", "lines": [
+        "background city", "me enters right with slide",
+        "me (dismayed): There's a Sorcerer King in town who calls himself a player. I need to know whether he's dangerous.",
+        "player: Is he?",
+        "me: I don't know. He talks like he's been playing longer than I have, and that's the part I don't like.",
+        "me (pleased): Meet me at the cafe in the evening. If he's what I think, I'll need you to keep me honest."]},
+    {"name": "World: Kirito, Cafe Game", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (dismayed): The Sorcerer King is at the table by the window. He's been watching us since we came in.",
+        "player: Are you going to talk to him?",
+        "me (pleased): I'm going to fight him, and then talk. That's how we do things, in this kind of world.",
+        "me: Stay out of the line of fire, and watch his hands. He casts before he speaks, and that's a player's habit.",
+        "me (dismayed): Okay. Here he comes. Keep your voice steady, and don't call him a threat until he's down."]},
+    {"name": "World: Kirito, Ainz Beaten", "lines": [
+        "cast ainz as Ainz Ooal Gown",
+        "background cafe", "me enters center with fade",
+        "ainz enters right with slide",
+        "ainz: {player} beat me, swordsman. Fine. You're a player, and so am I.",
+        "me (dismayed): Then tell me which guild you're in, because I've been looking for someone to say it with.",
+        "ainz: Not yet. Ask me again tomorrow, when I've decided whether the name is still mine.",
+        "me (pleased): Then I'll stop calling you a threat. Let's call you a rival, the way we used to."]},
+    {"name": "World: Kirito, Keep Playing", "lines": [
+        "background city", "me enters center with fade",
+        "me (pleased): I'm going to keep playing. The game's worth it, as long as I'm not alone in it.",
+        "player: What about the town?",
+        "me (dismayed): The town's real. That's the part I keep forgetting, and you keep reminding me.",
+        "me: Check my blades every morning, would you? The left one's still too heavy for me."]},
+    {"name": "World: Kirito, The Last Game", "lines": [
+        "background city", "me enters left with slide",
+        "me (dismayed): Asuna's in town. I've been avoiding her, because I don't know what to say to her after three years.",
+        "player: Are you going to see her?",
+        "me (pleased): I'm going to meet her at the arena tonight. I've been putting it off long enough.",
+        "player: What are you going to decide?",
+        "me (dismayed): Whether to stay in this world, or to log out and go home. She's the reason I'm still here.",
+        "me: Meet me at the arena tonight. I want you to see her face, and then tell me whether I should log out.",
+        "player: What if she doesn't want you back?",
+        "me (dismayed): Then I log out, and that's my answer. But she already said my name in the hall.",
+        "me (pleased): Bring the coat. It's the only thing that's always fit me."]},
+    {"name": "World: Kirito, Arena Last", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): The arena is where we first fought, and Asuna's standing at the far end, with the hairpin in her hair.",
+        "player: Are you ready?",
+        "me (pleased): No. But she's ready, and that's the part I've been afraid of.",
+        "me: Stand where she can see you. If I start to lose my nerve, call my name.",
+        "me (dismayed): Okay. Here she comes. Keep your eyes open, and don't blink."]},
+    {"name": "World: Kirito, Asuna Beaten", "lines": [
+        "cast asuna as Asuna Yuuki",
+        "background arena", "me enters center with fade",
+        "asuna enters right with slide",
+        "asuna: {player} beat me, Kirito. You still fight like you're waiting to be caught.",
+        "me (dismayed): I was waiting to be caught. I just didn't know it would be by you.",
+        "asuna: Then stay, or go. But say it to my face, and don't disappear.",
+        "me (pleased): I'll stay a while longer. The hairpin's still in your hair, and I'd like to see you wear it."]},
+    {"name": "World: Kirito, Log Out", "lines": [
+        "background city", "me enters center with fade",
+        "me (dismayed): I logged out of the game and went home. The hairpin was hers to keep, and she kept it.",
+        "player: Will you come back?",
+        "me (pleased): Maybe. But I'll come back as a player who knows the town is real, and that's different.",
+        "me: Thanks for watching me decide. Keep the left blade. It's yours now."]},
+    {"name": "World: Kirito, Stay", "lines": [
+        "background city", "me enters center with fade",
+        "me (pleased): I stayed in the town, with Asuna. I gave the beater's name up for a name I can use in daylight.",
+        "player: Is that better?",
+        "me (dismayed): It's quieter. And the sun's warm on the coat, which it never was in the game.",
+        "me: Come to the cafe tomorrow. Asuna's going to want to argue about the hairpin."]},
 ]
+
+# Batman. Canon a fan expects: Gotham's detective in the cowl, the batarang, and one rule: he doesn't kill. Rival: Joker, whom he has
+# never managed to put in a cell for good. Thread: Q1 plants a clue, a calling card found in an alley. Q2 pays off: the card leads
+# to the docks, where Chisato is watching the same shipments. Q3 answers Q1: the card is Joker's, and Batman has to decide whether
+# the one rule still holds when Joker is the one who's been paying the bosses.
 BATMAN_QUESTS = [
-  {
-    "key": "batman-detective-work",
-    "title": "Detective Work",
-    "gates": 2,
-    "about": "Batman needs a second pair of eyes on a case, and he spreads the clippings across the library table.",
-    "offer": [
-      "them: I need a second pair of eyes. Don't waste my time.",
-      "them (pleased): Good. You spotted it. That's the link I missed."
-    ],
-    "stages": [
-      {
-        "text": "Work the case with Batman at the library at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "library",
-            "times": [
-              1
-            ],
-            "scene": "World: Batman, Library",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Batman: Ancient Armor",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "BNJ/SX01-A07"
-          }
-        ]
-      },
-      {
-        "text": "Tell Batman what you noticed",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Batman",
-            "script": [
-              "them: The link is the same warehouse each time. Good. That's it.",
-              "them (pleased): ...Good. That's a lot, from me."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "second-pair-of-eyes",
-        "title": "Be his second pair of eyes",
-        "about": "Batman leaves you a case file, with a single word written on it: good.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "earbuds"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "batman-one-rule",
-    "title": "One Rule",
-    "gates": 5,
-    "about": "The Joker's plan, and the one line Batman won't cross, which the Joker wants him to cross.",
-    "offer": [
-      "them (dismayed): The Joker wants me to kill him. He's built a trap for that.",
-      "them: Come to the rooftop tonight. I need someone to remind me of the rule."
-    ],
-    "stages": [
-      {
-        "text": "Meet Batman on the rooftop at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "rooftop",
-            "times": [
-              3
-            ],
-            "scene": "World: Batman, Rooftop",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Beat the Joker in a duel",
-        "objectives": [
-          {
-            "do": "defeat",
-            "cpus": [
-              "Joker"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Batman your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Batman",
-            "script": [
-              "them: Make sure I don't cross the line. Can you?",
-              "them (pleased): ...Then the rule holds. Thank you."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "the-rule-holds",
-        "title": "Remind him of the rule",
-        "about": "Batman keeps the rule. The Joker's Best friend quest is closed for good.",
-        "rewards": [
-          {
-            "coins": 800
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ],
-        "locks": [
-          "joker-one-bad-day"
-        ]
-      },
-      {
-        "key": "let-the-rule-bend",
-        "title": "Let the rule bend",
-        "about": "Batman says nothing, and looks out over the city for a long time.",
-        "rewards": [
-          {
-            "coins": 500
-          },
-          {
-            "gift": "earbuds"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "batman-first-clue", "title": "The First Clue", "requires": {"rank": 1},
+     "scene": "World: Batman, Alley Card",
+     "about": "Someone has left a calling card in the alley, and Batman wants to know who else has seen it. He doesn't trust anyone who laughs at the card.",
+     "offer": ["them: There's a card in the alley. Somebody wants it found, and I want to know why.",
+               "them (dismayed): Meet me in the alley this evening. Don't touch the card, and don't laugh at it."],
+     "stages": [
+         {"text": "Look at the alley card with Batman in the evening", "objectives": [{"do": "visit", "place": "alley", "times": [2], "scene": "World: Batman, Alley Clue", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Batman what you noticed about the card", "objectives": [{"do": "talk", "to": "Batman", "script": [
+             "them: The ink's still wet, and the card's been folded twice. Someone wanted it to be found, quickly.",
+             "them (pleased): Good. Most people only see the joke on it. You saw the fold."]}]},
+     ],
+     "endings": [{"key": "clue-kept", "title": "Keep the card", "about": "Batman hands you the card to keep, and asks you not to show it to anyone until he knows whose hand wrote it. It has a grin drawn in the corner.",
+                  "scene": "World: Batman, Card Kept", "rewards": [{"coins": 300}, {"gift": "sleeves"}]}]},
+    {"key": "batman-the-docks", "title": "The Docks", "gates": 2, "requires": {"quests": ["batman-first-clue"]},
+     "scene": "World: Batman, Docks Watch",
+     "about": "The card led to the docks, where shipments come in at night. Chisato is watching the same crates, and Batman doesn't trust her to stay out of his way.",
+     "offer": ["them (dismayed): The shipments are coming through the docks, and someone is watching them better than the police.",
+               "them: Meet me at the warehouse this evening. If Chisato wants the crates, she'll have to go through me first."],
+     "stages": [
+         {"text": "Watch the docks with Batman in the evening", "objectives": [{"do": "visit", "place": "warehouse", "times": [2], "scene": "World: Batman, Docks Night", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Chisato, to keep her out of the crates", "scene": "World: Batman, Chisato Beaten", "objectives": [{"do": "defeat", "cpus": ["Chisato Nishikigi"]}]},
+         {"text": "Tell Batman what Chisato said", "objectives": [{"do": "talk", "to": "Batman", "script": [
+             "them (dismayed): She says the crates belong to LycoReco, and she's been sent to collect them.",
+             "them (pleased): Then she's not the one behind it. Someone with a card is. Keep watching."]}]},
+     ],
+     "endings": [{"key": "docks-quiet", "title": "Leave the docks quiet", "about": "Batman lets the docks go quiet for the night. He says the card has a name behind it now, and that he'll go after it himself.",
+                  "scene": "World: Batman, Docks Quiet", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "batman-one-rule", "title": "One Rule", "gates": 5, "requires": {"quests": ["batman-the-docks"]},
+     "scene": "World: Batman, One Rule",
+     "about": "The card is Joker's. Joker has been running the smuggling network out of the docks, with LycoReco's bosses paying him to keep it going. Batman's one rule is that he doesn't kill, and he has to decide whether the rule still holds when Joker is the one he's chasing.",
+     "offer": ["them (dismayed): The card is Joker's. He's been paying off LycoReco, and the bosses are letting him do it.",
+               "them: Meet me on the rooftop tonight. I want you there when I decide whether my one rule still holds."],
+     "stages": [
+         {"text": "Be on the rooftop with Batman at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Batman, Rooftop Rule", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Joker, to stop the network for good", "scene": "World: Batman, Joker Falls", "objectives": [{"do": "defeat", "cpus": ["Joker"]}]},
+         {"text": "Tell Batman your answer", "objectives": [{"do": "talk", "to": "Batman", "script": [
+             "them (dismayed): He's on the floor, and he's still laughing. He knows the bosses will protect him, and he's right.",
+             "them (pleased): Then the rule holds. I'll take him in, and the bosses will have to answer for the rest. Thank you."]}]},
+     ],
+     "endings": [
+         {"key": "rule-kept", "title": "Keep the rule", "about": "Batman takes Joker in, alive, and hands the bosses' names to the city. Joker's one-bad-day quest is closed for good, because the rule held.",
+          "locks": ["joker-one-bad-day"], "scene": "World: Batman, Rule Kept", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "let-him-run", "title": "Let him run", "about": "Batman lets Joker slip away into the rain, and takes the bosses instead. He doesn't kill anyone, so the rule holds, but he's chosen who to chase, and it isn't the man who made the network.",
+          "scene": "World: Batman, Let Him Run", "rewards": [{"coins": 500}, {"gift": "bottled-tea"}]},
+     ]},
 ]
+
 BATMAN_SCENES = [
-  {
-    "name": "World: Batman, Library",
-    "lines": [
-      "background library",
-      "me enters right with fade",
-      "me: The link is in this photo. Look closer. Ignore the rest.",
-      "player: Got it. The same warehouse.",
-      "me (pleased): Good. That's all I wanted to hear.",
-      "me: Keep watching the pattern. I'll be back."
-    ]
-  },
-  {
-    "name": "World: Batman, Rooftop",
-    "lines": [
-      "background night",
-      "me enters center with rise",
-      "me: The Joker wants me to kill him. He's built a trap for it.",
-      "player: What are you going to do?",
-      "me (dismayed): The rule. Always the rule.",
-      "me: Make sure I don't cross the line. Please."
-    ]
-  }
+    {"name": "World: Batman, Alley Card", "lines": [
+        "background city", "me enters center with fade",
+        "me: There's a card in the alley. Somebody wants it found, and I want to know why they bothered.",
+        "player: It's just a card.",
+        "me (dismayed): Nothing in this city is just a card. Don't touch it, and don't laugh at the grin on it.",
+        "me: Meet me in the alley this evening. Bring your eyes, and tell me what you notice about the paper."]},
+    {"name": "World: Batman, Alley Clue", "lines": [
+        "background city", "me enters center with fade",
+        "me (dismayed): The card's been folded twice. The grin is in the corner, and the ink is still wet.",
+        "player: Someone was here recently.",
+        "me: Yes. They left it for us to find, and they wanted it found quickly, before the rain.",
+        "me (dismayed): Look at the fold. Someone used the same hand they use to write, and that's a mistake I'd expect from a showman.",
+        "player: Do you know who it is?",
+        "me: Not yet. But I know the grin, and I know the kind of person who hides in the joke."]},
+    {"name": "World: Batman, Card Kept", "lines": [
+        "background city", "me enters center with fade",
+        "me (dismayed): Keep the card. Don't show it to anyone until I know whose hand wrote it.",
+        "player: What if someone asks?",
+        "me: Tell them it's evidence. That's the truth, and it's the only answer that doesn't get you hurt.",
+        "me (dismayed): The grin is for someone who thinks they're funny. I'd like to be the one who's left laughing."]},
+    {"name": "World: Batman, Docks Watch", "lines": [
+        "background city", "me enters center with fade",
+        "me (dismayed): The card led to the docks, where the shipments come in at night, and Chisato is watching the same crates.",
+        "player: Is she dangerous?",
+        "me: She's careful, which is more useful than dangerous. But she doesn't know the rule, and she should.",
+        "me (pleased): Meet me at the warehouse this evening. If she wants the crates, she'll have to go through me first.",
+        "me: Don't follow me in. Watch the door, and call out if anybody comes out with a red cap."]},
+    {"name": "World: Batman, Docks Night", "lines": [
+        "background ruins", "me enters center with fade",
+        "me (dismayed): The crates are stacked to the ceiling. Someone's been paying for every one of them, and it wasn't the bosses.",
+        "player: Can you see who?",
+        "me: Not from here. But I can hear Chisato's boots on the far side of the warehouse, and she's not alone.",
+        "me (pleased): Stay still. I'm going to show you the rule, and then you'll know what it's worth at night.",
+        "me: If she gets past me, she'll take the names. If she doesn't, she'll go home and be angry about it."]},
+    {"name": "World: Batman, Chisato Beaten", "lines": [
+        "cast chisato as Chisato Nishikigi",
+        "background ruins", "me enters center with fade",
+        "chisato enters right with slide",
+        "chisato: {player} beat me, Batman. I was only here for the crates. LycoReco sent me.",
+        "me (dismayed): The crates belong to someone who pays LycoReco to look the other way. Who gave you the order?",
+        "chisato: A man with a grin, on a card. I didn't see his face.",
+        "me (pleased): Then go home, and tell your bosses the card has a name. I'll find it before they do."]},
+    {"name": "World: Batman, Docks Quiet", "lines": [
+        "background ruins", "me enters center with fade",
+        "me (dismayed): The docks are quiet for the night. The card has a name behind it now, and it's not Chisato's.",
+        "player: Are you going after him?",
+        "me (pleased): Yes. Alone, if I have to, though it's better with a witness.",
+        "me: Keep the card safe. The grin will be waiting for us on the roof."]},
+    {"name": "World: Batman, One Rule", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me (dismayed): The card is Joker's. He's been paying LycoReco's bosses to keep the network running out of the docks.",
+        "player: Then the bosses are part of it.",
+        "me: Yes. And Joker's the one who keeps them paid, which is worse. I've let him laugh at me for years.",
+        "me (dismayed): My one rule is that I don't kill. It's held every night so far, and it's the only thing that makes me different from him.",
+        "player: Does it still hold, with him?",
+        "me (pleased): That's the question I'm here to answer. Come to the rooftop tonight, and watch me decide.",
+        "player: Will you stop him tonight?",
+        "me (dismayed): Yes, or I'll find out I can't. Either way, the rule gets tested tonight.",
+        "me: Don't say anything when I do. I'd like to hear myself think for once."]},
+    {"name": "World: Batman, Rooftop Rule", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): The roof is wet, and the gargoyles are watching. Joker's coming up the stairs, laughing already.",
+        "player: Are you ready?",
+        "me (pleased): The rule is ready. I'm not sure I am, but the city is, and that's enough for tonight.",
+        "me: Stand by the ledge, where you can see both of us. If I lose my temper, call my name.",
+        "me (dismayed): He's close. Keep your hands out of your pockets, and don't trust the grin."]},
+    {"name": "World: Batman, Joker Falls", "lines": [
+        "cast joker as Joker",
+        "background rooftop", "me enters center with fade",
+        "joker enters right with slide",
+        "joker: {player} beat me, Batman. You didn't even need the bat to do it. Ha.",
+        "me (dismayed): Then the rule holds. Stay where you are, and tell me who's paying the bosses.",
+        "joker: You'd like that, wouldn't you? A name for your little file. I'll give you one, if you let me go.",
+        "me (pleased): You'll go in a cell, alive, with the rule intact. That's the deal, Joker. It always is."]},
+    {"name": "World: Batman, Rule Kept", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): I took Joker in, alive. The bosses' names are with the city now, and the rule held.",
+        "player: That must feel good.",
+        "me (dismayed): It feels like the rule did its job. That's all I ever wanted from it.",
+        "me: Joker's one bad day is over. Don't tell him I said so. He'll make a card out of it."]},
+    {"name": "World: Batman, Let Him Run", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I let Joker slip into the rain, and went after the bosses instead. Nobody died tonight, so the rule stands.",
+        "player: Are you sorry?",
+        "me (pleased): No. But I know whose name I should have been chasing, and I'm not sure it was his.",
+        "me: Keep the card. The grin is the only thing on the roof I can't stand."]},
 ]
+
 JOKER_QUESTS = [
-  {
-    "key": "joker-a-little-joke",
-    "title": "A Little Joke",
-    "gates": 2,
-    "about": "The Joker wants an audience, and he tells a joke with no punchline.",
-    "offer": [
-      "them: Knock knock. Who's there? ...Exactly. Isn't it great?",
-      "them (pleased): You laughed. That's all I wanted."
-    ],
-    "stages": [
-      {
-        "text": "Find the Joker in the alley at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "alley",
-            "times": [
-              3
-            ],
-            "scene": "World: Joker, Alley",
-            "rewards": [
-              {
-                "pack": "climax_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give the Joker a handheld game for his audience",
-        "objectives": [
-          {
-            "do": "give_gift",
-            "gift": "handheld",
-            "to": "Joker"
-          }
-        ]
-      },
-      {
-        "text": "Let the Joker tell you the rest",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Joker",
-            "script": [
-              "them: Here's a playing card, for later. Keep it safe.",
-              "them (pleased): ...See you when you need a laugh."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "for-later",
-        "title": "Keep the card for later",
-        "about": "The Joker tucks the playing card into your coat and winks as he leaves.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "playmat"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "joker-one-bad-day",
-    "title": "One Bad Day",
-    "gates": 5,
-    "about": "The Joker has built a funhouse for the Bat, and wants to prove anyone can break.",
-    "offer": [
-      "them (dismayed): I built a funhouse for the Bat. It's a bit much.",
-      "them: Come to the warehouse tonight. Bring a smile."
-    ],
-    "stages": [
-      {
-        "text": "Visit the Joker at the warehouse in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "warehouse",
-            "times": [
-              2
-            ],
-            "scene": "World: Joker, Warehouse",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with the Joker: Joker: Nemesis in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "BNJ/SX01-010",
-            "against": [
-              "Joker"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give the Joker your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Joker",
-            "script": [
-              "them: Help me give him one bad day. Just one.",
-              "them (pleased): ...Then the laughs begin."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "one-bad-day",
-        "title": "Give Batman one bad day",
-        "about": "The Joker's funhouse opens. Batman's Best friend quest is closed for good.",
-        "rewards": [
-          {
-            "coins": 800
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ],
-        "locks": [
-          "batman-one-rule"
-        ]
-      },
-      {
-        "key": "laugh-it-off",
-        "title": "Laugh it off",
-        "about": "The Joker laughs, and says the funhouse can wait for a better day.",
-        "rewards": [
-          {
-            "coins": 500
-          },
-          {
-            "gift": "handheld"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "joker-calling-card", "title": "The Calling Card", "requires": {"rank": 1},
+     "scene": "World: Joker, Card Drop",
+     "about": "Joker leaves calling cards with a grin, and he's been dropping them in the plaza to see who picks them up. He's bored, and he's looking for someone who's not.",
+     "offer": ["them (pleased): Oh, you found one! Good. Keep it, it's the best thing I've ever given away.",
+               "them: Meet me at the plaza at noon. I'll show you the rest of the cards, and you can guess which one is real."],
+     "stages": [
+         {"text": "Meet Joker at the plaza at noon", "objectives": [{"do": "visit", "place": "plaza", "times": [1], "scene": "World: Joker, Plaza Cards", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Joker which card was real", "objectives": [{"do": "talk", "to": "Joker", "script": [
+             "them (pleased): You picked the one with the fold. Nobody picks the fold. You're going to be trouble.",
+             "them: Keep the card. It's a promise, and I don't give those out often."]}]},
+     ],
+     "endings": [{"key": "card-kept", "title": "Keep the card", "about": "Joker lets you keep the card, and says it'll always be worth more than the money it costs him. He grins and tells you to stop looking at the fold.",
+                  "scene": "World: Joker, Card Kept", "rewards": [{"coins": 300}, {"gift": "instant-ramen"}]}]},
+    {"key": "joker-the-shipment", "title": "The Shipment", "gates": 2, "requires": {"quests": ["joker-calling-card"]},
+     "scene": "World: Joker, The Shipment",
+     "about": "Joker is running a shipment out of the docks, and it's the biggest one this month. Takina is going to take it from him, and Joker wants the player to be there to see whether she can.",
+     "offer": ["them: I've got a shipment coming through the warehouse tonight. Takina's going to try and steal it. It's the best show in town.",
+               "them (pleased): Beat her in the shipment, and I'll tell you where the money really goes."],
+     "stages": [
+         {"text": "Meet Joker at the warehouse at night", "objectives": [{"do": "visit", "place": "warehouse", "times": [3], "scene": "World: Joker, Warehouse Shipment", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Takina, to keep the shipment moving", "scene": "World: Joker, Takina Beaten", "objectives": [{"do": "defeat", "cpus": ["Takina Inoue"]}]},
+         {"text": "Tell Joker what Takina did", "objectives": [{"do": "talk", "to": "Joker", "script": [
+             "them (dismayed): She got past my crates, which nobody does. And she's still angry about it.",
+             "them (pleased): That's the best part. The money goes to LycoReco's bosses, every time, and she's finally seen it."]}]},
+     ],
+     "endings": [{"key": "shipment-lost", "title": "Let the shipment go", "about": "Joker lets the shipment go, and laughs at the crates that are left. He says the bosses will be paying him again next week, and he's looking forward to it.",
+                  "scene": "World: Joker, Shipment Lost", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "joker-one-bad-day", "title": "One Bad Day", "gates": 5, "requires": {"quests": ["joker-the-shipment"]},
+     "scene": "World: Joker, One Bad Day",
+     "about": "Joker's network is about to be broken, and the card is the only thing that ties it to him. He has one bad day left to decide whether to take the bosses down with him, or to go alone.",
+     "offer": ["them (dismayed): Batman's coming for me tonight. He has a rule, and I've been waiting years to see if he breaks it.",
+               "them: Be on the rooftop tonight. I want a witness when he decides, and I want to see whether you'll stay on the roof or run."],
+     "stages": [
+         {"text": "Be on the rooftop with Joker at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Joker, Rooftop Bad Day", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Batman, to see whether his rule holds", "scene": "World: Joker, Batman Beaten", "objectives": [{"do": "defeat", "cpus": ["Batman"]}]},
+         {"text": "Tell Joker your answer", "objectives": [{"do": "talk", "to": "Joker", "script": [
+             "them (dismayed): He beat me, and he's still standing there with the rule. He didn't break it.",
+             "them (pleased): Then I'll take the bosses down with me, and let the city count the cards."]}]},
+     ],
+     "endings": [
+         {"key": "bad-day-taken", "title": "Take the bad day", "about": "Joker takes the bad day for himself, and pulls the bosses down with him. Batman's one-rule quest is closed for good, because Joker made sure the rule was tested.",
+          "locks": ["batman-one-rule"], "scene": "World: Joker, Bad Day Taken", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "bad-day-given-up", "title": "Give up the bad day", "about": "Joker gives the bad day up, and walks into the rain without his mask. He says the network is over, and he'd like the card back, please.",
+          "scene": "World: Joker, Given Up", "rewards": [{"coins": 500}, {"gift": "handheld"}]},
+     ]},
 ]
+
 JOKER_SCENES = [
-  {
-    "name": "World: Joker, Alley",
-    "lines": [
-      "background city",
-      "me enters center with fade",
-      "me: Knock knock. Who's there? ...Exactly. Isn't it great?",
-      "player: That wasn't a joke.",
-      "me (pleased): It is if you laugh. Did you laugh?",
-      "me: Here's a card. For later. Don't lose it."
-    ]
-  },
-  {
-    "name": "World: Joker, Warehouse",
-    "lines": [
-      "background ruins",
-      "me enters left with rise",
-      "me: A funhouse for the Bat. One bad day. That's all I want.",
-      "player: Why a bad day?",
-      "me (dismayed): To prove anyone can break. Even him.",
-      "me (pleased): Help me give it to him. Please. It's a joke."
-    ]
-  }
+    {"name": "World: Joker, Card Drop", "lines": [
+        "background sakura", "me enters center with rise",
+        "me (pleased): Oh, you found one! Good. I've been dropping them all over the plaza, for anyone who's bored enough to pick one up.",
+        "player: What's the card for?",
+        "me: Nothing. That's the best part. It's a grin on paper, and everyone who finds it thinks it means something.",
+        "me (dismayed): Meet me at the plaza at noon. I'll show you the rest of the cards, and you can guess which one is real."]},
+    {"name": "World: Joker, Plaza Cards", "lines": [
+        "background sakura", "me enters center with rise",
+        "me (pleased): Here, the cards. Five of them, and only one is real. Guess which one, and don't look at the fold.",
+        "player: The one with the fold.",
+        "me (dismayed): You picked the fold? Nobody picks the fold. That's the one I lost in the alley on purpose.",
+        "me: You're going to be trouble. I can tell from the way you pick things up.",
+        "me (pleased): Good. Trouble is what this town is missing, and nobody's brave enough to be it."]},
+    {"name": "World: Joker, Card Kept", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): You kept the card. It's worth more than the money it cost me to print, I promise.",
+        "player: Why does it matter so much?",
+        "me (dismayed): Because you're the first person who didn't look for a hidden meaning. You just kept it.",
+        "me: Stop looking at the fold. It's only a fold. The grin is the real joke, and you'll get it eventually."]},
+    {"name": "World: Joker, The Shipment", "lines": [
+        "background city", "me enters right with slide",
+        "me (pleased): I've got a shipment coming through the warehouse tonight. The biggest one this month.",
+        "player: Is it dangerous?",
+        "me (dismayed): It's illegal, which is dangerous enough. Takina's going to try and steal it, and she's very good at it.",
+        "me: Meet me at the warehouse at night. You'll see the best show in town, and maybe you'll be on the right side of it.",
+        "me (pleased): Oh, and the money goes to the bosses, every time. Remember that, when you see the crates."]},
+    {"name": "World: Joker, Warehouse Shipment", "lines": [
+        "background ruins", "me enters center with fade",
+        "me (pleased): The crates are open, and the whole network is in them. The bosses will be furious when they see the count.",
+        "player: Where's Takina?",
+        "me (dismayed): On her way in. She's trying to sneak past the guards, and she's very obvious about it.",
+        "me: Stand by the crates, and watch her come through the door. She'll stop when she sees you, and then she'll stop when she sees me.",
+        "me (pleased): The show's about to start. Don't blink, or you'll miss the bit where she gets angry."]},
+    {"name": "World: Joker, Takina Beaten", "lines": [
+        "cast takina as Takina Inoue",
+        "background ruins", "me enters center with fade",
+        "takina enters right with slide",
+        "takina: {player} got past me, Joker. The crates are still standing, and I'm furious about it.",
+        "me (dismayed): The crates are mine. You can have the files, if you tell me who's paying the bosses.",
+        "takina: LycoReco's bosses. You're the one who keeps them paid, aren't you?",
+        "me (pleased): Yes. And you've seen it now, which is what I wanted. Go home and tell Chisato."]},
+    {"name": "World: Joker, Shipment Lost", "lines": [
+        "background ruins", "me enters center with fade",
+        "me (pleased): The shipment's gone, and the crates are empty. The bosses will be paying me again next week.",
+        "player: Are they going to be angry?",
+        "me (dismayed): Furious. It's the most fun I've had in months, and it's the only way the network works.",
+        "me: I'll be on the rooftop, if you want to see what happens next. It's always more interesting from up there."]},
+    {"name": "World: Joker, One Bad Day", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me (dismayed): Batman's coming for me tonight. He has a rule, and I've been waiting years to see whether he breaks it.",
+        "player: Are you scared?",
+        "me (pleased): Terrified. It's the best feeling in the world, when someone's coming up the stairs for you.",
+        "me: This network is about to be broken, and the card is the only thing that ties it to me. I've got one bad day left.",
+        "me (dismayed): I'll decide tonight whether to take the bosses down with me, or to go alone, the way I always do.",
+        "player: What will you choose?",
+        "player: Will you say sorry to the bosses?",
+        "me (pleased): I'll say their names instead. That's far more fun than sorry.",
+        "me (pleased): Come to the rooftop tonight, and find out with me. I want a witness, and I want to see whether you'll stay or run."]},
+    {"name": "World: Joker, Rooftop Bad Day", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): The roof is perfect. Wet, dark, and Batman's coming up the stairs with his face set like stone.",
+        "player: Are you ready for him?",
+        "me (dismayed): I'm ready for the bit where he decides his rule is wrong. I'd love to see that happen.",
+        "me: Stand by the ledge. If I start laughing too loud, don't join in. That's the one warning I'll give you.",
+        "me (pleased): Here he comes. Don't trust the grin, and don't trust the rule either."]},
+    {"name": "World: Joker, Batman Beaten", "lines": [
+        "cast batman as Batman",
+        "background rooftop", "me enters center with fade",
+        "batman enters right with slide",
+        "batman: {player} put me down, Joker. Your bosses are going to answer for the crates.",
+        "me (dismayed): They won't, Batman. They never do. That's the joke I've been telling you for years.",
+        "batman: Then I'll take you in, and let the city hear the joke from the cell.",
+        "me (pleased): Ha. The rule holds, and I'm still laughing. That's the strange part of losing."]},
+    {"name": "World: Joker, Bad Day Taken", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): I took the bad day for myself, and pulled the bosses down with me. The network's gone.",
+        "player: Are you okay?",
+        "me (dismayed): I'm fine. Batman's rule was tested tonight, and it held, and that's the joke I'll tell in the cell.",
+        "me: The card's still in your pocket. Keep it, and don't look at the fold again."]},
+    {"name": "World: Joker, Given Up", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I gave the bad day up, and walked into the rain without the mask. The network's over.",
+        "player: Why give it up?",
+        "me (pleased): Because I wanted to see what the city looks like without me laughing at it. It's quieter.",
+        "me: Give me back the card, please. It's the last thing I'll ever ask you for."]},
 ]
+
+# Cinderella. Canon a fan expects: the glass slipper, the midnight bell, and a stepmother she never talks about. Thread: Q1 plants the
+# slipper, which she keeps in a box and won't wear until she's sure. Q2: she goes to the ball's qualifiers, and Rapi, the sniper, is
+# the one who keeps her waiting. Q3 answers Q1: the slipper fits, and the question is whether she goes back to the ball or stays.
 CINDERELLA_QUESTS = [
-  {
-    "key": "cinderella-the-glass-slipper",
-    "title": "The Glass Slipper",
-    "gates": 2,
-    "about": "Cinderella wants the player to find a lost shoe, and describes it precisely, and coldly.",
-    "offer": [
-      "them: I've lost a shoe. It's made of glass, and it's mine.",
-      "them (pleased): Good. You're the first to offer to look."
-    ],
-    "stages": [
-      {
-        "text": "Describe the shoe to Cinderella at the library in the morning",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "library",
-            "times": [
-              0
-            ],
-            "scene": "World: Cinderella, Library",
-            "rewards": [
-              {
-                "coins": 150
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Unblemished Silver",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "NIK/S135-E051"
-          }
-        ]
-      },
-      {
-        "text": "Show Cinderella what you found",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Cinderella",
-            "script": [
-              "them: That's my shoe. Thank you. ...Almost a smile, see?",
-              "them (pleased): You may stay for tea."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "almost-smile",
-        "title": "Get the almost-smile",
-        "about": "Cinderella nearly smiles, then remembers herself and goes back to being cold.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "bouquet"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "cinderella-midnight",
-    "title": "Midnight",
-    "gates": 5,
-    "about": "What happens when the magic runs out, and whether you'd still know her in rags.",
-    "offer": [
-      "them: The magic always ends. At midnight, every time.",
-      "them (dismayed): Come to the beach at dusk. I'll explain the rest there."
-    ],
-    "stages": [
-      {
-        "text": "Meet Cinderella at the beach in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "beach",
-            "times": [
-              2
-            ],
-            "scene": "World: Cinderella, Beach",
-            "rewards": [
-              {
-                "pack": "climax_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Glass Slippers. Full Contact, Cinderella",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "NIK/S135-E030"
-          }
-        ]
-      },
-      {
-        "text": "Answer Cinderella's question",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Cinderella",
-            "script": [
-              "them: Would you still know me in rags?",
-              "them (pleased): ...Yes. Then I'll keep the glass for the nights I need it."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "still-know-you",
-        "title": "Say you'd still know her",
-        "about": "Cinderella takes off her slipper and hands it to you, to keep until the next midnight.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "cinderella-glass-slipper", "title": "The Glass Slipper", "requires": {"rank": 1},
+     "scene": "World: Cinderella, Slipper Box",
+     "about": "Cinderella keeps a glass slipper in a box under her bed. She won't try it on, because she's afraid it will fit someone else's life.",
+     "offer": ["them: I have a slipper in a box, and I'm too scared to put it on. Will you hold it for me while I think?",
+               "them (pleased): Come to the cafe at noon. I'll bring the box, and you can tell me whether the glass is cracked."],
+     "stages": [
+         {"text": "Sit with Cinderella at the cafe at noon", "objectives": [{"do": "visit", "place": "cafe", "times": [1], "scene": "World: Cinderella, Cafe Box", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Cinderella whether the glass is cracked", "objectives": [{"do": "talk", "to": "Cinderella", "script": [
+             "them (pleased): It isn't cracked. You looked at it properly, which nobody has done in years.",
+             "them: Keep it safe for me. I'll decide about the ball when I've seen what happens at midnight."]}]},
+     ],
+     "endings": [{"key": "box-kept", "title": "Keep the box safe", "about": "Cinderella gives you the box to keep, and tells you not to open it until she asks. She says the slipper is the only thing she's sure of.",
+                  "scene": "World: Cinderella, Box Kept", "rewards": [{"coins": 300}, {"gift": "bouquet"}]}]},
+    {"key": "cinderella-the-ball", "title": "The Ball", "gates": 2, "requires": {"quests": ["cinderella-glass-slipper"]},
+     "scene": "World: Cinderella, Qualifiers",
+     "about": "The palace is holding qualifiers for the ball, and Rapi is the sniper judging them. Cinderella has to prove she's worth the invitation, and Rapi won't make it easy.",
+     "offer": ["them (dismayed): The qualifiers are tonight, and I've been told my dress doesn't count. Only the shooting counts.",
+               "them: Meet me at the arena in the evening. Rapi will be there, and she'll make me miss on purpose if she can."],
+     "stages": [
+         {"text": "Warm up with Cinderella at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Cinderella, Qualifier Warmup", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Rapi, to prove the qualifier was fair", "scene": "World: Cinderella, Rapi Beaten", "objectives": [{"do": "defeat", "cpus": ["Rapi"]}]},
+         {"text": "Tell Cinderella what Rapi said", "objectives": [{"do": "talk", "to": "Cinderella", "script": [
+             "them (dismayed): She said I was lucky with the glass, and that luck isn't a skill. She's probably right.",
+             "them (pleased): ...She also said I shot straight. That's the first compliment I've ever kept."]}]},
+     ],
+     "endings": [{"key": "invited", "title": "Go to the ball", "about": "Cinderella passes the qualifiers and goes to the ball, and she remembers the slipper at midnight. She leaves the box with you, to be opened when she comes home.",
+                  "scene": "World: Cinderella, Invited", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "cinderella-midnight", "title": "Midnight", "gates": 5, "requires": {"quests": ["cinderella-the-ball"]},
+     "scene": "World: Cinderella, Midnight Bell",
+     "about": "The bell is about to strike midnight, and Darkness is the knight holding the ballroom door. She won't let Cinderella leave before the bell unless Cinderella beats her, and the slipper depends on which way Cinderella runs.",
+     "offer": ["them (dismayed): The clock's nearly at midnight. I've got one slipper on, and the other one's still in the box.",
+               "them: Come to the rooftop, and watch the bell with me. I want to know whether to run, or to stay for the dance."],
+     "stages": [
+         {"text": "Watch the midnight bell with Cinderella on the rooftop", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Cinderella, Rooftop Bell", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Darkness, the knight who guards the ballroom door", "scene": "World: Cinderella, Darkness Beaten", "objectives": [{"do": "defeat", "cpus": ["Darkness"]}]},
+         {"text": "Tell Cinderella your answer", "objectives": [{"do": "talk", "to": "Cinderella", "script": [
+             "them (dismayed): The knight was in the way, and she still let me through. I don't know what that means.",
+             "them (pleased): Then I'll stay for the dance, and come home later, when I'm ready to be seen."]}]},
+     ],
+     "endings": [
+         {"key": "stay-for-dance", "title": "Stay for the dance", "about": "Cinderella stays for the dance, and sends the box home with you. She says she'll finish the ball when she's ready, and that the slipper fits her now.",
+          "scene": "World: Cinderella, Dance Stays", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "run-home", "title": "Run home", "about": "Cinderella runs home before the last stroke, and leaves one slipper on the steps. She says it's yours to find, if you want to see her again.",
+          "scene": "World: Cinderella, Run Home", "rewards": [{"coins": 500}, {"gift": "sleeves"}]},
+     ]},
 ]
+
 CINDERELLA_SCENES = [
-  {
-    "name": "World: Cinderella, Library",
-    "lines": [
-      "background library",
-      "me enters center with fade",
-      "me: Clear glass. Fits my foot. Missing from the palace. Find it.",
-      "player: Where should I look?",
-      "me (dismayed): Try the stairs. It's always the stairs.",
-      "me (pleased): ...You found it? Hm. You're not as useless as you look."
-    ]
-  },
-  {
-    "name": "World: Cinderella, Beach",
-    "lines": [
-      "background dusk",
-      "me enters right with slide",
-      "me: The magic always ends. At midnight, every time.",
-      "player: And then?",
-      "me (dismayed): Then I'm in rags. Would you still know me in them?",
-      "me: Be honest. I can tell when you're not."
-    ]
-  }
+    {"name": "World: Cinderella, Slipper Box", "lines": [
+        "background castle", "me enters center with fade",
+        "me: I've got a slipper in a box under my bed. Don't touch it, please. I'm too scared to put it on.",
+        "player: Why are you scared?",
+        "me (dismayed): Because it fits, and then it's someone else's life I'm wearing. I've only ever worn the broom.",
+        "me: Will you hold the box for me while I think? You don't need to open it.",
+        "me (pleased): Come to the cafe at noon. I'll bring it, and you can tell me whether the glass is cracked."]},
+    {"name": "World: Cinderella, Cafe Box", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (dismayed): Here's the box. The slipper's inside, on the blue cloth, catching the light like it's waiting for me.",
+        "player: It's beautiful.",
+        "me (pleased): Look at the heel, and tell me if there's a crack. I can't see it, and that's why I need someone else to look.",
+        "player: No crack that I can see.",
+        "me: Then it's still whole. That's the first thing that's been whole about me in years.",
+        "me (dismayed): Don't say anything else. I'd cry, and the cafe would stare."]},
+    {"name": "World: Cinderella, Box Kept", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): Keep the box, and don't open it until I ask. The slipper is the only thing I'm sure of.",
+        "player: What if you never ask?",
+        "me (dismayed): Then it stays in the box, safe, and I'm still the girl with the broom. That's an answer too.",
+        "me: Take the box home. It's heavier than it looks, the way anything you're trusted with usually is."]},
+    {"name": "World: Cinderella, Qualifiers", "lines": [
+        "background castle", "me enters left with slide",
+        "me (dismayed): The palace is holding qualifiers for the ball, and Rapi is judging the shooting. My dress doesn't count.",
+        "player: Are you going to shoot?",
+        "me (pleased): I'm going to try. Rapi hits what she aims at, and she judges straight, which is the worst news for someone like me.",
+        "me: Meet me at the arena this evening. Bring your eyes, and tell me whether she's cheating.",
+        "me (dismayed): She won't cheat. She'll score you exactly, and that's what frightens me."]},
+    {"name": "World: Cinderella, Qualifier Warmup", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): Ten targets, all moving. Rapi's already at the far end, watching me set my feet.",
+        "player: Are you nervous?",
+        "me (dismayed): Terrified. But I've been practising with a broom for years. A bow is only a broom that points.",
+        "me: Hold the scope for me, and call the wind. Tell me when the target stops moving.",
+        "me (pleased): Good. That's the rhythm I wanted. Now let's see if Rapi can keep up."]},
+    {"name": "World: Cinderella, Rapi Beaten", "lines": [
+        "cast rapi as Rapi",
+        "background arena", "me enters center with fade",
+        "rapi enters right with slide",
+        "rapi: {player} beat me on the qualifier, Cinderella. Your luck is still luck, but I'll give you the shot.",
+        "me (dismayed): It wasn't luck. I practised for years with a broom, and I'd like the judges to know it.",
+        "rapi: They won't care about the broom. They'll care about the score, and yours is high enough.",
+        "me (pleased): Then I'll keep the score, and the broom, and I'll thank you when I get to the palace."]},
+    {"name": "World: Cinderella, Invited", "lines": [
+        "background castle", "me enters center with fade",
+        "me (pleased): I passed the qualifiers, and I'm going to the ball. The slipper's on the box in my hand.",
+        "player: Congratulations.",
+        "me (dismayed): It doesn't feel like winning yet. It feels like being asked, and I'm not used to that.",
+        "me: Keep the box for me. I'll open it when I'm home, and you can see whether the glass is still whole."]},
+    {"name": "World: Cinderella, Midnight Bell", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me (dismayed): The bell is nearly at midnight. I've got one slipper on, and the other is still in the box.",
+        "player: Are you going to run?",
+        "me (pleased): I don't know. That's the trouble. The dance is the best thing I've ever been asked to do.",
+        "player: And if you stay?",
+        "me (dismayed): Then I'm not the girl with the broom any more, and everyone at the ball will be able to see it.",
+        "me: Come to the rooftop, and watch the bell with me. I want to know whether to run, or to stay for the dance.",
+        "player: What do you need from me?",
+        "me (dismayed): Just to be the one who knows which way I'm running, so I don't have to guess.",
+        "me (pleased): Bring the box. If I run, I'll need something to hold onto."]},
+    {"name": "World: Cinderella, Rooftop Bell", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): The bell's ringing. I can hear the guards at the ballroom door, and the knight is with them.",
+        "player: Is the knight dangerous?",
+        "me (pleased): Only if you try to get past her. She's been guarding the door for hours, and she's very patient.",
+        "me: Stand where you can see the stairs. If she comes up, you'll see her before I do.",
+        "me (dismayed): Please don't let me run until I've decided. The bell is very loud when you're deciding."]},
+    {"name": "World: Cinderella, Darkness Beaten", "lines": [
+        "cast darkness as Darkness",
+        "background rooftop", "me enters center with fade",
+        "darkness enters right with slide",
+        "darkness: {player} beat me, Cinderella. Please, hit me harder, I was enjoying the fight.",
+        "me (dismayed): You're not hurt, Darkness? You've been struck down on the roof, and you're still smiling.",
+        "darkness: I'm delighted. A knight who loses gracefully is a knight who gets to keep guarding the door.",
+        "me (pleased): Then let me through. I'll come back for the dance, and you can guard the stairs the whole time."]},
+    {"name": "World: Cinderella, Dance Stays", "lines": [
+        "background castle", "me enters center with fade",
+        "me (pleased): I stayed for the dance, and sent the box home with you. The slipper fits me now.",
+        "player: Are you happy?",
+        "me (dismayed): I'm surprised. It's a different feeling from happiness, and I'm still learning which one it is.",
+        "me: Finish the ball when I'm ready. I'll let you know, the moment I'm sure the glass won't crack."]},
+    {"name": "World: Cinderella, Run Home", "lines": [
+        "background castle", "me enters center with fade",
+        "me (dismayed): I ran home before the last stroke. The slipper is on the steps, one of them, and the other is in the box.",
+        "player: Will you come back?",
+        "me (pleased): Maybe, if you find the one on the steps. Then I'll know you were looking for me, not for the ball.",
+        "me: Keep the box. It's the only thing from that night I'm allowed to keep."]},
 ]
+
+# Rapi. Canon a fan expects: the sniper, precise and proud, who doesn't miss and doesn't waste a shot on a bad target. Rival in
+# the pack: Yoko. Thread: Q1 plants a challenge letter and her rule (one shot, no second chances). Q2 pays off: she judges
+# Cinderella's qualifiers and cheats for the one she likes. Q3: Yoko, the teacher who keeps the rule, and whether Rapi takes
+# the rematch or lets it go.
+# Rapi. Canon a fan expects: the sniper's precision and her rule (one shot, no second chances), and the red scarf she can't
+# remember the owner of, plus the voice of Red Hood, the woman who taught her, saying "I'll remember you, even if I forget everything else." Thread: Q1 plants
+# a red scarf fragment that comes back to her when she sights through the scope on the beach. Q2 chases the memory: Yoko knows the
+# old unit's sniping lines, and the only way to get a straight answer is a match. Q3 learns Red Hood's name and chooses
+# whether to keep the memory or let it go.
 RAPI_QUESTS = [
-  {
-    "key": "rapi-squad-leader",
-    "title": "Squad Leader",
-    "gates": 2,
-    "about": "Rapi runs a drill and wants an extra body, and she grades every move in silence.",
-    "offer": [
-      "them: Drill. Now. Ten minutes, no talking.",
-      "them (pleased): Acceptable. That's the highest grade I give."
-    ],
-    "stages": [
-      {
-        "text": "Join Rapi's drill at the arena at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "arena",
-            "times": [
-              1
-            ],
-            "scene": "World: Rapi, Arena",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Rapi: Warhead Volley in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "NIK/S117-TE09",
-            "against": [
-              "Rapi"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Let Rapi give her verdict",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Rapi",
-            "script": [
-              "them: You don't talk during drills. Good. Remember that.",
-              "them (pleased): ...Acceptable. Again tomorrow."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "acceptable",
-        "title": "Be acceptable",
-        "about": "Rapi puts you on her roster and gives you a single nod.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "energy-drink"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "rapi-red-hood",
-    "title": "Red Hood",
-    "gates": 5,
-    "about": "Memories Rapi isn't supposed to have. A commander she can't remember, and a red scarf.",
-    "offer": [
-      "them (dismayed): I remember a commander. I can't remember her name.",
-      "them: Come to the rooftop tonight. I need to talk about it."
-    ],
-    "stages": [
-      {
-        "text": "Meet Rapi on the rooftop at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "rooftop",
-            "times": [
-              3
-            ],
-            "scene": "World: Rapi, Rooftop",
-            "rewards": [
-              {
-                "pack": "level_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Rapi: Red Hood",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "NIK/S135-E058"
-          }
-        ]
-      },
-      {
-        "text": "Give Rapi your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Rapi",
-            "script": [
-              "them: Remind me, if I forget you. Promise.",
-              "them (pleased): ...Good. I'll remember that promise, at least."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "remind-me",
-        "title": "Promise to remind her",
-        "about": "Rapi tucks the red scarf into her jacket. She asks you to say your name now and then.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "rapi-red-scarf", "title": "Red Scarf", "requires": {"rank": 1},
+     "scene": "World: Rapi, Thread",
+     "about": "Rapi keeps a fragment of red scarf in her coat, and she can't remember where it came from. Sometimes a voice comes back when she sights through the scope: someone saying they'll remember her, even if they forget everything else.",
+     "offer": ["them: I found a red thread on the beach, and it hummed when I looked through the scope. Hold the scope for me.",
+               "them (pleased): Meet me on the beach at noon. I'll sight a target, and you tell me what you hear."],
+     "stages": [
+         {"text": "Hold the scope for Rapi on the beach at noon", "objectives": [{"do": "visit", "place": "beach", "times": [1], "scene": "World: Rapi, Beach Thread", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Rapi what you heard when she looked", "objectives": [{"do": "talk", "to": "Rapi", "script": [
+             "them (dismayed): You heard it too. A voice saying it would remember me, even if it forgot everything else.",
+             "them (pleased): Then it's real. I'm going to find out whose voice it was."]}]},
+     ],
+     "endings": [{"key": "thread-kept", "title": "Keep the thread", "about": "Rapi gives you the red thread to keep. She says it's the only thing she has from before the town, and she'd like you to hold it when the voice comes back.",
+                  "scene": "World: Rapi, Thread Given", "rewards": [{"coins": 300}, {"gift": "sleeves"}]}]},
+    {"key": "rapi-the-commander", "title": "The Commander", "gates": 2, "requires": {"quests": ["rapi-red-scarf"]},
+     "scene": "World: Rapi, Yoko's Lines",
+     "about": "The voice sounds like a commander from an old unit, and Yoko is the only sniper in town who uses the same lines. Rapi wants a straight answer from her, and Yoko will only give one to someone who beats her cleanly.",
+     "offer": ["them (dismayed): Yoko uses the same sniping lines as the voice. I need her to tell me where she learned them.",
+               "them: Meet me at the arena in the evening. Yoko won't talk unless the match is fair, so take the shot honestly."],
+     "stages": [
+         {"text": "Meet Rapi at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Rapi, Arena Lines", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Yoko, to get her to say where the lines came from", "scene": "World: Rapi, Yoko Talks", "objectives": [{"do": "defeat", "cpus": ["Yoko"]}]},
+         {"text": "Tell Rapi what Yoko said", "objectives": [{"do": "talk", "to": "Rapi", "script": [
+             "them (dismayed): She says the lines came from a commander who taught her, and she won't say her name without a second match.",
+             "them (pleased): Then I'll have the name at the next shot. I've waited long enough to hear it."]}]},
+     ],
+     "endings": [{"key": "name-to-come", "title": "Wait for the name", "about": "Rapi waits for the name, and Yoko promises to give it at the final shot. Rapi says she'll take the shot when she has the courage to hear the answer.",
+                  "scene": "World: Rapi, Name To Come", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "rapi-the-name", "title": "The Name", "gates": 5, "requires": {"quests": ["rapi-the-commander"]},
+     "scene": "World: Rapi, The Name",
+     "about": "Yoko has promised the name at the final shot, and the shot has to be fair. Rapi learns that Red Hood was the one who gave her the scarf, and that she asked her to forget her. She has to choose whether to keep the memory, or to let her go.",
+     "offer": ["them (dismayed): Yoko's giving the name at the final shot. She says she asked me to forget her.",
+               "them: Come to the arena tonight. Watch me take the shot, and tell me whether I should keep the memory or let it go."],
+     "stages": [
+         {"text": "Be at the arena with Rapi at night", "objectives": [{"do": "visit", "place": "arena", "times": [3], "scene": "World: Rapi, Night Shot", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Yoko, for the name, one shot, no second chances", "scene": "World: Rapi, Name Shot", "objectives": [{"do": "defeat", "cpus": ["Yoko"]}]},
+         {"text": "Tell Rapi your answer", "objectives": [{"do": "talk", "to": "Rapi", "script": [
+             "them (dismayed): The name was her, and she asked me to forget her. I can't do it.",
+             "them (pleased): Then I'll keep the memory, and the scarf. The voice will have a name now, and that's enough."]}]},
+     ],
+     "endings": [
+         {"key": "keep-the-memory", "title": "Keep the memory", "about": "Rapi keeps the memory of Red Hood, and the scarf with it. She sights through the scope one last time and says the voice has a name now, and she's no longer afraid of it.",
+          "scene": "World: Rapi, Memory Kept", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "let-it-go", "title": "Let her go", "about": "Rapi lets the memory of Red Hood go, and folds the scarf into a shot she will never take. She says she's done being someone's remembered name.",
+          "scene": "World: Rapi, Let Go", "rewards": [{"coins": 500}, {"gift": "bottled-tea"}]},
+     ]},
 ]
+
 RAPI_SCENES = [
-  {
-    "name": "World: Rapi, Arena",
-    "lines": [
-      "background arena",
-      "me enters left with slide",
-      "me: Drill. Ten minutes. No talking.",
-      "player: Yes, ma'am.",
-      "me (pleased): ...Acceptable. Don't get comfortable.",
-      "me: Next time, I'll grade you harder."
-    ]
-  },
-  {
-    "name": "World: Rapi, Rooftop",
-    "lines": [
-      "background night",
-      "me enters center with rise",
-      "me: I remember a red scarf. And a commander. I can't remember her name.",
-      "player: Do you want to?",
-      "me (dismayed): I'm scared of what I'd find if I did.",
-      "me: If I forget you, remind me. Please."
-    ]
-  }
+    {"name": "World: Rapi, Thread", "lines": [
+        "background beach", "me enters right with slide",
+        "me: I found a red thread on the beach, and it hummed when I looked through the scope. Don't laugh, it really did.",
+        "player: What does it sound like?",
+        "me (dismayed): A voice, a long way off. It says it'll remember me, even if it forgets everything else.",
+        "me: I can't place whose voice it is. It feels like someone I was supposed to shoot beside.",
+        "me (pleased): Hold the scope for me tomorrow, at noon. I want to sight a target, and hear whether it says the same thing again."]},
+    {"name": "World: Rapi, Beach Thread", "lines": [
+        "background beach", "me enters center with fade",
+        "me (dismayed): Hold the scope steady. I'm going to sight the far marker, and the thread's going to hum in my hand.",
+        "player: It's humming.",
+        "me (pleased): The voice again. It says, I'll remember you, even if I forget everything else.",
+        "player: Who said that?",
+        "me (dismayed): I don't know. But it sounded like the woman who taught me to shoot, and I can't remember her face at all.",
+        "me: Breathe with me. The shot is only a shot. The memory is the part that's hard to hold."]},
+    {"name": "World: Rapi, Thread Given", "lines": [
+        "background beach", "me enters center with fade",
+        "me (pleased): Take the thread. It's the only thing I have from before the town, and it's yours to hold while the voice is quiet.",
+        "player: Are you sure?",
+        "me (dismayed): I'm sure about the thread. I'm not sure about the voice, and I'd like someone else to hold the part I can't.",
+        "me: When it hums again, hold it and tell me what you hear. It's the only test I trust."]},
+    {"name": "World: Rapi, Yoko's Lines", "lines": [
+        "background arena", "me enters left with slide",
+        "me (dismayed): Yoko uses the same sniping lines as the voice. The exact ones, word for word, in the same order.",
+        "player: Did she learn them from the same man?",
+        "me (pleased): That's what I need to know. She won't say, unless I beat her cleanly, the way she beat me in the match.",
+        "me: Meet me at the arena in the evening. Take the shot honestly, and don't cheat, not even for me.",
+        "me (dismayed): I'm not asking you to win for me. I'm asking you to be there when she answers."]},
+    {"name": "World: Rapi, Arena Lines", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): Yoko's at the far end, rifle across her knees. She's already been waiting, and she knows what I'm going to ask.",
+        "player: Are you ready?",
+        "me (pleased): I'm ready for the question. The answer is the thing I'm not sure I can hear.",
+        "me: Hold the scope and call the wind. If she starts to answer, don't interrupt her.",
+        "me (dismayed): Her lines are Red Hood's. I've heard them a hundred times in my head, and never out loud."]},
+    {"name": "World: Rapi, Yoko Talks", "lines": [
+        "cast yoko as Yoko",
+        "background arena", "me enters center with fade",
+        "yoko enters right with slide",
+        "yoko: {player} beat me, Rapi. I'll tell you where the lines came from, since the match was fair.",
+        "me (dismayed): Then tell me. Who taught you the words I keep hearing in my head?",
+        "yoko: A woman called Red Hood, who I fought beside on a front line years ago, in a unit that doesn't exist any more. She wouldn't say her name without a second match.",
+        "me (pleased): Then I'll take the second match. I'll take it at the final shot, with no second chances."]},
+    {"name": "World: Rapi, Name To Come", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): Yoko promised the name at the final shot. I'll have to wait until then, and I hate waiting.",
+        "player: Will you still want to hear it?",
+        "me (pleased): Yes. It's the only thing from before the town that wants to be found, and I want to be the one who finds it.",
+        "me: Hold the scope for me, and call the wind when it's time. That's the last thing I'll ask for before the shot."]},
+    {"name": "World: Rapi, The Name", "lines": [
+        "background arena", "me enters left with slide",
+        "me (dismayed): Yoko's giving the name at the final shot. She says she asked me to forget her, and that's why she kept it.",
+        "player: Do you want to know?",
+        "me (pleased): More than anything. But I'm not sure I want to be the one who remembers her, once I know.",
+        "player: What would you do with it?",
+        "me (dismayed): Keep it, or let it go. Either way, I'd be choosing for myself, and nobody's ever let me do that before.",
+        "me: Come to the arena tonight. Watch me take the shot, and tell me whether I should keep the memory or let it go.",
+        "player: What if the name hurts?",
+        "me (dismayed): Then it hurts, and I'll have decided to hear it anyway. That's the only way I know to choose.",
+        "me (pleased): Bring the thread. The voice will want to hear it before the name."]},
+    {"name": "World: Rapi, Night Shot", "lines": [
+        "background night", "me enters center with fade",
+        "me (dismayed): The arena's dark, and Yoko's waiting at the far end with the rifle, ready for the last match.",
+        "player: Are you nervous?",
+        "me (pleased): No. I'm steady. The thread's humming in my pocket, and the voice has gone quiet.",
+        "me: Stand where you can see both of us. Don't call the wind, I'll call it myself this time.",
+        "me (dismayed): If I miss, don't tell me it was the wind. It was me, and that's the only honest answer I've got."]},
+    {"name": "World: Rapi, Name Shot", "lines": [
+        "cast yoko as Yoko",
+        "background arena", "me enters center with fade",
+        "yoko enters right with slide",
+        "yoko: {player} hit me, Rapi. The name is her, and it's yours now, for whatever you decide.",
+        "me (dismayed): Then say it. I've waited my whole life to hear it, and I'd like to hear it from you.",
+        "yoko: Her name was Red Hood, and she asked you to forget her. She kept your scarf, and she kept your name.",
+        "me (pleased): Then I'll keep the memory, and the scarf. The voice has a name now, and that's enough for me."]},
+    {"name": "World: Rapi, Memory Kept", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): I kept the memory, and the scarf with it. The voice has a name, and I'm not afraid of it any more.",
+        "player: What's her name?",
+        "me (dismayed): It's Red Hood, the woman who taught me to shoot. She asked me to forget her, and I've decided not to.",
+        "me: Thank you for holding the thread while I decided. It hums quietly now, like it's glad."]},
+    {"name": "World: Rapi, Let Go", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): I let the memory of Red Hood go, and folded the scarf into a shot I'll never take.",
+        "player: Are you sad?",
+        "me (pleased): A little. But I'm done being someone's remembered name. I'd like to be the one who forgets on purpose, for once.",
+        "me: Keep the bottled tea. It's the last thing from that unit I'm allowed to drink."]},
 ]
+
 DARKNESS_QUESTS = [
-  {
-    "key": "darkness-crusader",
-    "title": "Crusader",
-    "gates": 2,
-    "about": "Darkness wants the player to hit her as hard as they can, for training.",
-    "offer": [
-      "them: Hit me. As hard as you can. It's for training!",
-      "them (pleased): Ahh! That was perfect. Don't stop."
-    ],
-    "stages": [
-      {
-        "text": "Train with Darkness at the arena at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "arena",
-            "times": [
-              1
-            ],
-            "scene": "World: Darkness, Arena",
-            "rewards": [
-              {
-                "coins": 150
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Beat Darkness in a duel",
-        "objectives": [
-          {
-            "do": "defeat",
-            "cpus": [
-              "Darkness"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Let Darkness lecture you sincerely",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Darkness",
-            "script": [
-              "them: You must protect others with every blow. That's a crusader's duty.",
-              "them (pleased): ...You listened. Thank you. Now hit me again."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "protect-others",
-        "title": "Promise to protect others",
-        "about": "Darkness lectures you about protecting others, sincerely, for a full five minutes.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "instant-ramen"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "darkness-dustiness-ford",
-    "title": "Dustiness Ford Lalatina",
-    "gates": 5,
-    "about": "Darkness's noble name, and the arranged marriage her father has set for her.",
-    "offer": [
-      "them (dismayed): My father has arranged a match. I'm not going to accept it.",
-      "them: Come to the plaza tonight. I need you beside me."
-    ],
-    "stages": [
-      {
-        "text": "Meet Darkness in the plaza in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "plaza",
-            "times": [
-              2
-            ],
-            "scene": "World: Darkness, Plaza",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Musclebrained Crusader, Darkness",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "KS/W76-E002"
-          }
-        ]
-      },
-      {
-        "text": "Give Darkness your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Darkness",
-            "script": [
-              "them: Will you be at my side when I refuse?",
-              "them (pleased): ...Thank you. That's what I was hoping you'd say."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "at-her-side",
-        "title": "Stand at her side",
-        "about": "Darkness refuses the match in front of her father's men, and looks very pleased about it.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "darkness-crusader-duty", "title": "Crusader Duty", "requires": {"rank": 1},
+     "scene": "World: Darkness, Shield Duty",
+     "about": "Darkness is a crusader who guards the town's gate, and she is delighted to be hurt in the line of duty. She'd like someone to come and watch her take a hit, for the sake of the town.",
+     "offer": ["them (pleased): I'm on the gate tonight. Come and watch me take a hit for the town, if you can bear it.",
+               "them: Meet me at the shrine at noon. The shield needs polishing, and I'd like a second pair of eyes on the dents."],
+     "stages": [
+         {"text": "Polish the shield with Darkness at the shrine at noon", "objectives": [{"do": "visit", "place": "shrine", "times": [1], "scene": "World: Darkness, Shrine Shield", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Darkness what you thought of the dents", "objectives": [{"do": "talk", "to": "Darkness", "script": [
+             "them (pleased): You looked at the dents, and didn't flinch at the ones I've taken for the town. Wonderful.",
+             "them: Keep watching the gate for me. I'll be out there taking the hits, and you'll tell me how they look."]}]},
+     ],
+     "endings": [{"key": "shield-kept", "title": "Hold the shield", "about": "Darkness hands you the shield for a moment, and says it's heavier than it looks. She asks you to hold it while she goes to the gate, and to be there when she gets back.",
+                  "scene": "World: Darkness, Shield Held", "rewards": [{"coins": 300}, {"gift": "playmat"}]}]},
+    {"key": "darkness-the-masochist", "title": "The Masochist", "gates": 2, "requires": {"quests": ["darkness-crusader-duty"]},
+     "scene": "World: Darkness, Megumin's Challenge",
+     "about": "Megumin has challenged Darkness to a duel, and she's sure she'll win with her one explosion spell. Darkness wants to be the one who loses, for the sake of the lesson, and she needs you to stand where the blast lands.",
+     "offer": ["them (pleased): Megumin wants to duel me with her explosion. I'm going to let her win, or at least try.",
+               "them (dismayed): Stand at the arena's edge, please. If the blast comes, I'd like someone to see me get up."],
+     "stages": [
+         {"text": "Stand with Darkness at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Darkness, Arena Blast", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Megumin, so Darkness can take the blast", "scene": "World: Darkness, Megumin Beaten", "objectives": [{"do": "defeat", "cpus": ["Megumin"]}]},
+         {"text": "Tell Darkness what Megumin did", "objectives": [{"do": "talk", "to": "Darkness", "script": [
+             "them (pleased): She blasted me, and I got up. It's the best thing that's happened to me this week.",
+             "them (dismayed): She says I'm a masochist. She's right, and I'd like her to know I'm grateful."]}]},
+     ],
+     "endings": [{"key": "the-blast-taken", "title": "Take the blast", "about": "Darkness takes the blast and gets back up, grinning. Megumin's last spell has been spent, and she sulks in the arena, already planning her next crater.",
+          "scene": "World: Darkness, Blast Taken", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "darkness-the-shield", "title": "The Shield", "gates": 5, "requires": {"quests": ["darkness-the-masochist"]},
+     "scene": "World: Darkness, The Shield",
+     "about": "Erza has come to the gate, and she wants the shield for the town's defence. Darkness has to decide whether to give it up, or to fight Erza for the right to keep it.",
+     "offer": ["them (dismayed): Erza's asked for my shield. She says it should go to someone who can hold the line for real.",
+               "them: Come to the gate tonight. I want to see whether she's the one who should take the hits, or whether I should."],
+     "stages": [
+         {"text": "Stand guard with Darkness at the gate at night", "objectives": [{"do": "visit", "place": "shrine", "times": [3], "scene": "World: Darkness, Gate Night", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Erza, to see who holds the line", "scene": "World: Darkness, Erza Beaten", "objectives": [{"do": "defeat", "cpus": ["Erza Scarlet"]}]},
+         {"text": "Tell Darkness your answer", "objectives": [{"do": "talk", "to": "Darkness", "script": [
+             "them (dismayed): Erza hit me harder than anyone ever has, and she's still asking for the shield.",
+             "them (pleased): Then she can have it, and I'll stand beside her. The town is safer with two shields."]}]},
+     ],
+     "endings": [
+         {"key": "keep-the-shield", "title": "Keep the shield", "about": "Darkness keeps the shield and holds the gate alone, taking every hit she can. The town has chosen its guardian, and Erza goes back to the training yard, frowning.",
+          "scene": "World: Darkness, Shield Kept", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "share-the-shield", "title": "Share the shield", "about": "Darkness gives Erza half of the shield, and they hold the gate together. Erza takes the other half of the hits, and grins about it.",
+          "scene": "World: Darkness, Shield Shared", "rewards": [{"coins": 500}, {"gift": "instant-ramen"}]},
+     ]},
 ]
+
 DARKNESS_SCENES = [
-  {
-    "name": "World: Darkness, Arena",
-    "lines": [
-      "background arena",
-      "me enters center with fade",
-      "me: Hit me! As hard as you can! Go on!",
-      "player: Are you sure?",
-      "me (pleased): Yes! Ahh! That's the one!",
-      "me (dismayed): ...Right. Now I'm going to lecture you about protecting others."
-    ]
-  },
-  {
-    "name": "World: Darkness, Plaza",
-    "lines": [
-      "background sakura",
-      "me enters left with slide",
-      "me: My father has arranged a match. It's not what I want.",
-      "player: What do you want?",
-      "me (dismayed): To choose for myself, even if it's a bad choice.",
-      "me: Be at my side when I refuse. Please."
-    ]
-  }
+    {"name": "World: Darkness, Shield Duty", "lines": [
+        "background castle", "me enters center with fade",
+        "me (pleased): I'm on the gate tonight. Come and watch me take a hit for the town, if you can bear the sight of it.",
+        "player: Do you enjoy getting hurt?",
+        "me (dismayed): Very much. It's the only part of duty I've never had to pretend about.",
+        "me: Come to the shrine at noon. The shield needs polishing, and I'd like a second pair of eyes on the dents.",
+        "me (pleased): Bring nothing but yourself. The dents are my favourite part, and I won't let anyone else polish them."]},
+    {"name": "World: Darkness, Shrine Shield", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): Look at the dents. Each one is from a hit I took for the town, and I'd take them again.",
+        "player: Some of them look deep.",
+        "me (pleased): The deep ones are the best. They're the ones that stopped something from getting through the gate.",
+        "me: Hold the cloth steady while I polish. It's the only job here I'm not allowed to do alone.",
+        "me (dismayed): Tell me honestly which dent looks worst. I'll pretend I'm proud of it, and you'll know I'm lying."]},
+    {"name": "World: Darkness, Shield Held", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): Hold the shield for a moment. It's heavier than it looks, and it's warm from being polished.",
+        "player: It's heavy.",
+        "me (dismayed): It's supposed to be. Every dent is a weight, and every weight is someone I didn't let through.",
+        "me: Hold it while I go to the gate, and be here when I get back. I'll want to know how it felt in your hands."]},
+    {"name": "World: Darkness, Megumin's Challenge", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): Megumin's challenged me to a duel, and she's sure she'll win with her explosion spell.",
+        "player: Are you going to let her?",
+        "me (dismayed): I'm going to try to lose. It's the only way to make the lesson stick, and she's the one who needs to learn it.",
+        "me: Come to the arena this evening. Stand at the edge, and watch me take the blast.",
+        "me (pleased): If it knocks me down, don't help me up. I'll get up on my own, and I'll enjoy it."]},
+    {"name": "World: Darkness, Arena Blast", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): Megumin's at the far end, with her staff raised, and she's already shouting about the explosion.",
+        "player: How big is it going to be?",
+        "me (pleased): Big enough to knock me down, and not big enough to stop me getting up. That's the balance I like.",
+        "player: Will the blast hurt you badly?",
+        "me (dismayed): Badly enough to be interesting. Not badly enough to stop me getting up.",
+        "me: Stand at the edge. If the blast comes, I want someone to see me get back on my feet."]},
+    {"name": "World: Darkness, Megumin Beaten", "lines": [
+        "cast megumin as Megumin",
+        "background arena", "me enters center with fade",
+        "megumin enters right with slide",
+        "megumin: {player} beat me, Darkness. My explosion didn't land, and I'm furious about it.",
+        "me (pleased): You blasted me, and I got up. That's the best thing that's happened to me this week.",
+        "megumin: You're a masochist. I'll have to write that down, next to the explosion.",
+        "me (dismayed): Please do. I'd like it in writing, somewhere the town can read it."]},
+    {"name": "World: Darkness, Blast Taken", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): I took the blast, and I got up grinning. Megumin's last spell is spent, and she's sulking about it.",
+        "player: Are you hurt?",
+        "me (dismayed): Hurt is the best feeling I know. It means I'm still doing the job, and the job is still mine.",
+        "me: Go home. Megumin will want to explain her explosion to you, and I'd rather you didn't listen to all of it."]},
+    {"name": "World: Darkness, The Shield", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): Erza's asked for my shield. She says it should go to someone who can hold the line for real.",
+        "player: Is she right?",
+        "me (pleased): She might be. I've never been the one who held the gate alone, and the dents show it.",
+        "me: Come to the gate tonight. I want to see whether she's the one who should take the hits, or whether I should keep them.",
+        "me (dismayed): Be honest with me. If she's better at it, I'll give her the shield without a fight, and I'll mean it.",
+        "player: What are you going to do if she takes it?",
+        "me (dismayed): Stand at the gate without it, and see whether I still hold the line by hand.",
+        "me (pleased): If she's not, you'll fight her for it, and I'll stand beside you while you do."]},
+    {"name": "World: Darkness, Gate Night", "lines": [
+        "background night", "me enters center with fade",
+        "me (dismayed): The gate is dark, and the shield is cold. Erza's on the path, and she's walking straight toward me.",
+        "player: Are you ready?",
+        "me (pleased): Ready is the wrong word. I'm eager, which is worse, and she knows it.",
+        "player: Is Erza armoured tonight?",
+        "me (pleased): Head to toe, and she's polished the plates. She wants me to see my own dents in her reflection.",
+        "me: Stay at the gate. Whatever happens, don't step between us. This one's mine to decide."]},
+    {"name": "World: Darkness, Erza Beaten", "lines": [
+        "cast erza as Erza Scarlet",
+        "background shrine", "me enters center with fade",
+        "erza enters right with slide",
+        "erza: {player} put me down, Darkness. You're a good shield, but I want the gate more than the shield.",
+        "me (dismayed): You hit me harder than anyone ever has, and I still want to hold the gate with you.",
+        "erza: Then share it. Half the gate, half the hits. That's a fair fight, and I like those.",
+        "me (pleased): Share it, then. I'll take the left side, and you can take the right. We'll see who gets hit first."]},
+    {"name": "World: Darkness, Shield Kept", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I kept the shield, and I hold the gate alone. Every hit is mine, and I'm grateful for each one.",
+        "player: Erza was disappointed?",
+        "me (dismayed): She was, a little. She says she'll try again, and I'm looking forward to it.",
+        "me: Polish the dents with me tomorrow. The shield deserves it, and so do you."]},
+    {"name": "World: Darkness, Shield Shared", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): We share the shield now. Erza's on the right, and I'm on the left, and the gate hasn't fallen once.",
+        "player: That sounds good.",
+        "me (dismayed): It's better than good. Two shields, two sets of dents, and nobody through the gate.",
+        "me: Come and watch us hold it tonight. I'll let you take a hit, if you're brave enough."]},
 ]
+
 MEGUMIN_QUESTS = [
-  {
-    "key": "megumin-explosion",
-    "title": "EXPLOSION!",
-    "gates": 2,
-    "about": "Megumin needs someone to carry her home after her daily explosion, and she critiques the blast while being carried.",
-    "offer": [
-      "them: Explosion! Hold still, I'm casting it. Wait, do you see my spell?",
-      "them (pleased): Good. Carry me home. Please, my legs aren't working."
-    ],
-    "stages": [
-      {
-        "text": "Find Megumin in the forest at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "forest",
-            "times": [
-              1
-            ],
-            "scene": "World: Megumin, Forest",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Megumin",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "KS/W49-E035"
-          }
-        ]
-      },
-      {
-        "text": "Let Megumin critique the blast",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Megumin",
-            "script": [
-              "them: The blast was good. The landing was not. Tell me the truth.",
-              "them (pleased): ...You're right. I'll practise the landing."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "carry-her-home",
-        "title": "Carry her home again",
-        "about": "Megumin asks you to carry her home every day from now on, and insists it's a formal request.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "plushie"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "megumin-the-daily-explosion",
-    "title": "The Daily Explosion",
-    "gates": 5,
-    "about": "Megumin wants the player to rate her explosions, and tells them about her sister.",
-    "offer": [
-      "them: I cast one explosion a day. Rate it for me. Be honest.",
-      "them (dismayed): Come to the beach at dusk. I'll cast one over the sea."
-    ],
-    "stages": [
-      {
-        "text": "Watch Megumin's explosion at the beach in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "beach",
-            "times": [
-              2
-            ],
-            "scene": "World: Megumin, Beach",
-            "rewards": [
-              {
-                "pack": "level_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Megumin: Crimson Demon Megumin in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "KS/W49-E034",
-            "against": [
-              "Megumin"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Megumin your score",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Megumin",
-            "script": [
-              "them: Give me a score. A real one. Out of ten.",
-              "them (pleased): ...Eight. That's perfect. I'll remember it."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "rate-it-well",
-        "title": "Rate it well",
-        "about": "Megumin tells you about her sister, and why she only learned the one spell.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "megumin-explosion", "title": "Explosion!", "requires": {"rank": 1},
+     "scene": "World: Megumin, Spell Practice",
+     "about": "Megumin believes explosion magic is the best magic there is, and she can only cast one spell a day. She shouts the name every time, and she'll explain the spell's theory to anyone who stands still.",
+     "offer": ["them: EXPLOSION! ...That's my one spell for today. Don't tell anyone I'm out of it.",
+               "them (pleased): Come to the plaza at noon. I'll show you the theory, and you can tell me which part is wrong."],
+     "stages": [
+         {"text": "Watch Megumin's theory at the plaza at noon", "objectives": [{"do": "visit", "place": "plaza", "times": [1], "scene": "World: Megumin, Plaza Theory", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Megumin which part of the theory is wrong", "objectives": [{"do": "talk", "to": "Megumin", "script": [
+             "them (dismayed): That's the part about the crater. Ugh, you're right, I've never checked the radius.",
+             "them (pleased): Then I'll check it tonight, and I'll shout the result at everyone in the town."]}]},
+     ],
+     "endings": [{"key": "theory-checked", "title": "Check the theory", "about": "Megumin checks the radius of her explosion and finds she was off by a crater. She says it's the first time anyone has ever corrected her, and she's written your name in the margin.",
+                  "scene": "World: Megumin, Margin", "rewards": [{"coins": 300}, {"gift": "iced-coffee"}]}]},
+    {"key": "megumin-one-spell", "title": "One Spell", "gates": 2, "requires": {"quests": ["megumin-explosion"]},
+     "scene": "World: Megumin, The Spell Day",
+     "about": "Darkness has challenged Megumin to a duel, and Megumin has decided to spend her one spell on the fight. She has to decide whether the spell is worth the crater.",
+     "offer": ["them (dismayed): Darkness wants to duel me. She says she'll take the blast, and she's a masochist.",
+               "them: Meet me at the arena in the evening, and watch what happens when I spend the spell."],
+     "stages": [
+         {"text": "Watch Megumin prepare at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Megumin, Arena Prep", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Darkness, and spend the one spell", "scene": "World: Megumin, Darkness Beaten", "objectives": [{"do": "defeat", "cpus": ["Darkness"]}]},
+         {"text": "Tell Megumin what Darkness said", "objectives": [{"do": "talk", "to": "Megumin", "script": [
+             "them (dismayed): She got up, and she thanked me for the blast. I don't know how to respond to that.",
+             "them (pleased): Then I'll write it down. The spell was worth the crater, and she's worth the cookies."]}]},
+     ],
+     "endings": [{"key": "spell-well-spent", "title": "Spend the spell well", "about": "Megumin spends the spell on the duel and says it was worth every bit of the crater. Darkness is still grinning, and Megumin says that's the most annoying thing about her.",
+          "scene": "World: Megumin, Well Spent", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "megumin-the-last-spell", "title": "The Last Spell", "gates": 5, "requires": {"quests": ["megumin-one-spell"]},
+     "scene": "World: Megumin, The Last Spell",
+     "about": "Megumin has one last spell in her, and she's decided to use it on the biggest target in town. Gray has bet her that she'll miss, and she has to decide whether to cast it, or to save the spell for something worth the explosion.",
+     "offer": ["them (dismayed): Gray bet me I'd miss. He says my explosion's all noise and no aim.",
+               "them: Come to the arena tonight. I'm going to cast it at the far target, and I want you to tell me if I hit."],
+     "stages": [
+         {"text": "Stand with Megumin at the arena at night", "objectives": [{"do": "visit", "place": "arena", "times": [3], "scene": "World: Megumin, Night Arena", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Gray, to prove the explosion can hit", "scene": "World: Megumin, Gray Beaten", "objectives": [{"do": "defeat", "cpus": ["Gray Fullbuster"]}]},
+         {"text": "Tell Megumin your answer", "objectives": [{"do": "talk", "to": "Megumin", "script": [
+             "them (dismayed): He's on the floor, and he's still shirtless. I don't think I'll ever get the bet paid.",
+             "them (pleased): Then the last spell was worth it. Thank you for watching me hit the far target."]}]},
+     ],
+     "endings": [
+         {"key": "last-spell-cast", "title": "Cast the last spell", "about": "Megumin casts the last spell at the far target and hits it dead on. She says the explosion finally matched the theory, and she's keeping the crater as a memorial.",
+          "scene": "World: Megumin, Crater Kept", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "last-spell-saved", "title": "Save the last spell", "about": "Megumin saves the last spell for something worth the crater. She says she'll know it when she sees it, and that you'll be the first to hear about it.",
+          "scene": "World: Megumin, Saved", "rewards": [{"coins": 500}, {"gift": "bottled-tea"}]},
+     ]},
 ]
+
 MEGUMIN_SCENES = [
-  {
-    "name": "World: Megumin, Forest",
-    "lines": [
-      "background forest",
-      "me enters right with drop",
-      "me: EXPLOSION! Oh, I fell. Carry me home. Please.",
-      "player: Your legs are still fine.",
-      "me (pleased): My legs are very tired from the blast. Please.",
-      "me: The blast was good. The landing wasn't. Tell me the truth."
-    ]
-  },
-  {
-    "name": "World: Megumin, Beach",
-    "lines": [
-      "background dusk",
-      "me enters center with rise",
-      "me: I'll cast one explosion over the sea. Give it a score.",
-      "player: Eight out of ten.",
-      "me (dismayed): Only eight? Fine. I'll practise harder.",
-      "me: My sister taught me the one spell. I've only ever learned that one."
-    ]
-  }
+    {"name": "World: Megumin, Spell Practice", "lines": [
+        "background sakura", "me enters center with rise",
+        "me: EXPLOSION! ...That's my one spell for today, so don't tell anyone I'm out of it.",
+        "player: One spell a day?",
+        "me (dismayed): It's the rule, and I'm the only one who can break it. I'd rather keep it, because the crater is worth the wait.",
+        "me (pleased): Come to the plaza at noon. I'll show you the theory, and you can tell me which part is wrong.",
+        "me: Don't stand too close to the theory. It's loud, and it usually goes off."]},
+    {"name": "World: Megumin, Plaza Theory", "lines": [
+        "background sakura", "me enters center with rise",
+        "me (pleased): The theory is simple. Mana in, explosion out, and the crater is the proof. Look at the diagram.",
+        "player: The crater's the wrong size.",
+        "me (dismayed): That's the part I've always been sure of. Tell me why you think it's wrong, and don't be kind.",
+        "player: The radius doesn't match the mana you put in.",
+        "me (pleased): Oh. Oh, you're right. I've never checked the radius, and I've been shouting the wrong number for years.",
+        "me: Give me a moment, I'm writing it down. Don't leave the plaza yet, please."]},
+    {"name": "World: Megumin, Margin", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): I checked the radius, and I was off by a whole crater. Nobody's ever corrected me before.",
+        "player: Did you write my name down?",
+        "me (dismayed): In the margin, next to the spell. It's the first correction I've ever wanted to keep.",
+        "me: Thank you. The next explosion will be smaller, and I'll be proud of it."]},
+    {"name": "World: Megumin, The Spell Day", "lines": [
+        "background arena", "me enters left with slide",
+        "me (dismayed): Darkness wants to duel me. She says she'll take the blast, and she's a masochist about it.",
+        "player: Will you spend your spell?",
+        "me (pleased): On her? Absolutely. The crater's worth it, and she's been waiting for the explosion for a week.",
+        "me: Come to the arena this evening, and watch me spend the spell. It's the best show in town.",
+        "me (dismayed): Stand clear of the crater. It's bigger than the theory says, and that's the part I don't tell people."]},
+    {"name": "World: Megumin, Arena Prep", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): The arena's ready, and Darkness is standing at the far end with her shield up, grinning already.",
+        "player: Is she going to block it?",
+        "me (dismayed): She'll try. She always does, and she always gets hit. That's the fun part.",
+        "me: Hold the staff for a second. I need both hands free to say the name.",
+        "me (pleased): Stand back. The spell's about to go, and I'm going to shout it loud enough for the whole town."]},
+    {"name": "World: Megumin, Darkness Beaten", "lines": [
+        "cast darkness as Darkness",
+        "background arena", "me enters center with fade",
+        "darkness enters right with slide",
+        "darkness: {player} hit me, Megumin, and I'm grateful for it. That was a wonderful blast.",
+        "me (dismayed): You got up, Darkness. The crater isn't big enough to keep you down.",
+        "darkness: I'm always going to get up. That's the joy of being your shield.",
+        "me (pleased): Then the spell was worth the crater. Write it down, and keep the cookies coming."]},
+    {"name": "World: Megumin, Well Spent", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): I spent the spell on the duel, and it was worth every bit of the crater.",
+        "player: Darkness is still grinning.",
+        "me (dismayed): That's the most annoying thing about her. I'll never get the last word on her grin.",
+        "me: Go home, and tell the town I'm out of spells until tomorrow. They'll be disappointed, and so will I."]},
+    {"name": "World: Megumin, The Last Spell", "lines": [
+        "background arena", "me enters left with rise",
+        "me (dismayed): I have one last spell in me, and I'm going to use it on the biggest target in town.",
+        "player: Are you sure?",
+        "me (pleased): Gray says I'll miss. He bet me my dinner, and I intend to win it, with a crater.",
+        "player: And if you do miss?",
+        "me (dismayed): Then the crater's still there, and I'll have to explain it to the whole town. That's the risk.",
+        "me: Come to the arena tonight. I'm going to cast it at the far target, and I want you to tell me if I hit.",
+        "player: What will the crater look like?",
+        "me (pleased): Like a promise I kept. Big, round, and very much in the middle of the arena.",
+        "me (pleased): Hold your breath, and don't cover your ears. It's loud, and I'd like your honest opinion afterwards."]},
+    {"name": "World: Megumin, Night Arena", "lines": [
+        "background night", "me enters center with fade",
+        "me (dismayed): The arena's dark, and the far target is a faint white square. That's the one I'm going for.",
+        "player: Can you see it clearly?",
+        "me (pleased): Clearly enough. My eye is steady, and my mana is steadier than my patience.",
+        "player: Is the far target far enough?",
+        "me (dismayed): Far enough to be honest, close enough to be hit. Gray chose it, and I'm not going to argue.",
+        "me: Stand back. I'll say the name, and then you'll see whether Gray lost his dinner."]},
+    {"name": "World: Megumin, Gray Beaten", "lines": [
+        "cast gray as Gray Fullbuster",
+        "background arena", "me enters center with fade",
+        "gray enters right with slide",
+        "gray: {player} beat me, Megumin. I'm still shirtless, and I'll be paying for dinner forever.",
+        "me (pleased): Then the bet's mine. I hit the target, and you hit the floor. That's a win.",
+        "gray: Fine. I'll buy the cookies, and you'll tell the town I lost gracefully.",
+        "me (dismayed): Don't make me say that. The explosion was enough, and the crater's still smoking."]},
+    {"name": "World: Megumin, Crater Kept", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): I cast the last spell at the far target, and I hit it dead on. The explosion matched the theory.",
+        "player: Are you keeping the crater?",
+        "me (dismayed): As a memorial. It's the only thing I've ever built that stayed exactly where I put it.",
+        "me: Keep your eyes on the crater next time. It's the best view in the arena."]},
+    {"name": "World: Megumin, Saved", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): I saved the last spell. I'm not going to waste it on a bet, or on a target that doesn't deserve a crater.",
+        "player: What are you waiting for?",
+        "me (pleased): Something worth the explosion. I'll know it when I see it, and then you'll hear me shout the name.",
+        "me: Go home, and keep the cookies warm. I'll be out here until the spell is ready."]},
 ]
+
+# Erza Scarlet. Canon a fan expects: Requip (she changes armour mid-fight), the strawberry cake she eats in every scene, and an iron
+# loyalty to her friends that makes her strict with them. Thread: Q1 plants the cake and a request she won't say out loud, to
+# be allowed to sit with the group. Q2: Gray's bet about his shirt puts her in the arena to test whether he's serious. Q3 answers
+# Q1: she's offered the shield's guard, and the question is whether she's allowed to be the one who holds the line.
+# Erza Scarlet. Canon a fan expects: Requip (armour changed in the middle of a swing), the strawberry cake, a strict loyalty to
+# her guild, and a past in the Tower of Heaven, where she was a child and where she was given her name by someone she still
+# thinks about, Jellal. Thread: Q1 plants the cake and a question she won't answer: what her name was before the Tower. Q2 takes
+# her back to the Tower's memory, through a duel with Gray that rattles the old pain loose. Q3 answers Q1: the name was given to
+# her there, and she decides whether to keep it, or to go back for the one she had before.
 ERZA_SCARLET_QUESTS = [
-  {
-    "key": "erza-strawberry-cake",
-    "title": "Strawberry Cake",
-    "gates": 2,
-    "about": "Someone ruined Erza's cake, and she wants it replaced, with great dignity.",
-    "offer": [
-      "them: Someone has ruined my strawberry cake. I want it replaced.",
-      "them (pleased): Thank you. I shall accept it with dignity."
-    ],
-    "stages": [
-      {
-        "text": "Meet Erza at the cafe at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "cafe",
-            "times": [
-              1
-            ],
-            "scene": "World: Erza Scarlet, Cafe",
-            "rewards": [
-              {
-                "coins": 150
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Bring Erza a strawberry shortcake",
-        "objectives": [
-          {
-            "do": "give_gift",
-            "gift": "shortcake",
-            "to": "Erza Scarlet"
-          }
-        ]
-      },
-      {
-        "text": "Thank Erza for the replacement",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Erza Scarlet",
-            "script": [
-              "them: You saved the cake. Thank you, as if you'd saved a city.",
-              "them (pleased): ...I'll remember this, and so will the cake."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "dignified-thanks",
-        "title": "Accept her thanks",
-        "about": "Erza thanks you with great ceremony, and insists you have the last slice.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "bouquet"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "erza-tower-of-heaven",
-    "title": "Tower of Heaven",
-    "gates": 5,
-    "about": "Erza's childhood, and the name she gave herself, while she changes into each armour in turn.",
-    "offer": [
-      "them: I'll show you my armours. Each one is a memory.",
-      "them (dismayed): Come to the arena in the evening. It's a long story."
-    ],
-    "stages": [
-      {
-        "text": "Watch Erza at the arena in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "arena",
-            "times": [
-              2
-            ],
-            "scene": "World: Erza Scarlet, Arena",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Black Winged Armor, Erza",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "FT/EN-S02-005"
-          }
-        ]
-      },
-      {
-        "text": "Let Erza tell you how she got her name",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Erza Scarlet",
-            "script": [
-              "them: I chose this name myself. It's the one I wanted.",
-              "them (pleased): ...You understand. Thank you."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "her-name",
-        "title": "Learn her name",
-        "about": "Erza requips into plain clothes, and tells you how she came to be called Erza.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "erza-requip-practice", "title": "Requip Practice", "requires": {"rank": 1},
+     "scene": "World: Erza Scarlet, Cake Table",
+     "about": "Erza practises Requip, changing armour mid-swing, and eats strawberry cake between sets. She won't say what her name was before the guild gave her this one, and she changes the subject every time.",
+     "offer": ["them: Watch my armour change. Three sets, one swing. If you can count them, you'll get a slice of cake.",
+               "them (pleased): Meet me at the cafe at noon. I'll bring the cake, and you'll tell me whether I'm too strict."],
+     "stages": [
+         {"text": "Sit with Erza at the cafe at noon", "objectives": [{"do": "visit", "place": "cafe", "times": [1], "scene": "World: Erza Scarlet, Cafe Cake", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Erza whether she's too strict", "objectives": [{"do": "talk", "to": "Erza Scarlet", "script": [
+             "them (pleased): You said I'm strict, and you're right. Thank you for saying it without flinching.",
+             "them: Ask me your question next time. The one about my name. I'll answer it when I'm ready."]}]},
+     ],
+     "endings": [{"key": "slice-kept", "title": "Take the slice", "about": "Erza gives you the slice of cake she was saving. She says it's the first time she's shared the best piece, and it's because she trusts you to ask her about the name when it matters.",
+                  "scene": "World: Erza Scarlet, Slice Given", "rewards": [{"coins": 300}, {"gift": "shortcake"}]}]},
+    {"key": "erza-tower-of-heaven", "title": "Tower of Heaven", "gates": 2, "requires": {"quests": ["erza-requip-practice"]},
+     "scene": "World: Erza Scarlet, The Tower",
+     "about": "The Tower of Heaven is where Erza was taken as a child, and where she was given her name. Gray has been asking about the Tower in his own way, because the ice he uses reminds him of a place he was taught in. The two of them clash in the arena, and the old fight opens up.",
+     "offer": ["them (dismayed): The Tower of Heaven is where I was taken as a child. I keep dreaming about the stairs.",
+               "them: Gray keeps asking about it, and I think he's been to a place like it. Meet me at the arena, and see what happens when we fight."],
+     "stages": [
+         {"text": "Meet Erza at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Erza Scarlet, Arena Stairs", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Gray, to see what his ice remembers", "scene": "World: Erza Scarlet, Gray Beaten", "objectives": [{"do": "defeat", "cpus": ["Gray Fullbuster"]}]},
+         {"text": "Tell Erza what Gray said", "objectives": [{"do": "talk", "to": "Erza Scarlet", "script": [
+             "them (dismayed): He said his teacher sealed a monster in ice, and gave her life to do it. The stairs in my dream were ice too.",
+             "them (pleased): Then the Tower and his teacher's ice are the same kind of place. I'll find out why, and I'll ask him properly."]}]},
+     ],
+     "endings": [{"key": "her-name", "title": "Hear her name", "about": "Erza tells you the name she was given in the Tower, by the one person there who was kind to her. She says it's the first time she's said it aloud since the Tower, and asks you to keep it safe.",
+                  "scene": "World: Erza Scarlet, Her Name", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "erza-her-name", "title": "Her Name", "gates": 5, "requires": {"quests": ["erza-tower-of-heaven"]},
+     "scene": "World: Erza Scarlet, The Last Stair",
+     "about": "Erza has decided to go back to the Tower, to find out whether the one who gave her the name is still there. Darkness is holding the gate on the road, and Erza has to decide whether to fight her way through, or to keep the name and leave the past where it is.",
+     "offer": ["them (dismayed): I'm going back to the Tower. The name I was given there might be the last thing I have from the old life.",
+               "them: Come to the gate tonight. Darkness won't let me through without a fight, and I want you to be the one who decides whether I go."],
+     "stages": [
+         {"text": "Meet Erza at the gate at night", "objectives": [{"do": "visit", "place": "shrine", "times": [3], "scene": "World: Erza Scarlet, Gate Road", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Darkness, to get through the gate to the Tower", "scene": "World: Erza Scarlet, Darkness Beaten", "objectives": [{"do": "defeat", "cpus": ["Darkness"]}]},
+         {"text": "Tell Erza your answer", "objectives": [{"do": "talk", "to": "Erza Scarlet", "script": [
+             "them (dismayed): Darkness took every hit I gave her, and she still asked whether I wanted to go in.",
+             "them (pleased): Then I'll go in, and I'll keep the name, whichever way the Tower answers."]}]},
+     ],
+     "endings": [
+         {"key": "keep-her-name", "title": "Keep her name", "about": "Erza goes to the Tower and finds the one who gave her the name. She keeps it, and tells the old friend that the guild is the place she belongs now.",
+          "scene": "World: Erza Scarlet, Keeps The Name", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "leave-the-tower", "title": "Leave the Tower", "about": "Erza turns back at the last stair. She says the name was given to her, and it's hers to carry without the Tower's stones around it.",
+          "scene": "World: Erza Scarlet, Turns Back", "rewards": [{"coins": 500}, {"gift": "sleeves"}]},
+     ]},
 ]
+
 ERZA_SCARLET_SCENES = [
-  {
-    "name": "World: Erza Scarlet, Cafe",
-    "lines": [
-      "background cafe",
-      "me enters left with slide",
-      "me: Someone has ruined my cake. I'm not angry. Just disappointed.",
-      "player: I'll get you a new one.",
-      "me (pleased): ...Thank you. I shall accept it with dignity.",
-      "me: Now I'll eat it with great care."
-    ]
-  },
-  {
-    "name": "World: Erza Scarlet, Arena",
-    "lines": [
-      "background arena",
-      "me enters center with rise",
-      "me: This armour is for the strongest fights. This one is for the quiet ones.",
-      "player: Which one is your favourite?",
-      "me (dismayed): The plain clothes. Nobody expects anything from them.",
-      "me: I got my name from a place I wanted to leave behind. Let me tell you."
-    ]
-  }
+    {"name": "World: Erza Scarlet, Her Name", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): The name was given to me in the Tower, by the one kind person there. I haven't said it aloud since.",
+        "player: Will you tell me?",
+        "me (pleased): I'll tell you, once, and then you'll keep it safe for me.",
+        "me: Thank you for asking me properly. Nobody else ever did, not even the guild.",
+        "me (dismayed): Keep it between us, until I decide whether the Tower gets to hear it too."]},
+    {"name": "World: Erza Scarlet, Cake Table", "lines": [
+        "background cafe", "me enters center with fade",
+        "me: Watch my armour change. Three sets, one swing. If you can count them, you'll get a slice of cake.",
+        "player: Three sets? I only see one.",
+        "me (dismayed): That's because you're watching my face. Watch the edge of the blade, and the armour will change in front of you.",
+        "me (pleased): Good. Now sit. The cake is strawberry, and I've been saving the best slice for someone worth sharing it with.",
+        "player: Where did you learn to change armour like that?",
+        "me (dismayed): From the Tower, before the guild. I'd rather not talk about the Tower over cake.",
+        "me: Come to the cafe at noon, and I'll tell you whether I'm too strict. You'll say yes, and that's fine."]},
+    {"name": "World: Erza Scarlet, Cafe Cake", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): The strawberry cake is perfect today. Don't talk while I'm on the first bite.",
+        "player: Are you strict with everyone?",
+        "me (dismayed): Only with the ones I care about. The others I forget about, and that's more forgiving than it sounds.",
+        "player: Am I too strict, do you think?",
+        "me: You're too honest, which is why I like you. Keep answering without flinching, and we'll get along.",
+        "me (pleased): Then I'll ask you one thing in return. Do you know what my name was before the guild gave me this one?",
+        "me (dismayed): Don't answer. I'll tell you when I'm ready, and you'll be the first person I tell."]},
+    {"name": "World: Erza Scarlet, Slice Given", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): I gave you the best slice of cake. I've never given away the best slice before, not even to the guild.",
+        "player: Why now?",
+        "me (dismayed): Because you didn't pretend to know the answer to my question, and because I wanted to share the good part.",
+        "me: Eat it slowly. The strawberry is the only thing in the guild that never gets argued over.",
+        "me (pleased): Come back tomorrow. I'll have worked out how to ask you about the Tower, when you're ready."]},
+    {"name": "World: Erza Scarlet, The Tower", "lines": [
+        "background arena", "me enters left with slide",
+        "me (dismayed): The Tower of Heaven is where I was taken as a child. I keep dreaming about its stairs, and the ice.",
+        "player: Is Gray connected to it?",
+        "me: He keeps asking about the Tower, in his own way. The ice he uses reminds him of a place his teacher took him.",
+        "me (pleased): Meet me at the arena this evening. We'll fight, and I'll see what his ice remembers.",
+        "me (dismayed): I'm not sure I want to see it. But the stairs are coming back, and I'd rather meet them with a sword."]},
+    {"name": "World: Erza Scarlet, Arena Stairs", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): Gray's at the far end, with the ice already forming on his hands. He's looking at me like he knows the Tower.",
+        "player: Are you ready?",
+        "me (pleased): Ready is the wrong word. I'm steady, which is what the Tower taught me.",
+        "player: What do you see when you look at him?",
+        "me: Stand where you can see both of us. If the ice goes wrong, call my name, and I'll come back to you."]},
+    {"name": "World: Erza Scarlet, Gray Beaten", "lines": [
+        "cast gray as Gray Fullbuster",
+        "background arena", "me enters center with fade",
+        "gray enters right with slide",
+        "gray: {player} beat me, Erza. My teacher sealed a monster in ice, Deliora, and gave her life to do it.",
+        "me (dismayed): I was taken to a tower too, with stairs and no windows. I don't like talking about it, and I didn't say anything about ice.",
+        "gray: Then we're both from the same kind of place. I'd like to find out what it was, with you.",
+        "me (pleased): Then tell me the rest, and I'll tell you what I remember about the stairs."]},
+    {"name": "World: Erza Scarlet, The Last Stair", "lines": [
+        "background shrine", "me enters left with slide",
+        "me (dismayed): I'm going back to the Tower. The name I was given there might be the last thing I have from the old life.",
+        "player: Are you sure you want to go?",
+        "me (pleased): I'm not sure of anything about the Tower, except that the stairs are still there, and so is the one who gave me my name.",
+        "me: Come to the gate tonight. Darkness won't let me through without a fight, and I want you to be the one who decides whether I go.",
+        "me (dismayed): If I come back without the name, you'll know the Tower kept it, and you'll tell me what it cost.",
+        "player: What do you need from me at the gate?",
+        "me (dismayed): Your steady hand, and your word that you won't let me turn back for an easy reason.",
+        "me (pleased): Stand at the gate with me. The stairs are on the far side, and so is the answer."]},
+    {"name": "World: Erza Scarlet, Gate Road", "lines": [
+        "background night", "me enters center with fade",
+        "me (dismayed): The gate is dark, and Darkness is standing in front of it with the shield raised. She's been waiting all evening.",
+        "player: Is she going to let you pass?",
+        "me (pleased): Only if she loses. I'd rather she let me through, but she's the one who taught me that a guardian doesn't yield for asking.",
+        "me: Stay at the gate. This one's mine to decide, and I'll do it with my own sword.",
+        "me (dismayed): Keep your hands off the hilt. You're here to watch, not to help me up the stairs."]},
+    {"name": "World: Erza Scarlet, Darkness Beaten", "lines": [
+        "cast darkness as Darkness",
+        "background shrine", "me enters center with fade",
+        "darkness enters right with slide",
+        "darkness: {player} put me down, Erza. You're a good shield, but I want you to take the gate more than I do.",
+        "me (dismayed): You took every hit for years, Darkness. I don't want to take your place, only to stand beside you.",
+        "darkness: Then go through, and come back for the shield after. It's yours when you're ready to take it back.",
+        "me (pleased): I'll come back for it. I'll go up the stairs first, and then I'll see who the Tower was keeping."]},
+    {"name": "World: Erza Scarlet, Keeps The Name", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I went up the stairs to the Tower and found the one who gave me my name. I kept it, and I told them the guild is where I belong now.",
+        "player: How did they take it?",
+        "me (dismayed): Quietly. They said they were glad I came back for it, and that the name was always mine to choose.",
+        "me: Keep the napkin. I'll write my name on it, in capitals, so you'll never forget how to spell it."]},
+    {"name": "World: Erza Scarlet, Turns Back", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): I turned back at the last stair. The name was given to me, and it's mine to carry without the Tower's stones around it.",
+        "player: Are you at peace with that?",
+        "me (pleased): I'm at peace with the guild. The Tower can keep its stones, and I'll keep the name.",
+        "me: Come and eat cake with us tomorrow. The strawberry's the only thing in the guild that doesn't remember the Tower."]},
 ]
+
 GRAY_FULLBUSTER_QUESTS = [
-  {
-    "key": "gray-ice-make",
-    "title": "Ice-Make",
-    "gates": 2,
-    "about": "Gray will sculpt anything you ask for, and he keeps losing his shirt while doing it.",
-    "offer": [
-      "them: Name it. I'll make it out of ice.",
-      "them (pleased): Haha, you can't see my shirt, can you? It's gone."
-    ],
-    "stages": [
-      {
-        "text": "Find Gray on the beach at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "beach",
-            "times": [
-              1
-            ],
-            "scene": "World: Gray Fullbuster, Beach",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Ice Make, Gray",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "FT/S120-E085"
-          }
-        ]
-      },
-      {
-        "text": "Tell Gray what the sculpture looked like",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Gray Fullbuster",
-            "script": [
-              "them: You didn't notice my shirt either? Good. Thanks.",
-              "them (pleased): ...It's a good ice sculpture. You're a good judge."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "ice-sculpture",
-        "title": "Keep the ice sculpture",
-        "about": "Gray gives you the sculpture of yourself, and a shirt he has been looking for.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "sunglasses"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "gray-urs-ice",
-    "title": "Ur's Ice",
-    "gates": 5,
-    "about": "Gray's teacher, who turned herself into ice to save him, and what she taught him about sacrifice.",
-    "offer": [
-      "them (dismayed): Snow's starting to fall. That means I'm thinking about Ur.",
-      "them: Meet me in the plaza tonight. I'll tell you the whole story."
-    ],
-    "stages": [
-      {
-        "text": "Meet Gray in the plaza in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "plaza",
-            "times": [
-              2
-            ],
-            "scene": "World: Gray Fullbuster, Plaza",
-            "rewards": [
-              {
-                "pack": "climax_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Gray: Freezing Magic in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "FT/S120-E076",
-            "against": [
-              "Gray Fullbuster"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Gray your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Gray Fullbuster",
-            "script": [
-              "them: Ur taught me that sacrifice is not the same as loss.",
-              "them (pleased): ...Thanks for listening. It helps."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "her-lesson",
-        "title": "Remember her lesson",
-        "about": "Gray lets the snow settle, and tells you what Ur taught him, one word at a time.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "gray-ice-make", "title": "Ur's Lesson", "requires": {"rank": 1},
+     "scene": "World: Gray Fullbuster, Ur's Cup",
+     "about": "Gray keeps a frozen cup on the windowsill, and he says it's the first thing his teacher Ur ever made. He practises ice-make in the plaza, and his shirt keeps coming off, because Ur always told him ice needs a memory, not a grip.",
+     "offer": ["them: I've got a cup from my teacher. It's made of ice and it hasn't melted in years. Want to see?",
+               "them (dismayed): Meet me at the plaza at noon. I'll make ice the way Ur taught me, and you tell me whether it's a memory or a trick."],
+     "stages": [
+         {"text": "Watch Gray make ice at the plaza at noon", "objectives": [{"do": "visit", "place": "plaza", "times": [1], "scene": "World: Gray Fullbuster, Plaza Ice", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Gray whether the ice was a memory or a trick", "objectives": [{"do": "talk", "to": "Gray Fullbuster", "script": [
+             "them (dismayed): Ur said ice is a memory you can hold. I never believed her until today.",
+             "them (pleased): Then I'll keep the cup, and tell you the rest of her lessons. They're harder than they sound."]}]},
+     ],
+     "endings": [{"key": "ur-cup", "title": "Keep Ur's cup", "about": "Gray gives you the frozen cup to keep. It's cold in your hand, and he asks you to remember the first thing Ur taught him, even if the ice melts.",
+                  "scene": "World: Gray Fullbuster, Ur's Cup Given", "rewards": [{"coins": 300}, {"gift": "iced-coffee"}]}]},
+    {"key": "gray-deliora-ice", "title": "Deliora's Ice", "gates": 2, "requires": {"quests": ["gray-ice-make"]},
+     "scene": "World: Gray Fullbuster, The Shell",
+     "about": "Gray has found a sheet of ice in the old arena cellar that wasn't made by him. It's Ur's Iced Shell, the spell that sealed the monster Deliora, and the ice is starting to crack. Lyon, Ur's other student, is away, so Gray wants another mage's read on the ice. Erza has a steady hand, and she's willing to fight to test his resolve.",
+     "offer": ["them (dismayed): The ice in the cellar is Ur's Iced Shell. It's cracking, and I'm the only one who can hold it.",
+               "them: Meet me at the arena in the evening. Lyon's away, and I need another mage to test whether I can hold the shell."],
+     "stages": [
+         {"text": "Meet Gray at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Gray Fullbuster, Arena Shell", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Erza, to test whether his resolve holds", "scene": "World: Gray Fullbuster, Erza Beaten", "objectives": [{"do": "defeat", "cpus": ["Erza Scarlet"]}]},
+         {"text": "Tell Gray what Erza said", "objectives": [{"do": "talk", "to": "Gray Fullbuster", "script": [
+             "them (dismayed): She said the Tower had the same ice. She remembers the monster being sealed inside it.",
+             "them (pleased): Then Ur's shell and her Tower are the same thing. I'll go and find out what she sealed."]}]},
+     ],
+     "endings": [{"key": "shell-held", "title": "Hold the shell", "about": "Gray holds the cracking shell together with his own ice, and it stops cracking. He says Ur did the same, and that holding a seal is a kind of promise you keep with your whole body.",
+                  "scene": "World: Gray Fullbuster, Shell Held", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "gray-ur-sacrifice", "title": "Ur's Sacrifice", "gates": 5, "requires": {"quests": ["gray-deliora-ice"]},
+     "scene": "World: Gray Fullbuster, Ur's Sacrifice",
+     "about": "Gray finally learns what Ur's sacrifice meant. She gave her life to seal Deliora, and the seal is failing now because the cost was never paid in full. Gray has to decide whether to hold the seal alone, or to let it go, the way Ur did.",
+     "offer": ["them (dismayed): Ur didn't just seal Deliora. She gave her life to do it, and the seal needs a life to stay shut.",
+               "them: Come to the shrine tonight. Darkness is guarding the old path, and I need someone to watch me choose."],
+     "stages": [
+         {"text": "Be at the shrine with Gray at night", "objectives": [{"do": "visit", "place": "shrine", "times": [3], "scene": "World: Gray Fullbuster, Shrine Seal", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Darkness, to reach the seal", "scene": "World: Gray Fullbuster, Darkness Beaten", "objectives": [{"do": "defeat", "cpus": ["Darkness"]}]},
+         {"text": "Tell Gray your answer", "objectives": [{"do": "talk", "to": "Gray Fullbuster", "script": [
+             "them (dismayed): She took the hits to keep me moving, the way Ur kept the seal. I don't know if I can carry that.",
+             "them (pleased): Then I'll hold the seal myself, and let the cost be mine. Thank you for watching me choose."]}]},
+     ],
+     "endings": [
+         {"key": "hold-alone", "title": "Hold the seal alone", "about": "Gray holds the seal on his own, the way Ur did. The seal holds, and he says it's the first promise he's kept without anyone to tell him he should.",
+          "scene": "World: Gray Fullbuster, Seal Held", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "let-it-go", "title": "Let the seal go", "about": "Gray lets the seal go, and the monster stays sealed by the cost Ur already paid. He says he's done carrying a life that was never his to hold.",
+          "scene": "World: Gray Fullbuster, Seal Freed", "rewards": [{"coins": 500}, {"gift": "bottled-tea"}]},
+     ]},
 ]
+
 GRAY_FULLBUSTER_SCENES = [
-  {
-    "name": "World: Gray Fullbuster, Beach",
-    "lines": [
-      "background beach",
-      "me enters right with slide",
-      "me: Ice-make! Look, it's you. You look better than I expected.",
-      "player: Wait, where's your shirt?",
-      "me (dismayed): ...Oh no. Where did it go?",
-      "me (pleased): Hah, it doesn't matter. The sculpture's the important bit."
-    ]
-  },
-  {
-    "name": "World: Gray Fullbuster, Plaza",
-    "lines": [
-      "background night",
-      "me enters left with fade",
-      "me: Snow starts to fall. It always does when I think about Ur.",
-      "player: Tell me about her.",
-      "me (dismayed): She turned herself into ice to save me. Sacrifice, she called it.",
-      "me: That's what I learned from her. Sacrifice isn't loss. I'm still learning it."
-    ]
-  }
+    {"name": "World: Gray Fullbuster, Ur's Cup", "lines": [
+        "background sakura", "me enters center with rise",
+        "me: I've got a cup from my teacher. It's made of ice and it hasn't melted in years. Want to see it?",
+        "player: Your teacher made that?",
+        "me (dismayed): Ur did. She taught me ice-make, and she said it needs a memory, not a grip. My shirt keeps coming off because I keep forgetting.",
+        "me (pleased): Watch. One, and the cup holds its shape. Two, and I think of her, and the ice holds even tighter.",
+        "player: That's a lot of thinking for a cup.",
+        "me (dismayed): It's what she taught me. Meet me at the plaza at noon, and I'll make the ice the way she did, and you can tell me whether it's a memory or a trick."]},
+    {"name": "World: Gray Fullbuster, Plaza Ice", "lines": [
+        "background sakura", "me enters center with rise",
+        "me (pleased): The ice is up. Look at the bird, and tell me whether it's a memory or a trick.",
+        "player: It's holding its shape.",
+        "me (dismayed): That's the test. Ur said a trick melts the moment you stop looking. A memory holds.",
+        "me: I was thinking about her the whole time, and the shirt stayed on. That's the first time in weeks.",
+        "me (pleased): Good. Tell me honestly whether it's a memory or a trick, and I'll keep the answer in my pocket."]},
+    {"name": "World: Gray Fullbuster, Ur's Cup Given", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): Here's Ur's cup. It's cold, and it'll stay cold while you hold it.",
+        "player: Are you sure you want me to keep it?",
+        "me (dismayed): Yes. Remember the first thing she taught me, even if the ice melts. The memory is the part that matters.",
+        "me: Hold it steady. She'd have told you that, and then she'd have told you to stop looking at my shirt."]},
+    {"name": "World: Gray Fullbuster, The Shell", "lines": [
+        "background ruins", "me enters left with slide",
+        "me (dismayed): There's ice in the old arena cellar that I didn't make. It's Ur's Iced Shell, the seal over Deliora.",
+        "player: Is it cracking?",
+        "me: Yes. And I'm the only one who can hold it, because I was the one she taught to keep the memory of it alive.",
+        "me (pleased): Meet me at the arena in the evening. Lyon's away, and I need another mage to test whether I can hold the shell.",
+        "me (dismayed): If she does, I'll ask her what she sealed. I'm not going to let the shell break alone."]},
+    {"name": "World: Gray Fullbuster, Arena Shell", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): The cellar's ice is breathing, the way Ur said a seal does when it's getting tired. Erza's at the far end.",
+        "player: Will she be able to help?",
+        "me (pleased): I hope so. I want another mage to see the ice before I hold it again.",
+        "me: Stand back and watch. If it cracks while we're fighting, call me, and I'll come back to the shell.",
+        "me (dismayed): Okay. Here she comes. Keep your eyes on the ice, not on me."]},
+    {"name": "World: Gray Fullbuster, Erza Beaten", "lines": [
+        "cast erza as Erza Scarlet",
+        "background arena", "me enters center with fade",
+        "erza enters right with slide",
+        "erza: {player} beat me, Gray. Your ice is steady. Ur taught you well, I think, even if I never met her.",
+        "me (dismayed): Then tell me how to hold it longer. Ur's shell is cracking, and I need the next step.",
+        "erza: Lyon's not here, so I'll say what I see. You're holding that shell on guts, not on training. The cold will pull you if you let it.",
+        "me (pleased): Then I'll hold it with that. Thank you, Erza, for testing me as a fellow mage."]},
+    {"name": "World: Gray Fullbuster, Shrine Seal", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): The seal's at the shrine, and it's failing. Ur gave her life to hold it, and the cost was never fully paid.",
+        "player: What will happen if it breaks?",
+        "me (pleased): Deliora comes back. The monster Ur sealed, and the whole town freezes with it.",
+        "me: Darkness is guarding the old path to the seal. She's been waiting for me to ask her to move.",
+        "me (dismayed): Stand with me while I decide. If I hold it, the cost is mine. If I let it go, it's Ur's, and she already paid it once."]},
+    {"name": "World: Gray Fullbuster, Darkness Beaten", "lines": [
+        "cast darkness as Darkness",
+        "background shrine", "me enters center with fade",
+        "darkness enters right with slide",
+        "darkness: {player} got past me, Gray. You're carrying the seal's weight already, I can see it.",
+        "me (dismayed): I'm carrying Ur's memory, not the weight. The weight belongs to whoever decides to hold it.",
+        "darkness: Then decide quickly. The shell is groaning, and I've been guarding the path for too long.",
+        "me (pleased): Stand aside, then. I'm going to the seal, and I'll decide when I'm there."]},
+    {"name": "World: Gray Fullbuster, Shell Held", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I held the shell with my own ice, and it stopped cracking. Ur did the same, once.",
+        "player: That must have taken a lot out of you.",
+        "me (dismayed): It did. But holding a seal is a kind of promise you keep with your whole body, and I'd like to keep this one.",
+        "me: Thank you for watching the ice. It's the first time I haven't had to hold it alone."]},
+    {"name": "World: Gray Fullbuster, Ur's Sacrifice", "lines": [
+        "background shrine", "me enters left with slide",
+        "me (dismayed): Ur didn't just seal Deliora. She gave her life to do it, and the seal needs a life to stay shut.",
+        "player: Did she know the cost?",
+        "me (pleased): She knew it all. She chose it, the way she chose to teach me ice needs a memory.",
+        "player: What are you going to do?",
+        "me (dismayed): Hold it, or let it go. Either way, I'd be doing what she did, and I'd be doing it for myself.",
+        "me: Come to the shrine tonight. Darkness is guarding the old path, and I need someone to watch me choose.",
+        "player: Did Ur leave anything behind for you?",
+        "me (pleased): Bring the cup. I'd like the first thing she taught me to be the last thing I look at."]},
+    {"name": "World: Gray Fullbuster, Seal Held", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I held the seal alone, the way Ur did. It holds, and I'm the one keeping the promise.",
+        "player: Are you alright?",
+        "me (dismayed): I'm cold, and I'm tired, and I'm not going to pretend otherwise. But the seal is still shut.",
+        "me: Thank you for staying. It's the first promise I've kept without someone telling me I should."]},
+    {"name": "World: Gray Fullbuster, Seal Freed", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): I let the seal go, and the cost Ur already paid holds the monster. I'm done carrying a life that was never mine to hold.",
+        "player: Is that the right choice?",
+        "me (pleased): It's the one I can live with. Ur would have said it's the one she'd want, and that's the only thing I'm sure of.",
+        "me: Keep the bottled tea. It's from the shop by the old arena. Don't tell Erza I shared it with you."]},
 ]
+
 
 CAST = [
     cpu("Ainz Ooal Gown", "villain", quests=AINZ_OOAL_GOWN_QUESTS, extra_scenes=AINZ_OOAL_GOWN_SCENES,

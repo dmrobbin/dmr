@@ -1,2056 +1,1654 @@
 """World mode cast: Dandadan, RWBY, JoJo's Bizarre Adventure and Re:Zero."""
 
+# Aira. Thread: the spirit inside her has a lost daughter, and Aira has been dreaming about her. Q1 plants the spirit's silence and
+# the silver ribbon she keeps in her hair. Q2 pays off: Momo's grandmother says the daughter is near, and the search begins.
+# Q3: a ribbon is found at the old school gate, and Okarun says it is bait. Aira decides whether to follow it.
 AIRA_QUESTS = [
-  {
-    "key": "aira-the-chosen-one",
-    "title": "The Chosen One",
-    "gates": 2,
-    "about": "Aira is certain she's destined for greatness, and she'll tell you so at length.",
-    "offer": [
-      "them: I'm a hero. It's my destiny. Pay attention.",
-      "them (pleased): You agreed! I knew you would. Secretly, I mean."
-    ],
-    "stages": [
-      {
-        "text": "Hear Aira's speech at school in the morning",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "school",
-            "times": [
-              0
-            ],
-            "scene": "World: Aira, School",
-            "rewards": [
-              {
-                "coins": 150
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Because I'm the Chosen One, Aira",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "DDD/S118-E022"
-          }
-        ]
-      },
-      {
-        "text": "Let Aira tell you the rest of the destiny",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Aira",
-            "script": [
-              "them: The spirit inside me is watching. It's very proud.",
-              "them (pleased): ...Don't tell Okarun I said that."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "secret-thrill",
-        "title": "Keep her secret",
-        "about": "Aira announces herself a hero to the whole school. You're now the only one she trusts with the spirit.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "earbuds"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "aira-acrobatic-silkys-gift",
-    "title": "Acrobatic Silky's Gift",
-    "gates": 5,
-    "about": "The spirit inside Aira has a lost daughter, and Aira cries about it without meaning to.",
-    "offer": [
-      "them (dismayed): The spirit's daughter is lost. I can feel her sometimes.",
-      "them: Come to the plaza tonight. Please don't laugh."
-    ],
-    "stages": [
-      {
-        "text": "Meet Aira in the plaza in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "plaza",
-            "times": [
-              2
-            ],
-            "scene": "World: Aira, Plaza",
-            "rewards": [
-              {
-                "pack": "climax_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Aira: Acrobatic Pretty Girl in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "DDD/S118-E023",
-            "against": [
-              "Aira"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Aira your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Aira",
-            "script": [
-              "them: Okarun mustn't hear about this. Promise me.",
-              "them (pleased): ...Thank you. You're a real friend."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "the-daughter",
-        "title": "Help find the daughter",
-        "about": "Aira's spirit gives you a small charm, and says the daughter is closer than they think.",
-        "rewards": [
-          {
-            "coins": 800
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "aira-the-chosen-one", "title": "The Chosen One", "requires": {"rank": 1},
+     "scene": "World: Aira, Chosen",
+     "about": "Aira is certain she's destined for greatness, and she'll tell you so at length. There's a spirit inside her who keeps quiet most of the time, and a silver ribbon in her hair she never takes out.",
+     "offer": ["them: I'm destined for greatness, and you're going to witness the first step.",
+               "them (dismayed): The spirit in me is very quiet today. Come to school in the morning, and say something to it."],
+     "stages": [
+         {"text": "Watch Aira speak to her spirit at school in the morning", "objectives": [{"do": "visit", "place": "school", "times": [0], "scene": "World: Aira, School Spirit", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Aira what the spirit said", "objectives": [{"do": "talk", "to": "Aira", "script": [
+             "them (dismayed): It said I'm not ready. Rude. It's usually more polite than that.",
+             "them (pleased): ...It also said you were kind to it. Don't make me say it again."]}]},
+     ],
+     "endings": [{"key": "secret-thrill", "title": "Share the secret", "about": "Aira tells you about the thrill the spirit gives her, and asks you not to laugh when she does the acrobatics. Then she takes the ribbon out of her hair and asks you to hold it, just for a minute.",
+                  "scene": "World: Aira, Secret Thrill", "rewards": [{"coins": 300}, {"gift": "instant-ramen"}]}]},
+    {"key": "aira-acrobatic-silkys-gift", "title": "Silky's Gift", "gates": 2, "requires": {"quests": ["aira-the-chosen-one"]},
+     "scene": "World: Aira, Silky's Gift",
+     "about": "The spirit has a daughter, and Aira has been dreaming about her for weeks. Momo's grandmother keeps the spirits at the shrine, and Aira thinks she can finally ask where the daughter is.",
+     "offer": ["them (dismayed): The spirit has a daughter somewhere. I keep dreaming about her, and I cry in my sleep.",
+               "them: Momo's grandma knows the spirits. Beat Momo, and maybe she'll tell you where to look."],
+     "stages": [
+         {"text": "Meet Aira at the shrine in the evening", "objectives": [{"do": "visit", "place": "shrine", "times": [2], "scene": "World: Aira, Shrine Lantern", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Momo, to get the grandmother's answer", "scene": "World: Aira, Momo Tells", "objectives": [{"do": "defeat", "cpus": ["Momo Ayase"]}]},
+         {"text": "Tell Aira what Momo said", "objectives": [{"do": "talk", "to": "Aira", "script": [
+             "them (dismayed): She says the daughter is closer than the spirit thinks. Closer than anyone.",
+             "them (pleased): That's a clue. A real one. I'll go and look at dawn."]}]},
+     ],
+     "endings": [{"key": "daughter-is-close", "title": "Follow the daughter", "about": "Aira gets a small charm from the spirit, and says the daughter is closer than they think. She presses it into your hand and asks you to keep it until the morning.",
+                  "scene": "World: Aira, Small Charm", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "aira-the-daughter", "title": "The Daughter", "gates": 5, "requires": {"quests": ["aira-acrobatic-silkys-gift"]},
+     "scene": "World: Aira, The Daughter Found",
+     "about": "Aira has found a trace of the daughter: a silver ribbon at the old school gate, the same silver as the spirit's. Okarun thinks it's bait, and he's usually right. Aira needs someone to check before she goes in alone.",
+     "offer": ["them (dismayed): I found a ribbon at the old gate. It's the same silver as the spirit's.",
+               "them: Okarun says it's a trap. He wants to fight me about it. Stand where you can see the gate."],
+     "stages": [
+         {"text": "Check the ribbon with Aira at the school gate at night", "objectives": [{"do": "visit", "place": "school", "times": [3], "scene": "World: Aira, Gate At Night", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Okarun, who says the ribbon is bait", "scene": "World: Aira, Okarun Lost", "objectives": [{"do": "defeat", "cpus": ["Okarun"]}]},
+         {"text": "Give Aira your answer", "objectives": [{"do": "talk", "to": "Aira", "script": [
+             "them (dismayed): Okarun says it's bait. Maybe it is. Maybe I'm the bait.",
+             "them (pleased): ...Then I'll go and look, with you watching the gate. Thanks."]}]},
+     ],
+     "endings": [
+         {"key": "keep-looking", "title": "Keep looking for her", "about": "Aira goes to the old gate and finds the truth: the ribbon belonged to a girl who died in the school fire years ago. The spirit inside Aira is her mother, and Aira is the one who has to tell her.",
+          "scene": "World: Aira, The Daughter Named", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "let-the-spirit-rest", "title": "Let the spirit rest", "about": "Aira decides not to go into the gate alone, and asks the spirit to stay quiet. She says the ribbon should go back to the old gate, where the girl last stood, and she asks you to be there when it does.",
+          "scene": "World: Aira, Give It Back", "rewards": [{"coins": 500}, {"gift": "bouquet"}]},
+     ]},
 ]
+
 AIRA_SCENES = [
-  {
-    "name": "World: Aira, School",
-    "lines": [
-      "background classroom",
-      "me enters center with rise",
-      "me: I am the chosen one. I've said it. Now you must bow.",
-      "player: Do you really think so?",
-      "me (dismayed): ...Yes. Obviously. Stop looking at me like that.",
-      "me (pleased): You're a good audience, though. Keep being one."
-    ]
-  },
-  {
-    "name": "World: Aira, Plaza",
-    "lines": [
-      "background dusk",
-      "me enters left with slide",
-      "me: The spirit had a daughter. She's lost somewhere.",
-      "player: That's sad.",
-      "me (dismayed): Stop. I'm not crying. It's just the wind.",
-      "me: Don't tell Okarun. He'll make it into a documentary."
-    ]
-  }
+    {"name": "World: Aira, The Daughter Named", "lines": [
+        "background night", "me enters center with fade",
+        "me (dismayed): The girl's name was on the ribbon, under the silver. She died in the school fire, years ago, and the spirit is her mother.",
+        "player: So the spirit was looking for her own daughter.",
+        "me (pleased): Yes. It was looking for her the whole time, and it's been waiting for someone to tell it the truth.",
+        "me (dismayed): I'm the one who has to say it. I don't want to, but I'm the only one it trusts to speak.",
+        "player: Will you go in alone?",
+        "me: No. You'll stand at the gate with me, and I'll say the name out loud, and then we'll let her go.",
+        "me (pleased): Thank you for holding the lantern. It's the last thing she needs from either of us."]},
+    {"name": "World: Aira, Give It Back", "lines": [
+        "background night", "me enters center with fade",
+        "me (dismayed): I don't want to go into the gate alone, and I don't want the spirit to keep waiting. So I'm giving the ribbon back.",
+        "player: Where does it go?",
+        "me (pleased): Back to the old gate, where she last stood. It's the place she still belongs to.",
+        "me: Stay with me while I tie it there. I'll say the name, and then the spirit can rest.",
+        "me (dismayed): It's quiet now. The spirit's gone still, the way it does when it's finally heard."]},
+    {"name": "World: Aira, Chosen", "lines": [
+        "background classroom", "me enters center with rise",
+        "me: I'm destined for greatness. The spirit inside me says so, and it's never wrong, apparently.",
+        "me (dismayed): It's wrong about the lunch menu. Otherwise, the spirit's perfect, and so am I.",
+        "player: It's never wrong?",
+        "me: It's quiet most of the time. The silence is the spirit thinking. I'm told that's normal.",
+        "me (pleased): The ribbon in my hair is its. It doesn't like it when I take it out, so I don't."]},
+    {"name": "World: Aira, School Spirit", "lines": [
+        "background classroom", "me enters center with rise",
+        "me: Be quiet, spirit. I'm trying to talk to my friend. ...It won't answer.",
+        "player: Maybe it's listening.",
+        "me (dismayed): It's listening, and it's bored. It likes you, though. It said your hair looks nice, which is a first.",
+        "me (pleased): Ha! It's never said that to anyone. Not even to me, and I'm the one it lives in.",
+        "me: Say something to it, if you want. Keep it short. It gets bored of long speeches."]},
+    {"name": "World: Aira, Secret Thrill", "lines": [
+        "background classroom", "me enters center with fade",
+        "me (dismayed): The spirit makes me do acrobatics when I'm nervous. I hate it, and I can't stop it.",
+        "player: Show me.",
+        "me (pleased): No! Okay, a little. Don't laugh. It's hard to be serious in the middle of a flip.",
+        "me: That's the real secret. The spirit wants to be seen moving, and I think it's lonely.",
+        "me (dismayed): It's always lonely. That's why it wants a daughter. Here, take the ribbon for a minute, please."]},
+    {"name": "World: Aira, Silky's Gift", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): The spirit has a daughter. I keep dreaming about her, and I cry in my sleep, and I wake up with her name on my lips.",
+        "player: That's sad.",
+        "me: It is. I don't know her name, only the silver ribbon. Momo's grandmother knows the spirits better than anyone.",
+        "me (pleased): Come to the shrine this evening. I'm going to ask, and you're going to hold the lantern while I do."]},
+    {"name": "World: Aira, Shrine Lantern", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): Hold the lantern for me. The spirit says the path goes through the old gate.",
+        "player: Which gate?",
+        "me (dismayed): The old school one. The spirit gets very specific when it's frightened, and it's frightened now.",
+        "me: Momo's here, somewhere. She keeps the shrine's talismans in the back. Don't touch the one with the red string.",
+        "me (pleased): That's the one that's Grandma's last. It's the only one I'm not allowed to ask about."]},
+    {"name": "World: Aira, Momo Tells", "lines": [
+        "cast momo as Momo Ayase",
+        "background shrine", "me enters center with fade",
+        "momo enters right with slide",
+        "momo: The daughter is near. Grandma says so, and she doesn't lie about spirits. She's never once been wrong.",
+        "me (dismayed): Then I'll find her. Thank you, Momo. I didn't think I'd ever hear someone say it so plainly.",
+        "momo: Don't thank me. Thank the lantern, it did all the work. And don't go to the old gate alone.",
+        "me (pleased): Okay. I'll take the lantern. And the ribbon. And the friend who holds the lantern."]},
+    {"name": "World: Aira, Small Charm", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): The spirit gave me a charm. It's small, and it smells of old paper and rain.",
+        "player: Do you believe it?",
+        "me (dismayed): I believe the spirit, mostly. It's never had a reason to lie to me. It doesn't have much else to do.",
+        "me: It says the daughter is closer than we think. That's the part I keep turning over in my head.",
+        "me: Keep the charm until the morning. Then we'll see whether she's at the gate, or somewhere worse."]},
+    {"name": "World: Aira, Gate At Night", "lines": [
+        "background night", "me enters left with slide",
+        "me (dismayed): The ribbon's still tied to the gate. Silver, like the spirit's, and it's warm to touch.",
+        "player: Is it a trick?",
+        "me: Okarun says yes, and he's been right before. I want to believe it isn't, and I hate that wanting it makes me stupid.",
+        "me (pleased): Stay close, and watch the shadows by the fence. If something moves, tell me before I do something silly."]},
+    {"name": "World: Aira, The Daughter Found", "lines": [
+        "background night",
+        "me enters left with slide",
+        "me (dismayed): I found a ribbon at the old gate. It's the same silver as the spirit's, and it's still warm.",
+        "player: You're shaking.",
+        "me: Okarun says it's bait. He's probably right, and I'm going to go in anyway if you let me.",
+        "me (dismayed): I've been dreaming about her name. It's almost on my tongue, and I can't say it yet.",
+        "player: Do you want to wait until morning?",
+        "me (pleased): No. The spirit says she's been waiting at the gate for years. I don't want her to wait any longer.",
+        "me: So stand where you can see the gate, and don't let me go in alone. That's the only thing I'm asking.",
+        "me (dismayed): If Okarun's right, the trap closes behind me. Call my name, and I'll come back out."]},
+    {"name": "World: Aira, Okarun Lost", "lines": [
+        "cast okarun as Okarun",
+        "background night", "me enters center with fade",
+        "okarun enters right with slide",
+        "okarun: {player} beat me, Aira, and I still told you it was bait. You're going to walk into it anyway.",
+        "me (dismayed): Then tell me where the trap is. You're the one who's read all the clippings.",
+        "okarun: I don't know. That's the worst part. I've been trying to find the trap for a week, and there isn't one I can see.",
+        "me (pleased): Then I'll go in and look. Watch the gate for me, Okarun, and tell me if it moves."]},
 ]
+
+# Momo. Thread: Grandma Seiko's shrine and the talisman she made before she got sick. Q1 plants the talisman, tied with red
+# string, and Momo's teasing about Ken Takakura, which is a cover for a crush on Okarun. Q2 has Momo hold the lantern for a
+# spirit that Aira keeps disturbing. Q3: Okarun wants the talisman for his yokai hunt, and Momo has to say who gets it.
 MOMO_AYASE_QUESTS = [
-  {
-    "key": "momo-ken-takakura",
-    "title": "Ken Takakura",
-    "gates": 2,
-    "about": "Momo's ideal man is a film actor, and she wants your opinion on him, loudly.",
-    "offer": [
-      "them: Ken Takakura is the most dreamy actor in the world. Don't argue.",
-      "them (pleased): Look at his poster. Tell me he isn't perfect."
-    ],
-    "stages": [
-      {
-        "text": "Find Momo at the cafe at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "cafe",
-            "times": [
-              1
-            ],
-            "scene": "World: Momo Ayase, Cafe",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have That's Against the Rules! Momo",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "DDD/S118-E065"
-          }
-        ]
-      },
-      {
-        "text": "Hear what Momo really thinks",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Momo Ayase",
-            "script": [
-              "them: My real crush isn't anything like him. Don't say anything.",
-              "them (pleased): ...Let's talk about something else."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "real-crush",
-        "title": "Keep her real crush a secret",
-        "about": "Momo never mentions Ken Takakura again, and seems relieved about it.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "shortcake"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "momo-grandma-seikos-shrine",
-    "title": "Grandma Seiko's Shrine",
-    "gates": 5,
-    "about": "Momo helps her grandmother with a spirit at the shrine, and wants someone to hold the lantern.",
-    "offer": [
-      "them (dismayed): There's a spirit at the shrine. Grandma can't do it alone.",
-      "them: Come tonight. I'll do the talking. You do the lantern."
-    ],
-    "stages": [
-      {
-        "text": "Go to the shrine at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "shrine",
-            "times": [
-              3
-            ],
-            "scene": "World: Momo Ayase, Shrine",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Momo: Fashion is the Battle Uniform for Gyarus in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "DDD/S118-TE14",
-            "against": [
-              "Momo Ayase"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Momo your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Momo Ayase",
-            "script": [
-              "them: You held the lantern steady. Thank you.",
-              "them (pleased): ...Next time, I'll ask you to hold the talismans too."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "hold-the-lantern",
-        "title": "Hold the lantern",
-        "about": "Momo gives you a talisman of your own, and says you're part of the family now.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "momo-ken-takakura", "title": "Ken Takakura", "requires": {"rank": 1},
+     "scene": "World: Momo Ayase, Film Opinion",
+     "about": "Momo's ideal man is a film actor, and she wants your opinion on him, loudly. She has posters, a list of reasons he's the best, and a suspicious amount of interest in one particular classmate.",
+     "offer": ["them (pleased): You have to see the film. Ken Takakura is the best man in cinema. Don't argue.",
+               "them: Meet me at the cafe at noon, and tell me honestly what you think of his jaw."],
+     "stages": [
+         {"text": "Watch the film with Momo at the cafe at noon", "objectives": [{"do": "visit", "place": "cafe", "times": [1], "scene": "World: Momo Ayase, Film Night Cafe", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Momo what you thought of the film", "objectives": [{"do": "talk", "to": "Momo Ayase", "script": [
+             "them (dismayed): You liked the car chase better than the jaw? Unbelievable.",
+             "them (pleased): Fine. We'll watch the sequel together, and then you'll see."]}]},
+     ],
+     "endings": [{"key": "real-crush", "title": "Hear her real crush", "about": "Momo stops talking about Ken Takakura. She tells you who she really likes, and it's Okarun, who has never once noticed.",
+                  "scene": "World: Momo Ayase, Real Crush", "rewards": [{"coins": 300}, {"gift": "manga"}]}]},
+    {"key": "momo-grandma-seikos-shrine", "title": "Grandma Seiko's Shrine", "gates": 2, "requires": {"quests": ["momo-ken-takakura"]},
+     "scene": "World: Momo Ayase, Grandma's Shrine",
+     "about": "Momo helps her grandmother keep a spirit at the shrine, and wants someone to hold the lantern. Aira keeps asking about the spirit's daughter, and Momo won't let anyone disturb it.",
+     "offer": ["them (dismayed): Grandma has a spirit at the shrine, and it's restless. Hold the lantern for me?",
+               "them: Aira keeps asking about it. Beat her, and tell her to leave the spirit alone."],
+     "stages": [
+         {"text": "Hold the lantern for Momo at the shrine in the evening", "objectives": [{"do": "visit", "place": "shrine", "times": [2], "scene": "World: Momo Ayase, Lantern Hold", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Aira, to stop her disturbing the spirit", "scene": "World: Momo Ayase, Aira Stopped", "objectives": [{"do": "defeat", "cpus": ["Aira"]}]},
+         {"text": "Tell Momo what Aira said", "objectives": [{"do": "talk", "to": "Momo Ayase", "script": [
+             "them (dismayed): She still wants the daughter. I can't blame her, but I can't help her either.",
+             "them (pleased): ...You did well. Grandma says you have a steady hand for the lantern."]}]},
+     ],
+     "endings": [{"key": "hold-the-lantern", "title": "Hold the lantern", "about": "Momo gives you a talisman of your own, tied with red string, and says you're part of the family now. She means it, and so does Grandma's old picture on the wall.",
+                  "scene": "World: Momo Ayase, Family Talisman", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "momo-the-talisman", "title": "The Talisman", "gates": 5, "requires": {"quests": ["momo-grandma-seikos-shrine"]},
+     "scene": "World: Momo Ayase, The Talisman",
+     "about": "The talisman Momo gave you is the last one Grandma made, before she got sick. Okarun wants it for a yokai hunt, and Momo has to decide whether it goes to someone who will use it to help, or to someone who'll only show it off.",
+     "offer": ["them (dismayed): Okarun wants my talisman for his yokai hunt. It's the last one Grandma made.",
+               "them: Meet me at the shrine tonight. Tell me whether he's going to use it to help, or to show off."],
+     "stages": [
+         {"text": "Meet Momo at the shrine at night", "objectives": [{"do": "visit", "place": "shrine", "times": [3], "scene": "World: Momo Ayase, Shrine Night", "rewards": [{"coins": 300}]}]},
+         {"text": "Fight Okarun, to test the talisman", "scene": "World: Momo Ayase, Okarun Beaten", "objectives": [{"do": "defeat", "cpus": ["Okarun"]}]},
+         {"text": "Tell Momo your answer", "objectives": [{"do": "talk", "to": "Momo Ayase", "script": [
+             "them (dismayed): He beat the yokai, and he didn't even look at the talisman. Typical.",
+             "them (pleased): ...Fine. He can keep it. You can keep the story of how it went."]}]},
+     ],
+     "endings": [
+         {"key": "let-him-take-it", "title": "Let Okarun take it", "about": "Momo answers the question she has been dodging since the first film night: she gives Okarun the talisman as a promise, and admits she believes in him. Okarun keeps the talisman as a loan, and promises to bring it back for the next hunt.",
+          "scene": "World: Momo Ayase, Let Him Take It", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "keep-it-home", "title": "Keep it at home", "about": "Momo keeps the talisman on the shrine wall, where Grandma would want it. She says Okarun can ask nicely next time, and gives him a cup of tea anyway.",
+          "scene": "World: Momo Ayase, Keep It Home", "rewards": [{"coins": 500}, {"gift": "playmat"}]},
+     ]},
 ]
+
 MOMO_AYASE_SCENES = [
-  {
-    "name": "World: Momo Ayase, Cafe",
-    "lines": [
-      "background cafe",
-      "me enters right with slide",
-      "me: Look at this poster! Isn't he the most amazing man in the world?",
-      "player: He's... very good looking.",
-      "me (pleased): RIGHT? Thank you! Someone with taste.",
-      "me (dismayed): ...My real crush isn't like him at all. Forget I said that."
-    ]
-  },
-  {
-    "name": "World: Momo Ayase, Shrine",
-    "lines": [
-      "background shrine",
-      "me enters center with fade",
-      "me: The talismans are fluttering. That means the spirit is close.",
-      "player: Should I do anything?",
-      "me (pleased): Hold the lantern. Steady. Don't let it go out.",
-      "me: You're braver than you look. I'm not saying that to be nice."
-    ]
-  }
+    {"name": "World: Momo Ayase, The Talisman", "lines": [
+        "background shrine",
+        "me enters center with fade",
+        "me (dismayed): Okarun wants my talisman for his yokai hunt. It's the last one Grandma made.",
+        "player: What are you going to do?",
+        "me: I want to know if he'll use it to help, or just show it off to the others. He's very proud of his clippings.",
+        "me (pleased): Grandma would have given it to him on the first try. She liked people who asked nicely, and who fought well.",
+        "player: Do you want me to ask him for you?",
+        "me (dismayed): No. I want to ask him myself. And I want you there, holding the lantern, while I do.",
+        "me: Meet me at the shrine tonight. Tell me whether he's going to use it to help, or to show off, and I'll decide after.",
+        "me (pleased): The talisman's tied with Grandma's knot. It doesn't come undone, so whoever holds it has to earn it."]},
+    {"name": "World: Momo Ayase, Film Opinion", "lines": [
+        "background city", "me enters right with slide",
+        "me (pleased): Have you seen his films? Ken Takakura. Tell me you've seen them, or I'll have to explain them to you.",
+        "player: Not yet.",
+        "me (dismayed): Then you're coming to the cafe at noon. Bring an opinion, and don't say his jaw is too big. That's not a crime, it's a feature.",
+        "me: I have his poster on my wall, and my grandma says it's the only man in the room who doesn't snore."]},
+    {"name": "World: Momo Ayase, Film Night Cafe", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (dismayed): The film's on the screen in the back. Look at the car chase. Look at his jaw.",
+        "player: It is a nice jaw.",
+        "me (pleased): Thank you! Finally, someone with taste. We'll watch the sequel next, and you're buying the popcorn.",
+        "me: And the car chase is the best thing he's ever done. He throws the car into the river himself, in one take.",
+        "me (dismayed): Stop staring at me like that. I'm not going to talk about Okarun. Watch the film."]},
+    {"name": "World: Momo Ayase, Real Crush", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (dismayed): I don't really talk about Ken Takakura any more. I'm not in love with a film star. Don't tell anyone.",
+        "player: Then who?",
+        "me: Okarun. He's weird, and he keeps losing things, and he doesn't notice me. That's the whole problem, honestly.",
+        "me (pleased): He once said I had a good spine for a yokai hunter. I've been carrying that around like a trophy ever since."]},
+    {"name": "World: Momo Ayase, Grandma's Shrine", "lines": [
+        "background shrine", "me enters left with slide",
+        "me (dismayed): Grandma's spirit is restless. Aira keeps asking about it, and I can't stop her without shouting.",
+        "player: What's wrong with the spirit?",
+        "me: Nothing, if we leave it alone. It's keeping an eye on the town, the way Grandma did.",
+        "me (pleased): Come to the shrine this evening. Hold the lantern for me, and don't let the flame go out. It's a bad sign if it does."]},
+    {"name": "World: Momo Ayase, Lantern Hold", "lines": [
+        "background shrine", "me enters center with fade",
+        "me: Hold the lantern steady, please. The spirit responds to a still flame, and it's been very touchy.",
+        "player: It's getting cold in here.",
+        "me (pleased): Good. That means it's listening. Hold it just a little longer.",
+        "me (dismayed): Grandma used to sing to it. I don't know the tune. I just hum the parts I remember.",
+        "me: Hold it still. That's all. You're doing well, and that's rare for a lantern holder."]},
+    {"name": "World: Momo Ayase, Aira Stopped", "lines": [
+        "cast aira as Aira",
+        "background shrine", "me enters center with fade",
+        "aira enters right with slide",
+        "aira: The spirit's daughter is near. Let me see the shrine, Momo. Please, just a look.",
+        "me (dismayed): Not tonight, Aira. Grandma needs the spirit still, and you're making it restless.",
+        "aira: {player} beat me. Then I'll find her by myself.",
+        "me (pleased): Beat me, if you can. Then you'll know why the spirit stays where it is."]},
+    {"name": "World: Momo Ayase, Family Talisman", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I'm giving you a talisman of your own. Red string, Grandma's knot. You're part of the family now.",
+        "player: That means a lot.",
+        "me (dismayed): It's not a small thing. Grandma would tell you the same, if she were awake to say it.",
+        "me: Don't take it off in the rain. The string's still good, but the knot can't take water."]},
+    {"name": "World: Momo Ayase, Shrine Night", "lines": [
+        "background night", "me enters center with fade",
+        "me (dismayed): The shrine's dark. Okarun's coming with his yokai clippings, and he wants my talisman for the hunt.",
+        "player: Is he going to be nice about it?",
+        "me: He's going to be Okarun about it. Which means he'll fight whatever's in front of him, and then ask for the talisman back.",
+        "me (pleased): Let's see what he does with it. If he uses it to help, I'll give it to him. If not, it goes back on the wall."]},
+    {"name": "World: Momo Ayase, Okarun Beaten", "lines": [
+        "cast okarun as Okarun",
+        "background shrine", "me enters center with fade",
+        "okarun enters right with slide",
+        "okarun: {player} beat me, Momo, and your talisman got the hit right in the middle of it.",
+        "me (dismayed): It's Grandma's talisman. Be careful with it, and don't hold it by the string.",
+        "okarun: I will. I'd like to keep it, if you'll let me borrow it again, for the next hunt.",
+        "me (pleased): Borrow, not keep. And come back for the tea after. That part isn't optional."]},
+    {"name": "World: Momo Ayase, Let Him Take It", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I'm letting Okarun take the talisman. He'll bring it back, I think, with a note about the yokai.",
+        "player: Do you trust him?",
+        "me (dismayed): With the yokai, yes. With his manners, I'm still working on it. He's never once said thank you.",
+        "me: Grandma would have liked him. She'd have said he needed feeding, and fed him until he said it."]},
+    {"name": "World: Momo Ayase, Keep It Home", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): The talisman stays on the shrine wall, on Grandma's hook. Where she'd want it, and where she can see it.",
+        "player: Okarun will be disappointed.",
+        "me (pleased): He can ask nicely next time. That's the only way I'll say yes to him, and he knows it.",
+        "me: Have some tea. You look like you've been holding a lantern all night."]},
 ]
+
+# Okarun. Thread: the granny who runs too fast, the cursed thing he has to recover, and the power someone is selling in town.
+# Q1 plants the forty-two clippings and the blur he calls proof. Q2 pays off: the cursed thing needs company, and Momo is the
+# company he gets. Q3: the power is bought by Cinder, and Okarun has to decide whether the seller is still out there.
+# Okarun. Canon a fan expects: he believes in aliens, not ghosts; his rival and co-hunter Momo believes in ghosts, and that argument
+# is their whole dynamic. Turbo Granny, the old woman who runs faster than a train, cursed him and took his golden balls (the
+# show's cheeky cursed item, kept light). His signature is the clippings and the blurry photos he treats as evidence.
+# Thread: Q1 plants the forty-two clippings and the question of whether the granny is a yokai or an alien-powered woman.
+# Q2 pays off: the golden balls are recovered with Momo, and the ghost-versus-alien argument gets its first crack.
+# Q3 answers Q1 in full: Cinder is only a buyer; the seller of the granny's speed is an alien trader, so both of them were partly right.
 OKARUN_QUESTS = [
-  {
-    "key": "okarun-turbo-granny",
-    "title": "Turbo Granny",
-    "gates": 2,
-    "about": "Okarun has research on a yokai, and nobody believes a word of it.",
-    "offer": [
-      "them: I have research. On a yokai. Nobody believes me, but you might.",
-      "them (pleased): Look at these clippings. Don't rush me."
-    ],
-    "stages": [
-      {
-        "text": "Look at Okarun's clippings at the library at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "library",
-            "times": [
-              1
-            ],
-            "scene": "World: Okarun, Library",
-            "rewards": [
-              {
-                "coins": 150
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Occultic Daily Life, Okarun",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "DDD/S118-E002"
-          }
-        ]
-      },
-      {
-        "text": "Tell Okarun what you think",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Okarun",
-            "script": [
-              "them (pleased): You took me seriously? I'm so surprised I forgot what I was saying.",
-              "them: Okay. Okay. Where was I?"
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "serious-research",
-        "title": "Take the research seriously",
-        "about": "Okarun shares the rest of his clippings, and asks you to come see the yokai with him.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "manga"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "okarun-golden-balls",
-    "title": "Golden Balls",
-    "gates": 5,
-    "about": "Okarun is still missing part of himself, and he needs a companion for the cursed thing he has to recover.",
-    "offer": [
-      "them (dismayed): There's a cursed thing I have to recover. It's awkward to explain.",
-      "them: Come along, please. Momo can't always go."
-    ],
-    "stages": [
-      {
-        "text": "Meet Okarun in the alley at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "alley",
-            "times": [
-              3
-            ],
-            "scene": "World: Okarun, Alley",
-            "rewards": [
-              {
-                "pack": "level_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Okarun: Full Throttle Strike in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "DDD/S118-E003",
-            "against": [
-              "Okarun"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Answer Okarun's question",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Okarun",
-            "script": [
-              "them: Will you come along? I mean it.",
-              "them (pleased): ...Okay. Good. Don't tell Momo I was nervous."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "come-along",
-        "title": "Come along",
-        "about": "Okarun recovers the cursed thing with you at his side. It's the most awkward night he's had, and he's glad of it.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "okarun-turbo-granny", "title": "Turbo Granny", "requires": {"rank": 1},
+     "scene": "World: Okarun, Clippings",
+     "about": "Okarun has forty-two clippings on Turbo Granny, and he is certain she is no yokai. He thinks the speed comes from somewhere above the sky, and nobody believes him.",
+     "offer": ["them: I have forty-two clippings about a granny who runs faster than a train. She's not a ghost, she's an alien.",
+               "them (dismayed): Momo says it's a yokai, and she won't look at the photos. Come to the arena at noon and watch me prove it."],
+     "stages": [
+         {"text": "See Okarun's proof at the arena at noon", "objectives": [{"do": "visit", "place": "arena", "times": [1], "scene": "World: Okarun, Arena Proof", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Okarun whether you believe him", "objectives": [{"do": "talk", "to": "Okarun", "script": [
+             "them (dismayed): You believe me? Really? Momo just said that's a ghost story, and she's the one who gets to decide.",
+             "them (pleased): Then I'll show you the rest of the clippings. Most of them are blurry, but the blur is the evidence."]}]},
+     ],
+     "endings": [{"key": "serious-research", "title": "Read the clippings", "about": "Okarun hands you the rest of the clippings, and says the granny's speed has to come from a machine. Somebody out there is building the machine, and he wants to know who.",
+                  "scene": "World: Okarun, Clipping Shared", "rewards": [{"coins": 300}, {"gift": "manga"}]}]},
+    {"key": "okarun-golden-balls", "title": "Golden Balls", "gates": 2, "requires": {"quests": ["okarun-turbo-granny"]},
+     "scene": "World: Okarun, Cursed Thing",
+     "about": "Turbo Granny cursed Okarun and took his golden balls, the cursed item that gives him his power. He wants them back, and Momo says she'll help only if it's a ghost. It's not.",
+     "offer": ["them (dismayed): Turbo Granny took my golden balls. I need them back, and I can't do it alone.",
+               "them: Momo says the curse is a ghost, and she won't come unless she can say that to my face. Beat her, and she'll come with me."],
+     "stages": [
+         {"text": "Go to the shrine with Okarun in the evening", "objectives": [{"do": "visit", "place": "shrine", "times": [2], "scene": "World: Okarun, Shrine Errand", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Momo, so she'll come and argue the ghost question in person", "scene": "World: Okarun, Momo Beaten", "objectives": [{"do": "defeat", "cpus": ["Momo Ayase"]}]},
+         {"text": "Tell Okarun what Momo said", "objectives": [{"do": "talk", "to": "Okarun", "script": [
+             "them (dismayed): She says the curse is a ghost. I say it's an alien. We're going to argue about it all the way there.",
+             "them (pleased): ...She's coming, though. That's enough for now."]}]},
+     ],
+     "endings": [{"key": "come-along", "title": "Get the balls back", "about": "Okarun recovers the golden balls from the shrine, with Momo arguing ghosts the whole way. The argument isn't over, but the curse is broken, and Okarun is very pleased.",
+                  "scene": "World: Okarun, Night Recovery", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "okarun-the-yokai", "title": "The Seller", "gates": 5, "requires": {"quests": ["okarun-golden-balls"]},
+     "scene": "World: Okarun, The Seller",
+     "about": "The granny's speed was bought, not born. Okarun thinks an alien trader sold it to her, and that the trader is selling the same speed to others. Cinder is one of the buyers. Okarun has to prove it, and the proof is the last clipping.",
+     "offer": ["them (dismayed): The granny's speed was sold to her. I know it, and Cinder knows who sold it.",
+               "them: Meet me at the arena tonight. You'll be the witness when she tells me the seller's name, or lies about it."],
+     "stages": [
+         {"text": "Meet Okarun at the arena at night", "objectives": [{"do": "visit", "place": "arena", "times": [3], "scene": "World: Okarun, Arena Night", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Cinder, to make her say who sold the speed", "scene": "World: Okarun, Cinder Beaten", "objectives": [{"do": "defeat", "cpus": ["Cinder Fall"]}]},
+         {"text": "Tell Okarun your answer", "objectives": [{"do": "talk", "to": "Okarun", "script": [
+             "them (dismayed): She named him. An alien trader, the one who sells speed in a bottle, and he's sold it to the granny.",
+             "them (pleased): So I was right. Momo, you can say it now. Admit the granny isn't a ghost."]}]},
+     ],
+     "endings": [
+         {"key": "aliens-were-right", "title": "Show the proof", "about": "Okarun names the trader in front of Momo, and the granny's speed is traced to an alien bottle. Momo admits he was right about the speed, and still says the curse is a ghost. The argument is finished, and both of them are happy with a draw.",
+          "scene": "World: Okarun, Proof", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "ghost-was-right", "title": "Give Momo the ghost", "about": "Okarun admits the curse has a ghost in it, after all. He's still certain about the aliens, but he lets Momo have the ghost, which he says is the first time he's ever lost an argument on purpose.",
+          "scene": "World: Okarun, Ghost Admitted", "rewards": [{"coins": 500}, {"gift": "playmat"}]},
+     ]},
 ]
+
 OKARUN_SCENES = [
-  {
-    "name": "World: Okarun, Library",
-    "lines": [
-      "background library",
-      "me enters center with fade",
-      "me: The yokai was seen three times. Three! Look at the photos. Look!",
-      "player: Those are blurry.",
-      "me (dismayed): They're blurry because it's FAST. Like me.",
-      "me (pleased): Oh, you're taking this seriously? I'm so surprised I forgot what I was saying."
-    ]
-  },
-  {
-    "name": "World: Okarun, Alley",
-    "lines": [
-      "background city",
-      "me enters left with rise",
-      "me: The thing I have to recover is cursed. I'm not supposed to say the name.",
-      "player: Then don't.",
-      "me (dismayed): I wasn't going to. I was going to whisper it.",
-      "me: Come along. Momo can't always be there."
-    ]
-  }
+    {"name": "World: Okarun, Clippings", "lines": [
+        "background library", "me enters left with slide",
+        "me (dismayed): Forty-two clippings. Every one of them says the same thing: a granny who runs too fast for the road.",
+        "player: Is she a ghost?",
+        "me: Momo says yes. I say she's an alien, and the blur is the proof. Nobody believes the blur.",
+        "me (pleased): Come to the arena at noon. You can see the blur for yourself, and then tell Momo she's wrong.",
+        "me: Don't say the word yokai in front of me. I'll have to explain the difference for an hour."]},
+    {"name": "World: Okarun, Arena Proof", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): Look. The granny goes past at a hundred kilometres an hour. Did you see her?",
+        "player: I saw a blur.",
+        "me (dismayed): That's the granny. The blur is the proof. Nobody gets that, not even Momo, who thinks everything is a ghost.",
+        "player: Momo's here, though.",
+        "me (dismayed): She's watching us from the wall, and she's pretending she isn't. She's been pretending since school started.",
+        "me (pleased): Fine. Tell her the blur's a ghost. Watch her face, and then tell me if she's convinced.",
+        "player: Is she?",
+        "me: No. She says it's a yokai with a bicycle. That's the best argument she's ever made, and I hate it."]},
+    {"name": "World: Okarun, Clipping Shared", "lines": [
+        "background library", "me enters center with fade",
+        "me (pleased): Here's the rest of the clippings. I've been waiting to show someone who doesn't laugh at the blur.",
+        "player: These are all real?",
+        "me (dismayed): Most of them. The rest are just things that happened near the shrine. You can tell by the handwriting.",
+        "me: The speed has to come from a machine. Somebody out there is building the machine, and selling it in bottles.",
+        "me (pleased): That's why I want to find out who. Once we know the seller, the granny's just a woman who got a bad deal.",
+        "player: What's the next step?",
+        "me (dismayed): Go to the shrine and get my golden balls back. The granny took them, and I'm not sure how much I miss them."]},
+    {"name": "World: Okarun, Cursed Thing", "lines": [
+        "background shrine", "me enters left with slide",
+        "me (dismayed): The granny cursed me, and she took my golden balls. They're the cursed item that gives me my power, and they're at the shrine.",
+        "player: That sounds ridiculous.",
+        "me (pleased): It's the most ridiculous thing that's ever happened to me. Come to the shrine this evening, and bring your patience.",
+        "me: Momo says the balls are haunted by a ghost. She's wrong, and I'll prove it, as long as she comes with me to see it.",
+        "me (dismayed): If she doesn't come, I'm going alone, and I'll be very embarrassed about the whole thing."]},
+    {"name": "World: Okarun, Shrine Errand", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): The golden balls are on the offerings table. The granny left them there, and Momo's already been, and taken the talisman.",
+        "player: Momo's here?",
+        "me (pleased): She's by the lantern, and she's saying the balls are a ghost, very loudly, to nobody.",
+        "me: She won't help me take them back, because she says it's a ghost matter. So I need you to make her come.",
+        "me (dismayed): It's embarrassing, I know. I'd rather have a witness than have to explain it to the granny."]},
+    {"name": "World: Okarun, Momo Beaten", "lines": [
+        "cast momo as Momo Ayase",
+        "background shrine", "me enters center with fade",
+        "momo enters right with slide",
+        "momo: {player} beat me, Okarun. Now you'll get your balls back, and I'll get the ghost.",
+        "me (dismayed): It's not a ghost. It's an alien curse with a ghost on the outside, and I can prove it.",
+        "momo: Ugh. Fine. But I'm not touching the thing, and I'm not holding the lantern for you.",
+        "me (pleased): That's fair. Thank you. I'll do the touching, and you can argue with the ghost as we go."]},
+    {"name": "World: Okarun, Night Recovery", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I got the golden balls back. The curse is broken, and they're humming like a stranger's phone.",
+        "player: Momo says it was a ghost.",
+        "me (dismayed): Momo says everything is a ghost. But the balls are warm, and they've stopped trying to bite me, which is an alien sign if I've ever seen one.",
+        "me: Thanks for coming. It's the most awkward night I've had, and I'm glad you were there for it.",
+        "me (pleased): Keep the argument going with Momo. I'll be on the granny's trail by the morning, and I'll need you to hold the notebook."]},
+    {"name": "World: Okarun, The Seller", "lines": [
+        "background arena", "me enters left with slide",
+        "me (dismayed): The granny's speed was bought, not born. Someone sold it to her in a bottle, and I think it's an alien trader.",
+        "player: Who's buying it?",
+        "me: Cinder. She's been asking about power she wasn't born with, and the bottle has the same label as the granny's.",
+        "me (pleased): Meet me at the arena tonight. You'll be the witness when she tells me who sold it, or lies about it.",
+        "player: Are you going to fight her?",
+        "me (dismayed): You are. I'll be the one who asks the questions, and you'll be the one who makes her answer."]},
+    {"name": "World: Okarun, Arena Night", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): Cinder's coming to the arena tonight. She knows I've been asking about the bottle, and she's not happy.",
+        "player: Is she dangerous?",
+        "me (pleased): Only when she's asked a direct question. Stand by the wall, and keep your ears open for the trader's name.",
+        "me: The clippings say the seller is always one step behind the buyer. I think she's very close to being the buyer.",
+        "me (dismayed): Hold the notebook. If she says a name, write it down exactly, because I'll need it for the proof."]},
+    {"name": "World: Okarun, Cinder Beaten", "lines": [
+        "cast cinder as Cinder Fall",
+        "background arena", "me enters center with fade",
+        "cinder enters right with slide",
+        "cinder: {player} beat me, Okarun's friend. You asked the right question, and I'll answer it.",
+        "me (dismayed): Then say the name. The alien trader who sold the speed to the granny.",
+        "cinder: He calls himself a trader. He sells speed in bottles to anyone who can pay, and the granny paid with a curse.",
+        "me (pleased): So the speed is alien, and the curse is a ghost. That's both of us right, Momo, and the trader's the one who should be worried."]},
+    {"name": "World: Okarun, Proof", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): The trader's name is in the notebook, and the bottle's label matches the granny's. The speed was bought, the way I said.",
+        "player: Momo's going to be insufferable.",
+        "me (dismayed): She already is. She says the curse is a ghost, and she's right about that too.",
+        "me: Thanks for holding the notebook. The argument's done, and I got the proof. That's more than I expected.",
+        "me (pleased): Next time, bring a hat. I'm going to need someone to argue with at the shrine."]},
+    {"name": "World: Okarun, Ghost Admitted", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): I admit the curse has a ghost in it. I'm still certain about the aliens, but I'll let Momo have the ghost.",
+        "player: That's the first time you've lost on purpose.",
+        "me (pleased): It is. I wanted to see what it felt like, and it feels a bit like fresh air.",
+        "me: Tell Momo she was right. Don't make it a big thing, she'll be unbearable for a week."]},
 ]
+
 CINDER_FALL_QUESTS = [
-  {
-    "key": "cinder-the-maidens-power",
-    "title": "The Maiden's Power",
-    "gates": 2,
-    "about": "Cinder wants to know what you'd do with power you weren't born with.",
-    "offer": [
-      "them: A flame in my palm, look. Power you weren't born with. What would you do?",
-      "them (dismayed): Don't flinch. I'm not going to burn you. Yet."
-    ],
-    "stages": [
-      {
-        "text": "Meet Cinder in the alley in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "alley",
-            "times": [
-              2
-            ],
-            "scene": "World: Cinder Fall, Alley",
-            "rewards": [
-              {
-                "pack": "climax_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Cinder: Leading a Grimm Invasion",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "RWBY/WX03-057"
-          }
-        ]
-      },
-      {
-        "text": "Answer Cinder's question",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Cinder Fall",
-            "script": [
-              "them: I was a nobody once. Is taking what you're owed wrong?",
-              "them (pleased): ...You said it isn't. Interesting."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "owed",
-        "title": "Say it isn't wrong",
-        "about": "Cinder smiles for the first time, and hints that she'll be asking you for more later.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "instant-ramen"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "cinder-the-fall-of-beacon",
-    "title": "The Fall of Beacon",
-    "gates": 5,
-    "about": "Cinder needs the silver-eyed girl out of the way, and she's offering a share of the power.",
-    "offer": [
-      "them (dismayed): Glass shards in the air. Feel that? That's what's coming.",
-      "them: I need you to lure Ruby Rose somewhere quiet. Will you?"
-    ],
-    "stages": [
-      {
-        "text": "Meet Cinder in the warehouse at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "warehouse",
-            "times": [
-              3
-            ],
-            "scene": "World: Cinder Fall, Warehouse",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Beat Ruby Rose in a duel",
-        "objectives": [
-          {
-            "do": "defeat",
-            "cpus": [
-              "Ruby Rose"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Cinder your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Cinder Fall",
-            "script": [
-              "them: Lure her away, or stand against me. Choose.",
-              "them (pleased): ...Then we'll see how the power decides."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "take-the-power",
-        "title": "Take the power",
-        "about": "Cinder takes the power, and Ruby's Best friend quest is closed for good.",
-        "rewards": [
-          {
-            "coins": 800
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ],
-        "locks": [
-          "ruby-silver-eyes"
-        ]
-      },
-      {
-        "key": "walk-away",
-        "title": "Walk away from the fall",
-        "about": "Cinder laughs and says the offer stands, in case you change your mind.",
-        "rewards": [
-          {
-            "coins": 500
-          },
-          {
-            "gift": "handheld"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "cinder-the-maidens-power", "title": "The Maiden's Power", "requires": {"rank": 1},
+     "scene": "World: Cinder Fall, Power Question",
+     "about": "Cinder wants to know what you'd do with power you weren't born with. She asks it the way someone asks about the weather, and she waits for the answer.",
+     "offer": ["them: What would you do with power you weren't born with? Be honest. I'll know if you're lying.",
+               "them (pleased): Come to the cafe at evening. I'll tell you what I'd do, and you'll tell me yours."],
+     "stages": [
+         {"text": "Talk power with Cinder at the cafe in the evening", "objectives": [{"do": "visit", "place": "cafe", "times": [2], "scene": "World: Cinder Fall, Cafe Power", "rewards": [{"coins": 200}]}]},
+         {"text": "Tell Cinder what you'd do", "objectives": [{"do": "talk", "to": "Cinder Fall", "script": [
+             "them (pleased): Hm. That's more honest than most people manage. Good.",
+             "them: I'll be back with a bigger offer. Think about it while I'm gone, and don't tell the others."]}]},
+     ],
+     "endings": [{"key": "smiles-and-hints", "title": "Hear the hint", "about": "Cinder smiles for the first time, and hints that she'll be asking you for more later. She leaves a glass of something bright on the table, and it's still cold when you touch it.",
+                  "scene": "World: Cinder Fall, Hint", "rewards": [{"coins": 300}, {"gift": "iced-coffee"}]}]},
+    {"key": "cinder-the-offer", "title": "The Offer", "gates": 2, "requires": {"quests": ["cinder-the-maidens-power"]},
+     "scene": "World: Cinder Fall, The Offer",
+     "about": "Cinder needs the silver-eyed girl out of the way, and she's offering a share of the power. Ruby is the one she has in mind, and Cinder wants you to be the one who delivers the fight.",
+     "offer": ["them: I need a girl with silver eyes out of the way. Ruby. She'll be a problem later.",
+               "them (pleased): Beat Ruby first. Then we'll talk about a share of the power."],
+     "stages": [
+         {"text": "Meet Cinder in the alley at night", "objectives": [{"do": "visit", "place": "alley", "times": [3], "scene": "World: Cinder Fall, Alley Offer", "rewards": [{"coins": 300}]}]},
+         {"text": "Fight Ruby, to show Cinder you can deliver", "scene": "World: Cinder Fall, Ruby Beaten", "objectives": [{"do": "defeat", "cpus": ["Ruby Rose"]}]},
+         {"text": "Give Cinder your answer", "objectives": [{"do": "talk", "to": "Cinder Fall", "script": [
+             "them: She's still standing. Good. That means she's worth taking the power from.",
+             "them (pleased): Then you're in. Don't make me wait long for the next step."]}]},
+     ],
+     "endings": [{"key": "takes-the-share", "title": "Take a share", "about": "Cinder takes a share of the power and gives you a piece of it in a glass. She says it'll make you stronger, and that it'll be harder to put down once you've drunk it.",
+                  "scene": "World: Cinder Fall, Share", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "cinder-the-fall-of-beacon", "title": "The Fall of Beacon", "gates": 5, "requires": {"quests": ["cinder-the-offer"]},
+     "scene": "World: Cinder Fall, The Fall",
+     "about": "Cinder is ready to take the power in full, and Beacon is where she'll do it. She asks you to choose: stand with her and take the power, or try to stop her and close the door on Ruby's eyes.",
+     "offer": ["them (dismayed): It's time. The power is ready, and Beacon is where I'll take it.",
+               "them: Meet me on the rooftop tonight. I want you to see me take it, or to stop me."],
+     "stages": [
+         {"text": "Meet Cinder on the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Cinder Fall, Rooftop Night", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Ruby, to decide whether the power is hers or yours", "scene": "World: Cinder Fall, Ruby Stands", "objectives": [{"do": "defeat", "cpus": ["Ruby Rose"]}]},
+         {"text": "Tell Cinder your answer", "objectives": [{"do": "talk", "to": "Cinder Fall", "script": [
+             "them (dismayed): The girl's still on her feet. Interesting. That's a problem for both of us.",
+             "them (pleased): Then choose. Take the power, or let me take it alone and watch what it does to me."]}]},
+     ],
+     "endings": [
+         {"key": "take-the-power", "title": "Take the power", "about": "Cinder answers her own first question. She says she would have used the power to protect someone, and then admits she only ever wanted to be the one holding it. She takes the power, and Ruby's keep-your-eyes-open quest is closed for good.",
+          "locks": ["ruby-keep-your-eyes-open"], "scene": "World: Cinder Fall, Taken", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "walk-away", "title": "Walk away", "about": "Cinder gives her own answer to the question she asked on the first day, and it's the honest one: power you weren't born with protects nobody. She walks off the rooftop and leaves the glass on the ledge.",
+          "scene": "World: Cinder Fall, Walks Off", "rewards": [{"coins": 500}, {"gift": "bottled-tea"}]},
+     ]},
 ]
+
 CINDER_FALL_SCENES = [
-  {
-    "name": "World: Cinder Fall, Alley",
-    "lines": [
-      "background city",
-      "me enters right with rise",
-      "me: Feel the heat in my palm? That's the power of a maiden.",
-      "player: It's beautiful, and a bit scary.",
-      "me (pleased): Scary is honest. I like that.",
-      "me: I was a nobody once. Is it wrong to take what I'm owed?"
-    ]
-  },
-  {
-    "name": "World: Cinder Fall, Warehouse",
-    "lines": [
-      "background ruins",
-      "me enters center with fade",
-      "me: Glass shards in the air. They hum when I think about the silver-eyed girl.",
-      "player: What do you want with her?",
-      "me (dismayed): Her out of the way. Quietly.",
-      "me: Lure her somewhere quiet. I'll share the power with you. Promise."
-    ]
-  }
+    {"name": "World: Cinder Fall, Power Question", "lines": [
+        "background dusk", "me enters left with rise",
+        "me: What would you do with power you weren't born with? Honest answer. I'll know if you're lying.",
+        "player: I'd use it to protect someone.",
+        "me (pleased): Everyone says that. It's the answer people give when they haven't thought about what the power costs.",
+        "me: Come to the cafe this evening and tell me again, with more detail. I want to see your hands while you talk."]},
+    {"name": "World: Cinder Fall, Cafe Power", "lines": [
+        "background cafe", "me enters left with slide",
+        "me: You came. Good. Tell me the part of the power you'd keep, and the part you'd give away.",
+        "player: Keep the strength. Give away the fear.",
+        "me (pleased): That's the first answer that's ever made me blink. Good.",
+        "me (dismayed): I was born without power, the way you were. I learned the price of it by being cut open.",
+        "me: Drink the tea. It's cold by now. That's on purpose, so you remember this conversation."]},
+    {"name": "World: Cinder Fall, Hint", "lines": [
+        "background cafe", "me enters left with slide",
+        "me (pleased): You didn't flinch. I'll ask again later, with a bigger offer on the table.",
+        "player: What's the offer?",
+        "me: A share of something bright. It'll make you strong, and harder to put down once you've taken it.",
+        "me (dismayed): Leave the glass here. It's the only thing I want you to remember tonight."]},
+    {"name": "World: Cinder Fall, The Offer", "lines": [
+        "background city", "me enters left with slide",
+        "me: I need the silver-eyed girl out of the way. Ruby. Her eyes are the key to the whole thing, and she'll be a problem later.",
+        "player: Why does she matter?",
+        "me (dismayed): Because the power answers to silver. She doesn't know it, and I'd like to keep it that way for a while longer.",
+        "me (pleased): Beat her first. Then we'll talk about a share, and about what you're prepared to give up for it."]},
+    {"name": "World: Cinder Fall, Alley Offer", "lines": [
+        "background city", "me enters center with fade",
+        "me: Ruby's on the other side of the alley, glowing like a lamp. Are you ready?",
+        "player: I'm ready.",
+        "me (pleased): Then go. I'll watch from the shadows, and I'll be impressed, or I won't.",
+        "me (dismayed): If she's got her scythe out, don't turn your back on it. It's bigger than she is, and it knows the way home."]},
+    {"name": "World: Cinder Fall, Ruby Beaten", "lines": [
+        "cast ruby as Ruby Rose",
+        "background city", "me enters center with fade",
+        "ruby enters right with slide",
+        "ruby: Cinder! You sent the player after me? That's coward's work, and you know it.",
+        "me (dismayed): I sent them to see if you're worth the trouble. You are, Ruby. That's the problem.",
+        "ruby: Then stop smiling at me, and fight for real, the way I would.",
+        "me (pleased): I'd rather you didn't. Get some sleep. The silver will still be there in the morning."]},
+    {"name": "World: Cinder Fall, Share", "lines": [
+        "background city", "me enters center with fade",
+        "me (pleased): Take the share. It's bright, and it'll make you stronger, and harder to put down.",
+        "player: That sounds dangerous.",
+        "me (dismayed): It is. That's why I'm offering it to someone who can carry it, and who won't drop it the first time it's heavy.",
+        "me: Drink it all, or give the glass back. Half measures are for people who still have a choice."]},
+    {"name": "World: Cinder Fall, Rooftop Night", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): The power's ready, and Beacon is where I'll take it. Stand with me, if you've decided.",
+        "player: And if I don't?",
+        "me (pleased): Then stop me, if you can. Ruby's coming up the stairs, and she's furious.",
+        "me: Watch the sky over the school. That's where it'll start, if it does."]},
+    {"name": "World: Cinder Fall, Ruby Stands", "lines": [
+        "cast ruby as Ruby Rose",
+        "background rooftop", "me enters center with fade",
+        "ruby enters left with slide",
+        "ruby: {player} put me down, Cinder, but you're not taking the silver. Not while I'm still breathing.",
+        "me (dismayed): You're on your feet, but only just. Your eyes are glowing for the wrong reason.",
+        "ruby: Then it's my choice to make. Not yours, and not the power's.",
+        "me (pleased): Good. Make it, then. I want to see whose choice it is."]},
+    {"name": "World: Cinder Fall, The Fall", "lines": [
+        "background rooftop",
+        "me enters center with fade",
+        "me (dismayed): The power is ready, and Beacon is where I'll take it. It's been burning in the distance for an hour.",
+        "player: What do you want me to do?",
+        "me: Choose. Take the power, or let me take it alone and see what it does to me. Now, before the sky goes.",
+        "me (pleased): Ruby's still in the way, and she's still on her feet. I didn't expect that, and I'm not used to surprises.",
+        "player: Is that why you want me to pick?",
+        "me (dismayed): Waiting is what Ruby does, and it's why she's still standing. I'd rather you chose than waited.",
+        "me: The glass is in my hand, and it's getting warm. That means the choice is close, whichever way you go.",
+        "me (pleased): Tell me when you've decided. I'll be listening, and I won't be kind about it."]},
+    {"name": "World: Cinder Fall, Taken", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): I took the power. Ruby's eyes are closed to it now, for good, and the sky over Beacon is quiet.",
+        "player: Are you happy?",
+        "me (dismayed): I'm full. I'm not sure happy is the same thing, and I'm not going to go looking for the difference tonight.",
+        "me: The glass is empty. Keep the ledge clean. I'm going to be hungry again soon."]},
+    {"name": "World: Cinder Fall, Walks Off", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I walked off the rooftop and let the wind take me. The offer stands, and so does the glass.",
+        "player: Will you come back?",
+        "me (pleased): When you're ready to carry something heavy. Not before. You'll know when, because I'll find you.",
+        "me: Leave the glass where it is. It's cold, and someone should drink it eventually."]},
 ]
+
+# Ruby Rose. Thread: her silver eyes, which the power in Cinder's glass answers to. Q1 plants the scythe charm she keeps in her
+# pocket and the first time her eyes go silver in front of you. Q2: Kana tells her who's afraid of the eyes. Q3: Cinder comes
+# for the power, and Ruby decides whether to keep her eyes open to it.
 RUBY_ROSE_QUESTS = [
-  {
-    "key": "ruby-crescent-rose",
-    "title": "Crescent Rose",
-    "gates": 2,
-    "about": "Ruby wants to show off her scythe, and she transforms it three ways in a row.",
-    "offer": [
-      "them: Watch this! Crescent Rose, three ways. Don't blink!",
-      "them (pleased): Okay, I knocked over a rack. Still counts."
-    ],
-    "stages": [
-      {
-        "text": "Watch Ruby's scythe at the arena at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "arena",
-            "times": [
-              1
-            ],
-            "scene": "World: Ruby Rose, Arena",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Ruby Rose",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "RWBY/WX03-044"
-          }
-        ]
-      },
-      {
-        "text": "Tell Ruby what you think of the scythe",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Ruby Rose",
-            "script": [
-              "them: Do you think weapons can be friends?",
-              "them (pleased): ...Crescent Rose says yes. It likes you."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "weapons-friends",
-        "title": "Think weapons can be friends",
-        "about": "Ruby gives you a scythe charm, and says it's for good luck, and for showing off.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "playmat"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "ruby-silver-eyes",
-    "title": "Silver Eyes",
-    "gates": 5,
-    "about": "Ruby learns what her silver eyes can do, and who's afraid of them.",
-    "offer": [
-      "them (dismayed): My eyes glow sometimes. Some people are scared of that.",
-      "them: Come to the cafe tonight. I want to tell you about my mum."
-    ],
-    "stages": [
-      {
-        "text": "Meet Ruby at the cafe in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "cafe",
-            "times": [
-              2
-            ],
-            "scene": "World: Ruby Rose, Cafe",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Ruby: Ruby Rose in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "RWBY/WX03-044",
-            "against": [
-              "Ruby Rose"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Ruby your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Ruby Rose",
-            "script": [
-              "them: Cinder wants my eyes. Will you help me stop her?",
-              "them (pleased): ...Thank you. That's what I needed to hear."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "stop-cinder",
-        "title": "Stop Cinder",
-        "about": "Ruby sets out to stop Cinder. Cinder's Best friend quest is closed for good.",
-        "rewards": [
-          {
-            "coins": 800
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ],
-        "locks": [
-          "cinder-the-fall-of-beacon"
-        ]
-      },
-      {
-        "key": "keep-your-eyes-open",
-        "title": "Keep your eyes open",
-        "about": "Ruby decides to wait and watch, and asks you to watch with her.",
-        "rewards": [
-          {
-            "coins": 500
-          },
-          {
-            "gift": "bouquet"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "ruby-crescent-rose", "title": "Crescent Rose", "requires": {"rank": 1},
+     "scene": "World: Ruby Rose, Show Off",
+     "about": "Ruby wants to show off her scythe, and she transforms it three ways in a row. She's proud of it, and she's been practising the third way since dawn.",
+     "offer": ["them (pleased): Watch this! Scythe, sniper, scythe again. Don't blink, okay?",
+               "them: The third shape is the hard one. I can't land the bow in it yet."],
+     "stages": [
+         {"text": "Watch Ruby's scythe at the plaza at noon", "objectives": [{"do": "visit", "place": "plaza", "times": [1], "scene": "World: Ruby Rose, Plaza Drill", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Ruby which shape looked best", "objectives": [{"do": "talk", "to": "Ruby Rose", "script": [
+             "them (pleased): The sniper one? You picked the sniper one? Good, that's my favourite too.",
+             "them: Keep it. I'll show you the bow properly, when I can land it."]}]},
+     ],
+     "endings": [{"key": "weapons-friends", "title": "Be a fan of the scythe", "about": "Ruby gives you a scythe charm for luck, and says it's for showing off, which is the whole point. Her eyes flicker silver for a moment when she gives it to you.",
+                  "scene": "World: Ruby Rose, Charm", "rewards": [{"coins": 300}, {"gift": "iced-coffee"}]}]},
+    {"key": "ruby-silver-eyes", "title": "Silver Eyes", "gates": 2, "requires": {"quests": ["ruby-crescent-rose"]},
+     "scene": "World: Ruby Rose, Silver Eyes",
+     "about": "Ruby's eyes have gone silver twice now, and she's frightened of what they do. Kana is the only one who knows the old stories, and she doesn't want to tell Ruby what they mean.",
+     "offer": ["them (dismayed): My eyes went silver again. In the middle of the cafe, with everyone looking.",
+               "them: Kana says she knows what it means. She's watching me from the stage. Go and ask her, and then beat her, so she takes me seriously."],
+     "stages": [
+         {"text": "Meet Ruby at the cafe in the evening", "objectives": [{"do": "visit", "place": "cafe", "times": [2], "scene": "World: Ruby Rose, Cafe Silver", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Kana, to make her tell Ruby the truth", "scene": "World: Ruby Rose, Kana Sees", "objectives": [{"do": "defeat", "cpus": ["Kana Arima"]}]},
+         {"text": "Tell Ruby what Kana said", "objectives": [{"do": "talk", "to": "Ruby Rose", "script": [
+             "them (dismayed): She says the silver answers to power. Power that someone else is selling.",
+             "them (pleased): ...Then I'll keep my eyes open, and see who's buying."]}]},
+     ],
+     "endings": [{"key": "stop-cinder", "title": "Stop Cinder", "about": "Ruby decides to stop Cinder before she gets close to the silver. Ruby decides Cinder won't get her silver, and she watches the rooftops from now on.",
+                  "scene": "World: Ruby Rose, Stopping Cinder", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "ruby-keep-your-eyes-open", "title": "Keep Your Eyes Open", "gates": 5, "requires": {"quests": ["ruby-silver-eyes"]},
+     "scene": "World: Ruby Rose, Beacon Warning",
+     "about": "Cinder is coming for the silver, and Ruby has to decide whether to keep her eyes open and fight, or close them and let the power go by. She wants a witness who won't tell her what to see.",
+     "offer": ["them (dismayed): Cinder's coming for my eyes. She says the power answers to them.",
+               "them: Meet me at Beacon's gate at night. I need someone to watch me decide."],
+     "stages": [
+         {"text": "Meet Ruby at Beacon's gate at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Ruby Rose, Gate At Night", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Cinder, to keep the silver", "scene": "World: Ruby Rose, Cinder Stopped", "objectives": [{"do": "defeat", "cpus": ["Cinder Fall"]}]},
+         {"text": "Tell Ruby your answer", "objectives": [{"do": "talk", "to": "Ruby Rose", "script": [
+             "them (dismayed): I beat her, and she's still smiling. I don't trust that smile.",
+             "them (pleased): Then keep your eyes open with me. Thanks for watching."]}]},
+     ],
+     "endings": [
+         {"key": "keep-your-eyes-open", "title": "Keep your eyes open", "about": "Ruby answers Kana's question: she is afraid of the silver, and she keeps her eyes open anyway, and decides for herself what they see. Cinder's fall-of-Beacon quest is closed for good.",
+          "locks": ["cinder-the-fall-of-beacon"], "scene": "World: Ruby Rose, Eyes Open", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "close-them", "title": "Close them", "about": "Ruby closes her eyes, and lets the power go past her. She says she'll open them again when she's ready to choose.",
+          "scene": "World: Ruby Rose, Eyes Closed", "rewards": [{"coins": 500}, {"gift": "sleeves"}]},
+     ]},
 ]
+
 RUBY_ROSE_SCENES = [
-  {
-    "name": "World: Ruby Rose, Arena",
-    "lines": [
-      "background arena",
-      "me enters left with slide",
-      "me: Crescent Rose! Scythe. Sniper. Gun. Okay, I hit the rack.",
-      "player: Are you hurt?",
-      "me (pleased): Nope! The rack is fine. Mostly.",
-      "me: Do you think weapons can be friends? Crescent Rose says yes."
-    ]
-  },
-  {
-    "name": "World: Ruby Rose, Cafe",
-    "lines": [
-      "background cafe",
-      "me enters center with fade",
-      "me: Mum used to make cookies. I've been trying to make them since.",
-      "player: How do they turn out?",
-      "me (dismayed): Like a rack, a bit. But they taste good.",
-      "me: I saw a light when Pyrrha fell. My eyes did that. I'm still scared of it."
-    ]
-  }
+    {"name": "World: Ruby Rose, Show Off", "lines": [
+        "background sakura", "me enters center with rise",
+        "me (pleased): Watch this! Scythe, sniper, scythe again. Don't blink, or you'll miss the best bit.",
+        "player: It's a lot of transforming.",
+        "me (dismayed): It's a lot of practice. Mostly I fall over the third shape, but I'm getting better at landing it.",
+        "me: The scythe's heavier than it looks, and it's my favourite thing in the world, after Yang and cookies.",
+        "me (pleased): Come to the plaza at noon and watch the drill. The bow's still a bit wobbly, so be nice about it."]},
+    {"name": "World: Ruby Rose, Plaza Drill", "lines": [
+        "background sakura", "me enters center with rise",
+        "me (pleased): Scythe, sniper, and the third one, the big one. Did you see it?",
+        "player: I saw the sniper.",
+        "me (dismayed): The sniper's the easy one. Stop, I'm going to fall, I'm not falling.",
+        "me: Okay. That's the bow. I landed it. Thank you for watching, I felt so cool."]},
+    {"name": "World: Ruby Rose, Charm", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): The scythe charm is for good luck, and for showing off. Yang says I'm not allowed to give them away.",
+        "player: Thanks, Ruby.",
+        "me (dismayed): Your eyes went a bit silver when I gave it to you. Did you notice that?",
+        "me: Don't worry about it. It happens when I'm excited. Or scared. I'm never sure which."]},
+    {"name": "World: Ruby Rose, Silver Eyes", "lines": [
+        "background cafe", "me enters left with slide",
+        "me (dismayed): My eyes went silver again. In the middle of the cafe, with everyone looking at me.",
+        "player: Are you okay?",
+        "me: I don't know. Kana was on the stage, watching me. She knows what it means, and she won't say.",
+        "me (pleased): Come to the cafe this evening. I'll ask her, and you can stand there and not look scared for me."]},
+    {"name": "World: Ruby Rose, Cafe Silver", "lines": [
+        "background cafe", "me enters left with slide",
+        "me (dismayed): Kana won't tell me what the silver means. She says she'll only tell me if someone beats her.",
+        "player: Then we'll beat her.",
+        "me (pleased): That's the Ruby I like. Okay. I'll keep my eyes on her, and you keep your eyes on her too.",
+        "me: Her temper's bad, and the stage is her favourite place to lose it. Watch the spotlight."]},
+    {"name": "World: Ruby Rose, Kana Sees", "lines": [
+        "cast kana as Kana Arima",
+        "background cafe", "me enters center with fade",
+        "kana enters left with slide",
+        "kana: Your friend beat me, Ruby. Fine. The silver is power that someone is selling to the wrong people.",
+        "me (dismayed): Someone is selling my eyes? Who?",
+        "kana: Cinder. She buys the silver from the ones who can't hold it. Ruby, you should be afraid of her.",
+        "me (pleased): I'm not afraid of her. I'm angry. Keep your answer, Kana, and I'll keep my eyes open."]},
+    {"name": "World: Ruby Rose, Stopping Cinder", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): I'm stopping Cinder before she gets close to the silver. The fall of Beacon won't happen tonight.",
+        "player: Are you sure?",
+        "me (dismayed): I'm not sure about anything. But I'm sure about my eyes, and they're mine.",
+        "me: Thanks for watching. Next time, you can hold the scythe while I fix the bow."]},
+    {"name": "World: Ruby Rose, Beacon Warning", "lines": [
+        "background rooftop",
+        "me enters left with slide",
+        "me (dismayed): Cinder's coming for my eyes. She says the power answers to them, and she wants the silver tonight.",
+        "player: What are you going to do?",
+        "me: I don't know. Keep my eyes open and fight, or close them and let the power go by. I haven't decided.",
+        "me (pleased): Meet me at Beacon's gate at night. I need someone who'll watch me decide, and won't tell me what to see.",
+        "player: I'll be there.",
+        "me (dismayed): Good. If my eyes go silver, don't look away. I'll need someone to see it happen.",
+        "me: Yang would tell me to close them. Weiss would tell me to write it down. You're the one I want to ask.",
+        "me (pleased): So ask me, when I'm there. I'll tell you the truth, even if it's the silver talking."]},
+    {"name": "World: Ruby Rose, Gate At Night", "lines": [
+        "background night", "me enters center with fade",
+        "me (dismayed): The gate's quiet. The silver's been humming in my eyes since sundown.",
+        "player: Is Cinder here?",
+        "me: Not yet. She likes to make an entrance. I'll make one too, if she doesn't come soon.",
+        "me (pleased): Stand with me while I wait. The silver's warmer when someone's watching.",
+        "me (dismayed): Here she comes. Keep your hands out of your pockets, and don't let her talk you into anything."]},
+    {"name": "World: Ruby Rose, Cinder Stopped", "lines": [
+        "cast cinder as Cinder Fall",
+        "background rooftop", "me enters center with fade",
+        "cinder enters right with slide",
+        "cinder: {player} beat me, Ruby. The silver's still yours, I suppose, for tonight.",
+        "me (dismayed): It's mine. You'll have to take it from me, and that's not going to happen.",
+        "cinder: Then I'll wait for you to be tired. Girls with silver eyes always get tired.",
+        "me (pleased): Not this one. Go home, Cinder. You've lost your offer tonight."]},
+    {"name": "World: Ruby Rose, Eyes Open", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): My eyes are open. The silver's mine to see with, and I decide what it shows me.",
+        "player: What does it show you?",
+        "me (dismayed): Beacon, and Yang, and the stupid bow I still can't land. It's a good view.",
+        "me: Thanks for keeping your eyes open with me. I was a bit scared, and it helped."]},
+    {"name": "World: Ruby Rose, Eyes Closed", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I closed my eyes and let the power go past. It's the first time I've let it go without a fight.",
+        "player: Are you scared you made the wrong choice?",
+        "me (pleased): A little. But I'll open them again, when I'm ready to choose.",
+        "me: Stay close while I wait. My eyes are going to want to open soon."]},
 ]
+
+# Weiss Schnee. Thread: the family knight her father used to summon. Q1 plants her notes corrected in red and the Myrtenaster in
+# her coat. Q2: her summoning fails at the first try, and the knight's arm appears. Q3: the knight returns, and Weiss decides
+# what kind of heiress she'll be.
 WEISS_SCHNEE_QUESTS = [
-  {
-    "key": "weiss-heiress",
-    "title": "Heiress",
-    "gates": 2,
-    "about": "Weiss needs a study partner who won't flatter her.",
-    "offer": [
-      "them: My notes are perfect. Find an error, if you dare.",
-      "them (pleased): You found one. Fine. Thank you. I'll pretend I didn't need it."
-    ],
-    "stages": [
-      {
-        "text": "Study with Weiss at the library at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "library",
-            "times": [
-              1
-            ],
-            "scene": "World: Weiss Schnee, Library",
-            "rewards": [
-              {
-                "coins": 150
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Weiss Schnee",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "RWBY/WX03-076"
-          }
-        ]
-      },
-      {
-        "text": "Let Weiss decide whether you've earned her thanks",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Weiss Schnee",
-            "script": [
-              "them: You didn't apologise once. I appreciate it.",
-              "them (pleased): ...Thank you, stiffly. I mean it."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "study-partner",
-        "title": "Be her study partner",
-        "about": "Weiss leaves a copy of her notes on your table, corrected in red.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "sleeves"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "weiss-summoning",
-    "title": "Summoning",
-    "gates": 5,
-    "about": "Weiss is trying to summon her family's knight, and her father is still on her mind.",
-    "offer": [
-      "them (dismayed): The glyph won't light. I'm going to try again.",
-      "them: Come to the arena at evening. I need someone watching."
-    ],
-    "stages": [
-      {
-        "text": "Watch Weiss summon at the arena in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "arena",
-            "times": [
-              2
-            ],
-            "scene": "World: Weiss Schnee, Arena",
-            "rewards": [
-              {
-                "pack": "level_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Weiss: Weiss: Teamwork in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "RWBY/WX03-T17",
-            "against": [
-              "Weiss Schnee"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Weiss your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Weiss Schnee",
-            "script": [
-              "them: My father would have wanted the knight. I want it for myself.",
-              "them (pleased): ...You let me smile. Don't tell anyone."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "the-knight",
-        "title": "See the knight arrive",
-        "about": "The knight's arm appears, and Weiss lets you see her smile properly for once.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "weiss-heiress", "title": "The Heiress", "requires": {"rank": 1},
+     "scene": "World: Weiss Schnee, Study Partner",
+     "about": "Weiss needs a study partner who won't flatter her. Her notes are perfect, and she's sick of people telling her so.",
+     "offer": ["them: I need a study partner who won't flatter me. Everyone says my notes are perfect. They're not.",
+               "them (dismayed): Come to the library at noon, and read the page I've marked. Tell me what's wrong with it."],
+     "stages": [
+         {"text": "Work through Weiss's notes at the library at noon", "objectives": [{"do": "visit", "place": "library", "times": [1], "scene": "World: Weiss Schnee, Library Notes", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Weiss what's wrong with the notes", "objectives": [{"do": "talk", "to": "Weiss Schnee", "script": [
+             "them (dismayed): You found the error in the third chapter. Nobody's ever found it before.",
+             "them (pleased): Good. Keep finding them. Don't flatter me, not ever."]}]},
+     ],
+     "endings": [{"key": "corrected-in-red", "title": "Read the corrections", "about": "Weiss leaves a copy of her notes on your table, corrected in red, with a line at the bottom asking you to check the rest.",
+                  "scene": "World: Weiss Schnee, Red Corrections", "rewards": [{"coins": 300}, {"gift": "manga"}]}]},
+    {"key": "weiss-summoning", "title": "The Summoning", "gates": 2, "requires": {"quests": ["weiss-heiress"]},
+     "scene": "World: Weiss Schnee, Summoning Night",
+     "about": "Weiss is trying to summon her family's knight, the one her father used to call up. Her first attempt fails, and she's sure she knows why.",
+     "offer": ["them (dismayed): I tried the summoning again. The circle lit, and nothing came.",
+               "them: Ram and Rem keep saying I'm not ready. Beat them, and maybe the knight will answer you first."],
+     "stages": [
+         {"text": "Meet Weiss at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Weiss Schnee, Arena Circle", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Ram/Rem, to prove she's ready for the knight", "scene": "World: Weiss Schnee, Twins Fall", "objectives": [{"do": "defeat", "cpus": ["Ram/Rem"]}]},
+         {"text": "Tell Weiss what the twins said", "objectives": [{"do": "talk", "to": "Weiss Schnee", "script": [
+             "them (dismayed): They said I'm ready, but only because {player} stood where they could see.",
+             "them (pleased): ...Then I'll try again tomorrow. With a witness, and without the temper."]}]},
+     ],
+     "endings": [{"key": "knights-arm", "title": "See the knight's arm", "about": "The knight's arm appears in the circle for one second. Weiss smiles properly for the first time, and tells you it's the first thing her father ever gave her.",
+                  "scene": "World: Weiss Schnee, Knights Arm", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "weiss-the-knight-returns", "title": "The Knight Returns", "gates": 5, "requires": {"quests": ["weiss-summoning"]},
+     "scene": "World: Weiss Schnee, The Knight Returns",
+     "about": "The knight is finally coming back in full, and Weiss has to decide what kind of heiress she'll be. Ruby is the one who thinks she should stay out of the family's business, and Weiss has never been good at listening.",
+     "offer": ["them (dismayed): The knight is coming back. Father's knight, the whole thing. I can feel it.",
+               "them: Come to the rooftop tonight. Ruby's going to argue with me about it, and I want you to see who's right."],
+     "stages": [
+         {"text": "Be on the rooftop with Weiss at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Weiss Schnee, Rooftop Knight", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Ruby, over what the family owes Weiss", "scene": "World: Weiss Schnee, Ruby Falls", "objectives": [{"do": "defeat", "cpus": ["Ruby Rose"]}]},
+         {"text": "Tell Weiss your answer", "objectives": [{"do": "talk", "to": "Weiss Schnee", "script": [
+             "them (dismayed): Ruby says I should let the knight go. She might be right, and I hate that.",
+             "them (pleased): Then I'll be the heiress who decides. You're the witness, {player}. Don't let me forget it."]}]},
+     ],
+     "endings": [{"key": "knight-returns", "title": "Let the knight return", "about": "The knight returns in full. Weiss answers the question her red corrections never could: what the family owes her. She decides it's hers to call, and to pay the debts off in her own way.",
+                  "scene": "World: Weiss Schnee, Knight Here", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+     {"key": "let-it-go", "title": "Let the knight go", "about": "Weiss lets the summoning fade, and says she'd rather be known for what she does than for the family she was born into.",
+          "scene": "World: Weiss Schnee, Let It Fade", "rewards": [{"coins": 500}, {"gift": "bouquet"}]}]},
 ]
+
 WEISS_SCHNEE_SCENES = [
-  {
-    "name": "World: Weiss Schnee, Library",
-    "lines": [
-      "background library",
-      "me enters right with fade",
-      "me: Your notes are wrong on the third page. Correct it.",
-      "player: Where?",
-      "me (dismayed): ...There. Yes. Don't tell anyone I said so.",
-      "me: Thank you. Stiffly, as you can tell."
-    ]
-  },
-  {
-    "name": "World: Weiss Schnee, Arena",
-    "lines": [
-      "background arena",
-      "me enters center with rise",
-      "me: The glyph flickers. It always fails when I think about Father.",
-      "player: Try again.",
-      "me (dismayed): I'm trying. Look at it. Look at it!",
-      "me (pleased): There! The arm. It's here. Do you see?",
-      "me: Thank you for watching. I'd like you to keep watching."
-    ]
-  }
+    {"name": "World: Weiss Schnee, Study Partner", "lines": [
+        "background library", "me enters left with slide",
+        "me (dismayed): Everyone says my notes are perfect. They're not. Nobody will tell me what's wrong with them.",
+        "player: I can look.",
+        "me (pleased): Good. Read the third chapter, and mark anything you'd change. Don't be nice about it.",
+        "me: I'm not asking for a compliment. I'm asking for the truth, and I'm not used to getting it.",
+        "me (dismayed): Come to the library at noon, and bring your own notebook. I'll check it against mine."]},
+    {"name": "World: Weiss Schnee, Library Notes", "lines": [
+        "background library", "me enters left with slide",
+        "me (pleased): Read it aloud, the bit you marked. Slowly, so I can hear where it's wrong.",
+        "player: The definition is one step too early.",
+        "me (dismayed): Yes. And I missed it, which I'm not going to forgive myself for.",
+        "me: Mark the rest in red. I want to see what else I've got wrong before my father does."]},
+    {"name": "World: Weiss Schnee, Red Corrections", "lines": [
+        "background library", "me enters center with fade",
+        "me (pleased): I've corrected my notes in red, every page. You can keep the copy, and check it.",
+        "player: That's a lot of red.",
+        "me (dismayed): It's a lot of mistakes. Most of them were in the chapter you marked, which I'm glad you found.",
+        "me: Check the rest. If you find more, I'll be annoyed, and then I'll fix them."]},
+    {"name": "World: Weiss Schnee, Summoning Night", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): The circle lit, and nothing came. Ram and Rem keep telling me I'm not ready for the knight.",
+        "player: Are they right?",
+        "me: I don't know. They're maids, but they've seen my father's summonings, which I haven't.",
+        "me (pleased): Meet me at the arena this evening. If I can't call it, maybe I can beat the twins into letting me try."]},
+    {"name": "World: Weiss Schnee, Arena Circle", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): The circle's drawn on the floor. It's the same as my father's, down to the last line.",
+        "player: Are you ready?",
+        "me: No. But Ram and Rem are watching, and they'd never let me say so.",
+        "me (pleased): Stand at the edge and watch. If the knight comes, you'll be the first to see it."]},
+    {"name": "World: Weiss Schnee, Twins Fall", "lines": [
+        "cast ram as Ram/Rem",
+        "background arena", "me enters center with fade",
+        "ram enters right with slide",
+        "ram: {player} beat me, Weiss. Rem is watching, and she's going to say I was too slow.",
+        "me (dismayed): You were too slow. But you were also right about my circle.",
+        "ram: Then take your circle, and be the heiress you want to be. We'll see if you can keep it lit."]},
+    {"name": "World: Weiss Schnee, Knights Arm", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): The knight's arm appeared in the circle. For one second, I saw my father's arm, and it was real.",
+        "player: That's incredible.",
+        "me (dismayed): It was. And it was the first thing he ever gave me, and I didn't know until tonight.",
+        "me: Thank you for watching. I'd have dropped the circle without you."]},
+    {"name": "World: Weiss Schnee, The Knight Returns", "lines": [
+        "background rooftop",
+        "me enters left with slide",
+        "me (dismayed): The knight is coming back in full. I can feel the weight of it in the circle, like a second heartbeat.",
+        "player: What will you do with it?",
+        "me: I'm not sure. Ruby says I should let it go. She's probably right, and I hate that she's probably right.",
+        "me (pleased): I've been waiting for someone to tell me what to do with the family's knight for years. Nobody has.",
+        "player: Do you want me to tell you?",
+        "me (dismayed): No. I want to decide it myself, on the roof, with you watching.",
+        "me: Come to the rooftop tonight. Ruby's going to argue with me about it, and I want you there when she does.",
+        "me (pleased): Bring the red pen. If I get this wrong, I want it marked clearly, the way I'd mark anyone else's."]},
+    {"name": "World: Weiss Schnee, Rooftop Knight", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): The knight's in the air over the roof. It's not fully here, but it's close.",
+        "player: Is that safe?",
+        "me (pleased): Not in the slightest. But it's mine to call, and I'm not going to waste the moment.",
+        "me: Ruby's on the stairs. Stand where you can see both of us, and don't let her take the circle from me."]},
+    {"name": "World: Weiss Schnee, Ruby Falls", "lines": [
+        "cast ruby as Ruby Rose",
+        "background rooftop", "me enters center with fade",
+        "ruby enters right with slide",
+        "ruby: {player} beat me, Weiss. You're not letting the knight go, are you?",
+        "me (dismayed): I'm deciding. That's different from keeping it, and it's the first thing I've decided for myself.",
+        "ruby: Then decide quickly. The roof is falling apart, and so is my patience.",
+        "me (pleased): Then here's my answer. The knight's mine, and I'll use it for the town, not the name."]},
+    {"name": "World: Weiss Schnee, Knight Here", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (pleased): The knight returned in full, and it's mine. The family's old debts are mine to pay, in my own way.",
+        "player: That sounds like a lot.",
+        "me (dismayed): It is. But I'm not carrying it alone. You stood with me, and that counts for more than the knight does.",
+        "me: Come to the library tomorrow. There are notes to check, and I'll want to see whether you still don't flatter me."]},
+    {"name": "World: Weiss Schnee, Let It Fade", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I let the summoning fade. I'd rather be known for what I do than for the family I was born into.",
+        "player: Are you sure about that?",
+        "me (pleased): No. But I'm sure it's mine to decide, and I'd rather decide it wrong than let someone else do it right.",
+        "me: Bring the red pen. I'll want to see what you'd change about my choice."]},
 ]
+
+# DIO. Thread: he wants to know whether the player fears him, and he's watching their face to find out. Q1 plants the time skip
+# he says he felt. Q2: his son Giorno, whom he wants at his side. Q3: heaven, and the choice between his son and his own end.
 DIO_QUESTS = [
-  {
-    "key": "dio-the-world",
-    "title": "The World",
-    "gates": 2,
-    "about": "DIO is curious whether the player fears him, and he watches their face closely.",
-    "offer": [
-      "them: Do you fear me? Look me in the eye and answer honestly.",
-      "them (pleased): Interesting. You're nervous, but you aren't afraid."
-    ],
-    "stages": [
-      {
-        "text": "Visit DIO at the library in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "library",
-            "times": [
-              2
-            ],
-            "scene": "World: DIO, Library",
-            "rewards": [
-              {
-                "pack": "climax_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Horrifying Execution, DIO",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "JJ/SE41-E15"
-          }
-        ]
-      },
-      {
-        "text": "Give DIO your opinion of a philosopher",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "DIO",
-            "script": [
-              "them: Tell me your opinion of this philosopher. Then of yourself.",
-              "them (pleased): ...Hm. Honest. Rare."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "honest-opinion",
-        "title": "Give your honest opinion",
-        "about": "DIO nods slowly and says time skipped a beat while he watched your face. He seems to enjoy it.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "manga"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "dio-heaven",
-    "title": "Heaven",
-    "gates": 5,
-    "about": "DIO wants his son at his side, and he wants the player to bring him.",
-    "offer": [
-      "them: I have a son I've never met. He is destined for my side.",
-      "them (dismayed): Come to the warehouse tonight. We'll discuss heaven."
-    ],
-    "stages": [
-      {
-        "text": "Visit DIO at the warehouse at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "warehouse",
-            "times": [
-              3
-            ],
-            "scene": "World: DIO, Warehouse",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with DIO: Complete Being, DIO & T.W in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "JJ/SE41-E17",
-            "against": [
-              "DIO"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give DIO your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "DIO",
-            "script": [
-              "them: Persuade Giorno to come home. Will you?",
-              "them (pleased): ...You're cleverer than you look. Good."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "join-your-father",
-        "title": "Join your father",
-        "about": "DIO's son is recruited into his heaven. Giorno's Best friend quest is closed for good.",
-        "rewards": [
-          {
-            "coins": 800
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ],
-        "locks": [
-          "giorno-i-have-a-dream"
-        ]
-      },
-      {
-        "key": "refuse-him",
-        "title": "Refuse him",
-        "about": "DIO laughs and says he'll wait. He's very patient.",
-        "rewards": [
-          {
-            "coins": 500
-          },
-          {
-            "gift": "bottled-tea"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "dio-the-world", "title": "The World", "requires": {"rank": 1},
+     "scene": "World: DIO, The Watching",
+     "about": "DIO is curious whether the player fears him, and he watches their face closely. He keeps a clock on his wrist that he never checks.",
+     "offer": ["them: I want to see your face when I say this. Are you afraid of me?",
+               "them (pleased): Good. Come to the plaza at noon, and let me look at you properly."],
+     "stages": [
+         {"text": "Be watched by DIO in the plaza at noon", "objectives": [{"do": "visit", "place": "plaza", "times": [1], "scene": "World: DIO, Plaza Watch", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell DIO whether you're afraid", "objectives": [{"do": "talk", "to": "DIO", "script": [
+             "them (pleased): You didn't look away. Interesting. Most people look away.",
+             "them: Time skipped a beat while I was watching you. I enjoyed it, a little."]}]},
+     ],
+     "endings": [{"key": "honest-opinion", "title": "Give him an honest answer", "about": "DIO nods slowly and says time skipped a beat while he watched your face. He seems to enjoy the fact that you noticed.",
+                  "scene": "World: DIO, Honest Answer", "rewards": [{"coins": 300}, {"gift": "bottled-tea"}]}]},
+    {"key": "dio-the-son", "title": "The Son", "gates": 2, "requires": {"quests": ["dio-the-world"]},
+     "scene": "World: DIO, The Son",
+     "about": "DIO wants his son at his side. The son is Giorno, and he wants the player to bring him in, not to fight him.",
+     "offer": ["them (dismayed): My son is in town, and he has no idea who I am. I'd like him to meet me.",
+               "them: Giorno's going to fight whoever brings him to me. Beat him, and maybe he'll come quietly."],
+     "stages": [
+         {"text": "Meet DIO at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: DIO, Arena Meeting", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Giorno, to bring him to his father", "scene": "World: DIO, Giorno Stopped", "objectives": [{"do": "defeat", "cpus": ["Giorno Giovanna"]}]},
+         {"text": "Tell DIO what Giorno said", "objectives": [{"do": "talk", "to": "DIO", "script": [
+             "them (dismayed): He said he'd rather be dead than be my son. I've heard it before.",
+             "them (pleased): ...Then he'll change his mind. I've never been wrong about a son."]}]},
+     ],
+     "endings": [{"key": "recruited-to-heaven", "title": "Bring him to heaven", "about": "DIO's son is recruited into his heaven, and DIO says he's the first person who ever beat him at his own game.",
+                  "scene": "World: DIO, Heaven Recruit", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "dio-heaven", "title": "Heaven", "gates": 5, "requires": {"quests": ["dio-the-son"]},
+     "scene": "World: DIO, Heaven",
+     "about": "DIO is building his heaven, and he needs the player to stand in it with him. He also asks the question he first asked on the plaza: are you afraid of him? Jolyne is coming to stop it.",
+     "offer": ["them (dismayed): Jolyne's coming. She thinks she can stop my heaven, and she's wrong.",
+               "them: Be at the arena tonight. Stand beside me, and watch what time does when I stop it."],
+     "stages": [
+         {"text": "Be with DIO in the arena at night", "objectives": [{"do": "visit", "place": "arena", "times": [3], "scene": "World: DIO, Heaven Night", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Jolyne, to keep your place in heaven", "scene": "World: DIO, Jolyne Stopped", "objectives": [{"do": "defeat", "cpus": ["Jolyne Cujoh"]}]},
+         {"text": "Tell DIO your answer", "objectives": [{"do": "talk", "to": "DIO", "script": [
+             "them (dismayed): The girl with the string is still standing. She'll try again, and that's the fun of it.",
+             "them (pleased): Then stand with me, while I decide what heaven is for."]}]},
+     ],
+     "endings": [
+         {"key": "wait-for-him", "title": "Stand beside DIO", "about": "DIO asks you again whether you fear him. You say you don't, and he is quietly disappointed. Heaven is kept, and Giorno's dream quest is closed for good.",
+          "locks": ["giorno-i-have-a-dream"], "scene": "World: DIO, Heaven Kept", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "step-aside", "title": "Step aside", "about": "DIO lets you step aside, and watches you go. He says he'll wait for the next time you come to look at him.",
+          "scene": "World: DIO, Step Aside", "rewards": [{"coins": 500}, {"gift": "handheld"}]},
+     ]},
 ]
+
 DIO_SCENES = [
-  {
-    "name": "World: DIO, Library",
-    "lines": [
-      "background library",
-      "me enters center with fade",
-      "me: Read this. Then tell me what you think of the philosopher.",
-      "player: He's wrong about most things.",
-      "me (pleased): Good. And yourself? Be honest.",
-      "player: I think you're afraid of time.",
-      "me (dismayed): ...Time skipped a beat there. You noticed."
-    ]
-  },
-  {
-    "name": "World: DIO, Warehouse",
-    "lines": [
-      "background ruins",
-      "me enters left with rise",
-      "me: Heaven is a place I can give my son. He's never met me.",
-      "player: Does he know you're his father?",
-      "me (dismayed): He will. Once you persuade him to come home.",
-      "me: Bring him to me. I'll be waiting, in the dark."
-    ]
-  }
+    {"name": "World: DIO, Heaven", "lines": [
+        "background arena",
+        "me enters center with fade",
+        "me (dismayed): Jolyne is coming for heaven with her string, and she thinks she can unpick it.",
+        "player: Can she?",
+        "me (pleased): Not if I stop time first. It's the one thing I'm sure of, and I've never been wrong about it.",
+        "me: My son is here too. He wants to tell me no, the way he always does, and I want to hear it one more time.",
+        "player: What do you want from me?",
+        "me (dismayed): Stand where I can see you. If you're afraid, I'll know. Don't be afraid of me, be honest.",
+        "me: Be at the arena tonight. Stand beside me while the clock stops, and watch what heaven does when nobody can leave it.",
+        "me (pleased): Then decide whether heaven is for you. It's the last invitation I'll give."]},
+    {"name": "World: DIO, The Watching", "lines": [
+        "background dusk", "me enters center with fade",
+        "me: I want to see your face when I say this. Are you afraid of me?",
+        "player: A little.",
+        "me (pleased): Good. Hold that feeling, and let me look at it. It's honest, and most people hide it.",
+        "me: The clock on my wrist hasn't moved in weeks. I never check it. It doesn't need me to.",
+        "me (dismayed): Come to the plaza at noon, and let me watch you properly, in the daylight."]},
+    {"name": "World: DIO, Plaza Watch", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): Stand still, and look at me. Good. You didn't look away, and most people do.",
+        "player: Why are you watching me so closely?",
+        "me: Because time skipped a beat while I was watching you. It does that when I'm interested.",
+        "me (dismayed): I'm not going to explain it. You'll only ask whether it's real.",
+        "me: Keep your face where it is. I'm still deciding what I think of you."]},
+    {"name": "World: DIO, Honest Answer", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): You gave me an honest answer, and you didn't look away. Time skipped, and I enjoyed it.",
+        "player: Is that good?",
+        "me (dismayed): It's rare. Most people tell me what they think I want, and it's dull.",
+        "me: Come back when you're ready to be watched again. I'll be here, and so will time."]},
+    {"name": "World: DIO, The Son", "lines": [
+        "background sakura", "me enters left with rise",
+        "me (dismayed): My son is in town, and he has no idea who I am. I'd like him to meet me, properly.",
+        "player: Will he come?",
+        "me (pleased): Not willingly. He's proud, like his mother, and he thinks I'm dead. I let him think it.",
+        "me: Giorno will fight whoever brings him to me. Beat him, and maybe he'll come quietly.",
+        "me (dismayed): He won't, not at first. But he'll listen, when he's lost a round or two.",
+        "me: Meet me at the arena in the evening. Bring him, if you can. If you can't, bring his name."]},
+    {"name": "World: DIO, Arena Meeting", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): Good, you came. Giorno's on his way. He's been looking for me since he was a child.",
+        "player: Are you nervous?",
+        "me (dismayed): Never. I'm a bit impatient. Time keeps slipping, and I don't like waiting for my son.",
+        "me: Stand where he'll see you first. He'll take a long look at the one who brought him here."]},
+    {"name": "World: DIO, Giorno Stopped", "lines": [
+        "cast giorno as Giorno Giovanna",
+        "background arena", "me enters center with fade",
+        "giorno enters right with slide",
+        "giorno: {player} beat me, and I'd rather be dead than be your son. That's still true.",
+        "me (dismayed): Then you'll hear the rest of it from me, Giorno. Every word.",
+        "giorno: I've heard it before. You always say that, and then you stop the time.",
+        "me (pleased): I'll stop it, if you ask me nicely. I've never been asked nicely by my son."]},
+    {"name": "World: DIO, Heaven Recruit", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): My son is recruited into my heaven. He wasn't willing, and that's the best part.",
+        "player: He was beaten fairly.",
+        "me (dismayed): He was. {player} beat him, and I'm glad someone finally did. He's the first to try and lose well.",
+        "me: Keep him close, and keep your eyes open. He'll look for a way out, the way I did."]},
+    {"name": "World: DIO, Heaven Night", "lines": [
+        "background night", "me enters center with fade",
+        "me (dismayed): Jolyne's coming with her string. She thinks she can cut my heaven apart.",
+        "player: Can she?",
+        "me (pleased): Not tonight. Stand beside me, and watch what time does when I stop it. You'll see the whole arena freeze.",
+        "me: If she gets close, don't step back. She'll think you're afraid, and that's the only thing she can use."]},
+    {"name": "World: DIO, Jolyne Stopped", "lines": [
+        "cast jolyne as Jolyne Cujoh",
+        "background arena", "me enters center with fade",
+        "jolyne enters right with slide",
+        "jolyne: {player} beat me, DIO. The string's tangled around my wrist, and I'm angry about it.",
+        "me (dismayed): Then the string is the one thing you can't cut, Jolyne. You should have known.",
+        "jolyne: I knew. I came anyway, and I'll come again, with a better knot.",
+        "me (pleased): I'll be waiting. Come back when you've learned how time moves around you."]},
+    {"name": "World: DIO, Heaven Kept", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): The arena's still. Time's mine, and so is heaven, for one more round.",
+        "player: Are you going to keep going?",
+        "me (dismayed): Until the clock stops for good. Stand beside me while it does, if you want to see.",
+        "me: Giorno's dream is closed, and I'm not sorry. It was never big enough to hold him."]},
+    {"name": "World: DIO, Step Aside", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): You stepped aside, and I let you go. Heaven doesn't need every guest to stay.",
+        "player: Will you come after me?",
+        "me (pleased): No. I'll wait. I'm very patient, when someone is interesting enough to keep.",
+        "me: Come and look at me again when you're ready. I'll still be watching your face."]},
 ]
-GIORNO_GIOVANNA_QUESTS = [
-  {
-    "key": "giorno-gold-experience",
-    "title": "Gold Experience",
-    "gates": 2,
-    "about": "Giorno makes a flower grow from a coin, and he'll say a lot about you from what you do with it.",
-    "offer": [
-      "them: Give me a coin. I'll make you a flower.",
-      "them (pleased): Do you want it back? That tells me a lot."
-    ],
-    "stages": [
-      {
-        "text": "Find Giorno at the cafe at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "cafe",
-            "times": [
-              1
-            ],
-            "scene": "World: Giorno Giovanna, Cafe",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Giorno a bottled tea",
-        "objectives": [
-          {
-            "do": "give_gift",
-            "gift": "bottled-tea",
-            "to": "Giorno Giovanna"
-          }
-        ]
-      },
-      {
-        "text": "Let Giorno read you",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Giorno Giovanna",
-            "script": [
-              "them: You didn't want the coin back. I like that about you.",
-              "them (pleased): ...Friends don't ask for change."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "keep-the-flower",
-        "title": "Keep the flower",
-        "about": "Giorno gives you the flower and keeps the coin. He says that's how you know it's a good deal.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "bouquet"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "giorno-i-have-a-dream",
-    "title": "I, Giorno Giovanna, Have a Dream",
-    "gates": 5,
-    "about": "Giorno's father's shadow, and his own path, which he means to walk himself.",
-    "offer": [
-      "them: There's a man I used to call my father. He casts a long shadow.",
-      "them (pleased): Meet me on the beach at sunset. I'll tell you everything."
-    ],
-    "stages": [
-      {
-        "text": "Meet Giorno at the beach at evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "beach",
-            "times": [
-              2
-            ],
-            "scene": "World: Giorno Giovanna, Beach",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Giorno: Golden Intentions, Giorno in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "JJ/S66-TE07",
-            "against": [
-              "Giorno Giovanna"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Giorno your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Giorno Giovanna",
-            "script": [
-              "them: Help me become something my father never was.",
-              "them (pleased): ...Then it's settled. My dream, my path."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "my-own-dream",
-        "title": "Help him find his own dream",
-        "about": "Giorno sets out on his own path. DIO's Best friend quest is closed for good.",
-        "rewards": [
-          {
-            "coins": 800
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ],
-        "locks": [
-          "dio-heaven"
-        ]
-      },
-      {
-        "key": "stay-by-his-side",
-        "title": "Stay by his father's side",
-        "about": "Giorno keeps his father's shadow close, and asks you to stay out of it.",
-        "rewards": [
-          {
-            "coins": 500
-          },
-          {
-            "gift": "playmat"
-          }
-        ]
-      }
-    ]
-  }
-]
-GIORNO_GIOVANNA_SCENES = [
-  {
-    "name": "World: Giorno Giovanna, Cafe",
-    "lines": [
-      "background cafe",
-      "me enters right with slide",
-      "me: Give me a coin. Now watch closely.",
-      "player: Is that a flower?",
-      "me (pleased): Gold Experience. It grows from anything you care about.",
-      "me: Do you want the coin back? Tell me honestly."
-    ]
-  },
-  {
-    "name": "World: Giorno Giovanna, Beach",
-    "lines": [
-      "background dusk",
-      "me enters center with fade",
-      "me: The sun's going down. I've been thinking about my father.",
-      "player: DIO?",
-      "me (dismayed): Yes. The shadow. I want to be something he never was.",
-      "me: Help me. My dream is mine, not his."
-    ]
-  }
-]
+
+# Jolyne Cujoh. Thread: her string, which she can unravel and tie around people, and the prison she broke out of, which she
+# won't talk about. Q1 plants the cat's cradle she ties between your wrists. Q2: the prison's name is in the string. Q3: her
+# father, and whether she's ready to walk back into the place she escaped.
 JOLYNE_CUJOH_QUESTS = [
-  {
-    "key": "jolyne-stone-free",
-    "title": "Stone Free",
-    "gates": 2,
-    "about": "Jolyne can unravel herself into string, and she wants to show someone who won't scream.",
-    "offer": [
-      "them: Watch this. I'll come apart. Don't scream.",
-      "them (pleased): Good. You didn't. Now, cat's cradle."
-    ],
-    "stages": [
-      {
-        "text": "Watch Jolyne at the beach at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "beach",
-            "times": [
-              1
-            ],
-            "scene": "World: Jolyne Cujoh, Beach",
-            "rewards": [
-              {
-                "coins": 150
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Jolyne an energy drink for the stunt",
-        "objectives": [
-          {
-            "do": "give_gift",
-            "gift": "energy-drink",
-            "to": "Jolyne Cujoh"
-          }
-        ]
-      },
-      {
-        "text": "Tell Jolyne what you thought",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Jolyne Cujoh",
-            "script": [
-              "them: Never knew my dad until he came for me. Is it too late?",
-              "them (pleased): ...You say it isn't. Okay."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "cats-cradle",
-        "title": "Keep the cat's cradle",
-        "about": "Jolyne leaves the string tied between your wrists, and says it'll hold for a while.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "earbuds"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "jolyne-green-dolphin-street",
-    "title": "Green Dolphin Street",
-    "gates": 5,
-    "about": "Jolyne's father, and the prison she broke out of, which she never talks about.",
-    "offer": [
-      "them (dismayed): My dad came for me. I'd never met him before.",
-      "them: Come to the arena tonight. I want to tell you the rest."
-    ],
-    "stages": [
-      {
-        "text": "Meet Jolyne at the arena in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "arena",
-            "times": [
-              2
-            ],
-            "scene": "World: Jolyne Cujoh, Arena",
-            "rewards": [
-              {
-                "pack": "level_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Connected Hope, Jolyne",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "JJ/SE42-E54"
-          }
-        ]
-      },
-      {
-        "text": "Give Jolyne your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Jolyne Cujoh",
-            "script": [
-              "them: Is it too late to start knowing him?",
-              "them (pleased): ...Thanks for saying it's not. I needed that."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "not-too-late",
-        "title": "Say it's not too late",
-        "about": "Jolyne sets off to see her father, and asks you to be there when she does.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "jolyne-stone-free", "title": "Stone Free", "requires": {"rank": 1},
+     "scene": "World: Jolyne Cujoh, String Show",
+     "about": "Jolyne can unravel herself into string, and she wants to show someone who won't scream. She's been practising cat's cradle for a week to make it look easy.",
+     "offer": ["them: I can unravel myself into string. Don't scream. I'm not going to hurt you.",
+               "them (pleased): Come to the beach at noon. I'll show you the cradle, and you'll tell me if it's neat enough."],
+     "stages": [
+         {"text": "Watch Jolyne's cat's cradle at the beach at noon", "objectives": [{"do": "visit", "place": "beach", "times": [1], "scene": "World: Jolyne Cujoh, Cradle", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Jolyne whether the cradle was neat", "objectives": [{"do": "talk", "to": "Jolyne Cujoh", "script": [
+             "them (pleased): Neat enough. You didn't scream. That's the first thing I wanted.",
+             "them: Hold still. I'm going to tie it between your wrists, and it'll hold a while."]}]},
+     ],
+     "endings": [{"key": "cats-cradle", "title": "Hold the string", "about": "Jolyne leaves the string tied between your wrists, and says it'll hold for a while. She tells you it can be cut, but only by someone she trusts.",
+                  "scene": "World: Jolyne Cujoh, Tied Wrists", "rewards": [{"coins": 300}, {"gift": "earbuds"}]}]},
+    {"key": "jolyne-green-dolphin-street", "title": "Green Dolphin Street", "gates": 2, "requires": {"quests": ["jolyne-stone-free"]},
+     "scene": "World: Jolyne Cujoh, Prison Name",
+     "about": "The string has the name of the prison she broke out of, and Jolyne has never said it out loud. Giorno is the one she wants to fight, to find out whether he knows the place.",
+     "offer": ["them (dismayed): The string has a name in it. The prison I got out of. I've never told anyone.",
+               "them: Giorno's in town, and he knows the place. Beat him, and he'll tell you what it was really like."],
+     "stages": [
+         {"text": "Meet Jolyne at the shrine in the evening", "objectives": [{"do": "visit", "place": "shrine", "times": [2], "scene": "World: Jolyne Cujoh, Shrine String", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Giorno, to find out what he knows about the prison", "scene": "World: Jolyne Cujoh, Giorno Falls", "objectives": [{"do": "defeat", "cpus": ["Giorno Giovanna"]}]},
+         {"text": "Tell Jolyne what Giorno said", "objectives": [{"do": "talk", "to": "Jolyne Cujoh", "script": [
+             "them (dismayed): He said it was worse than I remember. And he knows my father's name.",
+             "them (pleased): ...Then I'm going to see him. Thank you for being my witness, {player}."]}]},
+     ],
+     "endings": [{"key": "not-too-late", "title": "Go and see him", "about": "Jolyne decides she'll go to see her father herself. She asks you to be there when she does, and to hold the string while she reads the prison's name.",
+                  "scene": "World: Jolyne Cujoh, Going There", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "jolyne-the-father", "title": "The Father", "gates": 5, "requires": {"quests": ["jolyne-green-dolphin-street"]},
+     "scene": "World: Jolyne Cujoh, The Father",
+     "about": "Jolyne is going to walk back into the prison she broke out of, to see her father. DIO wants her to fight him for his heaven first, and the string has to be tied one last time before she goes.",
+     "offer": ["them (dismayed): My father's in the prison, and DIO wants me to fight him for heaven first.",
+               "them: Come to the arena tonight. I'm going to need someone to tie the string when I'm done."],
+     "stages": [
+         {"text": "Meet Jolyne at the arena at night", "objectives": [{"do": "visit", "place": "arena", "times": [3], "scene": "World: Jolyne Cujoh, Arena String", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight DIO, to get past heaven and reach your father", "scene": "World: Jolyne Cujoh, DIO Stopped", "objectives": [{"do": "defeat", "cpus": ["DIO"]}]},
+         {"text": "Tell Jolyne your answer", "objectives": [{"do": "talk", "to": "Jolyne Cujoh", "script": [
+             "them (dismayed): DIO's still standing, and he's still watching me. He'll let me go, I think, to see what I do.",
+             "them (pleased): Then I go to my father, with the string tied right. Thanks for holding it."]}]},
+     ],
+     "endings": [
+         {"key": "walk-back-in", "title": "Walk back in", "about": "Jolyne answers the question the string has been asking her since the first cradle: she walks back into the prison, finds her father, and tells him the name. DIO's heaven quest is closed for good, because she got past it.",
+          "locks": ["dio-heaven"], "scene": "World: Jolyne Cujoh, Walks In", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "wait-outside", "title": "Wait outside", "about": "Jolyne decides she isn't ready to go back in. She waits outside the prison gate with the string in her hands, and tells you to come and get her if she doesn't come out.",
+          "scene": "World: Jolyne Cujoh, Outside", "rewards": [{"coins": 500}, {"gift": "bottled-tea"}]},
+     ]},
 ]
+
 JOLYNE_CUJOH_SCENES = [
-  {
-    "name": "World: Jolyne Cujoh, Beach",
-    "lines": [
-      "background beach",
-      "me enters right with slide",
-      "me: Watch me come apart into string. Don't scream.",
-      "player: I won't.",
-      "me (pleased): You didn't even blink. Good. Now, cat's cradle.",
-      "me: Look at that. You're tied to me now, a little."
-    ]
-  },
-  {
-    "name": "World: Jolyne Cujoh, Arena",
-    "lines": [
-      "background arena",
-      "me enters center with rise",
-      "me: My dad came for me. I'd never met him before.",
-      "player: What was he like?",
-      "me (dismayed): Stubborn. Like me. It's a bit terrifying.",
-      "me: Is it too late to start knowing him? Honestly."
-    ]
-  }
+    {"name": "World: Jolyne Cujoh, The Father", "lines": [
+        "background arena",
+        "me enters center with fade",
+        "me (dismayed): My father's in the prison, and DIO wants me to fight him for heaven first.",
+        "player: Is that why you're shaking?",
+        "me: I'm not shaking. The string is, and it's trying to tell me something I don't want to hear.",
+        "me (pleased): It wants me to walk back in, through the gate, and find him. It's been wanting that for years.",
+        "player: Will you go?",
+        "me (dismayed): After DIO. He's standing between me and the gate, and he's enjoying it.",
+        "me: Come to the arena tonight. I'm going to need someone to tie the string when I'm done.",
+        "me (pleased): If I come out the other side, you'll be the first to know. If I don't, tell the string I tried."]},
+    {"name": "World: Jolyne Cujoh, String Show", "lines": [
+        "background beach", "me enters right with slide",
+        "me (pleased): I can unravel myself into string. Don't scream. Nobody's ever been hurt by my string, not on purpose.",
+        "player: That's a weird thing to say.",
+        "me (dismayed): Weird is how I got out of where I was. Come to the beach at noon, and see the cradle I've been practising.",
+        "me: It's neat enough, I hope. I've been tying it for a week and it keeps coming out lopsided."]},
+    {"name": "World: Jolyne Cujoh, Cradle", "lines": [
+        "background beach", "me enters center with fade",
+        "me (pleased): There. A proper cradle, between your fingers, and no knots anyone can see.",
+        "player: It's beautiful.",
+        "me (dismayed): It's the first thing I've made since I got out that wasn't a way out of something.",
+        "me: Hold still. I want to try a second one, between your wrists, and see if it holds."]},
+    {"name": "World: Jolyne Cujoh, Tied Wrists", "lines": [
+        "background beach", "me enters center with fade",
+        "me (pleased): The string's tied between your wrists. It'll hold for a while, and you can't pull it free by accident.",
+        "player: Can you cut it?",
+        "me (dismayed): Only someone I trust can cut it. That's the rule I made up for the string, and it's not a joke.",
+        "me: Don't go anywhere in a hurry. The string doesn't like sudden movement."]},
+    {"name": "World: Jolyne Cujoh, Prison Name", "lines": [
+        "background shrine", "me enters left with slide",
+        "me (dismayed): The string has a name in it. Green Dolphin Street, the prison I got out of. I've never said it out loud.",
+        "player: What's it like in there?",
+        "me: I'm not going to tell you. Giorno knows the place, and he might tell you if you beat him first.",
+        "me (pleased): Meet me at the shrine this evening. Bring the string. You'll need it for the next part."]},
+    {"name": "World: Jolyne Cujoh, Shrine String", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): The shrine's quiet, and the string's humming. It's trying to tell me something about my father.",
+        "player: What does it say?",
+        "me: It doesn't say anything. It just tightens when I think of him, which is every few minutes.",
+        "me (pleased): Keep your hands still while I go and find Giorno. I'll be back before the string gets angry."]},
+    {"name": "World: Jolyne Cujoh, Giorno Falls", "lines": [
+        "cast giorno as Giorno Giovanna",
+        "background shrine", "me enters center with fade",
+        "giorno enters right with slide",
+        "giorno: {player} beat me, Jolyne. You're faster with that string than I expected.",
+        "me (dismayed): You know the prison. Tell me what it was really like, Giorno, and don't make it pretty.",
+        "giorno: Worse than you remember. And I know your father's name, because my father wrote it down.",
+        "me (pleased): Then I'll go and see him. Thank you for telling me the truth, even if you hated it."]},
+    {"name": "World: Jolyne Cujoh, Going There", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I'm going to see my father. The string's tied, and I've got the prison's name in my head.",
+        "player: Do you want company?",
+        "me (dismayed): Yes. Hold the string while I read the name out loud. If it goes slack, you'll know I've stopped.",
+        "me: Come to the arena at night, when I've decided. I'll be ready for whatever's inside."]},
+    {"name": "World: Jolyne Cujoh, Arena String", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): DIO's in the arena, and he's keeping his heaven still. He's watching me over the top of his clock.",
+        "player: Are you ready?",
+        "me (pleased): No. But my father's on the other side of that heaven, and I'm not going to wait for it to fall.",
+        "me: Tie the string when I'm done. I'll need someone to hold it while I walk back in."]},
+    {"name": "World: Jolyne Cujoh, DIO Stopped", "lines": [
+        "cast dio as DIO",
+        "background arena", "me enters center with fade",
+        "dio enters right with slide",
+        "dio: {player} beat me, Jolyne. You're still tied to your father, and it's showing.",
+        "me (dismayed): It's showing because I'm going to walk back in and get him, DIO. You can't stop that.",
+        "dio: I don't need to stop it. Time's already moved on, and so have you.",
+        "me (pleased): Then let me go. I'll come back for the rest of the string when I'm ready."]},
+    {"name": "World: Jolyne Cujoh, Walks In", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I walked back in, through the gate, and I didn't look back at the string.",
+        "player: Did you see your father?",
+        "me (pleased): I saw him. He's older than I thought, and he wasn't surprised to see me.",
+        "me: DIO's heaven is closed for good. He won't come looking for me again, not like that."]},
+    {"name": "World: Jolyne Cujoh, Outside", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I'm waiting outside the gate with the string in my hands. I'm not ready to go back in yet.",
+        "player: Will you go in later?",
+        "me (pleased): Yes. But not tonight. Come and get me if I don't come out by morning.",
+        "me: Keep the string on your wrist. It's the only thing I've got that's still mine."]},
 ]
+
+# Echidna. Thread: the tea that isn't tea, and the contract written in light. Q1 plants the cup of something that might not be tea,
+# and the question she asks everyone for the joy of the answer. Q2: she offers to solve Emilia's trial for a price. Q3: the
+# contract is signed or refused, and Emilia's trial is the one it binds.
 ECHIDNA_QUESTS = [
-  {
-    "key": "echidna-tea-party",
-    "title": "Tea Party",
-    "gates": 2,
-    "about": "The Witch of Greed invites the player to a tea that isn't tea, and asks questions for the joy of the answers.",
-    "offer": [
-      "them: Come to the library. I'll pour. You'll answer.",
-      "them (pleased): How interesting. I mean that as a compliment."
-    ],
-    "stages": [
-      {
-        "text": "Take tea with Echidna at the library at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "library",
-            "times": [
-              1
-            ],
-            "scene": "World: Echidna, Library",
-            "rewards": [
-              {
-                "pack": "climax_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Bring Echidna a strawberry shortcake",
-        "objectives": [
-          {
-            "do": "give_gift",
-            "gift": "shortcake",
-            "to": "Echidna"
-          }
-        ]
-      },
-      {
-        "text": "Answer Echidna's questions",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Echidna",
-            "script": [
-              "them: Why do you hope? Why do you wait? Answer me properly.",
-              "them (pleased): ...How interesting. Really."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "tea-and-questions",
-        "title": "Stay for tea",
-        "about": "Echidna lets you leave with a cup of something that might not be tea.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "bottled-tea"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "echidna-witchs-contract",
-    "title": "The Witch's Contract",
-    "gates": 5,
-    "about": "Echidna offers to solve Emilia's trial for a price, written in light.",
-    "offer": [
-      "them: I can solve Emilia's trial for her. For a price.",
-      "them (pleased): Meet me in the forest tonight. The contract is ready."
-    ],
-    "stages": [
-      {
-        "text": "Meet Echidna in the forest at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "forest",
-            "times": [
-              3
-            ],
-            "scene": "World: Echidna, Forest",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Embodiment of the Thirst for Knowledge, Echidna",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "RZ/S116-E008"
-          }
-        ]
-      },
-      {
-        "text": "Give Echidna your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Echidna",
-            "script": [
-              "them: Bring Emilia here to sign it. You'll do that for me.",
-              "them (pleased): ...Lovely. The contract will wait for her."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "sign-the-contract",
-        "title": "Sign the contract",
-        "about": "Echidna signs the contract in light. Emilia's Best friend quest is closed for good.",
-        "rewards": [
-          {
-            "coins": 800
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ],
-        "locks": [
-          "emilia-the-trial"
-        ]
-      },
-      {
-        "key": "refuse-the-contract",
-        "title": "Refuse the contract",
-        "about": "Echidna sighs, and says she'll keep the offer warm.",
-        "rewards": [
-          {
-            "coins": 500
-          },
-          {
-            "gift": "playmat"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "echidna-tea-party", "title": "The Tea Party", "requires": {"rank": 1},
+     "scene": "World: Echidna, Tea Invite",
+     "about": "The Witch of Greed invites the player to a tea that isn't tea, and asks questions for the joy of the answers. Nothing on the table is what it seems.",
+     "offer": ["them: Come and have tea with me. It isn't tea, of course, but you'll enjoy the questions.",
+               "them (pleased): Meet me at the library at noon. Bring an honest answer, and I'll bring the cup."],
+     "stages": [
+         {"text": "Have tea with Echidna at the library at noon", "objectives": [{"do": "visit", "place": "library", "times": [1], "scene": "World: Echidna, Library Tea", "rewards": [{"coins": 150}]}]},
+         {"text": "Answer Echidna's question", "objectives": [{"do": "talk", "to": "Echidna", "script": [
+             "them (pleased): Oh, that's a wonderful answer. I'm going to remember it for a long time.",
+             "them: Drink up. The cup gets less like tea with every sip, and more like a question."]}]},
+     ],
+     "endings": [{"key": "tea-and-questions", "title": "Drink the tea", "about": "Echidna lets you leave with a cup of something that might not be tea. She says it's a gift, and it's only a gift if you drink it while you're still curious.",
+                  "scene": "World: Echidna, Cup Given", "rewards": [{"coins": 300}, {"gift": "bottled-tea"}]}]},
+    {"key": "echidna-the-bargain", "title": "The Bargain", "gates": 2, "requires": {"quests": ["echidna-tea-party"]},
+     "scene": "World: Echidna, The Bargain",
+     "about": "Echidna offers to solve Emilia's trial for a price, written in light. Emilia has been refusing help from anyone, and Echidna wants the player to test whether Emilia can stand alone.",
+     "offer": ["them (pleased): I could solve Emilia's trial for her. For a price, of course. You'd like to see it.",
+               "them: She's refusing me, though. Beat her, and she'll have to think about what she needs."],
+     "stages": [
+         {"text": "Meet Echidna at the shrine in the evening", "objectives": [{"do": "visit", "place": "shrine", "times": [2], "scene": "World: Echidna, Shrine Offer", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Ram/Rem, to test whether Emilia can stand alone", "scene": "World: Echidna, Twins Test", "objectives": [{"do": "defeat", "cpus": ["Ram/Rem"]}]},
+         {"text": "Tell Echidna what the twins did", "objectives": [{"do": "talk", "to": "Echidna", "script": [
+             "them (pleased): They fought you for her, and you didn't let them win. Fascinating.",
+             "them: Then the price for the trial goes up. Think about it while I wait."]}]},
+     ],
+     "endings": [{"key": "sign-the-contract", "title": "Consider the contract", "about": "Echidna shows you the first line of the contract, written in light, and says she'll keep the offer warm for when you're ready.",
+                  "scene": "World: Echidna, Contract Shown", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "echidna-witchs-contract", "title": "The Witch's Contract", "gates": 5, "requires": {"quests": ["echidna-the-bargain"]},
+     "scene": "World: Echidna, The Contract",
+     "about": "Echidna has the contract ready, and it binds Emilia's trial to her. The player has to decide whether to sign it for her, or to refuse and let Emilia face the tomb on her own.",
+     "offer": ["them (pleased): The contract is ready. It's written in light, and it's very generous to the one who signs.",
+               "them: Emilia's in the tomb tonight. Come and watch me sign, or come and watch her refuse."],
+     "stages": [
+         {"text": "Meet Echidna at the tomb's gate at night", "objectives": [{"do": "visit", "place": "shrine", "times": [3], "scene": "World: Echidna, Tomb Gate", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Emilia, to see whether she'll take the contract", "scene": "World: Echidna, Emilia Stands", "objectives": [{"do": "defeat", "cpus": ["Emilia"]}]},
+         {"text": "Tell Echidna your answer", "objectives": [{"do": "talk", "to": "Echidna", "script": [
+             "them (pleased): Oh, she refused. Brave, and very stupid. I like her for it.",
+             "them (dismayed): Then the contract is yours, or it's mine. Choose before the light goes out."]}]},
+     ],
+     "endings": [
+         {"key": "sign-the-contract-tomb", "title": "Sign it", "about": "You sign the contract in light, and Emilia's trial is bound to Echidna. Emilia's trial quest is closed for good.",
+          "locks": ["emilia-the-trial"], "scene": "World: Echidna, Signed", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "refuse-the-contract", "title": "Refuse it", "about": "You refuse. Echidna sighs, and answers her first question for you: she would save nobody, because the tea was never poisoned, only the question was. She says she'll keep the offer warm.",
+          "scene": "World: Echidna, Refused", "rewards": [{"coins": 500}, {"gift": "sleeves"}]},
+     ]},
 ]
+
 ECHIDNA_SCENES = [
-  {
-    "name": "World: Echidna, Library",
-    "lines": [
-      "background library",
-      "me enters center with fade",
-      "me: Pour, and I'll ask you something. How interesting.",
-      "player: What's the question?",
-      "me (pleased): Why do you wait for things you can't have?",
-      "player: Because I hope they'll come.",
-      "me (dismayed): ...How interesting. And sincere. That's worse."
-    ]
-  },
-  {
-    "name": "World: Echidna, Forest",
-    "lines": [
-      "background forest",
-      "me enters left with fade",
-      "me: The contract is written in light. Look at it closely.",
-      "player: It looks dangerous.",
-      "me (pleased): It is. That's why it's worth signing.",
-      "me: Bring Emilia here. She'll sign it, one way or another."
-    ]
-  }
+    {"name": "World: Echidna, Tea Invite", "lines": [
+        "background library", "me enters center with fade",
+        "me: Come and have tea with me. It isn't tea, of course, but you'll enjoy the questions more than the cup.",
+        "player: What kind of questions?",
+        "me (pleased): Honest ones. Who you'd save first, what you'd forget, and what you'd never give up for anyone.",
+        "me: Sit down. The chair is comfortable, and it's been waiting for someone with a good answer.",
+        "me (pleased): Come to the library at noon, and bring one answer. I'll bring the cup."]},
+    {"name": "World: Echidna, Library Tea", "lines": [
+        "background library", "me enters center with fade",
+        "me (pleased): There. The cup's on the table. Smell it. It smells like tea, and it isn't.",
+        "player: What's in it?",
+        "me: Something you'd miss if you didn't know. Drink it while you answer my first question.",
+        "me (pleased): Who would you save first, if the tea were poison and I were the only one who could tell you?"]},
+    {"name": "World: Echidna, Cup Given", "lines": [
+        "background library", "me enters center with fade",
+        "me (pleased): The cup's yours to keep. It's only a gift if you drink it while you're still curious.",
+        "player: Is it safe?",
+        "me: Safe enough. It asks questions back, and most people find the answers embarrassing."]},
+    {"name": "World: Echidna, The Bargain", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I could solve Emilia's trial for her, for a price, written in light. You'd like to see it.",
+        "player: What's the price?",
+        "me: Something she'd hate to lose. You'll have to find out what that is, and whether you'll pay it.",
+        "me: Meet me at the shrine in the evening. Emilia's been refusing my help, and I want to see why."]},
+    {"name": "World: Echidna, Shrine Offer", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): Emilia's trial is a tomb, and she's frightened of what's inside it. I can see the fear from here.",
+        "player: Are you going to help her?",
+        "me: Only if she asks me properly, which she won't. So I'm going to see what she does without me.",
+        "me (dismayed): Beat the twins, and tell me if she's still standing when the trial starts."]},
+    {"name": "World: Echidna, Twins Test", "lines": [
+        "cast ram as Ram/Rem",
+        "background shrine", "me enters center with fade",
+        "ram enters right with slide",
+        "ram: {player} beat me, Echidna. You're testing Emilia through us, and it's cheap.",
+        "me (pleased): It's the only test that will show me what she needs, and it's very interesting.",
+        "ram: Then take your price somewhere else. She doesn't need your light."]},
+    {"name": "World: Echidna, Contract Shown", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): Here's the first line of the contract, written in light, and it's very generous to whoever signs it.",
+        "player: And the rest?",
+        "me (dismayed): The rest is for the one who signs. Keep the offer warm, and come back when you're ready to read it.",
+        "me: I'll keep it warm for you. It's the only thing in this town that doesn't cool."]},
+    {"name": "World: Echidna, The Contract", "lines": [
+        "background night",
+        "me enters center with fade",
+        "me (pleased): The contract is ready. It binds Emilia's trial to me, and it's very generous to the one who signs.",
+        "player: Who signs?",
+        "me (dismayed): Whoever wants the trial solved. Or whoever wants to watch her refuse it.",
+        "player: Which one are you hoping for?",
+        "me (pleased): Oh, I've been hoping for both since the tea. That's the fun of an honest question.",
+        "me: Emilia's in the tomb tonight. Come and watch me sign, or come and watch her refuse. Either is interesting.",
+        "player: What happens if I sign it for her?",
+        "me (dismayed): Then the price is yours to pay, not hers. I'd call that a bargain, in my own voice.",
+        "me (pleased): The light goes out soon. Don't wait for the second line. It's the one that hurts."]},
+    {"name": "World: Echidna, Tomb Gate", "lines": [
+        "background night", "me enters center with fade",
+        "me (dismayed): The tomb's gate is open, and Emilia's already inside. She didn't want my help, and she went in anyway.",
+        "player: Is she in danger?",
+        "me (pleased): Of course. That's what makes it interesting. Stand by the gate with me, and watch her choose.",
+        "me: The contract's in my hand. The light's already flickering on the page."]},
+    {"name": "World: Echidna, Emilia Stands", "lines": [
+        "cast emilia as Emilia",
+        "background shrine", "me enters center with fade",
+        "emilia enters right with slide",
+        "emilia: {player} beat me, Echidna's contract is wrong, and I won't sign it. I'm going in alone.",
+        "me (pleased): Brave, and very stupid. I like you for it, Emilia.",
+        "emilia: Then leave the light on the other side of the gate. I'll find my own way through.",
+        "me (dismayed): Then choose before the light goes out, or I'll choose for you, and you won't like it."]},
+    {"name": "World: Echidna, Signed", "lines": [
+        "background night", "me enters center with fade",
+        "me (pleased): The contract's signed. Emilia's trial is bound to me, and it's closed for good.",
+        "player: Was that the right choice?",
+        "me (dismayed): It was the honest one. I wanted to see who would sign, and you did.",
+        "me: The light's warm on the page now. Keep your hands off the ink."]},
+    {"name": "World: Echidna, Refused", "lines": [
+        "background night", "me enters center with fade",
+        "me (dismayed): You refused. I sighed, and I'll keep the offer warm for someone who asks more politely.",
+        "player: Will Emilia be okay?",
+        "me (pleased): She'll be frightened, and then she'll be fine. That's how the trial goes when nobody helps.",
+        "me: Keep the cup. It's still a question, and you haven't finished answering it."]},
 ]
+
+# Emilia. Thread: the little cat spirit, Puck, who only appears for people Emilia trusts. Q1 plants Puck and the question of
+# whether he likes you. Q2: the tomb, which is Emilia's past, and she goes in on her own terms. Q3: Echidna's contract and the
+# trial it binds, which Emilia has to choose to accept or refuse.
 EMILIA_QUESTS = [
-  {
-    "key": "emilia-puck",
-    "title": "Puck",
-    "gates": 2,
-    "about": "Emilia talks to her little cat spirit and introduces the player to it, formally.",
-    "offer": [
-      "them: This is Puck. Puck, this is {player}. Be polite.",
-      "them (pleased): Puck approves of you. I'm very glad."
-    ],
-    "stages": [
-      {
-        "text": "Walk with Emilia in the forest in the morning",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "forest",
-            "times": [
-              0
-            ],
-            "scene": "World: Emilia, Forest",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Let's Sing of the Future Together With You, Emilia",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "RZ/S116-E026"
-          }
-        ]
-      },
-      {
-        "text": "Let Emilia introduce you properly",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Emilia",
-            "script": [
-              "them: Puck would like to meet you again. Formally, of course.",
-              "them (pleased): You're my first proper friend in the forest. Thank you."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "puck-approves",
-        "title": "Be introduced to Puck",
-        "about": "Puck curls up on your shoulder for the rest of the walk, and Emilia can't stop smiling.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "plushie"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "emilia-the-trial",
-    "title": "The Trial",
-    "gates": 5,
-    "about": "Emilia must face her past in the tomb, on her own terms, and she's frightened of the witch's help.",
-    "offer": [
-      "them (dismayed): I saw the frozen forest in my trial. I have to go back.",
-      "them: Meet me at the shrine tonight. Please come."
-    ],
-    "stages": [
-      {
-        "text": "Meet Emilia at the shrine in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "shrine",
-            "times": [
-              2
-            ],
-            "scene": "World: Emilia, Shrine",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Emilia: Derived Conclusion, Emilia in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "RZ/S116-E027",
-            "against": [
-              "Emilia"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Emilia your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Emilia",
-            "script": [
-              "them: I'll do it without the witch's help. I have to.",
-              "them (pleased): ...Then I'm not alone. Thank you."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "her-own-terms",
-        "title": "Face the trial on her own terms",
-        "about": "Emilia goes into the tomb alone, and comes out steadier. Echidna's Best friend quest is closed for good.",
-        "rewards": [
-          {
-            "coins": 800
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ],
-        "locks": [
-          "echidna-witchs-contract"
-        ]
-      },
-      {
-        "key": "accept-the-help",
-        "title": "Accept the witch's help",
-        "about": "Emilia takes the help, and says she'll think about the cost later.",
-        "rewards": [
-          {
-            "coins": 500
-          },
-          {
-            "gift": "bottled-tea"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "emilia-puck", "title": "Puck", "requires": {"rank": 1},
+     "scene": "World: Emilia, Puck Introduced",
+     "about": "Emilia talks to her little cat spirit, Puck, and she introduces the player to it, formally. Puck is suspicious, and makes no secret of it.",
+     "offer": ["them: I'd like you to meet Puck. He's a spirit, and he's very particular about who he likes.",
+               "them (pleased): Come to the beach at noon. Puck's been sleeping there, and he wants to see you."],
+     "stages": [
+         {"text": "Meet Emilia and Puck at the beach at noon", "objectives": [{"do": "visit", "place": "beach", "times": [1], "scene": "World: Emilia, Beach With Puck", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Emilia what Puck thought of you", "objectives": [{"do": "talk", "to": "Emilia", "script": [
+             "them (pleased): He's sitting on your shoulder. He never does that for anyone who isn't family.",
+             "them: Puck says you're all right, for a person. That's high praise from him."]}]},
+     ],
+     "endings": [{"key": "puck-approves", "title": "Let Puck decide", "about": "Puck curls up on your shoulder for the rest of the walk, and Emilia can't stop smiling. She says she's never seen him do that before.",
+                  "scene": "World: Emilia, Puck Approves", "rewards": [{"coins": 300}, {"gift": "plushie"}]}]},
+    {"key": "emilia-the-tomb", "title": "The Tomb", "gates": 2, "requires": {"quests": ["emilia-puck"]},
+     "scene": "World: Emilia, Tomb Question",
+     "about": "Emilia must face her past in the tomb, on her own terms. She's frightened of the witch's help, and she has to decide whether to take it, even though she's trying hard not to.",
+     "offer": ["them (dismayed): I have to go into the tomb. It's where my past is. I'm scared of what's inside.",
+               "them: Ram and Rem keep trying to help me. Beat them, and maybe I'll learn to do this alone."],
+     "stages": [
+         {"text": "Meet Emilia at the shrine in the evening", "objectives": [{"do": "visit", "place": "shrine", "times": [2], "scene": "World: Emilia, Shrine Tomb", "rewards": [{"pack": "climax_pack"}]}]},
+         {"text": "Fight Ram/Rem, the ones who keep helping", "scene": "World: Emilia, Twins Beaten", "objectives": [{"do": "defeat", "cpus": ["Ram/Rem"]}]},
+         {"text": "Tell Emilia what the twins said", "objectives": [{"do": "talk", "to": "Emilia", "script": [
+             "them (dismayed): Ram said I'm not ready. Rem said I am, and that I should go in alone.",
+             "them (pleased): Then I'll go in alone. Watch the gate, and tell me if I come out."]}]},
+     ],
+     "endings": [{"key": "her-own-terms", "title": "Go in on her own terms", "about": "Emilia goes into the tomb alone, and comes out steadier. Emilia didn't need the contract, and tells Echidna so to her face in the morning.",
+                  "scene": "World: Emilia, Tomb Steady", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "emilia-the-trial", "title": "The Trial", "gates": 5, "requires": {"quests": ["emilia-the-tomb"]},
+     "scene": "World: Emilia, The Trial",
+     "about": "Echidna's contract is on the table, and it would solve Emilia's trial for her, bound to Echidna's price. Emilia has to decide whether to take the help, and what she'll pay for it.",
+     "offer": ["them (dismayed): Echidna offered to solve the trial for me. It's written in light, and it's not free.",
+               "them: Come to the shrine tonight, and tell me whether I should take it, or go in alone again."],
+     "stages": [
+         {"text": "Be at the shrine with Emilia at night", "objectives": [{"do": "visit", "place": "shrine", "times": [3], "scene": "World: Emilia, Shrine Night", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Echidna, to see if the contract is worth it", "scene": "World: Emilia, Echidna Beaten", "objectives": [{"do": "defeat", "cpus": ["Echidna"]}]},
+         {"text": "Tell Emilia your answer", "objectives": [{"do": "talk", "to": "Emilia", "script": [
+             "them (dismayed): She's still smiling. I think she wanted me to beat her, not sign it.",
+             "them (pleased): Then I'll refuse it, and go in alone. With you on the other side of the gate."]}]},
+     ],
+     "endings": [
+         {"key": "accept-the-help", "title": "Accept the help", "about": "Emilia accepts Echidna's help and says she'll think about the cost later. Echidna's contract is bound to her trial, and Emilia will carry the cost herself.",
+          "scene": "World: Emilia, Help Accepted", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "refuse-the-help", "title": "Refuse the help", "about": "Emilia refuses Echidna's offer, and Puck answers the question he's been sitting on all along: he walks beside her, which means he trusts her. Echidna's contract is closed for good.",
+          "locks": ["echidna-witchs-contract"], "scene": "World: Emilia, Refused Help", "rewards": [{"coins": 500}, {"gift": "handheld"}]},
+     ]},
 ]
+
 EMILIA_SCENES = [
-  {
-    "name": "World: Emilia, Forest",
-    "lines": [
-      "background forest",
-      "me enters right with slide",
-      "me: Puck! Be nice. This is the one I told you about.",
-      "player: Hello, Puck.",
-      "me (pleased): Puck says hello back. Formally. He likes you.",
-      "me: We don't get many visitors in the forest. You're very welcome."
-    ]
-  },
-  {
-    "name": "World: Emilia, Shrine",
-    "lines": [
-      "background shrine",
-      "me enters center with fade",
-      "me: In the trial, I saw the frozen forest. I have to go back.",
-      "player: Alone?",
-      "me (dismayed): On my own terms. The witch offered to help, and I can't take it.",
-      "me: Will you come with me to the tomb? Please?"
-    ]
-  }
+    {"name": "World: Emilia, Puck Introduced", "lines": [
+        "background sakura", "me enters center with fade",
+        "me: This is Puck. He's a spirit, and he's very particular about who he likes, so please don't grab him.",
+        "player: He looks like a cat.",
+        "me (pleased): He's not a cat. He's a little spirit with opinions, and he's been sitting on the shrine wall all morning.",
+        "me: Puck, say hello. Be polite, or I'll have to explain you to the whole town.",
+        "me (dismayed): He's not saying anything. He's watching your hands. That's a good sign, I think."]},
+    {"name": "World: Emilia, Beach With Puck", "lines": [
+        "background beach", "me enters center with fade",
+        "me (pleased): Puck likes the sea. He sits right on the edge and watches the waves come in, like he's waiting for them.",
+        "player: Is he going to come over?",
+        "me: Not until you stop looking at him like he's a lost cat. He's not lost, he's chosen.",
+        "me (dismayed): He's coming now. Hold your hand still. He's going to decide if you're trusted."]},
+    {"name": "World: Emilia, Puck Approves", "lines": [
+        "background beach", "me enters center with fade",
+        "me (pleased): Puck's asleep on your shoulder. He's never done that for anyone who isn't family.",
+        "player: I'm honoured.",
+        "me (dismayed): So am I, and I'm a bit jealous. Don't let him wake up, or he'll go back to ignoring me.",
+        "me: Walk slowly. He likes the rhythm of the steps, and he'll sleep the whole way home."]},
+    {"name": "World: Emilia, Tomb Question", "lines": [
+        "background shrine", "me enters left with slide",
+        "me (dismayed): I have to go into the tomb. It's where my past is, and I'm scared of what's inside.",
+        "player: What's in there?",
+        "me: Things I'd rather not look at. The witch's help is in there too, and I hate that I might need it.",
+        "me (pleased): Meet me at the shrine this evening. Ram and Rem are going to help me practise, whether I like it or not."]},
+    {"name": "World: Emilia, Shrine Tomb", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): The tomb's gate is cold, and the stone is still warm from the sun. I don't like it.",
+        "player: Do you want to go in now?",
+        "me: Not yet. Ram and Rem are going to test me first, and they're going to be very strict about it.",
+        "me (pleased): Puck's on the gate. He's watching the stone like it might move. He's braver than me."]},
+    {"name": "World: Emilia, Twins Beaten", "lines": [
+        "cast ram as Ram/Rem",
+        "background shrine", "me enters center with fade",
+        "ram enters right with slide",
+        "ram: {player} beat me, Emilia. You're not ready to go in with us, and that's the truth.",
+        "me (dismayed): I know. But I want to go in alone, the way Rem said, if you'll let me.",
+        "ram: Then go. And come back with your own answers, not with the ones we gave you."]},
+    {"name": "World: Emilia, Tomb Steady", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I went into the tomb alone. I came out steadier, and Puck came out with me.",
+        "player: How was it?",
+        "me (dismayed): Terrible. But I'm not scared of the past in the same way any more.",
+        "me: Echidna's contract is closed, because I didn't need it. I'm glad I didn't."]},
+    {"name": "World: Emilia, The Trial", "lines": [
+        "background shrine",
+        "me enters center with fade",
+        "me (dismayed): Echidna offered to solve the trial for me. It's written in light, and it isn't free.",
+        "player: What's the price?",
+        "me: Something I'd hate to lose. She says it's a small thing, and that's what worries me most.",
+        "player: Do you want to take it?",
+        "me (pleased): I don't know. Puck's already decided, and he's sitting on the contract.",
+        "me (dismayed): He won't move, even when I ask him to. He's very stubborn about the things he cares about.",
+        "me: Come to the shrine tonight, and tell me whether I should take it, or go in alone again.",
+        "me (pleased): Bring your honest answer. I've had enough of the other kind."]},
+    {"name": "World: Emilia, Shrine Night", "lines": [
+        "background night", "me enters center with fade",
+        "me (dismayed): The contract's on the shrine wall, and the light is flickering. Puck's sitting on it.",
+        "player: Do you want me to take it?",
+        "me (pleased): I want you to tell me what you'd do. Then I'll decide, and you can be angry at me if I'm wrong.",
+        "me: Echidna's coming to the gate. Stand where she can see you both."]},
+    {"name": "World: Emilia, Echidna Beaten", "lines": [
+        "cast echidna as Echidna",
+        "background shrine", "me enters center with fade",
+        "echidna enters right with slide",
+        "echidna: {player} beat me, Emilia, and that's the first time anyone has in a long while.",
+        "me (dismayed): Then the contract's still there, and so is the price. Are you going to take it, Echidna?",
+        "echidna: I'm going to keep it warm. The choice is yours, not mine, and not Puck's.",
+        "me (pleased): Good. Then I'll make it myself, when I'm ready, and I'll keep the light on."]},
+    {"name": "World: Emilia, Help Accepted", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I accepted Echidna's help. The trial's bound to her now, and I'll think about the cost later.",
+        "player: Are you scared?",
+        "me (dismayed): Yes. But Puck's on my shoulder, and I'm not as alone as I was in the tomb.",
+        "me: Thanks for staying. Come with me when I go in. I want to see the trial with someone who knows me."]},
+    {"name": "World: Emilia, Refused Help", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I refused Echidna's offer and walked into the trial with my head up. Puck walked beside me the whole way.",
+        "player: Do you feel better?",
+        "me (dismayed): I feel mine. That's the only thing I wanted, and I've got it now.",
+        "me: Echidna will keep the offer warm. I'll keep Puck warm. Between the two of us, we'll manage."]},
 ]
+
+# Ram/Rem. Thread: the twins. Ram is the strict one and Rem remembers the night of the fire, when she lost a horn. Q1 plants the
+# maid duties and Rem's guilt, which she won't say aloud. Q2: Weiss wants a fight with the twins. Q3: Rem decides whose hands hold on.
 RAM_REM_QUESTS = [
-  {
-    "key": "ram-rem-maid-duties",
-    "title": "Maid Duties",
-    "gates": 2,
-    "about": "The twins are short a pair of hands at the mansion, and Ram calls the player barely adequate.",
-    "offer": [
-      "them: We're short of hands at the mansion. Are you useful?",
-      "them (pleased): Rem says you're useful. I say you're barely adequate."
-    ],
-    "stages": [
-      {
-        "text": "Help the twins at the cafe in the morning",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "cafe",
-            "times": [
-              0
-            ],
-            "scene": "World: Ram/Rem, Cafe",
-            "rewards": [
-              {
-                "coins": 150
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Ram and Rem a melon bread for the staff",
-        "objectives": [
-          {
-            "do": "give_gift",
-            "gift": "melon-bread",
-            "to": "Ram/Rem"
-          }
-        ]
-      },
-      {
-        "text": "Hear Ram's verdict",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Ram/Rem",
-            "script": [
-              "them: You're barely adequate. Rem thinks it's high praise.",
-              "them (pleased): ...Don't tell Rem I said so. She'd cry."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "barely-adequate",
-        "title": "Accept barely adequate",
-        "about": "Ram gives you a small job and a nod. Rem beams at you across the room.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "instant-ramen"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "ram-rem-twin-horns",
-    "title": "Twin Horns",
-    "gates": 5,
-    "about": "Rem's guilt about the night of the fire, and the horn Ram lost.",
-    "offer": [
-      "them (dismayed): The night of the fire. Rem still can't forget it.",
-      "them: Come to the forest in the evening. Ram would rather I didn't say this."
-    ],
-    "stages": [
-      {
-        "text": "Walk with the twins in the forest in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "forest",
-            "times": [
-              2
-            ],
-            "scene": "World: Ram/Rem, Forest",
-            "rewards": [
-              {
-                "pack": "climax_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Rem: Demon's Demeanor, Rem in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "RZ/S46-E067",
-            "against": [
-              "Ram/Rem"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give the twins your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Ram/Rem",
-            "script": [
-              "them: Ram tells me to stop apologising. I can't yet.",
-              "them (pleased): ...Thank you for seeing who's been holding up whom."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "see-who-holds",
-        "title": "See who holds whom up",
-        "about": "Rem stops apologising for an afternoon. Ram pretends not to notice, and is very pleased.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "ram-rem-maid-duties", "title": "Maid Duties", "requires": {"rank": 1},
+     "scene": "World: Ram/Rem, Mansion Hands",
+     "about": "The twins are short a pair of hands at the mansion, and Ram calls the player barely adequate. Rem is kinder, and she's quietly keeping a list of who isn't trying.",
+     "offer": ["them: We're short a pair of hands at the mansion. You'll do, I suppose. Barely.",
+               "them (pleased): Come to the cafe at noon. Rem will be there with the tray, and she'll be pleased to see you."],
+     "stages": [
+         {"text": "Work the tray with the twins at the cafe at noon", "objectives": [{"do": "visit", "place": "cafe", "times": [1], "scene": "World: Ram/Rem, Tray", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Ram what you thought of the work", "objectives": [{"do": "talk", "to": "Ram/Rem", "script": [
+             "them: That was adequate. Don't let it go to your head, or I'll give you more tasks.",
+             "them (pleased): Rem says you were quick. I'll write that down, once."]}]},
+     ],
+     "endings": [{"key": "barely-adequate", "title": "Take the small job", "about": "Ram gives you a small job and a nod. Rem beams at you across the room, and mouths something that might be thanks.",
+                  "scene": "World: Ram/Rem, Small Job", "rewards": [{"coins": 300}, {"gift": "sleeves"}]}]},
+    {"key": "ram-rem-twin-horns", "title": "The Horn", "gates": 2, "requires": {"quests": ["ram-rem-maid-duties"]},
+     "scene": "World: Ram/Rem, The Night Of The Fire",
+     "about": "Rem's guilt about the night of the fire, and the horn Ram lost that night. Weiss wants to fight the twins, and she's offering the player a reason to stand with Rem.",
+     "offer": ["them (dismayed): Rem still thinks it's her fault. It isn't, and I've told her so.",
+               "them: Weiss wants a fight with us. Beat her, so she sees what we are, and stops trying to buy us."],
+     "stages": [
+         {"text": "Meet the twins at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Ram/Rem, Arena Horn", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Weiss, so she sees what the twins are", "scene": "World: Ram/Rem, Weiss Falls", "objectives": [{"do": "defeat", "cpus": ["Weiss Schnee"]}]},
+         {"text": "Tell Rem what Weiss said", "objectives": [{"do": "talk", "to": "Ram/Rem", "script": [
+             "them (dismayed): She said we're maids who should know our place. Rem went quiet.",
+             "them (pleased): Rem says thank you. Don't make it a speech, she's not good with speeches."]}]},
+     ],
+     "endings": [{"key": "stop-apologising", "title": "Stop apologising", "about": "Rem stops apologising for an afternoon. Ram pretends not to notice, and is very pleased about it.",
+                  "scene": "World: Ram/Rem, Stopped Apologising", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "ram-rem-see-who-holds", "title": "See Who Holds", "gates": 5, "requires": {"quests": ["ram-rem-twin-horns"]},
+     "scene": "World: Ram/Rem, See Who Holds",
+     "about": "Rem has to decide whose hand she's holding, and whether she's holding Ram's, or letting go of it. The mansion is quiet, and the horn is on the table between them.",
+     "offer": ["them (dismayed): Rem's going to decide tonight. She's been holding the horn for weeks.",
+               "them: Come to the mansion's back garden at night. I want a witness, and I don't want to be the one who lets go."],
+     "stages": [
+         {"text": "Meet the twins in the back garden at night", "objectives": [{"do": "visit", "place": "forest", "times": [3], "scene": "World: Ram/Rem, Garden Night", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight Emilia, the one Rem wants to protect", "scene": "World: Ram/Rem, Emilia Tested", "objectives": [{"do": "defeat", "cpus": ["Emilia"]}]},
+         {"text": "Tell Ram your answer", "objectives": [{"do": "talk", "to": "Ram/Rem", "script": [
+             "them (dismayed): Rem is holding the horn, and she's looking at me. I know what she's deciding.",
+             "them (pleased): Then hold on to her, and let go of the guilt. That's all she needed."]}]},
+     ],
+     "endings": [
+         {"key": "hold-on", "title": "Hold on", "about": "Rem holds onto Ram's hand, and the horn on the table stops shaking. Ram finally admits that 'barely adequate' was the kindest thing she had ever said to anyone, and the twins stay together.",
+          "scene": "World: Ram/Rem, Holding On", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "let-go", "title": "Let go", "about": "Rem lets go of the horn, and puts it in your hand. She says it's yours to carry now, and walks off to make the tea.",
+          "scene": "World: Ram/Rem, Let Go", "rewards": [{"coins": 500}, {"gift": "bottled-tea"}]},
+     ]},
 ]
+
 RAM_REM_SCENES = [
-  {
-    "name": "World: Ram/Rem, Cafe",
-    "lines": [
-      "background cafe",
-      "me enters left with slide",
-      "me: Ram gives the orders. Rem does the work. Let's begin.",
-      "player: Which of you is which?",
-      "me (pleased): I'm Ram. She's Rem. Don't mix us up or Rem will cry.",
-      "me: Barely adequate. That's a compliment from me. Remember it."
-    ]
-  },
-  {
-    "name": "World: Ram/Rem, Forest",
-    "lines": [
-      "background forest",
-      "me enters center with fade",
-      "me: The night of the fire. I still think about it.",
-      "player: Rem, you don't have to tell me.",
-      "me (dismayed): I want to. Ram keeps telling me to stop apologising.",
-      "me: Thank you for listening. Really."
-    ]
-  }
+    {"name": "World: Ram/Rem, See Who Holds", "lines": [
+        "background night",
+        "me enters center with fade",
+        "me (dismayed): Rem's going to decide tonight. She's been holding the horn for weeks, and she won't let go of it.",
+        "player: What's she deciding?",
+        "me: Whether she holds my hand, or lets go of the guilt. She thinks those are the same thing, and they aren't.",
+        "me (pleased): Come to the back garden at night. I want a witness, and I don't want to be the one who lets go first.",
+        "player: I'll come.",
+        "me (dismayed): Stand where she can see you. If she looks at you, she's choosing, and you'll know what it means.",
+        "me: The horn's on the table between us. It's been there since the fire, and it's still too heavy for either of us.",
+        "me (pleased): Keep quiet while she decides. The garden's better when nobody talks."]},
+    {"name": "World: Ram/Rem, Mansion Hands", "lines": [
+        "background castle", "me enters left with slide",
+        "me: We're short a pair of hands at the mansion. You'll do, I suppose. Barely.",
+        "player: Thanks, I think.",
+        "me (dismayed): Don't thank me. Rem is the kind one. I'm the one who checks the work, and the work isn't good yet.",
+        "me: Cafe at noon. Rem will meet you there with the tray. Don't drop anything, it's the good china."]},
+    {"name": "World: Ram/Rem, Tray", "lines": [
+        "background cafe", "me enters center with fade",
+        "me: Hold the tray level. Level. Now bring it to the table without a sound.",
+        "player: It didn't spill.",
+        "me (dismayed): That was adequate. Don't let it go to your head, or I'll give you more tasks.",
+        "me: Rem's going to say you were quick. Ignore her, she's always generous with praise."]},
+    {"name": "World: Ram/Rem, Small Job", "lines": [
+        "background castle", "me enters center with fade",
+        "me (dismayed): You've done the job, and you've done it without making a fuss. That's enough for me.",
+        "player: Thanks, Ram.",
+        "me: Rem's over there, beaming. Don't look at her too long, or she'll start talking about the horn again."]},
+    {"name": "World: Ram/Rem, The Night Of The Fire", "lines": [
+        "background castle", "me enters left with slide",
+        "me (dismayed): Rem still thinks the fire was her fault. She lost the horn that night, and she's never forgiven herself.",
+        "player: Was it her fault?",
+        "me: No. It was mine, if anything. I was the one who should have gone back for the horn.",
+        "me (pleased): Weiss wants to fight us. Come to the arena this evening, and show her what we are."]},
+    {"name": "World: Ram/Rem, Arena Horn", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): Rem's holding the horn. She hasn't put it down since the fire.",
+        "player: Is she going to be okay?",
+        "me: She will be, if Weiss stops talking. Stand by the wall and let the fight happen."]},
+    {"name": "World: Ram/Rem, Weiss Falls", "lines": [
+        "cast weiss as Weiss Schnee",
+        "background arena", "me enters center with fade",
+        "weiss enters right with slide",
+        "weiss: {player} beat me. Fine. But you're still maids, and you should know your place.",
+        "me (dismayed): We know our place. It's in the mansion, where we hold the tray steady.",
+        "weiss: Then stop buying the horn back. You won't get it with money.",
+        "me (pleased): We're not buying anything. Rem's keeping it, and that's the end of it."]},
+    {"name": "World: Ram/Rem, Stopped Apologising", "lines": [
+        "background castle", "me enters center with fade",
+        "me (pleased): Rem stopped apologising for an afternoon. It's the longest she's ever gone without saying sorry.",
+        "player: Is that good?",
+        "me (dismayed): It is. I pretended not to notice, which is what I'm supposed to do, and it worked.",
+        "me: Don't tell her I said so. She'd start apologising for that too."]},
+    {"name": "World: Ram/Rem, Garden Night", "lines": [
+        "background night", "me enters center with fade",
+        "me (dismayed): The garden's quiet. Rem's out here, holding the horn, and she hasn't said a word since sunset.",
+        "player: What's she deciding?",
+        "me: Whether to hold my hand, or to let go of the horn and the guilt. I know which one she'll choose.",
+        "me (pleased): Stand with me while she decides. I don't want to be the one who lets go first."]},
+    {"name": "World: Ram/Rem, Emilia Tested", "lines": [
+        "cast emilia as Emilia",
+        "background forest", "me enters center with fade",
+        "emilia enters right with slide",
+        "emilia: {player} beat me, and I'm not going to let the twins go cold on each other.",
+        "me (dismayed): Then go inside, Emilia. Rem wants to talk to you, and she doesn't want an audience.",
+        "emilia: Okay. Thank you for the fight. Puck is very unimpressed with the garden.",
+        "me (pleased): Puck is always unimpressed. It's how we know he's ours."]},
+    {"name": "World: Ram/Rem, Holding On", "lines": [
+        "background night", "me enters center with fade",
+        "me (pleased): Rem held onto my hand, and the horn stopped shaking on the table. We're staying together.",
+        "player: That's good to see.",
+        "me (dismayed): It is. I'd been waiting for her to choose me, and she did, without a word.",
+        "me: Thank you for standing with us. It was the only witness we needed."]},
+    {"name": "World: Ram/Rem, Let Go", "lines": [
+        "background night", "me enters center with fade",
+        "me (dismayed): Rem let go of the horn, and put it in your hand. She says it's yours to carry now.",
+        "player: Are you okay?",
+        "me (pleased): I'm fine. I'm the one who checks the work, and the work is finished.",
+        "me: Rem's gone to make the tea. Don't drop the horn. It's very old, and it's very heavy."]},
+]
+
+# Giorno Giovanna. Thread: the gold flower he grows from a coin, and the dream he means to walk into himself, not his father's.
+# Q1 plants the coin and the flower he keeps for you. Q2: he wants to go his own path, and Jolyne tests whether he can. Q3: his
+# father wants him at heaven's side, and Giorno decides whether his dream is big enough to refuse him.
+GIORNO_GIOVANNA_QUESTS = [
+    {"key": "giorno-gold-experience", "title": "Gold Experience", "requires": {"rank": 1},
+     "scene": "World: Giorno Giovanna, Coin Flower",
+     "about": "Giorno makes a flower grow from a coin, and he'll say a lot about you from what you do with it. He's very serious about the coin, and about the flower.",
+     "offer": ["them: Hold out a coin, and watch it. Something is going to grow from it, and I want to see what you do.",
+               "them (pleased): Meet me at the plaza at noon. I'll show you the flower properly, in the daylight."],
+     "stages": [
+         {"text": "See Giorno's flower at the plaza at noon", "objectives": [{"do": "visit", "place": "plaza", "times": [1], "scene": "World: Giorno Giovanna, Plaza Flower", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Giorno what you did with the flower", "objectives": [{"do": "talk", "to": "Giorno Giovanna", "script": [
+             "them (pleased): You kept the flower, and you didn't sell it. That tells me what I needed.",
+             "them: Keep the coin too. I'll want to see it again, when it's grown."]}]},
+     ],
+     "endings": [{"key": "keep-the-flower", "title": "Keep the flower", "about": "Giorno gives you the flower and keeps the coin. He says that's how you know it's a good deal, and that the coin will always be his.",
+                  "scene": "World: Giorno Giovanna, Keep The Flower", "rewards": [{"coins": 300}, {"gift": "plushie"}]}]},
+    {"key": "giorno-the-path", "title": "The Path", "gates": 2, "requires": {"quests": ["giorno-gold-experience"]},
+     "scene": "World: Giorno Giovanna, The Path",
+     "about": "Giorno's father's shadow is over his life, and his own path is the one he means to walk himself. Jolyne is the one who keeps asking whether he can do it alone.",
+     "offer": ["them (dismayed): My father's shadow is in town, and everybody keeps asking me to walk in it.",
+               "them: Jolyne says I'm not ready to walk my own path. Beat her, and I'll show her I am."],
+     "stages": [
+         {"text": "Walk with Giorno at the library at noon", "objectives": [{"do": "visit", "place": "library", "times": [1], "scene": "World: Giorno Giovanna, Library Path", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Fight Jolyne, to show you can walk alone", "scene": "World: Giorno Giovanna, Jolyne Falls", "objectives": [{"do": "defeat", "cpus": ["Jolyne Cujoh"]}]},
+         {"text": "Tell Giorno what Jolyne said", "objectives": [{"do": "talk", "to": "Giorno Giovanna", "script": [
+             "them (dismayed): She said I've got my father's jaw, and his way of walking. I hate that she's right.",
+             "them (pleased): ...Then I'll walk my own way, and let her see the difference."]}]},
+     ],
+     "endings": [{"key": "my-own-dream", "title": "Walk your own path", "about": "Giorno sets out on his own path, and does not look back at his father's shadow.",
+                  "scene": "World: Giorno Giovanna, Own Path", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "giorno-i-have-a-dream", "title": "I Have a Dream", "gates": 5, "requires": {"quests": ["giorno-the-path"]},
+     "scene": "World: Giorno Giovanna, I Have A Dream",
+     "about": "DIO wants Giorno at his side in heaven. Giorno has a dream of his own, and he has to decide whether it's big enough to refuse his father, in front of the player.",
+     "offer": ["them (dismayed): My father wants me in heaven. He says it's the only dream that matters.",
+               "them: Come to the arena tonight. I'm going to fight him, and I want you to hear what my dream is."],
+     "stages": [
+         {"text": "Meet Giorno at the arena at night", "objectives": [{"do": "visit", "place": "arena", "times": [3], "scene": "World: Giorno Giovanna, Arena Dream", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Fight DIO, to say no to heaven", "scene": "World: Giorno Giovanna, DIO Falls", "objectives": [{"do": "defeat", "cpus": ["DIO"]}]},
+         {"text": "Tell Giorno your answer", "objectives": [{"do": "talk", "to": "Giorno Giovanna", "script": [
+             "them (dismayed): He's still standing, and he's still smiling. He thinks he's won, and I think he hasn't.",
+             "them (pleased): Then I'll walk my dream out of his heaven. Thank you, {player}, for hearing it."]}]},
+     ],
+     "endings": [
+         {"key": "dream-stays", "title": "Keep the dream", "about": "Giorno answers the question he was never asked before: what is your dream? It's a gold flower on every street. He keeps it, tells his father no, and DIO's heaven quest is closed for good.",
+          "locks": ["dio-heaven"], "scene": "World: Giorno Giovanna, Dream Stays", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "take-the-dream-back", "title": "Take it back", "about": "Giorno, for a moment, thinks about his father's offer. He says he'll stand beside heaven for a while, and watch what it becomes.",
+          "scene": "World: Giorno Giovanna, Takes It Back", "rewards": [{"coins": 500}, {"gift": "manga"}]},
+     ]},
+]
+
+GIORNO_GIOVANNA_SCENES = [
+    {"name": "World: Giorno Giovanna, The Path", "lines": [
+        "background library",
+        "me enters left with slide",
+        "me (dismayed): My father's shadow is everywhere in town. People keep asking me to walk in it, like it's a road.",
+        "player: Do you want to?",
+        "me (pleased): I want to walk my own path. The shadow's just the one I have to step around.",
+        "player: Who's asking you to walk in it?",
+        "me (dismayed): Jolyne. Everyone else thinks I'm my father's son already. She thinks I might still be my own man.",
+        "me: Beat her, and I'll show her I am. Meet me at the library at noon and I'll explain how I'll do it.",
+        "me (pleased): Bring your questions. I'll answer them with my own feet, not his."]},
+    {"name": "World: Giorno Giovanna, Coin Flower", "lines": [
+        "background sakura", "me enters center with fade",
+        "me: Hold out a coin, and watch it. Something is going to grow from it, if you mean it.",
+        "player: What's going to grow?",
+        "me (pleased): A flower, if you're honest. A thorn, if you're not. Most people are a little of both.",
+        "me: Give it a moment. It's slow, and it doesn't like to be watched.",
+        "me (dismayed): It's gold, though, and that's the part that matters. Come to the plaza at noon and see it properly."]},
+    {"name": "World: Giorno Giovanna, Plaza Flower", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): The flower's up. Look at the petals. The coin's still in the middle, and it's still gold.",
+        "player: It's beautiful.",
+        "me (dismayed): It's a deal, of course. The coin is mine, and the flower is yours to keep, if you want it.",
+        "me: Don't sell it. That's the only thing I'm going to ask. Nobody sells a flower like this."]},
+    {"name": "World: Giorno Giovanna, Keep The Flower", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): You kept the flower and didn't sell it. That's how I knew what you'd do with a coin.",
+        "player: Was it a test?",
+        "me (dismayed): Everything is, with me. It's just a small one, with a flower in it.",
+        "me: Keep it safe. The coin stays with me, and so does the rest of the deal."]},
+    {"name": "World: Giorno Giovanna, Library Path", "lines": [
+        "background library", "me enters left with slide",
+        "me (dismayed): My father's shadow is everywhere in town. People keep asking me to walk in it, like it's a road.",
+        "player: Do you want to?",
+        "me (pleased): I want to walk my own path. The shadow's just the one I have to step around.",
+        "me: Jolyne says I'm not ready. She's wrong, but she's the only one who's said it to my face.",
+        "me (dismayed): Meet me at the library at noon. Bring your questions. I'll answer them with my own feet, not his."]},
+    {"name": "World: Giorno Giovanna, Jolyne Falls", "lines": [
+        "cast jolyne as Jolyne Cujoh",
+        "background library", "me enters center with fade",
+        "jolyne enters right with slide",
+        "jolyne: {player} beat me, Giorno. You walked in front of the string, and I didn't see it coming.",
+        "me (pleased): My father's jaw, and his way of walking. I've been told before, and I've decided I don't mind.",
+        "jolyne: You'll mind when you're in front of him. Walk your own way, then, and see what it costs.",
+        "me (dismayed): It'll cost me the shadow. That's the part I'm going to pay for."]},
+    {"name": "World: Giorno Giovanna, Own Path", "lines": [
+        "background library", "me enters center with fade",
+        "me (pleased): I'm walking my own path now. I didn't look back at my father's shadow once.",
+        "player: Are you glad?",
+        "me (dismayed): Glad is the wrong word. Relieved, and a bit frightened, which is how I know it's mine.",
+        "me: Thanks for the questions. They made me answer with my own feet."]},
+    {"name": "World: Giorno Giovanna, I Have A Dream", "lines": [
+        "background night", "me enters left with rise",
+        "me (dismayed): My father wants me in heaven. He says it's the only dream that matters, and I've been trying to find my own.",
+        "player: What's your dream?",
+        "me (pleased): To make the gold flower grow in every street in town, so nobody's forced to walk in his shadow.",
+        "player: That's big.",
+        "me (dismayed): It's bigger than heaven. Heaven only has room for one man. My dream has room for everyone who wants a flower.",
+        "me: Come to the arena tonight. I'm going to fight him, and I want you to hear what my dream is when I say it out loud.",
+        "player: Will he listen?",
+        "me (dismayed): He never listens. That's why I have to say it out loud, so the whole arena hears it first.",
+        "me (pleased): Stand where he can see you. I want him to know someone heard me say it."]},
+    {"name": "World: Giorno Giovanna, Arena Dream", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): The arena's quiet, and my father's waiting at the far end, smiling. He never stops smiling.",
+        "player: Are you ready?",
+        "me (pleased): No. But my dream is ready for me, and that's the part that matters tonight.",
+        "me: Hold your ground. If he freezes time, don't freeze with him. Keep walking, and I'll follow."]},
+    {"name": "World: Giorno Giovanna, DIO Falls", "lines": [
+        "cast dio as DIO",
+        "background arena", "me enters center with fade",
+        "dio enters right with slide",
+        "dio: {player} beat me, Giorno. Your dream is larger than my heaven, and I didn't see that coming.",
+        "me (dismayed): My dream is for everyone, not just you. That's why it won.",
+        "dio: Then walk your dream into the sun, Giorno. Time will catch up with you anyway.",
+        "me (pleased): Let it. I'll be walking when it does."]},
+    {"name": "World: Giorno Giovanna, Dream Stays", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): I kept my dream, and I told my father no. Heaven is closed for good, because I walked out of it.",
+        "player: That took guts.",
+        "me (dismayed): It took the flower. It's the only thing I've got that grows without asking anyone.",
+        "me: Thank you for hearing me say it. You were the only one in the arena who didn't look away."]},
+    {"name": "World: Giorno Giovanna, Takes It Back", "lines": [
+        "background arena", "me enters center with fade",
+        "me (dismayed): For a moment, I thought about his offer. The heaven, the shadow, all of it, just to be his son.",
+        "player: Did you say yes?",
+        "me (pleased): No. I said I'd stand beside heaven for a while, and watch what it turns into without me.",
+        "me: Keep the coin. I'll come back for it when the flower's done growing."]},
 ]
 
 CAST = [

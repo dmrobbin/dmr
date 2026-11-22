@@ -363,6 +363,10 @@ WORDING = [
     (r"\b(your waiting room has|you have) 1 (character with ⟦\d+⟧ in its card name)((?:(?:, and|,| and) 1 other character with ⟦\d+⟧ in its card name)+)",
      lambda m: f"{m[1]} 1 " + " & 1 ".join([m[2]] + re.findall(r"1 (other character with ⟦\d+⟧ in its card name)", m[3]))),
     (r"\byou have other ((?:⟦\d+⟧, )+⟦\d+⟧ and ⟦\d+⟧)", lambda m: "you have other " + m[1].replace(", ", " and ")),
+    # "All of your other "A" and "B" get +500 power": each of them gets it, so it's either name (in a condition, "you have
+    # A and B" means both, which is why this is only for a target that gets something)
+    (r"\b([Aa]ll of your (?:other )?)((?:⟦\d+⟧, )*⟦\d+⟧,? and ⟦\d+⟧)(?= gets? )",
+     lambda m: m[1] + re.sub(r",? and |, ", " or ", m[2])),
     (r"\b(search your deck for up to \d+ [^,.]+?), and up to (\d+) (⟦\d+⟧)", r"\1 and also up to \2 \3"),
     (r"\bthere is no character facing this card, or the character facing this card is 【REVERSE】", "there is no character facing this card or it is 【REVERSE】"),
     (r"\bperform \[standby\]", "perform the [standby] effect"),

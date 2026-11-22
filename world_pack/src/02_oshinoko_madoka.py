@@ -1,1708 +1,1219 @@
 """World mode cast: Oshi no Ko and Puella Magi Madoka Magica."""
 
+# Quests, three per CPU, one story each (the scene order rule: start = hook, visit = the event, stage scene after a duel = what
+# it changed, ending scene = the aftermath and what it points to).
+#
+# Cameos: Akane's arc fights Aqua as a stand-in for the man behind Ai's death, and Kana Arima knows who he was (Aqua's
+# quest 2 duel). Ruby Hoshino is the one Aqua's quest 3 has to beat, to get him to talk. Madoka's quest 2 is trained by
+# Mami, and Homura's quest 2 duel is with Mami (who learns the truth about soul gems in one loop). Sayaka's quest 2 is a knight's
+# duel with Emilia; Kyoko and Mami are the two who keep food and tea in the town.
+# The two locking pairs: Akane's "stop him" closes Aqua's "revenge", and Aqua's "finish it" closes Akane's "profile";
+# Madoka's "make the wish" closes Homura's "once more", and Homura's "turn back time" closes Madoka's "a wish".
+
 AKANE_KUROKAWA_QUESTS = [
-  {
-    "key": "akane-method-acting",
-    "title": "Method Acting",
-    "gates": 2,
-    "about": "Akane is studying the player, to play them in a role.",
-    "offer": [
-      "them: I've been watching how you walk. Hold still, I'm copying it.",
-      "them (pleased): Don't worry, it's a compliment."
-    ],
-    "stages": [
-      {
-        "text": "Find Akane at the library at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "library",
-            "times": [
-              1
-            ],
-            "scene": "World: Akane Kurokawa, Library",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Akane a manga volume for research",
-        "objectives": [
-          {
-            "do": "give_gift",
-            "gift": "manga",
-            "to": "Akane Kurokawa"
-          }
-        ]
-      },
-      {
-        "text": "Answer her question: what do you want?",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Akane Kurokawa",
-            "script": [
-              "them: I can copy everything about you but that. Tell me.",
-              "them (pleased): Hm. Honest. That I can use."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "let-her-play-you",
-        "title": "Let her play you",
-        "about": "Akane's copy of you is perfect now, and she's proud of it.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "shortcake"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "akane-profile-of-a-killer",
-    "title": "Profile of a Killer",
-    "gates": 5,
-    "about": "Akane has worked out who Aqua is hunting, and what the hunt is doing to him.",
-    "offer": [
-      "them (dismayed): I have a profile. It's about Aqua, and it's not pretty.",
-      "them: I need someone to help me stop him before he crosses a line."
-    ],
-    "stages": [
-      {
-        "text": "Meet Akane at the cafe in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "cafe",
-            "times": [
-              2
-            ],
-            "scene": "World: Akane Kurokawa, Cafe",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Perfect Trace, Akane Kurokawa",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "OSK/S107-E068"
-          }
-        ]
-      },
-      {
-        "text": "Decide what to do about Aqua",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Akane Kurokawa",
-            "script": [
-              "them: Aqua's hunt is going to get him killed, or worse.",
-              "them (dismayed): Stop him, or let him go. Your call."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "stop-him",
-        "title": "Stop him",
-        "about": "Akane tells Aqua's secret to the one person who can stop him. Aqua's Best friend quest is closed for good.",
-        "rewards": [
-          {
-            "coins": 800
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ],
-        "locks": [
-          "aqua-revenge"
-        ]
-      },
-      {
-        "key": "let-him-go",
-        "title": "Let him go his own way",
-        "about": "Akane keeps the profile to herself and lets Aqua chase his revenge.",
-        "rewards": [
-          {
-            "coins": 500
-          },
-          {
-            "gift": "earbuds"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "akane-method-acting", "title": "Method Acting", "requires": {"rank": 1},
+     "scene": "World: Akane Kurokawa, Study",
+     "about": "Akane is studying the player, to play them in a role. She wants your walk, your habits, and your honest answers.",
+     "offer": ["them: I've been watching how you walk. Hold still, I'm copying it.",
+               "them (pleased): Don't worry, it's a compliment."],
+     "stages": [
+         {"text": "Sit with Akane at the library at noon", "objectives": [{"do": "visit", "place": "library", "times": [1], "scene": "World: Akane Kurokawa, Library", "rewards": [{"coins": 200}]}]},
+         {"text": "Answer Akane's question: what do you want?", "objectives": [{"do": "talk", "to": "Akane Kurokawa", "script": [
+             "them: I can copy everything about you but that. Tell me.",
+             "them (pleased): Hm. Honest. That I can use."]}]},
+     ],
+     "endings": [{"key": "let-her-play-you", "title": "Let her play you", "about": "Akane's copy of you is perfect now. She has noticed something odd in Aqua's notes, and asks you to help her look.",
+                  "scene": "World: Akane Kurokawa, Notebook", "rewards": [{"coins": 300}, {"gift": "shortcake"}]}]},
+    {"key": "akane-profile-of-a-killer", "title": "Profile of a Killer", "gates": 2, "requires": {"quests": ["akane-method-acting"]},
+     "scene": "World: Akane Kurokawa, The Profile",
+     "about": "Akane has traced the man behind Ai's death, and what it's doing to Aqua. She needs to see how Aqua fights before she can stop him.",
+     "offer": ["them (dismayed): I have a profile. It's about Aqua, and it's not pretty.",
+               "them: Watch Aqua fight. I need to know how far he'll go."],
+     "stages": [
+         {"text": "Meet Akane at the cafe in the evening", "objectives": [{"do": "visit", "place": "cafe", "times": [2], "scene": "World: Akane Kurokawa, Cafe", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Duel Aqua, as a stand-in for the man he's hunting", "scene": "World: Akane Kurokawa, Stand-In",
+          "objectives": [{"do": "defeat", "cpus": ["Aqua Hoshino"]}]},
+         {"text": "Tell Akane what you saw", "objectives": [{"do": "talk", "to": "Akane Kurokawa", "script": [
+             "them: He's fighting like someone who has nothing left to lose.",
+             "them (dismayed): Then I need to stop him before he crosses the line."]}]},
+     ],
+     "endings": [{"key": "ready-to-stop", "title": "Get ready to stop him", "about": "Akane has the profile, and the pieces of the man behind Ai. Now she has to decide whether she'll use them.",
+                  "scene": "World: Akane Kurokawa, Ready", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "akane-the-role", "title": "The Role", "gates": 5, "requires": {"quests": ["akane-profile-of-a-killer"]},
+     "scene": "World: Akane Kurokawa, The Role",
+     "about": "Akane has to decide whether to stop Aqua, or let him go. Whichever she picks, she's going to play the part of the person who decided it.",
+     "offer": ["them: I have to make a choice about Aqua. I can't make it in a rehearsal.",
+               "them (dismayed): Come to the cafe at evening. I'll tell you what I'm going to do."],
+     "stages": [
+         {"text": "Meet Akane in the cafe at evening", "objectives": [{"do": "visit", "place": "cafe", "times": [2], "scene": "World: Akane Kurokawa, The Cafe Meeting", "rewards": [{"coins": 300}]}]},
+         {"text": "Beat Akane in a duel, to see if she's ready to play the role", "scene": "World: Akane Kurokawa, Her Last Scene",
+          "objectives": [{"do": "defeat", "cpus": ["Akane Kurokawa"]}]},
+         {"text": "Tell Akane your answer", "objectives": [{"do": "talk", "to": "Akane Kurokawa", "script": [
+             "them: So that's your answer. I'll do it, then.",
+             "them (pleased): Thanks for being in the audience, {player}."]}]},
+     ],
+     "endings": [
+         {"key": "stop-him", "title": "Stop him", "about": "Akane tells Aqua's secret to the one person who can stop him. Aqua's Best friend quest is closed for good.",
+          "locks": ["aqua-revenge"], "scene": "World: Akane Kurokawa, Stopped", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "let-him-go", "title": "Let him go his own way", "about": "Akane keeps the profile to herself and lets Aqua chase his revenge.",
+          "scene": "World: Akane Kurokawa, Let Go", "rewards": [{"coins": 500}, {"gift": "earbuds"}]},
+     ]},
 ]
+
 AKANE_KUROKAWA_SCENES = [
-  {
-    "name": "World: Akane Kurokawa, Library",
-    "lines": [
-      "background library",
-      "me enters center with fade",
-      "me: Stay still. Your shoulders go up when you think. Like this.",
-      "player: I'm not doing that.",
-      "me (pleased): You just did it. Notebook page four.",
-      "me: Don't worry. I won't play you badly. Just better than you'd like.",
-      "player: What do you want from me?",
-      "me (dismayed): ...That's the one line I can't copy. Tell me?"
-    ]
-  },
-  {
-    "name": "World: Akane Kurokawa, Cafe",
-    "lines": [
-      "background dusk",
-      "me enters left with slide",
-      "me: I wrote Aqua's profile. Read it, and tell me I'm wrong.",
-      "player: Is he really hunting someone?",
-      "me (dismayed): The man who had Ai killed. He's close.",
-      "me: Watching him do this to himself is the worst part.",
-      "me: I need you to decide what happens next. I can't carry it alone."
-    ]
-  }
+    {"name": "World: Akane Kurokawa, The Role", "lines": [
+        "background cafe",
+        "me enters left with slide",
+        "me (dismayed): I have to make a choice about Aqua, and I can't make it in a rehearsal.",
+        "player: What's the choice?",
+        "me: Stop him, or let him go. Whichever I pick, I'll have to live as the person who picked it.",
+        "player: Will Aqua forgive you if you stop him?",
+        "me (pleased): He won't, and that's the point. I'd rather he hated me than died in the alley.",
+        "player: Then what do you say to him at the end?",
+        "me (dismayed): The truth, in the cafe, with the profile on the table. That's all the role has left.",
+        "me (pleased): Come to the cafe this evening. I'll tell you what I'm going to do."]},
+    {"name": "World: Akane Kurokawa, Study", "lines": [
+        "background library", "me enters center with fade",
+        "me: Hold still. Your posture is so interesting. I'm copying it for a role.",
+        "player: Are you studying me?",
+        "me (pleased): Actors learn from everyone. Start with what makes you laugh, please."]},
+    {"name": "World: Akane Kurokawa, Library", "lines": [
+        "background library", "me enters center with fade",
+        "me: I'll need your name, your habits, and what makes you cry. Start with the name.",
+        "player: Why do you need all that?",
+        "me (dismayed): Because the role is someone who lost everything. I'm trying to get it right.",
+        "me: Tell me. What do you want?"]},
+    {"name": "World: Akane Kurokawa, Notebook", "lines": [
+        "background library", "me enters center with fade",
+        "me (pleased): Your copy is perfect. I've been practising your walk for a week.",
+        "player: And what did you find out?",
+        "me (dismayed): There's a name in Aqua's notes. It's the man behind Ai's death.",
+        "me: Come to the cafe at evening. I need someone to help me look at the profile."]},
+    {"name": "World: Akane Kurokawa, The Profile", "lines": [
+        "background cafe", "me enters left with slide",
+        "me (dismayed): I have a profile of the man Aqua's hunting. It's not pretty.",
+        "player: What does it say?",
+        "me: It says he's dangerous, and that Aqua is going to die if he keeps this up.",
+        "me: Watch Aqua fight. I need to see how far he'll go."]},
+    {"name": "World: Akane Kurokawa, Cafe", "lines": [
+        "background cafe", "me enters left with slide",
+        "me: Aqua's out there every night now. I'm worried he'll get himself killed.",
+        "player: Do you still have the profile?",
+        "me (dismayed): Yes. And I have a plan to stop him, if I can make it work."]},
+    {"name": "World: Akane Kurokawa, Stand-In", "lines": [
+        "cast aqua as Aqua Hoshino",
+        "background cafe",
+        "me enters left with slide",
+        "aqua enters right with slide",
+        "aqua: You watched the whole fight. You're not here for a profile, are you?",
+        "me (dismayed): I'm here for the truth. You fought like someone with nothing left.",
+        "aqua: Then you know what I'll do next. Get out of my way, Akane.",
+        "player: Are you going to be okay?",
+        "me (pleased): Not yet. But I'll have the profile ready by the time you're back."]},
+    {"name": "World: Akane Kurokawa, Ready", "lines": [
+        "background cafe", "me enters right with fade",
+        "me (dismayed): Now I have the profile, and the pieces of the man behind Ai.",
+        "player: What are you going to do?",
+        "me (pleased): Decide. Whether to stop him, or let him go. Come with me to find out."]},
+    {"name": "World: Akane Kurokawa, The Cafe Meeting", "lines": [
+        "background cafe", "me enters left with slide",
+        "me: I've made my choice, or I'm about to. Sit down and listen.",
+        "player: I'm listening.",
+        "me (dismayed): It's about Aqua, and what he's doing to himself. I can't play it safe any more."]},
+    {"name": "World: Akane Kurokawa, Her Last Scene", "lines": [
+        "background cafe",
+        "me enters left with slide",
+        "me (dismayed): I lost. Not the duel. The part I was playing, the one where I'm sure.",
+        "player: What part is that?",
+        "me: The one where I'm sure. I'm not, not yet.",
+        "me (pleased): But I'm ready to decide now. Come with me, and I'll tell you how."]},
+    {"name": "World: Akane Kurokawa, Stopped", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): I told the one person who can stop Aqua. It's done.",
+        "player: Is he going to be angry?",
+        "me (dismayed): Furious. But alive, I hope. That's worth more."]},
+    {"name": "World: Akane Kurokawa, Let Go", "lines": [
+        "background cafe", "me enters center with fade",
+        "me: I kept the profile to myself and let Aqua go his own way.",
+        "player: Do you regret it?",
+        "me (dismayed): A little. But it's his life to ruin, and I'm tired of being his audience."]},
 ]
+
 AQUA_HOSHINO_QUESTS = [
-  {
-    "key": "aqua-behind-the-camera",
-    "title": "Behind the Camera",
-    "gates": 2,
-    "about": "Aqua needs an extra for a reality show shoot, and he's not gentle about it.",
-    "offer": [
-      "them: I need an extra for a shoot. Someone who looks sincere on camera.",
-      "them (pleased): That's rare in this business. Don't waste it."
-    ],
-    "stages": [
-      {
-        "text": "Go to school for the shoot in the morning",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "school",
-            "times": [
-              0
-            ],
-            "scene": "World: Aqua Hoshino, School",
-            "rewards": [
-              {
-                "coins": 150
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Mask of Revenge, Aqua",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "OSK/S107-E067"
-          }
-        ]
-      },
-      {
-        "text": "Hear what Aqua thought of the shoot",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Aqua Hoshino",
-            "script": [
-              "them (pleased): You were sincere on camera. I didn't expect that.",
-              "them: Don't tell anyone I said it."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "in-the-shot",
-        "title": "Be in the shot",
-        "about": "Aqua puts you in the final cut. He says it's the only honest take in the whole show.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "playmat"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "aqua-revenge",
-    "title": "Revenge",
-    "gates": 5,
-    "about": "Aqua has found a lead on the man who had Ai killed, and he needs a witness, not help.",
-    "offer": [
-      "them (dismayed): I found a name. A photo, too. I'm not asking for help.",
-      "them: I'm asking you to watch."
-    ],
-    "stages": [
-      {
-        "text": "Meet Aqua in the alley at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "alley",
-            "times": [
-              3
-            ],
-            "scene": "World: Aqua Hoshino, Alley",
-            "rewards": [
-              {
-                "pack": "climax_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Aqua: Wrap-up Party in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "OSK/S107-E084",
-            "against": [
-              "Aqua Hoshino"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Aqua your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Aqua Hoshino",
-            "script": [
-              "them: I need to know whether you'll stand there while I finish this.",
-              "them (pleased): Okay. A witness, then."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "finish-it",
-        "title": "Finish it",
-        "about": "Aqua follows the lead to its end. Akane's Best friend quest is closed for good.",
-        "rewards": [
-          {
-            "coins": 800
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ],
-        "locks": [
-          "akane-profile-of-a-killer"
-        ]
-      },
-      {
-        "key": "walk-away",
-        "title": "Walk away from the lead",
-        "about": "Aqua leaves the photo in a drawer and lets it go, for now.",
-        "rewards": [
-          {
-            "coins": 500
-          },
-          {
-            "gift": "handheld"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "aqua-behind-the-camera", "title": "Behind the Camera", "requires": {"rank": 1},
+     "scene": "World: Aqua Hoshino, Extra",
+     "about": "Aqua needs an extra for a reality show shoot, and he's not gentle about it.",
+     "offer": ["them: I need an extra for a shoot. Someone who looks sincere on camera.",
+               "them (pleased): That's rare in this business. Don't waste it."],
+     "stages": [
+         {"text": "Go to school for the shoot in the morning", "objectives": [{"do": "visit", "place": "school", "times": [0], "scene": "World: Aqua Hoshino, School", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Aqua what you thought of the shoot", "objectives": [{"do": "talk", "to": "Aqua Hoshino", "script": [
+             "them (pleased): You were sincere on camera. I didn't expect that.",
+             "them: Don't tell anyone I said it."]}]},
+     ],
+     "endings": [{"key": "in-the-shot", "title": "Be in the shot", "about": "Aqua puts you in the final cut, and mentions the photo he's been carrying. It's of the man who had Ai killed.",
+                  "scene": "World: Aqua Hoshino, Photo", "rewards": [{"coins": 300}, {"gift": "playmat"}]}]},
+    {"key": "aqua-the-lead", "title": "The Lead", "gates": 2, "requires": {"quests": ["aqua-behind-the-camera"]},
+     "scene": "World: Aqua Hoshino, The Lead",
+     "about": "Aqua has a lead on the man who had Ai killed. The only person who knows where he is, is a dancer from Ai's last show: Kana Arima.",
+     "offer": ["them (dismayed): I found a name. A photo, too. Kana was there that night.",
+               "them: She won't talk unless someone beats her. Be that someone."],
+     "stages": [
+         {"text": "Meet Aqua in the alley at night", "objectives": [{"do": "visit", "place": "alley", "times": [3], "scene": "World: Aqua Hoshino, Alley", "rewards": [{"coins": 300}]}]},
+         {"text": "Beat Kana Arima, so she'll talk", "scene": "World: Aqua Hoshino, Kana Talks",
+          "objectives": [{"do": "defeat", "cpus": ["Kana Arima"]}]},
+         {"text": "Tell Aqua what Kana said", "objectives": [{"do": "talk", "to": "Aqua Hoshino", "script": [
+             "them (dismayed): He's real. And he's close.",
+             "them: Thanks for getting her to talk, {player}."]}]},
+     ],
+     "endings": [{"key": "the-witness", "title": "Be his witness", "about": "Aqua says he doesn't need your help, only a witness. He's going after the man next, and Akane will want to know.",
+                  "scene": "World: Aqua Hoshino, Witness", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "aqua-revenge", "title": "Revenge", "gates": 5, "requires": {"quests": ["aqua-the-lead"]},
+     "scene": "World: Aqua Hoshino, The Man",
+     "about": "Aqua has found the man who had Ai killed, and he's going to finish it. Ruby, Ai's daughter, is the only one who can still stop him, and Aqua has to decide whether to let her try.",
+     "offer": ["them (dismayed): I found him. He's in the old theatre, tonight.",
+               "them: I don't need help. I need a witness. Be there."],
+     "stages": [
+         {"text": "Go to the alley with Aqua at night", "objectives": [{"do": "visit", "place": "alley", "times": [3], "scene": "World: Aqua Hoshino, Rain", "rewards": [{"pack": "climax_pack"}]}]},
+         {"text": "Beat Ruby Hoshino, who's the only one who can stop him now", "scene": "World: Aqua Hoshino, Ruby Stops Him",
+          "objectives": [{"do": "defeat", "cpus": ["Ruby Hoshino"]}]},
+         {"text": "Give Aqua your answer", "objectives": [{"do": "talk", "to": "Aqua Hoshino", "script": [
+             "them: I need to know whether you'll stand there while I finish this.",
+             "them (pleased): Okay. A witness, then."]}]},
+     ],
+     "endings": [
+         {"key": "finish-it", "title": "Finish it", "about": "Aqua follows the lead to its end. Akane's Best friend quest is closed for good.",
+          "locks": ["akane-the-role"], "scene": "World: Aqua Hoshino, Finished", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "walk-away", "title": "Walk away from the lead", "about": "Aqua leaves the photo in a drawer and lets it go, for now.",
+          "scene": "World: Aqua Hoshino, Walked Away", "rewards": [{"coins": 500}, {"gift": "handheld"}]},
+     ]},
 ]
+
 AQUA_HOSHINO_SCENES = [
-  {
-    "name": "World: Aqua Hoshino, School",
-    "lines": [
-      "background classroom",
-      "me enters right with slide",
-      "me: Action. No. Not that smile, a sincere one. Again.",
-      "player: Like this?",
-      "me (pleased): ...Yeah. Keep that. That's the one.",
-      "me: Don't read anything into it. You're a prop with decent eyes.",
-      "player: Thanks, I think.",
-      "me (dismayed): It's not a compliment. It's a warning. Cameras see everything."
-    ]
-  },
-  {
-    "name": "World: Aqua Hoshino, Alley",
-    "lines": [
-      "background city",
-      "me enters left with rise",
-      "me: It's raining. Good. Nobody looks up.",
-      "player: What's in the envelope?",
-      "me (dismayed): A photo, and a name. The man who ordered Ai's death.",
-      "me: I don't need your help. I need a witness.",
-      "player: You'll have one.",
-      "me (pleased): ...Good. Don't blink."
-    ]
-  }
+    {"name": "World: Aqua Hoshino, The Man", "lines": [
+        "background city",
+        "me enters left with slide",
+        "me (dismayed): I found him. He's in the old theatre, tonight.",
+        "player: Are you sure it's him?",
+        "me: The photo matches. And the theatre's been dark for years, which is exactly the point.",
+        "player: What happens if Ruby gets there first?",
+        "me (dismayed): She stops me, or she doesn't. Either way, I'm done pretending the theatre is empty.",
+        "me (pleased): Stay on the roof with Ruby if she comes. She's Ai's daughter, and she'll want to see it end.",
+        "player: And you?",
+        "me (pleased): Be in the alley tonight. I don't need help. I need a witness."]},
+    {"name": "World: Aqua Hoshino, Extra", "lines": [
+        "background classroom", "me enters right with slide",
+        "me: I need an extra for a shoot. Someone who looks sincere, not nervous.",
+        "player: That's me, I suppose.",
+        "me (pleased): Good. Show up at school in the morning. Don't be late."]},
+    {"name": "World: Aqua Hoshino, School", "lines": [
+        "background classroom", "me enters right with slide",
+        "me: Action. No. Not that smile, a sincere one. Again.",
+        "player: Like this?",
+        "me (pleased): ...Yeah. Keep that. That's the one.",
+        "me: Don't read anything into it. You're a prop with decent eyes."]},
+    {"name": "World: Aqua Hoshino, Photo", "lines": [
+        "background classroom", "me enters center with fade",
+        "me: Here. A photo of the man who had Ai killed. Take a look.",
+        "player: Who is he?",
+        "me (dismayed): A producer. He's been hiding in the old theatre since then.",
+        "me: I'll find him. And when I do, I'll need someone to witness it."]},
+    {"name": "World: Aqua Hoshino, The Lead", "lines": [
+        "background city", "me enters left with slide",
+        "me (dismayed): Kana was there that night. She knows where he went.",
+        "player: Will she talk?",
+        "me: Not unless someone beats her. Meet me in the alley tonight. Be ready."]},
+    {"name": "World: Aqua Hoshino, Alley", "lines": [
+        "background city", "me enters center with fade",
+        "me: It's raining. Good. Nobody looks up here.",
+        "player: Kana's over there.",
+        "me (dismayed): Then go on, and make her talk. I'll watch from the rain."]},
+    {"name": "World: Aqua Hoshino, Kana Talks", "lines": [
+        "cast kana as Kana Arima",
+        "background city",
+        "me enters center with fade",
+        "kana enters right with slide",
+        "kana: {player} beat me. He's at the old theatre, Aqua. Don't go in alone.",
+        "me (dismayed): I wasn't going to. I needed you to say it.",
+        "kana: Then you know what it costs. Please don't tell him I said it.",
+        "player: What do we do now?",
+        "me: Tell Akane. She'll want to know first."]},
+    {"name": "World: Aqua Hoshino, The Witness", "lines": [
+        "background city", "me enters center with fade",
+        "me (pleased): She talked. He's real, and he's close.",
+        "player: Are you going after him now?",
+        "me (dismayed): Not yet. Akane will want to know first. I owe her that much."]},
+    {"name": "World: Aqua Hoshino, Rain", "lines": [
+        "background rain", "me enters left with slide",
+        "me (dismayed): The old theatre's behind the wall. Stay close, and don't let anyone out.",
+        "player: Are you going in?",
+        "me: I am. Be my witness, and tell them what you saw."]},
+    {"name": "World: Aqua Hoshino, Ruby Stops Him", "lines": [
+        "cast ruby as Ruby Hoshino",
+        "background city",
+        "me enters center with fade",
+        "ruby enters right with slide",
+        "ruby: {player} beat me, Aqua. Now stop, before you go in there.",
+        "me (dismayed): I'm not stopping, Ruby. You know why.",
+        "ruby: I know you think Mum would have wanted it. She wouldn't.",
+        "player: Ruby, let him finish. Or don't.",
+        "me (pleased): Stand by the wall. I'll be done in a minute."]},
+    {"name": "World: Aqua Hoshino, Finished", "lines": [
+        "background city", "me enters center with fade",
+        "me: I finished it. The man who had Ai killed won't hurt anyone else.",
+        "player: Are you okay?",
+        "me (dismayed): No. But I have a witness, and that's enough for now."]},
+    {"name": "World: Aqua Hoshino, Walked Away", "lines": [
+        "background city", "me enters center with fade",
+        "me: I put the photo in a drawer and walked away. For now.",
+        "player: Will you go back to it?",
+        "me (dismayed): Maybe. But I'm tired of being someone else's story."]},
+    {"name": "World: Aqua Hoshino, Witness", "lines": [
+        "background city", "me enters center with fade",
+        "me: You were my witness. That's more than anyone's given me in years.",
+        "player: Be careful out there.",
+        "me (dismayed): I'm always careful. It's the only thing I'm sure of."]},
 ]
+
 KANA_ARIMA_QUESTS = [
-  {
-    "key": "kana-ten-second-crier",
-    "title": "The Ten-Second Crier",
-    "gates": 2,
-    "about": "Kana is rehearsing crying on cue, and it won't come.",
-    "offer": [
-      "them (dismayed): Don't look. I'm practising.",
-      "them: Ten seconds, on cue. It's not that hard. Apparently."
-    ],
-    "stages": [
-      {
-        "text": "Watch Kana rehearse at school at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "school",
-            "times": [
-              1
-            ],
-            "scene": "World: Kana Arima, School",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have POP IN 2, Kana Arima",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "OSK/S121-E018"
-          }
-        ]
-      },
-      {
-        "text": "Tell Kana what you saw",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Kana Arima",
-            "script": [
-              "them (dismayed): You saw nothing. You understand? Nothing.",
-              "them (pleased): ...Thanks for not making it a thing."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "never-saw-it",
-        "title": "Never saw it",
-        "about": "Kana's tears worked, and she swears you were never there to see them.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "manga"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "kana-child-star-no-more",
-    "title": "Child Star No More",
-    "gates": 5,
-    "about": "Kana has been turned down for a role for being too old, and she won't say so out loud.",
-    "offer": [
-      "them: They said I'm too old. For a kid's role. I'm sixteen.",
-      "them (dismayed): Don't say anything. I ordered three desserts. I'll eat none."
-    ],
-    "stages": [
-      {
-        "text": "Find Kana at the cafe in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "cafe",
-            "times": [
-              2
-            ],
-            "scene": "World: Kana Arima, Cafe",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Kana: POP IN 2 in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "OSK/S121-E018",
-            "against": [
-              "Kana Arima"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Ask Kana the question she can't answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Kana Arima",
-            "script": [
-              "them: Does anyone remember child stars once they grow up?",
-              "them (pleased): ...You do. Okay. That helps."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "keep-her-company",
-        "title": "Keep her company",
-        "about": "Kana eats the desserts after all, and asks you to come to the next audition.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "kana-ten-second-crier", "title": "The Ten-Second Crier", "requires": {"rank": 1},
+     "scene": "World: Kana Arima, Rehearsal",
+     "about": "Kana is rehearsing crying on cue, and it won't come. She needs someone to watch her try, and tell her when it's real.",
+     "offer": ["them (dismayed): Don't look. I'm practising.",
+               "them: Ten seconds, on cue. It's not that hard. Apparently."],
+     "stages": [
+         {"text": "Watch Kana rehearse at school at noon", "objectives": [{"do": "visit", "place": "school", "times": [1], "scene": "World: Kana Arima, School", "rewards": [{"coins": 200}]}]},
+         {"text": "Tell Kana what you saw", "objectives": [{"do": "talk", "to": "Kana Arima", "script": [
+             "them (dismayed): You saw nothing. You understand? Nothing.",
+             "them (pleased): ...Thanks for not making it a thing."]}]},
+     ],
+     "endings": [{"key": "never-saw-it", "title": "Never saw it", "about": "Kana's tears worked, and she swears you were never there to see them. She also mentions a part she's been turned down for, because she's 'too old'.",
+                  "scene": "World: Kana Arima, Too Old", "rewards": [{"coins": 300}, {"gift": "manga"}]}]},
+    {"key": "kana-child-star-no-more", "title": "Child Star No More", "gates": 2, "requires": {"quests": ["kana-ten-second-crier"]},
+     "scene": "World: Kana Arima, Too Old",
+     "about": "Kana has been turned down for a part for being too old, and she's sure Akane got it instead. She wants a fight to see who's better.",
+     "offer": ["them: They said I'm too old. For a kid's role. I'm sixteen.",
+               "them (dismayed): Akane got the part. Beat her, and I'll tell you why I'm so angry."],
+     "stages": [
+         {"text": "Meet Kana at the cafe in the evening", "objectives": [{"do": "visit", "place": "cafe", "times": [2], "scene": "World: Kana Arima, Cafe", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Beat Akane in a duel, for the part", "scene": "World: Kana Arima, The Part",
+          "objectives": [{"do": "defeat", "cpus": ["Akane Kurokawa"]}]},
+         {"text": "Tell Kana what you think", "objectives": [{"do": "talk", "to": "Kana Arima", "script": [
+             "them (pleased): You won. That's the first thing that's gone my way all month.",
+             "them: Thanks for being on my side, {player}."]}]},
+     ],
+     "endings": [{"key": "keep-her-company", "title": "Keep her company", "about": "Kana eats the desserts after all, and asks you to come to the next audition with her.",
+                  "scene": "World: Kana Arima, Dessert", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "kana-curtain-call", "title": "Curtain Call", "gates": 5, "requires": {"quests": ["kana-child-star-no-more"]},
+     "scene": "World: Kana Arima, Curtain Call",
+     "about": "Kana's old show has been revived, and the director wants Ai to come back for a final performance. Kana has to decide whether to go on stage with her.",
+     "offer": ["them (dismayed): Ai is coming back for the final show. I don't know if I can stand next to her.",
+               "them: Come to the plaza at evening. Tell me what you'd do."],
+     "stages": [
+         {"text": "Meet Kana in the plaza in the evening", "objectives": [{"do": "visit", "place": "plaza", "times": [2], "scene": "World: Kana Arima, Plaza", "rewards": [{"coins": 300}]}]},
+         {"text": "Beat Ai in a duel, to see if she's ready to share the stage", "scene": "World: Kana Arima, Ready For The Stage",
+          "objectives": [{"do": "defeat", "cpus": ["Legendary Idol Ai"]}]},
+         {"text": "Tell Kana your answer", "objectives": [{"do": "talk", "to": "Kana Arima", "script": [
+             "them: Okay. I'll go on, if you're in the audience.",
+             "them (pleased): Ten seconds, and then I'm going to be brilliant."]}]},
+     ],
+     "endings": [{"key": "on-stage", "title": "Go on stage", "about": "Kana goes on stage with Ai for the final show, and she's not crying, for once.",
+                  "scene": "World: Kana Arima, On Stage", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]}]},
 ]
+
 KANA_ARIMA_SCENES = [
-  {
-    "name": "World: Kana Arima, School",
-    "lines": [
-      "background classroom",
-      "me enters center with fade",
-      "me: Okay. Sad face. Sad face. ...Why isn't it working?",
-      "player: Think of something sad.",
-      "me (dismayed): I'm thinking of you, and that's not helping.",
-      "me: Fine. Okay. Last try.",
-      "me bounces",
-      "me: ...You saw that? Forget you saw that. Right now."
-    ]
-  },
-  {
-    "name": "World: Kana Arima, Cafe",
-    "lines": [
-      "background cafe",
-      "me enters left with slide",
-      "me: Three desserts. I'm not going to eat any of them.",
-      "player: Why did you order them?",
-      "me (dismayed): Because nobody's ever ordered dessert for me.",
-      "me: Child stars grow up and nobody remembers them. I'm just... wondering if that's me.",
-      "player: I'd remember you.",
-      "me (pleased): ...Then eat the strawberry one. Don't tell me it's a lie."
-    ]
-  }
+    {"name": "World: Kana Arima, Rehearsal", "lines": [
+        "background classroom", "me enters center with fade",
+        "me (dismayed): Okay. Sad face. Sad face. ...Why isn't it working?",
+        "player: Think of something sad.",
+        "me: I'm thinking of you, and that's not helping.",
+        "me (pleased): Fine. One last try. Watch me, and tell me if it's real."]},
+    {"name": "World: Kana Arima, School", "lines": [
+        "background classroom", "me enters center with fade",
+        "me: Okay. Sad face. Sad face. ...Why isn't it working?",
+        "player: Think of something sad.",
+        "me (dismayed): I'm thinking of you, and that's not helping.",
+        "me: Fine. Last try."]},
+    {"name": "World: Kana Arima, Too Old", "lines": [
+        "background sakura", "me enters left with slide",
+        "me (dismayed): They turned me down for the kids' role. Too old, they said. I'm sixteen.",
+        "player: That's not fair.",
+        "me: Akane got the part instead. Come to the cafe in the evening, and I'll tell you the rest."]},
+    {"name": "World: Kana Arima, Cafe", "lines": [
+        "background cafe", "me enters left with slide",
+        "me: Three desserts. I'm not going to eat any of them.",
+        "player: Why did you order them?",
+        "me (dismayed): Because nobody ever orders dessert for me. And I'm angry about the part."]},
+    {"name": "World: Kana Arima, The Part", "lines": [
+        "cast akane as Akane Kurokawa",
+        "background cafe",
+        "me enters left with slide",
+        "akane enters right with fade",
+        "akane: {player} beat me. Then the part's yours, Kana. I'll be in the audience.",
+        "me (pleased): That's not the same as an apology.",
+        "akane: It's the only one you'll get from me.",
+        "player: Kana, you did it.",
+        "me (dismayed): Don't say it yet. I still have three desserts to eat."]},
+    {"name": "World: Kana Arima, Dessert", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): I ate the dessert after all. Thanks for beating Akane for me.",
+        "player: Anytime.",
+        "me (dismayed): Come to the next audition with me. I don't want to face it alone."]},
+    {"name": "World: Kana Arima, Curtain Call", "lines": [
+        "background sakura", "me enters left with slide",
+        "me (dismayed): The director wants Ai for a final show. And me, on the same stage.",
+        "player: Can you do it?",
+        "player: What if Ai doesn't want you on stage?",
+        "me (dismayed): Then I'll stand in the wings and sing the chorus anyway. The show still needs both of us.",
+        "player: Is that really what you want?",
+        "me (pleased): It's what I want, if you think I can. Tell me honestly, and I'll decide tonight.",
+        "me: Come to the plaza, and bring the cakes. I'll need something sweet before I walk onto the stage.",
+        "me: I don't know. Come to the plaza at evening and tell me what you'd do."]},
+    {"name": "World: Kana Arima, Plaza", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (dismayed): I don't know if I can stand next to Ai. She's been the one I wanted to be.",
+        "player: Then duel her, and see.",
+        "me: Hm. That's a plan. Okay."]},
+    {"name": "World: Kana Arima, Ready For The Stage", "lines": [
+        "cast legendary as Legendary Idol Ai",
+        "background sakura",
+        "me enters left with slide",
+        "legendary enters right with fade",
+        "legendary: You didn't cry. Good. You're ready to share the stage.",
+        "me (pleased): Ten seconds, and then I'm brilliant.",
+        "legendary: That's the Kana I remember from the first show.",
+        "player: Are you going to let her go on?",
+        "me (dismayed): I'm going to hold her hand while she does."]},
+    {"name": "World: Kana Arima, On Stage", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): I went on stage with Ai, and I didn't cry once. Ten seconds was plenty.",
+        "player: That's amazing.",
+        "me (dismayed): Thanks to you. I'd never have made it without someone in the audience."]},
 ]
+
 RUBY_HOSHINO_QUESTS = [
-  {
-    "key": "ruby-b-komachi-rehearsal",
-    "title": "B-Komachi Rehearsal",
-    "gates": 2,
-    "about": "Ruby needs an audience of one for her new routine.",
-    "offer": [
-      "them (pleased): You're my audience today. Don't blink, okay?",
-      "them: The routine is perfect, except the bow. I can't land the bow."
-    ],
-    "stages": [
-      {
-        "text": "Watch Ruby's routine in the plaza at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "plaza",
-            "times": [
-              1
-            ],
-            "scene": "World: Ruby Hoshino, Plaza",
-            "rewards": [
-              {
-                "coins": 150
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have To a Shining Stage, Ruby",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "OSK/S107-E036"
-          }
-        ]
-      },
-      {
-        "text": "Tell Ruby how the bow looked",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Ruby Hoshino",
-            "script": [
-              "them (pleased): You didn't laugh when I tripped? Good. You're my first fan now.",
-              "them: That's a promise, remember?"
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "first-fan",
-        "title": "Be her first fan",
-        "about": "Ruby lands the bow on the fourth try. She keeps your first autograph in her case.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "bouquet"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "ruby-ais-daughter",
-    "title": "Ai's Daughter",
-    "gates": 5,
-    "about": "Ruby has found her mother's old concert ticket, and she isn't sure what it means.",
-    "offer": [
-      "them (dismayed): I found a ticket. Mum's last concert. I've never told anyone.",
-      "them: Will you come to the cafe and look at it with me?"
-    ],
-    "stages": [
-      {
-        "text": "Meet Ruby at the cafe in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "cafe",
-            "times": [
-              2
-            ],
-            "scene": "World: Ruby Hoshino, Cafe",
-            "rewards": [
-              {
-                "pack": "level_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Ruby: Flames of Revenge in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "OSK/S121-E032",
-            "against": [
-              "Ruby Hoshino"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Answer Ruby's question",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Ruby Hoshino",
-            "script": [
-              "them: Can you love someone you only remember from a stage?",
-              "them (pleased): ...Okay. I think you can."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "love-from-the-stage",
-        "title": "Love from the stage",
-        "about": "Ruby keeps the ticket in her pocket for every show. She says it's lucky.",
-        "rewards": [
-          {
-            "coins": 700
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "ruby-b-komachi-rehearsal", "title": "B-Komachi Rehearsal", "requires": {"rank": 1},
+     "scene": "World: Ruby Hoshino, Rehearsal Invite",
+     "about": "Ruby needs an audience of one for the new routine. She wants you to watch and tell her if it's good enough.",
+     "offer": ["them (pleased): You're my audience today. Don't blink, okay?",
+               "them: The routine is perfect, except the bow. I can't land the bow."],
+     "stages": [
+         {"text": "Watch Ruby's routine in the plaza at noon", "objectives": [{"do": "visit", "place": "plaza", "times": [1], "scene": "World: Ruby Hoshino, Plaza", "rewards": [{"coins": 150}]}]},
+         {"text": "Tell Ruby how the bow looked", "objectives": [{"do": "talk", "to": "Ruby Hoshino", "script": [
+             "them (pleased): You didn't laugh when I tripped? Good. You're my first fan now.",
+             "them: That's a promise, remember?"]}]},
+     ],
+     "endings": [{"key": "first-fan", "title": "Be her first fan", "about": "Ruby lands the bow on the fourth try. She keeps your first autograph in her case, and mentions her mum's old ticket.",
+                  "scene": "World: Ruby Hoshino, First Fan", "rewards": [{"coins": 300}, {"gift": "bouquet"}]}]},
+    {"key": "ruby-ais-daughter", "title": "Ai's Daughter", "gates": 2, "requires": {"quests": ["ruby-b-komachi-rehearsal"]},
+     "scene": "World: Ruby Hoshino, The Ticket",
+     "about": "Ruby has found her mother's old concert ticket. Kana doesn't want her in the group, and Ruby needs to show she belongs.",
+     "offer": ["them (dismayed): I found a ticket. Mum's last concert. I've never told anyone.",
+               "them: Kana says I'm not good enough for the group. Beat her, and make her see."],
+     "stages": [
+         {"text": "Meet Ruby at the cafe in the evening", "objectives": [{"do": "visit", "place": "cafe", "times": [2], "scene": "World: Ruby Hoshino, Cafe", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Beat Kana, to show Ruby belongs in the group", "scene": "World: Ruby Hoshino, Kana Sees",
+          "objectives": [{"do": "defeat", "cpus": ["Kana Arima"]}]},
+         {"text": "Answer Ruby's question", "objectives": [{"do": "talk", "to": "Ruby Hoshino", "script": [
+             "them: Can you love someone you only remember from a stage?",
+             "them (pleased): ...Okay. I think you can."]}]},
+     ],
+     "endings": [{"key": "love-from-the-stage", "title": "Love from the stage", "about": "Ruby keeps the ticket in her pocket for every show. She says it's lucky, and that she'll sing it for her mum one day.",
+                  "scene": "World: Ruby Hoshino, Love From The Stage", "rewards": [{"coins": 700}, {"pack": "lucky_pack"}]}]},
+    {"key": "ruby-the-last-concert", "title": "The Last Concert", "gates": 5, "requires": {"quests": ["ruby-ais-daughter"]},
+     "scene": "World: Ruby Hoshino, The Last Concert",
+     "about": "Ai is on stage for one last concert, and Ruby has to decide whether to sing with her, or to carry on alone.",
+     "offer": ["them: Mum's doing a last show. She wants me on stage with her.",
+               "them (dismayed): I'm scared. Come to the plaza this evening and tell me what you think."],
+     "stages": [
+         {"text": "Meet Ruby in the plaza in the evening", "objectives": [{"do": "visit", "place": "plaza", "times": [2], "scene": "World: Ruby Hoshino, Plaza Night", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Beat Ai in a duel, to see if Ruby can carry on", "scene": "World: Ruby Hoshino, Mum's Test",
+          "objectives": [{"do": "defeat", "cpus": ["Legendary Idol Ai"]}]},
+         {"text": "Tell Ruby your answer", "objectives": [{"do": "talk", "to": "Ruby Hoshino", "script": [
+             "them (pleased): Okay. I'm going on stage, and I'm going to sing for both of us.",
+             "them: Thanks, {player}. Front row, always."]}]},
+     ],
+     "endings": [{"key": "sing-together", "title": "Sing together", "about": "Ruby and Ai sing together on the last night. The whole town is watching, and Ruby isn't scared.",
+                  "scene": "World: Ruby Hoshino, Sing Together", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]}]},
 ]
+
 RUBY_HOSHINO_SCENES = [
-  {
-    "name": "World: Ruby Hoshino, Plaza",
-    "lines": [
-      "background sakura",
-      "me enters center with rise",
-      "me: Okay! Watch! Step, turn, point, and... wait, I'm falling. I'm not falling.",
-      "player: You're fine. Keep going!",
-      "me (pleased): Ha! That was the best trip I've ever done!",
-      "me: Promise me you'll be my first fan. Like, officially.",
-      "player: I promise.",
-      "me bounces"
-    ]
-  },
-  {
-    "name": "World: Ruby Hoshino, Cafe",
-    "lines": [
-      "background cafe",
-      "me enters right with fade",
-      "me: Mum's ticket. Last show, same stage as ours.",
-      "player: You kept it.",
-      "me (dismayed): I didn't know what else to do with it.",
-      "me: I never saw her perform. Only the videos. Is that the same as knowing her?",
-      "player: It's a start.",
-      "me (pleased): A start. Okay. I can work with that."
-    ]
-  }
+    {"name": "World: Ruby Hoshino, Rehearsal Invite", "lines": [
+        "background sakura", "me enters center with rise",
+        "me (pleased): Want to watch my new routine? I need someone to tell me it's good.",
+        "player: I'm free.",
+        "me: Plaza at noon. Watch me fall over, and don't laugh."]},
+    {"name": "World: Ruby Hoshino, Plaza", "lines": [
+        "background sakura", "me enters center with rise",
+        "me: Okay! Watch! Step, turn, point, and... wait, I'm falling. I'm not falling.",
+        "player: You're fine. Keep going!",
+        "me (pleased): Ha! That was the best trip I've ever done!"]},
+    {"name": "World: Ruby Hoshino, First Fan", "lines": [
+        "background sakura", "me enters center with rise",
+        "me (pleased): The bow! I finally landed it, and you saw it. You're my first fan.",
+        "player: It was great.",
+        "me (dismayed): Mum's old ticket is in my pocket. I want to show it to you one day."]},
+    {"name": "World: Ruby Hoshino, The Ticket", "lines": [
+        "background cafe", "me enters right with fade",
+        "me (dismayed): I found Mum's ticket. The last concert she ever did.",
+        "player: You kept it.",
+        "me: Kana says I'm not good enough for the group. Will you help me show her?"]},
+    {"name": "World: Ruby Hoshino, Cafe", "lines": [
+        "background cafe", "me enters right with fade",
+        "me: I never saw her perform. Only the videos. Is that the same as knowing her?",
+        "player: It's a start.",
+        "me (pleased): A start. Okay. I can work with that."]},
+    {"name": "World: Ruby Hoshino, Kana Sees", "lines": [
+        "cast kana as Kana Arima",
+        "background cafe",
+        "me enters right with fade",
+        "kana enters left with slide",
+        "kana: {player} fought well. Fine. Ruby belongs with the group.",
+        "me (pleased): Did you just say that?",
+        "kana: I said it once. Don't make me say it again.",
+        "player: Ruby, you did it!",
+        "me (dismayed): Mum's ticket is still in my pocket, and I'm still shaking."]},
+    {"name": "World: Ruby Hoshino, Love From The Stage", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): I'm keeping the ticket. Mum's lucky, I think, and so am I.",
+        "player: Do you think she'd be proud?",
+        "me (dismayed): I hope so. I'll sing one of her songs for her, one day."]},
+    {"name": "World: Ruby Hoshino, Plaza Night", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (dismayed): Mum's doing a last show. She wants me on stage with her, and I'm scared.",
+        "player: You'll be fine.",
+        "me: Watch her duel you, and see if I can carry on. That's what I need to know."]},
+    {"name": "World: Ruby Hoshino, The Last Concert", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): Mum's last show. I'm going on stage with her, and I'm not scared.",
+        "player: Good luck.",
+        "player: What if she sings it too fast?",
+        "me (dismayed): Then I'll slow down with her, and we'll find the tempo together. That's what the front row is for.",
+        "player: Are you scared of the crowd?",
+        "me (pleased): Only of the empty seats. Mum says the empty ones are always louder when you look at them.",
+        "me (dismayed): Thanks, {player}. You were my audience, and that's the best kind."]},
+    {"name": "World: Ruby Hoshino, Mum's Test", "lines": [
+        "cast legendary as Legendary Idol Ai",
+        "background sakura",
+        "me enters center with fade",
+        "legendary enters left with slide",
+        "legendary: {player} carried the stage without me. That's what I wanted to see.",
+        "me (pleased): I didn't need you to hold me up. Did I?",
+        "legendary: No, sweetheart. You didn't.",
+        "player: Are you proud?",
+        "me (dismayed): Mum's crying. Don't tell anyone."]},
+    {"name": "World: Ruby Hoshino, Sing Together", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): We sang together, Mum and me. The whole town was watching.",
+        "player: It sounded perfect.",
+        "me (dismayed): It was. I wasn't scared once, and that's because you were in the front row."]},
 ]
+
 LEGENDARY_IDOL_AI_QUESTS = [
-  {
-    "key": "ai-the-lie-of-love",
-    "title": "The Lie of Love",
-    "gates": 2,
-    "about": "Ai runs a fan meet, and she wants to know if you can tell her real smile from the rest.",
-    "offer": [
-      "them: Watch carefully. Three smiles. Tell me which one is real.",
-      "them (pleased): Whatever you say, I'll tell you it's wrong."
-    ],
-    "stages": [
-      {
-        "text": "Watch Ai's fan meet at the plaza in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "plaza",
-            "times": [
-              2
-            ],
-            "scene": "World: Legendary Idol Ai, Plaza",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Legendary Idol, Ai",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "OSK/S107-E045"
-          }
-        ]
-      },
-      {
-        "text": "Tell Ai which smile you think was real",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Legendary Idol Ai",
-            "script": [
-              "them (dismayed): Wrong. Sweetly wrong. Remember that.",
-              "them (pleased): ...But the last one was close."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "real-smile",
-        "title": "Find the real smile",
-        "about": "Ai smiles once, without the lights on. She says you're the only one who ever noticed.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "bouquet"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "ai-everyones-idol",
-    "title": "Everyone's Idol",
-    "gates": 5,
-    "about": "Ai has never said \"I love you\" and meant it, and she's practising the words above the city.",
-    "offer": [
-      "them: I have to say something tonight. I don't know if I can.",
-      "them (dismayed): Stay on the rooftop with me. Just listen."
-    ],
-    "stages": [
-      {
-        "text": "Find Ai on the rooftop at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "rooftop",
-            "times": [
-              3
-            ],
-            "scene": "World: Legendary Idol Ai, Rooftop",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Ai: Unshakable Center in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "OSK/S107-TE10",
-            "against": [
-              "Legendary Idol Ai"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Listen while she practises",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Legendary Idol Ai",
-            "script": [
-              "them: I love you. ...It feels like a lie.",
-              "them (pleased): Say it again. Let me listen until it doesn't."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "until-it-stops",
-        "title": "Listen until it stops feeling a lie",
-        "about": "Ai says the words once more, and this time she doesn't look away from you.",
-        "rewards": [
-          {
-            "coins": 700
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "ai-the-lie-of-love", "title": "The Lie of Love", "requires": {"rank": 1},
+     "scene": "World: Legendary Idol Ai, Fan Meet",
+     "about": "Ai runs a fan meet, and she wants to know if you can tell her real smile from the rest.",
+     "offer": ["them: Watch carefully. Three smiles. Tell me which one is real.",
+               "them (pleased): Whatever you say, I'll tell you it's wrong."],
+     "stages": [
+         {"text": "Watch Ai's fan meet at the plaza in the evening", "objectives": [{"do": "visit", "place": "plaza", "times": [2], "scene": "World: Legendary Idol Ai, Plaza", "rewards": [{"coins": 200}]}]},
+         {"text": "Tell Ai which smile you think was real", "objectives": [{"do": "talk", "to": "Legendary Idol Ai", "script": [
+             "them (dismayed): Wrong. Sweetly wrong. Remember that.",
+             "them (pleased): ...But the last one was close."]}]},
+     ],
+     "endings": [{"key": "real-smile", "title": "Find the real smile", "about": "Ai smiles once, without the lights on. She tells you her daughter Ruby is a fan of yours, and asks you to be kind to her.",
+                  "scene": "World: Legendary Idol Ai, Real Smile", "rewards": [{"coins": 300}, {"gift": "bouquet"}]}]},
+    {"key": "ai-practice", "title": "Practice", "gates": 2, "requires": {"quests": ["ai-the-lie-of-love"]},
+     "scene": "World: Legendary Idol Ai, Ruby",
+     "about": "Ai has to teach her daughter Ruby to stand on stage without her. She wants you to watch the lesson, and to test Ruby against the crowd.",
+     "offer": ["them: Ruby's going to be on stage with me. I need to know if she can stand alone.",
+               "them (dismayed): Beat her in a duel, so she learns what the crowd feels like."],
+     "stages": [
+         {"text": "Watch Ai and Ruby at the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Legendary Idol Ai, Rooftop", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Beat Ruby, so she learns to stand against the crowd", "scene": "World: Legendary Idol Ai, Ruby Stands",
+          "objectives": [{"do": "defeat", "cpus": ["Ruby Hoshino"]}]},
+         {"text": "Tell Ai what you saw", "objectives": [{"do": "talk", "to": "Legendary Idol Ai", "script": [
+             "them (pleased): You made her stronger. Thank you.",
+             "them: I'm proud of her, and I'm proud of you for helping."]}]},
+     ],
+     "endings": [{"key": "stronger", "title": "Stand with her", "about": "Ai and Ruby agree to perform together, and Ai asks you to be in the front row.",
+                  "scene": "World: Legendary Idol Ai, Front Row", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "ai-everyones-idol", "title": "Everyone's Idol", "gates": 5, "requires": {"quests": ["ai-practice"]},
+     "scene": "World: Legendary Idol Ai, Words",
+     "about": "Ai has never said I love you and meant it. She's been practising the words above the city, and Akane's been watching her closely.",
+     "offer": ["them: I have to say something tonight. I don't know if I can.",
+               "them (dismayed): Stay on the rooftop with me. And if Akane comes, don't let her write it down."],
+     "stages": [
+         {"text": "Find Ai on the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Legendary Idol Ai, Rooftop Night", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Beat Akane, so she stops writing Ai down", "scene": "World: Legendary Idol Ai, Akane Stops",
+          "objectives": [{"do": "defeat", "cpus": ["Akane Kurokawa"]}]},
+         {"text": "Listen while Ai practises", "objectives": [{"do": "talk", "to": "Legendary Idol Ai", "script": [
+             "them: I love you. ...It feels like a lie.",
+             "them (pleased): Say it again. Let me listen until it doesn't."]}]},
+     ],
+     "endings": [{"key": "until-it-stops", "title": "Listen until it stops feeling a lie", "about": "Ai says the words once more, and this time she doesn't look away from you.",
+                  "scene": "World: Legendary Idol Ai, Not A Lie", "rewards": [{"coins": 700}, {"pack": "lucky_pack"}]}]},
 ]
+
 LEGENDARY_IDOL_AI_SCENES = [
-  {
-    "name": "World: Legendary Idol Ai, Plaza",
-    "lines": [
-      "background dusk",
-      "me enters center with fade",
-      "me: Smile one. Smile two. Smile three. Which one's real?",
-      "player: The second one.",
-      "me (dismayed): Wrong. Sweetly wrong. I'll remember that.",
-      "me: Next time, don't answer until I ask you properly."
-    ]
-  },
-  {
-    "name": "World: Legendary Idol Ai, Rooftop",
-    "lines": [
-      "background night",
-      "me enters left with rise",
-      "me: The city looks so small from up here. Everyone's so far away.",
-      "player: Are you okay?",
-      "me (dismayed): I'm practising. The words. They feel like a lie.",
-      "me: Stay and listen. Not because you have to. Because I'd like you to."
-    ]
-  }
+    {"name": "World: Legendary Idol Ai, Fan Meet", "lines": [
+        "background sakura", "me enters center with fade",
+        "me: Oh, the crowd's gathering. Don't worry, I'll smile for everyone.",
+        "player: Are you nervous?",
+        "me (pleased): Never. Watch the three smiles I'm going to give. Tell me which is real."]},
+    {"name": "World: Legendary Idol Ai, Plaza", "lines": [
+        "background sakura", "me enters center with fade",
+        "me: Smile one. Smile two. Smile three. Which one's real?",
+        "player: The second one.",
+        "me (dismayed): Wrong. Sweetly wrong. I'll remember that."]},
+    {"name": "World: Legendary Idol Ai, Real Smile", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): That was the real one. I didn't use the lights.",
+        "player: It suited you.",
+        "me (dismayed): Ruby is a fan of yours, you know. Be kind to her, if you can."]},
+    {"name": "World: Legendary Idol Ai, Rooftop", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me: The city looks so small from up here. Everyone's so far away.",
+        "player: Are you okay?",
+        "me (dismayed): I'm practising. Ruby's coming up, and she needs to learn to stand alone."]},
+    {"name": "World: Legendary Idol Ai, Ruby", "lines": [
+        "cast ruby as Ruby Hoshino",
+        "background rooftop", "me enters left with rise",
+        "ruby enters right with fade",
+        "me: Ruby, this is the one who's going to test you. Beat them, and you'll see the crowd.",
+        "ruby: Mum, I'm not scared of the crowd. I'm scared of you.",
+        "me (dismayed): Then prove it. Show me you can stand alone."]},
+    {"name": "World: Legendary Idol Ai, Ruby Stands", "lines": [
+        "cast ruby as Ruby Hoshino",
+        "background rooftop",
+        "me enters left with rise",
+        "ruby enters right with fade",
+        "ruby: I stood my ground, Mum. The crowd didn't swallow me.",
+        "me (pleased): You did. That's the lesson.",
+        "ruby: Then tell me something I didn't know.",
+        "me (dismayed): Don't ever let them stop you. I didn't have anyone to tell me that."]},
+    {"name": "World: Legendary Idol Ai, Front Row", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): Ruby and I will perform together. You'll have the front row.",
+        "player: Thank you.",
+        "me (dismayed): You're the one who made it possible. Come and see us."]},
+    {"name": "World: Legendary Idol Ai, Words", "lines": [
+        "background rooftop", "me enters left with rise",
+        "me (dismayed): I have to say something tonight. The words feel like a lie.",
+        "player: Try again.",
+        "player: Will Akane come up the stairs?",
+        "me (dismayed): She's always been on the stairs. Tonight I'd like her to stay down there with the notebook.",
+        "player: What if the words feel like a lie again?",
+        "me (pleased): Then I say them until they're not. That's the only practice I know.",
+        "me: Akane's watching. Don't let her write this down, please."]},
+    {"name": "World: Legendary Idol Ai, Rooftop Night", "lines": [
+        "background night", "me enters left with rise",
+        "me: Practising the words above the city. I love you. ...It still feels wrong.",
+        "player: Then keep trying.",
+        "me (dismayed): Akane's down there, with her notebook. Please stop her."]},
+    {"name": "World: Legendary Idol Ai, Akane Stops", "lines": [
+        "cast akane as Akane Kurokawa",
+        "background rooftop",
+        "me enters left with rise",
+        "akane enters right with fade",
+        "akane: {player} beat me. Fine. I'll stop writing, Ai.",
+        "me (pleased): Thank you, Akane. Put the notebook away.",
+        "akane: Not yet. I'll stop writing about you, at least for tonight.",
+        "player: What will you write about instead?",
+        "me (dismayed): Something true, maybe. Something that doesn't sound like a lie."]},
+    {"name": "World: Legendary Idol Ai, Not A Lie", "lines": [
+        "background night", "me enters center with fade",
+        "me (pleased): I said it, and this time it didn't feel like a lie.",
+        "player: It sounded true.",
+        "me (dismayed): Thanks for listening until it stopped being fake. Stay, if you can."]},
 ]
+
 MADOKA_QUESTS = [
-  {
-    "key": "madoka-kyubeys-offer",
-    "title": "Kyubey's Offer",
-    "gates": 2,
-    "about": "A small white creature offered Madoka a wish, and she wants your advice before she answers.",
-    "offer": [
-      "them: A small white creature came to me. It offered me a wish.",
-      "them (dismayed): I don't know if it would be selfish. Will you tell me?"
-    ],
-    "stages": [
-      {
-        "text": "Meet Madoka at school in the morning",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "school",
-            "times": [
-              0
-            ],
-            "scene": "World: Madoka, School",
-            "rewards": [
-              {
-                "coins": 150
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Bring Madoka a strawberry shortcake",
-        "objectives": [
-          {
-            "do": "give_gift",
-            "gift": "shortcake",
-            "to": "Madoka"
-          }
-        ]
-      },
-      {
-        "text": "Tell Madoka what you think of the wish",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Madoka",
-            "script": [
-              "them: Wishing for something isn't always selfish, is it?",
-              "them (pleased): ...Thank you. I'll think about it."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "think-it-over",
-        "title": "Let her think it over",
-        "about": "Madoka thinks it over, and keeps the question to herself for a while.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "plushie"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "madoka-a-wish",
-    "title": "A Wish",
-    "gates": 5,
-    "about": "The witches are winning. Madoka has a wish that might end it, and it costs her.",
-    "offer": [
-      "them (dismayed): The witches are getting stronger. I've thought of a wish.",
-      "them: I want you to hear it before I make it."
-    ],
-    "stages": [
-      {
-        "text": "Meet Madoka at the plaza in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "plaza",
-            "times": [
-              2
-            ],
-            "scene": "World: Madoka, Plaza",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Ultimate Madoka",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "MM/W17-E030"
-          }
-        ]
-      },
-      {
-        "text": "Hear the wish",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Madoka",
-            "script": [
-              "them: It's for everyone. It costs me. Will you remember me?",
-              "them (pleased): ...Thank you for not saying no."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "make-the-wish",
-        "title": "Let her make the wish",
-        "about": "Madoka makes her wish for everyone. Homura's Best friend quest is closed for good.",
-        "rewards": [
-          {
-            "coins": 800
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ],
-        "locks": [
-          "homura-once-more"
-        ]
-      },
-      {
-        "key": "hold-her-hand",
-        "title": "Hold her hand instead",
-        "about": "Madoka keeps her wish for another day, and asks you to stay close while she decides.",
-        "rewards": [
-          {
-            "coins": 500
-          },
-          {
-            "gift": "plushie"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "madoka-kyubeys-offer", "title": "Kyubey's Offer", "requires": {"rank": 1},
+     "scene": "World: Madoka, A White Creature",
+     "about": "A small white creature offered Madoka a wish, and she wants your advice before she answers.",
+     "offer": ["them: A small white creature came to my window. It offered me a wish.",
+               "them (dismayed): I don't know if it would be selfish. Will you tell me?"],
+     "stages": [
+         {"text": "Meet Madoka at school in the morning", "objectives": [{"do": "visit", "place": "school", "times": [0], "scene": "World: Madoka, School", "rewards": [{"coins": 150}]}]},
+         {"text": "Bring Madoka a strawberry shortcake", "objectives": [{"do": "give_gift", "gift": "shortcake", "to": "Madoka"}]},
+     ],
+     "endings": [{"key": "think-it-over", "title": "Let her think it over", "about": "Madoka thinks it over, and keeps the question to herself for a while. She asks Homura if she'd make the same choice.",
+                  "scene": "World: Madoka, Thinks It Over", "rewards": [{"coins": 300}, {"gift": "plushie"}]}]},
+    {"key": "madoka-a-wish", "title": "A Wish", "gates": 2, "requires": {"quests": ["madoka-kyubeys-offer"]},
+     "scene": "World: Madoka, The Witches",
+     "about": "The witches are getting stronger. Mami wants to train Madoka before she tries anything, and Madoka wants to know if she's ready.",
+     "offer": ["them (dismayed): The witches are getting stronger. Mami says I'm not ready yet.",
+               "them: Win a duel against Mami, and maybe she'll teach me something."],
+     "stages": [
+         {"text": "Meet Madoka at the plaza in the evening", "objectives": [{"do": "visit", "place": "plaza", "times": [2], "scene": "World: Madoka, Plaza", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Beat Mami, the training fight", "scene": "World: Madoka, Mami's Lesson",
+          "objectives": [{"do": "defeat", "cpus": ["Mami Tomoe"]}]},
+         {"text": "Hear the wish", "objectives": [{"do": "talk", "to": "Madoka", "script": [
+             "them: It's for everyone. It costs me. Will you remember me?",
+             "them (pleased): ...Thank you for not saying no."]}]},
+     ],
+     "endings": [{"key": "not-yet", "title": "Not yet", "about": "Madoka decides she isn't ready to make the wish. She says so to you first, then to Homura.",
+                  "scene": "World: Madoka, Not Yet", "rewards": [{"coins": 500}, {"pack": "lucky_pack"}]}]},
+    {"key": "madoka-the-wish", "title": "The Wish", "gates": 5, "requires": {"quests": ["madoka-a-wish"]},
+     "scene": "World: Madoka, The Wish",
+     "about": "Madoka tells you the wish she's thought of, the one that would end the witches for everyone, and what it would cost her. Homura is coming to stop her.",
+     "offer": ["them (dismayed): I've thought of a wish. It would end everything, and cost me everything.",
+               "them: Homura's coming to stop me. Stand with me when she does."],
+     "stages": [
+         {"text": "Meet Madoka at the shrine at evening", "objectives": [{"do": "visit", "place": "shrine", "times": [2], "scene": "World: Madoka, The Shrine", "rewards": [{"coins": 400}]}]},
+         {"text": "Beat Homura, who's trying to stop the wish", "scene": "World: Madoka, Homura Stopped",
+          "objectives": [{"do": "defeat", "cpus": ["Homura Akemi"]}]},
+         {"text": "Tell Madoka your answer", "objectives": [{"do": "talk", "to": "Madoka", "script": [
+             "them (pleased): So you'll stand with me. Thank you.",
+             "them: Remember me, okay? Even if I'm the only one who does."]}]},
+     ],
+     "endings": [
+         {"key": "make-the-wish", "title": "Let her make the wish", "about": "Madoka makes her wish for everyone. Homura's Best friend quest is closed for good.",
+          "locks": ["homura-turn-back-time"], "scene": "World: Madoka, Wish Made", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "hold-her-hand", "title": "Hold her hand instead", "about": "Madoka keeps her wish for another day, and asks you to stay close while she decides.",
+          "scene": "World: Madoka, Hand Held", "rewards": [{"coins": 500}, {"gift": "plushie"}]},
+     ]},
 ]
+
 MADOKA_SCENES = [
-  {
-    "name": "World: Madoka, School",
-    "lines": [
-      "background classroom",
-      "me enters center with fade",
-      "me: Last night a small white creature appeared at my window. It said it could grant me a wish.",
-      "player: What did you wish for?",
-      "me (dismayed): I didn't. Not yet. I'm not sure what I'd ask for.",
-      "me: Is it selfish, do you think? To wish for something that helps other people?"
-    ]
-  },
-  {
-    "name": "World: Madoka, Plaza",
-    "lines": [
-      "background dusk",
-      "me enters left with slide",
-      "me: I thought of a wish. It's for everyone, but it costs me.",
-      "player: What does it cost?",
-      "me (dismayed): Being forgotten, mostly. Everyone would forget me.",
-      "me: Remember me, okay? Even if I'm the only one who does."
-    ]
-  }
+    {"name": "World: Madoka, A White Creature", "lines": [
+        "background classroom", "me enters center with fade",
+        "me: A small white creature came to my window last night. It offered me a wish.",
+        "player: What did you say?",
+        "me (dismayed): I didn't say anything yet. Come to school in the morning and help me think."]},
+    {"name": "World: Madoka, School", "lines": [
+        "background classroom", "me enters center with fade",
+        "me: Last night a small white creature appeared at my window. It said it could grant me a wish.",
+        "player: What did you wish for?",
+        "me (dismayed): I didn't. Not yet. I'm not sure what I'd ask for.",
+        "me: Is it selfish, do you think? To wish for something that helps other people?"]},
+    {"name": "World: Madoka, Thinks It Over", "lines": [
+        "background classroom", "me enters center with fade",
+        "me: I'm thinking about it. Homura says I shouldn't, but she won't say why.",
+        "player: Will you make the wish?",
+        "me (dismayed): Not yet. I want to understand what it would cost first."]},
+    {"name": "World: Madoka, The Witches", "lines": [
+        "background sakura", "me enters left with slide",
+        "me (dismayed): The witches are getting stronger. Mami says I'm not ready yet.",
+        "player: Then train with her.",
+        "me: Meet me at the plaza in the evening. Mami's coming to show me what I need."]},
+    {"name": "World: Madoka, Plaza", "lines": [
+        "background sakura", "me enters center with fade",
+        "me: I thought of a wish. It's for everyone, but it costs me.",
+        "player: What does it cost?",
+        "me (dismayed): Being forgotten, mostly. Everyone would forget me."]},
+    {"name": "World: Madoka, Mami's Lesson", "lines": [
+        "cast mami as Mami Tomoe",
+        "background sakura",
+        "me enters center with fade",
+        "mami enters right with slide",
+        "mami: {player} held their ground, Madoka. That's the first lesson.",
+        "me (pleased): Thank you, Mami. I'm still not going to make the wish yet.",
+        "mami: Good. Then we'll train until you're ready to choose.",
+        "player: Mami is the best teacher.",
+        "me (dismayed): Please don't teach me to be brave like that. It hurts."]},
+    {"name": "World: Madoka, Not Yet", "lines": [
+        "background sakura", "me enters center with fade",
+        "me: I'm not ready to make the wish. I've decided to wait, and to talk to Homura first.",
+        "player: Good.",
+        "me (dismayed): Thank you for helping me think it through. You're a good friend."]},
+    {"name": "World: Madoka, The Wish", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): I've thought of the wish. It would end the witches for everyone. It would cost me everything.",
+        "player: What's Homura going to do?",
+        "player: Will Homura let you finish it?",
+        "me (dismayed): She never has, not in the loops I can remember. This time I'd like her to watch me say it.",
+        "player: What do you want Homura to know?",
+        "me (pleased): That the wish is for everyone, and that I'll still remember her, even if nobody else does.",
+        "me: She's coming to stop me. She knows something I don't."]},
+    {"name": "World: Madoka, The Shrine", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): Homura's coming. She's going to try to stop me from making the wish.",
+        "player: Will you fight her?",
+        "me (pleased): If I have to. Stand with me when she comes."]},
+    {"name": "World: Madoka, Homura Stopped", "lines": [
+        "cast homura as Homura Akemi",
+        "background shrine",
+        "me enters left with slide",
+        "homura enters right with fade",
+        "homura: {player} fought me, Madoka. Then you can still stop yourself.",
+        "me (dismayed): I didn't want to fight you. I wanted you to understand.",
+        "homura: I understand. I still don't want you to make the wish.",
+        "player: Then what do we do?",
+        "me (pleased): Hold my hand, and let me decide. That's all I'm asking."]},
+    {"name": "World: Madoka, Wish Made", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I made the wish. It was for everyone, and I'm not sorry.",
+        "player: Madoka...",
+        "me (dismayed): Remember me, okay? Even if nobody else does."]},
+    {"name": "World: Madoka, Hand Held", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I'm keeping the wish for later. You can hold my hand while I decide.",
+        "player: I'm here.",
+        "me: Thank you. Homura will come round, I think. She always does."]},
 ]
+
 HOMURA_AKEMI_QUESTS = [
-  {
-    "key": "homura-transfer-student",
-    "title": "Transfer Student",
-    "gates": 2,
-    "about": "Homura warns the player to keep away from Madoka, and knows things she shouldn't.",
-    "offer": [
-      "them: Keep away from Madoka. Don't ask why. I'll only tell you once.",
-      "them (dismayed): You don't believe me. You will."
-    ],
-    "stages": [
-      {
-        "text": "Find Homura at school in the morning",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "school",
-            "times": [
-              0
-            ],
-            "scene": "World: Homura Akemi, School",
-            "rewards": [
-              {
-                "pack": "climax_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Best Friends, Madoka & Homura",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "MM/W17-E047"
-          }
-        ]
-      },
-      {
-        "text": "Hear Homura's warning again",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Homura Akemi",
-            "script": [
-              "them: Madoka must never make a contract. I mean it.",
-              "them (pleased): ...You listened. That's rarer than you think."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "keep-your-distance",
-        "title": "Keep your distance",
-        "about": "Homura doesn't say thanks, but she stops watching you the way she watched Madoka.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "sleeves"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "homura-once-more",
-    "title": "Once More",
-    "gates": 5,
-    "about": "The truth about the time loops. Homura has lived this month more than once.",
-    "offer": [
-      "them (dismayed): I have lived this month more times than I can count.",
-      "them: I need you to help me stop her once more."
-    ],
-    "stages": [
-      {
-        "text": "Meet Homura on the rooftop at night",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "rooftop",
-            "times": [
-              3
-            ],
-            "scene": "World: Homura Akemi, Rooftop",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Win a duel with Homura: For Madoka's Sake in your deck",
-        "objectives": [
-          {
-            "do": "win_with",
-            "card": "MM/W35-E026",
-            "against": [
-              "Homura Akemi"
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Homura your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Homura Akemi",
-            "script": [
-              "them: Turn back time with me, or let her make the wish?",
-              "them (pleased): Then I'll do it alone. Thank you anyway."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "turn-back-time",
-        "title": "Turn back time",
-        "about": "Homura turns the clock back once more. Madoka's Best friend quest is closed for good.",
-        "rewards": [
-          {
-            "coins": 800
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ],
-        "locks": [
-          "madoka-a-wish"
-        ]
-      },
-      {
-        "key": "let-her-choose",
-        "title": "Let her choose",
-        "about": "Homura lets Madoka choose for herself, and watches from a distance.",
-        "rewards": [
-          {
-            "coins": 500
-          },
-          {
-            "gift": "manga"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "homura-transfer-student", "title": "Transfer Student", "requires": {"rank": 1},
+     "scene": "World: Homura Akemi, Warning",
+     "about": "Homura warns the player to keep away from Madoka, and knows things she shouldn't.",
+     "offer": ["them: Keep away from Madoka. Don't ask why. I'll only tell you once.",
+               "them (dismayed): You don't believe me. You will."],
+     "stages": [
+         {"text": "Find Homura at school in the morning", "objectives": [{"do": "visit", "place": "school", "times": [0], "scene": "World: Homura Akemi, School", "rewards": [{"pack": "climax_pack"}]}]},
+         {"text": "Hear Homura's warning again", "objectives": [{"do": "talk", "to": "Homura Akemi", "script": [
+             "them: Madoka must never make a contract. I mean it.",
+             "them (pleased): ...You listened. That's rarer than you think."]}]},
+     ],
+     "endings": [{"key": "keep-your-distance", "title": "Keep your distance", "about": "Homura doesn't say thanks, but she tells you she's lived this month more than once.",
+                  "scene": "World: Homura Akemi, Lived It", "rewards": [{"coins": 300}, {"gift": "sleeves"}]}]},
+    {"key": "homura-once-more", "title": "Once More", "gates": 2, "requires": {"quests": ["homura-transfer-student"]},
+     "scene": "World: Homura Akemi, Loops",
+     "about": "Homura has lived this month more than once, and she has seen what happens when Mami learns the truth about soul gems. In one loop Mami turned on the others. Homura needs to know whether this loop's Mami can bear that truth.",
+     "offer": ["them (dismayed): I have lived this month more times than I can count.",
+               "them: In one loop Mami learned what a soul gem really is, and turned on the others. I need to test whether she can bear the truth now."],
+     "stages": [
+         {"text": "Meet Homura on the rooftop at night", "objectives": [{"do": "visit", "place": "rooftop", "times": [3], "scene": "World: Homura Akemi, Rooftop", "rewards": [{"coins": 400}]}]},
+         {"text": "Duel Mami, to see whether she can bear the truth about soul gems", "scene": "World: Homura Akemi, Mami Tested",
+          "objectives": [{"do": "defeat", "cpus": ["Mami Tomoe"]}]},
+         {"text": "Tell Homura what Mami said", "objectives": [{"do": "talk", "to": "Homura Akemi", "script": [
+             "them: He's looking for someone who isn't here. Like me.",
+             "them (pleased): Thanks for finding out. Stay with me a while."]}]},
+     ],
+     "endings": [{"key": "one-more-try", "title": "One more try", "about": "Homura decides to try once more to stop Madoka, and asks for your help with the next loop.",
+                  "scene": "World: Homura Akemi, One More Try", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "homura-turn-back-time", "title": "Turn Back Time", "gates": 5, "requires": {"quests": ["homura-once-more"]},
+     "scene": "World: Homura Akemi, Turn Back",
+     "about": "Homura has decided to stop Madoka's wish, and it means turning back time one last time. She needs you to help her, and to beat Madoka if it comes to that.",
+     "offer": ["them (dismayed): Tonight, I stop Madoka's wish. I'll turn back time, once more.",
+               "them: Come to the shrine. I want you there when I try."],
+     "stages": [
+         {"text": "Meet Homura at the shrine at evening", "objectives": [{"do": "visit", "place": "shrine", "times": [2], "scene": "World: Homura Akemi, Shrine", "rewards": [{"coins": 300}]}]},
+         {"text": "Beat Madoka, so the wish can't be made", "scene": "World: Homura Akemi, Madoka Stopped",
+          "objectives": [{"do": "defeat", "cpus": ["Madoka"]}]},
+         {"text": "Tell Homura your answer", "objectives": [{"do": "talk", "to": "Homura Akemi", "script": [
+             "them: Once more, then. Thank you for helping me, {player}.",
+             "them (pleased): I'll remember this one, I promise."]}]},
+     ],
+     "endings": [
+         {"key": "turn-back-time", "title": "Turn back time", "about": "Homura turns the clock back once more. Madoka's Best friend quest is closed for good.",
+          "locks": ["madoka-the-wish"], "scene": "World: Homura Akemi, Clock Turned", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]},
+         {"key": "let-her-choose", "title": "Let her choose", "about": "Homura lets Madoka choose for herself, and watches from a distance.",
+          "scene": "World: Homura Akemi, Let Her Choose", "rewards": [{"coins": 500}, {"gift": "manga"}]},
+     ]},
 ]
+
 HOMURA_AKEMI_SCENES = [
-  {
-    "name": "World: Homura Akemi, School",
-    "lines": [
-      "background classroom",
-      "me enters right with slide",
-      "me: You shouldn't be here this early.",
-      "player: I just wanted to talk.",
-      "me (dismayed): You knew my name before we'd met. That's the first thing I'd like explained.",
-      "player: I don't know how.",
-      "me: Then stay away from her. Madoka must never make a contract."
-    ]
-  },
-  {
-    "name": "World: Homura Akemi, Rooftop",
-    "lines": [
-      "background night",
-      "me enters center with fade",
-      "me: I've lived this month more times than I can count. Every time, she makes the same wish.",
-      "player: What happens after?",
-      "me (dismayed): I don't remember how it ends, only how it starts again.",
-      "me: Help me stop it. Once more."
-    ]
-  }
+    {"name": "World: Homura Akemi, Warning", "lines": [
+        "background classroom", "me enters right with slide",
+        "me: Keep away from Madoka. And don't ask me why, because I won't answer.",
+        "player: You know my name.",
+        "me (dismayed): I know many things I shouldn't. Please stay away from her."]},
+    {"name": "World: Homura Akemi, School", "lines": [
+        "background classroom", "me enters right with slide",
+        "me: You shouldn't be here this early.",
+        "player: I just wanted to talk.",
+        "me (dismayed): You knew my name before we'd met. That's the first thing I'd like explained.",
+        "me: Then stay away from her. Madoka must never make a contract."]},
+    {"name": "World: Homura Akemi, Lived It", "lines": [
+        "background classroom", "me enters center with fade",
+        "me (dismayed): I've lived this month more than once. That's why I know what she'll do.",
+        "player: Like a time loop?",
+        "me: Something like that. Keep it to yourself, and come to the rooftop at night."]},
+    {"name": "World: Homura Akemi, Loops", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I've lived this month more times than I can count. Every time, she makes the same wish.",
+        "player: What happens after?",
+        "me: I don't remember how it ends. Only how it starts again."]},
+    {"name": "World: Homura Akemi, Rooftop", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): Mami doesn't know what she'll become. I need to find out whether she can bear it.",
+        "player: Do you think he's dangerous?",
+        "me: I don't know. Duel him, and then we'll know."]},
+        {"name": "World: Homura Akemi, Mami Tested", "lines": [
+        "cast mami as Mami Tomoe",
+        "background rooftop",
+        "me enters center with fade",
+        "mami enters right with slide",
+        "mami: {player} beat me, Homura. You're looking at me like you've seen something I haven't done yet.",
+        "me (dismayed): I have, in another loop. You learned what a soul gem really is, and you turned on the others.",
+        "mami: I don't believe that. I'd never turn on Madoka or Kyoko.",
+        "me (pleased): Then prove it, in this loop. Tell me the truth about the gems, and see whether you can carry it.",
+        "mami: The gems are the witches' cores. If I knew that, I'd be no better than the things we fight."]},
+    {"name": "World: Homura Akemi, One More Try", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I'm going to try once more to stop Madoka. Help me, this time.",
+        "player: What do you need?",
+        "me: Just keep me steady, if the timeline starts to slip."]},
+    {"name": "World: Homura Akemi, Turn Back", "lines": [
+        "background shrine", "me enters left with fade",
+        "me (dismayed): Tonight, I stop Madoka's wish. I'll turn back time once more.",
+        "player: Are you sure?",
+        "me: No. But this is the last loop. I'm going to make it count."]},
+    {"name": "World: Homura Akemi, Shrine", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): Madoka's coming. Stand with me, and don't let the wish happen.",
+        "player: I'll be here.",
+        "me: Good. Once more, then."]},
+    {"name": "World: Homura Akemi, Madoka Stopped", "lines": [
+        "cast madoka as Madoka",
+        "background shrine",
+        "me enters left with fade",
+        "madoka enters right with slide",
+        "madoka: Homura. {player} beat me. Are you happy now?",
+        "me (dismayed): No. I wanted you to be the one who chose.",
+        "madoka: I chose to fight. That's still a choice.",
+        "player: The clock's turned back, Homura.",
+        "me (pleased): For this loop. I'll remember this one."]},
+    {"name": "World: Homura Akemi, Clock Turned", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): The clock is turned back. Madoka can't make the wish now.",
+        "player: Did it work?",
+        "me (dismayed): For this loop, yes. Thank you for helping me, {player}."]},
+    {"name": "World: Homura Akemi, Let Her Choose", "lines": [
+        "background shrine", "me enters center with fade",
+        "me: I'm letting Madoka choose. She's the one who should decide, not me.",
+        "player: That's a hard thing to do.",
+        "me (dismayed): It is. But I've watched her choose for too many loops. Now it's her turn."]},
 ]
+
 KYOKO_SAKURA_QUESTS = [
-  {
-    "key": "kyoko-eat-it-all",
-    "title": "Eat It All",
-    "gates": 2,
-    "about": "Kyoko shares food with people who don't waste it, and she'll watch to see whether you do.",
-    "offer": [
-      "them: Here. Eat that. If you waste it, I'll know.",
-      "them (pleased): Don't look so surprised. Just finish the apple."
-    ],
-    "stages": [
-      {
-        "text": "Find Kyoko in the alley in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "alley",
-            "times": [
-              2
-            ],
-            "scene": "World: Kyoko Sakura, Alley",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Share some melon bread with Kyoko",
-        "objectives": [
-          {
-            "do": "give_gift",
-            "gift": "melon-bread",
-            "to": "Kyoko Sakura"
-          }
-        ]
-      },
-      {
-        "text": "Talk to Kyoko over the bread",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Kyoko Sakura",
-            "script": [
-              "them: You finished the apple. So you get another. That's how it works.",
-              "them (pleased): ...Friendship, by my rules."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "finish-the-apple",
-        "title": "Finish the apple",
-        "about": "Kyoko gives you another apple, then a third. You can't tell whether it's a gift or a test.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "instant-ramen"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "kyoko-fathers-church",
-    "title": "Father's Church",
-    "gates": 5,
-    "about": "The ruined chapel that Kyoko never visits, and what her wish did to her family.",
-    "offer": [
-      "them (dismayed): There's a ruined chapel by the shrine. I haven't been back in years.",
-      "them: Come with me. I don't want to go alone."
-    ],
-    "stages": [
-      {
-        "text": "Meet Kyoko at the shrine at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "shrine",
-            "times": [
-              1
-            ],
-            "scene": "World: Kyoko Sakura, Shrine",
-            "rewards": [
-              {
-                "pack": "level_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Kyoko Wishes for a Miracle",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "MM/W17-E069"
-          }
-        ]
-      },
-      {
-        "text": "Let Kyoko pray",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Kyoko Sakura",
-            "script": [
-              "them: I haven't prayed in years. I'm bad at it.",
-              "them (pleased): ...There. That's enough for now."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "pray-with-her",
-        "title": "Pray with her",
-        "about": "Kyoko tells you what her wish cost her family, and asks you to keep it.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "kyoko-eat-it-all", "title": "Eat It All", "requires": {"rank": 1},
+     "scene": "World: Kyoko Sakura, Apple",
+     "about": "Kyoko shares food with people who don't waste it, and she'll watch to see whether you do.",
+     "offer": ["them: Here. Eat that. If you waste it, I'll know.",
+               "them (pleased): Don't look so surprised. Just finish the apple."],
+     "stages": [
+         {"text": "Find Kyoko in the alley in the evening", "objectives": [{"do": "visit", "place": "alley", "times": [2], "scene": "World: Kyoko Sakura, Alley", "rewards": [{"coins": 200}]}]},
+         {"text": "Share some melon bread with Kyoko", "objectives": [{"do": "give_gift", "gift": "melon-bread", "to": "Kyoko Sakura"}]},
+     ],
+     "endings": [{"key": "finish-the-apple", "title": "Finish the apple", "about": "Kyoko gives you another apple, then a third. She mentions a ruined chapel by the shrine, where her father used to preach.",
+                  "scene": "World: Kyoko Sakura, Chapel", "rewards": [{"coins": 300}, {"gift": "instant-ramen"}]}]},
+    {"key": "kyoko-fathers-church", "title": "Father's Church", "gates": 2, "requires": {"quests": ["kyoko-eat-it-all"]},
+     "scene": "World: Kyoko Sakura, The Chapel",
+     "about": "The ruined chapel, and the wish that tore Kyoko's family apart. Sayaka wants to know why Kyoko's been so hard on her, so the two have to settle it.",
+     "offer": ["them (dismayed): There's a ruined chapel by the shrine. I haven't been back in years.",
+               "them: Sayaka keeps asking about my wish. Beat her, and I'll tell you."],
+     "stages": [
+         {"text": "Meet Kyoko at the shrine at noon", "objectives": [{"do": "visit", "place": "shrine", "times": [1], "scene": "World: Kyoko Sakura, Shrine", "rewards": [{"pack": "level_pack"}]}]},
+         {"text": "Beat Sayaka, to settle the argument", "scene": "World: Kyoko Sakura, Argument Settled",
+          "objectives": [{"do": "defeat", "cpus": ["Sayaka Miki"]}]},
+         {"text": "Let Kyoko pray", "objectives": [{"do": "talk", "to": "Kyoko Sakura", "script": [
+             "them: I haven't prayed in years. I'm bad at it.",
+             "them (pleased): ...There. That's enough for now."]}]},
+     ],
+     "endings": [{"key": "pray-with-her", "title": "Pray with her", "about": "Kyoko tells you what her wish cost her family, and asks you to keep it.",
+                  "scene": "World: Kyoko Sakura, Prayed", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "kyoko-the-cost", "title": "The Cost", "gates": 5, "requires": {"quests": ["kyoko-fathers-church"]},
+     "scene": "World: Kyoko Sakura, The Cost",
+     "about": "Mami has been waiting for Kyoko to fail. Kyoko doesn't confess again; she shows Mami the table she has made, and asks whether that counts as changed.",
+     "offer": ["them (dismayed): Mami's going to test me tonight, and decide whether I've changed. I'd like you to watch.",
+               "them: Meet me at the plaza at evening. Bring your appetite."],
+     "stages": [
+         {"text": "Meet Kyoko at the plaza in the evening", "objectives": [{"do": "visit", "place": "plaza", "times": [2], "scene": "World: Kyoko Sakura, Plaza", "rewards": [{"coins": 400}]}]},
+         {"text": "Beat Mami, to prove you'll stand by her", "scene": "World: Kyoko Sakura, Mami Tests",
+          "objectives": [{"do": "defeat", "cpus": ["Mami Tomoe"]}]},
+         {"text": "Tell Kyoko what you think", "objectives": [{"do": "talk", "to": "Kyoko Sakura", "script": [
+             "them (pleased): You didn't run. Thank you.",
+             "them: Nobody's asked me that before. I'm glad you did."]}]},
+     ],
+     "endings": [{"key": "shared-the-cost", "title": "Share the cost", "about": "Kyoko and Mami set a second place at the table for the next person who needs feeding. Kyoko stops counting the cost, and Mami says that counts as changed.",
+                  "scene": "World: Kyoko Sakura, Shared", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]}]},
 ]
+
 KYOKO_SAKURA_SCENES = [
-  {
-    "name": "World: Kyoko Sakura, Alley",
-    "lines": [
-      "background city",
-      "me enters right with slide",
-      "me: Catch. Eat it. All of it. Core too.",
-      "player: The core too?",
-      "me (pleased): The core too. Nothing goes to waste around me.",
-      "me: You didn't spit it out. That's the first good sign."
-    ]
-  },
-  {
-    "name": "World: Kyoko Sakura, Shrine",
-    "lines": [
-      "background shrine",
-      "me enters center with fade",
-      "me: My father's church. Ruined. My wish did that.",
-      "player: You don't have to tell me.",
-      "me (dismayed): I know. I want to. Once.",
-      "me: My family was everything, and I wished for something that tore them apart.",
-      "me (pleased): Now I pray, badly. You can laugh. I won't mind."
-    ]
-  }
+    {"name": "World: Kyoko Sakura, Apple", "lines": [
+        "background city", "me enters right with slide",
+        "me: Catch. Eat it. All of it. Core too.",
+        "player: The core too?",
+        "me (pleased): The core too. Nothing goes to waste around me."]},
+    {"name": "World: Kyoko Sakura, Alley", "lines": [
+        "background city", "me enters right with slide",
+        "me: Catch. Eat it. All of it. Core too.",
+        "player: The core too?",
+        "me (pleased): The core too. Nothing goes to waste around me.",
+        "me: You didn't spit it out. That's the first good sign."]},
+    {"name": "World: Kyoko Sakura, Chapel", "lines": [
+        "background shrine", "me enters center with fade",
+        "me: There's a ruined chapel by the shrine. My father preached there, before my wish.",
+        "player: Do you want to go?",
+        "me (dismayed): Not yet. I'll tell you about it when I can stand to."]},
+    {"name": "World: Kyoko Sakura, The Chapel", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (dismayed): My father's church. Ruined. My wish did that.",
+        "player: You don't have to tell me.",
+        "me: I know. I want to. Once."]},
+    {"name": "World: Kyoko Sakura, Shrine", "lines": [
+        "background shrine", "me enters center with fade",
+        "me: My father's church. Ruined. My wish did that.",
+        "player: You don't have to tell me.",
+        "me (dismayed): I know. I want to. Once.",
+        "me: My family was everything, and I wished for something that tore them apart."]},
+    {"name": "World: Kyoko Sakura, Argument Settled", "lines": [
+        "cast sayaka as Sayaka Miki",
+        "background shrine",
+        "me enters center with fade",
+        "sayaka enters right with slide",
+        "sayaka: {player} beat me, Kyoko. Justice wins, and I lost. Happy?",
+        "me (dismayed): I'm not happy. But you're the first one who's asked me about the wish.",
+        "sayaka: Then ask me yours. I'll answer, if you answer mine.",
+        "player: That sounds like a fair trade.",
+        "me (pleased): Fine. Let's share some bread, then."]},
+    {"name": "World: Kyoko Sakura, Prayed", "lines": [
+        "background shrine", "me enters center with fade",
+        "me (pleased): I prayed, badly. You can laugh. I won't mind.",
+        "player: I'm not laughing.",
+        "me (dismayed): Thank you for listening to me, {player}. I'm glad you were there."]},
+    {"name": "World: Kyoko Sakura, The Cost", "lines": [
+        "background sakura", "me enters left with slide",
+        "me (dismayed): Mami's going to test me tonight, and decide whether I've changed. I'd like you to watch.",
+        "player: I'll listen.",
+        "me: Meet me at the plaza in the evening. Bring your appetite, and your honesty."]},
+    {"name": "World: Kyoko Sakura, Plaza", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (dismayed): I wished for my family's happiness, and it cost me them. That's the truth.",
+        "player: I'm sorry.",
+        "me: Mami's coming to test whether I'm really changed. Stand with me."]},
+    {"name": "World: Kyoko Sakura, Mami Tests", "lines": [
+        "cast mami as Mami Tomoe",
+        "background sakura",
+        "me enters center with fade",
+        "mami enters left with slide",
+        "mami: {player} beat me, Kyoko. You're changing, and I can see it from here. I can see it in the way you fought.",
+        "me (pleased): Yeah? Good. Don't tell me it's over.",
+        "mami: It isn't. But you've earned a seat at the table.",
+        "player: Thanks, Mami.",
+        "me (dismayed): Okay. Tea, then. For three."]},
+    {"name": "World: Kyoko Sakura, Shared", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): I shared the cost with you. It doesn't lighten it, but I'm not alone with it.",
+        "player: Thank you for telling me.",
+        "me (dismayed): You're welcome to the apple. Always."]},
 ]
+
 MAMI_TOMOE_QUESTS = [
-  {
-    "key": "mami-tea-time",
-    "title": "Tea Time",
-    "gates": 2,
-    "about": "Mami has baked far too much for one person, and she's set out a tea service for two.",
-    "offer": [
-      "them (pleased): Oh, you're here. I baked. Sit, please.",
-      "them: There's far too much cake for one person, so you'll help."
-    ],
-    "stages": [
-      {
-        "text": "Join Mami for tea at the cafe at noon",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "cafe",
-            "times": [
-              1
-            ],
-            "scene": "World: Mami Tomoe, Cafe",
-            "rewards": [
-              {
-                "coins": 150
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Bring Mami a strawberry shortcake",
-        "objectives": [
-          {
-            "do": "give_gift",
-            "gift": "shortcake",
-            "to": "Mami Tomoe"
-          }
-        ]
-      },
-      {
-        "text": "Let Mami talk about the cakes",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Mami Tomoe",
-            "script": [
-              "them: That one is a sponge. That one is a mistake. Don't tell anyone.",
-              "them (pleased): Will you come back tomorrow? Please?"
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "come-back-tomorrow",
-        "title": "Come back tomorrow",
-        "about": "Mami sets out the cups for two every day now, and never explains why.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "bouquet"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "mami-not-alone",
-    "title": "Not Alone",
-    "gates": 5,
-    "about": "Mami admits why she's always hosting. She's been alone since the accident, and fighting alone too.",
-    "offer": [
-      "them (dismayed): Can I tell you why I keep baking?",
-      "them: I don't want you to think it's silly."
-    ],
-    "stages": [
-      {
-        "text": "Watch the sunset with Mami on the rooftop",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "rooftop",
-            "times": [
-              2
-            ],
-            "scene": "World: Mami Tomoe, Rooftop",
-            "rewards": [
-              {
-                "pack": "color_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Mami is \"No Longer Alone\"",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "MM/W17-E008"
-          }
-        ]
-      },
-      {
-        "text": "Answer Mami's question",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Mami Tomoe",
-            "script": [
-              "them: Will you be my partner? In the fights, and everything?",
-              "them (pleased): ...Then I'm not alone, am I?"
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "partners",
-        "title": "Be her partner",
-        "about": "Mami holds out a cake for you to share at the next battle. She says it's a promise.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "mami-tea-time", "title": "Tea Time", "requires": {"rank": 1},
+     "scene": "World: Mami Tomoe, Tea Invite",
+     "about": "Mami has baked far too much for one person, and she's set out a tea service for two.",
+     "offer": ["them (pleased): Oh, you're here. I baked. Sit, please.",
+               "them: There's far too much cake for one person, so you'll help."],
+     "stages": [
+         {"text": "Join Mami for tea at the cafe at noon", "objectives": [{"do": "visit", "place": "cafe", "times": [1], "scene": "World: Mami Tomoe, Cafe", "rewards": [{"coins": 150}]}]},
+         {"text": "Bring Mami a strawberry shortcake", "objectives": [{"do": "give_gift", "gift": "shortcake", "to": "Mami Tomoe"}]},
+     ],
+     "endings": [{"key": "come-back-tomorrow", "title": "Come back tomorrow", "about": "Mami sets out the cups for two every day now, and never explains why. She mentions that she's been alone since the accident.",
+                  "scene": "World: Mami Tomoe, Two Cups", "rewards": [{"coins": 300}, {"gift": "bouquet"}]}]},
+    {"key": "mami-not-alone", "title": "Not Alone", "gates": 2, "requires": {"quests": ["mami-tea-time"]},
+     "scene": "World: Mami Tomoe, Not Alone",
+     "about": "Mami admits why she's always hosting. She's been alone since the accident, and fighting alone too. Kyoko's the one who keeps pushing her.",
+     "offer": ["them (dismayed): Can I tell you why I keep baking?",
+               "them: Kyoko keeps coming to my cafe. Beat her, and maybe she'll talk to you about it."],
+     "stages": [
+         {"text": "Watch the sunset with Mami on the rooftop", "objectives": [{"do": "visit", "place": "rooftop", "times": [2], "scene": "World: Mami Tomoe, Rooftop", "rewards": [{"pack": "color_pack"}]}]},
+         {"text": "Beat Kyoko, to see if she'll change", "scene": "World: Mami Tomoe, Kyoko Tested",
+          "objectives": [{"do": "defeat", "cpus": ["Kyoko Sakura"]}]},
+         {"text": "Answer Mami's question", "objectives": [{"do": "talk", "to": "Mami Tomoe", "script": [
+             "them: Will you be my partner? In the fights, and everything?",
+             "them (pleased): ...Then I'm not alone, am I?"]}]},
+     ],
+     "endings": [{"key": "partners", "title": "Be her partner", "about": "Mami holds out a cake for you to share at the next battle. She says it's a promise.",
+                  "scene": "World: Mami Tomoe, Partners", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "mami-the-partnership", "title": "The Partnership", "gates": 5, "requires": {"quests": ["mami-not-alone"]},
+     "scene": "World: Mami Tomoe, The Partnership",
+     "about": "Mami is training a new partner to fight the witches, and she wants to be sure they can keep up. Sayaka has volunteered.",
+     "offer": ["them (dismayed): I need a new partner for the witches, and Sayaka volunteered.",
+               "them: Come to the arena, and tell me if she's up to it."],
+     "stages": [
+         {"text": "Meet Mami at the arena in the evening", "objectives": [{"do": "visit", "place": "arena", "times": [2], "scene": "World: Mami Tomoe, Arena", "rewards": [{"coins": 300}]}]},
+         {"text": "Beat Sayaka, to test her as a partner", "scene": "World: Mami Tomoe, Sayaka Tested",
+          "objectives": [{"do": "defeat", "cpus": ["Sayaka Miki"]}]},
+         {"text": "Tell Mami what you think of Sayaka", "objectives": [{"do": "talk", "to": "Mami Tomoe", "script": [
+             "them (pleased): Good. I'll train her, and you can watch.",
+             "them: You're a good friend, {player}. Thank you for being fair."]}]},
+     ],
+     "endings": [{"key": "two-partners", "title": "Make it two partners", "about": "Mami takes Sayaka on, and asks you to be the third. She says the witches will be scared of the three of you.",
+                  "scene": "World: Mami Tomoe, Three", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]}]},
 ]
+
 MAMI_TOMOE_SCENES = [
-  {
-    "name": "World: Mami Tomoe, Cafe",
-    "lines": [
-      "background cafe",
-      "me enters center with fade",
-      "me: Oh, you came! I set out a full service. I hope you're hungry.",
-      "player: Is all of this for me?",
-      "me (pleased): For two. I hoped someone would come.",
-      "me: That's a lemon curd tart. That's a vanilla sponge. Try the mistake, it's the best one."
-    ]
-  },
-  {
-    "name": "World: Mami Tomoe, Rooftop",
-    "lines": [
-      "background dusk",
-      "me enters left with slide",
-      "me: I always host because I'm afraid of an empty table.",
-      "player: Since when?",
-      "me (dismayed): Since the accident. Since it was only me.",
-      "me: Will you be my partner? I don't want to fight alone any more.",
-      "me (pleased): ...Thank you. Now eat your cake."
-    ]
-  }
+    {"name": "World: Mami Tomoe, Tea Invite", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): Oh, you're here! Come in. I've made far too much cake for one person.",
+        "player: I'll help you eat it.",
+        "me: Cafe at noon. Bring your appetite, and tell me all about your week."]},
+    {"name": "World: Mami Tomoe, Cafe", "lines": [
+        "background cafe", "me enters center with pop",
+        "me: Morning! You're early. Perfect, I haven't opened the shortcake yet.",
+        "player: Am I your first customer?",
+        "me (pleased): First friend of the morning! Sit, sit. I'll give you the good slice."]},
+    {"name": "World: Mami Tomoe, Two Cups", "lines": [
+        "background cafe", "me enters center with fade",
+        "me (pleased): I set out the cups for two every day now. I hope someone comes.",
+        "player: I'll come.",
+        "me (dismayed): It's because I've been alone since the accident. The cups help a little."]},
+    {"name": "World: Mami Tomoe, Rooftop", "lines": [
+        "background rooftop", "me enters center with fade",
+        "me (dismayed): I always host because I'm afraid of an empty table.",
+        "player: Since when?",
+        "me: Since the accident. Since it was only me. Watch the sunset with me, please."]},
+    {"name": "World: Mami Tomoe, Not Alone", "lines": [
+        "background dusk", "me enters left with slide",
+        "me (dismayed): Will you be my partner? I don't want to fight alone any more.",
+        "player: I will.",
+        "me (pleased): Thank you. Now eat your cake."]},
+    {"name": "World: Mami Tomoe, Kyoko Tested", "lines": [
+        "cast kyoko as Kyoko Sakura",
+        "background rooftop",
+        "me enters center with fade",
+        "kyoko enters right with slide",
+        "kyoko: {player} is tougher than your cakes, Mami.",
+        "me (pleased): That's the nicest thing you've ever said to me.",
+        "kyoko: Don't get used to it. I'm still angry about the wish.",
+        "player: Did you two just make peace?",
+        "me (dismayed): Let's call it a truce, and eat the cake."]},
+    {"name": "World: Mami Tomoe, Partners", "lines": [
+        "background dusk", "me enters center with fade",
+        "me (pleased): I'm holding out a cake for you to share at the next battle. It's a promise.",
+        "player: I'll keep it.",
+        "me (dismayed): Good. That's how partners work, right?"]},
+    {"name": "World: Mami Tomoe, The Partnership", "lines": [
+        "background sakura", "me enters left with slide",
+        "me (dismayed): I need a new partner for the witches. Sayaka volunteered.",
+        "player: Do you think she's ready?",
+        "me: Come to the arena in the evening. Let's see if she can keep up."]},
+    {"name": "World: Mami Tomoe, Arena", "lines": [
+        "background arena", "me enters center with fade",
+        "me (pleased): Let's see how Sayaka does. Don't go easy on her.",
+        "player: I won't.",
+        "me (dismayed): Good. Partners need to know their limits."]},
+    {"name": "World: Mami Tomoe, Sayaka Tested", "lines": [
+        "cast sayaka as Sayaka Miki",
+        "background arena",
+        "me enters left with slide",
+        "sayaka enters right with slide",
+        "sayaka: {player} beat me, Mami. But I'm still in.",
+        "me (pleased): You held the form longer than I expected. That's enough for a partner.",
+        "sayaka: Justice needs partners, right?",
+        "player: Good work, both of you.",
+        "me (dismayed): Stand by me. The witches are louder than ever."]},
+    {"name": "World: Mami Tomoe, Three", "lines": [
+        "background sakura", "me enters center with fade",
+        "me (pleased): Sayaka's my partner now, and you're the third. The witches will be scared.",
+        "player: I'm honoured.",
+        "me (dismayed): You should be. Come to tea tomorrow. The cups are for three now."]},
 ]
+
 SAYAKA_MIKI_QUESTS = [
-  {
-    "key": "sayaka-the-violinist",
-    "title": "The Violinist",
-    "gates": 2,
-    "about": "Sayaka wants a CD signed for a friend in hospital, and she's practising what to say out loud.",
-    "offer": [
-      "them: I need to ask someone for a signature. I've practised all week.",
-      "them (dismayed): Don't laugh. Please just listen to my lines."
-    ],
-    "stages": [
-      {
-        "text": "Find Sayaka at school in the morning",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "school",
-            "times": [
-              0
-            ],
-            "scene": "World: Sayaka Miki, School",
-            "rewards": [
-              {
-                "coins": 200
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Give Sayaka a set of earbuds for her friend's playlist",
-        "objectives": [
-          {
-            "do": "give_gift",
-            "gift": "earbuds",
-            "to": "Sayaka Miki"
-          }
-        ]
-      },
-      {
-        "text": "Let Sayaka rehearse once more",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Sayaka Miki",
-            "script": [
-              "them (pleased): You're a better friend than I deserve, you know that?",
-              "them: Okay. Now the lines. Properly this time."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "be-her-friend",
-        "title": "Be her friend",
-        "about": "Sayaka gets the signature and gives you a copy of the CD, with the best track marked.",
-        "rewards": [
-          {
-            "coins": 300
-          },
-          {
-            "gift": "plushie"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "key": "sayaka-mermaids-wish",
-    "title": "Mermaid's Wish",
-    "gates": 5,
-    "about": "Sayaka made a wish for someone else, and wonders whether it was worth what it cost her.",
-    "offer": [
-      "them (dismayed): I made a wish once. For someone else. Was it worth it?",
-      "them: Come to the beach. I'll tell you there."
-    ],
-    "stages": [
-      {
-        "text": "Meet Sayaka at the beach in the evening",
-        "objectives": [
-          {
-            "do": "visit",
-            "place": "beach",
-            "times": [
-              2
-            ],
-            "scene": "World: Sayaka Miki, Beach",
-            "rewards": [
-              {
-                "pack": "climax_pack"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "text": "Have Sayaka Finds Her Wish",
-        "objectives": [
-          {
-            "do": "have_card",
-            "card": "MM/W17-E088"
-          }
-        ]
-      },
-      {
-        "text": "Give Sayaka your answer",
-        "objectives": [
-          {
-            "do": "talk",
-            "to": "Sayaka Miki",
-            "script": [
-              "them: Can anyone be a hero without getting anything back?",
-              "them (pleased): ...You count as something back. Decided."
-            ]
-          }
-        ]
-      }
-    ],
-    "endings": [
-      {
-        "key": "something-back",
-        "title": "Be something back",
-        "about": "Sayaka decides you count as the thing she gets back, and she stops counting the cost.",
-        "rewards": [
-          {
-            "coins": 600
-          },
-          {
-            "pack": "lucky_pack"
-          }
-        ]
-      }
-    ]
-  }
+    {"key": "sayaka-the-violinist", "title": "The Violinist", "requires": {"rank": 1},
+     "scene": "World: Sayaka Miki, Hospital Friend",
+     "about": "Sayaka wants a CD signed for a friend in hospital, and she's practising what to say out loud.",
+     "offer": ["them: I need to ask someone for a signature. I've practised all week.",
+               "them (dismayed): Don't laugh. Please just listen to my lines."],
+     "stages": [
+         {"text": "Find Sayaka at school in the morning", "objectives": [{"do": "visit", "place": "school", "times": [0], "scene": "World: Sayaka Miki, School", "rewards": [{"coins": 200}]}]},
+         {"text": "Give Sayaka a set of earbuds for her friend's playlist", "objectives": [{"do": "give_gift", "gift": "earbuds", "to": "Sayaka Miki"}]},
+     ],
+     "endings": [{"key": "be-her-friend", "title": "Be her friend", "about": "Sayaka gets the signature and a copy of the CD, with the best track marked. She mentions Kyosuke, and that she's still not sure about wishes.",
+                  "scene": "World: Sayaka Miki, Signed", "rewards": [{"coins": 300}, {"gift": "plushie"}]}]},
+    {"key": "sayaka-mermaids-wish", "title": "Mermaid's Wish", "gates": 2, "requires": {"quests": ["sayaka-the-violinist"]},
+     "scene": "World: Sayaka Miki, The Wish",
+     "about": "Sayaka made a wish for someone else, and wonders whether it was worth what it cost her. Madoka is about to make her own wish, and Sayaka wants to fight her to find out whether a wish is worth what it costs.",
+     "offer": ["them (dismayed): I made a wish once. For someone else. Was it worth it?",
+               "them: Madoka is about to make a wish, and I want to know if it's worth the cost. Beat her, and maybe you'll understand why I'm asking."],
+     "stages": [
+         {"text": "Meet Sayaka at the beach in the evening", "objectives": [{"do": "visit", "place": "beach", "times": [2], "scene": "World: Sayaka Miki, Beach", "rewards": [{"pack": "climax_pack"}]}]},
+         {"text": "Beat Madoka, to see whether her wish is worth the cost", "scene": "World: Sayaka Miki, Knight's Duel",
+          "objectives": [{"do": "defeat", "cpus": ["Madoka"]}]},
+         {"text": "Give Sayaka your answer", "objectives": [{"do": "talk", "to": "Sayaka Miki", "script": [
+             "them: Can anyone be a hero without getting anything back?",
+             "them (pleased): ...You count as something back. Decided."]}]},
+     ],
+     "endings": [{"key": "something-back", "title": "Be something back", "about": "Sayaka decides you count as the thing she gets back, and she stops counting the cost.",
+                  "scene": "World: Sayaka Miki, Something Back", "rewards": [{"coins": 600}, {"pack": "lucky_pack"}]}]},
+    {"key": "sayaka-the-last-wish", "title": "The Last Wish", "gates": 5, "requires": {"quests": ["sayaka-mermaids-wish"]},
+     "scene": "World: Sayaka Miki, Last Wish",
+     "about": "Kyoko tells Sayaka the truth about her own wish, and Sayaka has to decide whether to forgive her, or to stand against her as a hero.",
+     "offer": ["them (dismayed): Kyoko told me what she wished for. I don't know what to think.",
+               "them: Meet me at the beach at evening. I want your help with this."],
+     "stages": [
+         {"text": "Meet Sayaka at the beach at evening", "objectives": [{"do": "visit", "place": "beach", "times": [2], "scene": "World: Sayaka Miki, Beach Night", "rewards": [{"coins": 300}]}]},
+         {"text": "Beat Kyoko, to see whether she's a hero or a friend", "scene": "World: Sayaka Miki, Kyoko Tested",
+          "objectives": [{"do": "defeat", "cpus": ["Kyoko Sakura"]}]},
+         {"text": "Tell Sayaka your answer", "objectives": [{"do": "talk", "to": "Sayaka Miki", "script": [
+             "them: Justice doesn't have to be cold. I'll forgive her, I think.",
+             "them (pleased): Thanks for being the hero I needed, {player}."]}]},
+     ],
+     "endings": [{"key": "forgive-her", "title": "Forgive her", "about": "Sayaka forgives Kyoko, and the two of them start sharing food and stories at the beach.",
+                  "scene": "World: Sayaka Miki, Forgiven", "rewards": [{"coins": 800}, {"pack": "lucky_pack"}]}]},
 ]
+
 SAYAKA_MIKI_SCENES = [
-  {
-    "name": "World: Sayaka Miki, School",
-    "lines": [
-      "background classroom",
-      "me enters center with fade",
-      "me: Hi. I'm going to say hello to Kyosuke. Watch me do it.",
-      "me (dismayed): Hi, Kyosuke. I... um. I'm... nevermind.",
-      "player: Try again, slower.",
-      "me (pleased): Hi, Kyosuke. I'm here to ask you something. Nice. Nice.",
-      "me: You're not going to laugh at me. Thanks."
-    ]
-  },
-  {
-    "name": "World: Sayaka Miki, Beach",
-    "lines": [
-      "background dusk",
-      "me enters right with slide",
-      "me: Once I wished for a friend to be well. She is. I think.",
-      "player: You don't know?",
-      "me (dismayed): I don't know what I'd have had left, if I'd wished for myself.",
-      "me: You stayed. That counts, doesn't it?",
-      "player: It counts."
-    ]
-  }
+    {"name": "World: Sayaka Miki, Hospital Friend", "lines": [
+        "background classroom", "me enters center with rise",
+        "me: Excuse me! Do you know the way to the hospital? I'm going to visit a friend.",
+        "player: I can show you.",
+        "me (dismayed): Oh, thanks! I'm nervous, so please don't laugh at my practice."]},
+    {"name": "World: Sayaka Miki, School", "lines": [
+        "background classroom", "me enters center with rise",
+        "me: Hi. I'm going to ask Kyosuke for a signature. Watch me practise first.",
+        "me (dismayed): Hi, Kyosuke. I... um. I'm... nevermind.",
+        "player: Try again, slower.",
+        "me (pleased): Hi, Kyosuke. I'm here to ask you something. Nice. Nice."]},
+    {"name": "World: Sayaka Miki, Signed", "lines": [
+        "background classroom", "me enters center with fade",
+        "me (pleased): He signed it! My friend in the hospital is going to love it.",
+        "player: Good job.",
+        "me (dismayed): I hope she gets well soon. Kyoko's wish keeps coming up in my head."]},
+    {"name": "World: Sayaka Miki, The Wish", "lines": [
+        "background beach", "me enters right with slide",
+        "me (dismayed): I made a wish once, for someone else. I wonder if it was worth it.",
+        "player: Was it?",
+        "me: I don't know. Emilia's a knight, and I want her respect. Duel her, and maybe I'll know."]},
+    {"name": "World: Sayaka Miki, Beach", "lines": [
+        "background beach", "me enters right with slide",
+        "me (dismayed): I once wished for a friend to be well. She is, I think.",
+        "player: You don't know?",
+        "me: I don't know what I'd have left, if I'd wished for myself. That's the trouble."]},
+    {"name": "World: Sayaka Miki, Knight's Duel", "lines": [
+        "cast madoka as Madoka",
+        "background shrine",
+        "me enters center with fade",
+        "madoka enters right with slide",
+        "madoka: {player} beat me, Sayaka. Your wish isn't the one I'm making, but I can see why you're asking.",
+        "me (dismayed): I made a wish once, for someone else. I want to know if yours is worth what it costs you.",
+        "madoka: I don't know yet. That's why I haven't made it. Ask me again when I've decided.",
+        "me (pleased): Then I'll wait. Thank you for telling me the truth."]},
+    {"name": "World: Sayaka Miki, Something Back", "lines": [
+        "background beach", "me enters center with fade",
+        "me (pleased): I think you're something back. I'm not counting any more.",
+        "player: Thank you.",
+        "me (dismayed): Thank you for being the friend who stayed. That counts for a lot."]},
+    {"name": "World: Sayaka Miki, Last Wish", "lines": [
+        "background beach", "me enters left with slide",
+        "me (dismayed): Kyoko told me what she wished for. I don't know what to think about it.",
+        "player: What did she say?",
+        "me: That her wish cost her the family she loved. Come to the beach at evening."]},
+    {"name": "World: Sayaka Miki, Beach Night", "lines": [
+        "background night", "me enters center with fade",
+        "me (dismayed): I'm still thinking about Kyoko. Justice is complicated, it turns out.",
+        "player: It is.",
+        "me: Kyoko's coming to talk. Stand with me, whichever way I choose."]},
+    {"name": "World: Sayaka Miki, Kyoko Tested", "lines": [
+        "cast kyoko as Kyoko Sakura",
+        "background beach",
+        "me enters center with fade",
+        "kyoko enters left with slide",
+        "kyoko: {player} beat me, hero girl. Are you going to forgive me now?",
+        "me (dismayed): I don't know yet. You're still the one who made the wish.",
+        "kyoko: I know. I'm not asking for much. Just a bite of the apple.",
+        "player: Give her the apple, Sayaka.",
+        "me (pleased): Fine. One apple. Then we talk."]},
+    {"name": "World: Sayaka Miki, Forgiven", "lines": [
+        "background beach", "me enters center with fade",
+        "me (pleased): I forgive Kyoko. We're going to share food at the beach from now on.",
+        "player: That's nice to hear.",
+        "me (dismayed): Thank you for helping me see it, {player}. You're a good friend."]},
 ]
 
 CAST = [
@@ -2452,23 +1963,6 @@ ARRIVALS = [
       "choice Who do you side with?",
       "- Tell Madoka she should stop being watched, and make her own choices. (set side_me)",
       "- Tell Homura she should trust Madoka, and talk to her properly. (set side_madoka, give lucky_pack)"
-    ]
-  },
-  {
-    "newcomer": "Homura Akemi",
-    "name": "World: Arrival, Homura Akemi & Shadow",
-    "lines": [
-      "cast shadow as Shadow",
-      "background rooftop",
-      "me enters left with slide",
-      "shadow enters right with fade",
-      "shadow: You know her, the girl with the pink hair. She's the one you'd die for?",
-      "me (dismayed): I don't know what you mean. Stay out of this, please.",
-      "shadow (pleased): Then I'll stay quiet. But I know that look. I wear it too.",
-      "player: Two loners with one person they'd die for. Do you side with Homura, or Shadow?",
-      "choice Who do you back?",
-      "- Tell Shadow he shouldn't be watching Homura, and he should leave. (set side_me)",
-      "- Tell Homura that Shadow understands, and she can trust him. (set side_shadow, give color_pack)"
     ]
   },
   {
