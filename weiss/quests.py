@@ -1336,7 +1336,7 @@ def choose(save, cpu, key, ending_key, confirmed):
             else:
                 found_line = chatter.pick(giver, "rank_up", after)
                 if found_line and found_line[2]:
-                    save.flags["scene"] = {"scene": found_line[2].pk, "cpu": giver.pk}
+                    world.play_rank_scene(save, found_line[2].pk, giver.pk)
                     events.append({"scene": reverse("weiss:world_scene", args=[save.slot])})
     # Anything with a link to follow (a pack's cards) goes last, after what closed and the rank reached, so following
     # it misses nothing; a scene still to play waits in the town too (world.town's "scene").

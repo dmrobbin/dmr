@@ -711,7 +711,7 @@ def game_finished(room, over):
         if cpu and after > before:  # what reaching the rank plays: its line in the result, or its scene to watch
             found = chatter.pick(cpu, "rank_up", after)
             if found and found[2]:
-                save.flags["scene"] = {"scene": found[2].pk, "cpu": cpu.pk}
+                play_rank_scene(save, found[2].pk, cpu.pk)
                 scene = reverse("weiss:world_scene", args=[save.slot])
             elif found:
                 rank_line = next((filler(save, cpu)(step["text"]) for step in found[1]["steps"] if step["do"] == "say"), "")
@@ -825,7 +825,7 @@ def rank_up_said(save, cpu, rank):
     watch (saved to the save, as the rank-up scene is for a duel)."""
     found = chatter.pick(cpu, "rank_up", rank)
     if found and found[2]:
-        save.flags["scene"] = {"scene": found[2].pk, "cpu": cpu.pk}
+        play_rank_scene(save, found[2].pk, cpu.pk)
         return {"rank_up": rank_names()[rank], "rank_line": "", "scene": reverse("weiss:world_scene", args=[save.slot])}
     line = next((filler(save, cpu)(step["text"]) for step in found[1]["steps"] if step["do"] == "say"), "") if found else ""
     return {"rank_up": rank_names()[rank], "rank_line": line, "scene": ""}
@@ -1568,7 +1568,7 @@ def rank_up(save, cpu, rank):
         return []
     key, compiled, scene = found
     if scene:
-        save.flags["scene"] = {"scene": scene.pk, "cpu": cpu.pk}
+        play_rank_scene(save, scene.pk, cpu.pk)
         return [{"scene": reverse("weiss:world_scene", args=[save.slot])}]
     events, _ = chatter.play(compiled, 0, Talk(save, cpu, key))  # said through: a rank-up line's choices aren't offered
     return events
@@ -1925,6 +1925,15 @@ def queue_scene(save, scene, cpu=None, rewards=None):
         save.flags.setdefault("scene_queue", []).append(item)
     else:
         save.flags["scene"] = item
+
+
+def play_rank_scene(save, scene_pk, cpu_pk):
+    """A rank-up's scene plays right away (the talk or result navigates to it). Whatever was waiting goes to the FRONT of
+    the queue, so it plays next rather than being lost."""
+    waiting = save.flags.get("scene")
+    if waiting:
+        save.flags.setdefault("scene_queue", []).insert(0, waiting)
+    save.flags["scene"] = {"scene": scene_pk, "cpu": cpu_pk}
 
 
 def next_scene(save):

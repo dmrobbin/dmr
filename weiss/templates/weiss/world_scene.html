@@ -6,8 +6,8 @@
 {% block head %}<script src="{% static 'weiss/backdrops.js' %}" defer></script><script src="{% static 'weiss/scene.js' %}" defer></script>{% endblock %}
 
 {% block content %}
-  {# The scene waiting to be watched (world_views.world_scene). When it ends, the page reports what its choices set
-     (world_scene_done), which takes effect once; then it ends on what the scene gave, or goes back to the town. #}
+  {% comment %}The scene waiting to be watched (world_views.world_scene). When it ends, the page reports what its choices set
+     (world_scene_done), which takes effect once; then it ends on what the scene gave, or goes back to the town.{% endcomment %}
   <div class="challenge-event">
     <p class="challenge-event-head"><span class="deck-tag">A moment</span> {{ payload.title }}</p>
     <div class="challenge-event-stage" data-scene-root></div>
@@ -20,47 +20,104 @@
         <a class="button-small" href="{% url 'weiss:world_town' save.slot %}" data-scene-done-town>Back to the town</a>
       </p>
     </section>
-    <p class="challenge-event-foot"><a class="link-button" href="{% url 'weiss:world_town' save.slot %}" data-town-url>Back to the town</a></p>
+    <p class="challenge-event-foot"><a class="link-button" href="{% url 'weiss:world_town' save.slot %}" data-town-url>Back to the town</a> <span class="challenge-event-hint" data-scene-foot-hint hidden>It'll be waiting in the town.</span></p>
   </div>
   {{ payload|json_script:"scene-payload" }}
   <script>
     window.addEventListener("DOMContentLoaded", () => {
       const scene = JSON.parse(document.getElementById("scene-payload").textContent);
+      const panel = document.querySelector("[data-scene-done]");
+      const foot = document.querySelector("[data-town-url]");
+      const hint = document.querySelector("[data-scene-foot-hint]");
+      // A scene with a choice waits for it: leaving before it's made leaves the scene waiting in the town. A scene
+      // without one counts as watched when the player leaves it: Skip, or any way of leaving from its last line.
+      const hasChoice = scene.steps.some((step) => step.do === "choice" || step.do === "offer");
+      const lastSay = scene.steps.filter((step) => step.do === "say").pop();
+      let onLastLine = false;
+      let reported = false; // the state has been sent and taken
+      let reporting = null; // the send in flight: a second click, or the scene's end, doesn't send it again
+
       const player = new ScenePlayer(document.querySelector("[data-scene-root]"), scene, {
         playerName: "{{ player_name|escapejs }}",
+        onStep: (step) => { onLastLine = step === lastSay; labelFoot(); },
         onEnd: (state) => finishScene(state),
       });
+
+      function labelFoot() {
+        if (hasChoice && !reported) {
+          foot.textContent = "Leave for now";
+          hint.hidden = false;
+          return;
+        }
+        hint.hidden = true;
+        foot.textContent = reported || onLastLine ? "Back to the town" : "Skip";
+      }
+
+      function stateBody(state) {
+        return new URLSearchParams({ state: JSON.stringify({ flags: state.flags || [], buffs: state.buffs || [] }) });
+      }
+
+      function sendState(state) {
+        const token = panel.querySelector("[name=csrfmiddlewaretoken]").value;
+        return fetch(panel.dataset.doneUrl, { method: "POST", headers: { "X-CSRFToken": token }, body: stateBody(state) });
+      }
+
+      // The scene's over, or it's been skipped: what its choices set is sent (once), then it ends on what it gave, if anything.
+      function finishScene(state) {
+        if (!reporting) reporting = reportScene(state);
+        return reporting;
+      }
+
+      async function reportScene(state) {
+        const town = foot.href;
+        const list = panel.querySelector("[data-scene-done-list]");
+        const show = (lines) => {
+          list.replaceChildren(...lines.map((line) => Object.assign(document.createElement("li"), { textContent: `★ ${line}` })));
+          panel.hidden = false;
+          panel.focus({ preventScroll: true });
+          panel.scrollIntoView({ block: "nearest" });
+        };
+        try {
+          const response = await sendState(state);
+          const data = await response.json();
+          if (!response.ok) {
+            reporting = null;
+            return show([data.error || "That didn't go through. Back in the town, the scene will be waiting."]);
+          }
+          reported = true;
+          player.token += 1; // it's over: nothing more is said under the rewards
+          labelFoot();
+          if (!data.rewards.length) return setTimeout(() => location.assign(town), 600);
+          if (data.link) {
+            const cards = panel.querySelector("[data-scene-done-cards]");
+            cards.href = data.link;
+            cards.hidden = false;
+            panel.querySelector("[data-scene-done-town]").classList.add("secondary");
+          }
+          show(data.rewards);
+        } catch {
+          reporting = null;
+          show(["That didn't go through. Check your connection: back in the town, the scene will be waiting."]);
+        }
+      }
+
+      foot.addEventListener("click", (event) => {
+        if (hasChoice && !reported) return; // it waits in the town: the link goes there, as it always has
+        event.preventDefault();
+        if (reported) return location.assign(foot.href);
+        finishScene(player.state());
+      });
+      // Leaving from the last line by another route (the browser's Back, a link in the header) counts as watched too.
+      window.addEventListener("pagehide", () => {
+        if (hasChoice || !onLastLine || reported || reporting) return;
+        reported = true;
+        // A beacon: a fetch started while the page is going can be dropped. The token goes in the form, as Django allows.
+        const body = stateBody(player.state());
+        body.set("csrfmiddlewaretoken", panel.querySelector("[name=csrfmiddlewaretoken]").value);
+        navigator.sendBeacon(panel.dataset.doneUrl, body);
+      });
+
       player.start();
     });
-
-    // The scene's over: what its choices set is sent (it takes effect once), then it ends on what it gave, if anything.
-    async function finishScene(state) {
-      const panel = document.querySelector("[data-scene-done]");
-      const town = document.querySelector("[data-town-url]").href;
-      const list = panel.querySelector("[data-scene-done-list]");
-      const show = (lines) => {
-        list.replaceChildren(...lines.map((line) => Object.assign(document.createElement("li"), { textContent: `★ ${line}` })));
-        panel.hidden = false;
-        panel.focus({ preventScroll: true });
-        panel.scrollIntoView({ block: "nearest" });
-      };
-      try {
-        const body = new URLSearchParams({ state: JSON.stringify({ flags: state.flags || [], buffs: state.buffs || [] }) });
-        const token = panel.querySelector("[name=csrfmiddlewaretoken]").value;
-        const response = await fetch(panel.dataset.doneUrl, { method: "POST", headers: { "X-CSRFToken": token }, body });
-        const data = await response.json();
-        if (!response.ok) return show([data.error || "That didn't go through. Back in the town, the scene will be waiting."]);
-        if (!data.rewards.length) return setTimeout(() => location.assign(town), 600);
-        if (data.link) {
-          const cards = panel.querySelector("[data-scene-done-cards]");
-          cards.href = data.link;
-          cards.hidden = false;
-          panel.querySelector("[data-scene-done-town]").classList.add("secondary");
-        }
-        show(data.rewards);
-      } catch {
-        show(["That didn't go through. Check your connection: back in the town, the scene will be waiting."]);
-      }
-    }
   </script>
 {% endblock %}

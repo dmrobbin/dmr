@@ -112,6 +112,12 @@ def from_town(request):
     return request.GET.get("from") == "town" or request.POST.get("from") == "town"
 
 
+def opened_page(request, slot):
+    """The packs just opened (world_opened), keeping the town's flow when the player came from the town."""
+    url = reverse("weiss:world_opened", args=[slot])
+    return f"{url}?from=town" if from_town(request) else url
+
+
 def deck_page(request, slot, deck=None):
     """A deck's builder page (the equipped one, with no deck), keeping the town's flow when the player came from it."""
     url = reverse("weiss:world_deck_edit", args=[slot, deck]) if deck else reverse("weiss:world_deck", args=[slot])
@@ -125,6 +131,7 @@ def played_ago(save):
     return f"{timesince(save.played)} ago"
 
 
+@xframe_options_sameorigin
 @staff_required
 def world_home(request):
     """The three save slots: each one's progress, or a new game."""
@@ -132,6 +139,7 @@ def world_home(request):
     return render(request, "weiss/world_home.html", {"slots": slots})
 
 
+@xframe_options_sameorigin
 @staff_required
 def world_new(request, slot):
     """A new game in an empty slot: choose the set its packs come from."""
@@ -162,6 +170,7 @@ def in_world(text):
             .replace("in your pool", "in your cards"))
 
 
+@xframe_options_sameorigin
 @staff_required
 def world_save(request, slot):
     """A save's page: its packs to open, specialty packs to claim and its deck, until it's ready for the town."""
@@ -209,11 +218,13 @@ def world_open(request, slot):
     if wants_json:
         save = WorldSave.objects.get(pk=save.pk)
         size = min(save.packs, 10)  # the save page's default
-        again = {"label": f"Open {size} more", "url": reverse("weiss:world_open", args=[slot]), "count": size} if save.packs else None
+        again_url = reverse("weiss:world_open", args=[slot]) + ("?from=town" if from_town(request) else "")
+        again = {"label": f"Open {size} more", "url": again_url, "count": size} if save.packs else None
         return JsonResponse({"opening": save.last_opening, "again": again, "error": None})
-    return redirect("weiss:world_opened", slot=slot)
+    return redirect(opened_page(request, slot))
 
 
+@xframe_options_sameorigin
 @staff_required
 def world_opened(request, slot):
     """The packs just opened, revealed; they're in the cards already, so reloading only replays them."""
@@ -223,18 +234,23 @@ def world_opened(request, slot):
     if not save.last_opening:
         return redirect("weiss:world_save", slot=slot)
     opening = save.last_opening
-    back = reverse("weiss:world_save", args=[slot])
+    # Opened from the town (?from=town): every way on goes back to the town, or stays in its flow.
+    town_flow = from_town(request)
+    town = reverse("weiss:world_town", args=[slot])
+    back = town if town_flow else reverse("weiss:world_save", args=[slot])
+    back_label = "Back to the town" if town_flow else "Back to your save"
     again = None  # a button that opens the next packs from here, rather than going back to the save to choose
     if opening.get("bought"):
-        town = reverse("weiss:world_town", args=[slot])
-        actions = [("Back to the town", town, True), ("Change your decks", f"{back}#decks", False)]
+        decks = deck_page(request, slot, save.deck_id) if town_flow and save.deck_id else f"{reverse('weiss:world_save', args=[slot])}#decks"
+        actions = [("Back to the town", town, True), ("Change your decks", decks, False)]
     elif save.packs:
         size = min(save.packs, 10)  # the save page's default
-        again = {"label": f"Open {size} more", "url": reverse("weiss:world_open", args=[slot]), "count": size}
-        actions = [("Back to your save", back, False)]
+        again_url = reverse("weiss:world_open", args=[slot]) + ("?from=town" if town_flow else "")
+        again = {"label": f"Open {size} more", "url": again_url, "count": size}
+        actions = [(back_label, back, town_flow)]
     else:
-        first = ("Open your specialty packs", back, True) if save.rewards else ("Build your deck", reverse("weiss:world_deck", args=[slot]), True)
-        actions = [first, ("Back to your save", back, False)]
+        first = ("Open your specialty packs", back, True) if save.rewards else ("Build your deck", deck_page(request, slot), True)
+        actions = [first, (back_label, back, False)]
     return render(request, "weiss/pack_open.html", {
         "set_id": opening["set_id"], "set_name": opening["set"], "count": len(opening["packs"]), "pack_size": packs.PACK_SIZE,
         "opening": opening, "back_url": back, "back_label": f"Slot {slot}", "actions": actions, "again": again,
@@ -382,6 +398,7 @@ def world_deck_delete(request, save, deck):
     messages.success(request, f"“{name}” deleted.")
 
 
+@xframe_options_sameorigin
 @staff_required
 def world_town(request, slot):
     """The town: the save's place as a scene, the time, its coins, the map and waiting. The page asks for the town as
@@ -452,6 +469,7 @@ def world_minigame(request, save):
     return {"go": reverse("weiss:world_minigame_play", args=[save.slot])}
 
 
+@xframe_options_sameorigin
 @staff_required
 def world_minigame_play(request, slot):
     """The game under way in the town: the game plays, and its result is posted (world_minigame_done)."""
@@ -528,7 +546,7 @@ def world_checkout(request, save):
         raise ValueError("Your basket couldn't be read. Try again.")
     done = world.checkout(save, items, expected)
     if done["packs"]:
-        return {"go": reverse("weiss:world_opened", args=[save.slot])}
+        return {"go": f"{reverse('weiss:world_opened', args=[save.slot])}?from=town"}  # the town opened them: back to the town
     return f"Bought {', '.join(done['bought'])}."
 
 
@@ -708,6 +726,7 @@ def world_buy_gift(request, save):
     return f"{item.icon} {item.name}: you have {save.gifts[item.key]}.".strip()
 
 
+@xframe_options_sameorigin
 @staff_required
 def world_scene(request, slot):
     """The scene waiting to be watched (a rank-up's, a quest's, the story's, a newcomer's arrival), played to its end,

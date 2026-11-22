@@ -19,6 +19,7 @@ from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonRespon
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
 
 from core import s3
@@ -174,6 +175,7 @@ def clear_stale_rooms():
             leave_run(room)
 
 
+@xframe_options_sameorigin
 @weiss_access_required
 def room_list(request):
     clear_stale_rooms()
@@ -476,6 +478,7 @@ def room_join(request, token):
     return redirect("weiss:play_room", pk=room.pk)
 
 
+@xframe_options_sameorigin
 @weiss_access_required
 def room_detail(request, pk):
     room = my_room(request, pk)

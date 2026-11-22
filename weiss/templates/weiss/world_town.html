@@ -14,6 +14,8 @@
        data-quest-url="{% url 'weiss:world_quest' save.slot %}" data-jump-url="{% url 'weiss:world_jump' save.slot %}" data-tutorial-url="{% url 'weiss:world_tutorial' save.slot %}" data-test-mode-url="{% url 'weiss:world_test_mode' save.slot %}"
        data-town-url="{% url 'weiss:world_town' save.slot %}" data-player="{{ request.user.username }}">
     {% csrf_token %}
+    {# The game's window: what full screen shows (world_town.js), so the notices above the stage are seen there too. #}
+    <div class="town-window" data-window>
     <p class="small town-notice" data-duel-banner hidden></p>
     <p class="small town-notice town-events" data-events hidden></p>
     <div class="small town-notice town-result" data-result hidden role="status">
@@ -246,6 +248,16 @@
         </div>
         <p class="town-passage-skip small" aria-hidden="true">Click to skip</p>
       </div>
+    </div>
+    {% comment %}Where world mode's own pages play without leaving the town (world_town.js openPlay): a duel, a scene, packs
+       being opened, a game. It covers the whole window (the screen, in full screen), so full screen carries on through
+       them; the page closes it by going back to the town. The frame is made fresh for each page.{% endcomment %}
+    <section class="town-play" data-play-layer hidden aria-labelledby="town-play-title">
+      <div class="town-play-head">
+        <button type="button" class="button-small secondary" data-play-back>← Back to the town</button>
+        <h2 class="town-play-title" id="town-play-title" data-play-title></h2>
+      </div>
+    </section>
     </div>
     <p class="small muted town-help">Look around and shop as much as you like. Once you talk to someone, give a gift or duel, you're spending this
       time of day here: talk to and give gifts to whoever's around, then pass time (a duel passes it by itself). Keys: M map, W pass time, F full screen, Esc closes what's open.</p>

@@ -3001,9 +3001,15 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .town-hud-menu-item.town-staff { color: var(--muted); border: 1px dashed rgb(255 255 255 / .18); }
 .town-hud-menu-jump { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .4rem .7rem; font-size: .9rem; color: #cfc9be; }
 .town-hud-menu-jump select { font: inherit; font-size: .85rem; }
-/* Full screen: the stage is the whole browser window, its overlays and all. */
-.town-stage:fullscreen { width: 100vw; height: 100vh; max-height: none; aspect-ratio: auto; border: 0; border-radius: 0; }
-.town-stage:-webkit-full-screen { width: 100vw; height: 100vh; max-height: none; aspect-ratio: auto; border: 0; border-radius: 0; }
+/* Full screen: the game's window (world_town.html's .town-window) is the screen: the notices along the top (a duel's
+   result, quest news, a scene waiting), and the stage, its overlays and all, filling the rest. */
+.town-window:fullscreen { display: flex; flex-direction: column; width: 100vw; height: 100vh; overflow: hidden; background: var(--bg); }
+.town-window:-webkit-full-screen { display: flex; flex-direction: column; width: 100vw; height: 100vh; overflow: hidden; background: var(--bg); }
+.town-window:fullscreen > .town-notice, .town-window:fullscreen > .town-goal { flex: none; max-height: 30vh; overflow: auto; margin: .5rem .5rem 0; }
+.town-window:fullscreen .town-stage { flex: 1 1 auto; min-height: 0; width: 100%; max-height: none; aspect-ratio: auto; border: 0; border-radius: 0; }
+.town-window:-webkit-full-screen .town-stage { flex: 1 1 auto; min-height: 0; width: 100%; max-height: none; aspect-ratio: auto; border: 0; border-radius: 0; }
+/* The stage meets the top of the screen, unless a notice is showing above it. */
+.town-window:fullscreen > :is(.town-notice, .town-goal):not([hidden]) ~ .town-stage { margin-top: .5rem; }
 /* The card shop's counter on the backdrop (weiss/static/weiss/backdrops.js draws it at x 31–69%, y 72–86%). */
 /* In the tutorial's shop step the counter is lifted above the guide's figure, so the whole counter is clickable. */
 .town-tut-shop .town-shop-hotspot { z-index: 50; }
@@ -3021,9 +3027,33 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .town-sheet-head { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .55rem .8rem; border-bottom: 1px solid rgb(212 175 55 / .35); }
 .town-sheet-head h2 { margin: 0; font-size: 1.1rem; }
 .town-sheet-frame { flex: 1 1 auto; width: 100%; min-height: 0; border: 0; background: var(--bg); }
+/* The play layer (world_town.js openPlay): a duel, a scene, packs being opened or a game, over the whole browser window
+   (the screen, in full screen), with a slim bar back to the town. The page under it doesn't scroll meanwhile. */
+.town-play { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; background: var(--bg); }
+.town-play[hidden] { display: none; }
+.town-play-head { flex: none; display: flex; align-items: center; gap: .7rem; min-height: 2.75rem; padding: .3rem .6rem; border-bottom: 1px solid rgb(212 175 55 / .35); background: var(--surface); }
+/* The page names itself; the title is for screen readers (the layer is labelled by it). */
+.town-play .town-play-title { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.town-play-frame { flex: 1 1 auto; display: block; width: 100%; min-height: 0; border: 0; background: var(--bg); }
+html.town-playing { overflow: hidden; }
+/* The town loaded in the play layer only hands over (world_town.js): it isn't shown while it does. */
+.in-frame [data-world-town] { visibility: hidden; }
 /* A page shown inside one of those panels: the site's own header, footer and back links are the town's now. */
 .in-frame .site-header, .in-frame .site-footer, .in-frame .back { display: none; }
 .in-frame main.container { padding-top: 1rem; }
+/* Pages inside the town's play layer */
+.in-frame main.container { padding-left: 1rem; padding-right: 1rem; padding-bottom: 1rem; }
+.in-frame .challenge-event { gap: .4rem; }
+.in-frame .challenge-event-stage { width: min(100%, 72rem, calc((100vh - 9.5rem) * 16 / 9)); }
+.in-frame .challenge-event-foot { text-align: center; }
+.in-frame .challenge-event-hint { display: block; margin-top: .15rem; font-size: .85rem; color: var(--muted); }
+.in-frame .challenge-event-hint[hidden] { display: none; }
+/* The memory board in the frame, wide enough for a desktop window or full screen: two rows of eight, so the 16 tiles
+   fit under the game's heading and score (four rows of four would need the height of a long page). */
+@media (min-width: 60rem) {
+  .in-frame .minigame-memory { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+  .in-frame .minigame-area { padding: .6rem 1.2rem; }
+}
 .town-stage { cursor: default; max-height: min(72vh, 42rem); }
 .town-stage .vn-bg { transition: opacity .26s ease, filter .45s ease; }
 .town-stage.town-fading .vn-bg, .town-stage.town-fading .town-people { opacity: 0; }

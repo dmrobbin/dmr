@@ -11,6 +11,8 @@
   const root = document.querySelector("[data-world-town]");
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
   if (!root || !AudioCtx) return;
+  // The town loaded inside its own play layer is only handing over (world_town.js): the town behind it has the sound.
+  try { if (window.parent !== window && window.parent.WeissTownReturn) return; } catch { /* a page of its own */ }
   const base = new URL("sounds/", document.currentScript ? document.currentScript.src : location.href);
 
   const MUSIC_KEY = "weiss-music"; // shared with the duel page (play.js): "on" or "off"
@@ -83,6 +85,7 @@
   let tournament = false; // the weekly tournament's on here
   let talking = null; // the CPU's name being talked to: the town's music takes its key (their profile name, as the duel's)
   let talkingNow = false; // someone's being talked to: the music and ambience duck under the words
+  let away = false; // a duel, scene, packs or a game is open over the town (world_town.js's play layer): it has the sound
 
   // ---- Building the sound ----
 
@@ -292,8 +295,9 @@
 
   function applyVolume() {
     if (!master) return;
-    master.gain.setTargetAtTime(on ? volume / 100 : 0, ctx.currentTime, 0.15);
-    songVolume(volume / 60);
+    const heard = on && !away;
+    master.gain.setTargetAtTime(heard ? volume / 100 : 0, ctx.currentTime, 0.15);
+    songVolume(heard ? volume / 60 : 0);
   }
 
   function paintControls() {
@@ -333,7 +337,7 @@
     await loadClicks();
     scheduleChirps();
     scheduleCrickets();
-    if (on) start();
+    if (on && !away) start();
     paintControls();
   }
 
@@ -444,6 +448,18 @@
   }
 
   document.addEventListener("world:town", (event) => update(event.detail || {}));
+
+  // The play layer (world_town.js openPlay): the town's sound stops while a duel, scene, packs or a game is open over
+  // it (they have their own), and comes back as it closes.
+  document.addEventListener("world:play", (event) => {
+    away = Boolean(event.detail && event.detail.open);
+    if (!ctx) return;
+    if (away) {
+      fadeOut(400).then(() => { if (away) stop(); });
+    } else if (on) {
+      start();
+    }
+  });
 
   // Start from the state the page was drawn with; world:town takes over from there.
   try {

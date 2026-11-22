@@ -5,8 +5,20 @@
 (() => {
   const root = document.querySelector("[data-world-town]");
   if (!root) return;
+  // The town, loaded inside its own play layer or a panel: something there went back to the town (a duel's end, a
+  // scene's), which is already showing behind it. Hand over what this load brought (the state, and the duel's result,
+  // which a town page shows once) and stop, so the town isn't run twice.
+  const host = (() => {
+    try { return window.parent !== window ? window.parent.WeissTownReturn : null; } catch { return null; }
+  })();
+  if (host) {
+    host(window.frameElement, JSON.parse(document.getElementById("town-state").textContent),
+      JSON.parse(document.getElementById("town-result").textContent));
+    return;
+  }
   const $ = (sel) => root.querySelector(sel);
   const stage = $("[data-stage]");
+  const gameWindow = $("[data-window]"); // the notices and the stage: what full screen shows
   const backdrop = $("[data-backdrop]");
   const light = $("[data-light]");
   const people = $("[data-people]");
@@ -30,7 +42,7 @@
   const TYPE_MS = 22;
 
   let town = JSON.parse(document.getElementById("town-state").textContent);
-  const result = JSON.parse(document.getElementById("town-result").textContent);
+  let result = JSON.parse(document.getElementById("town-result").textContent); // the last duel's, shown once
   let busy = false;
   let talking = null; // the person being talked to
   let advance = null; // what a click or key does while a line is showing
@@ -57,6 +69,7 @@
       banner.append(`You're in a duel with ${town.duel.cpu}; time stays where it is until it's over. `);
       const back = document.createElement("a");
       back.href = town.duel.url;
+      back.dataset.play = "duel";
       back.textContent = "Back to the duel";
       banner.append(back);
     }
@@ -69,7 +82,7 @@
     waiting.hidden = !town.scene || Boolean(linked);
     if (town.scene && !linked) {
       waiting.replaceChildren(`♥ ${town.scene.who ? `A moment with ${town.scene.who}` : "A moment"} is waiting for you. `,
-        Object.assign(document.createElement("a"), { href: town.scene.url, textContent: "Watch it now" }));
+        playLink(town.scene.url, "scene", "Watch it now"));
     }
     showNews(town.news);
     town.news = [];
@@ -189,7 +202,7 @@
       li.append(item.text);
       if (item.link) {
         li.append(" ");
-        li.append(Object.assign(document.createElement("a"), { href: item.link, textContent: "Watch" }));
+        li.append(playLink(item.link, "scene", "Watch"));
       }
       list.append(li);
     }
@@ -446,6 +459,13 @@
     menu.querySelector("button:not(:disabled)")?.focus({ preventScroll: true });
   }
 
+  // A link to one of world mode's own pages: it opens in the play layer (openPlay), so full screen carries on.
+  function playLink(href, kind, text) {
+    const link = Object.assign(document.createElement("a"), { href, textContent: text });
+    link.dataset.play = kind;
+    return link;
+  }
+
   function note(text, link) {
     const why = document.createElement("p");
     why.className = "small town-why";
@@ -628,7 +648,9 @@
       const picked = gamePanel.querySelector('input[name="game"]:checked');
       const data = await post(root.dataset.minigameUrl, { cpu: person.id, game: picked ? picked.value : "" });
       if (data && data.go) {
-        window.location.href = data.go;
+        gamePanel.hidden = true;
+        gamePanel.replaceChildren();
+        openPlay(data.go, "game");
         return;
       }
       gamePanel.querySelector("[data-pick-note]").textContent = data && data.error ? data.error : "";
@@ -866,7 +888,7 @@
         return lines([`★ ${event.reward}`], () => {
           // Packs given together are revealed together: offer to see them once, after the last.
           if (!event.link || queue.some((later) => later.link)) return next();
-          options([["See the cards", () => { window.location.href = event.link; }], ["Carry on", next, { quiet: true }]]);
+          options([["See the cards", () => openPlay(event.link, "cards")], ["Carry on", next, { quiet: true }]]);
         });
       }
       if (event.quest) {
@@ -891,7 +913,8 @@
 
   function waitingFor(waiting) {
     if (goScene) {
-      window.location.href = goScene;
+      openPlay(goScene, "scene");
+      goScene = null;
       return;
     }
     if (!waiting) return choices();
@@ -926,7 +949,7 @@
     lines([intro], async () => {
       const data = await post(root.dataset.duelUrl, { cpu: person.id, stakes: stakes ? "1" : "0" });
       if (data && data.go) {
-        window.location.href = data.go;
+        openPlay(data.go, "duel");
         return;
       }
       if (talking) choices();
@@ -1316,8 +1339,8 @@
 
   // A quest's visit scene (weiss.quests.arrived) plays as soon as the player's there: off to it.
   function playSceneNow() {
-    if (!town.scene || !town.scene.auto) return false;
-    window.location.assign(town.scene.url);
+    if (!town.scene || !town.scene.auto || !playLayer.hidden) return false;
+    openPlay(town.scene.url, "scene");
     return true;
   }
 
@@ -1488,7 +1511,8 @@
     basket = [];
     keepBasket();
     if (data.go) {
-      window.location.assign(data.go); // the packs, revealed together
+      closeShop(false);
+      openPlay(data.go, "packs"); // the packs, revealed together
       return;
     }
     listStock();
@@ -1971,10 +1995,117 @@
     openSheet(opener.dataset.title, opener.dataset.url || opener.href);
   });
 
-  // ---- Full screen: the stage (the game window) fills the browser window. Esc or F leaves it. ----
-  const fullscreenable = Boolean(stage.requestFullscreen);
+  // ---- The play layer: world mode's own pages (a duel, a scene, packs being opened, a game) over the whole window, so the
+  // town never unloads and full screen carries on through them. Each page is framed fresh (so the browser's Back has no
+  // history in it to step into). Going back to the town, however a page does it, loads the town in the frame, which hands
+  // over (WeissTownReturn, at the top): the layer closes and the town catches up, with the duel's result if there is one.
+  // A page that won't open in a frame is gone to as a page of its own, so nothing's ever stuck. ----
+  const playLayer = $("[data-play-layer]");
+  const playTitle = $("[data-play-title]");
+  const PLAY_TITLES = { duel: "Duel", scene: "A moment", packs: "Your packs", game: "A game", cards: "Your cards" };
+  let playFrame = null;
+  let playUrl = ""; // the page last asked for in the frame: where to go if it can't open there
+  let playOpenedAt = 0; // the town's version when the layer opened: unchanged on the way back, nothing was done there
+
+  function openPlay(url, kind) {
+    closeMenu(false);
+    closeMap(false);
+    closeShop(false);
+    closeSheet(false);
+    closeTalk(false);
+    if (playFrame) playFrame.remove();
+    playUrl = url;
+    playOpenedAt = town.version;
+    playTitle.textContent = PLAY_TITLES[kind] || "";
+    playLayer.dataset.kind = kind;
+    playFrame = Object.assign(document.createElement("iframe"), { className: "town-play-frame", title: PLAY_TITLES[kind] || "World mode", src: url });
+    playFrame.addEventListener("load", onPlayLoad);
+    playLayer.append(playFrame);
+    playLayer.hidden = false;
+    document.documentElement.classList.add("town-playing");
+    document.dispatchEvent(new CustomEvent("world:play", { detail: { open: true, kind } }));
+    playFrame.focus();
+  }
+
+  function closePlay() {
+    if (playLayer.hidden) return;
+    playLayer.hidden = true;
+    if (playFrame) playFrame.remove();
+    playFrame = null;
+    document.documentElement.classList.remove("town-playing");
+    document.dispatchEvent(new CustomEvent("world:play", { detail: { open: false } }));
+    menuButton.focus({ preventScroll: true });
+  }
+
+  function onPlayLoad() {
+    const frame = playFrame;
+    if (!frame) return;
+    let doc = null;
+    try {
+      doc = frame.contentDocument;
+      if (frame.contentWindow.location.pathname === townPath) return; // the town: it hands over as it starts
+      if (!doc || !doc.querySelector("main")) throw new Error("no page");
+    } catch {
+      // Refused here (or failed): go to it as a page of its own. Full screen ends, but the page is there.
+      window.location.assign(playUrl);
+      return;
+    }
+    playUrl = frame.contentWindow.location.href;
+    // Note where a link inside is going, so a page that refuses the frame can still be reached.
+    doc.addEventListener("click", (event) => {
+      const link = event.target.closest?.("a[href]");
+      if (link && !link.target && link.origin === location.origin) playUrl = link.href;
+    }, true);
+  }
+
+  // The layer's own way back: the page's, if it has one (a scene says how far it got before it goes), else the town.
+  function playBack() {
+    if (!playFrame) return closePlay();
+    try {
+      const exit = playFrame.contentDocument && playFrame.contentDocument.querySelector("[data-town-url]");
+      if (exit) return exit.click();
+      playFrame.contentWindow.location.replace(townPath);
+    } catch {
+      closePlay();
+      refreshTown();
+    }
+  }
+
+  // The town loaded in the play layer or a panel (see the top): what it brought takes over here.
+  window.WeissTownReturn = (frame, fresh, freshResult) => {
+    const fromPlay = playFrame && frame === playFrame;
+    if (!fromPlay && frame !== sheetFrame) return;
+    // A scene left for later ("Leave for now": one with a choice still to make) changed nothing, and is still waiting:
+    // it isn't started again straight away, or it could never be left. The town's note offers it.
+    const leftScene = fromPlay && playLayer.dataset.kind === "scene" && fresh.version === playOpenedAt;
+    town = fresh;
+    result = freshResult;
+    if (result && result.before) {
+      // Back from a duel: the place is covered before the frame goes, as a page coming back from one arrives covered.
+      passageEl.hidden = false;
+      passageEl.dataset.time = result.before.time;
+      passageWords(result.before, `After your duel with ${result.cpu}`);
+      passageEl.classList.add("is-on");
+    }
+    if (fromPlay) closePlay();
+    else closeSheet(false);
+    paint();
+    (result ? showResult(result) : Promise.resolve()).then(() => { if (!leftScene) playSceneNow(); });
+  };
+
+  $("[data-play-back]").addEventListener("click", playBack);
+  // Links to world mode's own pages (the duel to go back to, a scene to watch) open in the layer, not as a new page.
+  root.addEventListener("click", (event) => {
+    const link = event.target.closest("a[data-play]");
+    if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.button) return;
+    event.preventDefault();
+    openPlay(link.href, link.dataset.play);
+  });
+
+  // ---- Full screen: the game's window (the notices and the stage) fills the screen. Esc or F leaves it. ----
+  const fullscreenable = Boolean(gameWindow.requestFullscreen);
   function paintFullscreen() {
-    const on = document.fullscreenElement === stage;
+    const on = document.fullscreenElement === gameWindow;
     for (const button of fullscreenButtons) {
       button.hidden = !fullscreenable;
       button.setAttribute("aria-pressed", String(on));
@@ -1986,7 +2117,7 @@
   async function toggleFullscreen() {
     try {
       if (document.fullscreenElement) await document.exitFullscreen();
-      else await stage.requestFullscreen();
+      else await gameWindow.requestFullscreen();
     } catch {
       say("Full screen isn't available here.");
     }
@@ -2059,6 +2190,7 @@
   });
   passageEl.addEventListener("click", () => skipPassage && skipPassage());
   document.addEventListener("keydown", (event) => {
+    if (!playLayer.hidden) return; // a duel or a scene is on: its page has the keys
     if (skipPassage && !event.ctrlKey && !event.metaKey && !event.altKey) {
       event.preventDefault();
       return skipPassage();
@@ -2095,9 +2227,9 @@
     } catch { /* the page as it is will do */ }
   });
 
-  paint();
-  playSceneNow(); // one left waiting (a reload on arriving): it still plays
-  if (result) {
+  // The last duel's result, above the stage, and the time it took passing over the place. Shown on the page that comes
+  // back from the duel, or when a duel in the play layer ends (WeissTownReturn). Resolves once the passage is over.
+  function showResult(result) {
     const banner = $("[data-result]");
     banner.querySelector("[data-result-text]").textContent = result.event ? result.event : result.won
       ? `You beat ${result.cpu}: +${result.coins} coins${result.first ? " (with the day's first-win bonus)" : ""}.`
@@ -2112,7 +2244,8 @@
     if (result.rank_line) more.append(Object.assign(document.createElement("p"), { className: "town-result-line", textContent: `${result.cpu}: “${result.rank_line}”` }));
     if (result.rewards && result.rewards.length) more.append(Object.assign(document.createElement("p"), { textContent: `★ ${result.rewards.join(" · ")}` }));
     if (result.scene) {
-      const link = Object.assign(document.createElement("a"), { href: result.scene, className: "button-small", textContent: `A moment with ${result.cpu}` });
+      const link = playLink(result.scene, "scene", `A moment with ${result.cpu}`);
+      link.className = "button-small";
       more.append(Object.assign(document.createElement("p"), {}), link);
     }
     if (town.card_pick) {
@@ -2121,13 +2254,16 @@
       more.append(choose);
     }
     banner.hidden = false;
-    banner.querySelector("[data-result-close]").addEventListener("click", () => (banner.hidden = true));
-    if (result.before) {
-      // Back from a duel: the time it took passes over the place (the page came with it covered), and if they've
-      // moved on, say so, so nobody seems to vanish.
-      passage(result.before, nowWhen(), `After your duel with ${result.cpu}`).then(() => {
-        if (!town.people.some((p) => p.id === result.cpu_id)) say(`${result.cpu} has gone on their way.`);
-      });
-    }
+    banner.querySelector("[data-result-close]").onclick = () => (banner.hidden = true);
+    if (!result.before) return Promise.resolve();
+    // Back from a duel: the time it took passes over the place (it's covered already), and if they've moved on, say
+    // so, so nobody seems to vanish.
+    return passage(result.before, nowWhen(), `After your duel with ${result.cpu}`).then(() => {
+      if (!town.people.some((p) => p.id === result.cpu_id)) say(`${result.cpu} has gone on their way.`);
+    });
   }
+
+  paint();
+  // A duel's result first, then a scene left waiting (a reload on arriving, or a story chapter the duel began).
+  (result ? showResult(result) : Promise.resolve()).then(() => playSceneNow());
 })();
