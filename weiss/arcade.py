@@ -9,7 +9,7 @@ A challenge's run (weiss.challenge) is an arcade run too, with its own rules on 
 """
 import random
 
-from django.db.models import F, Max
+from django.db.models import F
 from django.utils import timezone
 
 from . import challenge, scenes
@@ -159,32 +159,30 @@ def game_finished(room, over, score=None):
         ArcadeClear.objects.filter(pk=clear.pk).update(count=F("count") + 1, name=run.scenario_name)
 
 
-TROPHY_MIN_PLAYERS = 5  # players with a score on a scenario before it has an average to be measured against
+# A trophy measures a run against par, not against other players, so it needs no one else. PAR_PER_WIN is the score an
+# average player's win is worth in a fight: measured in CPU-vs-CPU self-play (about 370 wins across all five models, the
+# winning seat's scoring.win_score). Its middle half was 2,200 to 3,000, and the models hardly differ, so it's one constant.
+PAR_PER_WIN = 2600
 TROPHY_TIERS = (("Small", 0, .75, 1), ("Medium", .75, 1.25, 2), ("Large", 1.25, 1.75, 3), ("Huge", 1.75, None, 4))  # (name, from, to, animation level)
 
 
-def trophy_averages():
-    """{scenario id: the average of everyone's best score there}, for each scenario with TROPHY_MIN_PLAYERS players who
-    have a score on it. Scenarios with fewer have no average yet, so no trophies."""
-    bests = ArcadeRun.objects.filter(score__gt=0, scenario__isnull=False).values("scenario_id", "user_id").annotate(best=Max("score"))
-    by_scenario = {}
-    for row in bests:
-        by_scenario.setdefault(row["scenario_id"], []).append(row["best"])
-    return {scenario_id: sum(scores) / len(scores) for scenario_id, scores in by_scenario.items() if len(scores) >= TROPHY_MIN_PLAYERS}
+def par(scenario):
+    """The score an average player should get on this scenario: PAR_PER_WIN for each of its fights (see fight_count)."""
+    return PAR_PER_WIN * fight_count(scenario)
 
 
-def trophy(best, average):
-    """A best score against a scenario's average: {tier, level, ratio, average}, or None if there's no average yet."""
-    if not average:
+def trophy(best, par):
+    """A best score against a par: {tier, level, ratio, par}, or None if there's no par (a scenario with no fights)."""
+    if not par:
         return None
-    ratio = best / average
+    ratio = best / par
     name, level = next((name, level) for name, _, high, level in TROPHY_TIERS if high is None or ratio < high)
-    return {"tier": name, "level": level, "ratio": round(ratio, 2), "average": round(average)}
+    return {"tier": name, "level": level, "ratio": round(ratio, 2), "par": round(par)}
 
 
-def attach_trophy(scenario, averages):
-    """The trophy on a cleared scenario, from the player's best there (`my_best`); none for one not cleared (`clears`)."""
-    scenario.trophy = trophy(scenario.my_best, averages.get(scenario.pk)) if scenario.clears else None
+def attach_trophy(scenario):
+    """The trophy on a cleared scenario, from the player's best there (`my_best`) against its par; none if not cleared (`clears`)."""
+    scenario.trophy = trophy(scenario.my_best, par(scenario)) if scenario.clears else None
 
 
 def high_scores(scenarios, limit=10):

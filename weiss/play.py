@@ -127,7 +127,7 @@ def board_payload(room, user, extra=None):
     if unlocked:  # for the Victory or Defeat screen
         scene["unlocked"] = unlocked
     tier = game.music_tier(room.state)
-    if tier != room.state.get("music_tier"):  # the duel's music only builds: kept on the room, so a fall in levels isn't a fall in tier
+    if tier > room.state.get("music_tier", 0):  # the duel's music only builds: kept on the room, so a fall in levels isn't a fall in tier
         room.state["music_tier"] = tier
         room.save(update_fields=["state"])
     return {"version": room.version, "status": room.status, "board": board, "cards": card_info(pks),
@@ -196,13 +196,12 @@ def arcade_home(request):
     best = {}
     for run in ArcadeRun.objects.filter(user=request.user, score__gt=0).only("scenario_id", "score"):
         best[run.scenario_id] = max(best.get(run.scenario_id, 0), run.score)
-    averages = arcade.trophy_averages()
     for scenario in scenarios:
         scenario.lineup = arcade.lineup(scenario, request.user)
         scenario.clears = clears.get(scenario.pk, 0)
         scenario.my_best = best.get(scenario.pk, 0)
         scenario.fights = arcade.fight_count(scenario)
-        arcade.attach_trophy(scenario, averages)
+        arcade.attach_trophy(scenario)
     scenarios.sort(key=lambda scenario: (scenario.fights, scenario.name.casefold()))  # the shortest, and easiest, first
     return render(request, "weiss/arcade.html", {
         "scenarios": scenarios,
