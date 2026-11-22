@@ -14,6 +14,26 @@
   const base = new URL("sounds/", document.currentScript ? document.currentScript.src : location.href);
 
   const MUSIC_KEY = "weiss-music"; // shared with the duel page (play.js): "on" or "off"
+  // The town's style, chosen on the music page (world_music): lofi is the town's lounge, as it has always been; a rock style
+  // plays through the minigames' synthesized music (minigames/audio.js), loaded here when it's needed.
+  const TOWN_MUSIC_KEY = "weiss-town-music";
+  const TOWN_STYLES = ["lofi", "rock_1", "rock_2", "rock_3", "rock_4", "hip_hop", "jazz", "funk", "synthwave", "emo", "metal", "cc0_1", "cc0_2", "cc0_3", "cc0_4", "cc0_5", "cc0_6", "cc0_7", "cc0_8"];
+  const SCRIPT_URL = document.currentScript ? document.currentScript.src : location.href;
+  // The songs the town offers: the page's song list (the json_script "song-tracks", the tracks the staff haven't deleted).
+  // TOWN_STYLES is only the fallback when that tag is missing. A chosen song that's no longer offered plays lofi.
+  const readTownSongs = () => {
+    try {
+      const el = document.getElementById("song-tracks");
+      const list = el ? JSON.parse(el.textContent) : null;
+      if (Array.isArray(list)) return list.filter((t) => t && typeof t.key === "string").map((t) => t.key);
+    } catch (e) { /* the fallback below */ }
+    return TOWN_STYLES;
+  };
+  const TOWN_SONGS = readTownSongs();
+  const storedStyle = (() => { try { return localStorage.getItem(TOWN_MUSIC_KEY); } catch { return null; } })();
+  const townStyle = TOWN_SONGS.includes(storedStyle) ? storedStyle : "lofi";
+  const isRock = () => townStyle !== "lofi";
+  let minigameMusic = null; // the audio module's load, once started
   const VOLUME_KEY = "weiss-music-volume"; // 0 to 100: shared with the duel (play.js), the same music volume on both
   const OLD_VOLUME_KEY = "weiss-town-volume"; // the town's own before the duel shared one: migrated, then dropped
   const TOWN_MUSIC = 0.4; // score.js's music level for the town (its duel default is 0.6): calmer
@@ -211,7 +231,7 @@
   // ---- The music ----
 
   function applyMusic() {
-    if (!score) return;
+    if (!score || isRock()) return;
     score.setTheme(talking ? { name: talking } : {}); // the house theme when nobody's being talked to
     score.setState({ setup: true }); // the lounge: the calm arrangement
     score.setMusicLevel(TOWN_MUSIC);
@@ -296,7 +316,31 @@
     paintControls();
   }
 
+  // The minigames' audio module, loaded the first time a rock style is wanted (it's a separate file, beside this one).
+  function loadMinigameAudio() {
+    if (window.MinigameAudio) return Promise.resolve();
+    if (!minigameMusic) {
+      minigameMusic = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = new URL("minigames/audio.js", SCRIPT_URL).href;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.append(script);
+      });
+    }
+    return minigameMusic;
+  }
+
   function start() {
+    if (isRock()) {
+      if (score && score.running) score.stop();
+      loadMinigameAudio()
+        .then(() => { if (on && isRock()) window.MinigameAudio.start(townStyle); })
+        .catch(() => { /* the lounge can't stand in for it; the town is quiet */ });
+      applyAmbience();
+      applyVolume();
+      return;
+    }
     applyMusic();
     if (score && !score.running) score.start();
     applyAmbience();
@@ -305,6 +349,7 @@
 
   function stop() {
     if (score && score.running) score.stop();
+    if (window.MinigameAudio) window.MinigameAudio.stop();
     applyVolume();
   }
 

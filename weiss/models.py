@@ -967,3 +967,19 @@ class CpuSchedule(models.Model):
 
     def __str__(self):
         return f"{self.cpu} at {self.place}"
+
+
+class MusicTrack(models.Model):
+    """A song on the staff music page: its engine key (audio.js), the name the page shows, and whether it's been deleted
+    from the page (kept, so it can be restored). Built-in styles get a row the first time the page shows them."""
+
+    key = models.CharField(max_length=40, unique=True, help_text="The engine's key, e.g. cc0_4")
+    name = models.CharField(max_length=80)
+    hidden = models.BooleanField(default=False, help_text="Deleted from the music page; kept so it can be restored")
+    position = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["position", "pk"]
+
+    def __str__(self):
+        return self.name

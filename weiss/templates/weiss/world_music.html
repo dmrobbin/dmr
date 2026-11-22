@@ -1,0 +1,211 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Music · World mode{% endblock %}
+
+{% block head %}<script src="{% static 'weiss/minigames/audio.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{% url 'weiss:cpu_home' %}?tab=world">← World mode settings</a></p>
+  <h1>Music</h1>
+  <p class="muted">Each style plays through the minigames' own sound module, so this is what the game would play. Play one to hear it;
+    <strong>Use in the town</strong> picks it for the town's music on this browser. The sound setting (Sound on or off) is the same as the minigames' and the town's.
+    You can rename a track or delete it; a deleted track moves to Deleted below, where you can restore it.</p>
+
+  <div class="music-stage">
+    <label for="music-tier" class="music-stage-label">Duel tier <output for="music-tier" class="music-stage-name" data-stage-name>0: Start</output></label>
+    <input type="range" id="music-tier" class="music-stage-slider" min="0" max="6" step="1" value="0" data-level>
+    <p class="music-stage-scale small muted" aria-hidden="true"><span style="--i: 0">0</span><span style="--i: 1">1</span><span style="--i: 2">2</span><span style="--i: 3">3</span><span style="--i: 4">4</span><span style="--i: 5">5</span><span style="--i: 6">6</span></p>
+    <ol class="music-stage-names small muted">
+      <li>0 Start</li><li>1 First level-up</li><li>2 Second</li><li>3 Third</li><li>4 Fourth</li><li>5 Fifth</li><li>6 Both at level 3</li>
+    </ol>
+    <div class="music-stage-tools">
+      <button type="button" class="button-small secondary" data-climax aria-pressed="false">Climax: off</button>
+      <button type="button" class="button-small secondary" data-match-point aria-pressed="false">Match point: off</button>
+      <button type="button" class="button-small secondary" data-splash>Splash</button>
+    </div>
+    <div class="music-sfx" role="group" aria-label="Sound effects">
+      <span class="small muted">Sound effects</span>
+      <button type="button" class="button-small secondary" data-sfx="hit">Hit</button>
+      <button type="button" class="button-small secondary" data-sfx="block">Block</button>
+      <button type="button" class="button-small secondary" data-sfx="play">Play</button>
+      <button type="button" class="button-small secondary" data-sfx="win">Win</button>
+      <button type="button" class="button-small secondary" data-sfx="lose">Lose</button>
+      <button type="button" class="button-small secondary" data-sfx="draw">Draw</button>
+      <button type="button" class="button-small secondary" data-sfx="damage">Damage</button>
+    </div>
+    <p class="muted small">Move the slider to hear each style at each tier of a duel. The change is live while a track plays. The climax and splash act on the playing track too.</p>
+  </div>
+
+  <ul class="music-list" data-music-list>
+    {% for style in styles %}
+      <li class="music-style" data-style="{{ style.key }}">
+        <span class="music-name">{{ style.name }}</span>
+        <span class="music-tags small muted" data-tags>
+          <span class="music-tag is-town" hidden data-tag-town>In the town</span>
+          <span class="music-tag is-playing" hidden data-tag-playing>Playing</span>
+        </span>
+        <span class="music-actions">
+          <button type="button" class="button-small secondary" data-play aria-pressed="false">Play</button>
+          <button type="button" class="button-small" data-use>Use in the town</button>
+        </span>
+        <form method="post" action="{% url 'weiss:world_music_rename' %}" class="music-rename">
+          {% csrf_token %}
+          <input type="hidden" name="key" value="{{ style.key }}">
+          <label class="small">Name
+            <input type="text" name="name" value="{{ style.name }}" maxlength="80" required>
+          </label>
+          <button type="submit" class="button-small secondary">Save name</button>
+        </form>
+        <form method="post" action="{% url 'weiss:world_music_delete' %}" class="music-delete">
+          {% csrf_token %}
+          <input type="hidden" name="key" value="{{ style.key }}">
+          <button type="submit" class="button-small secondary">Delete</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+
+  {% if deleted %}
+    <section class="music-deleted" aria-labelledby="music-deleted-title">
+      <h2 id="music-deleted-title">Deleted</h2>
+      <p class="muted small">These tracks are hidden from the town and the minigames' music list. Restore one to bring it back.</p>
+      <ul class="music-list">
+        {% for style in deleted %}
+          <li class="music-style is-deleted">
+            <span class="music-name">{{ style.name }}</span>
+            <form method="post" action="{% url 'weiss:world_music_restore' %}" class="music-restore">
+              {% csrf_token %}
+              <input type="hidden" name="key" value="{{ style.key }}">
+              <button type="submit" class="button-small">Restore</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  <p class="muted small" data-music-note aria-live="polite"></p>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const KEY = "weiss-town-music";     // the style the town plays, per viewer (this browser)
+      const SOUND_KEY = "weiss-music";    // the sound setting shared with the town and the minigames: "on" or "off"
+      const DEFAULT = "lofi";
+      const rows = [...document.querySelectorAll("[data-style]")];
+      const note = document.querySelector("[data-music-note]");
+      let playing = null;
+
+      // The duel's tiers (MinigameAudio.setTier, 0 to 6), the climax switch, the splash and the sound effects.
+      const TIERS = ["Start", "First level-up", "Second", "Third", "Fourth", "Fifth", "Both at level 3"];
+      const slider = document.querySelector("[data-level]");
+      const stageName = document.querySelector("[data-stage-name]");
+      const climaxButton = document.querySelector("[data-climax]");
+      const splashButton = document.querySelector("[data-splash]");
+      let stage = Number(slider.value) || 0;
+      let climax = false;
+      // Each engine call is skipped while the engine doesn't have it (the engine is still being built).
+      const engine = (name, ...args) => {
+        const fn = window.MinigameAudio && window.MinigameAudio[name];
+        if (typeof fn === "function") fn.apply(window.MinigameAudio, args);
+      };
+      const showStage = (n) => {
+        stage = n;
+        slider.setAttribute("aria-valuetext", `${n}: ${TIERS[n]}`);
+        stageName.textContent = `${n}: ${TIERS[n]}`;
+      };
+      // Live: the playing track changes tier at once. (Before a track starts, the tier waits for it.)
+      slider.addEventListener("input", () => {
+        const n = Number(slider.value);
+        showStage(n);
+        engine("setTier", n);
+      });
+      const paintClimax = () => {
+        climaxButton.setAttribute("aria-pressed", String(climax));
+        climaxButton.textContent = climax ? "Climax: on" : "Climax: off";
+      };
+      climaxButton.addEventListener("click", () => {
+        climax = !climax;
+        paintClimax();
+        engine("setClimax", climax);
+      });
+      const matchPointButton = document.querySelector("[data-match-point]");
+      let matchPoint = false;
+      const paintMatchPoint = () => {
+        matchPointButton.setAttribute("aria-pressed", String(matchPoint));
+        matchPointButton.textContent = matchPoint ? "Match point: on" : "Match point: off";
+      };
+      matchPointButton.addEventListener("click", () => {
+        matchPoint = !matchPoint;
+        paintMatchPoint();
+        engine("setMatchPoint", matchPoint);
+      });
+      splashButton.addEventListener("click", () => engine("splash"));
+      for (const button of document.querySelectorAll("[data-sfx]")) {
+        button.addEventListener("click", () => engine("sfx", button.dataset.sfx));
+      }
+      showStage(stage);
+      paintClimax();
+      paintMatchPoint();
+
+      const readTown = () => {
+        try { return localStorage.getItem(KEY) || DEFAULT; } catch { return DEFAULT; }
+      };
+      const writeTown = (key) => {
+        try { localStorage.setItem(KEY, key); } catch { /* only this visit, then */ }
+      };
+      const soundOn = () => {
+        try { return localStorage.getItem(SOUND_KEY) !== "off"; } catch { return true; }
+      };
+      // The module starts muted if the sound is off; the page doesn't change the sound setting.
+      window.MinigameAudio?.setMuted?.(!soundOn());
+
+      const paint = () => {
+        const town = readTown();
+        for (const row of rows) {
+          const isPlaying = row.dataset.style === playing;
+          const isTown = row.dataset.style === town;
+          row.classList.toggle("is-playing", isPlaying);
+          row.classList.toggle("is-town", isTown);
+          const play = row.querySelector("[data-play]");
+          play.textContent = isPlaying ? "Stop" : "Play";
+          play.setAttribute("aria-pressed", String(isPlaying));
+          play.setAttribute("aria-label", `${isPlaying ? "Stop" : "Play"} ${row.querySelector(".music-name").textContent}`);
+          row.querySelector("[data-tag-playing]").hidden = !isPlaying;
+          row.querySelector("[data-tag-town]").hidden = !isTown;
+          const use = row.querySelector("[data-use]");
+          use.disabled = isTown;
+          use.textContent = isTown ? "In the town" : "Use in the town";
+        }
+      };
+
+      for (const row of rows) {
+        row.querySelector("[data-play]").addEventListener("click", () => {
+          const key = row.dataset.style;
+          if (playing === key) {
+            window.MinigameAudio?.stop?.();
+            playing = null;
+            note.textContent = "Stopped.";
+          } else {
+            window.MinigameAudio?.start?.(key);
+            engine("setTier", stage);
+            engine("setClimax", climax);
+            engine("setMatchPoint", matchPoint);
+            playing = key;
+            note.textContent = soundOn() ? "" : "The sound is off: turn it on in the minigames or the town to hear it.";
+          }
+          paint();
+        });
+        row.querySelector("[data-use]").addEventListener("click", () => {
+          writeTown(row.dataset.style);
+          note.textContent = `${row.querySelector(".music-name").textContent} is the town's music on this browser.`;
+          paint();
+        });
+      }
+
+      // Leaving the page stops the preview.
+      window.addEventListener("pagehide", () => window.MinigameAudio?.stop?.());
+      paint();
+    });
+  </script>
+{% endblock %}

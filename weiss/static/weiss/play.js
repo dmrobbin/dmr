@@ -223,6 +223,66 @@
   } catch (e) { /* keep the default */ }
   let score = null; // the battle music, made with the AudioContext
 
+  // The song the town chose (world_audio.js, weiss-town-music). When one is chosen, the duel plays it through the
+  // minigames' engine (minigames/audio.js) in place of the battle music. Nothing chosen: the battle music, as before.
+  const TOWN_MUSIC_KEY = "weiss-town-music";
+  // The songs the page offers, with the names the staff gave them (the music page's MusicTrack rows, without the deleted
+  // ones: the duel page's song_tracks, rendered as json). The list below is only the fallback if that's missing.
+  const FALLBACK_SONGS = [
+    { key: "lofi", name: "Lo-fi" }, { key: "rock_1", name: "Rock 1" }, { key: "rock_2", name: "Rock 2" }, { key: "rock_3", name: "Rock 3" },
+    { key: "rock_4", name: "Rock 4" }, { key: "hip_hop", name: "Hip hop" }, { key: "jazz", name: "Jazz" }, { key: "funk", name: "Funk" },
+    { key: "synthwave", name: "Synthwave" }, { key: "emo", name: "Emo" }, { key: "metal", name: "Metal" }, { key: "cc0_1", name: "CC0 drums 1" },
+    { key: "cc0_2", name: "CC0 drums 2" }, { key: "cc0_3", name: "CC0 drums 3" }, { key: "cc0_4", name: "CC0 jazz" }, { key: "cc0_5", name: "CC0 hip hop" },
+    { key: "cc0_6", name: "CC0 funk" }, { key: "cc0_7", name: "CC0 emo" }, { key: "cc0_8", name: "CC0 metal" },
+  ];
+  const readSongTracks = () => {
+    try {
+      const el = document.getElementById("song-tracks");
+      const list = el ? JSON.parse(el.textContent) : null;
+      if (Array.isArray(list)) return list.filter((t) => t && typeof t.key === "string" && typeof t.name === "string");
+    } catch (e) { /* the fallback below */ }
+    return FALLBACK_SONGS;
+  };
+  const SONG_LIST = readSongTracks();
+  const SONGS = SONG_LIST.map((t) => t.key);
+  const chosenSong = () => {
+    try {
+      const saved = localStorage.getItem(TOWN_MUSIC_KEY);
+      return SONGS.includes(saved) ? saved : null;
+    } catch (e) { return null; }
+  };
+  let song = chosenSong();
+  let songLoading = null;
+  const SONG_NAMES = Object.fromEntries(SONG_LIST.map((t) => [t.key, t.name]));
+  const songName = () => (song ? SONG_NAMES[song] || song : "Battle music");
+  // The song follows the duel: its tier (0 to 6, from the payload's music_tier; it only builds) and its climax (climax_on).
+  // A splash marks each activated ability (the payload's abilities going up) and each sound-effect cue.
+  let songTier = 0;
+  let songClimax = false;
+  let songMatchPoint = false; // match point: the life-based effect (the payload's match_point)
+  let abilityCount = null; // the payload's abilities; null until the first payload, which only sets the count
+  // Calls the engine's method when it has it (the engine's duel methods are still being built).
+  const songCall = (name, ...args) => {
+    const fn = window.MinigameAudio && window.MinigameAudio[name];
+    if (typeof fn === "function") fn.apply(window.MinigameAudio, args);
+  };
+  const PLAY_SCRIPT = document.currentScript ? document.currentScript.src : location.href;
+  function loadSongEngine() {
+    if (window.MinigameAudio) return Promise.resolve();
+    if (!songLoading) {
+      songLoading = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = new URL("minigames/audio.js", PLAY_SCRIPT).href;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.append(script);
+      });
+    }
+    return songLoading;
+  }
+  // The battle music is what's playing (cues go into it); with a song chosen, the cues are the ordinary sounds.
+  const battleMusic = () => musicOn && score && !song;
+
   function audioContext() {
     const Context = window.AudioContext || window.webkitAudioContext;
     if (!Context) return null;
@@ -251,6 +311,7 @@
 
   // The music plays while sound and music are both on and the volume is up; it follows the board from the next bar.
   function syncMusic() {
+    if (song) return syncSong();
     if (!score) return;
     score.setVolume(soundVolume / 100);
     score.setMusicLevel(musicVolume / 100);
@@ -259,6 +320,53 @@
     if (wanted && !score.running) score.start();
     else if (!wanted && score.running) score.stop();
   }
+
+  // The chosen song: on while sound and music are on and the duel isn't over; off otherwise (and on leaving).
+  function syncSong() {
+    if (score && score.running) score.stop();
+    const wanted = soundOn && musicOn && soundVolume > 0 && !(board && board.game_over);
+    if (!wanted) {
+      if (window.MinigameAudio) window.MinigameAudio.stop();
+      return;
+    }
+    const playing = song;
+    loadSongEngine().then(() => {
+      // Still wanted, and still the same song? (The settings may have moved on while it loaded.)
+      if (song !== playing || !soundOn || !musicOn || !soundVolume || (board && board.game_over)) return;
+      window.MinigameAudio.setMuted(false);
+      // A song already playing crossfades to the new one; otherwise it starts. The tier and climax follow the duel.
+      const current = window.MinigameAudio.status ? window.MinigameAudio.status().playing : null;
+      if (current && current !== song) window.MinigameAudio.setSong(song);
+      else window.MinigameAudio.start(song);
+      songCall("setTier", songTier);
+      songCall("setClimax", songClimax);
+      songCall("setMatchPoint", songMatchPoint);
+    }).catch(() => { /* the engine didn't load: the duel is quiet, as its cues still play */ });
+  }
+
+  // The song changed (the Song button here, or another tab's setting): read it again and play it, or the battle music.
+  function songChanged() {
+    const next = chosenSong();
+    if (!next && song && window.MinigameAudio) window.MinigameAudio.stop();
+    song = next;
+    syncMusic();
+  }
+  // The Song button: the next song in turn (the battle music after the last). The choice is kept under the town's key, and
+  // the duel re-reads it on the change event (songChanged), so the music switches as the button is pressed.
+  function cycleSong() {
+    const order = [null, ...SONGS];
+    const next = order[(order.indexOf(song) + 1) % order.length];
+    try {
+      if (next) localStorage.setItem(TOWN_MUSIC_KEY, next);
+      else localStorage.removeItem(TOWN_MUSIC_KEY);
+    } catch (e) { /* only this visit, then */ }
+    window.dispatchEvent(new Event("weiss:song-change"));
+    const button = controlsEl.querySelector("[data-song]");
+    if (button) button.textContent = `Song: ${songName()}`;
+    sayStatus(`Song: ${songName()}`);
+  }
+  window.addEventListener("weiss:song-change", songChanged);
+  window.addEventListener("storage", (event) => { if (event.key === TOWN_MUSIC_KEY) songChanged(); });
 
   // The board, and whose theme it is, as the music follows them.
   function tellScore() {
@@ -464,7 +572,9 @@
     if (!soundOn || !soundVolume) return null;
     const ctx = audioContext();
     if (!ctx) return null;
-    if (musicOn && score) {
+    // A sound-effect cue splashes the chosen song too (the engine ignores it while the song isn't playing).
+    if (song) songCall("splash");
+    if (battleMusic()) {
       // Played in time with the music, so no stagger: several at once become a little figure (see score.js cue).
       syncMusic();
       const lands = score.cue(name, { opponent: quiet, count, icons });
@@ -579,7 +689,7 @@
       // A damage's cards, which the music turns over one by one before the hit (or the cancel).
       const flipped = { damage: is.damage_taken - was.damage_taken, negated: Math.max(1, is.clock - was.clock) };
       if (is.refreshes > was.refreshes) sounds.push("shuffle");
-      if (musicOn && score && is.reversed > was.reversed) sounds.push("reversed"); // only the music has this
+      if (battleMusic() && is.reversed > was.reversed) sounds.push("reversed"); // only the music has this
       if (is.level_ups > was.level_ups) sounds.push("level");
       else if (is.damage_taken > was.damage_taken) sounds.push("damage");
       else if (is.negated > was.negated) sounds.push("negated");
@@ -614,6 +724,24 @@
     const wasMyTurn = board ? board.my_turn : null;
     const lastBoard = board;
     board = data.board;
+    // The song's tier and climax come with the payload (music_tier, climax_on). A new activated ability (abilities going
+    // up) splashes the song once; the first payload only sets the count.
+    if (typeof data.music_tier === "number" && data.music_tier !== songTier) {
+      songTier = data.music_tier;
+      if (song) songCall("setTier", songTier); // safe before the song starts: the tier is kept for when it does
+    }
+    if (typeof data.climax_on === "boolean" && data.climax_on !== songClimax) {
+      songClimax = data.climax_on;
+      if (song) songCall("setClimax", songClimax);
+    }
+    if (typeof data.match_point === "boolean" && data.match_point !== songMatchPoint) {
+      songMatchPoint = data.match_point;
+      if (song) songCall("setMatchPoint", songMatchPoint);
+    }
+    if (typeof data.abilities === "number") {
+      if (abilityCount !== null && data.abilities > abilityCount && song) songCall("splash");
+      abilityCount = data.abilities;
+    }
     // Compact: our turn starting brings our side back into view (it's where the hand is), and a change on the
     // opponent's side while it's out of sight puts a dot on the button that shows it.
     if (wasMyTurn === false && board.my_turn) boardView = "me";
@@ -2203,6 +2331,9 @@
             <button type="button" data-music aria-keyshortcuts="M" title="Battle music: the game's moments play as part of it, in time and in key, instead of as sound effects (M)">Music</button>
             <input type="range" min="0" max="100" step="5" data-music-volume aria-label="Music volume, under the game's moments" title="Music volume, under the game's moments">
           </div>` : ""}
+          <div class="layout-switch">
+            <button type="button" data-song title="Choose the song: the battle music, or one of the styles. Kept on this browser, and the town's song too.">Song: ${esc(songName())}</button>
+          </div>
           <p class="sr-only" data-sound-status role="status"></p>
           <div class="layout-switch">
             <button type="button" data-rules title="Turn the turn rules on or off (both players have to agree)">Turn rules</button>
@@ -2229,6 +2360,11 @@
       const musicVolumeEl = controlsEl.querySelector("[data-music-volume]");
       musicVolumeEl.disabled = !soundOn || !musicOn;
       if (document.activeElement !== musicVolumeEl) musicVolumeEl.value = String(musicVolume);
+    }
+    const songEl = controlsEl.querySelector("[data-song]");
+    if (songEl) {
+      songEl.textContent = `Song: ${songName()}`;
+      songEl.disabled = !soundOn;
     }
     const volumeEl = controlsEl.querySelector("[data-sound-volume]");
     volumeEl.disabled = !soundOn;
@@ -3894,6 +4030,10 @@
       setSound(!soundOn);
       return;
     }
+    if (event.target.closest("[data-song]")) {
+      cycleSong();
+      return;
+    }
     if (event.target.closest("[data-music]")) {
       setMusic(!musicOn);
       return;
@@ -4193,6 +4333,7 @@
   }) : { render() {}, dismiss() {} };
 
   pollLoop();
+  if (song) syncMusic(); // the chosen song starts with the duel (once a click has unlocked the sound)
   // Back from another tab or app (a phone woken up): catch up at once rather than on the next tick. While
   // the page is hidden its sound is paused (the music too, mid-bar, to carry on where it was).
   document.addEventListener("visibilitychange", () => {
@@ -4202,4 +4343,6 @@
     }
     if (!document.hidden && pollWake) pollWake(); // back in view: ask now rather than at the end of the pause
   });
+  // Leaving the duel: the chosen song stops with the page (its own context goes with it, but say so now).
+  window.addEventListener("pagehide", () => { if (window.MinigameAudio) window.MinigameAudio.stop(); });
 })();

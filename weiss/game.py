@@ -198,6 +198,42 @@ def rps_view(state, player):
 MAX_HITS = 300  # damages remembered for the summary; a game never comes near it
 
 
+def life(state, player):
+    """How many levels a player has left before they lose (LOSING_LEVEL less the level zone)."""
+    return LOSING_LEVEL - len(state["players"][player]["zones"]["level"])
+
+
+MUSIC_TIER_MAX = 6  # the most the duel's music builds to (see music_tier)
+
+
+def music_tier(state):
+    """How far the duel's music has built: the level cards both players have, capped at MUSIC_TIER_MAX, and never lower
+    than the highest it has been in this duel (stored as state["music_tier"], see play.board_payload)."""
+    levels = sum(len(side["zones"]["level"]) for side in state["players"].values())
+    return min(MUSIC_TIER_MAX, max(state.get("music_tier", 0), levels))
+
+
+def climax_on(state):
+    """Whether a climax card is in either player's climax zone (the climax sound plays while one is)."""
+    return any(side["zones"]["climax"] for side in state["players"].values())
+
+
+def match_point(state):
+    """Whether either player is at match point: 1 life or fewer (see life). Not stored: it comes back off if a level is lost."""
+    return any(life(state, p) <= 1 for p in state["players"])
+
+
+def intensity(state):
+    """How tight the duel is, for its music (docs/duel-music-plan.md), 0 to 3: 0 at the start, 1 once a turn has passed,
+    2 when either player has 2 life or fewer, 3 when either has 1 life or fewer. (The duel has no last turn to go on.)"""
+    lives = [life(state, p) for p in state["players"]]
+    if min(lives) <= 1:
+        return 3
+    if min(lives) <= 2:
+        return 2
+    return 1 if state.get("turn_number", 1) > 1 else 0
+
+
 def damage_points(state, player):
     """How far a player is towards losing: 7 per level and 1 per clock card (28 is level 4), leaving out the cards of
     a cancelled damage still on their way out of the clock (see resolve_damage)."""
@@ -4690,6 +4726,7 @@ def activate(state, player, action, env):
     if why:
         raise GameError(f"Can't activate that: {why}.")
     add_log(state, player, f"activated {env.name(card['card'])}: {ability['text']}")
+    state["activations"] = state.get("activations", 0) + 1  # every activated ability in the duel (the log is trimmed)
     if not ability.get("when") and ability["kind"] == "auto":
         ability = {**ability, "steps": [{"do": "manual", "text": ability["text"]}]}
     entry = {"player": player, "uid": card["uid"], "card": card["card"], "ability": copy.deepcopy(ability),

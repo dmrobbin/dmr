@@ -9,7 +9,7 @@ A challenge's run (weiss.challenge) is an arcade run too, with its own rules on 
 """
 import random
 
-from django.db.models import F
+from django.db.models import F, Max
 from django.utils import timezone
 
 from . import challenge, scenes
@@ -157,6 +157,34 @@ def game_finished(room, over, score=None):
     if room.host_deck_id and run.scenario_id:
         clear, _ = ArcadeClear.objects.get_or_create(deck_id=room.host_deck_id, scenario_id=run.scenario_id, defaults={"name": run.scenario_name})
         ArcadeClear.objects.filter(pk=clear.pk).update(count=F("count") + 1, name=run.scenario_name)
+
+
+TROPHY_MIN_PLAYERS = 5  # players with a score on a scenario before it has an average to be measured against
+TROPHY_TIERS = (("Small", 0, .75, 1), ("Medium", .75, 1.25, 2), ("Large", 1.25, 1.75, 3), ("Huge", 1.75, None, 4))  # (name, from, to, animation level)
+
+
+def trophy_averages():
+    """{scenario id: the average of everyone's best score there}, for each scenario with TROPHY_MIN_PLAYERS players who
+    have a score on it. Scenarios with fewer have no average yet, so no trophies."""
+    bests = ArcadeRun.objects.filter(score__gt=0, scenario__isnull=False).values("scenario_id", "user_id").annotate(best=Max("score"))
+    by_scenario = {}
+    for row in bests:
+        by_scenario.setdefault(row["scenario_id"], []).append(row["best"])
+    return {scenario_id: sum(scores) / len(scores) for scenario_id, scores in by_scenario.items() if len(scores) >= TROPHY_MIN_PLAYERS}
+
+
+def trophy(best, average):
+    """A best score against a scenario's average: {tier, level, ratio, average}, or None if there's no average yet."""
+    if not average:
+        return None
+    ratio = best / average
+    name, level = next((name, level) for name, _, high, level in TROPHY_TIERS if high is None or ratio < high)
+    return {"tier": name, "level": level, "ratio": round(ratio, 2), "average": round(average)}
+
+
+def attach_trophy(scenario, averages):
+    """The trophy on a cleared scenario, from the player's best there (`my_best`); none for one not cleared (`clears`)."""
+    scenario.trophy = trophy(scenario.my_best, averages.get(scenario.pk)) if scenario.clears else None
 
 
 def high_scores(scenarios, limit=10):

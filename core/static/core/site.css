@@ -310,6 +310,15 @@ select option { color: var(--text); background: var(--surface); }
 .nav-infinite button, a.nav-infinite { display: inline-block; padding: .35rem .8rem; font: inherit; font-size: .85rem; font-weight: 600; color: var(--accent);
   text-decoration: none; background: var(--accent-soft); border: 1px solid rgb(212 175 55 / .45); border-radius: .5rem; cursor: pointer; white-space: nowrap; }
 .nav-infinite button:hover, a.nav-infinite:hover { color: var(--accent-hover); border-color: var(--accent); }
+/* On a phone the header's tabs are tighter, so they and the challenge button fit in two rows, the button not alone. */
+@media (max-width: 40rem) {
+  .dash-tabs a { font-size: .85rem; padding: .3rem .4rem; }
+  /* The tabs stay a navigation group (a nav landmark); the challenge button and the account links share the row below. */
+  .dashboard-header { gap: .3rem .4rem; }
+  a.nav-infinite { margin: 0; font-size: .8rem; padding: .3rem .35rem; }
+  .dashboard-header .logout { gap: .3rem .45rem; font-size: .8rem; }
+  .dashboard-header .logout a, .dashboard-header .logout button { padding: .2rem .25rem; }
+}
 .logout a.nav-profile { display: inline-flex; align-items: center; color: var(--muted); font-weight: 500; }
 .logout a.nav-profile:hover, .logout a.nav-profile.current { color: var(--accent); }
 .avatar-nav { width: 2.1rem; height: 2.1rem; font-size: 1rem; }
@@ -569,7 +578,7 @@ select option { color: var(--text); background: var(--surface); }
 .cpu-section, .vs-cpu { margin-bottom: 2rem; }
 .arcade-paused { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; margin: 0 0 1rem;
   padding: .75rem 1rem; border: 1px solid var(--accent); border-radius: .75rem; background: var(--accent-soft); }
-.arcade-tabs { display: flex; gap: .25rem; margin: 0 0 1rem; border-bottom: 1px solid var(--border); }
+.arcade-tabs { display: flex; flex-wrap: wrap; gap: .25rem; margin: 0 0 1rem; border-bottom: 1px solid var(--border); }
 .arcade-tabs a { padding: .4rem .8rem; color: var(--muted); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; }
 .arcade-tabs a:hover { color: var(--text); }
 .arcade-tabs a.current { color: var(--accent); border-bottom-color: var(--accent); }
@@ -636,10 +645,51 @@ select option { color: var(--text); background: var(--surface); }
 .arcade-best-fights { list-style: none; margin: .5rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: .25rem 1rem; }
 .game-over-score { font-size: 1.25rem; font-weight: 700; margin: .25rem 0 0; }
 .game-over-score-parts { font-size: .85rem; opacity: .8; margin: 0; }
-.arcade-scenarios { list-style: none; margin: 1rem 0; padding: 0; display: grid; gap: 1.25rem; }
+.arcade-scenarios { list-style: none; margin: 1rem 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; overflow-x: clip; /* a card stays the page's width: a wide trail scrolls inside it */ }
 .arcade-scenario { border: 1px solid var(--border); border-radius: .75rem; background: var(--surface); padding: 1rem; }
 .arcade-scenario h2 { margin: 0 0 .25rem; }
 .arcade-scenario-head { display: flex; align-items: center; gap: 1rem; }
+
+/* Arcade trophies (arcade.html): the key at the top, and one beside each cleared list. Each tier moves more than the last:
+   small stays still, medium shines gently, large bobs and glows, huge sweeps a shine and bursts light. Reduced motion
+   switches all of it off. */
+.arcade-trophy-key { list-style: none; margin: .75rem 0 1rem; padding: .6rem .8rem; display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; overflow-x: clip;
+  border: 1px solid var(--border); border-radius: .6rem; background: var(--surface); }
+.arcade-trophy-key-item { display: flex; align-items: center; gap: .5rem; font-size: .9rem; }
+.arcade-trophy { position: relative; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; isolation: isolate; overflow: visible; }
+.arcade-trophy-icon { display: inline-block; line-height: 1; filter: drop-shadow(0 1px 2px rgb(0 0 0 / .5)); }
+.arcade-trophy-small .arcade-trophy-icon { font-size: 1rem; }
+.arcade-trophy-medium .arcade-trophy-icon { font-size: 1.3rem; }
+.arcade-trophy-large .arcade-trophy-icon { font-size: 1.7rem; }
+.arcade-trophy-huge .arcade-trophy-icon { font-size: 2.2rem; }
+.arcade-cleared-line { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .6rem; margin: .2rem 0 0; }
+/* medium: a gentle shine across the trophy */
+.arcade-trophy-medium { overflow: hidden; border-radius: .3rem; }
+.arcade-trophy-medium::after { content: ""; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 40%, rgb(255 236 170 / .45) 50%, transparent 60%); transform: translateX(-100%); animation: arcade-trophy-shine 4.5s ease-in-out infinite; }
+/* large: a bob and a glow */
+.arcade-trophy-large { animation: arcade-trophy-bob 2.4s ease-in-out infinite; }
+.arcade-trophy-large .arcade-trophy-icon { border-radius: 50%; animation: arcade-trophy-glow 2.4s ease-in-out infinite; }
+/* huge: a shine sweep, and a light burst behind it */
+.arcade-trophy-huge { animation: arcade-trophy-bob 2s ease-in-out infinite; width: 3.4rem; height: 3.4rem; overflow: hidden; }
+/* Huge's fire and lightning (arcade_trophy_fx.html): drawn inside the trophy's box, behind the icon */
+.arcade-trophy-fx { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; overflow: visible; }
+.arcade-fx-flame { fill: #ff7a1a; opacity: .85; transform-box: fill-box; transform-origin: 50% 100%; animation: arcade-fx-flicker .8s ease-in-out infinite alternate; animation-delay: var(--d, 0s); }
+.arcade-fx-flame:nth-of-type(2n) { fill: #ffb43a; }
+.arcade-fx-bolt { fill: none; stroke: #fff3a0; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; opacity: 0; filter: drop-shadow(0 0 1px #ffe27a); animation: arcade-fx-arc 1.8s steps(1, end) infinite; animation-delay: var(--d, 0s); }
+@keyframes arcade-fx-flicker { from { transform: scaleY(.82) skewX(-5deg); opacity: .6; } to { transform: scaleY(1.14) skewX(4deg); opacity: 1; } }
+@keyframes arcade-fx-arc { 0%, 66% { opacity: 0; } 68% { opacity: 1; } 74% { opacity: .15; } 78% { opacity: 1; } 86%, 100% { opacity: 0; } }
+.arcade-trophy-huge::before { content: ""; position: absolute; inset: -40%; border-radius: 50%; background: radial-gradient(circle, rgb(255 230 140 / .75), transparent 60%); z-index: -1; opacity: 0; animation: arcade-trophy-burst 2.6s ease-out infinite; }
+.arcade-trophy-huge::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 35%, rgb(255 255 255 / .75) 50%, transparent 65%); transform: translateX(-120%); animation: arcade-trophy-sweep 2.6s ease-in-out infinite; }
+@keyframes arcade-trophy-shine { 0%, 60% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+@keyframes arcade-trophy-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes arcade-trophy-glow { 0%, 100% { filter: drop-shadow(0 0 .2rem rgb(255 210 90 / .4)); } 50% { filter: drop-shadow(0 0 .7rem rgb(255 210 90 / .9)); } }
+@keyframes arcade-trophy-sweep { 0%, 50% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+@keyframes arcade-trophy-burst { 0% { opacity: 0; transform: scale(.4); } 30% { opacity: .9; } 100% { opacity: 0; transform: scale(1.3); } }
+@media (prefers-reduced-motion: reduce) {
+  .arcade-trophy, .arcade-trophy *, .arcade-trophy::before, .arcade-trophy::after { animation: none !important; }
+  .arcade-trophy-medium::after, .arcade-trophy-huge::after, .arcade-trophy-huge::before { display: none; }
+  .arcade-trophy-fx { display: none; }
+}
 /* How many fights a run is: what makes one arcade list harder than another, so it leads. */
 .arcade-fights { flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 4.5rem; height: 4.5rem; margin: 0;
   border-radius: .75rem; background: var(--accent); color: var(--on-accent); line-height: 1; }
@@ -3591,6 +3641,53 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 .minigame-pick-play { min-height: 2.75rem; min-width: 7rem; padding: .4rem 1rem; font: inherit; font-weight: 600; color: var(--on-accent); background: var(--accent); border: 0; border-radius: .5rem; cursor: pointer; }
 .minigame-pick-play:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .quest-game-tag { margin-left: .2rem; }
+
+/* The staff music preview (world_music.html): one row per style; the playing and the town's style are marked. */
+.music-list { list-style: none; margin: 1rem 0; padding: 0; display: grid; gap: .6rem; }
+.music-style { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .8rem; padding: .7rem .9rem; border: 1px solid var(--border); border-radius: .6rem; background: var(--surface); }
+.music-name { font-weight: 600; min-width: 6rem; }
+.music-tags { display: flex; flex-wrap: wrap; gap: .3rem; flex: 1 1 8rem; }
+.music-tag { padding: .1rem .5rem; border-radius: 999px; border: 1px solid var(--border); font-size: .75rem; }
+.music-tag.is-playing { border-color: var(--accent); color: var(--accent); }
+.music-tag.is-town { border-color: var(--accent); }
+.music-style.is-playing { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.music-style.is-town { background: var(--accent-soft); }
+.music-actions { display: flex; flex-wrap: wrap; gap: .4rem; margin-left: auto; }
+.music-actions button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.music-style:has(button:disabled) .music-actions button:disabled { opacity: .6; cursor: default; }
+/* The staff track forms (world_music.html): rename a track, delete it, restore it from Deleted. */
+.music-style { position: relative; }
+.music-rename { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .4rem .6rem; flex: 1 1 100%; margin: 0; }
+.music-rename label { display: grid; gap: .2rem; flex: 1 1 12rem; min-width: 0; }
+.music-rename input[type="text"] { width: 100%; min-width: 0; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: .45rem; padding: .4rem .6rem; min-height: 2.25rem; }
+.music-rename input[type="text"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.music-delete, .music-restore { margin: 0 0 0 auto; }
+.music-deleted { margin-top: 1.5rem; }
+.music-deleted h2 { margin: 0 0 .25rem; font-size: 1.1rem; }
+.music-style.is-deleted { opacity: .85; }
+.music-rename button, .music-delete button, .music-restore button { min-height: 2.25rem; }
+/* The duel stage slider (world_music.html): a native range with its stage name, above the list. */
+.music-stage { display: grid; gap: .4rem; margin: 1rem 0 0; padding: .8rem .9rem; border: 1px solid var(--border); border-radius: .6rem; background: var(--surface); --thumb: 1.25rem; --track: .3rem; }
+.music-stage-label { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .2rem .8rem; font-weight: 600; }
+.music-stage-name { color: var(--accent); font-weight: 600; }
+/* Four stops (0 to 3). The track and thumb are drawn here so the thumb's centre is known: the labels sit under each stop. */
+.music-stage-slider { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 2.25rem; margin: 0; background: transparent; }
+.music-stage-slider::-webkit-slider-runnable-track { height: var(--track); border-radius: 999px; background: var(--border); }
+.music-stage-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: var(--thumb); height: var(--thumb); margin-top: calc((var(--track) - var(--thumb)) / 2); border: 0; border-radius: 50%; background: var(--accent); }
+.music-stage-slider::-moz-range-track { height: var(--track); border-radius: 999px; background: var(--border); }
+.music-stage-slider::-moz-range-thumb { width: var(--thumb); height: var(--thumb); border: 0; border-radius: 50%; background: var(--accent); }
+.music-stage-slider:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: .3rem; }
+/* The labels span the thumb's travel (the thumb centre runs from half a thumb in to half a thumb short of the end). */
+.music-stage-scale { position: relative; height: 1.4em; margin: 0 calc(var(--thumb) / 2); font-size: .75rem; }
+.music-stage-scale span { position: absolute; top: 0; left: calc(var(--i) * 100% / 6); width: 1.5rem; text-align: center; transform: translateX(-50%); }
+.music-stage-names { display: flex; flex-wrap: wrap; gap: .2rem .9rem; margin: 0; padding: 0; list-style: none; }
+.music-stage-tools, .music-sfx { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+.music-sfx > span { margin-right: .2rem; }
+.music-stage-tools [aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.music-stage-tools button:focus-visible, .music-sfx button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 40rem) {
+  .music-stage-scale { font-size: .7rem; }
+}
 .minigame-scoreline { margin: 0; font-size: .95rem; font-weight: 600; }
 .minigame-score b { color: var(--accent); font-size: 1.05rem; }
 .minigame-sep { color: var(--muted); }

@@ -16,7 +16,8 @@ import datetime
 
 from . import chatter, quests, scenes, world, world_calendar, world_events
 from .cpu_views import staff_required
-from .models import Chatter, CpuProfile, GiftItem, Quest, Scene, WorldEvent, WorldPlace, WorldSave
+from .music import MUSIC_STYLES, seed_music_tracks
+from .models import Chatter, CpuProfile, GiftItem, MusicTrack, Quest, Scene, WorldEvent, WorldPlace, WorldSave
 from .world_views import MAX_COINS
 
 MAX_TAGS = 10
@@ -567,3 +568,71 @@ def change_event(data):
         setattr(event, field, value)
     event.save()
     return f"Saved {name}." + ("" if event.enabled else " It's switched off.")
+
+# ---------------------------------------------------------------- Music preview (audio.js styles)
+
+
+@staff_required
+def world_music(request):
+    """Staff only: each music track, played through the minigame module (audio.js) so the sound is the game's own. The
+    tracks not deleted are "styles" (key, name, position, in order); the deleted ones are "deleted", to restore."""
+    seed_music_tracks()
+    tracks = list(MusicTrack.objects.all())
+    shown = [{"key": track.key, "name": track.name, "position": track.position} for track in tracks if not track.hidden]
+    deleted = [{"key": track.key, "name": track.name, "position": track.position} for track in tracks if track.hidden]
+    return render(request, "weiss/world_music.html", {"styles": shown, "deleted": deleted})
+
+
+def music_track(key):
+    track = MusicTrack.objects.filter(key=key).first()
+    if not track:
+        raise ValueError("There's no track like that.")
+    return track
+
+
+@staff_required
+@require_POST
+def world_music_rename(request):
+    """Rename a track on the music page: 1 to 80 characters, stripped."""
+    name = request.POST.get("name", "").strip()
+    try:
+        track = music_track(request.POST.get("key", ""))
+        if not 1 <= len(name) <= 80:
+            raise ValueError("A track's name is 1 to 80 characters.")
+        track.name = name
+        track.save(update_fields=["name"])
+    except ValueError as error:
+        messages.error(request, str(error))
+    else:
+        messages.success(request, f"Renamed to “{name}”.")
+    return redirect("weiss:world_music")
+
+
+@staff_required
+@require_POST
+def world_music_delete(request):
+    """Take a track off the music page (it can be restored)."""
+    try:
+        track = music_track(request.POST.get("key", ""))
+    except ValueError as error:
+        messages.error(request, str(error))
+    else:
+        track.hidden = True
+        track.save(update_fields=["hidden"])
+        messages.success(request, f"Deleted “{track.name}”. Restore it from Deleted.")
+    return redirect("weiss:world_music")
+
+
+@staff_required
+@require_POST
+def world_music_restore(request):
+    """Put a deleted track back on the music page."""
+    try:
+        track = music_track(request.POST.get("key", ""))
+    except ValueError as error:
+        messages.error(request, str(error))
+    else:
+        track.hidden = False
+        track.save(update_fields=["hidden"])
+        messages.success(request, f"Restored “{track.name}”.")
+    return redirect("weiss:world_music")

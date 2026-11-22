@@ -25,7 +25,7 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
 
 from . import buffs, challenge, packs, quests, scenes, world
-from . import world_calendar
+from . import music, world_calendar
 from . import world_events as events
 from . import world_rewards
 from . import world_roster as roster
@@ -390,7 +390,7 @@ def world_town(request, slot):
     if away:
         return away
     return render(request, "weiss/world_town.html", {"save": save, "town": world.town(save), "result": world.duel_result(save),
-                                                     "weekdays": world_calendar.DAYS})
+                                                     "weekdays": world_calendar.DAYS, "song_tracks": music.visible_tracks()})
 
 
 @staff_required

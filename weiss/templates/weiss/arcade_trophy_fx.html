@@ -1,0 +1,13 @@
+{% comment %}
+  The Huge trophy's effects (arcade.html): flames flickering up around its base and sides, and lightning arcing round it.
+  Inline SVG and CSS only (site.css, arcade-fx-*). Drawn behind the trophy, inside its box; off under reduced motion.
+{% endcomment %}
+<svg class="arcade-trophy-fx" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+  <path class="arcade-fx-flame" d="M11 44 C6 37 12 31 10 23 C16 29 17 35 15 41 Z" style="--d: 0s"/>
+  <path class="arcade-fx-flame" d="M37 44 C42 37 36 31 38 23 C32 29 31 35 33 41 Z" style="--d: .3s"/>
+  <path class="arcade-fx-flame" d="M24 46 C19 37 28 31 24 17 C31 26 32 37 27 43 Z" style="--d: .15s"/>
+  <path class="arcade-fx-flame" d="M16 46 C13 41 17 37 16 31 C20 36 21 41 19 45 Z" style="--d: .5s"/>
+  <path class="arcade-fx-flame" d="M32 46 C35 41 31 37 32 31 C28 36 27 41 29 45 Z" style="--d: .4s"/>
+  <polyline class="arcade-fx-bolt" points="3,15 11,21 7,25 15,33" style="--d: 0s"/>
+  <polyline class="arcade-fx-bolt" points="45,11 37,17 42,21 34,29" style="--d: .9s"/>
+</svg>

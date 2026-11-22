@@ -6,6 +6,17 @@
   <h1>Arcade Mode</h1>
   {% include "weiss/arcade_tabs.html" with current="runs" %}
   <p class="muted small">Fight through a list of CPUs in a row, and beat the last one to mark your deck. You meet each CPU the first time you play it.</p>
+  {% if trophy_tiers %}
+    {# The trophies a cleared list can earn (trophy_tiers: name, range, level), with the key for the trophies below. #}
+    <ul class="arcade-trophy-key" aria-label="Trophies: what a cleared list can earn">
+      {% for tier in trophy_tiers %}
+        <li class="arcade-trophy-key-item">
+          <span class="arcade-trophy arcade-trophy-{{ tier.name|lower }}" aria-hidden="true"><span class="arcade-trophy-icon">🏆</span>{% if tier.name|lower == "huge" %}{% include "weiss/arcade_trophy_fx.html" %}{% endif %}</span>
+          <span><b>{{ tier.name }}</b> <span class="muted small">{{ tier.range }}</span></span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
   {% if not scenarios %}
     <p class="empty">No arcade lists are available yet.</p>
   {% else %}
@@ -17,7 +28,7 @@
             <p class="arcade-fights" aria-label="{{ scenario.fights }} fight{{ scenario.fights|pluralize }}"><b>{{ scenario.fights }}</b><span>fight{{ scenario.fights|pluralize }}</span></p>
             <div>
               <h2>{{ scenario.name }}</h2>
-              {% if scenario.clears or scenario.my_best %}<p class="muted small">{% if scenario.clears %}Cleared {{ scenario.clears }} time{{ scenario.clears|pluralize }}{% endif %}{% if scenario.clears and scenario.my_best %} · {% endif %}{% if scenario.my_best %}Your best score {{ scenario.my_best }}{% endif %}</p>{% endif %}
+              {% if scenario.clears or scenario.my_best %}<p class="muted small arcade-cleared-line">{% if scenario.trophy %}<span class="arcade-trophy arcade-trophy-{{ scenario.trophy.tier|lower }}" aria-hidden="true"{% if scenario.trophy.average %} title="Your best score is {{ scenario.trophy.ratio|floatformat:2 }} times the average"{% endif %}><span class="arcade-trophy-icon">🏆</span>{% if scenario.trophy.tier|lower == "huge" %}{% include "weiss/arcade_trophy_fx.html" %}{% endif %}</span> {% endif %}{% if scenario.clears %}Cleared {{ scenario.clears }} time{{ scenario.clears|pluralize }}{% endif %}{% if scenario.clears and scenario.my_best %} · {% endif %}{% if scenario.my_best %}Your best score {{ scenario.my_best }}{% endif %}</p>{% endif %}
             </div>
           </div>
           {% include "weiss/arcade_lineup.html" with lineup=scenario.lineup %}

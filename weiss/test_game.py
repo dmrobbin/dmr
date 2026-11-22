@@ -1546,6 +1546,19 @@ class AbilityGameTests(TestCase):
         self.act(1, {"type": "ability_answer", "uids": [uid]})
         self.assertEqual(self.stats(uid)["power"], 2000)
 
+    def test_each_activation_counts_once_for_the_music(self):
+        self.card(20, "【ACT】 [(1) 【REST】 this card] Choose 1 of your characters, and that character gets +1000 power until end of turn.")
+        uid = self.play(20, "C1")
+        self.assertEqual(self.state.get("activations", 0), 0)
+        with self.assertRaises(game.GameError):
+            self.act(1, {"type": "activate", "uid": uid, "index": 0})  # no stock: not used, not counted
+        self.assertEqual(self.state.get("activations", 0), 0)
+        self.stock(1)
+        self.act(1, {"type": "activate", "uid": uid, "index": 0})
+        self.assertEqual(self.state["activations"], 1)
+        self.act(1, {"type": "ability_answer", "uids": [uid]})
+        self.assertEqual(self.state["activations"], 1)
+
     def test_the_button_says_why_it_cant_be_used(self):
         self.card(20, "【ACT】 [(1) 【REST】 this card] Draw 1 card.")
         uid = self.play(20, "C1")

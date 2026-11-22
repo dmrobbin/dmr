@@ -24,7 +24,7 @@ from django.views.decorators.http import require_POST
 from core import s3
 from core.access import has_weiss_access, weiss_access_required
 
-from . import arcade, augments, buffs, challenge, coop, cpu, curses, game, lists, packs, scenes, scoring, sleeves
+from . import arcade, augments, buffs, challenge, coop, cpu, curses, game, lists, music, packs, scenes, scoring, sleeves
 from .models import ArcadeRun, ArcadeScenario, Card, CardList, ChallengeRun, CpuProfile, GameRecord, GameRoom, PlayerProfile, cpu_user
 
 log = logging.getLogger(__name__)
@@ -126,7 +126,14 @@ def board_payload(room, user, extra=None):
     unlocked = (room.state.get("game_over") or {}).get("sleeves", {}).get(str(user.pk))
     if unlocked:  # for the Victory or Defeat screen
         scene["unlocked"] = unlocked
+    tier = game.music_tier(room.state)
+    if tier != room.state.get("music_tier"):  # the duel's music only builds: kept on the room, so a fall in levels isn't a fall in tier
+        room.state["music_tier"] = tier
+        room.save(update_fields=["state"])
     return {"version": room.version, "status": room.status, "board": board, "cards": card_info(pks),
+            "music_tier": tier, "climax_on": game.climax_on(room.state), "abilities": room.state.get("activations", 0),
+            "match_point": game.match_point(room.state),
+            "intensity": game.intensity(room.state),  # replaced by music_tier; kept until Sam's page no longer reads it
             "avatars": room_avatars(room), "sleeves": sleeves.board_sleeves(room, user.pk),
             **cpu_payload(room), **duel_payload(room, user), **scene, **(extra or {})}
 
@@ -189,15 +196,19 @@ def arcade_home(request):
     best = {}
     for run in ArcadeRun.objects.filter(user=request.user, score__gt=0).only("scenario_id", "score"):
         best[run.scenario_id] = max(best.get(run.scenario_id, 0), run.score)
+    averages = arcade.trophy_averages()
     for scenario in scenarios:
         scenario.lineup = arcade.lineup(scenario, request.user)
         scenario.clears = clears.get(scenario.pk, 0)
         scenario.my_best = best.get(scenario.pk, 0)
         scenario.fights = arcade.fight_count(scenario)
+        arcade.attach_trophy(scenario, averages)
     scenarios.sort(key=lambda scenario: (scenario.fights, scenario.name.casefold()))  # the shortest, and easiest, first
     return render(request, "weiss/arcade.html", {
         "scenarios": scenarios,
         "decks": CardList.objects.players(request.user),
+        "trophy_tiers": [{"name": name, "range": f"under {high}x" if not low else f"{low}x and above" if high is None else f"{low}x to {high}x",
+                          "level": level} for name, low, high, level in arcade.TROPHY_TIERS],
     })
 
 
@@ -482,6 +493,7 @@ def room_detail(request, pk):
         "invite_url": request.build_absolute_uri(reverse("weiss:play_join", args=[room.invite_token])),
         "my_deck": room.host_deck if seat == "host" else room.guest_deck,
         "decks": CardList.objects.players(request.user),
+        "song_tracks": music.visible_tracks(),  # the song choice: the names the staff gave, without the deleted ones, in order
     })
 
 
