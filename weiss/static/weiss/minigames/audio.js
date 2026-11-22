@@ -1,7 +1,8 @@
 /* Minigame sound (docs/minigames-plan.md, "Round 3: sound and music"). Music and effects are made with Web Audio, the same
    approach as world_audio.js: no audio files. One loop per game, each with its own tempo, key and mood (memory calm, cups
    playful and a bit tense, invaders driving, runner fast and bouncy, higher_lower light and quick), and short effects.
-   The API: MinigameAudio.start(key), stop(), sfx(name), setMuted(on), muted(). Nothing plays until the first user gesture.
+   The API: MinigameAudio.start(key), stop(), sfx(name), setMuted(on), muted(), setVolume(level). Nothing plays until the
+   first user gesture (or, when the engine loads after one, until the song is started).
    Music stops when the tab is hidden and when a game stops. Mute silences music and effects; the shell owns the button
    and its saved setting. */
 (() => {
@@ -146,10 +147,20 @@
       extra: two("4 . 5 . 7 . 5 . 4 . 2 . 0 . 2 .", "0 . 2 . 4 . 7 . 4 . 2 . 0 . 2 .") },
     emo: { drumGain: 0.9, topKit: "ride", splash: "fill", extraWave: "triangle", extraGain: 0.02,
       extra: two("0 . . . 0 . . . 2 . . . 0 . . .", "3 . . . 2 . . . 0 . . . 2 . . .") },
-    metal: { drumGain: 1.1, topKit: "hat", splash: "stab", extraKit: "kick",
+    metal: { drumGain: 1.1, topGain: 0.7, topKit: "hat", splash: "stab", extraKit: "kick", // topGain: peaks hit 0.92 at the top tier
       extra: two("x x . x x . x . x x . x x . x .", "x x . x x . x . x x . x x . x .") },
   };
   for (const key of Object.keys(LAYER_DATA)) Object.assign(STYLES[key], { layered: true }, LAYER_DATA[key]);
+  // Each style's level, in dB, so its tier-0 loudness sits within 2 dB of the common target: -33.0 on the engine's K meter
+  // (the town's music is this engine at the town's volume, 0.6, so about -37.4 there). Measured on the headless engine:
+  // the quiet CC0 and jazz songs need +5 to +8 dB; metal and rock_3 come down 4.6 to 5.8 dB. The loud layered songs (emo,
+  // hip_hop, jazz, lofi, rock_4) are held by their peaks, which must stay under 0.84 at every tier, match point included.
+  const LEVEL_DB = {
+    lofi: 5.9, rock_1: -0.3, rock_2: 5.2, rock_3: -4.6, rock_4: 1.5, hip_hop: 2.2, jazz: 7.1, funk: 0.5, synthwave: 1.1,
+    emo: 1.3, metal: -5.8, cc0_1: 7.5, cc0_2: 7.5, cc0_3: 7.1, cc0_4: 6.7, cc0_5: 7.8, cc0_6: 8.4, cc0_7: 8.0, cc0_8: 6.5,
+    memory: 1.2, cups: 4.9, invaders: 1.6, runner: 0.2, higher_lower: 5.4,
+  };
+  for (const key of Object.keys(LEVEL_DB)) STYLES[key].level = 10 ** (LEVEL_DB[key] / 20);
   // The tension pad's voice, per song (the match-point swell).
   const TENSION_WAVE = { lofi: "sine", rock_3: "square", rock_4: "triangle", hip_hop: "sine", jazz: "triangle", funk: "sawtooth", synthwave: "square", emo: "triangle", metal: "sawtooth" };
   for (const key of Object.keys(TENSION_WAVE)) STYLES[key].tensionWave = TENSION_WAVE[key];
@@ -182,6 +193,10 @@
   let sfxBus = null;
   let noise = null;
   let muted = false;
+  // The music volume: 1 is the loudness the songs were balanced at (the town and the duel pass their slider / 60).
+  const MUSIC_BASE = 0.55;
+  const MAX_VOLUME = 100 / 60;
+  let musicLevel = 1;
   let wanted = null; // the game's music, as the game asked for it
   let playing = null; // the loop actually running now
   let lastSfx = "";
@@ -266,7 +281,7 @@
     if (!isLayered(key)) return FULL_MIX.includes(name) ? 1 : 0;
     const effective = matchPoint ? Math.max(tier, 5) : tier; // at match point the drive is on, whatever the tier
     if (!TIER_LAYERS[effective].includes(name)) return 0;
-    return effective === 6 ? LOUD : 1;
+    return effective === 6 ? LOUD * (STYLES[key].topGain || 1) : 1;
   }
 
   const lowpass = (freq, bus) => {
@@ -283,6 +298,36 @@
     for (let i = 0; i < curve.length; i++) {
       const x = (i / (curve.length - 1)) * 2 - 1;
       curve[i] = Math.tanh(amount * x) / Math.tanh(amount);
+    }
+    return curve;
+  }
+
+  // The output's peak safety: a fixed curve (no compressor, so no automatic makeup gain and no pumping). A WaveShaper reads
+  // only [-1, 1], so the signal goes in at half level, and the curve's index x stands for an input of 2x: the knee covers
+  // inputs from 0.85 up to 2.0. Below 0.85 it is the identity, so every level at or under 1 is unchanged; above it the
+  // peaks ease toward 0.9 and never pass it. At the top volume (1.67) the music's peaks reach about 1.46 going in.
+  const PEAK_KNEE = 0.85;
+  const PEAK_CEILING = 0.87; // the oversampled shaper overshoots its curve by up to about 0.04, which the guard below catches
+  const PEAK_SOFTNESS = 0.5; // the tanh's width over the knee: it reaches the ceiling at an input of about 2.0
+  const PEAK_GUARD = 0.9; // the hard limit: nothing leaves the engine above this
+  function peakCeiling() {
+    const curve = new Float32Array(4096);
+    for (let i = 0; i < curve.length; i++) {
+      const x = (i / (curve.length - 1)) * 2 - 1;
+      const a = Math.abs(2 * x); // the input this index stands for
+      const y = a <= PEAK_KNEE ? a : PEAK_KNEE + (PEAK_CEILING - PEAK_KNEE) * Math.tanh((a - PEAK_KNEE) / PEAK_SOFTNESS);
+      curve[i] = Math.sign(x) * y;
+    }
+    return curve;
+  }
+
+  // The guard after it: the signal unchanged up to PEAK_GUARD, then a hard limit. Without oversampling it adds no overshoot,
+  // so the output is never over PEAK_GUARD, whatever the soft stage does.
+  function peakGuard() {
+    const curve = new Float32Array(4096);
+    for (let i = 0; i < curve.length; i++) {
+      const x = (i / (curve.length - 1)) * 2 - 1;
+      curve[i] = Math.max(-PEAK_GUARD, Math.min(PEAK_GUARD, x));
     }
     return curve;
   }
@@ -523,15 +568,16 @@
     playing = null;
   }
 
-  // A CC0 song: its layer loops (cc0_N_<layer>.wav; a missing one is silent), with its splash kept for a stinger. If none of
-  // its layer files are there, its one loop plays, as before.
+  // A CC0 song: its layer loops (cc0_N_<layer>.wav; a missing one is silent), with its splash kept for a stinger. A song
+  // that isn't layered (cc0_2 has only drums, bass and melody files) plays its one loop; if none of its layer files are
+  // there, that loop plays too, as before.
   async function beginSample(track) {
     const style = STYLES[track.key];
     const base = style.sample.replace(/\.wav$/, "");
     const names = [...LAYERS, "splash"];
-    const buffers = await Promise.all(names.map((name) => loadSample(`${base}_${name}.wav`)));
+    const buffers = style.layered ? await Promise.all(names.map((name) => loadSample(`${base}_${name}.wav`))) : [];
     if (track.dead) return;
-    if (buffers.some(Boolean)) {
+    if (style.layered && buffers.some(Boolean)) {
       names.forEach((name, n) => {
         const buffer = buffers[n];
         if (!buffer) return;
@@ -582,7 +628,7 @@
     track.nextTime = track.t0;
     tracks.push(track);
     playing = key;
-    fadeTo(track.bus, 1, fade);
+    fadeTo(track.bus, STYLES[key].level, fade); // the style's level (LEVEL_DB), so every song sits at the same loudness
     if (STYLES[key].sample) {
       beginSample(track);
       return;
@@ -651,26 +697,28 @@
     jump: (t) => tone(t, 300, 0.18, "square", 0.1, 620, sfxBus),
     slide: (t) => burst(t, 0.22, 600, 0.2, "bandpass", sfxBus),
     wave: (t) => [523, 659, 784, 1046].forEach((f, i) => tone(t + i * 0.09, f, 0.16, "triangle", 0.2, null, sfxBus)),
-    win: (t) => [523, 659, 784, 1046].forEach((f, i) => tone(t + i * 0.13, f, i === 3 ? 0.6 : 0.2, "triangle", 0.22, null, sfxBus)),
+    win: (t) => [523, 659, 784, 1046].forEach((f, i) => tone(t + i * 0.13, f, i === 3 ? 0.6 : 0.2, "triangle", 0.16, null, sfxBus)), // -3 dB: higher_lower's win stood 7 dB over its music
     lose: (t) => [659, 622, 587, 554].forEach((f, i) => tone(t + i * 0.22, f, 0.3, "triangle", 0.18, null, sfxBus)),
   };
 
   // The sound effects of a song. A synth song uses the engine's own cues; a CC0 song uses its kit's sounds, and a kit sound
   // that's missing falls back to the synth cue. A name the bank doesn't have plays the effect of that name, as before.
   const SYNTH_BANK = { hit: "hit", block: "shield", play: "flip", win: "win", lose: "lose", draw: "reveal", damage: "hit" };
+  // Each kit sound's gain: the files are as loud as the drums, so the loud ones (play, win, draw, lose, block) are turned
+  // down to sit near the music, as the synth cues do.
   const KIT_BANK = {
-    hit: { sample: "music/cc0/kit/hit.wav" }, // Frankensnare: snare
-    block: { sample: "music/cc0/kit/block.wav" }, // Swirly: closed hat
-    play: { sample: "music/cc0/kit/play.wav" }, // Swirly: closed hat
-    win: { sample: "music/cc0/kit/win.wav" }, // Swirly: crash
-    lose: { sample: "music/cc0/kit/lose.wav" }, // Big Rusty: kick
-    draw: { sample: "music/cc0/kit/draw.wav" }, // Swirly (Gogodze): cowbell
-    damage: { sample: "music/cc0/kit/damage.wav" }, // Big Rusty: kick
+    hit: { sample: "music/cc0/kit/hit.wav", gain: 1 }, // Frankensnare: snare
+    block: { sample: "music/cc0/kit/block.wav", gain: 0.3 }, // Swirly: closed hat (the same file as play)
+    play: { sample: "music/cc0/kit/play.wav", gain: 0.3 }, // Swirly: closed hat
+    win: { sample: "music/cc0/kit/win.wav", gain: 0.3 }, // Swirly: crash
+    lose: { sample: "music/cc0/kit/lose.wav", gain: 0.45 }, // Big Rusty: kick
+    draw: { sample: "music/cc0/kit/draw.wav", gain: 0.2 }, // Swirly (Gogodze): cowbell
+    damage: { sample: "music/cc0/kit/damage.wav", gain: 1 }, // Big Rusty: kick
   };
   const bankFor = (key) => (!STYLES[key] || MINIGAME_KEYS.has(key) ? null : STYLES[key].sample ? KIT_BANK : SYNTH_BANK);
 
   // A kit sound, played when it's loaded; if the file is missing, the synth cue plays instead.
-  function playKit(path, fallbackCue) {
+  function playKit(path, fallbackCue, gain) {
     loadSample(path).then((buffer) => {
       if (muted || !ctx) return;
       if (!buffer) {
@@ -679,7 +727,10 @@
       }
       const source = ctx.createBufferSource();
       source.buffer = buffer;
-      source.connect(sfxBus);
+      const trim = ctx.createGain();
+      trim.gain.value = gain;
+      source.connect(trim);
+      trim.connect(sfxBus);
       source.start(ctx.currentTime + 0.01);
     });
   }
@@ -696,9 +747,20 @@
     ctx = new Context();
     master = ctx.createGain();
     master.gain.value = muted ? 0 : 0.8;
-    master.connect(ctx.destination);
+    const headroom = ctx.createGain(); // half level into the shaper (see peakCeiling)
+    headroom.gain.value = 0.5;
+    const ceiling = ctx.createWaveShaper();
+    ceiling.curve = peakCeiling();
+    ceiling.oversample = "4x"; // the knee is curved, so it's oversampled to keep its corners from aliasing
+    const guard = ctx.createWaveShaper();
+    guard.curve = peakGuard();
+    guard.oversample = "none";
+    master.connect(headroom);
+    headroom.connect(ceiling);
+    ceiling.connect(guard);
+    guard.connect(ctx.destination);
     musicBus = ctx.createGain();
-    musicBus.gain.value = 0.55;
+    musicBus.gain.value = MUSIC_BASE * musicLevel; // the music volume, as set before the engine started
     musicBus.connect(master);
     sfxBus = ctx.createGain();
     sfxBus.gain.value = 0.7;
@@ -723,18 +785,34 @@
     }
   });
 
+  // The engine can load after the player's first click (a lazily loaded page): then no unlock event will come, so a song
+  // asked for now starts the engine itself, as long as the page already has a user gesture (a sticky activation).
+  function unlockIfActivated() {
+    if (!ctx && navigator.userActivation && navigator.userActivation.hasBeenActive) unlock();
+  }
+
   window.MinigameAudio = {
     // The game's music, switched at once. Starting again for the same game is harmless.
     start(key) {
       if (!STYLES[key]) return;
       wanted = key;
+      unlockIfActivated();
       beginTrack(key, 0);
     },
     // A song change: the song playing fades out and this one fades in over about a bar, at the current tier.
     setSong(key) {
       if (!STYLES[key]) return;
       wanted = key;
+      unlockIfActivated();
       beginTrack(key, barSeconds(key));
+    },
+    // The music's volume: 1 is the loudness the songs were balanced at (callers pass the slider / 60, so the default is 1).
+    // Music only: the effects keep their level. Up to 100 / 60, and the output's peak safety keeps that from clipping.
+    setVolume(level) {
+      const next = Number(level);
+      if (Number.isNaN(next)) return;
+      musicLevel = Math.max(0, Math.min(MAX_VOLUME, next));
+      if (ctx) musicBus.gain.setTargetAtTime(MUSIC_BASE * musicLevel, ctx.currentTime, 0.05);
     },
     // The tier, 0 to 6: the layers of the song that are on. Each tier adds a part; the change comes on the next bar.
     setTier: setTierNow,
@@ -769,7 +847,7 @@
       const bank = current ? bankFor(current.key) : null;
       const entry = bank && bank[name];
       if (entry && typeof entry === "object") {
-        playKit(entry.sample, SYNTH_BANK[name]);
+        playKit(entry.sample, SYNTH_BANK[name], entry.gain);
         return;
       }
       const cue = entry || name;
@@ -790,7 +868,7 @@
       const main = tracks[tracks.length - 1];
       const layers = main ? Object.fromEntries(LAYERS.map((name) => [name, layerTarget(main.key, name)])) : null;
       return {
-        ready: Boolean(ctx), playing, step: main ? main.stepIndex : 0, muted, wanted, lastSfx,
+        ready: Boolean(ctx), playing, step: main ? main.stepIndex : 0, muted, wanted, lastSfx, volume: musicLevel,
         clock: ctx ? ctx.currentTime : 0, tier, climax: climaxOn, tracks: tracks.length, layers,
         splashes: main ? main.splashes : 0, kit: Object.keys(kitBuffers).length,
         sources: main ? main.sources.length : 0, splashReady: Boolean(main && main.splashBuffer), matchPoint,

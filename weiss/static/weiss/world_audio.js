@@ -93,7 +93,8 @@
     return buffer;
   }
 
-  // A looping noise through a filter; the caller connects the filter onward.
+  // A looping noise through a filter; the caller connects the filter onward. Each starts at its own point in the buffer,
+  // so layers made of several noises don't move together.
   function noiseFilter(type, frequency, q) {
     const source = ctx.createBufferSource();
     source.buffer = noise;
@@ -103,7 +104,7 @@
     filter.frequency.value = frequency;
     filter.Q.value = q;
     source.connect(filter);
-    source.start();
+    source.start(0, rand(0, noise.duration));
     return filter;
   }
 
@@ -156,8 +157,18 @@
       noiseFilter("bandpass", 900, 0.5).connect(swell(out, 0.45, 0.35, 0.25));
       noiseFilter("bandpass", 2200, 0.8).connect(swell(out, 0.12, 0.6, 0.08));
     },
+    // A room of people talking at the next tables: a few low bands of noise (the vowels of far-off voices), each rising
+    // and falling slowly on its own, under a lowpass so there's no hiss. Never a steady pulse: a throb at 2 to 8 Hz (it
+    // was once 3.7 Hz) is the most grating sound there is.
     chatter(out) {
-      noiseFilter("bandpass", 650, 1.1).connect(swell(out, 0.4, 3.7, 0.35));
+      const room = ctx.createBiquadFilter();
+      room.type = "lowpass";
+      room.frequency.value = 1800;
+      room.Q.value = 0;
+      room.connect(out);
+      for (const [frequency, q, rate] of [[300, 1.2, 0.11], [520, 1.4, 0.17], [850, 1.6, 0.23], [1300, 1.8, 0.29]]) {
+        noiseFilter("bandpass", frequency, q).connect(swell(room, 0.5, rate, 0.25));
+      }
     },
     birds() {}, // chirps are scheduled, see scheduleChirps
     crickets() {}, // see scheduleCrickets
@@ -206,15 +217,18 @@
   }
 
   // The layers' levels for this place and time: birds by day, crickets from evening, the rest by place.
+  // Measured at the default volume, the town music is about -33 dB (K-weighted). The noise beds sit 8 to 12 dB under it
+  // (café -45, forest -42, beach -41, the tournament crowd -39), so they colour the place without covering the music.
+  // At the old levels the beach, forest and crowd were louder than the music. Re-measure if you change a layer.
   function mix() {
     const birds = time <= 1 ? 1 : 0;
     const crickets = time >= 2 ? 1 : 0;
     const m = {};
-    if (place === "cafe") m.chatter = time === 3 ? 0.35 : 0.9;
+    if (place === "cafe") m.chatter = time === 3 ? 0.06 : 0.15;
     else if (place === "library") m.hum = 0.45;
-    else if (place === "arena") m.crowd = tournament ? 1 : 0;
-    else if (place === "beach") Object.assign(m, { waves: 1, birds: birds * 0.6 });
-    else if (place === "forest") Object.assign(m, { wind: 0.8, birds, crickets });
+    else if (place === "arena") m.crowd = tournament ? 0.22 : 0;
+    else if (place === "beach") Object.assign(m, { waves: 0.24, birds: birds * 0.6 });
+    else if (place === "forest") Object.assign(m, { wind: 0.24, birds, crickets });
     else if (OUTDOORS.includes(place)) Object.assign(m, { birds: birds * 0.5, crickets: crickets * 0.6 });
     return m;
   }
@@ -270,9 +284,16 @@
 
   // ---- Starting, stopping and the controls ----
 
+  // A chosen song plays through the minigames' engine, in its own AudioContext, so the slider reaches it separately: 1 is
+  // its level at the default volume (60), where it measures as loud as the lounge.
+  function songVolume(level) {
+    if (window.MinigameAudio && window.MinigameAudio.setVolume) window.MinigameAudio.setVolume(level);
+  }
+
   function applyVolume() {
     if (!master) return;
     master.gain.setTargetAtTime(on ? volume / 100 : 0, ctx.currentTime, 0.15);
+    songVolume(volume / 60);
   }
 
   function paintControls() {
@@ -335,7 +356,11 @@
     if (isRock()) {
       if (score && score.running) score.stop();
       loadMinigameAudio()
-        .then(() => { if (on && isRock()) window.MinigameAudio.start(townStyle); })
+        .then(() => {
+          if (!on || !isRock()) return;
+          songVolume(volume / 60);
+          window.MinigameAudio.start(townStyle);
+        })
         .catch(() => { /* the lounge can't stand in for it; the town is quiet */ });
       applyAmbience();
       applyVolume();
@@ -374,6 +399,7 @@
       master.gain.cancelScheduledValues(now);
       master.gain.setValueAtTime(master.gain.value, now);
       master.gain.linearRampToValueAtTime(0, now + ms / 1000);
+      songVolume(0); // the song, too (applyVolume brings it back)
       setTimeout(resolve, ms);
     });
   }

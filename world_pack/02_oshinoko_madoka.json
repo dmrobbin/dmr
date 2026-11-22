@@ -1012,7 +1012,10 @@
       "me enters center with fade",
       "me: Hold still. Your posture is so interesting. I'm copying it for a role.",
       "player: Are you studying me?",
-      "me (lose): Actors learn from everyone. Start with what makes you laugh, please."
+      "me (lose): Actors learn from everyone. Start with what makes you laugh, please.",
+      "me (win): Not that one. That's a polite laugh. I need the real one.",
+      "me: Better. Keep that one in your pocket for later.",
+      "me (lose): Thank you. The role's a little less of a lie now."
      ]
     },
     {
@@ -1024,7 +1027,9 @@
       "me: I'll need your name, your habits, and what makes you cry. Start with the name.",
       "player: Why do you need all that?",
       "me (win): Because the role is someone who lost everything. I'm trying to get it right.",
-      "me: Tell me. What do you want?"
+      "me (lose): Watch how I hold the book. That's the posture of someone who doesn't sleep.",
+      "me: Now tell me what you want, and don't make it pretty.",
+      "me (win): That's the answer. I'll write it down before I forget it."
      ]
     },
     {
@@ -1048,7 +1053,9 @@
       "me (win): I have a profile of the man Aqua's hunting. It's not pretty.",
       "player: What does it say?",
       "me: It says he's dangerous, and that Aqua is going to die if he keeps this up.",
-      "me: Watch Aqua fight. I need to see how far he'll go."
+      "me (lose): Aqua's stubborn, though. He'll go on until someone stops him.",
+      "me: Watch Aqua fight. I need to see how far he'll go.",
+      "me (win): If he goes too far, I'll be the one who has to write it down."
      ]
     },
     {
@@ -1059,7 +1066,10 @@
       "me enters left with slide",
       "me: Aqua's out there every night now. I'm worried he'll get himself killed.",
       "player: Do you still have the profile?",
-      "me (win): Yes. And I have a plan to stop him, if I can make it work."
+      "me (win): Yes. It's worse than I thought, and I can't pretend otherwise.",
+      "me (lose): I have a plan to stop him, if I can make it work.",
+      "me: It needs a witness, and you're the only one he doesn't lie to.",
+      "me (win): Think about it while I order. The cake here is the one honest thing left in town."
      ]
     },
     {
@@ -1096,7 +1106,10 @@
       "me enters left with slide",
       "me: I've made my choice, or I'm about to. Sit down and listen.",
       "player: I'm listening.",
-      "me (win): It's about Aqua, and what he's doing to himself. I can't play it safe any more."
+      "me (win): It's about Aqua, and what he's doing to himself. I can't play it safe any more.",
+      "me: I've written him up as the villain of my next show. It's easier than writing him as my brother.",
+      "me (lose): Keep your voice low. I'd rather he didn't hear this from the cameras.",
+      "me (win): Please don't let him find out before I've decided what to say."
      ]
     },
     {
@@ -1107,7 +1120,7 @@
       "me enters left with slide",
       "me (win): I lost. Not the duel. The part I was playing, the one where I'm sure.",
       "player: What part is that?",
-      "me: The one where I'm sure. I'm not, not yet.",
+      "me: The sure one. I'm not, not yet.",
       "me (lose): But I'm ready to decide now. Come with me, and I'll tell you how."
      ]
     },
@@ -2186,7 +2199,10 @@
       "me enters right with slide",
       "me: I need an extra for a shoot. Someone who looks sincere, not nervous.",
       "player: That's me, I suppose.",
-      "me (lose): Good. Show up at school in the morning. Don't be late."
+      "me (lose): Good. Show up at school in the morning. Don't be late.",
+      "me (win): Keep your hands out of your pockets. The camera hates a fidget.",
+      "me: And smile like you mean it. That part's the hardest.",
+      "me (lose): Or like you have nothing to hide. Whichever is easier for you."
      ]
     },
     {
@@ -2198,7 +2214,9 @@
       "me: Action. No. Not that smile, a sincere one. Again.",
       "player: Like this?",
       "me (lose): ...Yeah. Keep that. That's the one.",
-      "me: Don't read anything into it. You're a prop with decent eyes."
+      "me: Don't read anything into it. You're a prop with decent eyes.",
+      "me (win): Again, from the top. The director's watching the back row.",
+      "me: Fine. Take your mark, and try not to blink."
      ]
     },
     {
@@ -2221,7 +2239,10 @@
       "me enters left with slide",
       "me (win): Kana was there that night. She knows where he went.",
       "player: Will she talk?",
-      "me: Not unless someone beats her. Meet me in the alley tonight. Be ready."
+      "me: Not unless someone beats her. Meet me in the alley tonight. Be ready.",
+      "me (lose): She's got a temper, but she's fair. That's a start.",
+      "me: Bring the notes from the rehearsal. Kana will want to see them.",
+      "me (win): If she won't talk, I'll make the choice for her."
      ]
     },
     {
@@ -2232,7 +2253,10 @@
       "me enters center with fade",
       "me: It's raining. Good. Nobody looks up here.",
       "player: Kana's over there.",
-      "me (win): Then go on, and make her talk. I'll watch from the rain."
+      "me (win): Then go on, and make her talk. I'll watch from the rain.",
+      "me (lose): She's angry, but she's the only one who knows the old theatre.",
+      "me: Keep your voice down. Anyone on the street could be on a camera.",
+      "me (win): If she runs, let her. We'll find her where she goes."
      ]
     },
     {
@@ -2269,7 +2293,10 @@
       "me enters left with slide",
       "me (win): The old theatre's behind the wall. Stay close, and don't let anyone out.",
       "player: Are you going in?",
-      "me: I am. Be my witness, and tell them what you saw."
+      "me: I am. Be my witness, and tell them what you saw.",
+      "me (lose): You're steadier than I thought, for someone who came out in the rain.",
+      "me: Mind the puddles near the gate. They hide the broken glass.",
+      "me (win): Good. Keep the lights in view, and let's go."
      ]
     },
     {
@@ -3337,7 +3364,9 @@
       "me (win): Okay. Sad face. Sad face. ...Why isn't it working?",
       "player: Think of something sad.",
       "me: I'm thinking of you, and that's not helping.",
-      "me (lose): Fine. One last try. Watch me, and tell me if it's real."
+      "me (lose): Fine. One last try. Watch me, and tell me if it's real.",
+      "me (win): It's not. I keep thinking about the part, and the cake, and Akane.",
+      "me: Once more from the top. If I cry on the beat, I'm in the show."
      ]
     },
     {
@@ -3346,10 +3375,12 @@
       "cast me as Kana Arima",
       "background classroom",
       "me enters center with fade",
-      "me: Okay. Sad face. Sad face. ...Why isn't it working?",
-      "player: Think of something sad.",
-      "me (win): I'm thinking of you, and that's not helping.",
-      "me: Fine. Last try."
+      "me (win): Akane got the part. She laughed when she told me, like it was a joke.",
+      "player: That's not fair.",
+      "me: Maybe not. But the director liked her smile better than my crying.",
+      "me (lose): I'll get it back. Watch.",
+      "me (win): Okay. Wait. That didn't work. Try again.",
+      "me: Come to the cafe in the evening, and I'll tell you the rest."
      ]
     },
     {
@@ -3360,7 +3391,10 @@
       "me enters left with slide",
       "me (win): They turned me down for the kids' role. Too old, they said. I'm sixteen.",
       "player: That's not fair.",
-      "me: Akane got the part instead. Come to the cafe in the evening, and I'll tell you the rest."
+      "me: Akane got the part instead. Come to the cafe in the evening, and I'll tell you the rest.",
+      "me (lose): At least I know where she'll be. That's something.",
+      "me: I want to be angry for a little longer. Don't tell me to calm down.",
+      "me (win): Thanks. Now let's go and eat something sweet."
      ]
     },
     {
@@ -3371,7 +3405,10 @@
       "me enters left with slide",
       "me: Three desserts. I'm not going to eat any of them.",
       "player: Why did you order them?",
-      "me (win): Because nobody ever orders dessert for me. And I'm angry about the part."
+      "me (win): Because nobody ever orders dessert for me. And I'm angry about the part.",
+      "me (lose): The strawberry one's for Akane. She'd hate that I'm sharing with her.",
+      "me: Sit down. I need someone to tell me I'm allowed to be angry.",
+      "me (win): Thanks. That's the first thing today that didn't hurt."
      ]
     },
     {
@@ -3408,12 +3445,12 @@
       "me enters left with slide",
       "me (win): The director wants Ai for a final show. And me, on the same stage.",
       "player: Can you do it?",
-      "player: What if Ai doesn't want you on stage?",
-      "me (win): Then I'll stand in the wings and sing the chorus anyway. The show still needs both of us.",
-      "player: Is that really what you want?",
-      "me (lose): It's what I want, if you think I can. Tell me honestly, and I'll decide tonight.",
-      "me: Come to the plaza, and bring the cakes. I'll need something sweet before I walk onto the stage.",
-      "me: I don't know. Come to the plaza at evening and tell me what you'd do."
+      "me: I don't know. Come to the plaza at evening and tell me what you'd do.",
+      "me (lose): Bring the cakes. I'll need something sweet before I walk onto the stage.",
+      "me (win): Ai's been practising the same words for a week. She won't say whose.",
+      "me: If I go on, I'm not doing it for the director. I'm doing it for the one watching from the back.",
+      "me (lose): Ruby, probably. She always stands at the back when she's scared.",
+      "me (win): Fine. Tell me one thing I can do to be ready."
      ]
     },
     {
@@ -3423,8 +3460,11 @@
       "background sakura",
       "me enters center with fade",
       "me (win): I don't know if I can stand next to Ai. She's been the one I wanted to be.",
-      "player: Then duel her, and see.",
-      "me: Hm. That's a plan. Okay."
+      "player: Then stand next to her, and see what happens.",
+      "me: Hm. That's a plan. Okay.",
+      "me (lose): She'll be surprised. Ai never expects anyone to push back.",
+      "me (win): I was going to say something cutting. Now I'm not sure I want to.",
+      "me: Walk with me to the stage. I'll decide on the way."
      ]
     },
     {
@@ -4466,7 +4506,9 @@
       "me enters center with rise",
       "me (lose): Want to watch my new routine? I need someone to tell me it's good.",
       "player: I'm free.",
-      "me: Plaza at noon. Watch me fall over, and don't laugh."
+      "me: Plaza at noon. Watch me fall over, and don't laugh.",
+      "me (win): If I do fall, get me back up before anyone sees.",
+      "me (lose): And if it's good, I'll tell the whole group."
      ]
     },
     {
@@ -4477,7 +4519,10 @@
       "me enters center with rise",
       "me: Okay! Watch! Step, turn, point, and... wait, I'm falling. I'm not falling.",
       "player: You're fine. Keep going!",
-      "me (lose): Ha! That was the best trip I've ever done!"
+      "me (lose): Ha! That was the best trip I've ever done!",
+      "me (win): The bow still wobbles on the left side. That's the one the judges watch.",
+      "me: Show me again, and this time tell me if I look ready.",
+      "me (lose): Right, count me in, and watch my hands."
      ]
     },
     {
@@ -4499,7 +4544,10 @@
       "me enters right with fade",
       "me (win): I found Mum's ticket. The last concert she ever did.",
       "player: You kept it.",
-      "me: Kana says I'm not good enough for the group. Will you help me show her?"
+      "me: Kana says I'm not good enough for the group. Will you help me show her?",
+      "me (lose): It's not a big ticket, but it has her signature on the back.",
+      "me (win): It's crumpled, but it still works. The door's the same as it was.",
+      "me: Okay. Let's go and find out whether I'm good enough."
      ]
     },
     {
@@ -4510,7 +4558,10 @@
       "me enters right with fade",
       "me: I never saw her perform. Only the videos. Is that the same as knowing her?",
       "player: It's a start.",
-      "me (lose): A start. Okay. I can work with that."
+      "me (lose): A start. Okay. I can work with that.",
+      "me (win): I keep thinking about the poster. It's still her face, even now.",
+      "me: Order something sweet. I'll pay, and you can tell me what you think.",
+      "me (lose): Strawberry, if they have it. That's Mum's favourite."
      ]
     },
     {
@@ -4547,7 +4598,10 @@
       "me enters center with fade",
       "me (win): Mum's doing a last show. She wants me on stage with her, and I'm scared.",
       "player: You'll be fine.",
-      "me: Watch her duel you, and see if I can carry on. That's what I need to know."
+      "me: Watch her test you, and see if I can carry on alone. That's what I need to know.",
+      "me (lose): Her poster's still up. Her face is so calm on it. I want that.",
+      "me (win): I don't know if I can give it back to her.",
+      "me: Stay with me until she says something. Anything."
      ]
     },
     {
@@ -4556,13 +4610,14 @@
       "cast me as Ruby Hoshino",
       "background sakura",
       "me enters center with fade",
-      "me (lose): Mum's last show. I'm going on stage with her, and I'm not scared.",
+      "me (lose): Mum's last show. I'm going on stage with her, and I'm ready.",
       "player: Good luck.",
-      "player: What if she sings it too fast?",
-      "me (win): Then I'll slow down with her, and we'll find the tempo together. That's what the front row is for.",
-      "player: Are you scared of the crowd?",
-      "me (lose): Only of the empty seats. Mum says the empty ones are always louder when you look at them.",
-      "me (win): Thanks, {player}. You were my audience, and that's the best kind."
+      "me (win): Thanks, {player}. I might still freeze under the lights.",
+      "player: Then look at the front row and sing to me.",
+      "me (lose): Okay. I'll sing to the front row, and I'll sing to you.",
+      "me: Mum's waiting at the side of the stage. She's waiting for me to say yes.",
+      "me (win): I've practised the first line a hundred times. It's the other lines that scare me.",
+      "me: Then I'll stop practising and just go. Thanks for being my front row."
      ]
     },
     {
@@ -5604,7 +5659,10 @@
       "me enters center with fade",
       "me: Oh, the crowd's gathering. Don't worry, I'll smile for everyone.",
       "player: Are you nervous?",
-      "me (lose): Never. Watch the three smiles I'm going to give. Tell me which is real."
+      "me (lose): Never. Watch the three smiles I'm going to give. Tell me which is real.",
+      "me: Smile one, for the cameras. Smile two, for the fans in the back. Smile three, for nobody.",
+      "me (win): That one's the only one I mean, and I haven't shown anyone in years.",
+      "me: Stay near the rope. I'll find you after."
      ]
     },
     {
@@ -5615,7 +5673,10 @@
       "me enters center with fade",
       "me: Smile one. Smile two. Smile three. Which one's real?",
       "player: The second one.",
-      "me (win): Wrong. Sweetly wrong. I'll remember that."
+      "me (win): Wrong. Sweetly wrong. I'll remember that.",
+      "me (lose): Good answer for a stranger. Not a good one for a fan.",
+      "me: Ask me again tomorrow. I might be better at it by then.",
+      "me (win): Or Ruby might be. She practises the same smile in the mirror."
      ]
     },
     {
@@ -5637,7 +5698,10 @@
       "me enters left with rise",
       "me: The city looks so small from up here. Everyone's so far away.",
       "player: Are you okay?",
-      "me (win): I'm practising. Ruby's coming up, and she needs to learn to stand alone."
+      "me (win): I'm practising. Ruby's coming up, and she needs to learn to stand alone.",
+      "me (lose): She thinks I'm the one who needs her. It's the other way round.",
+      "me: Don't tell her. Let her find out on the stage.",
+      "me (win): The wind's cold, and the lights below are going out one by one."
      ]
     },
     {
@@ -5650,7 +5714,11 @@
       "ruby enters right with fade",
       "me: Ruby, this is the one who's going to test you. Beat them, and you'll see the crowd.",
       "ruby: Mum, I'm not scared of the crowd. I'm scared of you.",
-      "me (win): Then prove it. Show me you can stand alone."
+      "me (win): Then prove it. Show me you can stand alone.",
+      "ruby: I can. I just don't want to be the only one on the stage when the lights go up.",
+      "me (lose): Then stand next to me, and I'll stand next to you. That's the deal.",
+      "ruby: Deal. But you go first.",
+      "me: Fine. I'll go first. Watch my feet, not my face."
      ]
     },
     {
@@ -5685,12 +5753,13 @@
       "background rooftop",
       "me enters left with rise",
       "me (win): I have to say something tonight. The words feel like a lie.",
-      "player: Try again.",
-      "player: Will Akane come up the stairs?",
-      "me (win): She's always been on the stairs. Tonight I'd like her to stay down there with the notebook.",
-      "player: What if the words feel like a lie again?",
-      "me (lose): Then I say them until they're not. That's the only practice I know.",
-      "me: Akane's watching. Don't let her write this down, please."
+      "player: Then say them your way.",
+      "me: Akane's watching. Don't let her write this down, please.",
+      "me (lose): Ruby's going to sing with me, if she says yes. That makes it easier to say.",
+      "me (win): Easier, but not easy. Stay where I can see you while I try.",
+      "me: The first time I said it, I laughed. It sounded like a line from a script.",
+      "me (lose): The second time, I cried a little, and it sounded like someone meant it.",
+      "me (win): I don't want to be the one who lies to her again. Watch me, and tell me if it sounds true."
      ]
     },
     {
@@ -5701,7 +5770,10 @@
       "me enters left with rise",
       "me: Practising the words above the city. I love you. ...It still feels wrong.",
       "player: Then keep trying.",
-      "me (win): Akane's down there, with her notebook. Please stop her."
+      "me (win): Akane's down there, with her notebook. Please stop her.",
+      "me (lose): She doesn't know what she's writing. She just likes the sound of it.",
+      "me: Stay where I can see you. The words come easier when someone's listening.",
+      "me (win): Okay. Again. Quietly, this time."
      ]
     },
     {
@@ -6765,7 +6837,10 @@
       "me enters center with fade",
       "me: A small white creature came to my window last night. It offered me a wish.",
       "player: What did you say?",
-      "me (win): I didn't say anything yet. Come to school in the morning and help me think."
+      "me (win): I didn't say anything yet. Come to school in the morning and help me think.",
+      "me (lose): It knew my name, which is worse than the offer itself.",
+      "me: Mami says I should talk to someone older before I decide. I'm not sure who that is.",
+      "me (win): Homura keeps looking at me in class, as if she already knows what I'll say."
      ]
     },
     {
@@ -6777,7 +6852,9 @@
       "me: Last night a small white creature appeared at my window. It said it could grant me a wish.",
       "player: What did you wish for?",
       "me (win): I didn't. Not yet. I'm not sure what I'd ask for.",
-      "me: Is it selfish, do you think? To wish for something that helps other people?"
+      "me: Is it selfish, do you think? To wish for something that helps other people?",
+      "me (lose): Sayaka would say it's brave. Kyoko would say it's a trap.",
+      "me (win): Homura hasn't said a word about it. That worries me most."
      ]
     },
     {
@@ -6799,7 +6876,10 @@
       "me enters left with slide",
       "me (win): The witches are getting stronger. Mami says I'm not ready yet.",
       "player: Then train with her.",
-      "me: Meet me at the plaza in the evening. Mami's coming to show me what I need."
+      "me: Meet me at the plaza in the evening. Mami's coming to show me what I need.",
+      "me (lose): She's patient with me, even when I'm slow. That's rare.",
+      "me: Sayaka keeps saying we should fight every witch we see. I think she's right, and I'm scared of it.",
+      "me (win): Please don't tell her I said that."
      ]
     },
     {
@@ -6810,7 +6890,10 @@
       "me enters center with fade",
       "me: I thought of a wish. It's for everyone, but it costs me.",
       "player: What does it cost?",
-      "me (win): Being forgotten, mostly. Everyone would forget me."
+      "me (win): Being forgotten, mostly. Everyone would forget me.",
+      "me (lose): It sounds lonely, but the witches would stop. That's what counts.",
+      "me: I haven't decided. Stay with me while I think about it.",
+      "me (win): The sakura's falling, and I keep counting the petals like they're my choices."
      ]
     },
     {
@@ -6847,11 +6930,12 @@
       "me enters center with fade",
       "me (win): I've thought of the wish. It would end the witches for everyone. It would cost me everything.",
       "player: What's Homura going to do?",
-      "player: Will Homura let you finish it?",
-      "me (win): She never has, not in the loops I can remember. This time I'd like her to watch me say it.",
-      "player: What do you want Homura to know?",
-      "me (lose): That the wish is for everyone, and that I'll still remember her, even if nobody else does.",
-      "me: She's coming to stop me. She knows something I don't."
+      "me: She's coming to stop me. She knows something I don't.",
+      "me (win): She keeps looking at me like I'm already gone. I don't know what she's seen.",
+      "me (lose): Stay here with me until she comes.",
+      "me: If I make the wish, I want someone to remember me. Even if it's only you.",
+      "me (win): Homura says that's not how it works. She's never wrong about how it works.",
+      "me (lose): Then I'll make the wish, and you'll be the last one who remembers me."
      ]
     },
     {
@@ -6862,7 +6946,10 @@
       "me enters center with fade",
       "me (win): Homura's coming. She's going to try to stop me from making the wish.",
       "player: Will you fight her?",
-      "me (lose): If I have to. Stand with me when she comes."
+      "me (lose): If I have to. Stand with me when she comes.",
+      "me: She's been standing in the trees since sunset. I can feel her watching.",
+      "me (win): Every loop, she's the one who looks most afraid.",
+      "me: Just hold my hand, and stay close while I decide."
      ]
     },
     {
@@ -7911,7 +7998,7 @@
       "background rooftop",
       "me enters right with fade",
       "me: You keep finding me up here.",
-      "player: You keep being up here.",
+      "player: You're up here again.",
       "me: I'm watching. Waiting. For something I can't stop.",
       "me (win): I've tried hundreds of times. Every ending is the same.",
       "player: Maybe this time is different.",
@@ -7945,7 +8032,10 @@
       "me enters right with slide",
       "me: Keep away from Madoka. And don't ask me why, because I won't answer.",
       "player: You know my name.",
-      "me (win): I know many things I shouldn't. Please stay away from her."
+      "me (win): I know many things I shouldn't. Please stay away from her.",
+      "me (lose): Not because you're in danger. Because she is, and you'd get in the way.",
+      "me: I've watched you make that choice in a dozen loops. Don't make it again.",
+      "me (win): Go home before the rain starts. The streets get dangerous when it does."
      ]
     },
     {
@@ -7957,7 +8047,9 @@
       "me: You shouldn't be here this early.",
       "player: I just wanted to talk.",
       "me (win): You knew my name before we'd met. That's the first thing I'd like explained.",
-      "me: Then stay away from her. Madoka must never make a contract."
+      "me: Then stay away from her. Madoka must never make a contract.",
+      "me (lose): But you're not what I expected. That's the second thing.",
+      "me (win): Keep your distance, and I'll keep mine. Deal?"
      ]
     },
     {
@@ -7979,7 +8071,10 @@
       "me enters center with fade",
       "me (win): I've lived this month more times than I can count. Every time, she makes the same wish.",
       "player: What happens after?",
-      "me: I don't remember how it ends. Only how it starts again."
+      "me: I don't remember how it ends. Only how it starts again.",
+      "me (lose): The rain is always the same. The clock is always a minute too late.",
+      "me (win): Madoka thinks I'm strange. She's right, but she doesn't know why.",
+      "me: If you see her before the wish, tell her to wait one more day."
      ]
     },
     {
@@ -7989,8 +8084,11 @@
       "background rooftop",
       "me enters center with fade",
       "me (win): Mami doesn't know what she'll become. I need to find out whether she can bear it.",
-      "player: Do you think he's dangerous?",
-      "me: I don't know. Duel him, and then we'll know."
+      "player: Do you think she'll break?",
+      "me: I don't know. Stay close, and we'll see what she does.",
+      "me (lose): Mami's stronger than she looks. She's already carrying too much.",
+      "me: Watch the sunset with me, if you can. It's the one thing that never changes.",
+      "me (win): Then I'll decide what to tell her before the sun goes down."
      ]
     },
     {
@@ -8027,7 +8125,13 @@
       "me enters left with fade",
       "me (win): Tonight, I stop Madoka's wish. I'll turn back time once more.",
       "player: Are you sure?",
-      "me: No. But this is the last loop. I'm going to make it count."
+      "me: No. But this is the last loop. I'm going to make it count.",
+      "me (lose): Stand where you can see the clock. If it skips, tell me.",
+      "me (win): Madoka will beg. Don't let her see your face when you say no.",
+      "player: What if she asks me to help her?",
+      "me: Then you tell her the truth. That's the one thing I haven't tried in this loop.",
+      "me (lose): Good. And thank you for staying. It's easier with someone watching.",
+      "me (win): Whatever happens, this is the end of the loop. I want to remember your face."
      ]
     },
     {
@@ -8038,7 +8142,10 @@
       "me enters center with fade",
       "me (win): Madoka's coming. Stand with me, and don't let the wish happen.",
       "player: I'll be here.",
-      "me: Good. Once more, then."
+      "me: Good. Once more, then.",
+      "me (lose): She'll talk you round if you're not careful. Don't let her.",
+      "me: When she comes through the gate, look at her and not at me.",
+      "me (win): I've tried every other way. This is the last one."
      ]
     },
     {
@@ -9072,9 +9179,12 @@
       "cast me as Kyoko Sakura",
       "background city",
       "me enters right with slide",
-      "me: Catch. Eat it. All of it. Core too.",
-      "player: The core too?",
-      "me (lose): The core too. Nothing goes to waste around me."
+      "me: Hey, the bakery's closing. Want the last of the bread?",
+      "player: Is it still good?",
+      "me (lose): Stale, but the good kind. The kind that remembers the oven.",
+      "me (win): Mami would tell me it's a waste. I'd tell her it's a second chance.",
+      "me: Take one. I'll keep the other for when she comes by.",
+      "me (lose): It tastes like the first morning we came here. Good."
      ]
     },
     {
@@ -9086,7 +9196,9 @@
       "me: Catch. Eat it. All of it. Core too.",
       "player: The core too?",
       "me (lose): The core too. Nothing goes to waste around me.",
-      "me: You didn't spit it out. That's the first good sign."
+      "me: You didn't spit it out. That's the first good sign.",
+      "me (win): Mami says I'm not allowed to waste anything any more. She's right.",
+      "me: Keep the seeds in your pocket. We'll plant them where nobody asks questions."
      ]
     },
     {
@@ -9106,9 +9218,12 @@
       "cast me as Kyoko Sakura",
       "background shrine",
       "me enters center with fade",
-      "me (win): My father's church. Ruined. My wish did that.",
-      "player: You don't have to tell me.",
-      "me: I know. I want to. Once."
+      "me (win): The bell's still ringing in my head. I can't walk past the chapel without stopping.",
+      "player: Do you want to go in?",
+      "me: No. But I want you to know why I stop.",
+      "me (lose): My father rang that bell every Sunday. The whole town came to hear it.",
+      "me (win): Now it's rubble, and the bell is somewhere under it.",
+      "me: Let's go. The plaza's better for talking."
      ]
     },
     {
@@ -9120,7 +9235,9 @@
       "me: My father's church. Ruined. My wish did that.",
       "player: You don't have to tell me.",
       "me (win): I know. I want to. Once.",
-      "me: My family was everything, and I wished for something that tore them apart."
+      "me: My family was everything, and I wished for something that tore them apart.",
+      "me (lose): The bell still rings in my head. I hear it every night.",
+      "me (win): That's enough for now. Thanks for letting me say it."
      ]
     },
     {
@@ -9157,7 +9274,12 @@
       "me enters left with slide",
       "me (win): Mami's going to test me tonight, and decide whether I've changed. I'd like you to watch.",
       "player: I'll listen.",
-      "me: Meet me at the plaza in the evening. Bring your appetite, and your honesty."
+      "me: Meet me at the plaza in the evening. Bring your appetite, and your honesty.",
+      "me (lose): I'll tell you what the wish cost, and you can decide if it was worth it.",
+      "me (win): The table we made, the family we had before the wish. None of it comes back for free.",
+      "me: Mami still sets a second place for me. I don't know whether that's kindness or a test.",
+      "me (lose): Either way, I'll show up. That's what's left to me.",
+      "me (win): Please don't tell her I cried. She'll never let me forget it."
      ]
     },
     {
@@ -9168,7 +9290,10 @@
       "me enters center with fade",
       "me (win): I wished for my family's happiness, and it cost me them. That's the truth.",
       "player: I'm sorry.",
-      "me: Mami's coming to test whether I'm really changed. Stand with me."
+      "me: Mami's coming to test whether I'm really changed. Stand with me.",
+      "me (lose): She won't go easy. That's how I know she still cares.",
+      "me (win): I keep rehearsing the apology. It comes out sounding like a wish.",
+      "me: If you hear me slip, tell me before she does."
      ]
     },
     {
@@ -10203,7 +10328,9 @@
       "me enters center with fade",
       "me (lose): Oh, you're here! Come in. I've made far too much cake for one person.",
       "player: I'll help you eat it.",
-      "me: Cafe at noon. Bring your appetite, and tell me all about your week."
+      "me: Cafe at noon. Bring your appetite, and tell me all about your week.",
+      "me (win): I'm nervous about Sayaka. I'd rather not ask her about it on an empty stomach.",
+      "me (lose): Let's start with the cake, then the boring parts."
      ]
     },
     {
@@ -10214,7 +10341,10 @@
       "me enters center with pop",
       "me: Morning! You're early. Perfect, I haven't opened the shortcake yet.",
       "player: Am I your first customer?",
-      "me (lose): First friend of the morning! Sit, sit. I'll give you the good slice."
+      "me (lose): First friend of the morning! Sit, sit. I'll give you the good slice.",
+      "me (win): I make too much on purpose. An empty table is harder to look at than a full one.",
+      "me: Eat slowly. You'll want to remember this one.",
+      "me (lose): There. Now tell me about your week, and don't skip the boring parts."
      ]
     },
     {
@@ -10236,7 +10366,10 @@
       "me enters center with fade",
       "me (win): I always host because I'm afraid of an empty table.",
       "player: Since when?",
-      "me: Since the accident. Since it was only me. Watch the sunset with me, please."
+      "me: Since the accident. Since it was only me. Watch the sunset with me, please.",
+      "me (lose): It's the one hour when the table feels full, even when nobody has come.",
+      "me (win): You're not going to say anything clever, are you? Good.",
+      "me: Thank you for staying."
      ]
     },
     {
@@ -10247,7 +10380,10 @@
       "me enters left with slide",
       "me (win): Will you be my partner? I don't want to fight alone any more.",
       "player: I will.",
-      "me (lose): Thank you. Now eat your cake."
+      "me (lose): Thank you. Now eat your cake.",
+      "me: Sayaka would have said yes faster. She'd have said it with her sword in the air.",
+      "me (win): I'm glad you didn't do that. The cake would have been ruined.",
+      "me: Let's walk back together. The road's easier in company."
      ]
     },
     {
@@ -10284,7 +10420,12 @@
       "me enters left with slide",
       "me (win): I need a new partner for the witches. Sayaka volunteered.",
       "player: Do you think she's ready?",
-      "me: Come to the arena in the evening. Let's see if she can keep up."
+      "me: Come to the arena in the evening. Let's see if she can keep up.",
+      "me (lose): She's brave, and that's the problem. Brave people get in the way of plans.",
+      "me (win): She says she wants to hold the line. I don't want her holding it alone.",
+      "me: Watch her warm up, and tell me honestly if she's ready to be a partner.",
+      "me (lose): Don't tell her I asked. She'd be insufferable for a week.",
+      "me (win): And I'll be there if she falls."
      ]
     },
     {
@@ -10295,7 +10436,10 @@
       "me enters center with fade",
       "me (lose): Let's see how Sayaka does. Don't go easy on her.",
       "player: I won't.",
-      "me (win): Good. Partners need to know their limits."
+      "me (win): Good. Partners need to know their limits.",
+      "me: Watch her footwork. She drops her guard when she's proud.",
+      "me (lose): And she's proud of everything she does, so that's a lot of openings.",
+      "me: Tell me honestly, when you've seen enough."
      ]
     },
     {
@@ -11335,7 +11479,10 @@
       "me enters center with rise",
       "me: Excuse me! Do you know the way to the hospital? I'm going to visit a friend.",
       "player: I can show you.",
-      "me (win): Oh, thanks! I'm nervous, so please don't laugh at my practice."
+      "me (win): Oh, thanks! I'm nervous, so please don't laugh at my practice.",
+      "me (lose): It's for Hitomi. She's been asking about the hero stuff since she got sick.",
+      "me: I've been practising the greeting all week. Did I get it right?",
+      "me (win): Okay. Here goes. Hi, Hitomi. I'm here."
      ]
     },
     {
@@ -11347,7 +11494,9 @@
       "me: Hi. I'm going to ask Kyosuke for a signature. Watch me practise first.",
       "me (win): Hi, Kyosuke. I... um. I'm... nevermind.",
       "player: Try again, slower.",
-      "me (lose): Hi, Kyosuke. I'm here to ask you something. Nice. Nice."
+      "me (lose): Hi, Kyosuke. I'm here to ask you something. Nice. Nice.",
+      "me: Kyosuke isn't here today, so I'm practising the signature on the wall instead.",
+      "me (win): It's crooked. Everything about this is crooked."
      ]
     },
     {
@@ -11369,7 +11518,10 @@
       "me enters right with slide",
       "me (win): I made a wish once, for someone else. I wonder if it was worth it.",
       "player: Was it?",
-      "me: I don't know. Emilia's a knight, and I want her respect. Duel her, and maybe I'll know."
+      "me: I don't know. Sometimes I think it was the only honest thing I've ever done.",
+      "me (lose): The knight in me wants to keep going. The girl wants to stop.",
+      "me (win): Madoka's the one who'll decide, not me. That's the part I can't carry.",
+      "me: Walk with me to the water. The sea helps me think."
      ]
     },
     {
@@ -11380,7 +11532,10 @@
       "me enters right with slide",
       "me (win): I once wished for a friend to be well. She is, I think.",
       "player: You don't know?",
-      "me: I don't know what I'd have left, if I'd wished for myself. That's the trouble."
+      "me: I don't know what I'd have left, if I'd wished for myself. That's the trouble.",
+      "me (lose): Kyoko's on her way to the plaza. I'm not sure what to tell her.",
+      "me (win): The sea is the only thing that stays the same.",
+      "me: Sit with me for a while. Quiet helps."
      ]
     },
     {
@@ -11416,7 +11571,12 @@
       "me enters left with slide",
       "me (win): Kyoko told me what she wished for. I don't know what to think about it.",
       "player: What did she say?",
-      "me: That her wish cost her the family she loved. Come to the beach at evening."
+      "me: That her wish cost her the family she loved. Come to the beach at evening.",
+      "me (lose): I want to know what it was worth, and whether I'd make the same choice.",
+      "me (win): I keep asking myself whether I could forgive her, and the answer keeps changing.",
+      "me: Will you forgive her? I need to hear someone else say it first.",
+      "me (lose): I think I will, if she keeps the table set and stops talking about the cost.",
+      "me (win): Stay on the sand with me. I want someone here when I decide."
      ]
     },
     {
@@ -11427,7 +11587,10 @@
       "me enters center with fade",
       "me (win): I'm still thinking about Kyoko. Justice is complicated, it turns out.",
       "player: It is.",
-      "me: Kyoko's coming to talk. Stand with me, whichever way I choose."
+      "me: Kyoko's coming to talk. Stand with me, whichever way I choose.",
+      "me (lose): She wants me to forgive her. I'm not sure I can, yet.",
+      "me (win): The waves are loud tonight. It's hard to hear myself think.",
+      "me: Stay close. I'll decide when she gets here."
      ]
     },
     {

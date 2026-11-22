@@ -321,6 +321,12 @@
     else if (!wanted && score.running) score.stop();
   }
 
+  // The song's own loudness follows the music slider: 1 is the engine's level, so the default (60) is unchanged.
+  // Guarded: until the engine has the setVolume call, the slider does nothing to a song.
+  function setSongVolume() {
+    if (window.MinigameAudio && window.MinigameAudio.setVolume) window.MinigameAudio.setVolume(musicVolume / 60);
+  }
+
   // The chosen song: on while sound and music are on and the duel isn't over; off otherwise (and on leaving).
   function syncSong() {
     if (score && score.running) score.stop();
@@ -334,6 +340,7 @@
       // Still wanted, and still the same song? (The settings may have moved on while it loaded.)
       if (song !== playing || !soundOn || !musicOn || !soundVolume || (board && board.game_over)) return;
       window.MinigameAudio.setMuted(false);
+      setSongVolume();
       // A song already playing crossfades to the new one; otherwise it starts. The tier and climax follow the duel.
       const current = window.MinigameAudio.status ? window.MinigameAudio.status().playing : null;
       if (current && current !== song) window.MinigameAudio.setSong(song);
@@ -367,6 +374,12 @@
   }
   window.addEventListener("weiss:song-change", songChanged);
   window.addEventListener("storage", (event) => { if (event.key === TOWN_MUSIC_KEY) songChanged(); });
+  // The music slider moved in another tab (the town's): take it here, as the slider does.
+  window.addEventListener("storage", (event) => {
+    if (event.key !== MUSIC_VOLUME_KEY || event.newValue === null || !Number.isFinite(Number(event.newValue))) return;
+    musicVolume = Number(event.newValue);
+    if (song) setSongVolume(); else syncMusic();
+  });
 
   // The board, and whose theme it is, as the music follows them.
   function tellScore() {
@@ -434,7 +447,8 @@
   function setMusicVolume(volume, save) {
     musicVolume = volume;
     try { localStorage.setItem(MUSIC_VOLUME_KEY, String(volume)); } catch (e) { /* only this visit, then */ }
-    syncMusic();
+    // A song playing takes the slider as its volume only: syncMusic would restart it from the top.
+    if (song) setSongVolume(); else syncMusic();
     clearTimeout(musicSaveTimer);
     if (save) musicSaveTimer = setTimeout(() => saveSound({ music: String(volume) }), SOUND_SAVE_MS);
   }
@@ -547,17 +561,17 @@
       tone(ctx, out, { ms: 380, from: 1600, to: 520, wave: "triangle", gain: 0.5 });
       noise(ctx, out, { ms: 380, from: 7000, to: 2500, q: 2, gain: 0.4 });
     },
-    // A level up: cards fanned out under a rising arpeggio, ending on a ringing chord.
+    // A level up: cards fanned out under a rising arpeggio, ending on a ringing chord. Trimmed about 3 dB: it stood above the other effects.
     level: (ctx, out) => {
-      sample(ctx, out, "fan", { gain: 1.1 });
+      sample(ctx, out, "fan", { gain: 0.8 });
       noise(ctx, out, { ms: 420, from: 600, to: 6000, gain: 0.35 });
-      [523, 659, 784].forEach((hz, i) => tone(ctx, out, { at: i * 80, ms: 180, from: hz, wave: "triangle", gain: 0.55 }));
-      for (const hz of [1047, 1319, 1568]) bell(ctx, out, { at: 240, ms: 1400, hz, gain: 0.3 });
+      [523, 659, 784].forEach((hz, i) => tone(ctx, out, { at: i * 80, ms: 180, from: hz, wave: "triangle", gain: 0.4 }));
+      for (const hz of [1047, 1319, 1568]) bell(ctx, out, { at: 240, ms: 1400, hz, gain: 0.22 });
     },
-    // Something needs our answer: a low, rising game-menu blip.
+    // Something needs our answer: a low, rising game-menu blip. Level with damage (momentary max about -15.4 dB after the limiter): it plays on nearly every decision.
     prompt: (ctx, out) => {
-      if (sample(ctx, out, "prompt", { gain: 1.1 })) return;
-      [392, 523, 784].forEach((hz, i) => tone(ctx, out, { at: i * 75, ms: i === 2 ? 220 : 110, from: hz, wave: "square", gain: 0.25 }));
+      if (sample(ctx, out, "prompt", { gain: 0.37 })) return;
+      [392, 523, 784].forEach((hz, i) => tone(ctx, out, { at: i * 75, ms: i === 2 ? 220 : 110, from: hz, wave: "square", gain: 0.084 }));
     },
     // A deck out: the waiting room shuffled into a new deck.
     shuffle: (ctx, out) => {

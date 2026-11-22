@@ -1089,7 +1089,9 @@
       "me (win): The ribbon's still tied to the gate. Silver, like the spirit's, and it's warm to touch.",
       "player: Is it a trick?",
       "me: Okarun says yes, and he's been right before. I want to believe it isn't, and I hate that wanting it makes me stupid.",
-      "me (lose): Stay close, and watch the shadows by the fence. If something moves, tell me before I do something silly."
+      "me (lose): Stay close, and watch the shadows by the fence. If something moves, tell me before I do something silly.",
+      "me (win): The ribbon's pulling toward the trees. That's not the wind.",
+      "me: Hold my sleeve if the lights go out. I'm not proud of that."
      ]
     },
     {
@@ -2154,11 +2156,11 @@
       "me enters center with fade",
       "me (win): Okarun wants my talisman for his yokai hunt. It's the last one Grandma made.",
       "player: What are you going to do?",
-      "me: I want to know if he'll use it to help, or just show it off to the others. He's very proud of his clippings.",
+      "me: I want to know if he'll help with it, or just show it off to the others. He's very proud of his clippings.",
       "me (lose): Grandma would have given it to him on the first try. She liked people who asked nicely, and who fought well.",
       "player: Do you want me to ask him for you?",
       "me (win): No. I want to ask him myself. And I want you there, holding the lantern, while I do.",
-      "me: Meet me at the shrine tonight. Tell me whether he's going to use it to help, or to show off, and I'll decide after.",
+      "me: Meet me at the shrine tonight. Tell me whether he's going to help with it, or to show off, and I'll decide after.",
       "me (lose): The talisman's tied with Grandma's knot. It doesn't come undone, so whoever holds it has to earn it."
      ]
     },
@@ -2258,8 +2260,10 @@
       "me enters center with fade",
       "me (win): The shrine's dark. Okarun's coming with his yokai clippings, and he wants my talisman for the hunt.",
       "player: Is he going to be nice about it?",
-      "me: He's going to be Okarun about it. Which means he'll fight whatever's in front of him, and then ask for the talisman back.",
-      "me (lose): Let's see what he does with it. If he uses it to help, I'll give it to him. If not, it goes back on the wall."
+      "me: He's going to be Okarun about it. He'll charge at whatever's in front of him, then ask for the talisman back.",
+      "me (lose): Let's see what he does with it. If he uses it to help, I'll give it to him. If not, it goes back on the wall.",
+      "me (win): The talisman's the only thing my grandmother left me that works.",
+      "me: Light the lantern. I'd rather not do this in the dark."
      ]
     },
     {
@@ -3418,9 +3422,12 @@
       "me (win): The granny's speed was bought, not born. Someone sold it to her in a bottle, and I think it's an alien trader.",
       "player: Who's buying it?",
       "me: Cinder. She's been asking about power she wasn't born with, and the bottle has the same label as the granny's.",
-      "me (lose): Meet me at the arena tonight. You'll be the witness when she tells me who sold it, or lies about it.",
-      "player: Are you going to fight her?",
-      "me (win): You are. I'll be the one who asks the questions, and you'll be the one who makes her answer."
+      "me (lose): Meet me at the arena tonight. I want a witness when she tells me who sold it, or lies about it.",
+      "player: Will she tell you the truth?",
+      "me (win): Only if she thinks she's winning. That's the only way Cinder talks.",
+      "me: The label has a symbol on it, a spiral with a dot. I've seen it somewhere, but not on a bottle.",
+      "me (lose): Keep your eyes on her hands, not her face. She hides things in her sleeves.",
+      "me (win): If she goes for the bottle, don't stop her. I need to see where she runs."
      ]
     },
     {
@@ -4558,7 +4565,9 @@
       "me: Ruby's on the other side of the alley, glowing like a lamp. Are you ready?",
       "player: I'm ready.",
       "me (lose): Then go. I'll watch from the shadows, and I'll be impressed, or I won't.",
-      "me (win): If she's got her scythe out, don't turn your back on it. It's bigger than she is, and it knows the way home."
+      "me (win): If she's got her scythe out, don't turn your back on it. It's bigger than she is, and it knows the way home.",
+      "me: Keep to the left wall. The light is brightest on the right, and she'll be waiting there.",
+      "me (lose): Good. That's the first sensible thing anyone's done this week."
      ]
     },
     {
@@ -4596,7 +4605,9 @@
       "me (win): The power's ready, and Beacon is where I'll take it. Stand with me, if you've decided.",
       "player: And if I don't?",
       "me (lose): Then stop me, if you can. Ruby's coming up the stairs, and she's furious.",
-      "me: Watch the sky over the school. That's where it'll start, if it does."
+      "me: Watch the sky over the school. That's where it'll start, if it does.",
+      "me (win): I've been waiting for this since the day the bottle opened.",
+      "me: You don't have to like what I'm doing. You just have to see it."
      ]
     },
     {
@@ -5479,10 +5490,10 @@
        ]
       },
       "scene": "World: Ruby Rose, Silver Eyes",
-      "about": "Ruby's eyes have gone silver twice now, and she's frightened of what they do. Kana is the only one who knows the old stories, and she doesn't want to tell Ruby what they mean.",
+      "about": "Ruby's eyes have gone silver twice now, and she's frightened of what they do. Weiss has read the old reports on silver eyes, and she doesn't want to tell Ruby what they mean.",
       "offer": [
        "them (dismayed): My eyes went silver again. In the middle of the cafe, with everyone looking.",
-       "them: Kana says she knows what it means. She's watching me from the stage. Go and ask her, and then beat her, so she takes me seriously."
+       "them: Weiss says she knows what it means. Go and ask her, and then beat her, so she takes me seriously."
       ],
       "stages": [
        {
@@ -5504,19 +5515,19 @@
         ]
        },
        {
-        "text": "Fight Kana, to make her tell Ruby the truth",
-        "scene": "World: Ruby Rose, Kana Sees",
+        "text": "Fight Weiss, to make her tell Ruby the truth",
+        "scene": "World: Ruby Rose, Weiss Sees",
         "objectives": [
          {
           "do": "defeat",
           "cpus": [
-           "Kana Arima"
+           "Weiss Schnee"
           ]
          }
         ]
        },
        {
-        "text": "Tell Ruby what Kana said",
+        "text": "Tell Ruby what Weiss said",
         "objectives": [
          {
           "do": "talk",
@@ -5694,8 +5705,11 @@
       "me enters center with rise",
       "me (lose): Scythe, sniper, and the third one, the big one. Did you see it?",
       "player: I saw the sniper.",
-      "me (win): The sniper's the easy one. Stop, I'm going to fall, I'm not falling.",
-      "me: Okay. That's the bow. I landed it. Thank you for watching, I felt so cool."
+      "me (win): The sniper's the easy one. The last shape, I think I'm going to fall, and I'm not falling.",
+      "me: Okay. That's the bow. I landed it. Thank you for watching, I felt so cool.",
+      "me (lose): Ha! Once more, with the spin. Count me in.",
+      "me (win): If I wobble on the left, that's on purpose, right? Tell me it's on purpose.",
+      "me: I'm going again. Keep your eyes on the bow, not the sky."
      ]
     },
     {
@@ -5718,7 +5732,7 @@
       "me enters left with slide",
       "me (win): My eyes went silver again. In the middle of the cafe, with everyone looking at me.",
       "player: Are you okay?",
-      "me: I don't know. Kana was on the stage, watching me. She knows what it means, and she won't say.",
+      "me: I don't know. Weiss was in the hall, watching me. She knows what it means, and she won't say.",
       "me (lose): Come to the cafe this evening. I'll ask her, and you can stand there and not look scared for me."
      ]
     },
@@ -5728,24 +5742,26 @@
       "cast me as Ruby Rose",
       "background cafe",
       "me enters left with slide",
-      "me (win): Kana won't tell me what the silver means. She says she'll only tell me if someone beats her.",
+      "me (win): Weiss won't tell me what the silver means. She says she'll only tell me if someone beats her.",
       "player: Then we'll beat her.",
       "me (lose): That's the Ruby I like. Okay. I'll keep my eyes on her, and you keep your eyes on her too.",
-      "me: Her temper's bad, and the stage is her favourite place to lose it. Watch the spotlight."
+      "me: Her temper's bad, and she loses it at the table. Watch her hands.",
+      "me (win): If she gets up, don't let her leave the cafe. I need that answer.",
+      "me: Order something sweet first. She'll be calmer with cake in front of her."
      ]
     },
     {
-     "name": "World: Ruby Rose, Kana Sees",
+     "name": "World: Ruby Rose, Weiss Sees",
      "script": [
       "cast me as Ruby Rose",
-      "cast kana as Kana Arima",
+      "cast weiss as Weiss Schnee",
       "background cafe",
       "me enters center with fade",
-      "kana enters left with slide",
-      "kana: Your friend beat me, Ruby. Fine. The silver is power that someone is selling to the wrong people.",
+      "weiss enters left with slide",
+      "weiss: {player} beat me, Ruby. Fine. The silver is power someone is selling, and it's the one thing I haven't written down.",
       "me (win): Someone is selling my eyes? Who?",
-      "kana: Cinder. She buys the silver from the ones who can't hold it. Ruby, you should be afraid of her.",
-      "me (lose): I'm not afraid of her. I'm angry. Keep your answer, Kana, and I'll keep my eyes open."
+      "weiss: I don't know yet. That's why I'm telling you, and not the report.",
+      "me (lose): Then keep your notes, and I'll keep my eyes open."
      ]
     },
     {
@@ -6649,7 +6665,7 @@
       "about": "Weiss is trying to summon her family's knight, the one her father used to call up. Her first attempt fails, and she's sure she knows why.",
       "offer": [
        "them (dismayed): I tried the summoning again. The circle lit, and nothing came.",
-       "them: Ram and Rem keep saying I'm not ready. Beat them, and maybe the knight will answer you first."
+       "them: Ruby keeps saying the circle is wrong. Beat her, and maybe the knight will answer you first."
       ],
       "stages": [
        {
@@ -6671,13 +6687,13 @@
         ]
        },
        {
-        "text": "Fight Ram/Rem, to prove she's ready for the knight",
-        "scene": "World: Weiss Schnee, Twins Fall",
+        "text": "Fight Ruby, to prove she's ready for the knight",
+        "scene": "World: Weiss Schnee, Ruby Doubts",
         "objectives": [
          {
           "do": "defeat",
           "cpus": [
-           "Ram/Rem"
+           "Ruby Rose"
           ]
          }
         ]
@@ -6689,7 +6705,7 @@
           "do": "talk",
           "to": "Weiss Schnee",
           "script": [
-           "them (dismayed): They said I'm ready, but only because {player} stood where they could see.",
+           "them (dismayed): Ruby said I'm ready, but only because {player} stood where she could see.",
            "them (pleased): ...Then I'll try again tomorrow. With a witness, and without the temper."
           ]
          }
@@ -6860,7 +6876,9 @@
       "me (lose): Read it aloud, the bit you marked. Slowly, so I can hear where it's wrong.",
       "player: The definition is one step too early.",
       "me (win): Yes. And I missed it, which I'm not going to forgive myself for.",
-      "me: Mark the rest in red. I want to see what else I've got wrong before my father does."
+      "me: Mark the rest in red. I want to see what else I've got wrong before my father does.",
+      "me (lose): Good. Keep going. Don't stop until the page is clean.",
+      "me (win): My father's notes were always neat. Mine are not, and that's the first thing he'll say."
      ]
     },
     {
@@ -6881,10 +6899,10 @@
       "cast me as Weiss Schnee",
       "background shrine",
       "me enters center with fade",
-      "me (win): The circle lit, and nothing came. Ram and Rem keep telling me I'm not ready for the knight.",
+      "me (win): The circle lit, and nothing came. Ruby keeps telling me I'm not ready for the knight.",
       "player: Are they right?",
-      "me: I don't know. They're maids, but they've seen my father's summonings, which I haven't.",
-      "me (lose): Meet me at the arena this evening. If I can't call it, maybe I can beat the twins into letting me try."
+      "me: I don't know. She's been in the circle with me, and she says the lines are wrong.",
+      "me (lose): Meet me at the arena this evening. If I can't call it, maybe I can beat Ruby into letting me try."
      ]
     },
     {
@@ -6896,20 +6914,23 @@
       "me (win): The circle's drawn on the floor. It's the same as my father's, down to the last line.",
       "player: Are you ready?",
       "me: No. But Ram and Rem are watching, and they'd never let me say so.",
-      "me (lose): Stand at the edge and watch. If the knight comes, you'll be the first to see it."
+      "me (lose): Stand at the edge and watch. If the knight comes, you'll be the first to see it.",
+      "me (win): The chalk's still wet on the third line. Someone's been here before me.",
+      "me: Step back from the edges. If the circle breaks, I want you outside it."
      ]
     },
     {
-     "name": "World: Weiss Schnee, Twins Fall",
+     "name": "World: Weiss Schnee, Ruby Doubts",
      "script": [
       "cast me as Weiss Schnee",
-      "cast ram as Ram/Rem",
+      "cast ruby as Ruby Rose",
       "background arena",
       "me enters center with fade",
-      "ram enters right with slide",
-      "ram: {player} beat me, Weiss. Rem is watching, and she's going to say I was too slow.",
-      "me (win): You were too slow. But you were also right about my circle.",
-      "ram: Then take your circle, and be the heiress you want to be. We'll see if you can keep it lit."
+      "ruby enters right with slide",
+      "ruby: {player} beat me, Weiss. The circle's still wrong, and you lit it anyway.",
+      "me (win): I lit it because the knight is mine to call, Ruby. You don't get to vote on that.",
+      "ruby: Then call it, and be the heiress you want to be. We'll see if you can keep it lit.",
+      "me (lose): I will. Thank you for the fight, and for the honest doubt."
      ]
     },
     {
@@ -6949,7 +6970,9 @@
       "me (win): The knight's in the air over the roof. It's not fully here, but it's close.",
       "player: Is that safe?",
       "me (lose): Not in the slightest. But it's mine to call, and I'm not going to waste the moment.",
-      "me: Ruby's on the stairs. Stand where you can see both of us, and don't let her take the circle from me."
+      "me: Ruby's on the stairs. Stand where you can see both of us, and don't let her take the circle from me.",
+      "me (win): If it falls, don't try to catch it. Let it land on the roof.",
+      "me: Hold still. It's turning toward you."
      ]
     },
     {
@@ -8092,7 +8115,9 @@
       "me (lose): Good, you came. Giorno's on his way. He's been looking for me since he was a child.",
       "player: Are you nervous?",
       "me (win): Never. I'm a bit impatient. Time keeps slipping, and I don't like waiting for my son.",
-      "me: Stand where he'll see you first. He'll take a long look at the one who brought him here."
+      "me: Stand where he'll see you first. He'll take a long look at the one who brought him here.",
+      "me (lose): You did well to come. Most people would have stayed away from this arena.",
+      "me (win): Keep your hands visible. Giorno always looks at hands first."
      ]
     },
     {
@@ -8130,7 +8155,9 @@
       "me (win): Jolyne's coming with her string. She thinks she can cut my heaven apart.",
       "player: Can she?",
       "me (lose): Not tonight. Stand beside me, and watch what time does when I stop it. You'll see the whole arena freeze.",
-      "me: If she gets close, don't step back. She'll think you're afraid, and that's the only thing she can use."
+      "me: If she gets close, don't step back. She'll think you're afraid, and that's the only thing she can use.",
+      "me (win): Hear the clock? It's the one sound I can't stop.",
+      "me: Count the seconds with me. Then we'll see what the arena does."
      ]
     },
     {
@@ -9229,7 +9256,9 @@
       "me (lose): The flower's up. Look at the petals. The coin's still in the middle, and it's still gold.",
       "player: It's beautiful.",
       "me (win): It's a deal, of course. The coin is mine, and the flower is yours to keep, if you want it.",
-      "me: Don't sell it. That's the only thing I'm going to ask. Nobody sells a flower like this."
+      "me: Don't sell it. That's the only thing I'm going to ask. Nobody sells a flower like this.",
+      "me (lose): Here, hold it up to the light. It changes colour when it's honest.",
+      "me (win): It's changing now. Careful, or you'll get a lesson about deals."
      ]
     },
     {
@@ -9294,7 +9323,7 @@
       "me (lose): To make the gold flower grow in every street in town, so nobody's forced to walk in his shadow.",
       "player: That's big.",
       "me (win): It's bigger than heaven. Heaven only has room for one man. My dream has room for everyone who wants a flower.",
-      "me: Come to the arena tonight. I'm going to fight him, and I want you to hear what my dream is when I say it out loud.",
+      "me: Come to the arena tonight. I'm going to fight him, and I want you to hear what my dream is when I say it.",
       "player: Will he listen?",
       "me (win): He never listens. That's why I have to say it out loud, so the whole arena hears it first.",
       "me (lose): Stand where he can see you. I want him to know someone heard me say it."
@@ -9309,7 +9338,9 @@
       "me (win): The arena's quiet, and my father's waiting at the far end, smiling. He never stops smiling.",
       "player: Are you ready?",
       "me (lose): No. But my dream is ready for me, and that's the part that matters tonight.",
-      "me: Hold your ground. If he freezes time, don't freeze with him. Keep walking, and I'll follow."
+      "me: Hold your ground. If he freezes time, don't freeze with him. Keep walking, and I'll follow.",
+      "me (win): He'll try to talk me round, the way he always does. I won't listen.",
+      "me: Stay near the arch. That's the only part of the floor that doesn't shake."
      ]
     },
     {
@@ -10399,7 +10430,9 @@
       "me (lose): There. A proper cradle, between your fingers, and no knots anyone can see.",
       "player: It's beautiful.",
       "me (win): It's the first thing I've made since I got out that wasn't a way out of something.",
-      "me: Hold still. I want to try a second one, between your wrists, and see if it holds."
+      "me: Hold still. I want to try a second one, between your wrists, and see if it holds.",
+      "me (lose): It's holding. Good. Don't move your hands until I say.",
+      "me (win): My father would have laughed at this. I'm not sure whether I'm glad or angry about that."
      ]
     },
     {
@@ -10435,7 +10468,9 @@
       "me (win): The shrine's quiet, and the string's humming. It's trying to tell me something about my father.",
       "player: What does it say?",
       "me: It doesn't say anything. It just tightens when I think of him, which is every few minutes.",
-      "me (lose): Keep your hands still while I go and find Giorno. I'll be back before the string gets angry."
+      "me (lose): Keep your hands still while I go and find Giorno. I'll be back before the string gets angry.",
+      "me (win): If the string snaps, don't touch it. It bites.",
+      "me: Light the lamp by the door. I don't want to walk in the dark."
      ]
     },
     {
@@ -10473,7 +10508,9 @@
       "me (win): DIO's in the arena, and he's keeping his heaven still. He's watching me over the top of his clock.",
       "player: Are you ready?",
       "me (lose): No. But my father's on the other side of that heaven, and I'm not going to wait for it to fall.",
-      "me: Tie the string when I'm done. I'll need someone to hold it while I walk back in."
+      "me: Tie the string when I'm done. I'll need someone to hold it while I walk back in.",
+      "me (win): If the clock stops, don't look at it. Look at me.",
+      "me: Okay. Here I go."
      ]
     },
     {
@@ -11557,7 +11594,9 @@
       "me (lose): There. The cup's on the table. Smell it. It smells like tea, and it isn't.",
       "player: What's in it?",
       "me: Something you'd miss if you didn't know. Drink it while you answer my first question.",
-      "me (lose): Who would you save first, if the tea were poison and I were the only one who could tell you?"
+      "me (lose): Who would you save first, if the tea were poison and I were the only one who could tell you?",
+      "me (win): Take your time. I've got all day, and the tea's already cooling.",
+      "me: Tell me honestly. I want to know what you'd do."
      ]
     },
     {
@@ -11592,7 +11631,9 @@
       "me (lose): Emilia's trial is a tomb, and she's frightened of what's inside it. I can see the fear from here.",
       "player: Are you going to help her?",
       "me: Only if she asks me properly, which she won't. So I'm going to see what she does without me.",
-      "me (win): Beat the twins, and tell me if she's still standing when the trial starts."
+      "me (win): Beat the twins, and tell me if she's still standing when the trial starts.",
+      "me (lose): The trial's a test of her nerve. The tomb is just a room.",
+      "me: Go on, then. Ask me the question you came here to ask."
      ]
     },
     {
@@ -11646,7 +11687,9 @@
       "me (win): The tomb's gate is open, and Emilia's already inside. She didn't want my help, and she went in anyway.",
       "player: Is she in danger?",
       "me (lose): Of course. That's what makes it interesting. Stand by the gate with me, and watch her choose.",
-      "me: The contract's in my hand. The light's already flickering on the page."
+      "me: The contract's in my hand. The light's already flickering on the page.",
+      "me (win): If she calls for help, I might answer. Or I might not.",
+      "me: Keep your voice down. The tomb listens."
      ]
     },
     {
@@ -12731,7 +12774,9 @@
       "me (lose): Puck likes the sea. He sits right on the edge and watches the waves come in, like he's waiting for them.",
       "player: Is he going to come over?",
       "me: Not until you stop looking at him like he's a lost cat. He's not lost, he's chosen.",
-      "me (win): He's coming now. Hold your hand still. He's going to decide if you're trusted."
+      "me (win): He's coming now. Hold your hand still. He's going to decide if you're trusted.",
+      "me (lose): Good. He likes it when people are patient with him.",
+      "me: Sit down, and let the tide come up to your ankles. It helps."
      ]
     },
     {
@@ -12767,7 +12812,9 @@
       "me (win): The tomb's gate is cold, and the stone is still warm from the sun. I don't like it.",
       "player: Do you want to go in now?",
       "me: Not yet. Ram and Rem are going to test me first, and they're going to be very strict about it.",
-      "me (lose): Puck's on the gate. He's watching the stone like it might move. He's braver than me."
+      "me (lose): Puck's on the gate. He's watching the stone like it might move. He's braver than me.",
+      "me (win): If the stone shifts, I'll need you to pull me back. I can't do it alone.",
+      "me: Let's wait for the lamp. It's always steadier once it's lit."
      ]
     },
     {
@@ -12820,7 +12867,9 @@
       "me (win): The contract's on the shrine wall, and the light is flickering. Puck's sitting on it.",
       "player: Do you want me to take it?",
       "me (lose): I want you to tell me what you'd do. Then I'll decide, and you can be angry at me if I'm wrong.",
-      "me: Echidna's coming to the gate. Stand where she can see you both."
+      "me: Echidna's coming to the gate. Stand where she can see you both.",
+      "me (win): If she offers me something, I'll say no. I think. Tell me if I've misjudged her.",
+      "me: Keep Puck where he is. He's calmer when he can see the wall."
      ]
     },
     {
@@ -13908,7 +13957,9 @@
       "me: Hold the tray level. Level. Now bring it to the table without a sound.",
       "player: It didn't spill.",
       "me (win): That was adequate. Don't let it go to your head, or I'll give you more tasks.",
-      "me: Rem's going to say you were quick. Ignore her, she's always generous with praise."
+      "me: Rem's going to say you were quick. Ignore her, she's always generous with praise.",
+      "me (lose): Try once more with the cups. Slower, this time.",
+      "me (win): If you drop one, you wash them all. That's the rule."
      ]
     },
     {
@@ -13942,7 +13993,10 @@
       "me enters center with fade",
       "me (win): Rem's holding the horn. She hasn't put it down since the fire.",
       "player: Is she going to be okay?",
-      "me: She will be, if Weiss stops talking. Stand by the wall and let the fight happen."
+      "me: She will be, if Weiss stops talking. Stand by the wall and let the fight happen.",
+      "me (lose): Rem trusts you more than she trusts me. That's a fact I'm going to hold against her.",
+      "me (win): If she blows the horn, step back. It's louder than it looks.",
+      "me: Watch the square. The fight will start there."
      ]
     },
     {
@@ -13980,7 +14034,9 @@
       "me (win): The garden's quiet. Rem's out here, holding the horn, and she hasn't said a word since sunset.",
       "player: What's she deciding?",
       "me: Whether to hold my hand, or to let go of the horn and the guilt. I know which one she'll choose.",
-      "me (lose): Stand with me while she decides. I don't want to be the one who lets go first."
+      "me (lose): Stand with me while she decides. I don't want to be the one who lets go first.",
+      "me (win): The roses are cold, and the wind is coming up the path.",
+      "me: Give her a minute. She'll come over when she's ready."
      ]
     },
     {

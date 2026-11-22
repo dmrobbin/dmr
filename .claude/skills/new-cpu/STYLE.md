@@ -122,12 +122,21 @@ What a CPU does in world mode's town, in its file's `world` part.
     (+2 to +5); `give money` and `give gift` rarely, as thanks. `fight stake …` only for a character who'd bet.
 - **Moods**: `them (pleased)` for happy, `them (dismayed)` for put out; the player's replies (`player:`,
   with no mood: they have no face in the box) are rare: chatter is mostly the CPU talking.
-- **Quests** (`quests`, optional for now; reference.md has the format): when asked for them, two gate quests, one with
-  `"gates": 2` (Friend) and one with `"gates": 5` (Best friend), since those rank-ups play scenes and should be
-  earned. Each: an `about` in one or two sentences, an `offer` of 2–4 chatter lines in the character's voice, 1–3
-  stages of 1–3 objectives that suit the character (a rival's `defeat`, a collector's `have_card` of a card from
-  their own deck, a schemer's `talk` with a choice that sets a flag), and endings. Most quests have one ending; give
-  a choice (and `locks` or `removes`) only where the story has a real conflict, and say why in the ending's `about`.
-  `removes` is for the rare, dramatic case (one character finishing another): use it sparingly. Keep objectives
-  winnable in a fair game: no luck-based feats.
+- **Quests** (`quests`; reference.md has the format): a connected three-quest arc per CPU, told as one story.
+  - Quest 1 (`"requires": {"rank": 1}`): the hook. A start scene where the CPU makes the offer, a visit or two, and
+    an ending. No duel.
+  - Quest 2 (`"gates": 2`, requires quest 1): a story-motivated duel, with a start scene, a visit, an after-duel
+    scene and an ending.
+  - Quest 3 (`"gates": 5`, requires quest 2): the payoff. A start scene that explains the stakes, a visit, a final
+    duel, and a choice. Locks go on quest 3's choice endings only.
+  - Every quest has a start scene and an ending scene. Quests 2 and 3 also have an after-duel scene. Each has an
+    `about` in one or two sentences and an `offer` in the CPU's voice.
+  - Bars: a visit has at least 5 dialogue lines; a quest 3 start has at least 8. The defeated CPU speaks to
+    `{player}` in its after-duel scene. The giver never says they will fight, duel or beat the player. A scene has
+    at most two player lines, never back to back, and no line is said twice.
+  - Duels: the player duels a CPU from the same series, or the giver. A cross-series duel needs a reason stated in
+    the story.
+  - Endings: closure text ("closed for good") only on an ending with a `locks` entry. A non-lock ending never says
+    the quest stays open.
+  - Keep objectives winnable in a fair game: no luck-based feats.
 - **`estranged`** chatter: one or two cold lines, said once a quest choice has closed this CPU's friendship.

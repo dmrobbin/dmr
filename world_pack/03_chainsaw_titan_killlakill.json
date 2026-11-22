@@ -1000,9 +1000,11 @@
       "background rooftop",
       "me enters center with fade",
       "me: I light one and don't smoke it. It keeps my hands busy while I think.",
-      "me (win): Not since my dad. Just the lighter. The smoke is for the other guy, the one who isn't here.",
+      "player: Since when do you carry a lighter with no cigarette?",
+      "me (win): Since my dad. The lighter's his. The smoke is for the other guy, the one who isn't here.",
       "me: Don't say anything about it. That's the whole point of the roof.",
-      "me (lose): Look at the city. It's full of people who think they're safe."
+      "me (lose): Look at the city. It's full of people who think they're safe.",
+      "me (win): They'd be wrong, if they knew what's under the streets."
      ]
     },
     {
@@ -1038,7 +1040,9 @@
       "me (win): Denji, you're still behind me. The devil's ahead. Stay back.",
       "player: He's not listening.",
       "me: He never does. He thinks being loud is the same as being brave.",
-      "me (lose): So I'll test him. If he can keep up in the alley, he can keep up anywhere."
+      "me (lose): So I'll test him. If he can keep up in the alley, he can keep up anywhere.",
+      "me (win): Keep your eyes on the wall, not the shadows. The shadows are where it hides.",
+      "me: Quiet now. It's close."
      ]
     },
     {
@@ -1093,7 +1097,9 @@
       "me (win): The lighter's still in my hand. I've been holding it for three years, waiting for this night.",
       "player: And what do you want?",
       "me: I want to go after him myself. Not Makima's way, not on her leash. Mine.",
-      "me (lose): Stay on the roof. If she comes up, you're my witness, not her dog."
+      "me (lose): Stay on the roof. If she comes up, you're my witness, not her dog.",
+      "me (win): Whatever happens, I'll walk down those stairs on my own feet.",
+      "me: Now go, before I change my mind."
      ]
     },
     {
@@ -2218,7 +2224,9 @@
       "me (win): The ring's on the ledge, and Pochita's chewing on the strap. I can't stop him.",
       "player: Power's coming up the stairs.",
       "me: I hear her. She's been sniffing my heart for three days. She thinks it's hers.",
-      "me (lose): Stand back. I'm not letting her take the ring, or the contract, or me."
+      "me (lose): Stand back. I'm not letting her take the ring, or the contract, or me.",
+      "me (win): Pochita, let go. Please. She'll stop if you stop.",
+      "me: Okay. Here she comes. Keep your hands where she can see them."
      ]
     },
     {
@@ -2258,7 +2266,7 @@
       "player: What do you want?",
       "me: I want to not be scared of the choice. I'm scared of the ring, mostly. It's the only thing I've ever bought.",
       "me (lose): Aki says hunting's the only job I've got. Makima says I'm a dog. Power says I'm a thief.",
-      "player: And what do you say?",
+      "player: Pochita's listening too, isn't he?",
       "me (win): I say I've got a pocket full of ring and a devil who won't shut up. That's not a job.",
       "me: Pochita's chewing the strap again. He thinks we're going to fight Aki in the alley, and he might be right.",
       "me (lose): Let's go. You're going to see me choose, and I'll choose before he does."
@@ -2273,7 +2281,9 @@
       "me (win): Aki's in the alley, with his smoke. He says the rules haven't changed.",
       "player: What are the rules?",
       "me: Hunt the devils, don't ask for thanks. That's all. He said that to me on the first day, and he's been saying it since.",
-      "me (lose): Let's go before he leaves. Pochita's coming too. He's still got the ring."
+      "me (lose): Let's go before he leaves. Pochita's coming too. He's still got the ring.",
+      "me (win): He never asks me how I feel. I think that's his way of saying he's proud.",
+      "me: Come on. The alley's dark enough to hide a devil."
      ]
     },
     {
@@ -3398,7 +3408,9 @@
       "me: I've read the old histories. Every world I've seen ends in pain. Mine won't.",
       "player: And Power?",
       "me (win): Power won't bend. She's loud, and she's been refusing me since the first week.",
-      "me (lose): Beat her, then. I'll watch how you do it, and how far you'll go for me."
+      "me (lose): Watch how she moves when she's angry. That's the part I need to understand.",
+      "me: Then stand by me when she comes in. I want you to see what happens to people who refuse.",
+      "me (win): Don't look away. I want to know whether you can watch it without flinching."
      ]
     },
     {
@@ -3453,7 +3465,9 @@
       "me (win): Aki's on the roof. He won't kneel, and he won't say the word I want.",
       "player: What are you going to do?",
       "me (lose): Make him. You're going to watch, and then you're going to thank me for the lesson.",
-      "me: The collar's in my hand. It's warm. I've been waiting a long time for a dog with his nerve."
+      "me: The collar's in my hand. It's warm. I've been waiting a long time for a dog with his nerve.",
+      "me (win): He'll come around. They always do, once they're tired enough.",
+      "me: Stay where I can see you. Your face tells me what you think of this."
      ]
     },
     {
@@ -4572,7 +4586,9 @@
       "me (win): The sun's still too bright out there, even now. I can't be out in the day.",
       "player: Is that why you're always indoors?",
       "me: That's why. Also people stare. Denji comes up here every week to steal blood from my supplies.",
-      "me (lose): He thinks it's a joke. It isn't. Sit in the shade and don't stare."
+      "me (lose): He thinks it's a joke. It isn't. Sit in the shade and don't stare.",
+      "me (win): Fine. Pour the tea and tell me what the town's saying about me.",
+      "me: Nothing good, I expect. They never do."
      ]
     },
     {
@@ -4611,7 +4627,9 @@
       "me: Makima sent her orders by a dog. A dog, {player}. So I'm going to hit her.",
       "player: Are you sure about this?",
       "me (win): No. But I'm going to be the greatest on my own terms, and that's sure enough.",
-      "me: If she wins, I'm her dog. If I win, she's the one who kneels. That's the whole plan."
+      "me: If she wins, I'm her dog. If I win, she's the one who kneels. That's the whole plan.",
+      "me (lose): Don't tell Denji I said that. He'll want to join in, and he'll ruin it.",
+      "me (win): Stand at the edge and count the strikes. I want a witness who can count."
      ]
     },
     {
@@ -5788,7 +5806,7 @@
       "me (lose): He won't look at me. He never does before a fight. It's how I know he's ready.",
       "player: Why did you want me here?",
       "me (win): Because someone should see what the plan costs, before it's done. I'd like it to be you.",
-      "me: Keep the ball in your pocket. It's the only thing I've ever given away without a price.",
+      "me: Keep the ball in your pocket. It's the one thing I've ever given away without a price.",
       "me (lose): Hold it steady, if the fight goes wrong. I'd like one of us to remember the throw."
      ]
     },
@@ -5801,7 +5819,9 @@
       "me (win): Levi's at the edge of the ring. He hasn't looked at me once, which is how I know he's ready.",
       "player: Is this the right thing?",
       "me: I don't know. But I'd rather be fought fairly than be left to rot in a corner of the wall.",
-      "me (lose): Keep the ball in your pocket. If I lose, you'll want something to remember me by."
+      "me (lose): Keep the ball in your pocket. If I lose, you'll want something to remember me by.",
+      "me (win): He'll be quick. I'll be slower, and that's the only fair thing about me.",
+      "me: Step back when the bell goes. The ground shakes when I move."
      ]
     },
     {
@@ -6923,7 +6943,9 @@
       "me (win): Levi's here, and he's watching me like a blade he doesn't trust.",
       "player: Is he going to fight you?",
       "me: He wants to test me. I'm going to let him, and see if he still has the edge he had in the old days.",
-      "me (lose): He drinks tea like it's a military order. I'm not joking. He sets the cup down like a bomb."
+      "me (lose): He drinks tea like it's a military order. I'm not joking. He sets the cup down like a bomb.",
+      "me (win): If I start to lose my temper, get between us. Please.",
+      "me: Good. Keep your hands out of your pockets."
      ]
     },
     {
@@ -6977,7 +6999,10 @@
       "me enters center with fade",
       "me (win): I'm going to choose tonight. Whatever it is, I want someone to see it, the whole way through.",
       "player: I'm watching.",
-      "me (lose): Good. Then watch Mikasa. She's coming up the stairs now, and she's already angry."
+      "me (lose): Good. Then watch Mikasa. She's coming up the stairs now, and she's already angry.",
+      "me: She'll ask me to stop. I won't. Not this time.",
+      "me (win): If I'm wrong, tell me. I'd rather hear it from you than from the walls.",
+      "me: Stand still. She's close."
      ]
     },
     {
@@ -8146,8 +8171,10 @@
       "me enters center with fade",
       "me (win): I made a vow to Erwin, and I'm going to keep it tonight, one way or another.",
       "player: And if you can't?",
-      "me (win): Then I'll put the blades down. I'd rather not, but I can.",
-      "me: Stay on the roof. If I need a witness, I want someone who doesn't drink from the second cup."
+      "me: Then I'll put the blades down. I'd rather not, but I can.",
+      "me (lose): Stay on the roof. If I need a witness, I want someone who doesn't drink from the second cup.",
+      "me (win): Erwin would have had a plan for this. He always did.",
+      "me: Keep your voice low. The wind carries too far up here."
      ]
     },
     {
@@ -9014,9 +9041,9 @@
        ]
       },
       "scene": "World: Mikasa, Blade Test",
-      "about": "Mikasa wants to test her blades against Ryuko's living sword, to prove she's still the strongest in the training yard. She hasn't been able to hold her form since the scarf.",
+      "about": "Mikasa wants to test her blades against Levi, the one who taught her to hold a form, to prove she's still the strongest in the training yard. She hasn't been able to hold her form since the scarf.",
       "offer": [
-       "them: Ryuko's got a sword that talks back. I want to see what my blades do against it.",
+       "them: Levi taught me to hold a form. I want to see whether my blades still do what he taught.",
        "them (dismayed): Come to the arena this evening. Stand at the edge, and tell me if I'm slow."
       ],
       "stages": [
@@ -9039,13 +9066,13 @@
         ]
        },
        {
-        "text": "Fight Ryuko, to see whether her sword holds",
-        "scene": "World: Mikasa, Ryuko Beaten",
+        "text": "Fight Levi, to see whether her form holds",
+        "scene": "World: Mikasa, Levi Tests",
         "objectives": [
          {
           "do": "defeat",
           "cpus": [
-           "Ryuko Matoi"
+           "Levi"
           ]
          }
         ]
@@ -9254,7 +9281,7 @@
       "cast me as Mikasa",
       "background arena",
       "me enters left with slide",
-      "me (win): Ryuko's sword talks back, and it's heavier than mine. I want to test my blades against it.",
+      "me (win): Levi's blade is steady and his form never breaks. I want to test my blades against that.",
       "player: Are you ready?",
       "me: I haven't held my form since the scarf. I want to find out whether it's the scarf, or me.",
       "me: Come to the arena this evening. Stand at the edge and tell me if I'm slow. Don't be kind about it."
@@ -9266,24 +9293,26 @@
       "cast me as Mikasa",
       "background arena",
       "me enters center with fade",
-      "me (win): My blades are sharp, but I need to be sure they'll hold against that sword.",
+      "me (win): My blades are sharp, but I need to be sure my form holds against Levi.",
       "player: They look ready.",
       "me: Watch the swing. If it's slow, tell me. I'd rather know than be told it's fine.",
-      "me (lose): I'm going to hit it from the left. Ryuko's always going to the right, and she's predictable about it."
+      "me (lose): I'm going to hit it from the left. Levi always steps to the right, and he's predictable about it.",
+      "me (win): The wood's cracked from the last round. Don't step on the splinters.",
+      "me: Stand back, and count the strikes out loud."
      ]
     },
     {
-     "name": "World: Mikasa, Ryuko Beaten",
+     "name": "World: Mikasa, Levi Tests",
      "script": [
       "cast me as Mikasa",
-      "cast ryuko as Ryuko Matoi",
+      "cast levi as Levi",
       "background arena",
       "me enters center with fade",
-      "ryuko enters right with slide",
-      "ryuko: {player} got me, and Mikasa's blade lines are sharper than I thought. Ugh.",
-      "me (lose): My blades held. Your sword's heavier, but mine turns faster.",
-      "ryuko: Whatever. Next time I come with the uniform on full, and you'll see.",
-      "me (win): You swing from the shoulder, Ryuko. You'll tire first."
+      "levi enters right with slide",
+      "levi: {player} is quicker than I thought, Mikasa. Your form still goes wide when you're angry.",
+      "me (win): I know. I'll keep my blades in line, the way you taught me.",
+      "levi: Good. Then we'll train tomorrow, and I'll see whether it holds when you're calm.",
+      "me (lose): Tomorrow, then. Thank you for the fight, Levi."
      ]
     },
     {
@@ -9323,8 +9352,10 @@
       "me enters center with fade",
       "me (win): He's up here. He's not looking back at me, and I can't follow him without knowing why.",
       "player: Are you going to try?",
-      "me: I have to. But you'll fight him first, to find out whether I still can stop him, or only follow.",
-      "me (lose): Stand back. Count the knots while you wait. I'll be quick."
+      "me: I have to. But I need to know whether I can still stop him, or only follow.",
+      "me (lose): Stand back. Count the knots while you wait. I'll be quick.",
+      "me (win): He taught me to hold a form. I want to know whether it still holds when he's the one moving.",
+      "me: Here he comes."
      ]
     },
     {
@@ -10446,7 +10477,9 @@
       "me (win): The uniform is in the arena at night. Ryuko's bringing it to fight Satsuki, and she's careless with it.",
       "player: Then let's go.",
       "me: Careful. The dresses are listening, and some of them want out of the drawers.",
-      "me (lose): Ryuko's sword is in the other drawer. It's not alive, but it's sharp, and it's been talking to me."
+      "me (lose): Ryuko's sword is in the other drawer. It's not alive, but it's sharp, and it's been talking to me.",
+      "me (win): Don't touch the red one. It bites.",
+      "me: Whatever you do, keep the door shut behind you."
      ]
     },
     {
@@ -10502,7 +10535,9 @@
       "me (win): Mother's coming here soon. I need to be able to say no to her, out loud, and mean it.",
       "player: Can you?",
       "me: I've never tried. I'm going to open the box while she's standing in the door. Watch me sew, and tell me if my hands shake.",
-      "me (lose): The name on the box is hers. I'm going to read it now, and I'm going to decide what to do about it."
+      "me (lose): The name on the box is hers. I'm going to read it now, and I'm going to decide what to do about it.",
+      "me (win): Then I'll stitch it shut again, or I'll burn it. I haven't chosen yet.",
+      "me: Stand by the lamp. I'd like to see your face when I open it."
      ]
     },
     {
@@ -11555,7 +11590,7 @@
       "me: I chose the Life Fibers over them. Over humanity. Over myself.",
       "player: You can still choose something else.",
       "me (win): After all I've done?",
-      "player: After all you've done.",
+      "player: Nothing stops you from changing course now.",
       "me: ...You are a strange child.",
       "choice",
       "- I'm your friend, Ragyo.",
@@ -11622,8 +11657,10 @@
       "me enters center with fade",
       "me (lose): The warehouse is mine. Every dress here is a lesson I've taught, and every one of them is still on the rack.",
       "player: And Nui?",
-      "me (win): Nui's been hiding in here for weeks, sewing things I didn't ask for. Fight her, so she remembers who she belongs to.",
-      "me: Don't hold back. If you do, she'll think she's won, and that's worse."
+      "me (win): Nui's been hiding in here for weeks, sewing things I didn't ask for. She needs to remember who she belongs to.",
+      "me: Watch how she moves when I speak. That's the lesson, not the dress.",
+      "me (lose): You may be the one to remind her, if she forgets again.",
+      "me (win): Don't hold back on her when it comes. If you do, she'll think she's won, and that's worse."
      ]
     },
     {
@@ -11677,7 +11714,9 @@
       "me (win): Satsuki will be here soon. She'll try to talk me down, and she'll fail, the way she always does.",
       "player: Do you want me to stop her?",
       "me (lose): I want you to watch. If she starts talking about the family, you'll know what she's really after.",
-      "me: Then, if you choose to, you can fight her. Be sure of the choice first. Once it's cut, it stays cut."
+      "me: Then, if you choose to, you can fight her. Be sure of the choice first. Once it's cut, it stays cut.",
+      "me (win): She's been cutting me down since she was small. I don't need her to win this.",
+      "me: Stand where she can see you. She'll be angrier when she has to look at you."
      ]
     },
     {
@@ -12788,7 +12827,9 @@
       "me (win): I'm going to get the other half from Satsuki. Hold this while I'm gone. Don't let Senketsu near it.",
       "player: What if you don't come back?",
       "me (lose): Then Senketsu will make a fuss, and you'll have to deal with him. He's very loud when he's worried.",
-      "me: And you'll have the half blade. That's more than Dad had at the end, so use it."
+      "me: And you'll have the half blade. That's more than Dad had at the end, so use it.",
+      "me (win): I'll be back before the wind changes. Keep your eyes on the door.",
+      "me: Hold it with both hands. It's heavier than it looks."
      ]
     },
     {
@@ -12827,7 +12868,9 @@
       "me (win): Nui has the other half, and she's sewing it into a dress. I'm going to get it back, and I'm going to ruin her day.",
       "player: Are you ready?",
       "me (lose): Senketsu is. He's been ready since last week, and he's been very annoying about it.",
-      "me: Stand where you can see the sword. If she tries to sew me, shout."
+      "me: Stand where you can see the sword. If she tries to sew me, shout.",
+      "me (win): I don't want anyone else hurt. Keep the crowd back.",
+      "me: Ready? Good. Let's go."
      ]
     },
     {
@@ -13968,7 +14011,9 @@
       "me (win): The first step is to test Ryuko. I'd like to know if she can hold the blade, or whether she'll break under it.",
       "player: Are you going to fight her yourself?",
       "me: No. I'm going to watch you do it, and see how much you can stand, because that's what I'll need from you later.",
-      "me (lose): It's not a small plan. It's the first seam I'm going to cut, and it's a good one."
+      "me (lose): It's not a small plan. It's the first seam I'm going to cut, and it's a good one.",
+      "me (win): Mother will hear about it by morning. That's the point.",
+      "me: Walk with me to the school gate. We'll talk on the way."
      ]
     },
     {
@@ -14023,7 +14068,9 @@
       "me (win): Mother's coming up the stairs. Stand behind me, and tell me if I'm wrong about this.",
       "player: You're not wrong.",
       "me (lose): Good. Then watch me take the first step, the way I planned it years ago, in the back of the classroom.",
-      "me: If I fall, pick up the answer I wrote down. It's the one that matters."
+      "me: If I fall, pick up the answer I wrote down. It's the one that matters.",
+      "me (win): She'll see the door is open. I want her to.",
+      "me: Stay close, and don't let her talk you round."
      ]
     },
     {
