@@ -96,7 +96,7 @@ class BasketTests(TestCase):
         basket = [{"kind": "pack", "set": SET, "count": 2}]
         answer = self.client.post(reverse("weiss:world_checkout", args=[1]),
                                   {"basket": json.dumps(basket), "expected": world.pack_price() * 2, "version": version}).json()
-        self.assertEqual(answer["go"], reverse("weiss:world_opened", args=[1]))
+        self.assertEqual(answer["go"], reverse("weiss:world_opened", args=[1]) + "?from=town")  # from the town: its pages go back there
         page = self.client.get(answer["go"])
         self.assertContains(page, "2 packs")
         gifts = self.client.post(reverse("weiss:world_checkout", args=[1]),

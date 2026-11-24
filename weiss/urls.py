@@ -1,11 +1,16 @@
 from django.urls import path
 
+from . import pwa
 from . import challenge_views, cpu_import_views, cpu_views, express, lists, pack_views, play, profiles, scene_views, sleeve_views, views, minigame_views, world_staff_views, world_views
 
 app_name = "weiss"
 
 urlpatterns = [
     path("", views.set_list, name="sets"),
+    # The installable app (weiss.pwa): served from here so the service worker's scope is the game's part of the site.
+    path("manifest.webmanifest", pwa.manifest, name="manifest"),
+    path("sw.js", pwa.service_worker, name="service_worker"),
+    path("offline/", pwa.offline, name="offline"),
     path("sets/<int:expansion_id>/", views.set_detail, name="set"),
     path("sets/<int:expansion_id>/favorite/", views.set_favorite, name="set_favorite"),
     path("sets/favorites/", views.set_favorites, name="set_favorites"),
@@ -53,6 +58,7 @@ urlpatterns = [
     path("world/<int:slot>/town/quest/", world_views.world_quest, name="world_quest"),
     path("world/<int:slot>/town/test-mode/", world_views.world_test_mode, name="world_test_mode"),
     path("world/<int:slot>/quests/", world_views.world_quests, name="world_quests"),
+    path("world/<int:slot>/people/", world_views.world_people, name="world_people"),
     path("world/<int:slot>/events/", world_views.world_events, name="world_events"),
     path("world/<int:slot>/events/enter/", world_views.world_event_enter, name="world_event_enter"),
     path("world/<int:slot>/events/board/", world_views.world_board, name="world_board"),

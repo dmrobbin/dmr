@@ -623,6 +623,153 @@
       ]
      },
      {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): I didn't have that in my notes."
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Okay. Adjusting my interpretation."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): I studied that move. Last week."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Predicted it. Page twelve."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: I'm getting into character now."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): The research is paying off."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): No. I can still rewrite this scene."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: Pressure is just more material to work with."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): I've analysed you completely, {player}."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Final act. I know how it ends."
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): {count} duels! I've filled a whole notebook on you, {player}."
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} losses in a row. I need to redo my research."
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): That's {count} wins. Preparation really is everything."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: Back for a rematch? I took notes on last time. Did you?"
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): I've studied our last duel. I know what you'll try."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You beat me last time. I've been rereading my notes."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: Last time I misread you. I won't make that mistake again."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: An actress who studies her roles so hard she forgets where she is. Often in the library or the cafe with a notebook."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: She was building a character who's kind without trying, and she's been using me as her reference. She says the friendship part isn't research."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: She worries about what people think, more than she shows. She'll ask twice whether I meant something nicely."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: After the reality show, people said cruel things and she believed every one. She says she's stopped hiding behind characters around me."
+      ]
+     },
+     {
       "context": "again",
       "min_rank": 0,
       "script": [
@@ -1809,6 +1956,153 @@
       "min_rank": 4,
       "script": [
        "them (pleased): Our round, {player}. I'd rather you were my witness than my opponent."
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): ...So you're not all act."
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them: Fine. I misjudged that."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them: I saw that coming three turns ago."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You telegraph everything."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Now I know what you're hiding."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Let's drop the act."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Don't look so pleased. It's not over."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: I've lost worse things than a card game."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them: You're out of moves. I can see it."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): That's the end of your performance."
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them: {count} duels. You're persistent. I'll give you that again."
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} in a row. I've underestimated you. Not this time."
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them: {count} straight. You're still predictable."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: Back after last time? You hide your tells worse than you think."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: You lost. You came back. Let's see what you've changed."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You won last time. I'm still working out how."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: Last time you read me. I don't let that happen twice."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: Keeps to himself and doesn't like chatting. Reads people for a living, and seems to see right through them. Seen around school and the alley."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: Everyone he gets close to ends up in danger, he says, so he pushes people away. He's apparently terrible at doing it to me."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: He's carrying something heavy that he won't name. He orders coffee and forgets to drink it while he thinks."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: His mother said lies are a kind of love, and he's told so many he lost track. He's never lied to me; he can't. I let him just be a person."
       ]
      },
      {
@@ -3006,6 +3300,153 @@
       ]
      },
      {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Ow! That's not in the script!"
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Hey! Watch the face! The face is my career!"
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Ha! A pro never breaks character."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Cut! That take was useless."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Now the star takes the stage."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Watch closely. This is acting."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): I am NOT losing in front of an audience!"
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: Fine. Big comeback. I'm great at those."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Curtain call, {player}. Bow nicely."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Admit it. I'm the better performer."
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): {count} duels? You're a fan. Admit it."
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} in a row?! I demand a retake!"
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): {count} straight! A natural, see?"
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Back after last time? Fine. Watch a real performer."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: You lost, and you came back. Okay, that's a little cool."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You won last time, and I haven't forgotten. I never forget."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: Last time was a bad take. This one's the real one."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: Used to be a famous child actor, and wants you to know it. Proud, quick to pout, and better on stage than she lets herself believe."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: She asked me to be her audience for a song and couldn't believe I liked it. Everyone in the industry just says things. I'm apparently a terrible liar."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: She acts tough so nobody can leave first. Sweets help. So does turning up."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: When she was little she was the best at everything, then she wasn't, and everyone left. She was so scared of being forgotten that she pushed people away first."
+      ]
+     },
+     {
       "context": "again",
       "min_rank": 0,
       "script": [
@@ -4149,6 +4590,153 @@
       "min_rank": 4,
       "script": [
        "them (pleased): Our round, {player}! I'd hate to beat my number one fan, but I'm going to try!"
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Waaah! Idols aren't supposed to get hit!"
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Owie! Okay, smile, Ruby, smile!"
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Hehe! Didn't even mess up my hair!"
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Idol dodge! Nailed it!"
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): My big debut starts now!"
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Centre stage! I'm turning it up!"
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): No no no, my fans are watching!"
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: Mom never gave up on stage. Neither will I!"
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Encore time! I'm about to win!"
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Get ready for my victory dance, {player}!"
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Duel number {count}! You're my number-one fan, aren't you?"
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} in a row?! Waaah, teach me your secret!"
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): I've won {count} in a row! Idol power is unstoppable!"
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): A rematch? Yay! I'll do a victory dance either way!"
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: You lost last time, but you were so cool! Again!"
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You beat me last time! I've been practising!"
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: Last time was yours. This time I'm shining brighter!"
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: Wants to be an idol like her mother, and practises everywhere. Bubbly, loud and impossible not to cheer for. Usually at school or the plaza."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: She got her first fan letter, from a little girl who wants to be an idol like her. Ruby was in a hospital bed once, dreaming of idols on TV."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: She's sharper than she lets on, especially about the people around her mother. She changes the subject with a dance."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: Her mother was the brightest star, and lied to keep shining. Ruby wants to shine and be real. She's asked me to keep her honest."
       ]
      },
      {
@@ -5302,6 +5890,153 @@
       "min_rank": 4,
       "script": [
        "them (pleased): Our round, {player}. I'd like to lose to you, a little bit."
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Ah! You hit an idol? How cruel~"
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them: Hehe, that hurt. Don't tell anyone~"
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Missed~ Idols never let it show."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Sorry~ I'm too cute to hit."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): The spotlight's warming up~"
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Smile on. Here comes the real show."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: Keep smiling. Always keep smiling."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Oh dear. My manager won't like this."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You did great! But the spotlight's mine~"
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Last song of the night, {player}."
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): {count} duels with me? You really are my most devoted fan~"
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} in a row? The idol's having an off week~"
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): {count} straight! Sorry~ The spotlight's still mine."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Back after last time? So sweet~"
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: You lost, but you looked great doing it. Again?"
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You beat the idol last time. It's in my memory book."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: Last time was yours. Eyes on me this time, okay?"
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: A legendary idol. Everyone in town knows her smile, and nobody knows what's behind it. Seen on rooftops and in the plaza."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: She's always performing and doesn't know how to stop. Lies are her thing, she says, but she thinks she likes me, and that one's almost true."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: When the smile slips, she looks tired. She asks about ordinary days as if they were foreign countries."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: She has two children, a secret, since idols can't. She tells them she loves them every day, not sure it's true. She told me, and felt that it was."
       ]
      },
      {
@@ -6465,6 +7200,153 @@
       "min_rank": 4,
       "script": [
        "them (pleased): Our round, {player}. If I lose, I want it to be to you."
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Eep! That was really strong!"
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Ow... It's okay, I can keep going!"
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): I did it! I actually blocked it!"
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Phew! I'm still okay!"
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: I'm getting braver. I think!"
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): I can do this. I really can!"
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): I-I won't give up! Not yet!"
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: Everyone's counting on me. I'll keep trying."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): I'm almost winning? Wow! Sorry!"
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Whatever happens, this was so much fun!"
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): {count} duels together! That's so many! Thank you, {player}!"
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You've won {count} in a row! I'll try even harder!"
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them: I've won {count}? Wow. Are you okay? You can do it!"
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You came back! Let's have fun this time too!"
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: Last time went my way, but you'll get it! I believe in you!"
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: You beat me last time! You're so strong!"
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You won last time. I'll do my best to keep up!"
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: A kind girl who wants everyone to have a happy ending. Shy about duels, but she always does her best. Usually at the cafe or the plaza."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: She brought two bentos because her dad made extra, so we ate together. Mami told her friends keep you going when things are hard."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: She worries about the magical girls around her more than she lets on, and she'd give anything to help them."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: If she could have any wish, she'd save every magical girl who ever suffered, even if she disappeared. She says I'd remember her. I would."
       ]
      },
      {
@@ -7660,6 +8542,153 @@
       ]
      },
      {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): ...That didn't happen last time."
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them: An error. I'll correct it."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them: I knew that was coming."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): I've seen that move a hundred times."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: I've done this more times than you know."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Nothing changes. I simply go further."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): No. I won't let it end like this."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: If I lose, I'll start over. I always do."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them: This is where it always ends."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them: It's over. It was over before it started."
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them: {count} duels. In this timeline, anyway."
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} in a row. This loop is different."
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them: {count} straight. As I've seen before."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: You came back. You always do."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: Last time ended as I expected. This time will too."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You won last time. A variable I've accounted for now."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: Last time surprised me. That doesn't happen often."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: Quiet, guarded and always watching. Warns people away from Madoka Kaname. Seen at the shrine and on the school roof."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: She waits on the roof for something she can't stop, and has tried hundreds of times. She says I sound like someone she knew."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: Every move she makes is calculated, except around Madoka. And, lately, around me."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: She's a time traveller who has lived the same month again and again to save one person, and forgot how to be anything else. This is the loop she wants to keep."
+      ]
+     },
+     {
       "context": "again",
       "min_rank": 0,
       "script": [
@@ -8831,6 +9860,153 @@
       ]
      },
      {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Tch! You made me drop my snack!"
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them: Okay, that one smarted. Not bad."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Ha! Too slow. *crunch*"
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Missed. Want some? No? More for me."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Alright. Now I'm actually trying."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Gettin' fun now. Don't fold on me."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Damn it. Fine, all or nothing."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: I don't quit. I fight for me, remember?"
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Done yet? I've got food waiting."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Hand it over, {player}. It's mine."
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them: {count} duels? You owe me {count} snacks, then."
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} in a row. Tch. Gimme a sec. *crunch* Okay. Now I'm mad."
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): {count} straight, {player}. Want an apple? Might help."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: Back for more? Brought snacks this time?"
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Lost and came back. I respect that. Kinda."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You got me last time. Fine. You earned it. Once."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: Last time was yours. Don't get used to it."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: Always eating, and always up for a fight. Says she fights only for herself. Hangs around the alley and the old shrine."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: She took me somewhere like her dad's old church, where she goes to get away from people, and gave me an apple. Eating together means something to her."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: She's softer than she lets anyone see, especially about Sayaka. She'll hand you food instead of saying sorry."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: She says she fights only for herself because the one time she fought for someone else, she lost everything. She'd fight for me without thinking twice."
+      ]
+     },
+     {
       "context": "again",
       "min_rank": 0,
       "script": [
@@ -9971,6 +11147,153 @@
       "min_rank": 4,
       "script": [
        "them (pleased): Our round, {player}. Even if you win, I'll bring you cake."
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Oh my. That was rather rude."
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Hm. My tea's gone cold from that."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): A senior never spills her tea."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Gracefully deflected, if I may say."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Shall we make this more elegant?"
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Time for the main course, I think."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): I can't fall here. Not in front of you."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: Even at the end, poise matters."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): One last flourish, and then we'll have tea."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Beautifully fought. Now, the last movement."
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): {count} duels! That deserves tea and cake, I think."
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} in a row. My, you've become a fine duelist."
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): {count} straight. A little more elegance, perhaps?"
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): A rematch? Lovely. The tea's still warm."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: You lost last time, but you fought well. Let's try again."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You won last time. A senior can't let that stand."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: You beat me last time. Splendid. Now, again."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: An elegant senior who always makes too much tea, and is generous with advice and cake. Found at the cafe and on the school roof."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: At her tea party she set out two cups, as she always does, for someone she hopes will come; usually no one does. That day I did. She remembers how I take my tea."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: She plays the strong senior all the time. When she thinks no one's looking, she's very tired."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: Being a magical girl is lonely: fight, smile, go home to an empty room. Around me she doesn't have to pretend. She'll set two cups for me, always."
       ]
      },
      {
@@ -11124,6 +12447,153 @@
       "min_rank": 4,
       "script": [
        "them (pleased): Our round, {player}! I'd never want to beat my hero, but I'm going to try!"
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Ugh! Okay, I'm fine! I heal fast!"
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Argh, that hurt! Justice needs a second!"
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Ha! Justice is untouchable!"
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Nope! Not today, villain!"
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Now I'm fired up! For justice!"
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Sword's out! Let's go!"
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): A hero doesn't lose like this! No way!"
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: Not giving up. That's the whole point of me!"
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Justice is about to prevail!"
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Sorry, {player}! Good guys win!"
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): {count} duels! That's a justice-level milestone!"
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} in a row! Okay, okay! I'm training harder!"
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): {count} straight! Justice keeps winning!"
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Back for revenge? That's the spirit! Bring it!"
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: You lost last time. Heroes always get a second shot!"
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You beat me last time. Justice demands a rematch!"
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: Last time was yours. Not again!"
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: A cheerful aspiring magical girl of justice. Loud, loyal and quick to cheer people up. Usually at school or the plaza."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: She asked whether doing the right thing is worth it when nobody notices. She decided you don't need everyone, just someone."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: She wants so badly to be a hero that it hurts her. She won't let a friend see that, if she can help it."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: She made her wish for Kyosuke, and he fell for someone else. She felt she'd thrown everything away. Her new wish, she says, already came true."
       ]
      },
      {

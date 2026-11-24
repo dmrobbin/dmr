@@ -136,7 +136,8 @@ fight stake 500"""
         for context, rank, script in chatter.DEFAULTS:
             with self.subTest(context=context, script=script):
                 self.assertEqual(chatter.compile_chatter(script)[1], [])
-        self.assertTrue({context for context, _, _ in chatter.DEFAULTS} >= set(chatter.CONTEXTS) - {"rank_up"} | {"rank_up"})
+        # rank_up and journal have no built-in default: a CPU without such a line gets none (a journal's entries are [])
+        self.assertTrue({context for context, _, _ in chatter.DEFAULTS} >= set(chatter.CONTEXTS) - {"rank_up", "journal"})
 
 
 class TalkTests(TestCase):

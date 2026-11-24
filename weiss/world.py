@@ -23,7 +23,7 @@ from . import world_rewards
 from . import world_roster as roster
 from . import world_tutorial as tutorial
 from .lists import CLIMAX_COUNT, COPY_LIMIT, DECK_SIZE, climax_problem, is_climax, unlimited, unplayable
-from .models import (Card, CardList, CardListEntry, CpuProfile, CpuSchedule, GameRoom, GiftItem, Scene, WorldPlace, WorldSave,
+from .models import (Card, CardList, CardListEntry, CpuProfile, CpuSchedule, GameRecord, GameRoom, GiftItem, Scene, WorldPlace, WorldSave,
                      WorldSettings, default_ranks)
 
 MIN_SET_CARDS = 100  # cards a set needs in its packs to start a save with
@@ -668,12 +668,27 @@ def start_duel(save, cpu_id, high_stakes=False):
         room.state["cpu_model"] = model
     if tutorial.easy(save, cpu):  # the tutorial's duel with the guide: they go easy
         room.state["cpu_model"] = "easy"
+    room.state["intro"] = duel_intro(save, cpu)  # picked once, so the intro doesn't change as the duel is polled
     room.save()
     events.round_started(save, room)  # the player's tournament opponent, at their round's time: it's that round
     quests.duel_started(save, room)
     engage(save)
     changed(save, "money", "quests", "today", "events")
     return room
+
+
+def friend_progress(points_before, points_after):
+    """The friendship bar's numbers for the results ceremony: the rank before and after the duel, and how far through the
+    rank before the bar goes from and to (a rank reached fills it: 1.0)."""
+    rows = ranks()
+    rank_before, rank_after = rank_for(points_before), rank_for(points_after)
+
+    def share(points, rank):
+        if rank + 1 >= len(rows) or rows[rank + 1]["points"] <= rows[rank]["points"]:
+            return 1.0
+        return round(min(1.0, max(0.0, (points - rows[rank]["points"]) / (rows[rank + 1]["points"] - rows[rank]["points"]))), 3)
+    return {"before": rows[rank_before]["name"], "after": rows[rank_after]["name"], "from": share(points_before, rank_before),
+            "to": 1.0 if rank_after > rank_before else share(points_after, rank_before)}
 
 
 def game_finished(room, over):
@@ -686,8 +701,7 @@ def game_finished(room, over):
         if not save or (save.flags.get("last_duel") or {}).get("room") == room.pk:
             return
         won = over["winner"] == str(room.host_id)
-        if won:
-            world_rewards.offer_card_pick(save, room)
+        card_pick = won and world_rewards.offer_card_pick(save, room)  # a card pick is waiting in the town (and it's this room's)
         cpu = CpuProfile.objects.filter(pk=room.cpu_profile_id).first()
         event_words, event_rewards = "", []
         if events.is_round(save, room):
@@ -705,7 +719,12 @@ def game_finished(room, over):
         if won:
             save.today["won"] = True
         save.today.setdefault("duelled", []).append(room.cpu_profile_id)
-        before, after = add_points(save, cpu.pk, points) if cpu else (0, 0)
+        points_before = relation(save, cpu.pk)["points"] if cpu else 0
+        before, after = add_points(save, cpu.pk, points) if cpu else (0, 0)  # the ranks before and after
+        points_after = relation(save, cpu.pk)["points"] if cpu else 0
+        if cpu:  # the player's record with them, for the people journal
+            rel = relation(save, cpu.pk)
+            rel["won" if won else "lost"] = rel.get("won" if won else "lost", 0) + 1
         rewards = event_rewards + ([text for text, _ in reward_ranks(save, cpu, after)] if cpu and after > before else [])
         rank_line, scene = "", ""
         if cpu and after > before:  # what reaching the rank plays: its line in the result, or its scene to watch
@@ -721,8 +740,15 @@ def game_finished(room, over):
                                    "rewards": rewards, "event": event_words,
                                    # When it started, for the town's time-passing to go from.
                                    "before": {"time": save.turn % len(WorldSave.TIMES), "label": f"{calendar.date_label(save.turn)}, {save.time_of_day.lower()}",
-                                              "day": save.day}}
+                                              "day": save.day},
+                                   # The results ceremony (docs/duel-presentation-plan.md, section 3).
+                                   "card_pick": bool(card_pick),
+                                   "friend": friend_progress(points_before, points_after) if cpu else None,
+                                   "cpu_line": (chatter.first_line(cpu, "after_win" if won else "after_loss", rank_of(save, cpu.pk), filler(save, cpu))
+                                                if cpu else "")}
+        moved = quests.progress_snapshot(save)
         quests.duel_finished(save, room, won)
+        save.flags["last_duel"]["quests"] = quests.progress_moves(save, moved)  # what this duel moved on, after it's counted
         if tutorial.easy(save, cpu) if cpu else False:  # the tutorial's duel, won or lost: it's over, and normal play opens
             tutorial.did(save, "duel")
         time_passed(save)
@@ -1582,14 +1608,69 @@ def talk_line(save, cpu_id, cold, first):
     return events.talk_context(save, cpu_id) or ("greet" if first else "again")
 
 
+HISTORY_MILESTONES = (10, 25, 50, 100)  # the player's 10th, 25th, 50th or 100th duel with a CPU
+HISTORY_LIMIT = 100  # the duels with a CPU that history looks back over: one query, and a streak is never longer
+
+
+def town_cast():
+    """The CPUs who can show up in the town: finalized, with a deck. The town's haunts and the people journal both use it."""
+    return CpuProfile.objects.filter(finalized=True, deck__isnull=False)
+
+
+def history_line(user, cpu, save=None, rng=random):
+    """A line the CPU says before a duel that remembers the player (docs/round-two-plan.md, section 2), from the user's
+    past duels with them (any mode), newest first. The first rule that applies is used: a milestone duel, a streak of
+    three or more, then a 50% rule (revenge after a loss, or a rematch after a win). None when no rule applies, the coin
+    flip fails, or the CPU has no line for the rule. With a town save, the line is the town's (their rank, the CPU's own
+    lines too); without one, rank 0 and the any-CPU and default lines only."""
+    results = list(GameRecord.objects.filter(host=user, cpu=True, cpu_profile=cpu).order_by("-finished", "-pk")
+                   .values_list("winner", flat=True)[:HISTORY_LIMIT])
+    if not results:
+        return None
+    won = results[0] == "host"
+    run = next((i for i, winner in enumerate(results) if winner != results[0]), len(results))  # the streak, newest first
+    count = None
+    if len(results) + 1 in HISTORY_MILESTONES:
+        context, count = "history_milestone", len(results) + 1
+    elif run >= 3:
+        context, count = ("history_streak_won" if won else "history_streak_lost"), run
+    else:
+        if rng.random() >= 0.5:  # a 50% rule's flip failed: the usual line
+            return None
+        context = "history_rematch_won" if won else "history_revenge"
+    lines = chatter.reaction_lines(cpu, context, rank_of(save, cpu.pk) if save else 0, duelling_in_town=save is not None)
+    if not lines:
+        return None
+    _, text = rng.choice(lines)
+    filled = filler(save, cpu)(text) if save else text.replace("{player}", user.username).replace("{name}", cpu.name).replace("{rank}", "")
+    return filled.replace("{count}", str(count)) if count is not None else filled
+
+
 def duel_intro(save, cpu):
-    """What a CPU says before a duel: its tournament line when the duel is the player's round, else its own."""
+    """What a CPU says before a duel: its tournament line when the duel is the player's round, else a line that remembers
+    the player (history_line), else its own."""
     rank, fill = rank_of(save, cpu.pk), filler(save, cpu)
     if events.round_label(save, cpu.pk):
         line = chatter.first_line(cpu, "tournament_duel", rank, fill)
         if line:
             return line
+    if (line := history_line(save.user, cpu, save)):
+        return line
     return chatter.first_line(cpu, "before_duel", rank, fill) or cpu.intro_text
+
+
+def duel_ribbon(save, room, cpu):
+    """What's at stake in a town duel, for its intro's ribbon: a tournament round, then a quest's duel, then high stakes,
+    then the story or tutorial; otherwise a friendly duel. Its {kind, text}."""
+    if (round_name := events.round_label(save, cpu.pk)):
+        return {"kind": "tournament", "text": f"Tournament · {round_name}"}
+    if (title := quests.duel_quest(save, cpu)):
+        return {"kind": "quest", "text": f"Quest · {title}"}
+    if room.world_stake:
+        return {"kind": "stakes", "text": f"High stakes · {room.world_stake:,} coins"}
+    if tutorial.active(save):
+        return {"kind": "story", "text": "Your first duel in town"}
+    return {"kind": "friendly", "text": "A friendly duel"}
 
 
 def talk(save, cpu_id):
@@ -1755,6 +1836,7 @@ def give(save, cpu_id, key):
     quests.gift_given(save, cpu, item)
     tutorial.did(save, "gift")
     reaction = taste(cpu, item)
+    rel.setdefault("tastes", {})[key] = reaction  # what they took this gift as, for the people journal
     world = Talk(save, cpu, "gift")
     gained = world.points(gain(cpu, GIFT_POINTS[reaction]))
     found = converse(save, cpu, f"gift_{reaction}", gained)

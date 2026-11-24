@@ -1,0 +1,132 @@
+{% extends "core/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}People · slot {{ save.slot }}{% endblock %}
+
+{% block head %}<script src="{% static 'weiss/people.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+  {% comment %}The people journal (world_views.world_people; docs/round-two-plan.md item 4). `journal` has the met people (in full),
+     the unmet ones (ids only), and the counts. `chosen` is the person whose entry is open (?cpu=<id>), if any. The page
+     matches the quest log's: the same back link and heading. {% endcomment %}
+  <p class="back"><a href="{{ back_url }}">← Back to the town</a></p>
+  <div class="people{% if chosen %} people-has-chosen{% endif %}" data-people>
+    <div class="challenge-head">
+      <div>
+        <h1>People</h1>
+        <p class="muted">Slot {{ save.slot }} · {{ save.date_label }} · {{ save.time_of_day|lower }}</p>
+      </div>
+    </div>
+    <p class="muted people-intro">Everyone you've met in town, and what you've learned about them.</p>
+    <p class="people-count" data-people-count>{% if journal.met_count == journal.total %}All {{ journal.total }} met{% else %}{{ journal.met_count }} of {{ journal.total }} met{% endif %}</p>
+
+    {% if journal.met_count == 0 %}
+      <div class="people-empty" data-people-empty>
+        <p>You haven't met anyone yet.</p>
+        <p class="muted small">Say hello to people around town, and they'll show up here.</p>
+      </div>
+    {% endif %}
+
+    <div class="people-layout">
+      <ul class="people-grid" aria-label="People">
+        {% for person in journal.met %}
+          <li>
+            <a class="people-card{% if chosen and chosen.id == person.id %} is-chosen{% endif %}" href="?cpu={{ person.id }}"{% if chosen and chosen.id == person.id %} aria-current="true"{% endif %}>
+              {% if person.image %}
+                <img class="people-art" src="{{ person.image }}" alt="">
+              {% elif person.avatar %}
+                <span class="people-picture"><img src="{{ person.avatar.image }}" alt="" style="width: {{ person.avatar.width }}%; left: {{ person.avatar.left }}%; top: {{ person.avatar.top }}%"></span>
+              {% else %}
+                <span class="people-crest" data-colors="{{ person.colors|join:"," }}" aria-hidden="true"><span class="people-crest-initial">{{ person.name|slice:":1" }}</span></span>
+              {% endif %}
+              <span class="people-name">{{ person.name }}</span>
+              <span class="people-rank muted small">{{ person.rank_name }}</span>
+              {% if person.next_rank_name %}
+                <span class="people-bar" role="img" aria-label="{{ person.rank_name }}: {% widthratio person.progress 1 100 %}% to {{ person.next_rank_name }}"><span class="people-bar-fill" style="width: {% widthratio person.progress 1 100 %}%"></span></span>
+              {% endif %}
+            </a>
+          </li>
+        {% endfor %}
+        {% for person in journal.unmet %}
+          <li>
+            <span class="people-card people-unmet" role="img" aria-label="Someone you haven't met">
+              <span class="people-crest people-crest-unmet" aria-hidden="true"><span class="people-crest-initial">?</span></span>
+              <span class="people-name" aria-hidden="true">???</span>
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+
+      {% if chosen %}
+        <article class="people-entry" aria-labelledby="people-entry-name" data-people-entry>
+          <p class="people-back"><a href="{% url 'weiss:world_people' slot %}">All people</a></p>
+          <div class="people-entry-head">
+            {% if chosen.image %}
+              <img class="people-entry-art" src="{{ chosen.image }}" alt="">
+            {% elif chosen.avatar %}
+              <span class="people-entry-picture"><img src="{{ chosen.avatar.image }}" alt="" style="width: {{ chosen.avatar.width }}%; left: {{ chosen.avatar.left }}%; top: {{ chosen.avatar.top }}%"></span>
+            {% else %}
+              <span class="people-entry-crest" data-colors="{{ chosen.colors|join:"," }}" aria-hidden="true"><span class="people-crest-initial">{{ chosen.name|slice:":1" }}</span></span>
+            {% endif %}
+            <div>
+              <h2 id="people-entry-name">{{ chosen.name }}</h2>
+              <p class="people-entry-rank"><strong>{{ chosen.rank_name }}</strong></p>
+              {% if chosen.next_rank_name %}
+                <div class="people-bar people-bar-wide" role="img" aria-label="{{ chosen.rank_name }}: {% widthratio chosen.progress 1 100 %}% to {{ chosen.next_rank_name }}"><span class="people-bar-fill" style="width: {% widthratio chosen.progress 1 100 %}%"></span></div>
+                <p class="muted small">Next: {{ chosen.next_rank_name }}</p>
+              {% else %}
+                <p class="muted small">Best friends</p>
+              {% endif %}
+            </div>
+          </div>
+
+          <section class="people-section" aria-labelledby="people-record">
+            <h3 id="people-record">Record</h3>
+            {% if chosen.record.won or chosen.record.lost %}
+              <p>Duels: {{ chosen.record.won }} won · {{ chosen.record.lost }} lost</p>
+            {% else %}
+              <p class="muted">You haven't duelled yet.</p>
+            {% endif %}
+          </section>
+
+          <section class="people-section" aria-labelledby="people-tastes">
+            <h3 id="people-tastes">Gifts</h3>
+            {% if chosen.tastes.loved or chosen.tastes.liked or chosen.tastes.disliked %}
+              {% if chosen.tastes.loved %}<p><strong>Loved</strong> {{ chosen.tastes.loved|join:", " }}</p>{% endif %}
+              {% if chosen.tastes.liked %}<p><strong>Liked</strong> {{ chosen.tastes.liked|join:", " }}</p>{% endif %}
+              {% if chosen.tastes.disliked %}<p><strong>Disliked</strong> {{ chosen.tastes.disliked|join:", " }}</p>{% endif %}
+            {% else %}
+              <p class="muted">Give gifts to learn what they like.</p>
+            {% endif %}
+          </section>
+
+          <section class="people-section" aria-labelledby="people-quests">
+            <h3 id="people-quests">Their quests</h3>
+            {% if chosen.quests %}
+              <ul class="people-quests">
+                {% for quest in chosen.quests %}
+                  <li><span>{{ quest.title }}</span> <span class="people-status people-status-{{ quest.status }}">{% if quest.status == "active" %}In progress{% elif quest.status == "done" %}Done{% else %}Closed{% endif %}</span></li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="muted">No quests from them yet.</p>
+            {% endif %}
+          </section>
+
+          <section class="people-section" aria-labelledby="people-journal">
+            <h3 id="people-journal">What you know</h3>
+            {% if chosen.entries %}
+              <ol class="people-journal">
+                {% for entry in chosen.entries %}
+                  <li>{% if entry.unlocked %}{{ entry.text }}{% else %}<span class="muted">Get to {{ entry.rank_name }} to learn more.</span>{% endif %}</li>
+                {% endfor %}
+              </ol>
+            {% else %}
+              <p class="muted">Nothing written yet.</p>
+            {% endif %}
+          </section>
+        </article>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

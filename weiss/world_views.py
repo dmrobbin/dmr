@@ -27,6 +27,7 @@ from django.views.decorators.http import require_POST
 from . import buffs, challenge, packs, quests, scenes, world
 from . import music, world_calendar
 from . import world_events as events
+from . import world_people as world_people_journal
 from . import world_rewards
 from . import world_roster as roster
 from . import world_tutorial as tutorial
@@ -275,6 +276,21 @@ def world_claim(request, slot):
         return redirect("weiss:world_opened", slot=slot)
     messages.success(request, "Added to your cards.")
     return redirect("weiss:world_save", slot=slot)
+
+
+@xframe_options_sameorigin
+@staff_required
+def world_people(request, slot):
+    """The people journal: the people this save has met (in full), and the rest as locked entries. `?cpu=<id>` opens one
+    person's entry (docs/round-two-plan.md, section 4)."""
+    save, away = save_or_home(request, slot)
+    if away:
+        return away
+    journal = world_people_journal.people(save)
+    chosen = next((person for person in journal["met"] if str(person["id"]) == request.GET.get("cpu")), None)
+    return render(request, "weiss/world_people.html", {
+        "save": save, "slot": slot, "journal": journal, "chosen": chosen, "back_url": reverse("weiss:world_town", args=[slot]),
+    })
 
 
 # The town shows these pages in its own window (world_town.js), so they may be framed by this site, and only by it.

@@ -15,13 +15,14 @@ when each context plays and keeps what it changes.
 import random
 import re
 
-from . import scenes
+from . import duel_lines, scenes
 from .models import Chatter, GiftItem
 
 THEM = "them"
 CPU_MOODS = ("main", "pleased", "dismayed")
 CONTEXTS = dict(Chatter.CONTEXTS)
-FIRST_LINE_ONLY = {"before_duel", "after_win", "after_loss", "hello", "goodbye"}  # shown as one line, outside a conversation
+FIRST_LINE_ONLY = {"before_duel", "after_win", "after_loss", "hello", "goodbye",
+                   "duel_hurt", "duel_cancel", "duel_level", "duel_brink", "duel_winning"}  # shown as one line, outside a conversation
 MAX_POINTS = 50  # one `points` line's most, either way
 MAX_MONEY = 5000  # one `give money` line's most
 MAX_STAKE = 100_000
@@ -222,6 +223,40 @@ DEFAULTS = [  # (context, min rank, script)
     ("tournament_duel", 0, "them: Tournament round. No holding back, okay?"),
 ]
 COLD = {"hello": "them (dismayed): …What do you want?", "goodbye": "them: Fine. Go."}  # someone a quest choice estranged
+
+DEFAULTS += duel_lines.DUEL_DEFAULTS  # appended, so the built-in lines' numbers (default:N) don't move
+
+DUEL_CONTEXTS = ("duel_hurt", "duel_cancel", "duel_level", "duel_brink", "duel_winning")
+
+
+def reaction_lines(cpu, context, rank, duelling_in_town=True):
+    """The lines a CPU says in a duel's context, for a player of this rank: every line that fits the rank, from the first
+    tier that has any: the CPU's own (a town duel only), then any CPU's, then the built-in defaults. Each is (mood, text),
+    the first thing said in its script, unfilled (see play.reactions)."""
+    def fits(min_rank):
+        return min_rank <= rank
+    tiers = []
+    if cpu and duelling_in_town:
+        tiers.append(Chatter.objects.filter(cpu=cpu, context=context))
+    tiers.append(Chatter.objects.filter(cpu=None, context=context))
+    for rows in tiers:
+        found = []
+        for row in rows:
+            if not fits(row.min_rank) or not row.script.strip():
+                continue
+            compiled, errors = compile_chatter(row.script)
+            if not errors and compiled["steps"]:
+                found.append(first_said(compiled))
+        if found:
+            return found
+    return [first_said(compile_chatter(script)[0]) for where, min_rank, script in DEFAULTS
+            if where == context and fits(min_rank)]
+
+
+def first_said(compiled):
+    """(mood, text) of the first thing said in a compiled script: "main" when it has no mood."""
+    step = next((step for step in compiled["steps"] if step["do"] == "say"), None)
+    return (step.get("mood") or "main", step["text"]) if step else ("main", "")
 
 
 def candidates(cpu, context, rank):

@@ -22,6 +22,43 @@
     linear-gradient(160deg, #7a1220, #3a0510);
 }
 
+/* The light theme (docs/round-two-plan.md item 5): the same variables with light values. Dark is the default. With no
+   choice saved (the "site-theme" key: "light", "dark", or nothing for System), the device's setting picks; the pre-paint
+   script in <head> sets data-theme when there's a choice. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg: #f5f2ea; --surface: #ffffff; --text: #1f1c17; --muted: #5c574e; --border: #d6cfc0;
+    --accent: #7a5a0c; --accent-hover: #5e450a; --accent-soft: rgb(122 90 12 / .12); --on-accent: #ffffff; --won: #1d6b3a; --lost: #a3302a;
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f5f2ea; --surface: #ffffff; --text: #1f1c17; --muted: #5c574e; --border: #d6cfc0;
+  --accent: #7a5a0c; --accent-hover: #5e450a; --accent-soft: rgb(122 90 12 / .12); --on-accent: #ffffff; --won: #1d6b3a; --lost: #a3302a;
+}
+/* The game's own screens stay as they are in either theme: the duel, the town scene, the minigames, the scene player, the
+   recap panel and the turn and phase graphics keep the dark set. */
+.play, .game-over, .cpu-intro, .minigame, .minigame-area, .town-stage, .town-play, .challenge-event, 
+.turn-banner, .phase-show, .cx-takeover, .combo-cutin, .cpu-reaction {
+  color-scheme: dark;
+  --bg: #0e0f12; --surface: #16181d; --text: #ece8e1; --muted: #9a958d; --border: #2a2d34;
+  --accent: #d4af37; --accent-hover: #e6c35c; --accent-soft: rgb(212 175 55 / .12); --on-accent: #14120e;
+  --won: #57c27a; --lost: #e06c6c;
+}
+
+/* The duel page keeps the dark set whatever the site theme: its text, surfaces and borders all come from it, so nothing in
+   the duel picks up the light theme (the game's own screens are pinned too, below). */
+.dashboard:has(.play) {
+  color-scheme: dark; color: var(--text);
+  --bg: #0e0f12; --surface: #16181d; --text: #ece8e1; --muted: #9a958d; --border: #2a2d34;
+  --accent: #d4af37; --accent-hover: #e6c35c; --accent-soft: rgb(212 175 55 / .12); --on-accent: #14120e;
+}
+/* In the light theme the duel page takes the dark body's glow over its dark base (the body itself is light there), so both
+   themes look the same. In dark, the body does this already and the duel page shows it through. */
+:root[data-theme="light"] .dashboard:has(.play) { background: radial-gradient(ellipse 80% 50% at 50% -10%, rgb(212 175 55 / .1), transparent), var(--bg); }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .dashboard:has(.play) { background: radial-gradient(ellipse 80% 50% at 50% -10%, rgb(212 175 55 / .1), transparent), var(--bg); } }
+
 * { box-sizing: border-box; }
 body {
   margin: 0;
@@ -390,12 +427,12 @@ select option { color: var(--text); background: var(--surface); }
 .set-tile { position: relative; }
 .set-fav-form { margin: 0; }
 .set-tile .set-fav-form { position: absolute; top: 1.35rem; right: 1.35rem; }
-.set-fav { display: inline-flex; align-items: center; justify-content: center; gap: .35rem; min-width: 2.5rem; min-height: 2.5rem; padding: 0 .5rem; font: inherit; font-size: 1.25rem; line-height: 1; color: var(--text); background: rgb(14 15 18 / .75); border: 1px solid var(--border); border-radius: 999px; cursor: pointer; transition: color .15s, border-color .15s, transform .1s; }
+.set-fav { display: inline-flex; align-items: center; justify-content: center; gap: .35rem; min-width: 2.5rem; min-height: 2.5rem; padding: 0 .5rem; font: inherit; font-size: 1.25rem; line-height: 1; color: #ece8e1; background: rgb(14 15 18 / .75); border: 1px solid var(--border); border-radius: 999px; cursor: pointer; transition: color .15s, border-color .15s, transform .1s; }
 .set-fav:hover { border-color: var(--accent); color: var(--accent); }
 .set-fav:active { transform: scale(.92); }
 .set-fav:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .set-fav[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
-.set-fav-labelled { font-size: .9rem; font-weight: 600; padding: 0 .85rem; background: none; }
+.set-fav-labelled { font-size: .9rem; font-weight: 600; padding: 0 .85rem; background: none; color: var(--text); }
 .set-fav-labelled .set-fav-star { font-size: 1.1rem; }
 .tab-count { margin-left: .2rem; padding: 0 .4rem; font-size: .75rem; border-radius: 999px; background: var(--accent-soft); }
 /* The sets page's shelves: the newest few favorites and recently viewed sets, above all the sets. */
@@ -767,8 +804,8 @@ select option { color: var(--text); background: var(--surface); }
 .match-list { list-style: none; margin: .5rem 0; padding: 0; display: grid; gap: .4rem; }
 .match-list li { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
 .match-result { min-width: 2.6rem; font-weight: 700; }
-.match-won { color: #57c27a; }
-.match-lost { color: #e06c6c; }
+.match-won { color: var(--won, #57c27a); }
+.match-lost { color: var(--lost, #e06c6c); }
 .match-list .muted { display: block; }
 .cpu-picture { display: flex; align-items: center; gap: .5rem; margin: 0 0 .5rem; }
 .avatar-picker { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
@@ -798,6 +835,192 @@ select option { color: var(--text); background: var(--surface); }
 .cpu-intro-image, .game-over-cpu-image { display: block; max-width: min(90vw, 28rem); max-height: 55vh; object-fit: contain; border-radius: .5rem; box-shadow: 0 10px 40px rgb(0 0 0 / .6); }
 .cpu-intro-picture { width: 12rem; height: 12rem; }
 .cpu-speech { margin: 0; font-size: 1.15rem; white-space: pre-line; color: #eee; }
+/* The versus intro (play_versus.js, docs/duel-presentation-plan.md part 1). The name is .cpu-intro .cpu-intro-name: the
+   duel sits in .dashboard, whose "h2" heading style (font-size .8rem, uppercase) would otherwise win over .cpu-intro-name. */
+.cpu-intro .cpu-intro-name { margin: 0; font-family: "Cinzel", Georgia, serif; font-size: clamp(1.7rem, 6vw, 2.9rem); font-weight: 700; line-height: 1.1; letter-spacing: .02em; text-transform: none; color: #fff; text-shadow: 0 .1rem .6rem rgb(0 0 0 / .85); }
+.cpu-intro.versus { display: block; padding: 0; overflow: hidden; background: #05070d; }
+.versus-stage { position: absolute; inset: 0; }
+/* Desktop: the two sides fill their own halves of the screen and meet on the seam (.versus-seam: the same line as the
+   clip paths' join, from 62% across the top to 38% across the bottom). Their portraits and captions sit clear of it. */
+.versus-side { position: absolute; inset: 0; transition: transform .5s cubic-bezier(.2, .8, .3, 1); }
+.versus-them { clip-path: polygon(62% 0, 100% 0, 100% 100%, 38% 100%); background: linear-gradient(200deg, color-mix(in srgb, var(--side-a) 72%, #000), color-mix(in srgb, var(--side-b) 58%, #000)); transform: translate(110%, -110%); }
+.versus-me { clip-path: polygon(0 0, 62% 0, 38% 100%, 0 100%); background: linear-gradient(20deg, color-mix(in srgb, var(--side-a) 72%, #000), color-mix(in srgb, var(--side-b) 58%, #000)); transform: translate(-110%, 110%); }
+.cpu-intro.versus.is-arrived .versus-side { transform: none; }
+.versus-portrait { flex: none; width: min(22vw, 15rem); transform: scale(.9); transition: transform .5s ease-out; }
+.is-arrived .versus-portrait { transform: none; }
+.versus-them .versus-portrait { position: absolute; top: 8%; right: 4%; }
+.versus-me .versus-portrait { position: absolute; left: 4%; bottom: 8%; }
+.versus-art { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: .6rem; box-shadow: 0 .6rem 2rem rgb(0 0 0 / .55); }
+.versus-picture { position: relative; display: block; width: 100%; aspect-ratio: 1; overflow: hidden; border-radius: 50%; }
+.versus-picture img { position: absolute; }
+.versus-crest { display: grid; place-items: center; width: 100%; aspect-ratio: 1; border-radius: 50%; background: linear-gradient(135deg, var(--crest-a), var(--crest-b)); border: .35rem solid rgb(255 255 255 / .85); box-shadow: 0 .6rem 2rem rgb(0 0 0 / .55), inset 0 0 0 .5rem rgb(0 0 0 / .18); }
+.versus-crest-initial { font-family: "Cinzel", Georgia, serif; font-size: clamp(4rem, 15vw, 8rem); font-weight: 700; line-height: 1; color: #fff; text-shadow: 0 .15rem .5rem rgb(0 0 0 / .5); }
+.versus-caption { display: flex; flex-direction: column; gap: .2rem; min-width: 0; max-width: 30%; text-shadow: 0 .1rem .6rem rgb(0 0 0 / .85); }
+.versus-them .versus-caption { position: absolute; top: calc(8% + min(22vw, 15rem) + .8rem); right: 4%; align-items: flex-end; text-align: right; }
+.versus-me .versus-caption { position: absolute; left: 4%; bottom: calc(8% + min(22vw, 15rem) + .8rem); align-items: flex-start; text-align: left; }
+.versus-name { margin: 0; font-family: "Cinzel", Georgia, serif; font-size: 1.3rem; color: #fff; overflow-wrap: anywhere; }
+.versus-title { margin: 0; font-size: .8rem; letter-spacing: .14em; text-transform: uppercase; color: #ffe9a8; }
+.versus-deck { margin: 0; font-size: .9rem; color: #f2f2f7; overflow-wrap: anywhere; }
+.versus-seam { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; overflow: visible; pointer-events: none; }
+.versus-seam line { stroke: #fff; stroke-width: 3; opacity: 0; transition: opacity .45s ease-out; }
+.cpu-intro.versus.is-split .versus-seam line { opacity: 1; }
+.versus-slash { display: none; }
+.versus-vs { position: absolute; left: 50%; top: 50%; z-index: 2; transform: translate(-50%, -50%) scale(2.6); font-family: "Cinzel", Georgia, serif; font-size: clamp(3.4rem, 12vw, 7rem); font-weight: 700; line-height: 1; color: #fff; opacity: 0; text-shadow: 0 0 1.2rem rgb(212 175 55 / .8), 0 .2rem .6rem #000; transition: transform .35s cubic-bezier(.2, 1.6, .4, 1), opacity .2s; }
+.cpu-intro.versus.is-impact .versus-vs { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+.cpu-intro.versus.is-impact:not(.no-motion)::before { content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none; background: radial-gradient(circle at 50% 50%, rgb(255 255 255 / .85), transparent 60%); animation: versus-flash .45s ease-out forwards; }
+.cpu-intro.versus.is-impact .versus-stage { animation: versus-shake .4s linear; }
+@keyframes versus-flash { from { opacity: 1; } to { opacity: 0; } }
+@keyframes versus-shake { 0%, 100% { transform: translate(0, 0); } 20% { transform: translate(-8px, 5px); } 40% { transform: translate(7px, -4px); } 60% { transform: translate(-5px, 3px); } 80% { transform: translate(3px, -2px); } }
+.versus-ribbon { position: absolute; z-index: 2; left: 50%; top: calc(50% + 4.6rem); width: max-content; max-width: 90%; margin: 0; padding: .35rem 1.1rem; transform: translateX(-50%) scaleX(0); opacity: 0; background: #d4af37; color: #15120a; font-size: .85rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; text-align: center; transition: transform .4s ease-out, opacity .3s; }
+.cpu-intro.versus.is-ribbon .versus-ribbon { transform: translateX(-50%) scaleX(1); opacity: 1; }
+.versus-foot { position: absolute; z-index: 2; left: 50%; bottom: 1.25rem; width: min(92%, 34rem); display: flex; flex-direction: column; align-items: center; gap: .45rem; padding: .8rem 1rem; box-sizing: border-box; text-align: center; background: #0b0d14; border: 1px solid rgb(212 175 55 / .35); border-radius: .75rem; transform: translate(-50%, 12px); opacity: 0; transition: transform .35s ease-out, opacity .3s; }
+.versus-foot::before { content: ""; position: absolute; top: -.55rem; right: 16%; border-left: .5rem solid transparent; border-right: .5rem solid transparent; border-bottom: .55rem solid #0b0d14; }
+.cpu-intro.versus.is-line .versus-foot { transform: translate(-50%, 0); opacity: 1; }
+.versus-speaker { margin: 0; font-size: .8rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #ffe9a8; }
+.versus-line { min-height: 2.4em; font-size: 1.05rem; }
+.versus-begin[hidden] { display: none; }
+.cpu-intro.versus.is-leaving { pointer-events: none; }
+.cpu-intro.versus.is-leaving .versus-them { transform: translate(110%, -110%); }
+.cpu-intro.versus.is-leaving .versus-me { transform: translate(-110%, 110%); }
+.cpu-intro.versus.is-leaving .versus-foot { opacity: 0; }
+/* Animations off (or reduced motion): the end state, with no movement. */
+.cpu-intro.versus.no-motion *, .cpu-intro.versus.no-motion::before { transition: none !important; animation: none !important; }
+/* A phone: two bands, one above the other, with a slash between them. */
+@media (max-width: 40rem) {
+  .versus-side { inset: auto; width: 100%; height: 46%; display: flex; align-items: center; gap: 1rem; padding: .8rem 1rem; }
+  .versus-them { top: 0; right: 0; bottom: auto; left: auto; flex-direction: row-reverse; text-align: right; clip-path: polygon(0 0, 100% 0, 100% 78%, 0 100%); }
+  .versus-me { bottom: 0; left: 0; top: auto; right: auto; flex-direction: row; align-items: flex-start; padding-top: 2.5rem; text-align: left; clip-path: none; }
+  .versus-them .versus-portrait, .versus-me .versus-portrait { position: static; width: min(30vw, 9.5rem); }
+  .versus-them .versus-caption, .versus-me .versus-caption { position: static; max-width: none; }
+  .versus-seam { display: none; }
+  .versus-slash { display: block; position: absolute; left: -10%; right: -10%; top: 50%; height: .3rem; background: linear-gradient(90deg, transparent, #fff 20%, #fff 80%, transparent); transform: translateY(-50%) rotate(-28deg) scaleX(0); transition: transform .45s ease-out; }
+  .cpu-intro.versus.is-split .versus-slash { transform: translateY(-50%) rotate(-28deg) scaleX(1); }
+  .versus-foot { bottom: .6rem; gap: .25rem; padding: .55rem .8rem; }
+  .versus-foot::before { display: none; }
+  .versus-line { min-height: 0; font-size: .95rem; }
+  .versus-name { font-size: 1.1rem; }
+  .versus-me { padding-top: 1.4rem; }
+  .versus-ribbon { top: .7rem; font-size: .75rem; }
+}
+/* Rock, paper, scissors: the hands shake three times, then the banner (play_versus.js). */
+.rps-shaking { animation: rps-shake .3s ease-in-out 3; }
+@keyframes rps-shake { 0%, 100% { transform: translateX(0) rotate(0); } 25% { transform: translateX(-6px) rotate(-8deg); } 75% { transform: translateX(6px) rotate(8deg); } }
+.rps-result[hidden] { display: none; }
+/* The CPU's speech bubble in a duel (play.js, docs/duel-presentation-plan.md part 2): by the top corner of the board, on
+   their side. Its colour says the mood: pleased and dismayed tint it. A click dismisses it. */
+.cpu-reaction { position: absolute; z-index: 45; display: flex; align-items: flex-start; gap: .55rem; max-width: min(18rem, 60vw); box-sizing: border-box; padding: .55rem .7rem; background: #0b0d14; border: 1px solid rgb(212 175 55 / .45); border-radius: .75rem; box-shadow: 0 .4rem 1.2rem rgb(0 0 0 / .6); cursor: pointer; animation: cpu-reaction-in .25s ease-out; }
+.cpu-reaction[hidden] { display: none; }
+.cpu-reaction::after { content: ""; position: absolute; top: -.5rem; left: 1.1rem; border-left: .45rem solid transparent; border-right: .45rem solid transparent; border-bottom: .5rem solid #0b0d14; }
+.cpu-reaction-pleased { border-color: #9ff5b4; background: #0c1812; }
+.cpu-reaction-pleased::after { border-bottom-color: #0c1812; }
+.cpu-reaction-dismayed { border-color: #ffb4b0; background: #1a0e10; }
+.cpu-reaction-dismayed::after { border-bottom-color: #1a0e10; }
+.cpu-reaction-face { flex: none; width: 2.6rem; height: 2.6rem; border-radius: 50%; object-fit: cover; border: 2px solid rgb(255 255 255 / .8); }
+.cpu-reaction-crest { display: grid; place-items: center; background: linear-gradient(135deg, #7a4f9a, #2f5f8f); color: #fff; font-family: "Cinzel", Georgia, serif; font-weight: 700; font-size: 1.2rem; }
+.cpu-reaction-text { margin: 0; font-size: .95rem; line-height: 1.3; color: #f2f2f7; }
+@keyframes cpu-reaction-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .cpu-reaction { animation: none; } }
+/* The people journal (world_people.html; docs/round-two-plan.md item 4): the grid of people, and one person's entry beside
+   it on a desktop, or as a page of its own on a phone. */
+.people { display: flex; flex-direction: column; gap: .4rem; min-width: 0; }
+.people h1 { margin: 0; }
+.people-intro { margin: 0; }
+.people-count { margin: .2rem 0 .6rem; font-weight: 600; color: var(--text); }
+.people-empty p { margin: 0 0 .3rem; }
+.people-layout { display: grid; gap: 1rem; min-width: 0; }
+.people-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); gap: .6rem; min-width: 0; }
+.people-card { display: flex; flex-direction: column; align-items: center; gap: .3rem; height: 100%; box-sizing: border-box; padding: .7rem .5rem; min-width: 0; text-align: center; color: var(--text); text-decoration: none; background: var(--surface); border: 1px solid var(--border); border-radius: .6rem; }
+.people-card:hover { border-color: var(--accent); }
+.people-card.is-chosen { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.people-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.people-name { font-weight: 600; overflow-wrap: anywhere; max-width: 100%; }
+.people-rank { overflow-wrap: anywhere; max-width: 100%; }
+.people-art { display: block; width: 100%; max-width: 6rem; aspect-ratio: 3 / 4; object-fit: cover; border-radius: .4rem; }
+.people-crest, .people-entry-crest { display: grid; place-items: center; width: 4.6rem; aspect-ratio: 1; border-radius: 50%; background: linear-gradient(135deg, var(--crest-a, #5a5f70), var(--crest-b, #2a2d34)); border: .2rem solid rgb(255 255 255 / .8); box-sizing: border-box; }
+.people-entry-crest { width: 7rem; }
+.people-crest-unmet { background: linear-gradient(135deg, #4a4d59, #2a2d34); border-color: rgb(255 255 255 / .35); }
+.people-crest-initial { font-family: "Cinzel", Georgia, serif; font-size: 1.8rem; font-weight: 700; line-height: 1; color: #fff; text-shadow: 0 .1rem .4rem rgb(0 0 0 / .5); }
+.people-unmet { opacity: .75; cursor: default; }
+.people-picture, .people-entry-picture { position: relative; display: block; width: 4.6rem; aspect-ratio: 1; overflow: hidden; border-radius: 50%; }
+.people-entry-picture { width: 7rem; }
+.people-picture img, .people-entry-picture img { position: absolute; }
+.people-entry-art { display: block; width: 7rem; aspect-ratio: 3 / 4; object-fit: cover; border-radius: .4rem; }
+.people-bar { display: block; height: .35rem; width: 100%; border-radius: 999px; background: var(--border); overflow: hidden; }
+.people-bar-wide { height: .5rem; max-width: 22rem; }
+.people-bar-fill { display: block; height: 100%; background: var(--accent); }
+.people-entry { display: flex; flex-direction: column; gap: .9rem; min-width: 0; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: .8rem; color: var(--text); overflow-wrap: anywhere; }
+.people-entry-head { display: flex; gap: 1rem; align-items: center; min-width: 0; }
+.people .people-entry-head h2 { margin: 0; font-size: 1.4rem; font-weight: 700; text-transform: none; letter-spacing: normal; color: var(--text); }
+.people-entry-head > div { display: flex; flex-direction: column; gap: .3rem; min-width: 0; }
+.people-entry-rank { margin: 0; }
+.people-back { margin: 0; }
+.people-section h3 { margin: 0 0 .3rem; font-size: 1rem; }
+.people-section p { margin: 0 0 .3rem; }
+.people-quests, .people-journal { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: .3rem; }
+.people-quests { list-style: none; padding-left: 0; }
+.people-status { font-size: .85rem; color: var(--muted); }
+.people-status-done { color: var(--text); }
+@media (min-width: 60rem) {
+  .people-has-chosen .people-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: start; }
+}
+@media (max-width: 40rem) {
+  .people-has-chosen .people-grid { display: none; }
+  .people-back { display: block; }
+}
+.people:not(.people-has-chosen) .people-back { display: none; }
+
+/* The theme menu in the site header (dashboard_base.html; docs/round-two-plan.md item 5). */
+.theme-menu { position: relative; }
+.theme-menu > summary { cursor: pointer; list-style: none; padding: .2rem .4rem; border-radius: .3rem; color: var(--muted); }
+.theme-menu > summary::-webkit-details-marker { display: none; }
+.theme-menu > summary:hover { color: var(--text); }
+.theme-menu > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.theme-choices { position: absolute; right: 0; top: 100%; z-index: 30; display: flex; flex-direction: column; gap: .4rem; margin: .3rem 0 0; padding: .6rem .8rem; min-width: 8.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: .5rem; box-shadow: 0 .4rem 1rem rgb(0 0 0 / .25); }
+.theme-choices label { display: flex; align-items: center; gap: .45rem; color: var(--text); cursor: pointer; }
+
+/* The profile's recent games: each row's recap disclosure (recap.js, drawn by play_summary.js; docs/round-two-plan.md item 1),
+   and the moments at the top of the game-over summary panel. */
+.recap-toggle { margin-top: .3rem; }
+.recap-body { margin-top: .5rem; padding: .6rem; border: 1px solid var(--border); border-radius: .6rem; background: var(--surface); }
+.recap-body[hidden] { display: none; }
+.recap-body [data-recap-moment][hidden] { display: none; }
+.game-summary-moments, .gs-moments { margin: 0 0 .8rem; padding-left: 1.2rem; display: flex; flex-direction: column; gap: .3rem; color: var(--text); }
+
+/* The results ceremony in a world duel's game-over screen (play_ceremony.js, docs/duel-presentation-plan.md part 3). */
+.ceremony { display: flex; flex-direction: column; align-items: center; gap: .45rem; width: 100%; max-width: 30rem; margin: .4rem auto; text-align: center; }
+.ceremony:empty { display: none; }
+/* With a ceremony, the win or loss screen fits the viewport's height: the crest and the result word are sized by it too,
+   and the spacing around the lines tightens. A window too short for it still scrolls (.game-over-banner). */
+.game-over:has(.ceremony) .game-over-crest { width: min(22rem, 70vw, calc(clamp(80px, 18vh, 200px) * 1.6)); margin-bottom: -1rem; }
+.game-over:has(.ceremony) .game-over-word { font-size: min(clamp(3.5rem, 12vw, 9rem), 11vh); }
+.game-over:has(.ceremony) .game-over-quote { margin-top: .3rem; }
+.game-over:has(.ceremony) .game-over-reason { margin-top: .2rem; }
+.game-over:has(.ceremony) .ceremony { margin: .2rem auto .3rem; gap: .3rem; }
+.game-over:has(.ceremony) .game-over-status { min-height: 0; margin: .3rem 0; }
+.game-over:has(.ceremony) .game-over-buttons { margin-top: .2rem; }
+.ceremony-step { opacity: 0; transform: translateY(6px); transition: opacity .3s ease-out, transform .3s ease-out; margin: 0; }
+.ceremony-step.is-in { opacity: 1; transform: none; }
+.ceremony-coins { margin: 0; font-family: "Cinzel", Georgia, serif; font-size: clamp(1.6rem, 5vw, 2.2rem); font-weight: 700; color: #ffe9a8; font-variant-numeric: tabular-nums; }
+.ceremony-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: .35rem; }
+.ceremony-tag { padding: .15rem .55rem; font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: #15120a; background: #d4af37; border-radius: 999px; }
+.ceremony-muted { margin: 0; font-size: .9rem; color: var(--muted); }
+.ceremony-name { margin: 0; font-family: "Cinzel", Georgia, serif; font-weight: 700; color: #fff; }
+.ceremony-bar { width: min(18rem, 80vw); height: .5rem; overflow: hidden; background: rgb(255 255 255 / .14); border-radius: 999px; }
+.ceremony-fill { height: 100%; width: 0; background: linear-gradient(90deg, #d4af37, #ffe9a8); border-radius: 999px; }
+.ceremony-points { margin: 0; font-size: .9rem; color: #ffe9a8; }
+.ceremony-friend.is-down .ceremony-fill { background: #8c7777; }
+.ceremony-friend.is-down .ceremony-points { color: #d8c9c9; }
+.ceremony-rank { margin: 0; font-family: "Cinzel", Georgia, serif; font-size: 1.2rem; font-weight: 700; color: #fff; }
+.ceremony-caption { margin: 0; font-size: .75rem; letter-spacing: .14em; text-transform: uppercase; color: #ffe9a8; }
+.ceremony-caption[hidden], .ceremony-muted[hidden] { display: none; }
+.ceremony-flash .ceremony-bar { animation: ceremony-flash .6s ease-out; }
+@keyframes ceremony-flash { 0%, 100% { box-shadow: none; } 40% { box-shadow: 0 0 1.2rem #ffe9a8; } }
+.ceremony-quest { display: flex; align-items: center; gap: .4rem; font-size: .95rem; color: #f2f2f7; }
+.ceremony-check { flex: none; width: 1.1rem; color: var(--muted); }
+.ceremony-quest.is-done .ceremony-check { color: #9ff5b4; }
+.ceremony-event, .ceremony-reward { font-size: .95rem; color: #f2f2f7; }
+.ceremony-leave { margin-top: .2rem; }
+@media (prefers-reduced-motion: reduce) { .ceremony-step, .ceremony-fill { transition: none; } .ceremony-flash .ceremony-bar { animation: none; } }
 .game-over-custom .game-over-banner { max-height: calc(100vh - 2rem); overflow-y: auto; }
 .game-over-cpu { display: flex; flex-direction: column; align-items: center; gap: .6rem; margin-bottom: .6rem; }
 .game-over-custom .game-over-cpu-image { max-height: 40vh; }
@@ -1077,8 +1300,8 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .damage-form { display: flex; align-items: flex-end; gap: .5rem; margin-top: .6rem; }
 .damage-form label { display: flex; flex-direction: column; gap: .2rem; font-size: .75rem; color: var(--muted); }
 .damage-form input { width: 4.5rem; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: .4rem; padding: .3rem .45rem; }
-.damage-form button { font: inherit; font-size: .8rem; font-weight: 600; color: var(--on-accent); background: #c0504d; border: none; border-radius: .4rem; padding: .4rem .7rem; cursor: pointer; }
-.damage-form button:hover { background: #d9625e; }
+.damage-form button { font: inherit; font-size: .8rem; font-weight: 600; color: #fff; background: #a33a37; border: none; border-radius: .4rem; padding: .4rem .7rem; cursor: pointer; }
+.damage-form button:hover { background: #b8433f; }
 .damage-note { margin: .35rem 0 0; }
 
 .zone { position: relative; display: flex; flex-direction: column; align-items: center; gap: .25rem; padding: .3rem; border: 1px dashed rgb(255 255 255 / .1); border-radius: .5rem; min-width: calc(var(--card-h) + .6rem); }
@@ -1314,11 +1537,15 @@ button.button-small.secondary { border: 1px solid var(--border); }
 @media (max-width: 88rem) {  /* the board needs its room more than the chat needs to be beside it */
   .play { grid-template-columns: minmax(0, 1fr) 19rem; }
   .play.layout-focus { grid-template-columns: minmax(0, 1fr) 17rem; }
-  .play-chat-side { position: static; order: 3; grid-column: 1 / -1; height: 18rem; }
+  /* The chat sits under the board only; the side column spans both rows, so a long side column (the recap, the controls,
+     the note) pushes its own row down and never runs over the chat's Send button. */
+  .play-chat-side { position: static; order: 3; grid-column: 1; grid-row: 2; height: 18rem; }
+  .play-side { grid-column: 2; grid-row: 1 / span 2; }
 }
 @media (max-width: 70rem) {
   .play, .play.layout-focus { grid-template-columns: minmax(0, 1fr); }
-  .play-side { position: static; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+  .play-side { position: static; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); grid-column: auto; grid-row: auto; }
+  .play-chat-side { grid-column: 1 / -1; grid-row: auto; }
 }
 /* Announcements over the board (play.js flash()): "Deck Out!" between the deck and center right. */
 .play-flash { position: fixed; z-index: 45; transform: translate(-50%, -50%); pointer-events: none; white-space: nowrap; font-weight: 800; letter-spacing: .03em; color: var(--accent); text-shadow: 0 0 12px rgb(0 0 0 / .9), 0 2px 4px rgb(0 0 0 / .9); }
@@ -1566,18 +1793,22 @@ button .cx, .phase-bar button.current .cx { filter: drop-shadow(0 0 2px rgb(0 0 
 .match-stars-right { text-align: left; }
 /* Victory or Defeat: a metal crest over a huge word, blue and gold or red and iron. */
 .game-over { --crest-light: #fff6d2; --crest-mid: #e7b53c; --crest-dark: #7d5414; --crest-core: #10243f; --crest-gem: #6cc8ff; --word-light: #fffbe6; --word-mid: #f2c750; --word-dark: #a06c17; --glow: rgb(255 205 90 / .55);
-  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; overflow: hidden; padding: 1rem; background: radial-gradient(circle at center, rgb(24 62 110 / .92), rgb(4 10 22 / .97) 70%); }
+  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; overflow: hidden; padding: 1rem; background: radial-gradient(circle at center, rgb(24 62 110), rgb(4 10 22) 70%); }
 .game-over-defeat { --crest-light: #d9d4d4; --crest-mid: #8c7777; --crest-dark: #352626; --crest-core: #220b0b; --crest-gem: #d63a2f; --word-light: #f7dcd8; --word-mid: #d0473a; --word-dark: #5e1712; --glow: rgb(214 58 47 / .5);
-  background: radial-gradient(circle at center, rgb(84 18 16 / .92), rgb(14 4 4 / .97) 70%); }
+  background: radial-gradient(circle at center, rgb(84 18 16), rgb(14 4 4) 70%); }
 .game-over-rays { position: absolute; left: 50%; top: 50%; width: 170vmax; height: 170vmax; margin: -85vmax 0 0 -85vmax; opacity: .16; background: repeating-conic-gradient(var(--word-mid) 0 6deg, transparent 6deg 18deg); -webkit-mask-image: radial-gradient(circle, #000, transparent 55%); mask-image: radial-gradient(circle, #000, transparent 55%); }
 .game-over-defeat .game-over-rays { opacity: .07; }
-.game-over-banner { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; }
-.game-over-crest { width: min(22rem, 70vw); margin-bottom: -1.5rem; filter: drop-shadow(0 0 22px var(--glow)) drop-shadow(0 8px 12px rgb(0 0 0 / .7)); }
-.game-over-word { position: relative; margin: 0; padding: 0 .2em; font-family: "Cinzel", Georgia, "Times New Roman", serif; font-weight: 700; font-size: clamp(3.5rem, 12vw, 9rem); line-height: 1.15; letter-spacing: .06em; text-transform: uppercase; color: transparent; background: linear-gradient(180deg, var(--word-light) 12%, var(--word-mid) 52%, var(--word-dark) 92%); -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 3px 0 rgb(0 0 0 / .65)) drop-shadow(0 0 26px var(--glow)); }
+.game-over-banner { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; max-height: calc(100vh - 2rem); overflow-y: auto; }
+.game-over-crest { flex: none; width: min(22rem, 70vw); margin-bottom: -1.5rem; filter: drop-shadow(0 0 22px var(--glow)) drop-shadow(0 8px 12px rgb(0 0 0 / .7)); }
+.game-over .game-over-word { position: relative; margin: 0; padding: 0 .2em; font-family: "Cinzel", Georgia, "Times New Roman", serif; font-weight: 700; font-size: clamp(3.5rem, 12vw, 9rem); line-height: 1.15; letter-spacing: .06em; text-transform: uppercase; color: transparent; background: linear-gradient(180deg, var(--word-light) 12%, var(--word-mid) 52%, var(--word-dark) 92%); -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 3px 0 rgb(0 0 0 / .65)) drop-shadow(0 0 26px var(--glow)); }
 .game-over-word::before, .game-over-word::after { content: ""; position: absolute; left: 8%; right: 8%; height: 2px; background: linear-gradient(90deg, transparent, var(--word-mid), transparent); }
 .game-over-word::before { top: .04em; }
 .game-over-word::after { bottom: .02em; }
 .game-over-reason { margin: .6rem 0 0; font-size: 1.05rem; color: #fff; }
+/* The CPU's line under the result word, as a quote with its name (like the intro's caption). */
+.game-over-quote { margin: .7rem 0 0; max-width: 28rem; }
+.game-over-quote-line { margin: 0; font-size: 1.1rem; line-height: 1.35; color: #fff; text-shadow: 0 .1rem .6rem rgb(0 0 0 / .8); }
+.game-over-quote-name { margin: .25rem 0 0; font-family: "Cinzel", Georgia, serif; font-size: .9rem; font-weight: 700; letter-spacing: .08em; color: var(--word-light); }
 .game-over-status { min-height: 1.5em; margin: .9rem 0 .6rem; color: #eee; }
 .game-over-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; }
 .game-over-buttons button { min-width: 10rem; padding: .7rem 1.4rem; font: inherit; font-family: "Cinzel", Georgia, serif; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #1b1300; background: linear-gradient(180deg, var(--word-light), var(--word-mid)); border: 1px solid var(--word-dark); border-radius: .3rem; cursor: pointer; box-shadow: 0 0 14px var(--glow); }
@@ -2364,7 +2595,7 @@ button.spire-node-face:disabled { cursor: not-allowed; }
 /* The table's mood (play.js setTableMood): warmer at the edges as the levels climb, a boss's purple tint, and at
    match point a red heartbeat round the edges with that side's clock glowing. Whose turn it is: their side edged
    in gold, the other a touch quieter. Layers behind the board's contents, so nothing on it moves. */
-.play-board { position: relative; isolation: isolate; }
+.play-board { position: relative; isolation: isolate; background-color: var(--bg); /* the table's dark base under its gradient, in either theme */ }
 .play-board::before, .play-board::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 1.4s ease; }
 .play-board::before { background: radial-gradient(ellipse at center, transparent 38%, var(--table-mood, rgb(214 138 40 / .28)) 100%); }
 .play-board[data-tier="1"]::before { opacity: .35; }

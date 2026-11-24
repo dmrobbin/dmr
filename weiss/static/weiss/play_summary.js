@@ -85,5 +85,21 @@
     return `<div class="gs-tiles">${tiles}</div>${graph}`;
   }
 
-  window.WeissSummary = { html };
+  // A duel's recap (a profile row's recap_view: {me, them, points: [[turn, mine, theirs], ...], moments: [text, ...]}):
+  // the same graph and text alternative, then the moments, with no tiles (a recap has no hits or climaxes to count).
+  function recapHtml(view) {
+    const rows = (view && view.points) || [];
+    if (!rows.length) return `<p class="gs-empty">No turns to chart for this game.</p>`;
+    const names = { me: view.me || "You", them: view.them || "Your opponent" };
+    const points = [{ turn: 0, mine: 0, theirs: 0 }, ...rows.map(([turn, mine, theirs]) => ({ turn, mine, theirs }))];
+    const graph = points.length > 1
+      ? `<figure class="gs-figure"><figcaption>Damage by turn <span class="gs-legend"><span class="gs-key gs-mine"></span>${esc(names.me)} <span class="gs-key gs-theirs"></span>${esc(names.them)}</span></figcaption>
+          ${chartHtml(points, names)}${tableHtml(points, names)}</figure>`
+      : `<p class="gs-empty">The game ended before a turn was over, so there's no graph to draw.</p>`;
+    const moments = (view.moments || []).length
+      ? `<ul class="gs-moments">${view.moments.map((text) => `<li>${esc(text)}</li>`).join("")}</ul>` : "";
+    return `${graph}${moments}`;
+  }
+
+  window.WeissSummary = { html, recapHtml };
 })();

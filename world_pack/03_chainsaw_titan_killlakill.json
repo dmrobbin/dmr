@@ -616,6 +616,153 @@
       ]
      },
      {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Tch. I'll feel that one tomorrow."
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them: Fine. Noted. Don't do it again."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them: Clean block. That's how it's done."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Sloppy. You'd be dead on a real job."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Alright. No more going easy."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Now this is a job."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Don't get comfortable. I've been worse off."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: Bad luck. I'm used to it."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them: Wrap it up. I've got paperwork."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them: Last chance. Make it clean."
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them: {count} duels. That's more paperwork than I'd like. Fine."
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} in a row. Don't get cocky."
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them: {count} straight. Work on your fundamentals."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: Back again. Let's make it clean."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: You lost last time. Learn from it, or it happens again."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You beat me last time. Good. Don't get comfortable."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: Last time was yours. I've adjusted."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: A Public Safety devil hunter. Serious, tidy and always on a smoke break. Found at the cafe and on rooftops."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: He goes to the roof to think about his family, the snow, and the gun devil. Everyone who gets close to him dies, he says. He made me promise to look both ways."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: He looks after Denji and Power more than he complains about them, which is a lot."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: It snowed the day his family died. His contract showed him how he dies, and he's stopped fighting it. He'd like his last thought to be of me, a long time from now."
+      ]
+     },
+     {
       "context": "again",
       "min_rank": 0,
       "script": [
@@ -1804,6 +1951,153 @@
       ]
      },
      {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): OW! Hey! That's my good arm!"
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Dang! That hurt worse than Power's cooking."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Ha! Didn't even scratch me!"
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Missed! Bet you're hungry now, huh?"
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Okay, now I'm all fired up!"
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Now we're cookin'! Hey, food after?"
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): No way! I'm not losin' my dinner!"
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: I've been chopped up worse. I'm good."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): I'm gonna win! Then you buy me food!"
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Almost! Is this what winnin' feels like?"
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them: {count} duels?! Dude! That's a lot! We should get food to celebrate!"
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} in a row? Dang! You're like, really good!"
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): I've won {count} straight! Hell yeah! Food's on you!"
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Back for more? Cool! Got snacks?"
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: You lost last time. Wanna get food after this one anyway?"
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You got me last time! Rematch! Then food!"
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: Last time was yours. I've been thinkin' about it. Kinda."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: A devil hunter with a chainsaw for a heart. Always hungry, always loud, and impossible to dislike. Turns up anywhere there's food."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: He brought breakfast: bread and jam. He'd never had jam until a few months ago. Pochita wanted him to have a normal life, and normal people eat with friends."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: Everyone tells him what he wants. He's still working it out, and he listens to me more than he lets on."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: He told me he doesn't really know what he wants, beyond bread and a girlfriend. Right then, he said, he wanted just this: hanging out. He's got a best friend now."
+      ]
+     },
+     {
       "context": "again",
       "min_rank": 0,
       "script": [
@@ -2986,6 +3280,153 @@
       ]
      },
      {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them: That was brave. Don't make it a habit."
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Hm. You've surprised me."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): That won't work on me."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Good try. Sit."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Now let's see how obedient you are."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: I'll be serious now. You won't like it."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: Don't look so pleased. I don't lose."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: Interesting. Keep going. I'm watching."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You did well. You can stop now."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Lie down, {player}."
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them: {count} duels. You keep coming back. Good."
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} in a row. Interesting. I'll remember."
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): {count} straight. Try again later."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: You came back after last time. Obedient. I like that."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You lost. You returned. Good."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: You beat me last time. That's unusual."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Last time was yours. I've been thinking about it."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: Calm, polite and impossible to read. Everyone in town seems to do what she says. Found at the cafe, the shrine and up on rooftops."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: She watches films all day; most are terrible, but one in ten has a scene that changes something in you. She isn't sure she can change. We watched one together."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: She's never asked me for anything. I think she's waiting to see if I'll offer."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: Everyone obeys her in the end; it's what she is. She wanted an equal once and didn't know how. I've never done what she wanted because she wanted it."
+      ]
+     },
+     {
       "context": "again",
       "min_rank": 0,
       "script": [
@@ -4160,6 +4601,153 @@
       "min_rank": 4,
       "script": [
        "them (pleased): Our round, {player}! Power doesn't want to beat you, but Power will try!"
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): YOU HIT ME?! The greatest?! CHEATER!"
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Owww! That didn't count! I wasn't looking!"
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): HAHA! Nothing can touch Power!"
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Pathetic human! Bow before me!"
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Power grows ever MORE powerful!"
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Behold! Even stronger! As expected!"
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Denji! DENJI! Do something!"
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): This is all your fault! Somehow!"
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Kneel! Grovel! Worship me!"
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Hand over your food and I'll end it quick!"
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them: {count} DUELS! You're obsessed with me! I understand completely!"
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} in a row?! CHEATER! Every single one!"
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): {count} straight! HAHAHA! As expected of the greatest!"
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Back to lose again, human? Excellent!"
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: You lost last time! Bow, and I'll let you try again!"
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You beat me last time! That didn't count! I wasn't ready!"
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: Last time was cheating. This time, I'm cheating first!"
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: A Blood Fiend who calls herself the greatest, at length. Demands food and worship, in that order. Usually in the alley or the plaza."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: She decided I'm her friend. It's a great honour few receive: Denji, her cat Meowy, and now me. Friends share food, especially mine."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: She lies and blames others when she's scared, which is often. She's trying not to, around me."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: She told me she doesn't want to lie to me, because I stay, even when she's awful. Best friend, fine, but she's still the greatest."
       ]
      },
      {
@@ -5342,6 +5930,153 @@
       ]
      },
      {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Ooh. That one went over the fence."
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them: A line drive. I didn't see it."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Caught it. Out."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Foul ball. Try again."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Let me warm up my arm."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Bottom of the ninth. I'm pitching."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Two outs. Bases loaded. Hm."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: I've thrown from worse counts."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Full count. Swing if you dare."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them: Last pitch. Brace yourself, {player}."
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them: {count} duels. That's quite a few innings."
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} home runs in a row. Well hit."
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): {count} strikeouts. Shall we go again?"
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: Back at the plate after last time? Brave."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You struck out last time. Let's see a better swing."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You hit one out last time. I'll pitch differently."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: Last time was yours. Fine. Well hit."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: Enormous when he wants to be, polite when he doesn't. Likes baseball and a game of catch. Seen in the forest and by the arena."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: We played catch, the way Mr. Ksaver used to with him; he was the only one who saw him as a person. He says I do too."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: He talks about the world the way a doctor talks about an illness. Catch is the only time he sounds hopeful."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: He believes the world would be kinder if no one was born into it. Then he plays catch with a friend, and isn't sure. His grandfather said moments like these make life worth it."
+      ]
+     },
+     {
       "context": "again",
       "min_rank": 0,
       "script": [
@@ -6521,6 +7256,153 @@
       ]
      },
      {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): That won't stop me."
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): I'll get back up. I always do."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them: Is that all? I've taken worse."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them: You can't hold me back."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Every hit makes me stronger. Keep going."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Now I'm done holding back."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Not here. I didn't come this far to stop."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: I'll fight until there's nothing left."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them: This is the end of the road for you."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them: Get out of my way, {player}."
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them: {count} duels. You keep standing in my way."
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} in a row. I'll get stronger. I have to."
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them: {count} straight. Fight harder, or get out of my way."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: You came back after losing. I respect that."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: Lost last time? Then fight. That's all there is."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You beat me last time. It won't stop me."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: Last time was yours. I'm still moving forward."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: Intense and restless, and always talking about freedom. Doesn't have time for chatting. Found by the sea, in the forest or at the arena."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: Armin told him there was an ocean beyond the walls, and there was. He thought seeing it would make him feel free. There was just more on the other side."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: He sees something coming that he won't talk about. He's kinder when he forgets to be angry."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: He's seen things he'll do, and can't stop. Everyone will hate him, maybe rightly. He asked me to remember him like this: looking at the ocean, free."
+      ]
+     },
+     {
       "context": "again",
       "min_rank": 0,
       "script": [
@@ -7691,6 +8573,153 @@
       "min_rank": 4,
       "script": [
        "them (pleased): Our round, {player}. I'd rather keep my promise to Erwin than beat you, but I'll try."
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them: Tch. Lucky. Don't count on it twice."
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Now there's dirt on my jacket."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them: Sloppy. Clean it up."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them: Predictable."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Fine. I'll take this seriously."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Now pay attention."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: Don't get excited. You haven't won."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: I've had worse odds outside the walls."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them: Finish it, or I will."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them: Last move. Make it clean."
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them: {count} duels. You're still alive. Good."
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} in a row. Not bad. Don't let it make you sloppy."
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them: {count} straight. Too slow. Again."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: Back after last time. Fine. Make it quick."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: You lost. Clean up your mistakes and try again."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: You beat me last time. Not bad."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Last time was yours. It won't be twice."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: A short, sharp-tongued soldier who can't stand dirt. Drinks tea constantly. Seen at the cafe, the school and the arena."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: He taught me to make tea properly, holding the cup by the rim, as someone he trusted once showed him. I'm a fast learner. I'm not to make it weird."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: He keeps everything clean and everyone at a distance. He notices when you're tired, and makes the tea stronger."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: He's buried more comrades than he can count, and always thought he'd be next. He says I sound like Erwin. Then he told me not to be late tomorrow."
       ]
      },
      {
@@ -8871,6 +9900,153 @@
       "min_rank": 4,
       "script": [
        "them (pleased): Our round, {player}. I'd never want to hurt you, but I'll win if I can."
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): ...I'm fine."
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them: That won't happen again."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them: Not good enough."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them: You won't get past me."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: I'm stronger now."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: I'll end this quickly."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): I can't lose. Not while he's out there."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: I'll fight. That's all I know how to do."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them: It's over."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them: Stay down."
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them: {count} duels. You're still here."
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} in a row. I'll train harder."
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them: {count} straight. I won't lose."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: You came back."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: You lost last time. Again, then."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You beat me last time. That won't happen again."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: Last time was yours. I remember."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: Quiet, strong and always looking for Eren. Wears a red scarf, even in summer. Found at the arena and in the forest."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: The world is cruel, she says, and beautiful, though she forgets the second part. Eren, Armin, and me, a little: the people she'll protect."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: She doesn't say much, but she always knows where everyone is."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: She's afraid all the time, of losing them and of losing herself, and has never let anyone see. She'd wrap her scarf around both of us."
       ]
      },
      {
@@ -10057,6 +11233,153 @@
       ]
      },
      {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Ow ow ow! You ripped Nui's dress!"
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Hey! That's not how you play dolls!"
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Hehe~ Missed me! Nui's too cute to hit!"
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Nope~! Nui stitched that right up!"
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Ooh, Nui's having fun now~!"
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Time to sew something really pretty~!"
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Nooo~! Nui doesn't like this game any more!"
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: Hmm~ Maybe Nui should stop being nice~"
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Almost done, little doll~!"
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Hold still, {player}~ This won't hurt much!"
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): {count} playdates~! Nui's keeping count! Nui counts everything~!"
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} in a row?! You're no fun! ...Again again again!"
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): {count} straight~! Nui's so good at dolls~!"
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You came back to play~! After last time! How cute~!"
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: Lost last time~? Let Nui sew you up and try again~!"
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You beat Nui last time! Nui's still pouting~!"
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: Last time was yours~ This time Nui's not being nice~"
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: A sweet-looking girl in frills who speaks in the third person and calls everyone her doll. Hard to tell when she's joking. Usually in the plaza or the alley."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: She sewed me a friendship ribbon. Nui doesn't have friends, she has toys, but I talk back, so I'm a friend."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: She doesn't understand why people get upset, and she's started asking. That's new."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: She was made, not born: made by Ragyo to be perfect, and perfect dolls don't need anyone. She keeps coming to find me anyway. She's sewn me into her heart."
+      ]
+     },
+     {
       "context": "again",
       "min_rank": 0,
       "script": [
@@ -11235,6 +12558,153 @@
       ]
      },
      {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You dare lay a hand on me?"
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them: Bold. Foolish, but bold."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Your effort is as thin as cheap cloth."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Pitiful. Clothing protects its own."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Now I shall show you true radiance."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Behold. Light from above."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): A thread out of place. How irritating."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: You've earned my attention. Regret it."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Kneel, and be clothed in defeat."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Bare yourself, {player}. It's over."
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them: {count} audiences with me. Your devotion is noted."
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} defeats in a row. Insolent. ...Impressive."
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): {count} victories. Kneel, little one."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: You return after defeat. How devoted."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Again? Then let me look at you."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You defeated me last time. I have not forgotten."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: Your last victory amused me. Do not repeat it."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: Head of a vast clothing empire, and she glows. Believes clothes are what make people human. Seen on rooftops and in the library."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: She wears those clothes to show she's above everyone, and I talk to her as if we're the same. No one has ever dared. Perhaps that's why she lets me stay."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: She never asks about anyone, but she remembers everything I've told her."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: Her daughters despise her, rightly, she says. She chose the Life Fibers over them, over humanity, over herself. Calling me her best friend is, she says, very human of her."
+      ]
+     },
+     {
       "context": "again",
       "min_rank": 0,
       "script": [
@@ -12406,6 +13876,153 @@
       "min_rank": 4,
       "script": [
        "them (pleased): Our round, {player}! I don't want to beat you, but I'm gonna try!"
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Agh! Okay, that one stung, Senketsu."
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Damn it! Fine, I'm awake now!"
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Ha! Is that all ya got?"
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Didn't even mess up my outfit."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Alright, Senketsu. Let's crank it up!"
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Now we're talkin'!"
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Not yet! I ain't done!"
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: I'll keep gettin' up. That's my whole thing."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): One more and you're done!"
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Hope you're ready, {player}! Here it comes!"
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them: {count} duels? Heh. You're alright, {player}."
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} in a row? Damn. Okay, Senketsu, let's get serious."
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): {count} straight! Hell yeah!"
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: Back for more? Cool. Let's go."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): You lost last time and came back. I like that."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You got me last time. Not again."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: Last time was yours. Senketsu's still sore about it."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: Carries half a scissor blade and a sailor uniform that talks. Hunting whoever killed her dad. Usually in the alley or the arena."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: Senketsu says I'm alright, and he doesn't say that about anyone. Her friends are Mako, Senketsu, and now me. Friendship means getting food."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: She acts like she doesn't need anyone. She'd fight the whole town for one friend."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: She's part Life Fiber, made of the same stuff as Ragyo, and wonders if she's a person at all. Mako screamed that she is. I told her the same, more quietly."
       ]
      },
      {
@@ -13585,6 +15202,153 @@
       "min_rank": 4,
       "script": [
        "them (pleased): Our round, {player}. I would rather you stood with me. But the bracket is the bracket."
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them: Good. You strike like a human."
+      ]
+     },
+     {
+      "context": "duel_hurt",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): Insolence. I shall remember it."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them: Your blow lacks conviction."
+      ]
+     },
+     {
+      "context": "duel_cancel",
+      "min_rank": 0,
+      "script": [
+       "them (pleased): Stand straight. That was weak."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Now I shall stop holding back."
+      ]
+     },
+     {
+      "context": "duel_level",
+      "min_rank": 0,
+      "script": [
+       "them: Rise to my level, or fall."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them: Even cornered, I do not bow."
+      ]
+     },
+     {
+      "context": "duel_brink",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You've earned this ground. Now hold it."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them: Show me your resolve one last time."
+      ]
+     },
+     {
+      "context": "duel_winning",
+      "min_rank": 0,
+      "script": [
+       "them: Your final hand, {player}. Make it worthy."
+      ]
+     },
+     {
+      "context": "history_milestone",
+      "min_rank": 0,
+      "script": [
+       "them: {count} duels. Your resolve is noted."
+      ]
+     },
+     {
+      "context": "history_streak_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): {count} defeats in a row. You've shown me you're human."
+      ]
+     },
+     {
+      "context": "history_streak_lost",
+      "min_rank": 0,
+      "script": [
+       "them: {count} victories. You have potential. Earn it."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: You return after defeat. Stand straight."
+      ]
+     },
+     {
+      "context": "history_revenge",
+      "min_rank": 0,
+      "script": [
+       "them: Lost, and back. Good. Show me your resolve."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them (dismayed): You defeated me last time. Well done. Once."
+      ]
+     },
+     {
+      "context": "history_rematch_won",
+      "min_rank": 0,
+      "script": [
+       "them: Your last victory was earned. Earn another."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 0,
+      "script": [
+       "narrator: President of Honnouji Academy, and she makes sure you know it. Commanding, formidable and fond of speeches. Found at the school and the arena."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 2,
+      "script": [
+       "narrator: Everyone in her academy serves a purpose, even her. I don't, and yet she keeps finding time for me. Her friendship isn't offered lightly."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 4,
+      "script": [
+       "narrator: She's always on duty. Sometimes she forgets, for a moment, and laughs."
+      ]
+     },
+     {
+      "context": "journal",
+      "min_rank": 5,
+      "script": [
+       "narrator: Her whole life has been a plan to defeat her mother, at the cost of her childhood, her sister and her heart. She's not sure who she is without it. We'll find out together."
       ]
      },
      {

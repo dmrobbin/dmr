@@ -9,13 +9,17 @@ from .models import Card
 
 def offer_card_pick(save, room):
     """A win's offer: the CPU's deck's distinct cards (its climaxes left out, unless that's all it has), kept on the
-    save until picked. A new win replaces an unclaimed offer."""
+    save until picked. A new win replaces an unclaimed offer. Returns whether an offer was made: a CPU with no cards
+    makes none."""
     from . import world  # weiss.world imports this module
 
     cpu = room.cpu_profile
     cards = sorted((card for card, _ in world.deck_cards(cpu)), key=lambda card: card.serial_number)
     choices = [card for card in cards if not is_climax(card)] or cards
+    if not choices:
+        return False
     save.flags["card_pick"] = {"room": room.pk, "cpu": cpu.pk, "cpu_name": room.cpu_name, "cards": [card.pk for card in choices]}
+    return True
 
 
 def card_pick_view(save):

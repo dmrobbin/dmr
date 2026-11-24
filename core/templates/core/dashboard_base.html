@@ -10,6 +10,21 @@
   <script src="{% static 'weiss/searchable_select.js' %}" defer></script>
   {# A page shown inside the town's window (world_town.js): the site's header, footer and back links are the town's own. #}
   <script>if (window.top !== window) document.documentElement.classList.add("in-frame");</script>
+  {# The theme before the first paint (docs/round-two-plan.md item 5): the saved choice, if there is one; System (no choice) leaves it to the device. #}
+  <script>(function () { try { var choice = localStorage.getItem("site-theme"); if (choice === "light" || choice === "dark") document.documentElement.setAttribute("data-theme", choice); } catch (e) {} })();</script>
+  {% if request.resolver_match.namespace == "weiss" %}
+    {# The game installs as an app (weiss.pwa): its manifest, icons, and the service worker, registered by the top page only. #}
+    <link rel="manifest" href="{% url 'weiss:manifest' %}">
+    <meta name="theme-color" content="#0e0f12" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f5f2ea" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/png" sizes="192x192" href="{% static 'weiss/app/icon-192.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'weiss/app/icon-180.png' %}">
+    <meta name="apple-mobile-web-app-title" content="Weiss">
+    <meta name="mobile-web-app-capable" content="yes">
+    <script>if ("serviceWorker" in navigator && window.top === window) addEventListener("load", function () {
+      navigator.serviceWorker.register("{% url 'weiss:service_worker' %}", { scope: "{% url 'weiss:sets' %}" }).catch(function () {});
+    });</script>
+  {% endif %}
   {% block head %}{% endblock %}
 </head>
 <body>
@@ -35,6 +50,16 @@
           <a class="nav-infinite" href="{% url 'weiss:arcade_challenge' %}" title="Back to your challenge">∞ Your challenge</a>
         {% endif %}
       {% endif %}
+      {# The theme: System (the device's setting), Light or Dark, saved on this device (docs/round-two-plan.md item 5). #}
+      <details class="theme-menu">
+        <summary>Theme</summary>
+        <fieldset class="theme-choices">
+          <legend class="sr-only">Theme</legend>
+          <label><input type="radio" name="site-theme" value="" data-theme-choice> System</label>
+          <label><input type="radio" name="site-theme" value="light" data-theme-choice> Light</label>
+          <label><input type="radio" name="site-theme" value="dark" data-theme-choice> Dark</label>
+        </fieldset>
+      </details>
       <form class="logout" method="post" action="{% url 'logout' %}">
         {% csrf_token %}
         {% if user.is_staff and section != "weiss" %}<a href="{% url 'admin:core_joblead_add' %}">Add lead</a>{% endif %}
@@ -58,5 +83,21 @@
   <footer class="site-footer">
     <div class="container">&copy; {% now "Y" %} Daryl Robbin</div>
   </footer>
+  <script>
+    // The theme choice: saved on this device (try/catch: a private window may refuse storage); System clears it.
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem("site-theme"); } catch (e) {}
+      var radios = document.querySelectorAll("[data-theme-choice]");
+      for (var i = 0; i < radios.length; i++) {
+        radios[i].checked = radios[i].value === ((saved === "light" || saved === "dark") ? saved : "");
+        radios[i].addEventListener("change", function (event) {
+          var choice = event.target.value;
+          try { if (choice) localStorage.setItem("site-theme", choice); else localStorage.removeItem("site-theme"); } catch (e) {}
+          if (choice) document.documentElement.setAttribute("data-theme", choice); else document.documentElement.removeAttribute("data-theme");
+        });
+      }
+    })();
+  </script>
 </body>
 </html>

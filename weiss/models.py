@@ -635,6 +635,7 @@ class GameRecord(models.Model):
     score = models.PositiveIntegerField(null=True, blank=True, help_text="A win against a CPU's score; none for other games")
     game_number = models.PositiveSmallIntegerField(default=1)
     turns = models.PositiveSmallIntegerField(default=0)
+    recap = models.JSONField(default=dict, blank=True, help_text="Points by turn and its standout moments (game.recap); {} for older games")
     finished = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -899,6 +900,18 @@ class Chatter(models.Model):
         ("tournament_out", "Talking in tournament week, once the player is out"),
         ("tournament_champion", "Talking in tournament week, once the player is champion"),
         ("tournament_duel", "Before its tournament round duel (its first line)"),
+        # Said during a duel, in a speech bubble by its side of the board (its first line; see docs/duel-presentation-plan.md).
+        ("duel_hurt", "In a duel: it takes a big hit"), ("duel_cancel", "In a duel: it cancels the player's damage"),
+        ("duel_level", "In a duel: it levels up"), ("duel_brink", "In a duel: it's at match point"),
+        ("duel_winning", "In a duel: the player is at match point"),
+        # Before a duel, from the player's history against it (its first line; see docs/round-two-plan.md).
+        ("history_milestone", "Before a duel: a milestone duel against it (10th, 25th...)"),
+        ("history_streak_won", "Before a duel: the player has beaten it 3+ times running"),
+        ("history_streak_lost", "Before a duel: the player has lost to it 3+ times running"),
+        ("history_revenge", "Before a duel: the player lost the last one"),
+        ("history_rematch_won", "Before a duel: the player won the last one"),
+        # World mode's people journal: the player's notes on it, one entry a script, unlocked at its min rank.
+        ("journal", "The people journal: an entry about it"),
     ]
 
     cpu = models.ForeignKey("CpuProfile", null=True, blank=True, on_delete=models.CASCADE, related_name="chatter",

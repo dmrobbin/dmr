@@ -50,6 +50,7 @@ leaves the stage.
 """
 import copy
 import random
+from collections import Counter
 import re
 import secrets
 from types import SimpleNamespace
@@ -251,10 +252,86 @@ def record_turn(state, player):
 
 
 def record_hit(state, player, amount, cancelled):
-    """A damage this player was dealt: how much, and whether a climax cancelled it."""
+    """A damage this player was dealt: how much, and whether a climax cancelled it. Its recap fact is the attacker's
+    seat, the turn, the amount and the cancel."""
     hits = state.setdefault("timeline", {"points": [], "hits": []})["hits"]
     hits.append({"turn": state.get("turn_number", 0), "player": player, "amount": amount, "cancelled": cancelled})
     del hits[:-MAX_HITS]
+    facts = state.setdefault("timeline_facts", {"attacks": [], "climaxes": []})["attacks"]
+    facts.append([state.get("turn_number", 0), seat(state, other_player(state, player)), amount, 1 if cancelled else 0])
+    del facts[:-FACT_LIMIT]
+
+
+def record_climax(state, player):
+    """A climax card played: whose, and when (for the recap)."""
+    climaxes = state.setdefault("timeline_facts", {"attacks": [], "climaxes": []})["climaxes"]
+    climaxes.append([state.get("turn_number", 0), seat(state, player)])
+    del climaxes[:-FACT_LIMIT]
+
+
+def seat(state, player):
+    """0 for the host (the first of the game's two players), 1 for the guest."""
+    return 0 if state["order"][0] == player else 1
+
+
+def duel_recap(state):
+    """A game's recap, at its end (play.record_game keeps it; the game-over screen shows it from each seat): the points
+    by turn as [turn, host, guest], and up to three standout moments, best first, each kind once (docs/round-two-plan.md).
+    The moments' thresholds are in MOMENT_RULES below."""
+    order = state.get("order") or []
+    if len(order) != 2:
+        return {"points": [], "moments": []}
+    host, guest = order
+    by_turn = {}
+    for entry in (state.get("timeline") or {}).get("points", []):  # a turn can be recorded twice (its end, then the game's): the last one stands
+        by_turn[entry["turn"]] = [entry["turn"], entry["damage"].get(host, 0), entry["damage"].get(guest, 0)]
+    points = [by_turn[turn] for turn in sorted(by_turn)]
+    facts = state.get("timeline_facts") or {}
+    attacks = facts.get("attacks", [])  # [turn, attacker seat, amount, cancelled]
+    last_turn = state.get("turn_number", 0)
+    found = {}
+    over = state.get("game_over")
+    if len(points) > 1 and over:
+        # Points are damage taken, so the winner was behind when they had MORE than the other player. The last entry is the
+        # game-ending blow, which isn't a deficit: it's left out.
+        winner = 0 if over["winner"] == host else 1
+        deficit, turn = max((row[1 + winner] - row[2 - winner], row[0]) for row in points[:-1])
+        if deficit >= 7:
+            found["comeback"] = {"turn": turn, "side": winner, "n": deficit}
+    if points and over:
+        winner = 0 if over["winner"] == host else 1
+        levels = [len(state["players"][p]["zones"]["level"]) for p in order]
+        if levels[0] == 3 and levels[1] == 3:
+            found["close_finish"] = {"turn": last_turn, "side": winner, "n": 3}
+        if levels[winner] <= 1:
+            found["flawless"] = {"turn": last_turn, "side": winner, "n": levels[winner]}
+    landed = [(amount, turn, side) for turn, side, amount, cancelled in attacks if not cancelled]
+    if landed:
+        amount, turn, side = max(landed, key=lambda hit: (hit[0], -hit[1]))
+        if amount >= 3:
+            found["big_hit"] = {"turn": turn, "side": side, "n": amount}
+    stopped = [(amount, turn, side) for turn, side, amount, cancelled in attacks if cancelled]  # the attacker whose attack it was
+    if stopped:
+        amount, turn, side = max(stopped, key=lambda hit: (hit[0], -hit[1]))
+        if amount >= 3:
+            found["big_cancel"] = {"turn": turn, "side": side, "n": amount}
+    dealt = Counter()
+    for turn, side, amount, cancelled in attacks:
+        if not cancelled:
+            dealt[(turn, side)] += amount
+    if dealt:
+        (turn, side), amount = max(dealt.items(), key=lambda item: (item[1], -item[0][0]))
+        if amount >= 6:
+            found["burst_turn"] = {"turn": turn, "side": side, "n": amount}
+    moments = [{"kind": kind, "turn": found[kind]["turn"], "side": "host" if found[kind]["side"] == 0 else "guest", "n": found[kind]["n"]}
+               for kind in MOMENT_RULES if kind in found][:3]
+    return {"points": points, "moments": moments}
+
+
+# The recap's moment kinds, in priority order (the first three that apply are kept). A kind's `n` is the level, the
+# points behind, or the damage: the thresholds below are the least that counts.
+MOMENT_RULES = ("comeback", "close_finish", "flawless", "big_hit", "big_cancel", "burst_turn")
+FACT_LIMIT = 200  # attacks and climaxes kept for a game's recap (a 30-turn game has far fewer)
 
 
 def timeline_view(state, player):
@@ -1105,6 +1182,7 @@ def end_game(state, loser, reason, said):
     wins = state.setdefault("match_wins", {})
     wins[winner] = wins.get(winner, 0) + 1
     record_attack(state)  # an attack's damage that ended the game is still shown
+    state["game_over"]["recap"] = duel_recap(state)  # once, here: the game-over screen and the record both use it
     for key in ("ability_queue", "resolving", "ability_show", "combo_show", "attack", "auto_next", "pending_end", "pending_damage", "pending_refresh",
                 "pending_climax", "pending_discard", "reveal", "rules_request", "undo"):
         state.pop(key, None)
@@ -1343,6 +1421,8 @@ def apply_action(state, player, action, env):
             # to the attack phase.
             side["climaxes"] = side.get("climaxes", 0) + 1
             state["pending_climax"] = player
+        if to == "climax":
+            record_climax(state, player)
         if src == "hand":
             played(state, player, card, to, env)
         return {}

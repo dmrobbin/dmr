@@ -951,6 +951,33 @@ def duel_model(save, cpu):
     return None
 
 
+def duel_quest(save, cpu):
+    """The title of the quest whose duel this is now (a duel objective naming this CPU), or None."""
+    for quest in quests(save).values():
+        for _, obj in current(save, quest):
+            if obj["do"] == "duel" and obj["cpu"].lower() == cpu.name.lower():
+                return quest.title
+    return None
+
+
+def progress_snapshot(save):
+    """(quest, objective key, objective, have) for every objective the quests are on now, before something moves them."""
+    return [(quest, key, obj, progress(save, quest, key, obj)[0]) for quest in quests(save).values() for key, obj in current(save, quest)]
+
+
+def progress_moves(save, before):
+    """What moved since progress_snapshot, in words: [{"text", "done": True}] for one that's finished, or
+    [{"text", "done": False, "n", "total"}] for one on its way."""
+    moved = []
+    for quest, key, obj, have_before in before:
+        have, need = progress(save, quest, key, obj)
+        if have == have_before:
+            continue
+        text = describe(save, obj)
+        moved.append({"text": text, "done": True} if have >= need else {"text": text, "done": False, "n": have, "total": need})
+    return moved
+
+
 def duel_started(save, room):
     """Keep the deck a duel's played with, as it was when it started: a deck rule is checked against that."""
     save.quests["duel"] = {"room": room.pk, "deck": dict((str(pk), n) for pk, n in room.host_deck.entries.values_list("card_id", "quantity"))

@@ -1714,7 +1714,8 @@ class GameOverTests(TestCase):
 
     def test_reaching_level_4_makes_the_other_player_the_winner(self):
         self.level_up()
-        self.assertEqual(self.state["game_over"], {"winner": "2", "loser": "1", "reason": "level", "rematch": []})
+        self.assertEqual({k: v for k, v in self.state["game_over"].items() if k != "recap"}, {"winner": "2", "loser": "1", "reason": "level", "rematch": []})
+        self.assertEqual(set(self.state["game_over"]["recap"]), {"points", "moments"})  # the recap, kept on the game
         self.assertFalse(game.view(self.state, 1)["game_over"]["won"])
         self.assertTrue(game.view(self.state, 2)["game_over"]["won"])
         self.assertEqual(game.view(self.state, 1)["match_wins"], [{"name": "alice", "wins": 0}, {"name": "bob", "wins": 1}])
@@ -1763,7 +1764,8 @@ class DeckOutLossTests(TestCase):
 
     def test_no_deck_and_no_waiting_room_loses(self):
         self.act(1, {"type": "move_top", "from": "deck", "to": "stock", "count": 15})
-        self.assertEqual(self.state["game_over"], {"winner": "2", "loser": "1", "reason": "deck", "rematch": []})
+        self.assertEqual({k: v for k, v in self.state["game_over"].items() if k != "recap"}, {"winner": "2", "loser": "1", "reason": "deck", "rematch": []})
+        self.assertEqual(set(self.state["game_over"]["recap"]), {"points", "moments"})  # the recap, kept on the game
         self.assertEqual(game.view(self.state, 2)["game_over"]["reason"], "deck")
         self.assertIn("can't refresh", self.state["log"][-1]["text"])
 

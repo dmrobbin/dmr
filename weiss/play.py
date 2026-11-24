@@ -25,7 +25,7 @@ from django.views.decorators.http import require_POST
 from core import s3
 from core.access import has_weiss_access, weiss_access_required
 
-from . import arcade, augments, buffs, challenge, coop, cpu, curses, game, lists, music, packs, scenes, scoring, sleeves
+from . import arcade, augments, buffs, challenge, chatter, coop, cpu, curses, game, lists, music, packs, scenes, scoring, sleeves
 from .models import ArcadeRun, ArcadeScenario, Card, CardList, ChallengeRun, CpuProfile, GameRecord, GameRoom, PlayerProfile, cpu_user
 
 log = logging.getLogger(__name__)
@@ -52,6 +52,38 @@ def card_info(pks):
     return info
 
 
+try:
+    from .recap_lines import RECAP_LINES  # Barry's captions (docs/round-two-plan.md)
+except ImportError:  # until they land: a stand-in for each kind
+    RECAP_LINES = {kind: {"you": "TODO(copy): {turn}", "them": "TODO(copy): {name}"} for kind in game.MOMENT_RULES}
+
+
+def duel_recap_names(state):
+    """{"host": name, "guest": name} for a game's two players, in seat order."""
+    host, guest = state["order"]
+    return {"host": state["players"][host]["name"], "guest": state["players"][guest]["name"]}
+
+
+def duel_recap_view(recap, seat, names):
+    """A game's recap from one player's seat (docs/round-two-plan.md): the points by turn as [turn, mine, theirs], the
+    two names, and each standout moment's caption (filled in: {turn}, {n}, {name} the other player, {player} this one).
+    None without points: an old record, or a game that ended before turn 1."""
+    points = (recap or {}).get("points")
+    if not points:
+        return None
+    other = "guest" if seat == "host" else "host"
+    mine = 1 if seat == "host" else 2  # the column of this seat in [turn, host, guest]
+    moments = []
+    for moment in (recap.get("moments") or [])[:3]:
+        caption = RECAP_LINES.get(moment["kind"], {}).get("you" if moment["side"] == seat else "them", "")
+        if caption:
+            fills = {"turn": moment["turn"], "n": moment["n"], "name": names[other], "player": names[seat]}
+            for key, value in fills.items():
+                caption = caption.replace("{" + key + "}", str(value))
+            moments.append(caption)
+    return {"me": names[seat], "them": names[other], "points": [[row[0], row[mine], row[3 - mine]] for row in points], "moments": moments}
+
+
 def room_avatars(room):
     """{player name: picture} for those with one. The game's log only knows players by name, so that's the
     key; if both have the same name, there'd be no telling them apart, so they keep their names."""
@@ -65,6 +97,66 @@ def room_avatars(room):
     return {players[pk]["name"]: owner.avatar for pk, owner in owners.items() if pk in players}
 
 
+def colors_from(entries):
+    """The colours of a deck from its (card colour, quantity) pairs, most cards first (two at most)."""
+    counts = {}
+    for color, quantity in entries:
+        if color:
+            counts[color] = counts.get(color, 0) + quantity
+    return sorted(counts, key=lambda color: -counts[color])[:2]
+
+
+def deck_colors(card_list):
+    """The colours of a deck's cards, most cards first (two at most); [] for no deck."""
+    return colors_from(card_list.entries.values_list("card__color", "quantity")) if card_list else []
+
+
+def versus(room, profile):
+    """Both sides of a duel's intro (docs/duel-presentation-plan.md): each one's picture, name, deck and colours, the
+    friendship rank's name (a town duel) and what's at stake (the ribbon, a town duel's)."""
+    title, ribbon = "", None
+    if room.world_save_id and profile and room.world_save:
+        from . import world  # weiss.world uses this module
+        title = world.rank_names()[world.rank_of(room.world_save, profile.pk)]
+        ribbon = world.duel_ribbon(room.world_save, room, profile)
+    them_deck = profile.deck if profile else None
+    mine = PlayerProfile.objects.filter(user_id=room.host_id).first()
+    return {"me": {"name": room.host.username, "picture": mine.avatar if mine else None,
+                   "deck": room.host_deck.name if room.host_deck else "", "colors": deck_colors(room.host_deck)},
+            "them": {"name": profile.name if profile else room.cpu_name, "picture": profile.avatar if profile else None,
+                     "image": profile.image_url if profile else "", "deck": them_deck.name if them_deck else "",
+                     "colors": deck_colors(them_deck), "title": title},
+            "ribbon": ribbon}
+
+
+def reactions(room, profile):
+    """The lines the CPU says in the duel's speech bubbles, by context, for this player (docs/duel-presentation-plan.md,
+    section 2): every line that fits the player's rank, filled in. None in a narrative challenge or for a deleted CPU."""
+    if not profile or challenge.narrative(room.arcade_run):
+        return {}
+    from . import world  # weiss.world uses this module
+    save = room.world_save if room.world_save_id else None
+    rank = world.rank_of(save, profile.pk) if save else 0
+    values = {"player": room.host.username, "name": profile.name, "rank": world.rank_names()[rank] if save else ""}
+
+    def fill(text):
+        for key, value in values.items():
+            text = text.replace("{" + key + "}", value)
+        return text
+    return {context: [{"mood": mood, "text": fill(text)} for mood, text in
+                      chatter.reaction_lines(profile, context, rank, duelling_in_town=save is not None)]
+            for context in chatter.DUEL_CONTEXTS}
+
+
+def presentation(room):
+    """The duel's intro (both sides) and the CPU's reactions, for this game: worked out when the game is dealt (deal), and
+    stored in room.state, so the polls only read them. {} for a game without a CPU."""
+    if not room.vs_cpu:
+        return {}
+    profile = room.cpu_profile
+    return {"versus": versus(room, profile), "reactions": reactions(room, profile)}
+
+
 def cpu_payload(room):
     """What a game against a CPU adds: its screens, and where an arcade run has got to."""
     if not room.vs_cpu:
@@ -76,12 +168,19 @@ def cpu_payload(room):
     if profile:
         # In a narrative challenge the scenes say what the CPUs have to say, so their own lines are left out.
         said = not challenge.narrative(room.arcade_run)
+        intro = profile.intro_text if said else ""
+        if room.state.get("intro"):  # the line picked when the game was seated (a town duel's, or one that remembers the player)
+            intro = room.state["intro"]
         payload["cpu"] = {"name": profile.name, "image": profile.image_url, "images": {screen: profile.screen_url(screen) for screen in ("intro", "win", "lose")},
-                          "picture": profile.avatar, "intro": profile.intro_text if said else "",
+                          "picture": profile.avatar, "intro": intro,
                           "win": profile.player_win_text if said else "", "lose": profile.player_lose_text if said else "",
                           "combo": profile.combo_text if said else ""}
     else:  # it was deleted during the game
         payload["cpu"] = {"name": room.cpu_name, "image": "", "images": {}, "picture": None, "intro": "", "win": "", "lose": "", "combo": ""}
+    # Stored when the game was dealt; a room dealt before that was stored has them worked out here, not saved.
+    presented = room.state["presentation"] if "presentation" in room.state else presentation(room)
+    payload["versus"] = presented["versus"]
+    payload["cpu"]["reactions"] = presented["reactions"]
     if room.world_save_id:  # a town duel: back to the town after, and what it paid
         save = room.world_save
         result = (save.flags.get("last_duel") or {}) if save else {}
@@ -118,6 +217,8 @@ def cpu_payload(room):
 
 def board_payload(room, user, extra=None):
     board = game.view(room.state, user.pk)
+    if board.get("game_over") and room.state.get("game_over"):  # the Recap button's view, from this player's seat
+        board["game_over"]["recap"] = duel_recap_view(room.state["game_over"].get("recap") or game.duel_recap(room.state), room.seat_of(user), duel_recap_names(room.state))
     pks = game.visible_cards(board)
     if extra and "revealed" in extra:
         pks.update(c["card"] for c in extra["revealed"]["cards"])
@@ -331,6 +432,10 @@ def seat_cpu(room, profile, scenes=()):
     deal(room, intro=not challenge.narrative(room.arcade_run))
     if scenes:
         room.state["scenes"] = list(scenes)
+    if not room.world_save_id and not challenge.narrative(room.arcade_run):  # a town duel's line is picked by world.start_duel
+        from . import world  # weiss.world uses this module
+        if (line := world.history_line(room.host, profile)):  # a line that remembers the player, kept for the whole match
+            room.state["intro"] = line
 
 
 def not_begun(room):
@@ -547,6 +652,8 @@ def deal(room, intro=False):
     ], **series)
     if intro:
         room.state["cpu_intro"] = True
+    if old.get("intro"):  # a rematch keeps the game's intro line (picked when the game was seated)
+        room.state["intro"] = old["intro"]
     if room.cpu_profile_id and room.cpu_profile and room.cpu_profile.combo_text and not challenge.narrative(room.arcade_run):
         room.state["cut_ins"] = {str(room.guest_id): anchor_cards(room.guest_deck)}
     trial = challenge.of(room.arcade_run) if room.arcade_run_id else None
@@ -561,6 +668,7 @@ def deal(room, intro=False):
             game.flash_start(room.state)
             if colors := anchor_colors(room.guest_deck):  # what the CPU's level cards are to be (cpu.Mind.flash_level)
                 room.state["players"][str(room.guest_id)]["anchor_colors"] = colors
+    room.state["presentation"] = presentation(room)  # the intro's two sides and the CPU's reactions: once per game, not per poll
 
 
 def augment_start(room, trial):
@@ -950,7 +1058,8 @@ def record_game(room, over, score=None):
         host_id=room.host_id, guest_id=room.guest_id, host_name=players[str(room.host_id)]["name"], guest_name=players[str(room.guest_id)]["name"],
         host_deck_name=room.host_deck.name if room.host_deck else "", guest_deck_name=room.guest_deck.name if room.guest_deck else "",
         cpu=room.vs_cpu, cpu_profile=room.cpu_profile, winner="host" if over["winner"] == str(room.host_id) else "guest",
-        reason=over.get("reason", ""), game_number=room.state.get("game_number", 1), turns=room.state.get("turn_number", 0))
+        reason=over.get("reason", ""), game_number=room.state.get("game_number", 1), turns=room.state.get("turn_number", 0),
+        recap=over.get("recap") or game.duel_recap(room.state))  # the recap game.end_game kept; worked out here for a game from before it
 
 
 def play_action(room, player, action, lookups=None):
@@ -1017,6 +1126,10 @@ def cpu_step(room, wait=True):
             return GameRoom.objects.select_related("host", "guest", "cpu_profile").get(pk=room.pk)
 
 
+CPU_PENDING_KEYS = ("pending_climax", "pending_damage", "pending_refresh", "pending_discard", "ability_show", "combo_show",
+                    "resolving", "ability_queue", "attack", "reveal", "rules_request", "auto_next")  # what a stalled CPU turn may be waiting on
+
+
 def cpu_move(room, wait, safe=False):
     """cpu_step's move, in a transaction of its own: what the CPU chooses, or (safe) the fallback that can't stick."""
     with transaction.atomic():
@@ -1039,6 +1152,10 @@ def cpu_move(room, wait, safe=False):
         action = (cpu.fallback_action(room.state, room.guest_id) if safe
                   else cpu.next_action(room.state, room.guest_id, lookups["info"], aggression, model=model))
         if not action:
+            if room.state.get("turn") == str(room.guest_id):  # the CPU's own turn, and nothing for it to do: worth a trace
+                pending = {key: room.state.get(key) for key in CPU_PENDING_KEYS if room.state.get(key)}
+                log.warning("CPU %s in room %s has no action on its own turn: phase %s, pending %s",
+                            room.cpu_name, room.pk, room.state.get("phase"), pending)
             return room
         try:
             play_action(room, room.guest_id, action, lookups)

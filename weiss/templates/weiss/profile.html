@@ -1,6 +1,9 @@
 {% extends "weiss/base.html" %}
+{% load static %}
 
 {% block title %}Profile{% endblock %}
+
+{% block head %}<script src="{% static 'weiss/play_summary.js' %}" defer></script><script src="{% static 'weiss/recap.js' %}" defer></script>{% endblock %}
 
 {% block weiss_content %}
   <div class="profile-head">
@@ -131,6 +134,12 @@
             {% include "weiss/avatar.html" with avatar=record.opponent_avatar name=record.opponent_name size="" %}
             <span>vs {{ record.opponent_name }}{% if record.cpu %} <span class="deck-tag">CPU</span>{% endif %}
               <span class="muted small">{% if record.my_deck_name %}with {{ record.my_deck_name }} · {% endif %}game {{ record.game_number }} · {{ record.turns }} turns · {{ record.finished|date:"M j, Y" }}</span></span>
+            {% if record.recap_view %}
+              <button type="button" class="button-small secondary recap-toggle" aria-expanded="false" aria-controls="recap-{{ record.pk }}" data-recap-toggle>Recap</button>
+              <div class="recap-body" id="recap-{{ record.pk }}" hidden data-recap-me="{{ record.recap_view.me }}" data-recap-them="{{ record.recap_view.them }}" data-recap-points="{% for turn, mine, theirs in record.recap_view.points %}{{ turn }},{{ mine }},{{ theirs }};{% endfor %}">
+                {% for text in record.recap_view.moments %}<span hidden data-recap-moment>{{ text }}</span>{% endfor %}
+              </div>
+            {% endif %}
           </li>
         {% endfor %}
       </ul>

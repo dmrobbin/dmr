@@ -18,6 +18,10 @@ A cast file has CAST = [cpu(...), ...]. In a CPU:
 - ARRIVALS (a module-level list, optional): arrival scenes, each {"newcomer", "name", "lines"}; filed under the newcomer.
 - tournament (optional): lines for the tournament week, by spectator, entrant, out, champion and duel, each three
   lists (ranks 0, 2, 4).
+- duel (optional): lines said in a duel, a dict of hurt, cancel, level, brink and winning to lists of one-line scripts.
+- history (optional): what the CPU says before a duel that remembers the player: a dict of milestone, streak_won,
+  streak_lost, revenge and rematch_won to lists of one-line scripts.
+- journal (optional): the player's notes on the CPU, a dict of rank ("0", "2", "4", "5") to a one-line script.
 - mid (optional): first-talk lines for the in-between ranks, a dict of rank ("1", "3", "5") to lines.
 - hello_steps and bye_steps (optional): two lines of greeting and two of goodbye for each of the six relationship steps,
   a list of six pairs, rank 0 (Stranger) first. They come on top of hello and bye.
@@ -34,6 +38,9 @@ from pathlib import Path
 HERE = Path(__file__).parent
 GREETING_RANKS = (0, 2, 4)  # hello and bye: a stranger's, a friend's, a close friend's
 DAYS = {"wk": [0, 1, 2, 3, 4], "we": [5, 6], "all": list(range(7))}
+HISTORY_MOMENTS = {"milestone": "history_milestone", "streak_won": "history_streak_won", "streak_lost": "history_streak_lost",
+                   "revenge": "history_revenge", "rematch_won": "history_rematch_won"}
+DUEL_MOMENTS = {"hurt": "duel_hurt", "cancel": "duel_cancel", "level": "duel_level", "brink": "duel_brink", "winning": "duel_winning"}
 MOMENTS = {"again": ("again", 0), "loved": ("gift_loved", 0), "disliked": ("gift_disliked", 0), "before": ("before_duel", 0),
            "won": ("after_win", 0), "lost": ("after_loss", 0), "hi2": ("greet", 2), "hi4": ("greet", 4),
            "r1": ("rank_up", 1), "r3": ("rank_up", 3), "r4": ("rank_up", 4), "cold": ("estranged", 0)}
@@ -86,6 +93,21 @@ def entry(spec):
         for rank, scripts in zip((0, 2, 4), tiers):
             for script in scripts:
                 chatter.append({"context": f"tournament_{key}", "min_rank": rank, "script": [script]})
+    # duel: what a CPU says in a duel's speech bubbles (docs/duel-presentation-plan.md, section 2), each a list of one-line
+    # scripts at rank 0: hurt (a big hit), cancel (it cancels the player's damage), level (it levels up), brink (its match
+    # point) and winning (the player's match point).
+    for key, context in DUEL_MOMENTS.items():
+        for script in spec["lines"].get("duel", {}).get(key, []):
+            chatter.append({"context": context, "min_rank": 0, "script": [script]})
+    # history: what a CPU says before a duel that remembers the player (docs/round-two-plan.md, section 2), each kind a list
+    # of one-line scripts at rank 0: milestone, streak_won, streak_lost, revenge and rematch_won.
+    for key, context in HISTORY_MOMENTS.items():
+        for script in spec["lines"].get("history", {}).get(key, []):
+            chatter.append({"context": context, "min_rank": 0, "script": [script]})
+    # journal: the player's notes on this CPU (docs/round-two-plan.md, section 4), one line for each rank: "0", "2", "4"
+    # and "5", each a one-line script at that rank.
+    for rank, script in spec["lines"].get("journal", {}).items():
+        chatter.append({"context": "journal", "min_rank": int(rank), "script": [f"narrator: {script}"]})  # a note: narration
     # repeat: lines for talking again (the again context), at each of the three tiers (ranks 0, 2, 4): a future and a past
     # line, and comparisons with a liked and a disliked character (each a list of three, unfavourable to favourable).
     repeat = spec["lines"].get("repeat")

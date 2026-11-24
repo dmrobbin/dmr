@@ -16,7 +16,7 @@ from django.views.decorators.http import require_POST
 
 from core.access import weiss_access_required
 
-from . import sleeves
+from . import play, sleeves
 from .card_images import series_title
 from .models import ArcadeRun, Card, CardList, CpuProfile, GameRecord, PlayerProfile, SleeveUnlock
 from .views import summarize_sets
@@ -111,6 +111,8 @@ def profile(request):
     opponents_avatars(records, user)
     for record in records:
         record.view_for(user)
+        record.recap_view = play.duel_recap_view(record.recap, "host" if record.host_id == user.pk else "guest",  # the Recap disclosure
+                                            {"host": record.host_name, "guest": record.guest_name})
     sleeves.check(user.pk)  # one added since their last game may be theirs already
     fresh = SleeveUnlock.objects.filter(user=user, seen=False)
     new = set(fresh.values_list("sleeve_id", flat=True))

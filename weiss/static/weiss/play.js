@@ -76,6 +76,7 @@
   let board = null;
   let avatars = {}; // {player name: picture}, for those who have one
   let cpuInfo = null; // the CPU in a game against one: its images and what it says
+  let versus = null; // a game against a CPU: who's on each side (the names, decks and colours) and what's at stake
   let arcade = null; // where an arcade run has got to
   let world = null; // a town duel: where to go back to, and what it paid
   let prize = null; // an infinite challenge's prize for this win: what the Victory screen's slot machine lands on
@@ -533,6 +534,15 @@
   }
 
   const SOUNDS = {
+    // The soft tick at the end of the results ceremony's coin count: a small, high blip.
+    tick: (ctx, out) => tone(ctx, out, { ms: 90, from: 1400, to: 1400, wave: "sine", gain: 0.12 }),
+    // The VS stinger, as the duel's versus intro hits (play_versus.js): a low hit under a rising whoosh and a bright chord.
+    // It plays over the music, not as a music cue (see playSound), and its peak stays at or below the damage cue's.
+    versus: (ctx, out) => {
+      noise(ctx, out, { ms: 240, from: 300, to: 5000, q: 1, gain: 0.22 });
+      tone(ctx, out, { ms: 320, from: 180, to: 60, gain: 0.35 });
+      for (const hz of [392, 494, 587]) bell(ctx, out, { ms: 900, hz, gain: 0.12 });
+    },
     // A climax played, without the music: a whoosh rising for CLIMAX_LEAD_MS, then it lands with a boom and a chord.
     climax: (ctx, out) => {
       noise(ctx, out, { ms: CLIMAX_LEAD_MS, from: 300, to: 6000, q: 1.2, gain: 0.5 });
@@ -588,7 +598,8 @@
     if (!ctx) return null;
     // A sound-effect cue splashes the chosen song too (the engine ignores it while the song isn't playing).
     if (song) songCall("splash");
-    if (battleMusic()) {
+    // The VS stinger has no music cue (score.js), so it plays over the music like the sounds with a song chosen.
+    if (battleMusic() && !["versus", "tick"].includes(name)) {
       // Played in time with the music, so no stagger: several at once become a little figure (see score.js cue).
       syncMusic();
       const lands = score.cue(name, { opponent: quiet, count, icons });
@@ -717,11 +728,19 @@
         at += SOUND_STAGGER_MS;
       }
     }
+    reactions.consider(before, now);
     if (prompt && prompt !== heardPrompt) playSound("prompt", { at: at && at + SOUND_STAGGER_MS });
     heardPrompt = prompt;
   }
 
   // --- Talking to the server -------------------------------------------------------------------
+
+  // --- The CPU's reactions: play_reactions.js (WeissReactions), made here, once what it reads is defined -----------------
+  const reactions = window.WeissReactions.create({
+    SPECTATING: () => SPECTATING, boardEl: () => boardEl, cpuInfo: () => cpuInfo, board: () => board,
+    gameOverEl: () => gameOverEl, introEl: () => introEl, logEl: () => logEl, root: () => root, esc: (value) => esc(value),
+    promptKey: () => promptKey(), atBrink: (owner) => atBrink(owner),
+  });
 
   function receive(data) {
     if (data.status && data.status !== "playing") {
@@ -733,7 +752,7 @@
     for (const [pk, info] of Object.entries(data.cards || {})) {
       if (!cards[pk]) cards[pk] = info;
     }
-    const before = opponentSnapshot();
+    const before = movement.opponentSnapshot();
     const wasInPlay = board ? inPlay(board) : null;
     const wasMyTurn = board ? board.my_turn : null;
     const lastBoard = board;
@@ -790,7 +809,7 @@
       renderBoss();
       renderDuel();
       renderAugments();
-      showScene();
+      prizeScreen.showScene();
     } catch (e) {
       version = previous === version ? "" : previous; // not drawn: the next poll fetches this board again
       throw e;
@@ -798,7 +817,7 @@
     // The show around it (flights, bursts, announcements, sounds) is extra: if it goes wrong, the board stands.
     // The battle view reads the board before the table's show, which waits on it (the clock's cards turning over
     // until its souls land, the battle's loser until its clash).
-    for (const extra of [() => animateOpponent(before), () => wasInPlay && animations && celebrate(wasInPlay), () => battle.update(lastBoard),
+    for (const extra of [() => movement.animateOpponent(before), () => wasInPlay && animations && celebrate(wasInPlay), () => battle.update(lastBoard),
       () => fx.tableFx(lastBoard), announce, playBoardSounds]) {
       try {
         extra();
@@ -817,7 +836,7 @@
     if (board.damage_pending && !resolveTimer) {
       resolveTimer = setTimeout(() => {
         resolveTimer = null;
-        act({ type: "resolve_damage" });
+        movement.act({ type: "resolve_damage" });
       }, animations ? CLIMAX_SHOW_MS : DAMAGE_RESOLVE_MS); // long enough for "Damage Negated!" to be seen
     }
     // A phase of our turn ended itself: pause on it, then move on (the server drops this if the
@@ -827,7 +846,7 @@
       const next = board.auto_next;
       autoTimer = setTimeout(() => {
         autoTimer = null;
-        if (board.auto_next === next && board.my_turn && !board.ability) act({ type: "phase", phase: next, auto: true });
+        if (board.auto_next === next && board.my_turn && !board.ability) movement.act({ type: "phase", phase: next, auto: true });
       }, PHASE_PAUSE_MS);
     }
     // We played a climax in the climax phase: let it show, then move on to the attack phase
@@ -841,7 +860,7 @@
           return;
         }
         climaxTimer = null;
-        if (board.climax_pending && !board.ability) act({ type: "phase", phase: "attack" });
+        if (board.climax_pending && !board.ability) movement.act({ type: "phase", phase: "attack" });
       };
       climaxTimer = setTimeout(moveOn, CLIMAX_SHOW_MS);
     }
@@ -852,7 +871,7 @@
       const delay = (animations ? CLIMAX_SHOW_MS : 0) + (mine ? 0 : SHOW_FALLBACK_MS);
       showTimer = setTimeout(() => {
         showTimer = null;
-        if (board.ability_show && board.ability_show.id === id) act({ type: "ability_show_done", id });
+        if (board.ability_show && board.ability_show.id === id) movement.act({ type: "ability_show_done", id });
       }, delay);
     }
     // A CX combo's cut-in: the CPU moves on once it's been seen; this page does too, a little later, in case.
@@ -860,21 +879,21 @@
       const { id } = board.combo_show;
       comboTimer = setTimeout(() => {
         comboTimer = null;
-        if (board.combo_show && board.combo_show.id === id) act({ type: "combo_show_done", id });
+        if (board.combo_show && board.combo_show.id === id) movement.act({ type: "combo_show_done", id });
       }, COMBO_SHOW_MS + SHOW_FALLBACK_MS);
     }
     // Rock, paper, scissors has a winner: let both players see it, then on to the mulligan.
     if (board.rps && board.rps.won !== null && !rpsTimer) {
       rpsTimer = setTimeout(() => {
         rpsTimer = null;
-        if (board.rps) act({ type: "rps_done" });
+        if (board.rps) movement.act({ type: "rps_done" });
       }, RPS_SHOW_MS);
     }
     // A damage emptied our deck: pause a moment, then the server refreshes it and deals the rest.
     if (board.refresh_pending && !refreshTimer) {
       refreshTimer = setTimeout(() => {
         refreshTimer = null;
-        act({ type: "continue_damage" });
+        movement.act({ type: "continue_damage" });
       }, REFRESH_PAUSE_MS);
     }
   }
@@ -917,7 +936,7 @@
     const ability = board.ability_show;
     if (ability && ability.id !== shownAbility) {
       shownAbility = ability.id;
-      if (show) showAbility(ability);
+      if (show) prizeScreen.showAbility(ability);
     }
     for (const owner of ["me", "opponent"]) {
       const side = owner === "me" ? board.me : board.opponent;
@@ -926,15 +945,15 @@
       if (!show || !seen[owner]) continue;
       const mat = boardEl.querySelector(`.mat-${owner}`);
       if (now[owner].refreshes > seen[owner].refreshes) {
-        flash(between(mat, '[data-pile="deck"]', '[data-slot="C3"]'), "Deck Out!", "flash-deck-out");
+        prizeScreen.flash(prizeScreen.between(mat, '[data-pile="deck"]', '[data-slot="C3"]'), "Deck Out!", "flash-deck-out");
       }
-      if (now[owner].climaxes > seen[owner].climaxes) showClimax(side.zones.climax[side.zones.climax.length - 1], owner, now[owner].climaxes);
+      if (now[owner].climaxes > seen[owner].climaxes) prizeScreen.showClimax(side.zones.climax[side.zones.climax.length - 1], owner, now[owner].climaxes);
       if (now[owner].negated > seen[owner].negated && !battle.claimsNegated(owner, now[owner].negated)) { // the battle view's shield shows it
         const card = side.negated_card;
-        setTimeout(() => showNegated(card), fx.negatedWait(owner)); // once the damage's cards have turned over (tableFx)
+        setTimeout(() => prizeScreen.showNegated(card), fx.negatedWait(owner)); // once the damage's cards have turned over (tableFx)
       }
       if (now[owner].level_ups > seen[owner].level_ups) {
-        showLevelUp(owner === "me" && !SPECTATING ? "You" : side.name, side.zones.level.length);
+        prizeScreen.showLevelUp(owner === "me" && !SPECTATING ? "You" : side.name, side.zones.level.length);
       }
     }
     seen = now;
@@ -966,7 +985,7 @@
       const el = boardEl.querySelector(`.pcard[data-uid="${CSS.escape(uid)}"]`);
       if (outOfSight(el)) continue;
       // The opponent's card flies in first (animateOpponent): burst once it lands.
-      setTimeout(() => { if (el.isConnected) rarityBurst(el, info); }, el.style.visibility === "hidden" ? FLIGHT_MS + 80 : 0);
+      setTimeout(() => { if (el.isConnected) rarityBurst(el, info); }, el.style.visibility === "hidden" ? movement.FLIGHT_MS + 80 : 0);
     }
   }
 
@@ -1104,280 +1123,41 @@
     text.hidden = !open;
   }
 
-  // --- An infinite challenge's prize: a slot machine on the Victory screen -----------------------------------
-
-  const PRIZE_ICONS = { climax_pack: "⚡", color_pack: "🎨", lucky_pack: "💎" };
-  const SLOT_SPINS = 8; // times round the reel before it stops
-
-  function prizeSlotHtml(drawn) {
-    // The reel: round and round, then the prize, as the last of its items.
-    const items = [];
-    for (let turn = 0; turn < SLOT_SPINS; turn++) items.push(...drawn.reel);
-    items.push(...drawn.reel.slice(0, drawn.won + 1));
-    return `<div class="slot" role="img" aria-label="Your prize: ${esc(drawn.reel[drawn.won].name)}">
-      <div class="slot-lights" aria-hidden="true">${"<i></i>".repeat(10)}</div>
-      <div class="slot-window" aria-hidden="true"><div class="slot-reel">${items.map((item) =>
-        `<div class="slot-item"><span class="slot-icon">${PRIZE_ICONS[item.buff] || "★"}</span><span>${esc(item.name)}</span></div>`).join("")}</div></div>
-      <p class="slot-result" hidden>+${drawn.packs} pack and a <strong>${esc(drawn.reel[drawn.won].name)}</strong>!</p>
-    </div>`;
-  }
-
-  // Spin the reel down to its last item, slowing as it goes, then light up. Seen once a win: a redraw shows it stopped.
-  let slotSpun = null;
-  function spinPrizeSlot(el, drawn) {
-    const reel = el.querySelector(".slot-reel");
-    const items = reel.children;
-    const stop = items.length - 1;
-    const height = items[0].getBoundingClientRect().height;
-    const done = () => {
-      reel.style.transform = `translateY(${-stop * height}px)`;
-      el.classList.add("slot-won");
-      el.querySelector(".slot-result").hidden = false;
-    };
-    const key = `${version}:${drawn.won}`;
-    if (!animations || slotSpun === key || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      done();
-      return;
-    }
-    slotSpun = key;
-    el.classList.add("slot-spinning");
-    reel.animate([{ transform: "translateY(0)" }, { transform: `translateY(${-stop * height}px)` }],
-                 { duration: 3200, delay: 900, easing: "cubic-bezier(.15,.55,.15,1)", fill: "forwards" })
-      .finished.then(() => {
-        el.classList.remove("slot-spinning");
-        done();
-      }, () => {});
-  }
-
-  // A scene the run plays: over the whole board, then the server is told it's done and the run goes on. After a
-  // win it waits a moment, so the victory is seen first.
-  function showScene() {
-    if (!sceneData || sceneData.key === sceneShown || !window.ScenePlayer) return;
-    const scene = sceneData;
-    sceneShown = scene.key;
-    const overlay = document.createElement("div");
-    overlay.className = "scene-overlay";
-    overlay.setAttribute("role", "dialog");
-    overlay.setAttribute("aria-label", scene.title || "Scene");
-    overlay.innerHTML = `<div class="scene-overlay-stage"></div><button type="button" class="scene-skip">Skip scene</button>`;
-    let player = null;
-    // With the buffs it gave, if any: in a challenge they're the player's now (the server checks them against the scene).
-    const done = () => {
-      overlay.remove();
-      const picked = player ? player.state() : { buffs: [], fights: [] };
-      act({ type: "scene_done", key: scene.key, buffs: picked.buffs.map((given) => [given.step, given.option]),
-            fights: picked.fights.map((chosen) => [chosen.step, chosen.option]) });
-    };
-    overlay.querySelector(".scene-skip").addEventListener("click", done, { once: true });
-    const start = () => {
-      // The game-over screen is waiting for the last damage to turn over (holdGameOver): the scene comes after it.
-      if (gameOverHeld()) return setTimeout(start, gameOverHeldUntil - performance.now() + 1600);
-      document.body.appendChild(overlay);
-      player = new ScenePlayer(overlay.querySelector(".scene-overlay-stage"), scene, { playerName: sceneViewer, onEnd: () => setTimeout(done, 600) });
-      player.start();
-    };
-    setTimeout(start, board && board.game_over ? 1600 : 0);
-  }
-
-  const climaxColor = (info) => CLIMAX_COLORS[String((info && info.color) || "").toLowerCase()] || "#ffb347";
-
-  // A climax just played takes over the screen: it darkens in the climax's colour with streaks drawing in while
-  // the music builds (or a whoosh rises), then the card and its name slam in on the beat with a flash, rings and a
-  // jolt of the board. As it fades, its power surges across its side's stage (play_fx.js climaxSurge). A click puts
-  // it away early. `count`: that side's climaxes played, so its sound isn't played twice (playBoardSounds).
-  function showClimax(card, owner, count) {
-    const info = card && card.card ? cards[card.card] : null;
-    if (!info) return;
-    cuedClimaxes[owner] = count;
-    const heard = playSound("climax", { quiet: owner === "opponent" });
-    const lead = Math.round(Math.min(900, heard ?? CLIMAX_LEAD_MS));
-    const end = lead + CLIMAX_HOLD_MS;
-    climaxShowEnds = performance.now() + end + CLIMAX_FADE_MS;
-    const color = climaxColor(info);
-    const whose = owner === "me" && !SPECTATING ? "You play a climax" : `${board[owner] ? board[owner].name : "Your opponent"} plays a climax`;
-    const el = document.createElement("div");
-    el.className = `cx-takeover${reducedMotion ? " still" : ""}`;
-    el.setAttribute("aria-hidden", "true"); // the log says it; this only shows it
-    el.style.setProperty("--cx", color);
-    el.style.setProperty("--lead", `${lead}ms`);
-    el.innerHTML = `<div class="cx-veil"></div><div class="cx-streaks"></div><div class="cx-flash"></div>
-      <div class="cx-core">
-        <div class="cx-rings"><i></i><i></i><i></i></div>
-        <div class="cx-card"${info.grade ? ` data-grade="${info.grade}"` : ""}><img src="${esc(info.image)}" alt="">${info.grade >= 3 ? '<span class="rfx-sheen"></span>' : ""}</div>
-        <p class="cx-title">${CX_HTML}<span class="cx-name">${esc(info.name)}</span></p>
-        <p class="cx-who">${esc(whose)}</p>
-      </div>`;
-    document.body.appendChild(el);
-    let gone = false;
-    const leave = () => {
-      if (gone) return;
-      gone = true;
-      el.classList.add("cx-out");
-      setTimeout(() => el.remove(), CLIMAX_FADE_MS);
-    };
-    el.addEventListener("click", leave);
-    setTimeout(leave, end);
-    // The board jolts as it lands.
-    if (!reducedMotion) {
-      setTimeout(() => boardEl.animate([{ translate: "0 0" }, { translate: "-7px 3px" }, { translate: "6px -3px" }, { translate: "-4px 1px" }, { translate: "2px 0" }, { translate: "0 0" }],
-        { duration: 380, easing: "ease-out" }), lead);
-    }
-    fx.climaxSurge(owner, color, end);
-  }
-
-  // A climax revealed by damage: it cancels the damage, and both players see that it did.
-  function showNegated(pk) {
-    const info = cards[pk];
-    if (!info) return;
-    const el = document.createElement("div");
-    el.className = `climax-show ${CLIMAX_EFFECTS[Math.floor(Math.random() * CLIMAX_EFFECTS.length)]}`;
-    el.style.animationDuration = `${CLIMAX_SHOW_MS}ms`;
-    el.innerHTML = `<div class="trigger-show">
-      <p class="trigger-show-title damage-negated">Damage Negated!</p>
-      <div class="trigger-show-cards"><div class="tc-card negate-card">
-        <svg class="negate-shield" viewBox="0 0 100 116" aria-hidden="true"><path d="M50 4 94 20v34c0 28-19 48-44 58C25 102 6 82 6 54V20z"/></svg>
-        <img src="${esc(info.image)}" alt="${esc(info.name)}"></div></div>
-    </div>`;
-    document.body.appendChild(el);
-    el.addEventListener("animationend", (event) => { if (event.target === el) el.remove(); }); // not its pieces' own animations
-  }
-
-  // An ability that has resolved: its card, in the middle of the screen with the same entrance as a
-  // climax, with an arrow to each card it was directed at.
-  function showAbility(ability) {
-    if (ability.check && battle.claimsCheck(ability.id)) return; // an attack's trigger check: the battle view shows it
-    if (ability.check) return showTriggerCheck(ability.check, ability.label);
-    const source = cards[ability.card];
-    if (!source) return;
-    const targets = ability.targets.map((pk) => cards[pk]).filter(Boolean);
-    const el = document.createElement("div");
-    el.className = `climax-show ${CLIMAX_EFFECTS[Math.floor(Math.random() * CLIMAX_EFFECTS.length)]}`;
-    el.style.animationDuration = `${CLIMAX_SHOW_MS}ms`;
-    el.innerHTML = targets.length
-      ? `<div class="ability-show" style="--targets: ${targets.length}">
-          <img data-source src="${esc(source.image)}" alt="Ability: ${esc(source.name)}">
-          <div class="ability-show-targets">${targets.map((t) => `<img data-target src="${esc(t.image)}" alt="Target: ${esc(t.name)}">`).join("")}</div>
-          <svg class="ability-arrows" aria-hidden="true"></svg>
-        </div>`
-      : `<img src="${esc(source.image)}" alt="Ability: ${esc(source.name)}">`;
-    document.body.appendChild(el);
-    el.addEventListener("animationend", (event) => { if (event.target === el) el.remove(); }); // not its pieces' own animations
-    if (targets.length) {
-      const images = [...el.querySelectorAll("img")].map((img) => img.decode().catch(() => {}));
-      Promise.all(images).then(() => drawArrows(el));
-    }
-  }
-
-  // A trigger check: the card or cards it turned over, with their icons, or that they have none.
-  // Trigger icons as Card.trigger spells them: what the reveal shows for each.
-  const TRIGGER_BADGES = {
-    soul: ["", "Soul"], draw: ["✋", "Draw"], gate: ["⛩", "Gate"], treasure: ["💰", "Treasure"], choice: ["🔀", "Choice"],
-    comeback: ["↩", "Comeback"], standby: ["⏳", "Standby"], shot: ["🎯", "Shot"], bounce: ["↪", "Bounce"], pool: ["💧", "Pool"],
-  };
-
-  // A checked card's trigger icons as badges, popping in one after another once the card has turned over; a double
-  // soul is one "Soul +2" badge.
-  function triggerBadgesHtml(checked) {
-    const icons = checked.flatMap((c) => (c.trigger || "").split(/\s+/).filter(Boolean));
-    if (!icons.length) return '<p class="tc-none">No trigger</p>';
-    const souls = icons.filter((icon) => icon === "soul").length;
-    const others = [...new Set(icons.filter((icon) => icon !== "soul"))];
-    const badges = [
-      ...(souls ? [`<li class="tc-badge tc-soul">${SOUL_ICON}<span>Soul +${souls}</span></li>`] : []),
-      ...others.map((icon) => {
-        const [symbol, word] = TRIGGER_BADGES[icon] || ["✦", icon.charAt(0).toUpperCase() + icon.slice(1)];
-        return `<li class="tc-badge tc-${esc(icon)}"><span aria-hidden="true">${symbol}</span><span>${esc(word)}</span></li>`;
-      }),
-    ];
-    return `<ul class="tc-badges">${badges.map((b, n) => b.replace('class="tc-badge', `style="--n: ${n}" class="tc-badge`)).join("")}</ul>`;
-  }
-
-  // Cards checked or revealed, in the middle of the screen: each comes in face down and turns over (a high rarity
-  // with its shine), then a trigger check's icons pop in under them.
-  function showTriggerCheck(pks, label = null) {
-    const checked = pks.map((pk) => cards[pk]).filter(Boolean);
-    if (!checked.length) return;
-    const el = document.createElement("div");
-    el.className = `climax-show ${CLIMAX_EFFECTS[Math.floor(Math.random() * CLIMAX_EFFECTS.length)]}`;
-    el.style.animationDuration = `${CLIMAX_SHOW_MS}ms`;
-    el.innerHTML = `<div class="trigger-show${reducedMotion ? "" : " tc-reveal"}">
-      <p class="trigger-show-title">${esc(label || "Trigger check")}</p>
-      <div class="trigger-show-cards">${checked.map((c) => `<div class="tc-card"${c.grade ? ` data-grade="${c.grade}"` : ""}>
-        <img src="${esc(c.image)}" alt="${esc(c.name)}">${c.grade >= 3 ? '<span class="rfx-sheen" aria-hidden="true"></span>' : ""}
-        <span class="tc-back pcard-back" aria-hidden="true"></span></div>`).join("")}</div>
-      ${label ? "" : triggerBadgesHtml(checked)}
-    </div>`;
-    document.body.appendChild(el);
-    el.addEventListener("animationend", (event) => { if (event.target === el) el.remove(); }); // not its pieces' own animations
-  }
-
-  // Arrows from the shown ability's card to its targets, measured without the entrance's transform.
-  function drawArrows(el) {
-    const box = el.querySelector(".ability-show");
-    const svg = box.querySelector(".ability-arrows");
-    const from = box.querySelector("[data-source]");
-    const startX = from.offsetLeft + from.offsetWidth;
-    const startY = from.offsetTop + from.offsetHeight / 2;
-    const GAP = 8;
-    svg.setAttribute("width", box.offsetWidth);
-    svg.setAttribute("height", box.offsetHeight);
-    svg.innerHTML = `<defs><marker id="ability-arrowhead" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
-        <path d="M0 0 L5 2.5 L0 5 z" fill="#ffd964"/></marker></defs>`
-      + [...box.querySelectorAll("[data-target]")].map((to) => `<line x1="${startX + GAP}" y1="${startY}"
-        x2="${to.offsetLeft - GAP}" y2="${to.offsetTop + to.offsetHeight / 2}" stroke="#ffd964" stroke-width="5" marker-end="url(#ability-arrowhead)"/>`).join("");
-  }
-
-  // The point halfway between the centers of two zones on one side of the table.
-  // A side of the table a compact screen isn't showing (announcements on it are left out; its button gets a dot).
-  const outOfSight = (el) => !el || !el.getClientRects().length;
-
-  function between(mat, fromSel, toSel) {
-    if (outOfSight(mat)) return null;
-    const from = mat && mat.querySelector(fromSel);
-    const to = mat && mat.querySelector(toSel);
-    if (!from || !to) return null;
-    const a = from.getBoundingClientRect();
-    const b = to.getBoundingClientRect();
-    return { x: (a.left + a.right + b.left + b.right) / 4, y: (a.top + a.bottom + b.top + b.bottom) / 4 };
-  }
-
-  // A level up, in the middle of the screen for both players as a phase change is (the opponent's level
-  // zone may be off the screen): who levelled, and their old level rolling over to the new one. One
-  // that comes with a phase change waits for its graphic to go, and two at once take turns.
-  let levelShowFree = 0; // when the last level up queued has finished showing (performance.now())
-  function showLevelUp(who, level) {
-    const now = performance.now();
-    const phaseShowing = document.querySelector(".phase-show") ? PHASE_PAUSE_MS : 0;
-    const start = Math.max(now + phaseShowing, levelShowFree);
-    levelShowFree = start + LEVEL_SHOW_MS;
-    setTimeout(() => {
-      const el = document.createElement("div");
-      el.className = "level-show";
-      el.style.setProperty("--level-ms", `${LEVEL_SHOW_MS}ms`);
-      el.setAttribute("role", "status");
-      el.innerHTML = `<div class="phase-show-card level-show-card">
-          <span class="phase-show-word">Level up</span>
-          <span class="level-show-numbers" aria-hidden="true"><span class="level-show-old">${level - 1}</span><span class="level-show-new">${level}</span></span>
-          <span class="level-show-who">${esc(who)}</span>
-          <span class="sr-only">${esc(who)} ${who === "You" ? "are" : "is"} now level ${level}</span>
-        </div>`;
-      document.body.appendChild(el);
-      el.addEventListener("animationend", (event) => { if (event.target === el) el.remove(); });
-    }, start - now);
-  }
-
-  // Text over the board at a point, fading in and out.
-  function flash(at, text, className) {
-    if (!at) return;
-    const el = document.createElement("div");
-    el.className = `play-flash ${className}`;
-    el.textContent = text;
-    el.setAttribute("aria-live", "polite");
-    el.style.left = `${at.x}px`;
-    el.style.top = `${at.y}px`;
-    document.body.appendChild(el);
-    el.addEventListener("animationend", (event) => { if (event.target === el) el.remove(); }); // not its pieces' own animations
-  }
+  // --- An infinite challenge's prize: a slot machine: play_prize.js (WeissPrize), made here once what it reads is defined
+  const prizeScreen = window.WeissPrize.create({
+    CLIMAX_COLORS: () => CLIMAX_COLORS,
+    CLIMAX_EFFECTS: () => CLIMAX_EFFECTS,
+    CLIMAX_FADE_MS: () => CLIMAX_FADE_MS,
+    CLIMAX_HOLD_MS: () => CLIMAX_HOLD_MS,
+    CLIMAX_LEAD_MS: () => CLIMAX_LEAD_MS,
+    CLIMAX_SHOW_MS: () => CLIMAX_SHOW_MS,
+    CX_HTML: () => CX_HTML,
+    LEVEL_SHOW_MS: () => LEVEL_SHOW_MS,
+    PHASE_PAUSE_MS: () => PHASE_PAUSE_MS,
+    SOUL_ICON: () => SOUL_ICON,
+    SPECTATING: () => SPECTATING,
+    animations: () => animations,
+    battle: () => battle,
+    board: () => board,
+    boardEl: () => boardEl,
+    cards: () => cards,
+    climaxShowEnds: () => climaxShowEnds,
+    cuedClimaxes: () => cuedClimaxes,
+    esc: () => esc,
+    fx: () => fx,
+    gameOverHeld: () => gameOverHeld,
+    gameOverHeldUntil: () => gameOverHeldUntil,
+    heard: () => heard,
+    playSound: (...args) => playSound(...args),
+    reducedMotion: () => reducedMotion,
+    sceneData: () => sceneData,
+    sceneShown: () => sceneShown,
+    sceneViewer: () => sceneViewer,
+    version: () => version,
+    who: (...args) => who(...args),
+    setClimaxShowEnds: (value) => { climaxShowEnds = value; },
+    setSceneShown: (value) => { sceneShown = value; },
+  });
 
   // --- The table's show and mood: play_fx.js (WeissTableFx), made at the end once all it uses is defined -------
 
@@ -1391,338 +1171,46 @@
 
   let battle = { update() {}, damageLead: () => 0, battleClaim: () => null, claimsCheck: () => false, claimsNegated: () => false };
 
-  // --- Card movement: our own moves fly a card from where it is to where it's going, and then the
-  // action is sent, so the real card appears as the flight lands ---------------------------------
-
-  const FLIGHT_MS = 420; // each card's flight
-  const FLIGHT_STAGGER_MS = 140; // between cards when several move
-  const MAX_FLIGHTS = 10;
-  const BACK = '<span class="pcard-back"></span>';
-
-  // The element showing one of our zones: a stage slot (markers fly to their character), a pile,
-  // or the hand.
-  function zoneEl(zone) {
-    if (zone === "hand") return boardEl.querySelector(".hand-me .hand-cards");
-    const slot = isMarkerPile(zone) ? zone.slice("marker:".length) : zone;
-    if (STAGE.includes(slot)) return boardEl.querySelector(`.mat-me [data-slot="${slot}"]`);
-    return boardEl.querySelector(`.mat-me [data-pile="${zone}"]`);
-  }
-
-  // An element's box as laid out, ignoring rotation, so a rested card still flies card-shaped.
-  function layoutBox(el) {
-    const r = el.getBoundingClientRect();
-    const w = el.offsetWidth || r.width;
-    const h = el.offsetHeight || r.height;
-    return { left: r.left + r.width / 2 - w / 2, top: r.top + r.height / 2 - h / 2, width: w, height: h };
-  }
-
-  // The top (last) card shown in a zone, if any.
-  function topCardEl(zone) {
-    const el = zoneEl(zone);
-    const shown = el ? el.querySelectorAll(".pcard") : [];
-    return shown.length ? shown[shown.length - 1] : null;
-  }
-
-  // Where a card leaves a zone from: its top card, or the empty space.
-  function originBox(zone) {
-    const top = topCardEl(zone);
-    const empty = zoneEl(zone) && zoneEl(zone).querySelector(".zone-empty");
-    return top ? layoutBox(top) : empty ? layoutBox(empty) : null;
-  }
-
-  // Where a card arriving in a zone lands: past the end of the hand or clock, below the level
-  // stack's last card, or on the pile or slot itself. `size` is used when there's nothing to match.
-  function landingBox(zone, size) {
-    const el = zoneEl(zone);
-    if (!el) return null;
-    const top = topCardEl(zone);
-    if (top) {
-      const last = layoutBox(top);
-      if (zone === "hand" || zone === "clock") return { ...last, left: last.left + last.width * .6 };
-      if (zone === "level") return { ...last, top: last.top + last.height * .22 };
-      return last;
-    }
-    const empty = el.querySelector(".zone-empty");
-    if (empty) return layoutBox(empty);
-    const r = el.getBoundingClientRect(); // an empty hand
-    return { left: r.left + r.width / 2 - size.width / 2, top: r.top, width: size.width, height: size.height };
-  }
-
-  const faceOf = (el) => {
-    const img = el && !el.classList.contains("face-down") && el.querySelector("img");
-    return img ? `<img src="${esc(img.src)}" alt="">` : BACK;
-  };
-
-  // The cards an action of ours moves, as [{from, to, face}] boxes, in the order they move.
-  function flightsFor(action) {
-    const flights = [];
-    // `hide`: the card on the board that's moving, hidden while its flight stands in for it.
-    const fly = (from, toZone, face = BACK, times = 1, ms = FLIGHT_MS, hide = null) => {
-      const to = from && landingBox(toZone, from);
-      for (let i = 0; to && i < Math.min(times, MAX_FLIGHTS); i++) flights.push({ from, to, face, ms, hide });
-    };
-    const fromZone = (zone, toZone, times = 1, face = BACK, ms = FLIGHT_MS) => fly(originBox(zone), toZone, face, times, ms);
-    const at = PHASE_NAMES.indexOf(board.phase);
-    const target = action.type === "end_turn" ? PHASE_NAMES.length - 1 : PHASE_NAMES.indexOf(action.phase);
-    const passes = (phase) => at < PHASE_NAMES.indexOf(phase) && PHASE_NAMES.indexOf(phase) <= target;
-    switch (action.type) {
-      case "move": {
-        const el = root.querySelector(`.pcard[data-uid="${action.uid}"]`);
-        if (!el) break;
-        fly(layoutBox(el), action.to, faceOf(el), 1, FLIGHT_MS, el);
-        // Moving onto an occupied slot from another slot swaps them: the other card flies back.
-        const other = STAGE.includes(el.dataset.zone) && STAGE.includes(action.to) && topCardEl(action.to);
-        if (other) fly(layoutBox(other), el.dataset.zone, faceOf(other), 1, FLIGHT_MS, other);
-        const info = el.dataset.card ? cards[el.dataset.card] : null;
-        if (el.dataset.zone === "hand" && PLAY_ZONES.includes(action.to) && info && info.cost && !action.free_with) {
-          fromZone("stock", "waiting", info.cost); // paying the cost
-        }
-        break;
-      }
-      case "move_top": fromZone(action.from, action.to, action.count || 1); break;
-      case "move_all": fromZone(action.from, action.to, Math.min(pileCards(board.me, action.from).length, 6), faceOf(topCardEl(action.from))); break;
-      case "attack": fromZone("deck", board.rules ? "stock" : "resolution"); break;
-      case "discard":
-        for (const uid of action.uids) {
-          const el = root.querySelector(`.hand-me .pcard[data-uid="${uid}"]`);
-          if (el) fly(layoutBox(el), "waiting", faceOf(el), 1, FLIGHT_MS, el);
-        }
-        break;
-      case "mulligan":
-        for (const uid of action.uids) {
-          const el = root.querySelector(`.hand-me .pcard[data-uid="${uid}"]`);
-          if (el) fly(layoutBox(el), "waiting", faceOf(el), 1, FLIGHT_MS, el);
-        }
-        fromZone("deck", "hand", action.uids.length);
-        break;
-      case "trigger_choice": {
-        // A bounce has no `to`: its card goes to the opponent's hand, which isn't one of our zones.
-        const el = action.uid && action.to && root.querySelector(`.pcard[data-uid="${action.uid}"]`);
-        if (el) fly(layoutBox(el), action.to, faceOf(el));
-        if (action.accept) fromZone("deck", "stock");
-        break;
-      }
-      case "counter": {
-        const el = root.querySelector(`.pcard[data-uid="${action.uid}"]`);
-        if (el) fly(layoutBox(el), "waiting", faceOf(el));
-        break;
-      }
-      case "damage":
-        fromZone("deck", "clock", action.count || 1);
-        fx.noteOwnDamage(); // these cards have flown in: the table's show doesn't turn them over again
-        break;
-      case "encore": fromZone("stock", "waiting", ENCORE_COST); break;
-      case "clock_draw": {
-        const el = root.querySelector(`.pcard[data-uid="${action.uid}"]`);
-        if (el) fly(layoutBox(el), "clock", faceOf(el));
-        fromZone("deck", "hand", CLOCK_DRAW);
-        break;
-      }
-      case "phase":
-      case "end_turn":
-        if (board.rules && passes("draw")) fromZone("deck", "hand", 1, BACK, FLIGHT_MS * 1.2); // the draw phase's draw, a little slower
-        if (passes("end") && board.me.zones.climax.length) fromZone("climax", "waiting", board.me.zones.climax.length, faceOf(topCardEl("climax")));
-        break;
-      default: break;
-    }
-    return flights;
-  }
-
-  // The action waits for its flights, but never for long: a browser can hold animations back (a tab out of
-  // sight, a phone put down), and the action, and the game with it, mustn't wait on that.
-  async function animateAction(action) {
-    if (!animations || !board) return;
-    const flights = flightsFor(action);
-    await Promise.race([flyAll(flights), wait(FLIGHT_MS * 2 + flights.length * FLIGHT_STAGGER_MS)]);
-  }
-
-  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-  // A request that gives up: one a phone has left hanging (put away mid-request, or between networks)
-  // would otherwise hold up every one after it until the page is reloaded.
-  async function fetchWithin(ms, url, options = {}) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), ms);
-    try {
-      return await fetch(url, { ...options, signal: controller.signal });
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-
-  // Fly card-shaped boxes {from, to, face, ms}: `hide` is hidden for the flight (it's the card
-  // leaving; the board is redrawn afterwards anyway), `show` is hidden until its flight lands.
-  function flyAll(flights) {
-    // A compact screen shows one side of the table at a time: nothing flies to or from the side out of sight.
-    flights = flights.filter(({ from, to }) => from && to && from.width && to.width);
-    return Promise.all(flights.map(({ from, to, face, ms = FLIGHT_MS, hide, show, opponent }, i) => {
-      const el = document.createElement("div");
-      el.className = opponent ? "card-flight card-flight-opponent" : "card-flight";
-      el.innerHTML = face;
-      Object.assign(el.style, { left: `${from.left}px`, top: `${from.top}px`, width: `${from.width}px`, height: `${from.height}px` });
-      document.body.appendChild(el);
-      if (hide) hide.style.visibility = "hidden";
-      if (show) show.style.visibility = "hidden";
-      const animation = el.animate([
-        { transform: "translate(0, 0) scale(1)" },
-        { transform: `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${to.width / from.width})` },
-      ], { duration: ms, delay: i * FLIGHT_STAGGER_MS, easing: "cubic-bezier(.3, .7, .4, 1)", fill: "forwards" });
-      return animation.finished.catch(() => {}).then(() => {
-        el.remove();
-        if (show) show.style.visibility = "";
-      });
-    }));
-  }
-
-  // The opponent's moves arrive already made, so their stage changes are animated after the fact:
-  // a character that changed slots flies from its old slot, and one played from their hand flies
-  // from there, while the card in its new slot stays hidden until the flight lands.
-  function opponentSnapshot() {
-    if (!board || !board.opponent || !animations) return null;
-    const mat = boardEl.querySelector(".mat-opponent");
-    if (!mat) return null;
-    const slots = {};
-    const boxes = {};
-    for (const slot of STAGE) {
-      const card = board.opponent.stage[slot];
-      if (card) slots[card.uid] = slot;
-      const el = mat.querySelector(`[data-slot="${slot}"] .pcard, [data-slot="${slot}"] .zone-empty`);
-      if (el) boxes[slot] = layoutBox(el);
-    }
-    const handCards = boardEl.querySelectorAll(".hand-opponent .pcard");
-    const hand = handCards.length ? layoutBox(handCards[handCards.length - 1]) : null;
-    return { slots, boxes, hand, handCount: board.opponent.zones.hand.count };
-  }
-
-  function animateOpponent(before) {
-    if (!before || !board.opponent || !animations) return;
-    const mat = boardEl.querySelector(".mat-opponent");
-    const flights = [];
-    for (const slot of STAGE) {
-      const card = board.opponent.stage[slot];
-      const el = card && mat && mat.querySelector(`[data-slot="${slot}"] .pcard`);
-      if (!el || before.slots[card.uid] === slot) continue;
-      const from = before.slots[card.uid] ? before.boxes[before.slots[card.uid]]
-        : board.opponent.zones.hand.count < before.handCount ? before.hand : null;
-      if (from) flights.push({ from, to: layoutBox(el), face: faceOf(el), show: el, opponent: true });
-    }
-    flyAll(flights);
-  }
-
-  // Asking for the board: one request at a time, from pollLoop. The server may hold a request until something changes
-  // (its long-poll, weiss.play.room_state): a "nothing new" that took a while says it does, and then the next request
-  // goes straight out, so a move shows as soon as it's made. Otherwise this is plain polling, every POLL_MS.
-  const LONG_POLL_SIGN_MS = 1500;
-  let polling = false;
-  let longPoll = false;
-  let pollWake = null; // ends pollLoop's pause early (the tab coming back into view)
-
-  // "board", "nothing" or "failed" (what came back), or "skipped" (an action of ours is out, or a poll already is).
-  async function poll() {
-    if (busy || polling) return "skipped";
-    polling = true;
-    let data = null;
-    let problem = "";
-    try {
-      const started = performance.now();
-      // A tab out of sight doesn't hold a server thread waiting: it only checks, and less often (pollLoop).
-      const response = await fetchWithin(POLL_TIMEOUT_MS, `${STATE_URL}?v=${version}&wait=${document.hidden ? 0 : 1}`, { credentials: "same-origin" });
-      if (response.status === 200) data = await response.json();
-      else if (response.status === 204) longPoll = performance.now() - started > LONG_POLL_SIGN_MS;
-      else if (response.status >= 500) problem = SERVER_ERROR;
-    } catch (e) { problem = CONNECTION_ERROR; } // offline for a moment, or timed out; try again next tick
-    finally { polling = false; }
-    // Our own action's answer may have brought this board already: nothing to draw again.
-    if (data && data.version !== undefined && String(data.version) === version && !problem) data = null;
-    // Outside the try: a mistake in drawing the board must show in the console, not pass for being offline.
-    if (data && [CONNECTION_ERROR, DRAW_ERROR, SERVER_ERROR].includes(error)) error = ""; // through again: the board says where things stand
-    if (data) receive(data);
-    else {
-      if (problem) pollFailed(problem);
-      if (!busy) armTimers(); // nothing new: anything we owe the game that didn't get through goes again
-    }
-    return data ? "board" : problem ? "failed" : "nothing";
-  }
-
-  async function pollLoop() {
-    for (;;) {
-      const got = await poll();
-      // Held requests come back as soon as there's news, so the next goes out at once; plain polling waits its turn,
-      // as does a failure (no hammering a server that's struggling) and a tab out of sight (less often still).
-      const pause = document.hidden ? POLL_MS * 3 : longPoll && (got === "board" || got === "nothing") ? 50 : POLL_MS;
-      await new Promise((resolve) => {
-        pollWake = resolve;
-        setTimeout(resolve, pause);
-      });
-      pollWake = null;
-    }
-  }
-
-  // A poll that didn't get through. Before the first board there's nothing else on screen, so the table says what's
-  // wrong rather than looking like it's still loading; after it, a server error shows where errors do (a moment
-  // offline is left to the next tick).
-  function pollFailed(problem) {
-    if (!board) {
-      boardEl.innerHTML = `<p class="panel-error" role="alert">${esc(problem === SERVER_ERROR
-        ? "The table couldn't be loaded: the server ran into a problem with this game. Still trying…"
-        : "The table couldn't be loaded: can't reach the server. Still trying…")}</p>`;
-    } else if (problem === SERVER_ERROR && error !== SERVER_ERROR) {
-      error = SERVER_ERROR;
-      render();
-    }
-  }
-
-  async function act(action) {
-    if (SPECTATING) return;
-    if (action.type === "duel_concede" && !window.confirm(`Concede the vs. battle? ${duel.partner} picks their augment and curse first.`)) return;
-    // A card its own text lets us play for free by giving up a character: asks how to pay.
-    if (action.type === "move" && !action.free_with && !action.pay_full && (board.free_plays || {})[action.uid]
-        && (action.to in board.me.stage || action.to === "resolution" || action.to === "climax")) {
-      modal = { confirmFree: action };
-      renderModal();
-      return;
-    }
-    if (modal && modal.confirmFree) {
-      modal = null;
-      renderModal();
-    }
-    busy = true;
-    let failed = false;
-    hideMenu();
-    try {
-      await animateAction(action);
-      const response = await fetchWithin(ACTION_TIMEOUT_MS, ACTION_URL, {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json", "X-CSRFToken": CSRF },
-        body: JSON.stringify(action),
-      });
-      const data = await response.json();
-      if (data.redirect) {
-        window.location.href = data.redirect;
-        return;
-      }
-      error = data.error || "";
-      if (modal && modal.revealed && action.uid && !data.error) {
-        modal.revealed = modal.revealed.filter((c) => c.uid !== action.uid);
-      }
-      if (data.board || data.status) receive(data); else render();
-    } catch (e) {
-      failed = true;
-      const offline = e.name === "AbortError" || e instanceof TypeError; // timed out, or no connection
-      if (!offline) console.error(e);
-      error = offline ? CONNECTION_ERROR : DRAW_ERROR;
-      try {
-        render();
-      } catch (again) {
-        console.error(again);
-      }
-    } finally {
-      busy = false;
-    }
-    // It may have gone through all the same (an answer that was lost, or a board that didn't draw): catch up now.
-    if (failed) poll();
-  }
+  // --- Card movement: our own moves: play_movement.js (WeissMovement), made here once what it reads is defined
+  const movement = window.WeissMovement.create({
+    ACTION_TIMEOUT_MS: () => ACTION_TIMEOUT_MS,
+    ACTION_URL: () => ACTION_URL,
+    CLOCK_DRAW: () => CLOCK_DRAW,
+    CONNECTION_ERROR: () => CONNECTION_ERROR,
+    CSRF: () => CSRF,
+    DRAW_ERROR: () => DRAW_ERROR,
+    ENCORE_COST: () => ENCORE_COST,
+    PHASE_NAMES: () => PHASE_NAMES,
+    PLAY_ZONES: () => PLAY_ZONES,
+    POLL_MS: () => POLL_MS,
+    POLL_TIMEOUT_MS: () => POLL_TIMEOUT_MS,
+    SERVER_ERROR: () => SERVER_ERROR,
+    SPECTATING: () => SPECTATING,
+    STAGE: () => STAGE,
+    STATE_URL: () => STATE_URL,
+    animations: () => animations,
+    armTimers: (...args) => armTimers(...args),
+    board: () => board,
+    boardEl: () => boardEl,
+    busy: () => busy,
+    cards: () => cards,
+    duel: () => duel,
+    error: () => error,
+    esc: () => esc,
+    fx: () => fx,
+    hideMenu: (...args) => menus.hideMenu(...args),
+    isMarkerPile: () => isMarkerPile,
+    modal: () => modal,
+    pileCards: (...args) => pileCards(...args),
+    receive: (...args) => receive(...args),
+    render: (...args) => render(...args),
+    renderModal: (...args) => renderModal(...args),
+    root: () => root,
+    version: () => version,
+    setBusy: (value) => { busy = value; },
+    setError: (value) => { error = value; },
+    setModal: (value) => { modal = value; },
+  });
 
   // --- Drawing ---------------------------------------------------------------------------------
 
@@ -2248,14 +1736,14 @@
       backdropSeen[owner] = { uid: top.uid, at: heard ? now + lead : now - CX_BACKDROP_FADE_MS };
     }
     const delay = backdropSeen[owner].at - now; // positive: still waiting for the takeover; negative: part-way in
-    const style = `--cx-art: url('${esc(info.image)}'); --cx-color: ${climaxColor(info)}; animation-delay: ${Math.round(delay)}ms`;
+    const style = `--cx-art: url('${esc(info.image)}'); --cx-color: ${prizeScreen.climaxColor(info)}; animation-delay: ${Math.round(delay)}ms`;
     return `<div class="cx-backdrop" style="${style}" aria-hidden="true"></div>`;
   }
 
   function render() {
     if (!board) return;
     // Redrawing replaces the card being hovered: the zoom carries over to whatever card is under the pointer then.
-    if (zoomCard) queueMicrotask(keepZoom);
+    if (art.hasZoom()) queueMicrotask(art.keepZoom);
     const me = board.me;
     const opp = board.opponent;
     const oppHand = opp ? opp.zones.hand.count : 0;
@@ -2288,13 +1776,13 @@
     const atBottom = logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 20;
     logEl.innerHTML = board.log.map((entry) => entry.chat
       ? `<p class="log-chat"><b>${who(entry.who)}:</b> ${esc(entry.text)}</p>`
-      : `<p>${entry.who ? `<b>${who(entry.who)}</b> ` : ""}${logHtml(entry)}</p>`).join("");
+      : `<p>${entry.who ? `<b>${who(entry.who)}</b> ` : ""}${logHtml(entry)}</p>`).join("") + reactions.logHtml();
     if (atBottom) logEl.scrollTop = logEl.scrollHeight;
 
     renderModal();
     renderGameOver();
     renderIntro();
-    renderTray();
+    touchScreen.renderTray();
   }
 
   const gameNumber = () => board.game_number || 1;
@@ -2518,7 +2006,8 @@
     const faceOff = rps.last ? `<div class="rps-faceoff">${hand(rps.last.me, "You", rps.won === false ? "rps-lost" : "")}<span class="rps-vs">vs</span>${hand(rps.last.opponent, name, rps.won ? "rps-lost" : "")}</div>` : "";
     let body;
     if (rps.won !== null) {
-      body = `<p class="rps-result ${rps.won ? "rps-won" : "rps-beaten"}">${rps.won ? "You win! You go first." : `${name} wins and goes first.`}</p>`;
+      // The banner's words are Barry's copy (docs/duel-presentation-plan.md).
+      body = `<p class="rps-result ${rps.won ? "rps-won" : "rps-beaten"}">${rps.won ? "You go first" : `${esc(name)} goes first`}</p>`;
     } else if (rps.mine) {
       body = `<p>You chose ${RPS_HANDS[rps.mine][1].toLowerCase()}. Waiting for ${name}…</p>`;
     } else {
@@ -2529,7 +2018,14 @@
     modalEl.hidden = false;
     modalEl.innerHTML = `<div class="play-modal-box confirm-box rps-box" role="dialog" aria-label="Rock, paper, scissors">
       <h2>Rock, paper, scissors</h2>${faceOff}${body}</div>`;
+    // Once both have picked: the hands shake, then the banner (play_versus.js). Once per result, not on each redraw.
+    const revealKey = rps.won !== null ? JSON.stringify(rps.last) : null;
+    if (revealKey && revealKey !== rpsRevealedFor && window.WeissVersus) {
+      rpsRevealedFor = revealKey;
+      window.WeissVersus.rpsReveal(modalEl.querySelector(".rps-box"), { animations });
+    }
   }
+  let rpsRevealedFor = null; // the result whose hands have been revealed
 
   // Games won in this series of rematches, either side of the turn counter: the first player on the
   // left and the second on the right, on both players' screens.
@@ -2572,11 +2068,19 @@
 
   function renderIntro() {
     if (!intro || !cpuInfo) {
-      if (introEl) introEl.remove();
+      if (introEl && window.WeissVersus) window.WeissVersus.close(introEl);
+      else if (introEl) introEl.remove();
       introEl = null;
       return;
     }
     if (introEl) return;
+    // The versus intro (play_versus.js) when it's loaded; the plain screen below otherwise.
+    if (window.WeissVersus) {
+      const ribbon = (versus && versus.ribbon && versus.ribbon.text) || (arcade ? `${arcade.scenario} · ${fightOf()}` : null);
+      introEl = window.WeissVersus.intro({ cpu: cpuInfo, versus, ribbon, animations, onImpact: () => playSound("versus") });
+      root.appendChild(introEl);
+      return;
+    }
     introEl = document.createElement("div");
     introEl.className = "cpu-intro";
     introEl.setAttribute("role", "dialog");
@@ -2590,13 +2094,37 @@
     root.appendChild(introEl);
   }
 
+  // A world duel's results ceremony (play_ceremony.js), once the game-over screen is built. Its end shows the way back.
+  function startCeremony(over) {
+    const box = gameOverEl.querySelector("[data-ceremony]");
+    if (!box) return;
+    window.WeissCeremony.play(box, world.result, {
+      won: over.won, cpuName: cpuInfo ? cpuInfo.name : world.result.cpu || "", animations, skipTarget: gameOverEl,
+      onTick: () => playSound("tick"),
+      onDone: () => {
+        if (!gameOverEl) return;
+        gameOverEl.dataset.ceremonyState = "done";
+        const link = gameOverEl.querySelector("[data-town-link]");
+        // Focus scrolls the button into view, inside the banner, on a window too short to show it.
+        const summary = gameOverEl.querySelector("[data-summary-open]");
+        if (summary) summary.hidden = false;
+        if (link) { link.hidden = false; link.focus(); }
+      },
+    });
+  }
+
   function gameOverButtons(over) {
     if (SPECTATING) return `<a class="button" href="${esc(root.dataset.challengeUrl)}">Back to the challenge</a>`;
     if (world) {
       const result = world.result;
-      const paid = result && result.coins ? `<p class="game-over-world">+${result.coins} coins${result.first ? " (the day's first win)" : ""}${result.stake ? ", the stakes won" : ""}.</p>`
-        : result && result.stake ? `<p class="game-over-world">The ${result.stake}-coin entry fee is gone.</p>` : "";
-      return `${paid}<a class="button" href="${esc(world.town)}">Back to the town</a>`;
+      // With a result, the ceremony (play_ceremony.js) plays out the rewards, and this link waits for it to end.
+      const waiting = Boolean(result && gameOverEl && gameOverEl.dataset.ceremonyState !== "done");
+      if (result && !window.WeissCeremony) { // no ceremony file: the old one-line payout
+        const paid = result.coins ? `<p class="game-over-world">+${result.coins} coins${result.first ? " (the day's first win)" : ""}${result.stake ? ", the stakes won" : ""}.</p>`
+          : result.stake ? `<p class="game-over-world">The ${result.stake}-coin entry fee is gone.</p>` : "";
+        return `${paid}<a class="button" href="${esc(world.town)}">Back to the town</a>`;
+      }
+      return `<a class="button" href="${esc(world.town)}" data-town-link${waiting ? " hidden" : ""}>Back to the town</a>`;
     }
     if (duel) return `<a class="button" href="${esc(duel.url)}">On to the augments &amp; curses</a>`;
     if (!arcade) {
@@ -2624,16 +2152,23 @@
 
   const hasSummary = (over) => Boolean(over.timeline && window.WeissSummary);
 
+  // In a world duel the button waits for the results ceremony to finish (or be skipped), as the town's Back button does.
   function summaryButtonHtml(over) {
-    return hasSummary(over) ? '<button type="button" class="game-over-summary-open" data-summary-open aria-haspopup="dialog">📈 How the game went</button>' : "";
+    if (!hasSummary(over)) return "";
+    const waiting = Boolean(world && world.result && gameOverEl && gameOverEl.dataset.ceremonyState !== "done");
+    return `<button type="button" class="game-over-summary-open" data-summary-open aria-haspopup="dialog"${waiting ? " hidden" : ""}>📈 How the game went</button>`;
   }
 
+  // The panel: the game's moments (the duel recap's, from this player's seat) at the top, then the graph and the numbers.
   function summaryPanelHtml(over) {
     if (!hasSummary(over)) return "";
     const names = { me: "You", them: board.opponent ? board.opponent.name : "Your opponent" };
+    const moments = over.recap && (over.recap.moments || []).length
+      ? `<ul class="game-summary-moments">${over.recap.moments.map((text) => `<li>${esc(text)}</li>`).join("")}</ul>` : "";
     return `<div class="game-summary" role="dialog" aria-modal="true" aria-labelledby="game-summary-title" data-summary hidden>
       <div class="game-summary-head"><h2 id="game-summary-title">How the game went</h2>
         <button type="button" class="game-over-summary-open game-summary-close" data-summary-close>Close</button></div>
+      ${moments}
       ${window.WeissSummary.html(over.timeline, names)}
     </div>`;
   }
@@ -2690,7 +2225,7 @@
     if (gameOverEl) {
       gameOverEl.remove(); // only just drawn, in this same render: unseen, so its prize slot still spins when it's back
       gameOverEl = null;
-      slotSpun = null;
+      prizeScreen.slotSpun = null;
     }
     if (score && score.running) tellScore();
     setTimeout(() => {
@@ -2709,12 +2244,13 @@
     }
     if (!gameOverEl && gameOverHeld()) return;
     if (!gameOverEl) {
-      hideMenu();
-      hideZoom();
+      menus.hideMenu();
+      art.hideZoom();
       gameOverEl = document.createElement("div");
       const outcome = over.won ? "win" : "lose"; // for the player
       const custom = cpuInfo && cpuImage(outcome); // a CPU with an avatar has its own screen, and its own words
-      const said = custom && (over.won ? cpuInfo.win : cpuInfo.lose);
+      // In a town duel the CPU's game-over words are the after-win or after-loss line (world.result.cpu_line).
+      const said = world && world.result ? world.result.cpu_line : custom && (over.won ? cpuInfo.win : cpuInfo.lose);
       gameOverEl.className = `game-over ${over.won ? "game-over-victory" : "game-over-defeat"}${custom ? " game-over-custom" : ""}${animations ? " animated" : ""}`;
       gameOverEl.setAttribute("role", "alertdialog");
       gameOverEl.setAttribute("aria-label", over.won ? "Victory" : "Defeat");
@@ -2723,9 +2259,10 @@
         : over.reason === "boss" ? "The boss's health bar is empty."
         : over.reason === "concede" ? `${loser} conceded.` : `${loser} reached level 4.`;
       gameOverEl.innerHTML = `<div class="game-over-rays"></div>
-        <div class="game-over-banner">${CREST}${custom ? `<div class="game-over-cpu">${cpuPortrait("game-over-cpu-image", outcome)}${said ? `<p class="cpu-speech">${esc(said)}</p>` : ""}</div>` : ""}
+        <div class="game-over-banner">${CREST}${custom ? `<div class="game-over-cpu">${cpuPortrait("game-over-cpu-image", outcome)}</div>` : ""}
           <h2 class="game-over-word">${over.won ? "Victory" : "Defeat"}</h2>
           <p class="game-over-reason">${reason}</p>
+          ${said ? `<figure class="game-over-quote"><p class="game-over-quote-line">“${esc(said)}”</p><figcaption class="game-over-quote-name">${esc(cpuInfo ? cpuInfo.name : "")}</figcaption></figure>` : ""}
           ${over.score ? scoreLines(over.score) : ""}
           ${arcade && arcade.challenge && over.won ? `<p class="game-over-arcade">${prize ? "" : `Won: ${esc(arcade.challenge.won)} · `}${arcade.challenge.packs} packs to open</p>` : ""}
           ${arcade && arcade.challenge && !over.won && !arcade.coop ? `<p class="game-over-arcade">${arcade.challenge.going ? `A second chance: you can fight again${arcade.challenge.lives ? ` (${arcade.challenge.lives} more left)` : ""}.` : "The challenge is over."}</p>` : ""}
@@ -2733,15 +2270,17 @@
           ${arcade && arcade.boss ? `<p class="game-over-arcade">${bossLine(over)}</p>` : ""}
           ${duel ? `<p class="game-over-arcade">${over.won ? "You pick your augment and curse first." : `${esc(duel.partner)} picks their augment and curse first.`} Rivalry: you ${duel.mine} – ${duel.theirs} ${esc(duel.partner)}</p>` : ""}
           ${arcade ? `<p class="game-over-arcade">${arcade.cleared ? `🏆 ${esc(arcade.scenario)} cleared!` : over.won ? `Up next: ${fightOf()}` : `${esc(arcade.scenario)}: ${fightOf()}`}${arcade.score ? ` · run score ${arcade.score}` : ""}</p>` : ""}
-          ${over.won && prize ? prizeSlotHtml(prize) : ""}
+          ${over.won && prize ? prizeScreen.prizeSlotHtml(prize) : ""}
           ${unlocked ? sleevesUnlockedHtml(unlocked) : ""}
           <p class="game-over-status" data-game-over-status></p>
+          ${world && world.result ? `<div class="ceremony" data-ceremony></div>` : ""}
           <div class="game-over-buttons" data-game-over-buttons></div>
           ${summaryButtonHtml(over)}</div>
         ${summaryPanelHtml(over)}`;
       root.appendChild(gameOverEl);
       wireSummary(gameOverEl);
-      if (over.won && prize) spinPrizeSlot(gameOverEl.querySelector(".slot"), prize);
+      if (world && world.result && window.WeissCeremony) startCeremony(over);
+      if (over.won && prize) prizeScreen.spinPrizeSlot(gameOverEl.querySelector(".slot"), prize);
     }
     const name = opponentWho("Your opponent");
     gameOverEl.querySelector("[data-game-over-status]").innerHTML = (error && esc(error))
@@ -2766,7 +2305,7 @@
   // A pop-up hides the tray of buttons for a picked card (touch), and closing it brings the tray back.
   function renderModal() {
     renderModalBox();
-    renderTray();
+    touchScreen.renderTray();
   }
 
   function renderModalBox() {
@@ -3396,812 +2935,103 @@
     if (el) showPreview(el.dataset.card);
   });
 
-  // --- Enlarged card art after resting the mouse on a card -------------------------------------
-
-  const ZOOM_DELAY_MS = 0;
-  const zoomEl = document.createElement("div");
-  zoomEl.className = "play-zoom";
-  zoomEl.hidden = true;
-  document.body.appendChild(zoomEl);
-  // Beside the zoom of a character whose power, soul or level has changed: the cards (or augments, curses...) changing it.
-  const sourcesEl = document.createElement("div");
-  sourcesEl.className = "play-zoom-sources";
-  sourcesEl.hidden = true;
-  document.body.appendChild(sourcesEl);
-  let zoomTimer = null;
-  let zoomCard = null; // the .pcard element being hovered
-
-  function hideZoom() {
-    clearTimeout(zoomTimer);
-    zoomTimer = null;
-    zoomCard = null;
-    zoomEl.hidden = true;
-    sourcesEl.hidden = true;
-  }
-
-  // Where a card giving a boost is now, as "Your back left" or "Bob's climax area", or "" if it's not on the board.
-  function whereIs(uid) {
-    const sides = [["me", SPECTATING ? `${board.me.name}'s` : "Your"], ["opponent", board.opponent ? `${board.opponent.name}'s` : "Opponent's"]];
-    for (const [key, owner] of sides) {
-      const side = board[key];
-      if (!side) continue;
-      const slot = STAGE.find((s) => side.stage[s] && side.stage[s].uid === uid);
-      if (slot) return `${owner} ${LABELS[slot].toLowerCase()}`;
-      for (const [zone, name] of [["climax", "climax area"], ["memory", "memory"], ["waiting", "waiting room"]]) {
-        const pile = side.zones[zone];
-        if (Array.isArray(pile) && pile.some((c) => c.uid === uid)) return `${owner} ${name}`;
-      }
-    }
-    return "";
-  }
-
-  function showSources(el) {
-    const html = sourcesHtml(el.dataset.uid, el.dataset.card, el.dataset.zone);
-    if (!html) {
-      sourcesEl.hidden = true;
-      return;
-    }
-    sourcesEl.innerHTML = html;
-    sourcesEl.hidden = false;
-    const zoomBox = zoomEl.getBoundingClientRect();
-    const width = sourcesEl.getBoundingClientRect().width;
-    // To the right of the zoomed card, or to its left if the window's too narrow.
-    const right = zoomBox.right + 16;
-    sourcesEl.style.left = `${right + width <= window.innerWidth - 8 ? right : Math.max(8, zoomBox.left - 16 - width)}px`;
-  }
-
-  // What's changing a character's power, soul or level, and by how much ("" if nothing is).
-  function sourcesHtml(uid, pk, zone) {
-    const entries = STAGE.includes(zone) && (board.stat_sources || {})[uid];
-    const info = cards[pk];
-    if (!entries || !entries.length || !info) return "";
-    const live = (board.stats || {})[uid] || {};
-    const signed = (n) => `${n > 0 ? "+" : ""}${n}`;
-    const totals = [["power", "Power"], ["soul", "Soul"], ["level", "Level"]]
-      .filter(([stat]) => live[stat] !== undefined && info[stat] !== null && info[stat] !== undefined && info[stat] !== "" && Number(live[stat]) !== Number(info[stat]))
-      .map(([stat, label]) => `<span class="${Number(live[stat]) > Number(info[stat]) ? "boosted" : "lowered"}">${label} ${esc(info[stat])} → ${esc(live[stat])}</span>`);
-    const rows = entries.map((entry) => {
-      const changes = [["power", "power"], ["soul", "soul"], ["level", "level"]]
-        .filter(([stat]) => entry[stat])
-        .map(([stat, label]) => `<b class="${entry[stat] > 0 ? "boosted" : "lowered"}">${signed(entry[stat])} ${label}</b>`);
-      if (entry.set_power !== undefined) changes.push(`<b>power set to ${esc(entry.set_power)}</b>`);
-      if (entry.set_soul !== undefined) changes.push(`<b>soul set to ${esc(entry.set_soul)}</b>`);
-      const source = entry.card ? cards[entry.card] : null;
-      const name = source ? source.name : entry.label || "An effect";
-      const where = entry.uid === uid ? "Its own ability" : entry.uid ? whereIs(entry.uid) : "";
-      const face = source
-        ? `<img src="${esc(source.image)}" alt="" class="${(source.type || "").toLowerCase() === "climax" ? "source-climax" : ""}">`
-        : '<span class="source-chip" aria-hidden="true">✦</span>';
-      return `<li>${face}<span class="source-text">${changes.join("")}<span class="source-name">${esc(name)}</span>${where ? `<span class="muted small">${esc(where)}</span>` : ""}</span></li>`;
-    });
-    return `${totals.length ? `<p class="source-totals">${totals.join("")}</p>` : ""}<ul>${rows.join("")}</ul>`;
-  }
-
-  let pointer = null; // where the mouse last was, to find the hovered card again after a redraw
-
-  // After a redraw (as animations cause), the zoom stays up on the card still under the pointer.
-  function keepZoom() {
-    const under = pointer && document.elementFromPoint(pointer.x, pointer.y);
-    const el = under && under.closest && under.closest(".pcard[data-card]");
-    if (!el) return hideZoom();
-    const showing = !zoomEl.hidden;
-    zoomCard = el;
-    if (showing) showZoom(el);
-  }
-
-  function showZoom(el) {
-    const info = cards[el.dataset.card];
-    if (!info) return;
-    zoomEl.innerHTML = `<img src="${esc(info.image)}" alt="${esc(info.name)}">${info.grade >= 3 ? '<span class="rfx-sheen" aria-hidden="true"></span>' : ""}`;
-    zoomEl.classList.toggle("zoom-climax", (info.type || "").toLowerCase() === "climax");
-    if (info.grade) zoomEl.dataset.grade = info.grade; else delete zoomEl.dataset.grade;
-    zoomEl.hidden = false;
-    showSources(el);
-  }
-
-  root.addEventListener("mousemove", (event) => {
-    if (touch) return; // a tap sends a mousemove too: a touch screen has the tray and the full-screen view instead
-    pointer = { x: event.clientX, y: event.clientY };
-    const el = event.target.closest(".pcard[data-card]");
-    if (el === zoomCard) return;
-    hideZoom();
-    if (!el) return;
-    zoomCard = el;
-    zoomTimer = setTimeout(() => {
-      if (zoomCard === el && el.isConnected) showZoom(el);
-    }, ZOOM_DELAY_MS);
-  });
-  root.addEventListener("mouseleave", hideZoom);
-  root.addEventListener("mousedown", hideZoom);
-  root.addEventListener("dragstart", hideZoom);
-  window.addEventListener("scroll", hideZoom, { passive: true });
-
-  // --- Touch screens: a tapped card's buttons in a tray, and cards full screen ----------------------
-  // On a desktop a card's quick buttons sit on it and show while the mouse is over it, and resting on a card
-  // enlarges it. With no mouse, a tap picks the card (it's outlined) and the tray along the bottom of the
-  // screen has the same buttons, big enough to press, with their names written out. The tray's View, or a
-  // long press on any card (pop-ups included), shows the card full screen: its picture, or its text.
-
-  const LONG_PRESS_MS = 450;
-  const trayEl = document.createElement("div");
-  trayEl.className = "play-tray";
-  trayEl.dataset.tray = "";
-  trayEl.hidden = true;
-  trayEl.setAttribute("role", "region");
-  trayEl.setAttribute("aria-label", "Picked card");
-  root.appendChild(trayEl);
-
-  const selectedEl = () => (selected ? boardEl.querySelector(`.pcard[data-uid="${CSS.escape(selected)}"]`) : null);
-
-  function select(uid) {
-    selected = selected === uid ? null : uid; // tapping the picked card again puts it down
-    hideMenu();
-    renderTray();
-  }
-
-  function clearSelection() {
-    selected = null;
-    renderTray();
-  }
-
-  // A board button copied into the tray: its symbol, then its name (only in its tooltip on the board).
-  function trayButton(b, { symbolOnly = false } = {}) {
-    const copy = b.cloneNode(true);
-    copy.className = [...b.classList].filter((c) => ["ability-button", "ready", "counter-button"].includes(c)).join(" ");
-    copy.removeAttribute("style");
-    const label = b.getAttribute("aria-label");
-    if (label && !symbolOnly && b.textContent.trim() !== label) {
-      copy.innerHTML = `<span class="tray-symbol" aria-hidden="true">${b.innerHTML}</span><span>${esc(label)}</span>`;
-    }
-    return copy;
-  }
-
-  const actOf = (b) => {
-    try { return JSON.parse(b.dataset.act || "{}"); } catch (e) { return {}; }
-  };
-
-  // The picked card's name and numbers as they are now (abilities included), and where it is.
-  function trayStats(el, info) {
-    const live = (board.stats || {})[el.dataset.uid] || {};
-    const has = (value) => value !== null && value !== undefined && value !== "";
-    const parts = [info.type];
-    if (has(info.level)) parts.push(`Level ${has(live.level) ? live.level : info.level}`);
-    if (has(info.cost)) parts.push(`Cost ${info.cost}`);
-    if (has(info.power)) parts.push(`Power ${has(live.power) ? live.power : info.power}`);
-    if (has(info.soul)) parts.push(`Soul ${has(live.soul) ? live.soul : info.soul}`);
-    const where = el.dataset.zone === "hand" ? "In hand" : LABELS[el.dataset.zone];
-    const pos = el.classList.contains("pos-rest") ? "rested" : el.classList.contains("pos-reverse") ? "reversed" : "";
-    return [parts.filter(Boolean).join(" · "), [where, pos].filter(Boolean).join(", ")];
-  }
-
-  function renderTray() {
-    if (!board) return;
-    boardEl.querySelectorAll(".pcard.selected").forEach((el) => el.classList.remove("selected"));
-    const el = selectedEl();
-    const holder = el && (el.closest(".hand-card") || el.closest(".zone.slot"));
-    const show = Boolean(touch && holder && !outOfSight(el) && !board.game_over);
-    if (!show) selected = null;
-    trayEl.hidden = !show || !modalEl.hidden; // a pop-up comes first; the tray is back once it's closed
-    root.classList.toggle("tray-open", !trayEl.hidden);
-    // Where the card can go, lit up on the board: a picked hand card goes to one with a tap; a dragged one, dropped.
-    if (dragUid) showDropHints(dragUid);
-    else if (show && !trayEl.hidden && el.dataset.zone === "hand") showDropHints(el.dataset.uid);
-    else clearDropHints();
-    if (!show) return;
-    el.classList.add("selected");
-
-    const pk = el.dataset.card;
-    const info = pk ? cards[pk] : null;
-    const zone = el.dataset.zone;
-    const mine = el.dataset.owner === "me" && !SPECTATING;
-    const zoomAttrs = `data-zoom-card="${esc(pk)}" data-zoom-uid="${esc(el.dataset.uid)}" data-zoom-zone="${esc(zone)}"`;
-    const [stats, where] = info ? trayStats(el, info) : ["", LABELS[zone] || ""];
-    const notes = [...holder.querySelectorAll(".hand-needs")].map((n) => `<p class="play-tray-note">${esc(n.textContent)}</p>`).join("")
-      + (zone === "hand" && boardEl.querySelector(".drop-hint") ? '<p class="play-tray-hint">Or tap a lit-up place on the board.</p>' : "");
-    trayEl.innerHTML = `<div class="play-tray-head">
-        ${info ? `<button type="button" class="play-tray-thumb" ${zoomAttrs} aria-label="Show ${esc(info.name)} full screen"><img src="${esc(info.image)}" alt=""></button>`
-          : '<span class="play-tray-thumb"><span class="pcard-back"></span></span>'}
-        <div class="play-tray-info"><p class="play-tray-name">${info ? esc(info.name) : "Face-down card"}</p>
-          <p class="play-tray-stats">${esc(stats)}${stats && where ? " · " : ""}${esc(where)}</p>${notes}</div>
-        <button type="button" class="play-tray-close" data-tray-close aria-label="Put the card down">×</button>
-      </div>`;
-
-    const actions = document.createElement("div");
-    actions.className = "play-tray-actions";
-    if (info) actions.insertAdjacentHTML("beforeend", `<button type="button" ${zoomAttrs}>🔍 View</button>`);
-    if (mine && zone === "hand") {
-      // Where it can be played on the stage, laid out like the stage (front row, then back row), then the rest.
-      const buttons = [...holder.querySelectorAll(".hand-actions button")];
-      const toStage = (b) => actOf(b).type === "move" && STAGE.includes(actOf(b).to);
-      const stage = buttons.filter(toStage);
-      if (stage.length) {
-        const row = (slots) => `<div class="tray-stage-row">${slots.map((s) => `<span data-tray-slot="${s}"></span>`).join("")}</div>`;
-        actions.insertAdjacentHTML("beforeend", `<div class="tray-stage" role="group" aria-label="Play to the stage">
-          <span class="tray-group-label">Play to</span>${row(["C1", "C2", "C3"])}${row(["B1", "B2"])}</div>`);
-        for (const b of stage) actions.querySelector(`[data-tray-slot="${actOf(b).to}"]`).replaceWith(trayButton(b, { symbolOnly: true }));
-        actions.querySelectorAll("[data-tray-slot]").forEach((gap) => gap.remove());
-      }
-      for (const b of buttons.filter((b) => !toStage(b))) actions.appendChild(trayButton(b));
-    } else if (mine) {
-      // Attacks first, then abilities, then the card's corner buttons, then moves to the slots beside it
-      // (a move between two slots is drawn on the first of them, so it may be on a neighbour).
-      const found = new Set([
-        ...holder.querySelectorAll(".slot-actions button"),
-        ...holder.querySelectorAll(".ability-button"),
-        ...holder.querySelectorAll(".slot-pos button"),
-        ...[...boardEl.querySelectorAll(".mat-me .slot-link")].filter((b) => actOf(b).uid === selected || actOf(b).to === zone),
-      ]);
-      for (const b of found) actions.appendChild(trayButton(b));
-    }
-    trayEl.appendChild(actions);
-  }
-
-  const viewerEl = document.createElement("div");
-  viewerEl.className = "play-viewer";
-  viewerEl.hidden = true;
-  viewerEl.setAttribute("role", "dialog");
-  viewerEl.setAttribute("aria-modal", "true");
-  document.body.appendChild(viewerEl);
-  let viewerReturn = null; // where the focus goes back to once it's closed
-
-  // A card full screen: its picture, or its text (with what's changing its power, soul or level, on the stage).
-  function openViewer(pk, uid = null, zone = null) {
-    const info = cards[pk];
-    if (!info) return;
-    hideZoom();
-    hideMenu();
-    const sources = uid ? sourcesHtml(uid, pk, zone) : "";
-    viewerReturn = document.activeElement;
-    viewerEl.setAttribute("aria-label", info.name);
-    viewerEl.innerHTML = `<div class="play-viewer-bar">
-        <div class="layout-switch" role="group" aria-label="Show">
-          <button type="button" data-viewer-tab="picture">Picture</button><button type="button" data-viewer-tab="text">${sources ? "Text and boosts" : "Text"}</button>
-        </div>
-        <button type="button" class="play-viewer-close" data-viewer-close aria-label="Close">×</button>
-      </div>
-      <div class="play-viewer-picture" data-viewer-panel="picture"><img src="${esc(info.image)}" alt="${esc(info.name)}"></div>
-      <div class="play-viewer-text" data-viewer-panel="text">${cardTextHtml(info)}${sources ? `<div class="play-viewer-sources">${sources}</div>` : ""}</div>`;
-    showViewerTab("picture");
-    viewerEl.hidden = false;
-    viewerEl.querySelector("[data-viewer-close]").focus({ preventScroll: true });
-  }
-
-  function showViewerTab(tab) {
-    viewerEl.querySelectorAll("[data-viewer-tab]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.viewerTab === tab)));
-    viewerEl.querySelectorAll("[data-viewer-panel]").forEach((panel) => { panel.hidden = panel.dataset.viewerPanel !== tab; });
-  }
-
-  function closeViewer() {
-    if (viewerEl.hidden) return false;
-    viewerEl.hidden = true;
-    viewerEl.innerHTML = "";
-    if (viewerReturn && viewerReturn.isConnected) viewerReturn.focus({ preventScroll: true });
-    return true;
-  }
-
-  viewerEl.addEventListener("click", (event) => {
-    const tab = event.target.closest("[data-viewer-tab]");
-    if (tab) return showViewerTab(tab.dataset.viewerTab);
-    if (event.target.closest("[data-viewer-close]")) return closeViewer();
-    if (event.target.matches(".play-viewer-picture img")) return showViewerTab("text"); // the picture, tapped: its text
-    if (event.target === viewerEl || event.target.matches(".play-viewer-picture")) closeViewer(); // the dark space around it
+  // --- Enlarged card art: play_art.js (WeissArt), made here once what it reads is defined ---
+  const art = window.WeissArt.create({
+    LABELS: () => LABELS,
+    SPECTATING: () => SPECTATING,
+    STAGE: () => STAGE,
+    board: () => board,
+    cards: () => cards,
+    esc: () => esc,
+    root: () => root,
+    touch: () => touch,
   });
 
-  // A long press on a card (not a mouse's) shows it full screen. The tap that ends it does nothing else.
-  let pressTimer = null;
-  let pressAt = null;
-  let swallowClick = false;
-  const cancelPress = () => {
-    clearTimeout(pressTimer);
-    pressTimer = null;
-  };
-  root.addEventListener("pointerdown", (event) => {
-    swallowClick = false;
-    cancelPress();
-    const el = event.pointerType !== "mouse" && event.target.closest(".pcard[data-card]");
-    if (!el) return;
-    pressAt = { x: event.clientX, y: event.clientY };
-    pressTimer = setTimeout(() => {
-      pressTimer = null;
-      swallowClick = true;
-      openViewer(el.dataset.card, el.dataset.uid, el.dataset.zone);
-    }, LONG_PRESS_MS);
-  });
-  root.addEventListener("pointermove", (event) => {
-    if (pressTimer && pressAt && Math.hypot(event.clientX - pressAt.x, event.clientY - pressAt.y) > 10) cancelPress(); // scrolling
-  });
-  root.addEventListener("pointerup", cancelPress);
-  root.addEventListener("pointercancel", cancelPress);
-  document.addEventListener("click", (event) => {
-    if (!swallowClick) return;
-    swallowClick = false;
-    event.preventDefault();
-    event.stopPropagation();
-  }, true);
-  // Not the browser's own long-press menu (save image...) over a card, but the card full screen: some browsers
-  // (Chrome on Android) end the press themselves to bring up their menu, before the timer above goes off.
-  root.addEventListener("contextmenu", (event) => {
-    const el = touch && event.target.closest(".pcard");
-    if (!el) return;
-    event.preventDefault();
-    if (el.dataset.card && viewerEl.hidden) {
-      cancelPress();
-      swallowClick = true;
-      openViewer(el.dataset.card, el.dataset.uid, el.dataset.zone);
-    }
+  // --- Touch screens: play_touch.js (WeissTouch), made here once what it reads is defined ---
+  const touchScreen = window.WeissTouch.create({
+    LABELS: () => LABELS,
+    SPECTATING: () => SPECTATING,
+    STAGE: () => STAGE,
+    art: () => art,
+    board: () => board,
+    boardEl: () => boardEl,
+    cardTextHtml: (...args) => cardTextHtml(...args),
+    cards: () => cards,
+    clearDropHints: (...args) => clearDropHints(...args),
+    dragUid: () => dragUid,
+    esc: () => esc,
+    hideMenu: (...args) => menus.hideMenu(...args),
+    modalEl: () => modalEl,
+    prizeScreen: () => prizeScreen,
+    root: () => root,
+    selected: () => selected,
+    showDropHints: (...args) => showDropHints(...args),
+    touch: () => touch,
+    setSelected: (value) => { selected = value; },
   });
 
-  // --- Menus -----------------------------------------------------------------------------------
-
-  let menuZone = null; // the deck or stage slot whose [...] menu is open, if any
-
-  function showMenu(x, y, title, items) {
-    if (SPECTATING) items = items.filter((item) => item !== "-" && (item.view || item.zoom));
-    if (!items.length) return hideMenu();
-    menuZone = null;
-    menuEl.classList.remove("see-through");
-    const zoom = (z) => `data-zoom-card="${esc(z.pk)}" data-zoom-uid="${esc(z.uid || "")}" data-zoom-zone="${esc(z.zone || "")}"`;
-    menuEl.innerHTML = `<p class="play-menu-title">${esc(title)}</p>` + items.map((item) => item === "-"
-      ? "<hr>"
-      : item.zoom ? `<button type="button" ${zoom(item.zoom)}>${esc(item.label)}</button>`
-      : `<button type="button" data-menu-item='${esc(JSON.stringify(item.action || {}))}' ${item.prompt ? `data-prompt="${esc(item.prompt)}" data-prompt-default="${esc(item.promptDefault ?? 1)}"` : ""} ${item.view ? `data-view='${esc(JSON.stringify(item.view))}'` : ""}>${esc(item.label)}</button>`).join("")
-      + (touch ? '<hr><button type="button" class="play-menu-cancel" data-menu-cancel>Cancel</button>' : ""); // a sheet over the board needs a way out
-    menuEl.hidden = false;
-    const box = menuEl.getBoundingClientRect();
-    menuEl.style.left = `${Math.min(x, window.innerWidth - box.width - 8)}px`;
-    menuEl.style.top = `${Math.min(y, window.innerHeight - box.height - 8)}px`;
-  }
-
-  function hideMenu() {
-    menuEl.hidden = true;
-    menuZone = null;
-  }
-
-  // The [...] button on our deck and our occupied stage slots opens its full menu beside the zone.
-  function openZoneMenu(zone, zoneEl) {
-    const card = zone === "deck" ? null : zoneEl.querySelector(".pcard[data-uid]");
-    const [title, items] = zone === "deck" ? pileMenu("deck", "me") : cardMenu(card);
-    const box = zoneEl.getBoundingClientRect();
-    showMenu(box.right + 6, box.top, title, items);
-    menuEl.classList.toggle("see-through", zone !== "deck"); // over the stage: let the board show through
-    const width = menuEl.getBoundingClientRect().width;
-    if (box.right + 6 + width > window.innerWidth - 8) { // no room on the right: open to the left
-      menuEl.style.left = `${Math.max(8, box.left - 6 - width)}px`;
-    }
-    menuZone = zone;
-  }
-
-  function cardMenu(el) {
-    const uid = el.dataset.uid;
-    const zone = el.dataset.zone;
-    const info = el.dataset.card ? cards[el.dataset.card] : null;
-    const items = [];
-    // With no mouse to rest on a card, the menu is the way to see it whole.
-    if (touch && info) items.push({ label: "🔍 View card", zoom: { pk: el.dataset.card, uid, zone } }, "-");
-    if (["C1", "C2", "C3"].includes(zone) && el.classList.contains("pos-stand") && board.my_turn) {
-      items.push({ label: "⚔ Attack (rest + trigger check)", action: { type: "attack", uid } }, "-");
-    }
-    if (STAGE.includes(zone) && el.classList.contains("pos-reverse") && canEncore()) {
-      items.push({ label: `Encore: pay ${ENCORE_COST} stock, rest`, action: { type: "encore", uid } }, "-");
-    }
-    if (["C1", "C2", "C3", "B1", "B2"].includes(zone)) {
-      items.push({ label: "Stand", action: { type: "position", uid, pos: "stand" } },
-        { label: "Rest", action: { type: "position", uid, pos: "rest" } },
-        { label: "Reverse", action: { type: "position", uid, pos: "reverse" } }, "-");
-      // For when an ability isn't doing what it should: back to normal at the end of the turn.
-      const live = (board.stats || {})[uid];
-      items.push({ label: "Set power…", action: { type: "set_power", uid }, prompt: "Set this card's power until the end of the turn:", promptDefault: live ? live.power : (info && info.power) || 0 });
-      if (live && live.manual) items.push({ label: "Put power back to normal", action: { type: "set_power", uid, clear: true } });
-      items.push({ label: "Set soul…", action: { type: "set_soul", uid }, prompt: "Set this card's soul until the end of the turn:", promptDefault: live ? live.soul : (info && info.soul) || 0 });
-      if (live && live.manual_soul) items.push({ label: "Put soul back to normal", action: { type: "set_soul", uid, clear: true } });
-      items.push("-");
-    }
-    if (!["hand", "deck", "stock"].includes(zone)) {
-      items.push({ label: el.classList.contains("face-down") ? "Turn face up" : "Turn face down", action: { type: "flip", uid } }, "-");
-    }
-    const unaffordable = zone === "hand" && (!canPay(info) || colorMissing({ uid }));
-    for (const to of MOVE_TARGETS) {
-      if (unaffordable && PLAY_ZONES.includes(to)) continue;
-      if (to !== zone) items.push({ label: `→ ${LABELS[to]}`, action: { type: "move", uid, to } });
-    }
-    items.push({ label: "→ Deck (top)", action: { type: "move", uid, to: "deck", where: "top" } },
-      { label: "→ Deck (bottom)", action: { type: "move", uid, to: "deck", where: "bottom" } });
-    items.push(...markerItems((slot, face_down) => ({ type: "move", uid, to: `marker:${slot}`, face_down }),
-      (slot) => slot !== zone && `marker:${slot}` !== zone));
-    return [info ? info.name : "Card", items];
-  }
-
-
-  // "Marker under <character>" choices, face up and face down, for each of our occupied stage slots.
-  function markerItems(makeAction, allowed = () => true, prefix = "Marker") {
-    const items = [];
-    for (const slot of STAGE) {
-      const character = board.me.stage[slot];
-      if (!character || !allowed(slot)) continue;
-      const info = character.card ? cards[character.card] : null;
-      const under = `${LABELS[slot].toLowerCase()}${info ? ` (${info.name})` : ""}`;
-      items.push({ label: `${prefix} under ${under}, face up`, action: makeAction(slot, false) },
-        { label: `${prefix} under ${under}, face down`, action: makeAction(slot, true) });
-    }
-    return items.length ? ["-", ...items] : [];
-  }
-
-  function pileMenu(zone, owner) {
-    const view = { owner, zone, title: `${owner === "me" ? "Your" : `${board.opponent.name}'s`} ${LABELS[zone].toLowerCase()}` };
-    if (owner !== "me") {
-      return PUBLIC_PILES.includes(zone) || isMarkerPile(zone) ? [LABELS[zone], [{ label: "View all", view }]] : null;
-    }
-    if (isMarkerPile(zone)) {
-      return [LABELS[zone], [
-        { label: "View all", view },
-        { label: "All → waiting room", action: { type: "move_all", from: zone, to: "waiting" } },
-        { label: "All → hand", action: { type: "move_all", from: zone, to: "hand" } },
-        { label: "All → stock", action: { type: "move_all", from: zone, to: "stock" } },
-      ]];
-    }
-    if (zone === "deck") {
-      return ["Deck", [
-        { label: "Shuffle", action: { type: "shuffle" } },
-        { label: "Top → waiting room", action: { type: "move_top", from: "deck", to: "waiting" } },
-        { label: "Bottom → waiting room", action: { type: "move_top", from: "deck", to: "waiting", where: "bottom" } },
-        "-",
-        { label: "Draw 1", action: { type: "move_top", from: "deck", to: "hand" } },
-        { label: "Draw…", action: { type: "move_top", from: "deck", to: "hand" }, prompt: "How many cards to draw?" },
-        "-",
-        { label: "Take damage…", action: { type: "damage" }, prompt: "How much damage?" },
-        { label: "Trigger: top → resolution", action: { type: "move_top", from: "deck", to: "resolution" } },
-        { label: "Top → stock", action: { type: "move_top", from: "deck", to: "stock" } },
-        { label: "Mill…", action: { type: "move_top", from: "deck", to: "waiting" }, prompt: "How many cards to put into the waiting room?" },
-        "-",
-        { label: "Look at top…", action: { type: "peek" }, prompt: "Look at how many cards?" },
-        { label: "Search deck", action: { type: "search" } },
-        ...markerItems((slot, face_down) => ({ type: "move_top", from: "deck", to: `marker:${slot}`, face_down }),
-          () => true, "Top card → marker"),
-      ]];
-    }
-    if (zone === "stock") {
-      return ["Stock", [
-        { label: "Pay 1: top → waiting room", action: { type: "move_top", from: "stock", to: "waiting" } },
-        { label: "Pay…", action: { type: "move_top", from: "stock", to: "waiting" }, prompt: "Pay how many stock?" },
-      ]];
-    }
-    const items = [{ label: "View all", view }];
-    if (zone === "waiting") items.push({ label: "Refresh: all → deck and shuffle", action: { type: "move_all", from: "waiting", to: "deck" } });
-    if (["clock", "resolution", "climax", "memory"].includes(zone)) {
-      items.push({ label: "All → waiting room", action: { type: "move_all", from: zone, to: "waiting" } });
-    }
-    if (zone === "resolution") items.push({ label: "All → stock", action: { type: "move_all", from: zone, to: "stock" } });
-    return [LABELS[zone], items];
-  }
-
-  root.addEventListener("click", (event) => {
-    const viewButton = event.target.closest("[data-zoom-card]");
-    if (viewButton) {
-      openViewer(viewButton.dataset.zoomCard, viewButton.dataset.zoomUid || null, viewButton.dataset.zoomZone || null);
-      return;
-    }
-    if (event.target.closest("[data-tray-close]")) {
-      clearSelection();
-      return;
-    }
-    const sideButton = event.target.closest("[data-board-view]");
-    if (sideButton) {
-      boardView = sideButton.dataset.boardView;
-      if (boardView === "opponent") oppMoved = false;
-      selected = null;
-      hideMenu();
-      render();
-      return;
-    }
-    const augment = event.target.closest("[data-augment]");
-    if (augment) {
-      showAugment(augment);
-      return;
-    }
-    if (event.target.closest("[data-menu-cancel]")) {
-      hideMenu();
-      return;
-    }
-    const menuItem = event.target.closest("[data-menu-item]");
-    if (menuItem) {
-      if (touch) selected = null; // the card's been dealt with: put it down
-      if (menuItem.dataset.view) {
-        modal = JSON.parse(menuItem.dataset.view);
-        hideMenu();
-        renderModal();
-        return;
-      }
-      const action = JSON.parse(menuItem.dataset.menuItem);
-      if (menuItem.dataset.prompt) {
-        const answer = window.prompt(menuItem.dataset.prompt, menuItem.dataset.promptDefault);
-        if (!answer) return hideMenu();
-        action.count = Number(answer);
-      }
-      act(action);
-      return;
-    }
-    const zoneMenu = event.target.closest("[data-zone-menu]");
-    if (zoneMenu) {
-      if (menuZone === zoneMenu.dataset.zoneMenu && !menuEl.hidden) hideMenu();
-      else openZoneMenu(zoneMenu.dataset.zoneMenu, zoneMenu.closest(".zone") || zoneEl(zoneMenu.dataset.zoneMenu)); // or from the tray
-      return;
-    }
-    const confirmClimax = event.target.closest("[data-confirm-climax]");
-    if (confirmClimax) {
-      modal = { confirmClimax: confirmClimax.dataset.confirmClimax };
-      renderModal();
-      return;
-    }
-    const flashPick = event.target.closest("[data-flash-pick]");
-    if (flashPick) {
-      const uid = flashPick.dataset.flashPick;
-      if (flashPicks.has(uid)) flashPicks.delete(uid); else if (board.flash && flashPicks.size < board.flash.need) flashPicks.add(uid);
-      renderModal();
-      return;
-    }
-    const mulliganPick = event.target.closest("[data-mulligan-pick]");
-    if (mulliganPick) {
-      const uid = mulliganPick.dataset.mulliganPick;
-      if (mulliganPicks.has(uid)) mulliganPicks.delete(uid); else mulliganPicks.add(uid);
-      renderModal();
-      return;
-    }
-    const abilityPick = event.target.closest("[data-ability-pick]");
-    if (abilityPick) {
-      const uid = abilityPick.dataset.abilityPick;
-      const prompt = board.ability.prompt;
-      if (abilityPicks.includes(uid)) abilityPicks = abilityPicks.filter((u) => u !== uid);
-      else if (prompt.max === 1) abilityPicks = [uid];
-      else if (abilityPicks.length < prompt.max) abilityPicks.push(uid);
-      renderModal();
-      return;
-    }
-    if (event.target.closest("[data-ability-submit]")) {
-      const uids = abilityPicks;
-      abilityPicks = [];
-      act({ type: "ability_answer", uids });
-      return;
-    }
-    // Putting a card on the stage: picking previews it; the button below puts it there.
-    const placeSlot = event.target.closest("[data-place-pick]");
-    const standbyPick = event.target.closest("[data-standby-pick]");
-    if (placeSlot || standbyPick) {
-      if (placeSlot) placePick = { ...placePick, slot: placeSlot.dataset.placePick };
-      else placePick = { ...placePick, uid: standbyPick.dataset.standbyPick };
-      const again = placeSlot ? `[data-place-pick="${placePick.slot}"]` : `[data-standby-pick="${placePick.uid}"]`;
-      renderModal();
-      const el = modalEl.querySelector(again);
-      if (el) el.focus(); // the redraw replaced what had focus
-      return;
-    }
-    if (event.target.closest("[data-place-submit], [data-standby-submit]")) {
-      const { uid, slot } = placePick;
-      const standby = Boolean(event.target.closest("[data-standby-submit]"));
-      placePick = { kind: null, uid: null, slot: null };
-      act(standby ? { type: "trigger_choice", uid, to: slot } : { type: "ability_answer", value: slot });
-      return;
-    }
-    const abilities = event.target.closest("[data-abilities]");
-    if (abilities) {
-      modal = { abilities: abilities.dataset.abilities };
-      hideMenu();
-      renderModal();
-      return;
-    }
-    if (event.target.closest("[data-close-after]")) modal = null;
-    const discardPick = event.target.closest("[data-discard-pick]");
-    if (discardPick) {
-      const uid = discardPick.dataset.discardPick;
-      if (discardPicks.has(uid)) discardPicks.delete(uid);
-      else if (discardPicks.size < board.discard.count) discardPicks.add(uid);
-      renderModal();
-      return;
-    }
-    if (event.target.closest("[data-discard-submit]")) {
-      const uids = [...discardPicks];
-      discardPicks.clear();
-      act({ type: "discard", uids });
-      return;
-    }
-    if (event.target.closest("[data-flash-submit]")) {
-      const uids = [...flashPicks];
-      flashPicks.clear();
-      act({ type: "flash_level", uids });
-      return;
-    }
-    if (event.target.closest("[data-mulligan-submit]")) {
-      const uids = [...mulliganPicks];
-      mulliganPicks.clear();
-      act({ type: "mulligan", uids });
-      return;
-    }
-    const levelPick = event.target.closest("[data-level-up]");
-    if (levelPick) {
-      act({ type: "level_up", uid: levelPick.dataset.levelUp });
-      return;
-    }
-    const search = event.target.closest("[data-search-view]");
-    if (search) {
-      modal = JSON.parse(search.dataset.searchView);
-      hideMenu();
-      renderModal();
-      return;
-    }
-    const phaseButton = event.target.closest("[data-phase]");
-    if (phaseButton) {
-      act({ type: "phase", phase: phaseButton.dataset.phase });
-      return;
-    }
-    if (event.target.closest("[data-rules]")) {
-      act(board.rules_request && board.rules_request.mine ? { type: "rules_answer" } : { type: "rules_request" });
-      return;
-    }
-    if (event.target.closest("[data-animations]")) {
-      setAnimations(!animations);
-      return;
-    }
-    if (event.target.closest("[data-sound]")) {
-      setSound(!soundOn);
-      return;
-    }
-    if (event.target.closest("[data-song]")) {
-      cycleSong();
-      return;
-    }
-    if (event.target.closest("[data-music]")) {
-      setMusic(!musicOn);
-      return;
-    }
-    const layoutButton = event.target.closest("[data-layout]");
-    if (layoutButton) {
-      setLayout(layoutButton.dataset.layout);
-      return;
-    }
-    if (event.target.closest("[data-recap-close]")) {
-      recap.dismiss();
-      return;
-    }
-    const button = event.target.closest("[data-act]");
-    if (button) {
-      if (button.closest("[data-tray]")) clearSelection(); // done with the picked card
-      act(JSON.parse(button.dataset.act));
-      return;
-    }
-    const more = event.target.closest("[data-more]");
-    if (more) {
-      const card = more.closest(".hand-card") ? more.closest(".hand-card").querySelector(".pcard[data-uid]") : selectedEl(); // or from the tray
-      if (card) {
-        const [title, items] = cardMenu(card);
-        showMenu(event.clientX, event.clientY, title, items);
-      }
-      return;
-    }
-    if (event.target.closest("[data-peek]") || event.target.closest("[data-peek-back]")) {
-      peekKey = event.target.closest("[data-peek]") ? shownKey : null;
-      renderModal();
-      return;
-    }
-    const peekPile = event.target.closest("[data-peek-pile]");
-    if (peekPile) {
-      const zone = peekPile.dataset.peekPile;
-      peekKey = shownKey;
-      modal = { owner: "me", zone, title: `Your ${LABELS[zone].toLowerCase()}`, backToChoice: true };
-      renderModal();
-      return;
-    }
-    if (event.target.closest("[data-counter-hide]") || event.target.closest("[data-counter-show]")) {
-      counterHidden = event.target.closest("[data-counter-hide]") ? counterKey() : null;
-      renderModal();
-      renderAttackPanel();
-      return;
-    }
-    if (event.target.closest("[data-close]") || event.target === modalEl) {
-      if (modal && modal.backToChoice) peekKey = null;
-      modal = null;
-      renderModal();
-      return;
-    }
-    // A touch screen: a tap on a card in the hand or on the stage picks it (its buttons go in the tray); one
-    // on the other side's card in a pop-up shows it; one on our deck opens its menu (there's no hovering to
-    // find the [...] button). A tap anywhere else on the board puts the picked card down.
-    if (touch) {
-      // A picked hand card, and a tap on a place it can go that's lit up for it: it goes there.
-      const spot = selected && event.target.closest(".mat-me .drop-hint[data-drop]");
-      if (spot && board.me.zones.hand.some((c) => c.uid === selected)) {
-        const uid = selected;
-        clearSelection();
-        playTo(uid, spot.dataset.drop);
-        return;
-      }
-      const tapped = event.target.closest(".pcard[data-uid]");
-      if (tapped && boardEl.contains(tapped) && (tapped.closest(".zone.slot") || tapped.closest(".hand-card"))) {
-        select(tapped.dataset.uid);
-        return;
-      }
-      if (tapped && modalEl.contains(tapped) && tapped.dataset.card && (tapped.dataset.owner !== "me" || SPECTATING)) {
-        openViewer(tapped.dataset.card, tapped.dataset.uid, tapped.dataset.zone);
-        return;
-      }
-      if (!SPECTATING && event.target.closest('[data-pile="deck"][data-owner="me"]')) {
-        openZoneMenu("deck", zoneEl("deck"));
-        return;
-      }
-      if (selected && boardEl.contains(event.target)) clearSelection();
-    }
-    // The deck's and stage cards' menus are on their [...] buttons.
-    if (event.target.closest('[data-pile="deck"][data-owner="me"]') || event.target.closest('.zone.slot[data-owner="me"]:not(:has(.marker-pile:hover))')) {
-      hideMenu();
-      return;
-    }
-    // A stacked pile opens the pile's menu (its cards are reachable through "View all");
-    // cards in the hand, spread in clock/level, or in a viewer open their own menu.
-    const pile = event.target.closest("[data-pile]");
-    const card = event.target.closest(".pcard[data-uid]");
-    if (card && card.dataset.owner === "me" && !(pile && pile.classList.contains("pile"))) {
-      const [title, items] = cardMenu(card);
-      showMenu(event.clientX, event.clientY, title, items);
-      event.stopPropagation();
-      return;
-    }
-    if (pile) {
-      const menu = pileMenu(pile.dataset.pile, pile.dataset.owner);
-      if (menu) {
-        showMenu(event.clientX, event.clientY, menu[0], menu[1]);
-        return;
-      }
-    }
-    if (!event.target.closest("[data-menu]")) hideMenu();
-  });
-
-  document.addEventListener("keydown", (event) => {
-    const abilityPick = event.target.closest && event.target.closest("[data-ability-pick], [data-place-pick], [data-standby-pick]");
-    if (abilityPick && (event.key === "Enter" || event.key === " ")) {
-      event.preventDefault();
-      abilityPick.click();
-      return;
-    }
-    const flashPick = event.target.closest && event.target.closest("[data-flash-pick]");
-    if (flashPick && (event.key === "Enter" || event.key === " ")) {
-      event.preventDefault();
-      flashPick.click();
-      return;
-    }
-    const levelPick = event.target.closest && event.target.closest("[data-level-up]");
-    if (levelPick && (event.key === "Enter" || event.key === " ")) {
-      event.preventDefault();
-      act({ type: "level_up", uid: levelPick.dataset.levelUp });
-      return;
-    }
-    // Ctrl+Z (⌘Z on a Mac): take back our last move, while it can be (not while typing, where it undoes the typing).
-    if ((event.key === "z" || event.key === "Z") && (event.ctrlKey || event.metaKey) && !event.shiftKey && !event.altKey
-        && !(event.target.closest && event.target.closest("input, textarea, select, [contenteditable]"))) {
-      if (board && board.undo && !SPECTATING && !busy) {
-        event.preventDefault();
-        act({ type: "undo" });
-      }
-      return;
-    }
-    // M: the music on or off, unless typing (chat, a damage amount) or with a modifier held.
-    if ((event.key === "m" || event.key === "M") && !event.ctrlKey && !event.metaKey && !event.altKey && !event.repeat
-        && !(event.target.closest && event.target.closest("input, textarea, select, [contenteditable]"))) {
-      toggleMusicKey();
-      return;
-    }
-    if (event.key === "Escape") {
-      if (closeSummary()) return; // the game's summary over the game-over screen
-      if (closeViewer()) return; // the full-screen card first, then the rest
-      clearSelection();
-      hideZoom();
-      hideMenu();
-      if (modal && modal.backToChoice) peekKey = null;
-      modal = null;
-      renderModal();
-    }
-  });
-
-  // A tap outside the table (the header, say) closes a menu: on a touch screen it covers the bottom of the screen.
-  document.addEventListener("click", (event) => {
-    if (!menuEl.hidden && !root.contains(event.target)) hideMenu();
+  // --- Menus: play_menus.js (WeissMenus), made here once what it reads is defined ---
+  const menus = window.WeissMenus.create({
+    ENCORE_COST: () => ENCORE_COST,
+    LABELS: () => LABELS,
+    MOVE_TARGETS: () => MOVE_TARGETS,
+    PLAY_ZONES: () => PLAY_ZONES,
+    PUBLIC_PILES: () => PUBLIC_PILES,
+    SPECTATING: () => SPECTATING,
+    STAGE: () => STAGE,
+    abilityPicks: () => abilityPicks,
+    animations: () => animations,
+    art: () => art,
+    board: () => board,
+    boardEl: () => boardEl,
+    boardView: () => boardView,
+    busy: () => busy,
+    canEncore: () => canEncore,
+    canPay: () => canPay,
+    cards: () => cards,
+    closeSummary: (...args) => closeSummary(...args),
+    colorMissing: () => colorMissing,
+    counterHidden: () => counterHidden,
+    counterKey: () => counterKey,
+    cycleSong: (...args) => cycleSong(...args),
+    discardPicks: () => discardPicks,
+    esc: () => esc,
+    flashPicks: () => flashPicks,
+    isMarkerPile: () => isMarkerPile,
+    menuEl: () => menuEl,
+    modal: () => modal,
+    modalEl: () => modalEl,
+    movement: () => movement,
+    mulliganPicks: () => mulliganPicks,
+    musicOn: () => musicOn,
+    oppMoved: () => oppMoved,
+    peekKey: () => peekKey,
+    placePick: () => placePick,
+    playTo: (...args) => playTo(...args),
+    recap: () => recap,
+    render: (...args) => render(...args),
+    renderAttackPanel: (...args) => renderAttackPanel(...args),
+    renderModal: (...args) => renderModal(...args),
+    root: () => root,
+    selected: () => selected,
+    setAnimations: (...args) => setAnimations(...args),
+    setLayout: (...args) => setLayout(...args),
+    setMusic: (...args) => setMusic(...args),
+    setSound: (...args) => setSound(...args),
+    showAugment: (...args) => showAugment(...args),
+    shownKey: () => shownKey,
+    soundOn: () => soundOn,
+    toggleMusicKey: (...args) => toggleMusicKey(...args),
+    touch: () => touch,
+    touchScreen: () => touchScreen,
+    setAbilityPicks: (value) => { abilityPicks = value; },
+    setBoardView: (value) => { boardView = value; },
+    setCounterHidden: (value) => { counterHidden = value; },
+    setModal: (value) => { modal = value; },
+    setPeekKey: (value) => { peekKey = value; },
+    setPlacePick: (value) => { placePick = value; },
+    setSelected: (value) => { selected = value; },
+    setOppMoved: (value) => { oppMoved = value; },
   });
 
   // --- Drag and drop ---------------------------------------------------------------------------
@@ -4248,7 +3078,7 @@
     if (!card || SPECTATING) return;
     event.dataTransfer.setData("text/plain", card.dataset.uid);
     event.dataTransfer.effectAllowed = "move";
-    hideMenu();
+    menus.hideMenu();
     dragUid = card.dataset.uid;
     // Painted after the browser has taken its picture of the card being dragged.
     requestAnimationFrame(() => { if (dragUid) showDropHints(dragUid); });
@@ -4295,7 +3125,7 @@
       renderModal();
       return;
     }
-    act({ type: "move", uid, to });
+    movement.act({ type: "move", uid, to });
   }
 
   // --- Chat ------------------------------------------------------------------------------------
@@ -4304,7 +3134,7 @@
     if (!event.target.matches("[data-damage]")) return;
     event.preventDefault();
     const count = Number(event.target.elements.count.value);
-    if (count >= 1) act({ type: "damage", count });
+    if (count >= 1) movement.act({ type: "damage", count });
   });
 
   // No chat form for a co-op partner watching (play_room.html).
@@ -4312,7 +3142,7 @@
   if (chatEl) chatEl.addEventListener("submit", (event) => {
     event.preventDefault();
     const input = event.target.elements.text;
-    if (input.value.trim()) act({ type: "chat", text: input.value });
+    if (input.value.trim()) movement.act({ type: "chat", text: input.value });
     input.value = "";
   });
 
@@ -4334,19 +3164,19 @@
   // The pieces in files of their own (see each one's header), now that all they use is defined. If one didn't load,
   // the board goes on without it.
   fx = window.WeissTableFx ? window.WeissTableFx.create({
-    boardEl, cards, STAGE, CLIMAX_SHOW_MS, SPECTATING, reducedMotion, esc, who, outOfSight, pileCount, musicTheme, atBrink,
-    board: () => board, avatars: () => avatars, animations: () => animations, score: () => score, holdGameOver, climaxColor,
+    boardEl, cards, STAGE, CLIMAX_SHOW_MS, SPECTATING, reducedMotion, esc, who, outOfSight: prizeScreen.outOfSight, pileCount, musicTheme, atBrink,
+    board: () => board, avatars: () => avatars, animations: () => animations, score: () => score, holdGameOver, climaxColor: prizeScreen.climaxColor,
     damageLead: (owner) => battle.damageLead(owner), battleClaim: (id) => battle.battleClaim(id),
   }) : { tableFx() {}, setTableMood() {}, negatedWait: () => 0, noteOwnDamage() {}, climaxSurge() {} };
   if (window.WeissBattle) {
-    battle = window.WeissBattle.create({ root, cards, esc, climaxColor, reducedMotion, SOUL_ICON, board: () => board, animations: () => animations,
+    battle = window.WeissBattle.create({ root, cards, esc, climaxColor: prizeScreen.climaxColor, reducedMotion, SOUL_ICON, board: () => board, animations: () => animations,
       pinnacle: { power: PINNACLE_POWER, aura: pinnacleAura, layers: pinnacleLayers } });
   }
   recap = window.WeissRecap ? window.WeissRecap.create({
     controlsEl, esc, who, logHtml, gameNumber, board: () => board, avatars: () => avatars,
   }) : { render() {}, dismiss() {} };
 
-  pollLoop();
+  movement.pollLoop();
   if (song) syncMusic(); // the chosen song starts with the duel (once a click has unlocked the sound)
   // Back from another tab or app (a phone woken up): catch up at once rather than on the next tick. While
   // the page is hidden its sound is paused (the music too, mid-bar, to carry on where it was).
@@ -4355,7 +3185,7 @@
       if (document.hidden) audio.suspend().catch(() => {});
       else if (soundOn) audio.resume().catch(() => {});
     }
-    if (!document.hidden && pollWake) pollWake(); // back in view: ask now rather than at the end of the pause
+    if (!document.hidden) movement.wakePoll(); // back in view: ask now rather than at the end of the pause
   });
   // Leaving the duel: the chosen song stops with the page (its own context goes with it, but say so now).
   window.addEventListener("pagehide", () => { if (window.MinigameAudio) window.MinigameAudio.stop(); });
