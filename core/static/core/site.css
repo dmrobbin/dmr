@@ -1383,6 +1383,9 @@ button.button-small.secondary { border: 1px solid var(--border); }
 .layout-switch button { font: inherit; color: var(--muted); background: none; border: none; padding: .3rem .65rem; cursor: pointer; }
 .layout-switch button + button { border-left: 1px solid var(--border); }
 .layout-switch button[aria-pressed="true"] { color: var(--on-accent); background: var(--accent); font-weight: 600; }
+/* The duel's song: a dropdown beside the sound switches (play.js songOptionsHtml). */
+.song-pick { display: flex; align-items: center; gap: .5rem; margin-top: .6rem; font-size: .78rem; color: var(--muted); }
+.song-pick select { font-size: .78rem; padding: .3rem 1.8rem .3rem .55rem; min-width: 0; max-width: 14rem; flex: 0 1 auto; }
 
 .pcard { position: relative; width: var(--card-w); height: var(--card-h); flex: none; border-radius: .35rem; transition: transform .15s; cursor: pointer; }
 .pcard img { width: 100%; height: 100%; object-fit: cover; border-radius: .35rem; display: block; box-shadow: 0 2px 6px rgb(0 0 0 / .5); }

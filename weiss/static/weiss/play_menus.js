@@ -318,10 +318,6 @@
         app.setSound(!app.soundOn());
         return;
       }
-      if (event.target.closest("[data-song]")) {
-        app.cycleSong();
-        return;
-      }
       if (event.target.closest("[data-music]")) {
         app.setMusic(!app.musicOn());
         return;

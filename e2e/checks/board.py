@@ -96,6 +96,21 @@ def board(run):
     page.wait_for_timeout(300)
     run.expect(menu.is_hidden(), "Escape didn't close the card's menu", page)
 
+    # The song: a dropdown of the battle music and every song. Picking one saves it (the town's key too) and it stays
+    # picked as the board is drawn again; Battle music clears it.
+    song = layer.locator("select[data-song]")
+    run.visible(song, "the Song dropdown", page)
+    options = song.locator("option").all_inner_texts()
+    run.expect(options[0] == "Battle music" and len(options) > 2, f"the Song dropdown's options: {options[:4]}", page)
+    song.select_option(index=2)
+    picked = song.input_value()
+    run.expect(frame.evaluate("() => localStorage.getItem('weiss-town-music')") == picked, "picking a song didn't save it", page)
+    page.wait_for_timeout(2500)  # a poll or two: the controls are drawn again
+    run.expect(song.input_value() == picked, "the picked song didn't stay picked as the board updated", page)
+    run.shot(page, "song")
+    song.select_option(value="")
+    run.expect(frame.evaluate("() => localStorage.getItem('weiss-town-music')") is None, "Battle music didn't clear the saved song", page)
+
     # Chat: a message goes into the log.
     layer.get_by_placeholder("Message").fill("Good luck!")
     layer.get_by_role("button", name="Send").click()

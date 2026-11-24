@@ -359,20 +359,20 @@
     song = next;
     syncMusic();
   }
-  // The Song button: the next song in turn (the battle music after the last). The choice is kept under the town's key, and
-  // the duel re-reads it on the change event (songChanged), so the music switches as the button is pressed.
-  function cycleSong() {
-    const order = [null, ...SONGS];
-    const next = order[(order.indexOf(song) + 1) % order.length];
+  // The Song dropdown: the battle music ("") or one of the songs. The choice is kept under the town's key, and the duel
+  // re-reads it on the change event (songChanged), so the music switches as soon as it's picked.
+  function chooseSong(next) {
+    next = SONGS.includes(next) ? next : null;
+    if (next === song) return;
     try {
       if (next) localStorage.setItem(TOWN_MUSIC_KEY, next);
       else localStorage.removeItem(TOWN_MUSIC_KEY);
     } catch (e) { /* only this visit, then */ }
     window.dispatchEvent(new Event("weiss:song-change"));
-    const button = controlsEl.querySelector("[data-song]");
-    if (button) button.textContent = `Song: ${songName()}`;
     sayStatus(`Song: ${songName()}`);
   }
+  const songOptionsHtml = () => [`<option value="">Battle music</option>`,
+    ...SONG_LIST.map((t) => `<option value="${esc(t.key)}">${esc(t.name)}</option>`)].join("");
   window.addEventListener("weiss:song-change", songChanged);
   window.addEventListener("storage", (event) => { if (event.key === TOWN_MUSIC_KEY) songChanged(); });
   // The music slider moved in another tab (the town's): take it here, as the slider does.
@@ -1833,9 +1833,9 @@
             <button type="button" data-music aria-keyshortcuts="M" title="Battle music: the game's moments play as part of it, in time and in key, instead of as sound effects (M)">Music</button>
             <input type="range" min="0" max="100" step="5" data-music-volume aria-label="Music volume, under the game's moments" title="Music volume, under the game's moments">
           </div>` : ""}
-          <div class="layout-switch">
-            <button type="button" data-song title="Choose the song: the battle music, or one of the styles. Kept on this browser, and the town's song too.">Song: ${esc(songName())}</button>
-          </div>
+          <label class="song-pick" title="The battle music, or one of the songs. Kept on this browser, and the town's song too.">
+            <span>Song</span><select data-song>${songOptionsHtml()}</select>
+          </label>
           <p class="sr-only" data-sound-status role="status"></p>
           <div class="layout-switch">
             <button type="button" data-rules title="Turn the turn rules on or off (both players have to agree)">Turn rules</button>
@@ -1865,7 +1865,7 @@
     }
     const songEl = controlsEl.querySelector("[data-song]");
     if (songEl) {
-      songEl.textContent = `Song: ${songName()}`;
+      if (document.activeElement !== songEl) songEl.value = song || "";
       songEl.disabled = !soundOn;
     }
     const volumeEl = controlsEl.querySelector("[data-sound-volume]");
@@ -2993,7 +2993,6 @@
     colorMissing: () => colorMissing,
     counterHidden: () => counterHidden,
     counterKey: () => counterKey,
-    cycleSong: (...args) => cycleSong(...args),
     discardPicks: () => discardPicks,
     esc: () => esc,
     flashPicks: () => flashPicks,
@@ -3153,6 +3152,7 @@
   });
   root.addEventListener("change", (event) => {
     if (event.target.matches("[data-sound-volume]")) playSound("draw");
+    if (event.target.matches("[data-song]")) chooseSong(event.target.value);
   });
   // Browsers only let a page make sound after it's been clicked: start the audio on the first click.
   root.addEventListener("pointerdown", () => {
