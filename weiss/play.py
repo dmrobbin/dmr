@@ -124,7 +124,7 @@ def versus(room, profile):
     return {"me": {"name": room.host.username, "picture": mine.avatar if mine else None,
                    "deck": room.host_deck.name if room.host_deck else "", "colors": deck_colors(room.host_deck)},
             "them": {"name": profile.name if profile else room.cpu_name, "picture": profile.avatar if profile else None,
-                     "image": profile.image_url if profile else "", "deck": them_deck.name if them_deck else "",
+                     "image": profile.screen_url("intro") if profile else "", "deck": them_deck.name if them_deck else "",  # image: its intro picture, else its main one
                      "colors": deck_colors(them_deck), "title": title},
             "ribbon": ribbon}
 

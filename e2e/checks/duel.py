@@ -7,9 +7,9 @@ from . import DESKTOP, PHONE, Failed, check, db, open_duel_in_town
 MUSIC_OFF = "try { localStorage.setItem('weiss-music', 'off'); } catch (e) {}"
 
 
-def intro_in_town(run, viewport, tag):
+def intro_in_town(run, viewport, tag, init_script=MUSIC_OFF):
     db("save", "duel")
-    page = run.page(viewport, init_script=MUSIC_OFF)
+    page = run.page(viewport, init_script=init_script)
     frame = open_duel_in_town(run, page)
     layer = page.frame_locator(".town-play-frame")
     intro = run.visible(layer.locator(".cpu-intro"), "the versus intro", page)
@@ -27,29 +27,52 @@ def intro_in_town(run, viewport, tag):
     return page, frame, layer, begin
 
 
-def through_rps(run, page, frame, layer):
-    """Begin's been clicked: play rock, paper, scissors until someone wins. Returns the first-player banner's words."""
+RPS_WATCH = """() => { window.__rps = { ties: 0, result: '' }; let tie = false;
+  new MutationObserver(() => { const r = document.querySelector('.rps-result');
+    if (r && !window.__rps.result) window.__rps.result = r.textContent.trim();
+    const now = /A tie!/.test(document.body.innerText); if (now && !tie) window.__rps.ties++; tie = now; })
+  .observe(document.body, { subtree: true, childList: true, characterData: true }); }"""
+
+
+def through_rps(run, page, frame, layer, picked=False):
+    """Begin's been clicked: play rock, paper, scissors until someone wins. Returns the first-player banner's words.
+    picked: a first pick has been made already (with RPS_WATCH installed before it)."""
     # Ties and the result are noted as they happen: the banner only stays a moment before the mulligan.
-    frame.evaluate("""() => { window.__rps = { ties: 0, result: '' }; let tie = false;
-      new MutationObserver(() => { const r = document.querySelector('.rps-result');
-        if (r && !window.__rps.result) window.__rps.result = r.textContent.trim();
-        const now = /A tie!/.test(document.body.innerText); if (now && !tie) window.__rps.ties++; tie = now; })
-      .observe(document.body, { subtree: true, childList: true, characterData: true }); }""")
-    for _ in range(5):  # a tie means choosing again
+    if not picked:
+        frame.evaluate(RPS_WATCH)
+    for round_ in range(6):  # a tie means choosing again
         ties = frame.evaluate("() => window.__rps.ties")
-        run.visible(layer.locator(".rps-choices button"), "rock, paper, scissors", page)
-        layer.locator(".rps-choices button").first.click()
+        if not (picked and round_ == 0):
+            run.visible(layer.locator(".rps-choices button"), "rock, paper, scissors", page)
+            layer.locator(".rps-choices button").first.click()
         frame.wait_for_function(f"() => window.__rps.result || window.__rps.ties > {ties}", timeout=12000)
         if frame.evaluate("() => window.__rps.result"):
             break
     return frame.evaluate("() => window.__rps.result")
 
 
+# Holds the intro's start (intro_done) back for a moment, as a slow connection would: a pick made straight after Begin
+# then reaches the server first unless the page waits for it.
+SLOW_BEGIN = """(() => { const real = window.fetch; window.fetch = function (url, options) {
+  if (options && typeof options.body === 'string' && options.body.includes('intro_done'))
+    return new Promise((resolve) => setTimeout(resolve, 800)).then(() => real.call(this, url, options));
+  return real.call(this, url, options); }; })();"""
+
+
 @check("versus")
 def versus(run):
-    page, frame, layer, begin = intro_in_town(run, DESKTOP, "desk")
+    page, frame, layer, begin = intro_in_town(run, DESKTOP, "desk", init_script=MUSIC_OFF + SLOW_BEGIN)
+    # A quick player picks the moment Begin is pressed: the pick has to wait for the start to reach the server, not
+    # be refused ("The match hasn't started yet.").
+    frame.evaluate(RPS_WATCH)
     begin.click()
-    banner = through_rps(run, page, frame, layer)
+    layer.locator(".rps-choices button").first.click(timeout=8000)
+    page.wait_for_timeout(300)
+    shown = frame.evaluate("() => [...document.querySelectorAll('.panel-error')].filter(e => !e.hidden).map(e => e.innerText)")
+    run.expect(not shown, f"picking straight after Begin showed an error: {shown}", page)
+    banner = through_rps(run, page, frame, layer, picked=True)
+    shown = frame.evaluate("() => [...document.querySelectorAll('.panel-error')].filter(e => !e.hidden).map(e => e.innerText)")
+    run.expect(not shown, f"rock, paper, scissors showed an error: {shown}", page)
     run.expect("first" in banner, f"no first-player banner (saw {banner!r})", page)
     run.shot(page, "desk-rps")
     intro_in_town(run, PHONE, "phone")

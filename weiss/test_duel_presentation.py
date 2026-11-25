@@ -5,7 +5,7 @@ from unittest import mock
 from django.test import TestCase
 
 from . import chatter, play, test_world, world
-from .models import Chatter, CpuProfile, GameRoom, PlayerProfile
+from .models import CpuImage, Chatter, CpuProfile, GameRoom, PlayerProfile
 from .test_world import give_cpu
 
 
@@ -94,6 +94,17 @@ class VersusTests(PresentationBase):
         self.assertIsNone(versus["them"]["picture"])
         self.assertEqual((versus["them"]["image"], versus["them"]["deck"], versus["them"]["colors"]), ("", "", []))
         self.assertIsNone(versus["ribbon"])  # no CPU to say what it stakes
+
+    def test_the_versus_shows_the_cpus_intro_picture_and_else_its_main_one(self):
+        room = self.duel()
+        self.cinder.image = CpuImage.objects.create(key="main.png")
+        self.cinder.save()
+        image = play.versus(room, self.cinder)["them"]["image"]
+        self.assertIn("screen=intro", image)
+        self.assertIn("v=main.png", image)  # with no intro picture, its main one stands in
+        self.cinder.intro_image = CpuImage.objects.create(key="intro.png")
+        self.cinder.save()
+        self.assertIn("v=intro.png", play.versus(room, self.cinder)["them"]["image"])
 
     def test_the_host_has_their_own_picture_when_they_have_an_avatar(self):
         PlayerProfile.objects.create(user=self.user, avatar_card=self.cards[0])

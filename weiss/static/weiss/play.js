@@ -2011,8 +2011,11 @@
     } else if (rps.mine) {
       body = `<p>You chose ${RPS_HANDS[rps.mine][1].toLowerCase()}. Waiting for ${name}…</p>`;
     } else {
+      // Until the server has the intro's Begin (intro is still set), a pick would be refused ("The match hasn't started
+      // yet."): the intro slides away as soon as Begin is pressed, so the choices wait for its answer, a moment at most.
+      const starting = intro ? " disabled" : "";
       body = `<p>${rps.last ? "A tie! Choose again." : "The winner goes first."}${rps.opponent_chose ? ` ${name} has chosen.` : ""}</p>
-        <div class="rps-choices">${Object.entries(RPS_HANDS).map(([choice, [symbol, label]]) => `<button type="button" data-act='${esc(JSON.stringify({ type: "rps", choice }))}'>
+        <div class="rps-choices">${Object.entries(RPS_HANDS).map(([choice, [symbol, label]]) => `<button type="button"${starting} data-act='${esc(JSON.stringify({ type: "rps", choice }))}'>
           <span class="rps-symbol" aria-hidden="true">${symbol}</span>${label}</button>`).join("")}</div>`;
     }
     modalEl.hidden = false;

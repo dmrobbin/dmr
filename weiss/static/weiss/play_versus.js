@@ -68,8 +68,13 @@
     const meColours = coloursOf(me.colors, me.name);
     const themColours = coloursOf(them.colors, them.name);
     const line = cpu.intro || "";
+    // A side: its figure (the portrait with its caption, one block, so the caption follows a portrait of any shape), and
+    // for a side with art, the same art blurred and dimmed behind it, filling the side's half of the screen.
     const side = (kind, colours, who, caption) => {
-      const el = make("div", { class: `versus-side versus-${kind}` }, make("div", { class: "versus-portrait" }, portrait(who.name, colours, who.image || "", who.picture)), caption);
+      const art = who.image || "";
+      const el = make("div", { class: `versus-side versus-${kind}` },
+        art ? make("img", { class: "versus-backdrop", src: art, alt: "", "aria-hidden": "true" }) : null,
+        make("div", { class: "versus-figure" }, make("div", { class: "versus-portrait" }, portrait(who.name, colours, art, who.picture)), caption));
       el.style.setProperty("--side-a", colours[0]);
       el.style.setProperty("--side-b", colours[1]);
       return el;

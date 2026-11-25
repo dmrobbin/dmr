@@ -846,18 +846,26 @@ select option { color: var(--text); background: var(--surface); }
 .versus-them { clip-path: polygon(62% 0, 100% 0, 100% 100%, 38% 100%); background: linear-gradient(200deg, color-mix(in srgb, var(--side-a) 72%, #000), color-mix(in srgb, var(--side-b) 58%, #000)); transform: translate(110%, -110%); }
 .versus-me { clip-path: polygon(0 0, 62% 0, 38% 100%, 0 100%); background: linear-gradient(20deg, color-mix(in srgb, var(--side-a) 72%, #000), color-mix(in srgb, var(--side-b) 58%, #000)); transform: translate(-110%, 110%); }
 .cpu-intro.versus.is-arrived .versus-side { transform: none; }
+/* Each side's figure: its portrait and caption as one block, in its own corner (theirs from the top right, the caption
+   under the portrait; ours from the bottom left, the caption over it), so the caption follows a portrait of any shape.
+   It stays inside its half: right of the seam, and clear of the VS and the speech at the bottom. */
+.versus-figure { position: absolute; z-index: 1; display: flex; flex-direction: column; gap: .8rem; max-width: 34%; }
+.versus-them .versus-figure { top: 7%; right: 4%; align-items: flex-end; text-align: right; }
+.versus-me .versus-figure { bottom: 8%; left: 4%; flex-direction: column-reverse; align-items: flex-start; text-align: left; }
 .versus-portrait { flex: none; width: min(22vw, 15rem); transform: scale(.9); transition: transform .5s ease-out; }
 .is-arrived .versus-portrait { transform: none; }
-.versus-them .versus-portrait { position: absolute; top: 8%; right: 4%; }
-.versus-me .versus-portrait { position: absolute; left: 4%; bottom: 8%; }
-.versus-art { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: .6rem; box-shadow: 0 .6rem 2rem rgb(0 0 0 / .55); }
+/* Art is shown whole, at its own shape (never cropped): as large as fits the figure's corner. */
+.versus-portrait:has(> .versus-art) { width: auto; }
+.versus-art { display: block; width: auto; height: auto; max-width: min(34vw, 30rem); max-height: 50vh; border-radius: .6rem; box-shadow: 0 .6rem 2rem rgb(0 0 0 / .55); }
+/* Behind it, the same art blurred and dimmed fills the side's half: the panel is theirs, whatever the art's shape. */
+.versus-backdrop { position: absolute; inset: -6%; width: 112%; height: 112%; object-fit: cover; filter: blur(22px) saturate(1.15) brightness(.5); opacity: .55; pointer-events: none; }
 .versus-picture { position: relative; display: block; width: 100%; aspect-ratio: 1; overflow: hidden; border-radius: 50%; }
 .versus-picture img { position: absolute; }
 .versus-crest { display: grid; place-items: center; width: 100%; aspect-ratio: 1; border-radius: 50%; background: linear-gradient(135deg, var(--crest-a), var(--crest-b)); border: .35rem solid rgb(255 255 255 / .85); box-shadow: 0 .6rem 2rem rgb(0 0 0 / .55), inset 0 0 0 .5rem rgb(0 0 0 / .18); }
 .versus-crest-initial { font-family: "Cinzel", Georgia, serif; font-size: clamp(4rem, 15vw, 8rem); font-weight: 700; line-height: 1; color: #fff; text-shadow: 0 .15rem .5rem rgb(0 0 0 / .5); }
-.versus-caption { display: flex; flex-direction: column; gap: .2rem; min-width: 0; max-width: 30%; text-shadow: 0 .1rem .6rem rgb(0 0 0 / .85); }
-.versus-them .versus-caption { position: absolute; top: calc(8% + min(22vw, 15rem) + .8rem); right: 4%; align-items: flex-end; text-align: right; }
-.versus-me .versus-caption { position: absolute; left: 4%; bottom: calc(8% + min(22vw, 15rem) + .8rem); align-items: flex-start; text-align: left; }
+.versus-caption { display: flex; flex-direction: column; gap: .2rem; min-width: 0; max-width: 100%; text-shadow: 0 .1rem .6rem rgb(0 0 0 / .85); }
+.versus-them .versus-caption { align-items: flex-end; }
+.versus-me .versus-caption { align-items: flex-start; }
 .versus-name { margin: 0; font-family: "Cinzel", Georgia, serif; font-size: 1.3rem; color: #fff; overflow-wrap: anywhere; }
 .versus-title { margin: 0; font-size: .8rem; letter-spacing: .14em; text-transform: uppercase; color: #ffe9a8; }
 .versus-deck { margin: 0; font-size: .9rem; color: #f2f2f7; overflow-wrap: anywhere; }
@@ -890,8 +898,18 @@ select option { color: var(--text); background: var(--surface); }
   .versus-side { inset: auto; width: 100%; height: 46%; display: flex; align-items: center; gap: 1rem; padding: .8rem 1rem; }
   .versus-them { top: 0; right: 0; bottom: auto; left: auto; flex-direction: row-reverse; text-align: right; clip-path: polygon(0 0, 100% 0, 100% 78%, 0 100%); }
   .versus-me { bottom: 0; left: 0; top: auto; right: auto; flex-direction: row; align-items: flex-start; padding-top: 2.5rem; text-align: left; clip-path: none; }
-  .versus-them .versus-portrait, .versus-me .versus-portrait { position: static; width: min(30vw, 9.5rem); }
-  .versus-them .versus-caption, .versus-me .versus-caption { position: static; max-width: none; }
+  /* Relative, not static: it has to stack over the (absolute) backdrop. */
+  .versus-figure { position: relative; inset: auto; flex-direction: inherit; align-items: center; gap: 1rem; max-width: none; width: 100%; min-width: 0; }
+  /* Their band's bottom edge slants up to 78% of its height on the right, where their art is: the art sits at the top
+     and stays above the slant. */
+  .versus-them { align-items: flex-start; }
+  .versus-them .versus-figure { align-items: flex-start; }
+  .versus-me .versus-figure { inset: auto; flex-direction: row; align-items: flex-start; }
+  .versus-them .versus-figure { inset: auto; }
+  .versus-them .versus-portrait, .versus-me .versus-portrait { width: min(30vw, 9.5rem); }
+  .versus-portrait:has(> .versus-art) { width: auto; }
+  .versus-art { max-width: 44vw; max-height: calc((100vh - 3rem) * .46 * .72 - 1.2rem); }
+  .versus-caption { flex: 1; }
   .versus-seam { display: none; }
   .versus-slash { display: block; position: absolute; left: -10%; right: -10%; top: 50%; height: .3rem; background: linear-gradient(90deg, transparent, #fff 20%, #fff 80%, transparent); transform: translateY(-50%) rotate(-28deg) scaleX(0); transition: transform .45s ease-out; }
   .cpu-intro.versus.is-split .versus-slash { transform: translateY(-50%) rotate(-28deg) scaleX(1); }
