@@ -65,7 +65,7 @@ class MinigameDataTests(MinigameTests):
     def test_the_cards_have_every_field_and_a_picture(self):
         body = self.data(difficulty="hard").json()
         self.assertEqual((body["game"], body["difficulty"]), ("memory", "hard"))
-        self.assertEqual(set(body["cpu"]), {"id", "name", "portraits", "avatar"})
+        self.assertEqual(set(body["cpu"]), {"id", "name", "portraits", "avatar", "image"})  # image: the intro art, or ""
         self.assertEqual(body["cpu"]["name"], "Aang")
         self.assertTrue(body["cards"])
         for card in body["cards"]:

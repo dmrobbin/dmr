@@ -1,6 +1,12 @@
 {% extends "core/dashboard_base.html" %}
 {% load static %}
 
+{% block head %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap">
+{% endblock %}
+
 {% block title %}Minigames{% endblock %}
 
 {% block content %}
@@ -34,6 +40,7 @@
   <div class="minigame-stage" data-minigame-stage data-data-url="{{ data_url }}" data-player-name="{{ user.username }}"></div>
 
   <script src="{% static 'weiss/minigames/audio.js' %}" defer></script>
+  <script src="{% static 'weiss/minigames/fx.js' %}" defer></script>
   <script src="{% static 'weiss/minigames/shell.js' %}" defer></script>
   <script src="{% static 'weiss/minigames/memory.js' %}" defer></script>
   <script src="{% static 'weiss/minigames/cups.js' %}" defer></script>

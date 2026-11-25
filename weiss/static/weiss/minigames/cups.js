@@ -1,18 +1,47 @@
-/* Three cups (docs/minigames-plan.md): three real cards are shown, then covered by cups and shuffled. "Where's <card>?"
-   Pick a cup. The CPU is the dealer: the shuffle gets faster each round (by difficulty) and the CPU taunts while it
-   shuffles. Five rounds; find three or more to win. */
+/* Three cups (docs/minigames-plan.md): three real cards are shown face up, then the cups come down over them and they're
+   shuffled. "Where's <card>?" Pick a cup. The CPU is the dealer: the shuffle gets faster each round (by difficulty) and the
+   CPU taunts while it shuffles. Five rounds; find three or more to win.
+   The table (docs/minigames-polish-plan.md): a felt table seen from above, SVG cups, swaps along arcs (one passes in front,
+   the other behind), the target card's picture in the prompt, and the lift that slides the picked card out. The frame's
+   start card begins the game; each round shows the cards for a moment, then the cups come down (no Start button). */
 (() => {
   // The shuffle's step time for the first round, by difficulty (ms); each round it gets a little faster.
   const STEP_MS = { easy: 560, normal: 400, hard: 270 };
   const ROUNDS = 5;
   const WIN_AT = 3;
+  const REVEAL_MS = 2200; // the three cards show face up this long before the cups come down
+  const ARC = 14; // how far a swapping cup arcs, in per cent of the table's height (up or down): the arc stays on the felt
+
+  // A cup, in SVG: tapered, with a rim, an opening and a highlight down the side. Its gradient id is per cup.
+  function cupSvg(index) {
+    const id = `minigame-cup-body-${index}`;
+    // The cup sits on the bottom of its button (so its shadow, under the button, is right under it).
+    return `<svg viewBox="0 0 100 120" preserveAspectRatio="xMidYMax meet" aria-hidden="true" focusable="false">
+      <defs><linearGradient id="${id}" x1="0" x2="1" y1="0" y2="0">
+        <stop offset="0" stop-color="#7a5714"/><stop offset=".3" stop-color="#e8c25c"/><stop offset=".55" stop-color="#c39430"/><stop offset="1" stop-color="#5c410f"/>
+      </linearGradient></defs>
+      <path d="M18 24 L82 24 L75 110 Q74 116 68 116 L32 116 Q26 116 25 110 Z" fill="url(#${id})"/>
+      <path d="M30 34 L33 104" stroke="#fff6d0" stroke-opacity=".45" stroke-width="4" stroke-linecap="round" fill="none"/>
+      <ellipse cx="50" cy="24" rx="32" ry="8" fill="#f3d57f"/>
+      <ellipse cx="50" cy="25" rx="23" ry="5" fill="#2a1d07" fill-opacity=".6"/>
+      <ellipse cx="50" cy="24" rx="32" ry="8" fill="none" stroke="#fff3c4" stroke-opacity=".7"/>
+    </svg>`;
+  }
+
+  const el = (tag, className, text) => {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
 
   function play(ctx) {
-    const { area, cards, cpu, difficulty, random } = ctx;
+    const { area, cards, cpu, difficulty, random, fx } = ctx;
     const step = STEP_MS[difficulty] ?? STEP_MS.normal;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const pause = (ms) => (reduced ? Math.min(ms, 120) : ms);
     const timers = [];
+    const frames = [];
     let stopped = false;
     let busy = true;
     let round = 0;
@@ -53,33 +82,32 @@
       trio = picked;
     }
 
-    const stage = document.createElement("div");
-    stage.className = "minigame-cups";
-    const prompt = document.createElement("p");
-    prompt.className = "minigame-cups-prompt";
+    // ---- The table ----
+    const stage = el("div", "minigame-cups");
+    const prompt = el("p", "minigame-cups-prompt");
     prompt.setAttribute("aria-live", "polite");
-    const row = document.createElement("div");
-    row.className = "minigame-cups-row";
-    row.setAttribute("role", "group");
-    row.setAttribute("aria-label", "Cups");
-    stage.append(prompt, row);
+    const felt = el("div", "minigame-felt");
+    felt.setAttribute("role", "group");
+    felt.setAttribute("aria-label", "Cups");
+    const row = el("div", "minigame-cups-row");
+    felt.append(row);
+    stage.append(prompt, felt);
     area.append(stage);
 
     // Each cup covers one card. order[slot] is the cup now in that slot (left to right).
     const cupEls = [0, 1, 2].map((index) => {
-      const holder = document.createElement("div");
-      holder.className = "minigame-cup-slot";
-      const card = document.createElement("div");
-      card.className = "minigame-card-under";
-      const img = document.createElement("img");
+      const holder = el("div", "minigame-cup-slot");
+      const shadow = el("div", "minigame-cup-shadow");
+      shadow.setAttribute("aria-hidden", "true");
+      const card = el("div", "minigame-card-under");
+      const img = el("img");
       img.alt = "";
-      const name = document.createElement("span");
-      name.className = "minigame-card-name";
+      const name = el("span", "minigame-card-name");
       card.append(img, name);
-      const cup = document.createElement("button");
+      const cup = el("button", "minigame-cup");
       cup.type = "button";
-      cup.className = "minigame-cup";
       cup.setAttribute("aria-label", `Cup ${index + 1}`);
+      cup.innerHTML = cupSvg(index);
       cup.addEventListener("click", () => pick(index));
       cup.addEventListener("keydown", (event) => {
         if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
@@ -88,7 +116,7 @@
         const next = order[event.key === "ArrowLeft" ? Math.max(0, slot - 1) : Math.min(2, slot + 1)];
         cupEls[next].cup.focus();
       });
-      holder.append(card, cup);
+      holder.append(shadow, card, cup);
       row.append(holder);
       return { holder, card, img, nameEl: name, cup, index };
     });
@@ -96,64 +124,60 @@
     let target = 0; // the cup index holding the card asked for this round
 
     const slotOf = (cupIndex) => order.indexOf(cupIndex);
-    // Cups are placed by slot; the card under each cup moves with it.
+    // A cup's place: x in slots (a slot is one holder's width), y in per cent of a holder's height (negative is up).
+    const place = (cupIndex, x, y) => {
+      const { holder } = cupEls[cupIndex];
+      holder.style.setProperty("--x", String(x));
+      holder.style.setProperty("--y", String(y));
+    };
     const layout = () => {
-      order.forEach((cupIndex, slot) => {
-        cupEls[cupIndex].holder.style.setProperty("--slot", String(slot));
-      });
+      order.forEach((cupIndex, slot) => place(cupIndex, slot, 0));
     };
 
-    const showCards = (up) => {
-      for (const { card } of cupEls) card.classList.toggle("is-up", up);
-    };
-    const covered = (on) => {
-      for (const { cup } of cupEls) {
-        cup.classList.toggle("is-lifted", !on);
-        cup.disabled = on; // the cups are live only when they're to be picked
+    // Two cups swap places along arcs: one passes in front (down), the other behind (up). Their order changes at once.
+    function swapSlots(sa, sb, duration, done) {
+      const ca = order[sa];
+      const cb = order[sb];
+      [order[sa], order[sb]] = [cb, ca];
+      if (duration <= 0) {
+        layout();
+        return done();
       }
-    };
-
-    const setStatus = () => ctx.status(`Round ${round} of ${ROUNDS} · you ${score.player} · ${cpu.name} ${score.cpu}${distinctShortfall ? ` · this set has only ${3 - distinctShortfall} different names, so a name repeats` : ""}`);
-
-    // The three cards, in full: picture, name and the characteristics the card view shows. Shown before each shuffle,
-    // until the player presses Start.
-    const reveal = document.createElement("div");
-    reveal.className = "minigame-reveal";
-    const startButton = document.createElement("button");
-    startButton.type = "button";
-    startButton.className = "minigame-start";
-    startButton.textContent = "Start";
-    startButton.addEventListener("click", () => begin());
-    stage.insertBefore(reveal, row);
-
-    function revealCard(card) {
-      const box = document.createElement("article");
-      box.className = "minigame-reveal-card";
-      const art = document.createElement("div");
-      art.className = "minigame-reveal-art";
-      const img = document.createElement("img");
-      img.alt = "";
-      img.src = card.image;
-      img.addEventListener("error", () => art.classList.add("no-art"), { once: true });
-      art.append(img);
-      const title = document.createElement("h3");
-      title.className = "minigame-reveal-name";
-      title.textContent = card.name;
-      const facts = document.createElement("dl");
-      facts.className = "minigame-reveal-facts";
-      const rows = [["Level", card.level], ["Power", card.power], ["Cost", card.cost], ["Color", card.color], ["Type", card.type], ["Trigger", card.trigger], ["Rarity", card.rarity]];
-      for (const [label, value] of rows) {
-        const dt = document.createElement("dt");
-        dt.textContent = label;
-        const dd = document.createElement("dd");
-        dd.textContent = value === undefined || value === null || value === "" ? "—" : String(value);
-        facts.append(dt, dd);
-      }
-      box.append(art, title, facts);
-      return box;
+      const started = performance.now();
+      const frame = (now) => {
+        if (stopped) return;
+        const t = Math.min(1, (now - started) / duration);
+        const eased = t * t * (3 - 2 * t);
+        const arc = Math.sin(Math.PI * t) * ARC;
+        place(ca, sa + (sb - sa) * eased, arc);
+        place(cb, sb + (sa - sb) * eased, -arc);
+        if (t < 1) frames.push(requestAnimationFrame(frame));
+        else done();
+      };
+      frame(started);
+      frames.push(requestAnimationFrame(frame));
     }
 
-    // Fills the reveal and the cups with this round's three cards.
+    // The cups up (cards in view, for the reveal) or down (covering them).
+    const raise = (on) => row.classList.toggle("is-raised", on);
+    // The cups can be picked only when they're to be picked.
+    const setPickable = (on) => {
+      for (const { cup } of cupEls) cup.disabled = !on;
+    };
+
+    const setStatus = () => ctx.status(`Round ${round} of ${ROUNDS}${distinctShortfall ? " · a name repeats in this set" : ""}`);
+
+    // The prompt: the card asked for, with its picture.
+    function askFor() {
+      const card = trio[target];
+      const picture = el("img", "minigame-prompt-art");
+      picture.alt = "";
+      picture.src = card.image;
+      picture.addEventListener("error", () => picture.remove(), { once: true });
+      prompt.replaceChildren(el("span", "", "Where's "), picture, el("strong", "", card.name), el("span", "", "?"));
+    }
+
+    // Fills the cups' cards with this round's three cards.
     function showTrio() {
       cupEls.forEach(({ card, img, nameEl }, index) => {
         const c = trio[index];
@@ -161,11 +185,13 @@
         img.src = c.image;
         img.onerror = () => card.classList.add("no-art");
         nameEl.textContent = c.name;
+        card.classList.remove("is-out");
       });
-      reveal.replaceChildren(...trio.map((card) => revealCard(card)), startButton);
+      for (const { holder } of cupEls) holder.classList.remove("is-picked", "is-answer");
     }
 
-    // The round: show the cards, wait for Start (no timer), then cover them and shuffle. The question comes after.
+    // The round: the cards show face up with the cups raised, then the cups come down, the shuffle runs, and the question
+    // comes after it.
     function nextRound() {
       if (stopped) return;
       round += 1;
@@ -173,39 +199,32 @@
       chooseTrio();
       if (trio.length < 3) {
         // Not enough pictured cards to lay out three cups: say so, and end the game as a draw.
-        ctx.status("This set has too few pictured cards for Three cups.");
+        ctx.status("This set has too few pictured cards for Three Cups.");
         stopped = true;
         return ctx.end("draw");
       }
       showTrio();
       setStatus();
-      prompt.textContent = "";
-      covered(false);
-      showCards(true);
+      prompt.textContent = "Remember where they are.";
       order = [0, 1, 2];
       layout();
       target = Math.floor(random() * 3);
       busy = true;
-      row.hidden = true;
-      reveal.hidden = false;
-      startButton.disabled = false;
-      startButton.focus({ preventScroll: true });
+      setPickable(false);
+      raise(true);
+      later(begin, REVEAL_MS);
     }
 
-    // Start: the cards go under the cups and the shuffle begins, with the CPU's patter.
+    // The cups come down over the cards, and the shuffle begins, with the CPU's patter.
     function begin() {
-      if (stopped || reveal.hidden) return; // Start only while the cards are showing
-      startButton.disabled = true;
-      reveal.hidden = true;
-      row.hidden = false;
+      raise(false);
+      prompt.textContent = "Watch the shuffle.";
       later(() => {
         ctx.say("cpu_good"); // the dealer's patter, as the cups go down
-        covered(true);
-        showCards(false);
         shuffle(3 + round, () => {
-          covered(false);
-          prompt.textContent = `Where's ${trio[target].name}?`;
+          askFor();
           busy = false;
+          setPickable(true);
           cupEls[0].cup.focus({ preventScroll: true });
         });
       }, 300);
@@ -222,8 +241,7 @@
         const a = Math.floor(random() * 3);
         let b = Math.floor(random() * 3);
         if (b === a) b = (a + 1) % 3;
-        [order[a], order[b]] = [order[b], order[a]];
-        layout();
+        swapSlots(a, b, reduced ? 0 : stepTime * 0.85, () => {});
         k += 1;
         if (k % 3 === 0) ctx.say("cpu_good");
         later(go, stepTime);
@@ -234,30 +252,39 @@
     function pick(index) {
       if (stopped || busy) return;
       busy = true;
-      covered(true);
-      cupEls[index].holder.classList.add("is-picked");
+      setPickable(false);
       const hit = index === target;
+      const picked = cupEls[index];
+      const answer = cupEls[target];
+      picked.holder.classList.add("is-picked"); // the cup lifts
+      picked.card.classList.add("is-out"); // and the card slides out from under it
+      answer.card.classList.add("is-out");
+      answer.holder.classList.add("is-answer");
       ctx.sfx("cup");
-      // Lift the cup to show the card under it, and the card asked for.
-      cupEls[index].cup.classList.add("is-lifted");
-      cupEls[index].card.classList.add("is-up");
-      cupEls[target].card.classList.add("is-up");
-      cupEls[target].holder.classList.add("is-answer");
       ctx.sfx("reveal");
+      const cupBox = picked.cup.getBoundingClientRect();
+      const answerBox = answer.card.getBoundingClientRect();
       if (hit) {
         score.player += 1;
         prompt.textContent = `Yes: ${trio[target].name}.`;
+        fx.burst(answerBox.left + answerBox.width / 2, answerBox.top + answerBox.height / 2, { count: 16 });
+        fx.pop(cupBox.left + cupBox.width / 2, cupBox.top, "+1", { tone: "good" });
         ctx.say("player_good");
         ctx.sfx("correct");
       } else {
         score.cpu += 1;
         prompt.textContent = `No: ${trio[target].name} is under cup ${slotOf(target) + 1}.`;
+        fx.shake(picked.cup);
+        fx.pop(answerBox.left + answerBox.width / 2, answerBox.top, "+1", { tone: "bad" });
         ctx.say("cpu_good");
         ctx.sfx("wrong");
       }
       ctx.score(score.player, score.cpu);
       later(() => {
-        cupEls.forEach(({ holder }) => holder.classList.remove("is-picked", "is-answer"));
+        for (const { holder, card } of cupEls) {
+          holder.classList.remove("is-picked", "is-answer");
+          card.classList.remove("is-out");
+        }
         nextRound();
       }, 1800);
     }
@@ -265,7 +292,7 @@
     function finish() {
       stopped = true;
       const result = score.player >= WIN_AT ? "win" : "lose";
-      ctx.end(result);
+      ctx.end(result, { line: `You found ${score.player} of ${ROUNDS}.` });
     }
 
     ctx.score(0, 0);
@@ -278,12 +305,15 @@
         stopped = true;
         for (const id of timers) clearTimeout(id);
         timers.length = 0;
+        for (const id of frames) cancelAnimationFrame(id);
+        frames.length = 0;
       },
     };
   }
 
   window.MinigameGames.cups = {
-    title: "Three cups",
+    title: "Three Cups",
+    rule: "Watch the shuffle, then find the card. Find 3 of 5 to win.",
     about: "Find the card under the right cup. Three right of five wins.",
     play,
   };

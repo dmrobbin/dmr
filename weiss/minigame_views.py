@@ -15,7 +15,7 @@ from django.views.decorators.http import require_GET
 from . import packs, world
 from .cpu_views import staff_required
 from .lists import is_climax
-from .models import Card, CardListEntry, CpuProfile
+from .models import Card, CardListEntry, CpuProfile, PlayerProfile
 
 GAMES = {"memory": "Memory", "cups": "Three cups", "invaders": "Climax Invaders", "higher_lower": "Higher or Lower", "runner": "Runner"}
 DIFFICULTIES = ("easy", "normal", "hard")
@@ -115,21 +115,33 @@ def world_minigame_data(request):
     cpu = CpuProfile.objects.filter(pk=request.GET.get("cpu", ""), finalized=True).first()
     if not cpu:
         return JsonResponse({"error": "There's no CPU like that."}, status=404)
-    data = game_data(game, cpu, difficulty, request.user.username)
+    data = game_data(game, cpu, difficulty, request.user)
     if data is None:
         return JsonResponse({"error": "No set has enough pictured cards to play from yet."}, status=400)
     return JsonResponse(data)
 
 
-def game_data(game, cpu, difficulty, player_name, seed=None):
-    """What a minigame plays from, against this CPU: its cards (from one set) and its lines. None if no set can play."""
+def game_data(game, cpu, difficulty, user, seed=None):
+    """What a minigame plays from, against this CPU: its cards (from one set), its lines, and the two sides for the frame:
+    the player (name, picture, sleeve) and the CPU's intro art (docs/minigames-polish-plan.md, the contract). None if no set
+    can play."""
     rng = random.Random(seed) if seed is not None else random
     set_id = game_set(cpu, rng)
     if set_id is None:
         return None
     return {
         "game": game, "difficulty": difficulty,
-        "cpu": {"id": cpu.pk, "name": cpu.name, "portraits": world.cpu_portraits(cpu), "avatar": cpu.avatar["image"] if cpu.avatar else None},
+        "player": player_view(user),
+        "cpu": {"id": cpu.pk, "name": cpu.name, "portraits": world.cpu_portraits(cpu), "avatar": cpu.avatar["image"] if cpu.avatar else None,
+                "image": cpu.screen_url("intro")},  # the intro art, falling back to the main image; "" with neither
         "cards": [card_json(card) for card in game_cards(set_id, rng)],
-        "lines": lines_for(cpu.name, game, player_name),
+        "lines": lines_for(cpu.name, game, user.username),
     }
+
+
+def player_view(user):
+    """The player for the frame: their name, their profile picture (as the duel's versus shows it; None without one), and
+    their sleeve as the CSS background the duel uses for their face-down cards ("" for the default)."""
+    profile = PlayerProfile.objects.filter(user=user).select_related("sleeve").first()
+    return {"name": user.username, "picture": profile.avatar if profile else None,
+            "sleeve": profile.sleeve.css if profile and profile.sleeve_id else ""}

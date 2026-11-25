@@ -795,7 +795,7 @@ def minigame_offer(save, cpu):
     return {"allowed": allowed, "played": played, "base": gain(cpu, base), "points": gain(cpu, base * 2), "win_points": gain(cpu, base * 3)}
 
 
-def minigame_data(save, username):
+def minigame_data(save, user):
     """What the game under way plays from (minigame_views.game_data), with its seed. Raises ValueError."""
     from . import minigame_views  # weiss.minigame_views uses this module
     pending = minigame_under_way(save)
@@ -803,10 +803,10 @@ def minigame_data(save, username):
         raise ValueError("There's no game to play.")
     cpu = CpuProfile.objects.filter(pk=pending["cpu"]).first()
     difficulty = "easy" if tutorial.step(save) == "minigame" else "normal"  # the tutorial's guide goes easy
-    data = cpu and minigame_views.game_data(pending["game"], cpu, difficulty, username)
+    data = cpu and minigame_views.game_data(pending["game"], cpu, difficulty, user)
     if not data:
         raise ValueError("That game can't be played right now.")
-    lines = minigame_views.lines_for(cpu.name, "world", username, minigame_views.WORLD_MOMENTS)
+    lines = minigame_views.lines_for(cpu.name, "world", user.username, minigame_views.WORLD_MOMENTS)
     return {**data, "seed": pending["seed"], "lines": lines, "again": bool(save.today.get("minigames"))}
 
 

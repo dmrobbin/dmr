@@ -579,7 +579,7 @@ def challenge_minigame_data(request):
     if not pending or pending.get("decided"):
         return JsonResponse({"error": "There's no minigame to play."}, status=400)
     cpu = CpuProfile.objects.filter(pk=pending["cpu"]).first()
-    data = cpu and minigame_views.game_data(pending["game"], cpu, "normal", request.user.username, seed=pending["seed"])
+    data = cpu and minigame_views.game_data(pending["game"], cpu, "normal", request.user, seed=pending["seed"])
     if not data:
         return JsonResponse({"error": "That minigame can't be played right now."}, status=400)
     return JsonResponse({**data, "seed": pending["seed"]})

@@ -509,7 +509,7 @@ def world_minigame_data(request, slot):
     if away:
         return JsonResponse({"error": f"Slot {slot} has no save."}, status=404)
     try:
-        return JsonResponse(world.minigame_data(save, request.user.username))
+        return JsonResponse(world.minigame_data(save, request.user))
     except ValueError as error:
         return JsonResponse({"error": str(error)}, status=400)
 

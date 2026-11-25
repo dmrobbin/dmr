@@ -39,7 +39,7 @@ class TutorialMinigameTests(TutorialBase):
     def test_the_guide_plays_easy_and_a_too_early_result_leaves_the_step(self):
         save = self.through("minigame")
         world.start_minigame(save, self.aang.pk, "cups")
-        self.assertEqual(world.minigame_data(save, self.user.username)["difficulty"], "easy")
+        self.assertEqual(world.minigame_data(save, self.user)["difficulty"], "easy")
         with self.assertRaisesRegex(ValueError, "too quickly"):
             world.finish_minigame(save, "win")
         self.assertEqual(self.step(), "minigame")

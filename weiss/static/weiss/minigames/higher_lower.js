@@ -2,7 +2,9 @@
    card's power is higher or lower (equal counts as right). Turns alternate: a right guess scores and keeps the turn, a
    wrong one passes it. First to five. The CPU reads the odds from the cards still to come, more or less well by
    difficulty. Registers in window.MinigameGames and is started by the shell (shell.js), which gives the ctx: area, cards,
-   cpu, difficulty, random, say, score, status and end. Its stop() is safe to call again. */
+   cpu, difficulty, random, say, score, status, end, fx and countdown. Its stop() is safe to call again.
+   The stage (docs/minigames-polish-plan.md): the card before on the left, small and dim; the new card on the right, flipping
+   in, with a stamp for the guess and a streak count. */
 (() => {
   window.MinigameGames = window.MinigameGames || {};
 
@@ -45,35 +47,46 @@
 
     // ---- The page ----
     const game = el("div", "hl-game");
-    const turnLine = el("p", "hl-turn", "");
-    turnLine.setAttribute("aria-live", "polite");
     const stage = el("div", "hl-stage");
+    // The card before, on the left: small and dimmed, with its power.
+    const prev = el("div", "hl-prev");
+    prev.hidden = true;
+    const prevArt = el("img", "hl-prev-art");
+    prevArt.alt = "";
+    prevArt.addEventListener("error", () => prevArt.remove());
+    const prevPower = el("p", "hl-prev-power", "");
+    const prevName = el("p", "hl-prev-name", "");
+    prev.append(prevArt, prevPower, prevName);
+    // The new card, on the right: big, flipping in, with its power, and the stamp for the guess over it.
     const cardBox = el("div", "hl-card");
     const art = el("img", "hl-art");
     art.alt = "";
     art.addEventListener("error", () => art.remove());
     const name = el("p", "hl-name", "");
     const power = el("p", "hl-power", "");
-    cardBox.append(art, name, power);
-    const before = el("p", "hl-before small", "");
-    stage.append(cardBox, before);
+    const stamp = el("p", "hl-stamp", "");
+    stamp.setAttribute("aria-hidden", "true");
+    cardBox.append(art, stamp, name, power);
+    stage.append(prev, cardBox);
+    const streakLine = el("p", "hl-streak", "");
+    streakLine.setAttribute("aria-live", "polite");
     const choices = el("div", "hl-choices");
     choices.setAttribute("role", "group");
     choices.setAttribute("aria-label", "Your guess");
-    const higher = el("button", "hl-higher", "Higher");
+    const higher = el("button", "hl-higher", "▲ Higher");
     higher.type = "button";
     higher.dataset.guess = "higher";
     higher.append(el("kbd", "", "H"));
-    const lower = el("button", "hl-lower", "Lower");
+    const lower = el("button", "hl-lower", "▼ Lower");
     lower.type = "button";
     lower.dataset.guess = "lower";
     lower.append(el("kbd", "", "L"));
     choices.append(higher, lower);
-    game.append(turnLine, stage, choices);
+    game.append(stage, streakLine, choices);
     ctx.area.append(game);
 
     // ---- The state ----
-    const state = { current: deck.shift(), turn: "player", player: 0, cpu: 0, busy: false, over: false, timer: 0, shown: 0 };
+    const state = { current: deck.shift(), turn: "player", player: 0, cpu: 0, streak: 0, busy: false, over: false, timer: 0, shown: 0 };
     let stopped = false;
 
     function show(item, shownBefore) {
@@ -88,15 +101,28 @@
         art.src = item.card.image;
         cardBox.prepend(art);
       }
-      before.textContent = shownBefore ? `Before it: ${shownBefore.card.name || "a card"}, power ${shownBefore.power}` : "";
+      stamp.textContent = "";
+      stamp.className = "hl-stamp";
+      if (shownBefore) {
+        prev.hidden = false;
+        prevArt.remove();
+        if (shownBefore.card.image) {
+          prevArt.src = shownBefore.card.image;
+          prev.prepend(prevArt);
+        }
+        // The number to beat: as large and gold as the new card's power, with the card's name under it.
+        prevPower.replaceChildren("Power ", el("strong", "", String(shownBefore.card.power ?? shownBefore.power)));
+        prevName.textContent = shownBefore.card.name || "";
+      } else {
+        prev.hidden = true;
+      }
     }
 
+    // Whose turn it is: the round pill (the frame's), and the buttons for it.
     function paintTurn() {
       const yours = state.turn === "player" && !state.over;
       higher.disabled = lower.disabled = !yours || state.busy;
-      turnLine.textContent = state.over ? "" : state.turn === "player"
-        ? "Your turn: is the next card's power higher or lower?"
-        : `${ctx.cpu.name} is guessing…`;
+      ctx.status(state.over ? "" : state.turn === "player" ? "Your turn" : `${ctx.cpu.name}'s turn`);
     }
 
     function score() {
@@ -128,14 +154,21 @@
       const right = guess === "higher" ? next.power >= previous.power : next.power <= previous.power; // equal is right
       state.current = next;
       show(next, previous);
+      stamp.textContent = right ? "✓" : "✗";
+      stamp.className = `hl-stamp ${right ? "is-right" : "is-wrong"}`;
+      const box = cardBox.getBoundingClientRect();
+      if (right) ctx.fx.burst(box.left + box.width / 2, box.top + box.height / 2, { count: 14 });
+      else ctx.fx.shake(cardBox);
       if (who === "player") {
         sfx(right ? "correct" : "wrong");
         if (right) state.player += 1;
+        state.streak = right ? state.streak + 1 : 0;
         ctx.say(right ? "player_good" : "player_bad");
       } else {
         if (right) state.cpu += 1;
         ctx.say(right ? "cpu_good" : "cpu_bad");
       }
+      streakLine.textContent = state.streak >= 2 ? `Streak ×${state.streak}` : "";
       score();
       if (!right) state.turn = who === "player" ? "cpu" : "player";
       state.busy = true;
@@ -168,7 +201,8 @@
       clearTimeout(state.timer);
       paintTurn();
       sfx(result); // a draw has no sound of its own
-      ctx.end(result); // the shell says the CPU's line and calls stop()
+      // The results screen's line: the right guesses on each side.
+      ctx.end(result, { line: `${state.player} right to ${ctx.cpu.name}'s ${state.cpu}.` }); // the shell calls stop()
     }
 
     // ---- Input ----
@@ -202,7 +236,6 @@
     // ---- Start: the first card, and the player's turn ----
     show(state.current, null);
     if (window.MinigameAudio) window.MinigameAudio.start("higher_lower");
-    ctx.status(`First to ${FIRST_TO}`);
     score();
     paintTurn();
     return { stop };
@@ -210,6 +243,7 @@
 
   window.MinigameGames.higher_lower = {
     title: "Higher or Lower",
+    rule: "Will the next card's power be higher or lower? First to 5 wins.",
     about: "A card and its power. Is the next card's power higher or lower? Equal counts as right. First to five.",
     play: startHigherLower,
   };

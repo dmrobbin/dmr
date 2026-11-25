@@ -122,7 +122,7 @@ class WorldMinigameTests(QuestBase):
                  "Ruby": {"world": {"invite": ["Ruby asks, {player}."]}}}
         self.play()
         with mock.patch.object(minigame_views, "pack_lines", return_value=lines):
-            data = world.minigame_data(self.fresh(), self.user.username)
+            data = world.minigame_data(self.fresh(), self.user)
         self.assertEqual(data["lines"]["invite"], [f"Ruby asks, {self.user.username}."])
         self.assertEqual(data["lines"]["again"], [f"Again, {self.user.username}?"])
         self.assertEqual(set(data["lines"]), set(minigame_views.WORLD_MOMENTS))
@@ -133,7 +133,7 @@ class WorldMinigameTests(QuestBase):
         self.ripen()
         self.finish("draw")
         self.play(cpu=self.cinder)
-        self.assertTrue(world.minigame_data(self.fresh(), self.user.username)["again"])
+        self.assertTrue(world.minigame_data(self.fresh(), self.user)["again"])
 
     def test_time_passes_when_the_result_is_posted(self):
         self.play()

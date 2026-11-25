@@ -75,7 +75,7 @@
 
     const status = () => {
       if (stopped) return;
-      ctx.status(`${turn === "player" ? "Your turn" : `${cpu.name}'s turn`} · pairs left ${pairsLeft}`);
+      ctx.status(`${turn === "player" ? "Your turn" : `${cpu.name}'s turn`} · ${pairsLeft} ${pairsLeft === 1 ? "pair" : "pairs"} left`);
     };
 
     const showFace = (index, up) => {
@@ -95,21 +95,30 @@
     const finish = () => {
       stopped = true;
       const result = score.player > score.cpu ? "win" : score.player < score.cpu ? "lose" : "draw";
-      ctx.end(result);
+      const pairs = (n) => `${n} ${n === 1 ? "pair" : "pairs"}`;
+      ctx.end(result, { line: `You found ${pairs(score.player)}. ${cpu.name} found ${pairs(score.cpu)}.` });
     };
 
-    // A pair is found: both tiles stay up, dim, and the finder keeps the turn.
+    // A pair is found: both tiles stay up, glow, slide to the finder's pile, and the finder keeps the turn.
     const found = (who, a, b) => {
       matched.add(a);
       matched.add(b);
-      tiles[a].classList.add("is-matched");
-      tiles[b].classList.add("is-matched");
-      tiles[a].disabled = true;
-      tiles[b].disabled = true;
+      for (const index of [a, b]) {
+        tiles[index].classList.add("is-matched", who === "player" ? "is-by-you" : "is-by-cpu");
+        tiles[index].disabled = true;
+        const box = tiles[index].getBoundingClientRect();
+        ctx.fx.burst(box.left + box.width / 2, box.top + box.height / 2, { count: 12 });
+      }
       pairsLeft -= 1;
       score[who] += 1;
       scoreUp();
       ctx.sfx("match");
+    };
+
+    // A miss: the two cards shake before they turn back.
+    const missed = (a, b) => {
+      ctx.fx.shake(tiles[a]);
+      ctx.fx.shake(tiles[b]);
     };
 
     // The CPU sees every card that's turned up, and remembers it, most of the time.
@@ -152,6 +161,7 @@
         }
         ctx.say("player_bad");
         ctx.sfx("miss");
+        missed(a, b);
         later(() => {
           unflip();
           turn = "cpu";
@@ -178,7 +188,10 @@
       busy = true;
       flip(a);
       remember(a);
+      // The tile the CPU is about to pick is highlighted through the pause before it turns over.
+      tiles[b].classList.add("is-thinking");
       later(() => {
+        tiles[b].classList.remove("is-thinking");
         flip(b);
         remember(b);
         later(() => {
@@ -194,6 +207,7 @@
           }
           ctx.say("cpu_bad");
           ctx.sfx("miss");
+          missed(a, b);
           later(() => {
             unflip();
             turn = "player";
@@ -220,6 +234,7 @@
 
   window.MinigameGames.memory = {
     title: "Memory",
+    rule: "Find matching pairs. A match keeps your turn. Most pairs wins.",
     about: "Find the pairs. A match keeps your turn; a miss passes it.",
     play,
   };
