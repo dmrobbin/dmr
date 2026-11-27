@@ -405,6 +405,7 @@ def travel(save, key):
     if place.key != save.place or chose:  # arriving, or staying for a new time of day: visits done here
         save.place = place.key
         quests.arrived(save)
+        roster.meet_here(save)  # a newcomer here is met (unless a quest visit's scene is playing: one at a time)
         if place.key == "shop":
             tutorial.did(save, "travel_shop")
         if chose:  # the map after time passed is answered: that's the tutorial's "time" step
@@ -1674,9 +1675,13 @@ def duel_ribbon(save, room, cpu):
 
 
 def talk(save, cpu_id):
-    """Talk to someone here: the day's first talk with them brings points."""
+    """Talk to someone here: the day's first talk with them brings points. A newcomer whose arrival hasn't played is
+    met instead: their arrival scene plays (the town goes to it), and talking comes after, as with anyone."""
     cpu = someone_here(save, cpu_id)
     tutorial.allows(save, "talk", cpu=cpu)
+    if roster.meet(save, cpu.pk):
+        changed(save, "flags")
+        return {"arrival": True}
     rel = relation(save, cpu.pk)
     if rel.get("talked_turn") == save.turn:
         raise ValueError(f"You've talked with {cpu.name} {this_time(save)} already.")
@@ -1938,6 +1943,7 @@ def town(save):
     if tutorial.refresh(save):  # a step done by itself (a deck made legal on its own page)
         changed(save, "flags", "gifts", "money")
     known = places(save)
+    newcomers = set(roster.pending(save))  # in town, their arrival not played yet: marked as new
     here = place_of(save, known)
     time = save.turn % len(WorldSave.TIMES)
     duel = live_duel(save)
@@ -1957,6 +1963,7 @@ def town(save):
         "places": [{"key": p.key, "name": p.name, "backdrop": p.backdrop(time), "here": here is not None and p.key == here.key,
                     "who": by_place.get(p.key, []), "events": happening.get(p.key, [])} for p in known],
         "people": [{"id": cpu.pk, "name": cpu.name, "portraits": cpu_portraits(cpu), "stake": stake_with(save, cpu.pk, rule),
+                    "new": cpu.pk in newcomers,  # their arrival hasn't played: meeting them plays it (roster.meet)
                     **greetings(save, cpu), "talked_now": save.relations.get(str(cpu.pk), {}).get("talked_turn") == save.turn,
                     "intro": duel_intro(save, cpu),
                     "duelled": cpu.pk in save.today.get("duelled", []), "relation": standing(save, cpu.pk),
@@ -2019,13 +2026,13 @@ def play_rank_scene(save, scene_pk, cpu_pk):
 
 
 def next_scene(save):
-    """A scene's been watched: the next waiting one comes up (then a newcomer's arrival, if any are still to come)."""
+    """A scene's been watched: the next waiting one comes up. A newcomer's arrival never follows by itself: it plays when
+    the player meets them (roster.meet), so scenes don't run on one after another."""
     queue = save.flags.get("scene_queue") or []
     if not save.flags.get("scene") and queue:
         save.flags["scene"] = queue.pop(0)
     if not queue:
         save.flags.pop("scene_queue", None)
-    roster.next_arrival(save)
 
 
 

@@ -9,6 +9,8 @@ Run: python e2e/checks/db.py <command>    (the checks call it for you; see e2e/c
   played    (after `duel`) the latest town duel gets six turns of history: a comeback with a big hit and a cancel
   record    a finished game against a CPU on the profile, with a recap
   stock     the latest town duel: three cards from the player's deck go to their stock (to pay for a card)
+  newcomer  (after `save`) someone at the player's place is a newcomer whose arrival hasn't played, with a scene for it;
+            prints their name
   finish    the latest town duel ends, the player winning
   lose      the latest town duel ends, the player losing
 """
@@ -173,6 +175,32 @@ def stock():
     print("stock", len(zones["stock"]))
 
 
+def newcomer():
+    """Someone here now is a newcomer not met yet (as a new week leaves them: world_roster.week_started), with an arrival
+    scene with someone else in town. The scratch database's cast is too small for a real second week."""
+    from weiss.models import Scene
+    found = latest_save()
+    here = [cpu for cpu, _ in world.present(found)]
+    assert here, "nobody's at the save's place"
+    cpu = here[0]
+    other = next(c for c in CpuProfile_all() if c.pk != cpu.pk)
+    Scene.objects.filter(name__istartswith=f"World: Arrival, {cpu.name}").delete()
+    Scene.objects.create(name=f"World: Arrival, {cpu.name} & {other.name}", script="\n".join([
+        f"cast new as {cpu.name}", f"cast old as {other.name}", "background sakura",
+        "new: Hello! I've only just got here.", "old: Welcome to town.", "choice Who do you stand with?",
+        "- The newcomer (set side_new)", "- The one who was here first (set side_old)"]))
+    found.flags["arrivals"] = [cpu.pk]
+    found.flags.pop("scene", None)
+    found.flags.pop("scene_queue", None)
+    found.save()
+    print(cpu.name)
+
+
+def CpuProfile_all():
+    from weiss.models import CpuProfile
+    return list(CpuProfile.objects.filter(finalized=True).order_by("pk"))
+
+
 def finish(player_wins=True):
     room = GameRoom.objects.filter(world_save__user__username=USER).order_by("-pk").first()
     winner = str(room.host_id) if player_wins else str(room.guest_id)
@@ -184,7 +212,7 @@ def finish(player_wins=True):
     print("finished", room.pk)
 
 
-COMMANDS = {"migrate": migrate, "packs": packs, "save": save, "duel": duel, "people": people, "played": played, "record": record, "stock": stock, "finish": finish, "lose": lambda: finish(False)}
+COMMANDS = {"migrate": migrate, "packs": packs, "save": save, "duel": duel, "people": people, "played": played, "record": record, "stock": stock, "newcomer": newcomer, "finish": finish, "lose": lambda: finish(False)}
 
 if __name__ == "__main__":
     for name in sys.argv[1:]:

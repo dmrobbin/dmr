@@ -187,3 +187,24 @@ each partner scene, the choice is between siding with the newcomer and siding wi
 - [ ] Goes in `world_pack/src` with the newcomer (as `extra_scenes`, like the quest visit scenes), so the packs
       import it. There, `build.py` adds "cast me as <the CPU>" at the top: write the newcomer as `me` (so its side flag is
       `side_me`), and add a `cast` line for the other character.
+
+## Pacing change (2026-11-26): a newcomer's arrival plays when the player meets them
+
+**The problem (reported by the user):** at the start of a week, every newcomer's arrival scene played back to back,
+five in a row with a choice in each, before the player had control again. It felt random and disorienting.
+- `world_roster.week_started` queued all of the week's newcomers.
+- `world.next_scene` called `next_arrival` after each scene ended, so the next one began at once.
+
+**The change:**
+- **The week's news** still says who's new: "New in town this week: …". The newcomers are pending arrivals
+  (`flags["arrivals"]`), and they're in town at their places as usual.
+- **The arrival scene plays when the player meets the newcomer:**
+  - when the player talks to them (the arrival scene is their introduction, in place of the talk);
+  - or when the player arrives at a place where one is, or stays there into a new time of day.
+  - **At most one** arrival scene per arrival or time of day. Other newcomers at the same place wait until the player
+    talks to them or comes back.
+- **No chaining:** a scene's end never starts an arrival by itself. `next_scene` no longer calls `next_arrival`.
+- **Newcomers not met yet** stay pending past the week's end; there's no deadline.
+- **The town marks them:** `town()["people"][i]["new"]` is true for a pending newcomer, and the page shows a "New"
+  marker on them.
+- **Saves already mid-queue:** the queue is left to play out; nothing is lost.

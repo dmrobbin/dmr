@@ -138,7 +138,7 @@
       button.dataset.spot = spots[i]; // where they stand when nobody's talking to them (applyTalkFocus)
       button.style.setProperty("--delay", `${i * 90}ms`);
       const marker = questMarker(person);
-      button.setAttribute("aria-label", `Talk to ${person.name}${marker ? `: ${marker.label}` : ""}`);
+      button.setAttribute("aria-label", `Talk to ${person.name}${person.new ? " (new in town)" : ""}${marker ? `: ${marker.label}` : ""}`);
       const tag = document.createElement("span");
       tag.className = "town-tag";
       tag.textContent = person.name;
@@ -150,6 +150,13 @@
         badge.textContent = marker.kind === "offer" ? "!" : "★";
         badge.title = marker.label;
         button.append(badge);
+      }
+      if (person.new) { // a newcomer not met yet: meeting them plays their arrival (weiss.world_roster.meet)
+        const fresh = document.createElement("span");
+        fresh.className = "town-new-mark";
+        fresh.setAttribute("aria-hidden", "true");
+        fresh.textContent = "New";
+        button.append(fresh);
       }
       button.dataset.tutorial = "person";
       button.addEventListener("click", () => (town.tutorial && town.tutorial.step === "arrive" ? approach(person) : meet(person)));
@@ -551,8 +558,21 @@
       playTutorialLines();
       return;
     }
+    if (person.new) { // a newcomer: walking up to them is meeting them, and their arrival scene plays
+      introduce(person);
+      return;
+    }
     const hello = person.hello || "Hm? Oh, hello.";
     lines([hello], choices);
+  }
+
+  // Meeting a newcomer (weiss.world.talk plays their arrival scene, once): off to the scene. If it can't play any more
+  // (they've just arrived, with nobody about for it), it's an ordinary talk.
+  async function introduce(person) {
+    const data = await post(root.dataset.talkUrl, { cpu: person.id });
+    if (data && playSceneNow()) return;
+    if (data && data.talk && talking) play(data.talk);
+    else if (talking) lines([person.hello || "Hm? Oh, hello."], choices);
   }
 
   // Keeps `talking` up to date with the town as the server last said it.
@@ -819,6 +839,7 @@
 
   async function talk() {
     const data = await post(root.dataset.talkUrl, { cpu: talking.id });
+    if (data && playSceneNow()) return; // a newcomer met: their arrival scene plays instead
     if (data && talking) play(data.talk);
     else if (talking) choices();
   }

@@ -11,6 +11,10 @@ Each newcomer's arrival plays a scene, if one's written (docs/world-arrivals-pla
 "World: Arrival, <newcomer> & <resident>" with someone already in town, else "World: Arrival, <newcomer>". Its choice
 says whose side the player takes (an option's "(set side_<cast id>)") and may give a pack ("(give climax_pack)");
 arrival_done pays it: friendship points with that character, and the pack or, if none, arrival coins.
+
+The scene plays when the player meets the newcomer (meet, meet_here), one at a time, never in a run: a week's newcomers
+used to play back to back as the week began, and that was disorienting ("Pacing change" in the plan). Until then they're
+pending, in flags["arrivals"], and the town marks them as new.
 """
 import random
 
@@ -183,14 +187,17 @@ def newcomers(save):
 # ---------------------------------------------------------------- Arrivals
 
 def week_started(save):
-    """A new week: this week's newcomers are in town, the town says who, and their arrival scenes queue up."""
+    """A new week: this week's newcomers are in town and the town says who. Those with an arrival scene wait to be met
+    (meet, meet_here): nothing plays by itself."""
     arrived = newcomers(save)
     if not arrived:
         return
     names = list(CpuProfile.objects.filter(pk__in=arrived).order_by("name").values_list("name", flat=True))
     quests.news(save, f"New in town this week: {quests.names(names)}.")
-    save.flags["arrivals"] = save.flags.get("arrivals", []) + arrived
-    next_arrival(save)
+    scened = [cpu.pk for cpu in CpuProfile.objects.filter(pk__in=arrived) if arrival_scene(save, cpu)]
+    waiting = [pk for pk in pending(save) if pk not in scened] + [pk for pk in arrived if pk in scened]
+    if waiting:
+        save.flags["arrivals"] = waiting
 
 
 def arrival_scene(save, cpu):
@@ -210,19 +217,42 @@ def arrival_scene(save, cpu):
     return Scene.objects.filter(name__iexact=f"{ARRIVAL}{cpu.name}").first()
 
 
-def next_arrival(save):
-    """Queue the next newcomer's arrival scene, once nothing else is waiting to be watched. A newcomer with no
-    scene written yet just arrives (the town's news has said so)."""
-    queue = save.flags.get("arrivals", [])
-    while queue and not save.flags.get("scene"):
-        cpu = CpuProfile.objects.filter(pk=queue.pop(0)).first()
-        scene = arrival_scene(save, cpu) if cpu else None
-        if scene:
-            save.flags["scene"] = {"scene": scene.pk, "cpu": cpu.pk, "auto": True, "arrival": cpu.pk}
+def pending(save):
+    """The newcomers whose arrival hasn't played yet (the town marks them as new)."""
+    return [int(pk) for pk in save.flags.get("arrivals", [])]
+
+
+def meet(save, cpu_id):
+    """The player meets a newcomer whose arrival hasn't played: their arrival scene plays now (the town goes to it), if
+    nothing else is waiting to be watched. Returns whether it did. A newcomer whose scene can't be played any more (no
+    one it needs is in town) has simply arrived: they stop being new."""
+    cpu_id = int(cpu_id)
+    queue = pending(save)
+    if cpu_id not in queue or save.flags.get("scene"):
+        return False
+    queue.remove(cpu_id)
     if queue:
         save.flags["arrivals"] = queue
     else:
         save.flags.pop("arrivals", None)
+    cpu = CpuProfile.objects.filter(pk=cpu_id).first()
+    scene = arrival_scene(save, cpu) if cpu else None
+    if not scene:
+        return False
+    save.flags["scene"] = {"scene": scene.pk, "cpu": cpu.pk, "auto": True, "arrival": cpu.pk}
+    return True
+
+
+def meet_here(save):
+    """The player's come to a place (or stayed there into a new time of day): one newcomer here whose arrival hasn't
+    played is met, the first in the order they came. Others here wait to be talked to, or for the next time. Nothing
+    plays if a scene's already waiting (a quest's visit, say): one scene at a time. Returns whether one did."""
+    queue = pending(save)
+    if not queue or save.flags.get("scene"):
+        return False
+    here = {cpu.pk for cpu, _ in world.present(save)}
+    first = next((pk for pk in queue if pk in here), None)
+    return meet(save, first) if first is not None else False
 
 
 def arrival_done(save, chosen_flags, chosen_buffs):
