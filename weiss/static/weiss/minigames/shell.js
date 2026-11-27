@@ -324,6 +324,7 @@
       end(result, extra = {}) {
         if (ended) return;
         ended = true;
+        status(""); // the game's last status (whose turn, what's left) is stale now: the end card says the rest
         if (running && running.stop) running.stop();
         running = null;
         cancelCountdown();

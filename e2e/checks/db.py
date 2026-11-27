@@ -13,6 +13,8 @@ Run: python e2e/checks/db.py <command>    (the checks call it for you; see e2e/c
             prints their name
   finish    the latest town duel ends, the player winning
   lose      the latest town duel ends, the player losing
+  player    the non-staff test player (e2e-player): Weiss access, a known password, and no saves, rooms or reports left
+  reports   the player's reports are deleted (they are limited to five an hour, so a check that sends some starts clear)
 """
 import os
 import pathlib
@@ -33,7 +35,9 @@ from django.contrib.auth.models import User  # noqa: E402
 from django.core.management import call_command  # noqa: E402
 
 from weiss import world  # noqa: E402
-from weiss.models import Card, GameRoom, WorldSave  # noqa: E402
+from weiss.models import Card, GameRoom, WorldReport, WorldSave  # noqa: E402
+from django.contrib.auth.models import Group  # noqa: E402
+from core.access import WEISS_GROUP  # noqa: E402
 
 USER = "e2e"
 SLOT = 1
@@ -212,7 +216,31 @@ def finish(player_wins=True):
     print("finished", room.pk)
 
 
-COMMANDS = {"migrate": migrate, "packs": packs, "save": save, "duel": duel, "people": people, "played": played, "record": record, "stock": stock, "newcomer": newcomer, "finish": finish, "lose": lambda: finish(False)}
+PLAYER = "e2e-player"
+PLAYER_PASSWORD = "e2e-player-pass"
+
+
+def player():
+    """A regular player: not staff, in the Weiss group, with nothing left from an earlier run (saves, rooms, reports)."""
+    user, _ = User.objects.get_or_create(username=PLAYER)
+    user.is_staff = user.is_superuser = False
+    user.is_active = True
+    user.set_password(PLAYER_PASSWORD)
+    user.save()
+    user.groups.add(Group.objects.get_or_create(name=WEISS_GROUP)[0])
+    GameRoom.objects.filter(host=user).delete()
+    WorldSave.objects.filter(user=user).delete()
+    WorldReport.objects.filter(user=user).delete()
+    print("player", user.pk)
+
+
+def reports():
+    from weiss.models import WorldReport
+    deleted, _ = WorldReport.objects.filter(user__username=USER).delete()
+    print("reports deleted", deleted)
+
+
+COMMANDS = {"player": player, "reports": reports, "migrate": migrate, "packs": packs, "save": save, "duel": duel, "people": people, "played": played, "record": record, "stock": stock, "newcomer": newcomer, "finish": finish, "lose": lambda: finish(False)}
 
 if __name__ == "__main__":
     for name in sys.argv[1:]:

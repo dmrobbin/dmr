@@ -12,7 +12,7 @@
        data-buy-gift-url="{% url 'weiss:world_buy_gift' save.slot %}" data-talk-url="{% url 'weiss:world_talk' save.slot %}"
        data-answer-url="{% url 'weiss:world_answer' save.slot %}" data-give-url="{% url 'weiss:world_give' save.slot %}" data-level-url="{% url 'weiss:world_level' save.slot %}" data-decks-url="{% url 'weiss:world_deck' save.slot %}?from=town"
        data-quest-url="{% url 'weiss:world_quest' save.slot %}" data-jump-url="{% url 'weiss:world_jump' save.slot %}" data-tutorial-url="{% url 'weiss:world_tutorial' save.slot %}" data-test-mode-url="{% url 'weiss:world_test_mode' save.slot %}"
-       data-town-url="{% url 'weiss:world_town' save.slot %}" data-player="{{ request.user.username }}">
+       data-town-url="{% url 'weiss:world_town' save.slot %}" data-report-url="{% url 'weiss:world_report' save.slot %}" data-player="{{ request.user.username }}">
     {% csrf_token %}
     {# The game's window: what full screen shows (world_town.js), so the notices above the stage are seen there too. #}
     <div class="town-window" data-window>
@@ -108,6 +108,9 @@
           <a class="town-hud-menu-item" href="{% url 'weiss:world_save' save.slot %}">
             <span>Your save<span class="town-hud-menu-hint">packs, decks and settings</span></span>
           </a>
+          <button type="button" class="town-hud-menu-item" data-report-open aria-haspopup="dialog" aria-controls="town-report">
+            <span>Report a problem<span class="town-hud-menu-hint">tell us what went wrong</span></span>
+          </button>
           <button type="button" class="town-hud-menu-item" data-menu-wait>
             <span>Pass time<span class="town-hud-menu-hint" data-menu-wait-hint></span></span>
           </button>
@@ -136,6 +139,24 @@
           {% endif %}
         </div>
       </section>
+
+      {# "Report a problem" (world_town.js report): a modal dialog, so it's read and used the same from the keyboard and on a phone. #}
+      <dialog class="town-report" id="town-report" data-report aria-labelledby="town-report-title" aria-describedby="town-report-help">
+        <h2 class="town-report-title" id="town-report-title">Report a problem</h2>
+        <p class="small muted" id="town-report-help">Tell us what happened and what you expected. We'll see your save as it is right now, so you don't need to describe it.</p>
+        <form class="town-report-form" id="town-report-form" data-report-form>
+          <label class="town-report-label" for="town-report-text">What went wrong?</label>
+          <textarea class="town-report-text" id="town-report-text" name="text" rows="6" placeholder="I tried to buy a pack, but…" data-report-text></textarea>
+          <p class="small town-report-count" data-report-count hidden></p>
+          <p class="town-report-error" data-report-error role="alert" hidden></p>
+        </form>
+        {# The thanks: a live region that's always here, so a screen reader announces it when it's filled. #}
+        <p class="town-report-thanks" data-report-thanks role="status"></p>
+        <div class="town-report-actions">
+          <button type="button" class="button-small secondary" data-report-cancel>Cancel</button>
+          <button type="submit" class="button-small" form="town-report-form" data-report-send>Send report</button>
+        </div>
+      </dialog>
 
       <section class="vn-box town-box" data-box hidden aria-live="polite">
         <span class="vn-name" data-name></span>

@@ -20,11 +20,36 @@ env:
   EB_BUCKET: elasticbeanstalk-us-east-2-804260298130
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"  # the version Elastic Beanstalk runs (.ebextensions/01_packages.config)
+
+      # mysqlclient (in requirements.txt) builds against the MySQL client headers.
+      - name: Install system packages
+        run: sudo apt-get update && sudo apt-get install -y default-libmysqlclient-dev pkg-config build-essential
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # No DB_HOST here, so the tests run on SQLite. Settings need a secret key outside DEBUG; this one is for CI only.
+      - name: Run tests
+        env:
+          DJANGO_SECRET_KEY: ci-only-not-a-secret
+        run: |
+          python manage.py test weiss
+          python manage.py check_world_pack world_pack/*.json
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
       - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::804260298130:role/github-actions-eb-deploy

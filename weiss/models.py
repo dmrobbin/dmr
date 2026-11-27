@@ -709,6 +709,7 @@ class WorldSettings(models.Model):
     arrival_points = models.PositiveSmallIntegerField(default=8, help_text="Friendship points with the character the player sides with in an arrival scene")
     tutorial_guides = models.JSONField(default=list, blank=True, help_text="The CPUs (by name) a new player can ask to be their guide in the tutorial")
     ranks = models.JSONField(default=default_ranks, help_text="Friendship ranks with each CPU: [{name, points}], from the first (0 points)")
+    open_to_players = models.BooleanField(default=False, help_text="Whether every Weiss player can play world mode (off: staff only). Staff tools stay staff only either way")
     updated = models.DateTimeField(auto_now=True)
     updated_by = models.ForeignKey("auth.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
 
@@ -789,6 +790,26 @@ class WorldSave(models.Model):
         """"Monday 18 November, Year 1"."""
         from . import world_calendar
         return world_calendar.full_label(self.turn)
+
+
+class WorldReport(models.Model):
+    """A problem a player reported from the town ("Report a problem"): what they said, and the save as it was then, so
+    staff can see what they saw. The save may be deleted later; the snapshot stays."""
+
+    user = models.ForeignKey("auth.User", on_delete=models.CASCADE, related_name="world_reports")
+    save_ref = models.ForeignKey(WorldSave, null=True, blank=True, on_delete=models.SET_NULL, related_name="reports")
+    text = models.TextField(help_text="What the player said went wrong")
+    page = models.CharField(max_length=300, blank=True, help_text="Where they were (the page's address)")
+    state = models.JSONField(default=dict, blank=True, help_text="The save then: its fields, and the town as the page saw it")
+    created = models.DateTimeField(auto_now_add=True)
+    resolved = models.BooleanField(default=False)
+    staff_note = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["resolved", "-created"]
+
+    def __str__(self):
+        return f"{self.user} · {self.created:%Y-%m-%d %H:%M}"
 
 
 class WorldPlace(models.Model):

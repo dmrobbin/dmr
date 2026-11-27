@@ -9,6 +9,7 @@ from django.db.models import Max
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.text import slugify
 from django.views.decorators.http import require_POST
 
@@ -17,7 +18,7 @@ import datetime
 from . import chatter, quests, scenes, world, world_calendar, world_events
 from .cpu_views import staff_required
 from .music import MUSIC_STYLES, seed_music_tracks
-from .models import Chatter, CpuProfile, GiftItem, MusicTrack, Quest, Scene, WorldEvent, WorldPlace, WorldSave
+from .models import Chatter, CpuProfile, GiftItem, MusicTrack, Quest, Scene, WorldEvent, WorldPlace, WorldReport, WorldSave
 from .world_views import MAX_COINS
 
 MAX_TAGS = 10
@@ -636,3 +637,26 @@ def world_music_restore(request):
         track.save(update_fields=["hidden"])
         messages.success(request, f"Restored “{track.name}”.")
     return redirect("weiss:world_music")
+
+
+@staff_required
+def world_reports(request):
+    """Player reports (world_report): open ones first, each with the save as it was when sent."""
+    rows = [{
+        "pk": report.pk, "player": report.user.username, "created": report.created, "text": report.text, "page": report.page,
+        "state": report.state, "state_json": json.dumps(report.state, indent=2, ensure_ascii=False),
+        "resolved": report.resolved, "staff_note": report.staff_note, "slot": report.state.get("slot"),
+        "update_url": reverse("weiss:world_report_update", args=[report.pk]),
+    } for report in WorldReport.objects.select_related("user")]
+    return render(request, "weiss/world_reports.html", {"reports": rows, "open_count": sum(1 for row in rows if not row["resolved"])})
+
+
+@staff_required
+@require_POST
+def world_report_update(request, pk):
+    """A report's resolved flag and staff note, saved together from the list's form."""
+    report = get_object_or_404(WorldReport, pk=pk)
+    report.resolved = request.POST.get("resolved") == "1"
+    report.staff_note = request.POST.get("staff_note", "").strip()
+    report.save(update_fields=["resolved", "staff_note"])
+    return redirect("weiss:world_reports")

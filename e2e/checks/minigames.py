@@ -84,3 +84,49 @@ def minigames(run):
                 if scheme == "dark":
                     run.shot(page, f"{tag}-{game}")
     run.expect(not problems, "\n".join(problems))
+
+
+@check("minigame-end")
+def minigame_end(run):
+    """Memory played to its last pair: the end card shows, and the header pill doesn't still say whose turn it is or how
+    many pairs are left (the shell clears the pill when a game ends)."""
+    for viewport, tag, touch in ((DESKTOP, "desk", False), (PHONE, "phone", True)):
+        page = run.page(viewport, touch=touch)
+        start(run, page, "memory")
+        page.wait_for_timeout(500)
+        pill = page.locator(".minigame-pill")
+        for _ in range(12):  # each pair: two taps on the same name, found by its name in the DOM
+            if page.locator(".minigame-tile:not(.is-matched)").count() == 0:
+                break
+            page.wait_for_function("() => { const p = document.querySelector('.minigame-pill'); return !p || p.hidden || p.textContent.includes('Your turn') || !!document.querySelector('.minigame-over:not([hidden])'); }", timeout=20000)
+            if page.locator(".minigame-over:not([hidden])").count():
+                break
+            pair = page.evaluate("""() => {
+              const open = [...document.querySelectorAll('.minigame-tile:not(.is-matched)')];
+              for (const t of open) {
+                const name = t.querySelector('.minigame-tile-name').textContent;
+                const twin = open.find((u) => u !== t && u.querySelector('.minigame-tile-name').textContent === name);
+                if (twin) return [t.dataset.index, twin.dataset.index];
+              }
+              return null; }""")
+            if not pair:
+                break
+            for index in pair:
+                page.locator(f".minigame-tile[data-index='{index}']").click()
+                page.wait_for_timeout(250)
+            page.wait_for_timeout(700)
+        run.visible(page.locator(".minigame-over:not([hidden])"), "the memory end card", page, 15000)
+        # The end score counts up for 700 ms: wait for its final figures (all 8 pairs are the player's) before the shot.
+        end_score = page.locator(".minigame-end-score b")
+        try:
+            page.wait_for_function("() => [...document.querySelectorAll('.minigame-end-score b')].map(b => b.textContent).join(' ') === '8 0'",
+                                   timeout=5000)
+        except Exception:
+            shown = end_score.all_inner_texts()
+            run.expect(False, f"the end score settles at {' — '.join(shown)}, not 8 — 0", page)
+        run.expect(end_score.all_inner_texts() == ["8", "0"], f"the end score reads {end_score.all_inner_texts()}, not 8 and 0", page)
+        run.shot(page, f"{tag}-memory-end")
+        text = pill.inner_text() if pill.count() and pill.is_visible() else ""
+        run.expect(text == "", f"the header still reads {text!r} after the game ended", page)
+        run.no_overflow(page, f"the memory end at {viewport['width']}px")
+        page.close()

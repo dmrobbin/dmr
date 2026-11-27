@@ -186,4 +186,4 @@ def run_checks(chosen):
     return 1 if failed else 0
 
 
-from . import app, arrivals, board, duel, minigames, people, recap, theme  # noqa: E402,F401  (they register their checks)
+from . import app, arrivals, board, duel, minigames, people, player, recap, report, theme  # noqa: E402,F401  (they register their checks)

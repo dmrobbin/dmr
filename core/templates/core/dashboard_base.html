@@ -38,7 +38,7 @@
         <a href="{% url 'weiss:lists' %}"{% if section == "weiss" and listing == "list" %} class="current" aria-current="page"{% endif %}>My lists</a>
         <a href="{% url 'weiss:play_rooms' %}"{% if playing == "play_" %} class="current" aria-current="page"{% endif %}>Play</a>
         <a href="{% url 'weiss:arcade' %}"{% if section == "weiss" and arcading == "arcade" %} class="current" aria-current="page"{% endif %}>Arcade</a>
-        <a href="{% url 'weiss:world_home' %}"{% if section == "weiss" and worlding == "world" %} class="current" aria-current="page"{% endif %}>World</a>
+        {% if world_open %}<a href="{% url 'weiss:world_home' %}"{% if section == "weiss" and worlding == "world" %} class="current" aria-current="page"{% endif %}>World</a>{% endif %}
         {% if user.is_staff %}<a href="{% url 'weiss:cpu_home' %}"{% if cpu_tab == "cpu_" %} class="current" aria-current="page"{% endif %}>CPU creation</a>{% endif %}
         {% endwith %}
       </nav>

@@ -1,7 +1,8 @@
 from core.access import has_weiss_access
 
-from . import challenge, sleeves
+from . import challenge, sleeves, world
 from .lists import panel_context
+from .models import WorldReport
 from .play import paused_run
 
 
@@ -19,7 +20,10 @@ def card_lists(request):
               "infinite_start": current is None,
               # The game board's sound effects (see play.js), as the player last set them.
               "sound_on": profile.sound_on if profile else True, "sound_volume": profile.sound_volume if profile else 60,
-              "music_volume": profile.music_volume if profile else 60}
+              "music_volume": profile.music_volume if profile else 60,
+              "world_open": world.open_to(user)}
+    if user.is_staff:
+        header["open_reports"] = WorldReport.objects.filter(resolved=False).count()
     if not match or match.namespace != "weiss":
         return header
     return {**header, **panel_context(request), "arcade_paused": paused_run(request),

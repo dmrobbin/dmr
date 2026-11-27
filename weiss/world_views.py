@@ -9,20 +9,25 @@ who's where) is made up for the test and kept only in the browser tab.
 World mode is staff-only while it's being built.
 """
 import json
+import logging
 import random
 from functools import wraps
 from datetime import timedelta
 
 from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.timesince import timesince
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
+
+from core.access import weiss_access_required
 
 from . import buffs, challenge, packs, quests, scenes, world
 from . import music, world_calendar
@@ -33,10 +38,11 @@ from . import world_roster as roster
 from . import world_tutorial as tutorial
 from .cpu_views import MAX_LOADOUT, MAX_START_PACKS, back_to, staff_required
 from .lists import CLIMAX_COUNT, COPY_LIMIT, DECK_GROUPS, DECK_SIZE, unlimited
-from .models import CardList, CpuProfile, CpuSchedule, Scene, WorldPlace, WorldSave, WorldSettings
+from .models import CardList, CpuProfile, CpuSchedule, Scene, WorldPlace, WorldReport, WorldSave, WorldSettings
 from .views import attach_covers, card_types, summarize_sets
 
 MAX_COINS = 1_000_000
+logger = logging.getLogger(__name__)
 
 # Places to visit: (key, name, backdrop for morning, noon, evening and night, from weiss.scenes.BACKGROUNDS). The
 # backdrops are drawn at one time of day each (the city is always night), so a place changes backdrop with the time.
@@ -74,6 +80,26 @@ def schedule_for(cpu):
             "once": rng.random() < .25,
         })
     return rules
+
+
+CLOSED_MESSAGE = "World mode isn't open yet. It's coming soon!"
+
+
+def player_required(view=None, *, as_json=False):
+    """A player's world page or endpoint: open to every Weiss player once staff open world mode (world.open_to), and to
+    staff always. Closed, a page goes to the sets list with a message; a JSON answer is a 403 with the same line."""
+    def decorate(view):
+        @wraps(view)
+        @weiss_access_required
+        def wrapper(request, *args, **kwargs):
+            if world.open_to(request.user):
+                return view(request, *args, **kwargs)
+            if as_json or "application/json" in request.headers.get("Accept", ""):
+                return JsonResponse({"error": CLOSED_MESSAGE}, status=403)
+            messages.info(request, CLOSED_MESSAGE)
+            return redirect("weiss:sets")
+        return wrapper
+    return decorate(view) if view else decorate
 
 
 @staff_required
@@ -133,7 +159,7 @@ def played_ago(save):
 
 
 @xframe_options_sameorigin
-@staff_required
+@player_required
 def world_home(request):
     """The three save slots: each one's progress, or a new game."""
     slots = [(slot, save, save and world.step(save), save and played_ago(save)) for slot, save in world.saves_of(request.user).items()]
@@ -141,7 +167,7 @@ def world_home(request):
 
 
 @xframe_options_sameorigin
-@staff_required
+@player_required
 def world_new(request, slot):
     """A new game in an empty slot: choose the set its packs come from."""
     if slot not in WorldSave.SLOTS:
@@ -172,7 +198,7 @@ def in_world(text):
 
 
 @xframe_options_sameorigin
-@staff_required
+@player_required
 def world_save(request, slot):
     """A save's page: its packs to open, specialty packs to claim and its deck, until it's ready for the town."""
     save, away = save_or_home(request, slot)
@@ -200,7 +226,7 @@ def world_save(request, slot):
     return render(request, "weiss/world_save.html", context)
 
 
-@staff_required
+@player_required
 @require_POST
 def world_open(request, slot):
     save, away = save_or_home(request, slot)
@@ -226,7 +252,7 @@ def world_open(request, slot):
 
 
 @xframe_options_sameorigin
-@staff_required
+@player_required
 def world_opened(request, slot):
     """The packs just opened, revealed; they're in the cards already, so reloading only replays them."""
     save, away = save_or_home(request, slot)
@@ -259,7 +285,7 @@ def world_opened(request, slot):
     })
 
 
-@staff_required
+@player_required
 @require_POST
 def world_claim(request, slot):
     save, away = save_or_home(request, slot)
@@ -279,7 +305,7 @@ def world_claim(request, slot):
 
 
 @xframe_options_sameorigin
-@staff_required
+@player_required
 def world_people(request, slot):
     """The people journal: the people this save has met (in full), and the rest as locked entries. `?cpu=<id>` opens one
     person's entry (docs/round-two-plan.md, section 4)."""
@@ -295,7 +321,7 @@ def world_people(request, slot):
 
 # The town shows these pages in its own window (world_town.js), so they may be framed by this site, and only by it.
 @xframe_options_sameorigin
-@staff_required
+@player_required
 def world_deck(request, slot, deck=None):
     """Build one of the save's decks from its cards (the equipped one, without a deck in the link): the challenge deck
     builder, posting the whole deck to save it."""
@@ -375,10 +401,10 @@ def deck_change(view):
             if request.POST.get("next") == "builder":  # from the deck's own builder: stay there
                 return redirect(deck_page(request, slot, chosen.pk))
         return redirect(f"{reverse('weiss:world_save', args=[slot])}#decks")
-    return staff_required(require_POST(wrapper))
+    return player_required(require_POST(wrapper))
 
 
-@staff_required
+@player_required
 @require_POST
 def world_deck_new(request, slot):
     """Another deck: empty, or a copy of one of the save's."""
@@ -415,7 +441,7 @@ def world_deck_delete(request, save, deck):
 
 
 @xframe_options_sameorigin
-@staff_required
+@player_required
 def world_town(request, slot):
     """The town: the save's place as a scene, the time, its coins, the map and waiting. The page asks for the town as
     JSON (world_town_state) and posts each move (world_travel, world_wait), getting the town back each time."""
@@ -426,7 +452,7 @@ def world_town(request, slot):
                                                      "weekdays": world_calendar.DAYS, "song_tracks": music.visible_tracks()})
 
 
-@staff_required
+@player_required(as_json=True)
 def world_town_state(request, slot):
     save, away = save_or_home(request, slot)
     if away:
@@ -453,7 +479,7 @@ def town_move(move):
         if isinstance(said, dict):  # somewhere to go
             return JsonResponse({**said, "town": world.town(save)})
         return JsonResponse({"said": said or "", "town": world.town(save)})
-    return staff_required(require_POST(wrapper))
+    return player_required(as_json=True)(require_POST(wrapper))
 
 
 @town_move
@@ -486,7 +512,7 @@ def world_minigame(request, save):
 
 
 @xframe_options_sameorigin
-@staff_required
+@player_required
 def world_minigame_play(request, slot):
     """The game under way in the town: the game plays, and its result is posted (world_minigame_done)."""
     save, away = save_or_home(request, slot)
@@ -503,7 +529,7 @@ def world_minigame_play(request, slot):
     })
 
 
-@staff_required
+@player_required(as_json=True)
 def world_minigame_data(request, slot):
     save, away = save_or_home(request, slot)
     if away:
@@ -514,7 +540,7 @@ def world_minigame_data(request, slot):
         return JsonResponse({"error": str(error)}, status=400)
 
 
-@staff_required
+@player_required(as_json=True)
 @require_POST
 def world_minigame_done(request, slot):
     """The game's result is posted: points, a win's pack and time, through world.finish_minigame."""
@@ -530,7 +556,7 @@ def world_minigame_done(request, slot):
     return JsonResponse({**done, "redirect": reverse("weiss:world_town", args=[slot])})
 
 
-@staff_required
+@player_required
 @require_POST
 def world_buy(request, slot):
     """Buy packs at the card shop (a specialty pack, with `special`): they open into the save's cards, shown being
@@ -627,7 +653,7 @@ def world_quest(request, save):
 
 
 @xframe_options_sameorigin
-@staff_required
+@player_required
 def world_quests(request, slot):
     """The save's quest log: what's offered, under way (each stage and objective, how far along), finished and closed."""
     save, away = save_or_home(request, slot)
@@ -646,7 +672,7 @@ def world_quests(request, slot):
 
 
 @xframe_options_sameorigin
-@staff_required
+@player_required
 def world_events(request, slot):
     """The notice board: the week's calendar (weiss.world_events), what's on today, and the weekly tournament (entry,
     and the bracket so far)."""
@@ -660,7 +686,7 @@ def world_events(request, slot):
     })
 
 
-@staff_required
+@player_required
 @require_POST
 def world_event_enter(request, slot):
     """Enter this week's tournament (at its place, on Saturday or first thing Sunday): the fee's taken."""
@@ -678,7 +704,7 @@ def world_event_enter(request, slot):
     return redirect("weiss:world_events", slot=slot)
 
 
-@staff_required
+@player_required
 @require_POST
 def world_board(request, slot):
     """The notice board's quests (weiss.quests.board): take one, or claim one that's done."""
@@ -743,7 +769,7 @@ def world_buy_gift(request, save):
 
 
 @xframe_options_sameorigin
-@staff_required
+@player_required
 def world_scene(request, slot):
     """The scene waiting to be watched (a rank-up's, a quest's, the story's, a newcomer's arrival), played to its end,
     which the page reports (world_scene_done): what its choices set, and what it gave. It stays waiting until then, so
@@ -770,7 +796,7 @@ def world_scene(request, slot):
     })
 
 
-@staff_required
+@player_required(as_json=True)
 @require_POST
 def world_scene_done(request, slot):
     """The waiting scene's been played to its end: what its choices set (flags, packs) takes effect, once
@@ -794,7 +820,7 @@ def world_wait(request, save):
     return f"A new day: {save.weekday}." if save.turn % len(WorldSave.TIMES) == 0 else f"{save.time_of_day}."
 
 
-@staff_required
+@player_required
 @require_POST
 def world_delete(request, slot):
     """Delete a save, its cards and its deck. It can't be undone, so the player types the slot's name to confirm."""
@@ -807,6 +833,49 @@ def world_delete(request, slot):
     save.delete()
     messages.success(request, f"Slot {slot} deleted.")
     return redirect("weiss:world_home")
+
+
+REPORT_LIMIT = 5  # reports a player can send an hour
+REPORT_MAX = 2000  # characters in a report
+REPORT_EMPTY = "Write a few words about what went wrong first."
+REPORT_TOO_LONG = "That's over 2,000 characters. Could you shorten it a little?"
+REPORT_TOO_MANY = "You've sent a lot of reports this hour. Please try again a bit later."
+REPORT_SAID = "Thanks: we've got it. We'll look into it."
+
+
+def save_state(save):
+    """The save as it is now, for a report: its fields, and the town as the page sees it. If the town can't be read,
+    the report still keeps the fields, with the error instead (the town is most likely what's broken)."""
+    fields = json.loads(json.dumps({field.attname: getattr(save, field.attname) for field in WorldSave._meta.concrete_fields},
+                                   cls=DjangoJSONEncoder))
+    try:
+        return {**fields, "town": json.loads(json.dumps(world.town(save), cls=DjangoJSONEncoder))}
+    except Exception as error:
+        logger.exception("A report's town couldn't be read (save %s)", save.pk)
+        return {**fields, "town_error": f"{type(error).__name__}: {error}"}
+
+
+@player_required(as_json=True)
+@require_POST
+def world_report(request, slot):
+    """A problem reported from the town: the player's words, and the save as it is now, so staff see what they saw. Not
+    checked against the town's version: a report has to get through even when the page's save is out of step."""
+    save, away = save_or_home(request, slot)
+    if away:
+        return JsonResponse({"error": f"Slot {slot} has no save."}, status=404)
+    text = request.POST.get("text", "").strip()
+    if not text:
+        return JsonResponse({"error": REPORT_EMPTY}, status=400)
+    if len(text) > REPORT_MAX:
+        return JsonResponse({"error": REPORT_TOO_LONG}, status=400)
+    with transaction.atomic():
+        get_user_model().objects.select_for_update().get(pk=request.user.pk)  # one player's reports counted in turn
+        hour_ago = timezone.now() - timedelta(hours=1)
+        if WorldReport.objects.filter(user=request.user, created__gte=hour_ago).count() >= REPORT_LIMIT:
+            return JsonResponse({"error": REPORT_TOO_MANY}, status=429)
+        WorldReport.objects.create(user=request.user, save_ref=save, text=text,
+                                   page=request.POST.get("page", "").strip()[:300], state=save_state(save))
+    return JsonResponse({"said": REPORT_SAID})
 
 
 @staff_required
@@ -852,6 +921,18 @@ def world_settings(request):
         return back_to("world")
     WorldSettings.objects.update_or_create(pk=1, defaults={**fields, "updated_by": request.user})
     messages.success(request, "Saved. New saves start with these; the coins apply from now on.")
+    return back_to("world")
+
+
+@staff_required
+@require_POST
+def world_switch(request):
+    """World mode's on switch: open to every Weiss player (open=1), or staff only again (open=0)."""
+    if request.POST.get("open") not in ("0", "1"):
+        return HttpResponseBadRequest("open must be 1 or 0")
+    on = request.POST["open"] == "1"
+    WorldSettings.objects.update_or_create(pk=1, defaults={"open_to_players": on, "updated_by": request.user})
+    messages.success(request, "World mode is open to every player." if on else "World mode is staff only again. Players' saves are kept.")
     return back_to("world")
 
 

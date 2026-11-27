@@ -22,6 +22,8 @@ from . import world_events as events
 from . import world_rewards
 from . import world_roster as roster
 from . import world_tutorial as tutorial
+from core.access import has_weiss_access
+
 from .lists import CLIMAX_COUNT, COPY_LIMIT, DECK_SIZE, climax_problem, is_climax, unlimited, unplayable
 from .models import (Card, CardList, CardListEntry, CpuProfile, CpuSchedule, GameRecord, GameRoom, GiftItem, Scene, WorldPlace, WorldSave,
                      WorldSettings, default_ranks)
@@ -35,6 +37,14 @@ START_MONEY = 1000
 
 def settings():
     return WorldSettings.current()
+
+
+def open_to(user):
+    """Whether a user can play world mode: staff always, and any Weiss player once staff open it to players."""
+    if user.is_staff:
+        return True
+    found = settings()
+    return has_weiss_access(user) and bool(found and found.open_to_players)
 
 
 def start_packs():

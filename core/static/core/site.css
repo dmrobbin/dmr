@@ -3250,6 +3250,15 @@ button.spire-node-face:disabled { cursor: not-allowed; }
   padding: .4rem; background: rgb(14 13 20 / .97); border: 1px solid rgb(212 175 55 / .5); border-radius: .6rem; box-shadow: 0 .6rem 1.6rem rgb(0 0 0 / .55); }
 .town-hud-menu[hidden] { display: none; }
 .town-hud-menu-list { display: flex; flex-direction: column; gap: .15rem; }
+/* The cue that the menu scrolls (world_town.js paintMenuCue): a fade at its foot while there's more below. Sticky, so it
+   sits over the bottom of the visible part, not the end of the list. */
+.town-hud-menu.has-more::after { content: ""; position: sticky; bottom: 0; display: block; height: 2.8rem; margin: -2.8rem -.4rem -.4rem; background: linear-gradient(rgb(14 13 20 / 0), rgb(14 13 20 / .97) 70%); pointer-events: none; }
+/* Phones: tighter rows, so more of the menu shows without scrolling. */
+@media (max-width: 40rem) and (max-height: 56rem) {
+  .town-hud-menu-list { gap: 0; }
+  .town-hud-menu-item { padding: .4rem .6rem; font-size: .9rem; }
+  .town-hud-menu-hint { margin-top: 0; font-size: .74rem; }
+}
 .town-hud-menu-item { display: flex; align-items: center; justify-content: space-between; gap: .6rem; width: 100%; padding: .55rem .7rem; font: inherit; font-size: .95rem; color: #f3efe7;
   text-align: left; text-decoration: none; background: none; border: 0; border-radius: .4rem; cursor: pointer; }
 .town-hud-menu-item:hover:not(:disabled), .town-hud-menu-item:focus-visible { outline: none; background: rgb(40 34 18 / .95); box-shadow: inset 0 0 0 1px var(--accent); }
@@ -3871,6 +3880,44 @@ html.town-playing { overflow: hidden; }
 .town-hud-menu-sound { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .55rem .7rem; font-size: .95rem; color: #f3efe7; }
 .town-hud-menu-sound input[type="range"] { flex: 0 1 9rem; min-width: 0; accent-color: var(--accent); cursor: pointer; }
 .town-hud-menu-sound:focus-within { box-shadow: inset 0 0 0 1px var(--accent); border-radius: .4rem; }
+
+/* "Report a problem" (world_town.html, world_town.js): a dialog over the town. */
+.town-report { width: min(28rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); overflow-y: auto; padding: 1rem 1.1rem; border: 1px solid var(--accent); border-radius: .75rem; background: var(--surface); color: var(--text); box-shadow: 0 12px 40px rgb(0 0 0 / .55); font-size: .95rem; line-height: 1.45; }
+.town-report::backdrop { background: rgb(0 0 0 / .55); }
+.town-report [hidden] { display: none !important; }
+.town-report-title { margin: 0 0 .35rem; font-size: 1.1rem; }
+.town-report-form { margin: .7rem 0 0; }
+.town-report-label { display: block; margin-bottom: .35rem; font-weight: 600; }
+.town-report-text { display: block; width: 100%; box-sizing: border-box; min-height: 7rem; padding: .5rem .6rem; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: .4rem; resize: vertical; }
+.town-report-text:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.town-report-count { margin: .3rem 0 0; text-align: right; color: var(--muted); }
+.town-report-count.is-over, .town-report-error { color: #e07a76; }
+.town-report-error { margin: .6rem 0 0; }
+.town-report-thanks { margin: .7rem 0 0; color: var(--accent); }
+.town-report-thanks:empty { margin: 0; }
+.town-report-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: .5rem; margin-top: .9rem; }
+.town-report .button-small { min-height: 2.75rem; }
+
+/* The CPU tab's on switch (cpu_world.html): the saved state as a status, and the one button that changes it. */
+.world-switch { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; }
+/* A status, not a control: a dot and text, no border or button shape. The dot's colour backs up the words. */
+.world-switch-status { display: inline-flex; align-items: center; gap: .5rem; margin: 0; color: var(--muted); }
+.world-switch-status::before { content: ""; flex: none; width: .6rem; height: .6rem; border-radius: 50%; background: var(--muted); }
+.world-switch-status.is-open { color: var(--text); font-weight: 600; }
+.world-switch-status.is-open::before { background: var(--won, #57c27a); } /* the site's dark set has no --won: the fallback is its green */
+
+/* The staff's player reports (world_reports.html). */
+.report { max-width: 50rem; }
+.report.is-resolved { opacity: .75; }
+.report-page { overflow-wrap: anywhere; }
+.report-text { margin: .6rem 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.report-state-wrap { margin: .4rem 0 .8rem; }
+.report-state-wrap summary { cursor: pointer; color: var(--muted); }
+.report-state { max-height: 20rem; overflow: auto; margin: .5rem 0 0; padding: .6rem; font-size: .78rem; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--bg); border: 1px solid var(--border); border-radius: .4rem; }
+.report-form { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; }
+.report-resolved { display: inline-flex; align-items: center; gap: .4rem; }
+.report-note { display: flex; flex: 1 1 100%; flex-direction: column; gap: .3rem; }
+.report-note textarea { font: inherit; padding: .4rem .5rem; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: .4rem; }
 /* World mode's tutorial on the pages outside the town (weiss/templates/weiss/tutorial_guide.html): the guide banner,
    the thing to press (tutorial-target, pulsing), and the deck's live rules line. The town's spotlight is Sam's. */
 .tutorial-guide { display: flex; flex-direction: column; gap: .25rem; margin: 0 0 1rem; padding: .7rem .9rem; border: 1px solid var(--accent); border-left-width: .3rem; border-radius: .5rem; background: var(--accent-soft); }

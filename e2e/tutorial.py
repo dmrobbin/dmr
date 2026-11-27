@@ -114,14 +114,16 @@ def open_packs(page):
         page.locator("[data-pack-sheet] button", has_text="Close").first.click()
 
 
-def play_memory(page, limit=120):
+def play_memory(page, limit=120, done=None):
     """Play memory by clicks, as a player does: turn two tiles, keep a matching pair, and turn the rest back over when
-    they don't match. Stops when the game's end screen shows (the result posts, and the page goes back to the town)."""
+    they don't match. Stops when the game's end screen shows (the result posts, and the page goes back to the town).
+    `page` may be the town's play frame (minigames v2 open in the town); `done` says when the town has taken it back."""
     def face_down():
         return page.locator(".minigame-tile[aria-label$='face down']")
 
     for _ in range(limit):
-        if page.locator("text=You win!").count() or page.locator("text=wins").count() or page.url.endswith("/town/"):
+        # The end: the shell's results card (minigames/shell.js). Not "wins" anywhere: the rule says "Most pairs wins".
+        if (done and done()) or page.locator(".minigame-end-card:not([hidden])").count() or page.url.endswith("/town/"):
             return
         tiles = face_down()
         if tiles.count() < 2:
@@ -275,17 +277,29 @@ def run(page):
         page.wait_for_timeout(400)
         page.locator("input[name=game][value=memory]").first.click()
         page.locator("[data-pick-play]").first.click()
-        page.wait_for_url("**/minigame/**", timeout=20000)
-        page.locator(".minigame-tile").first.wait_for(timeout=20000)
+        # Minigames v2: the game plays in a frame over the town (world_town.js openPlay); the town's address stays.
+        frame = page.wait_for_selector(".town-play-frame", timeout=20000).content_frame()
+        frame.wait_for_url("**/minigame/**", timeout=20000)
+        try:
+            frame.get_by_role("button", name="Start").first.click(timeout=20000)  # minigames v2: a start screen first
+            frame.locator(".minigame-tile").first.wait_for(timeout=20000)
+        except PlaywrightTimeout as error:
+            harness.shot(page, "stuck-memory-start")
+            raise Stuck(f"memory: no tiles in the game frame ({frame.url}): " + frame.locator("body").inner_text()[:400].replace(chr(10), " | ")) from error
         harness.shot(page, "16-memory-start")
         # A game counts only after 20 seconds (the server's minimum): a player takes at least that long, so the script does.
         page.wait_for_timeout(22000)
-        play_memory(page)
+        back_in_town = lambda: page.locator(".town-play-frame").count() == 0 or frame.is_detached() or frame.url.endswith("/town/")  # noqa: E731
+        play_memory(frame, done=back_in_town)
+        if not back_in_town():
+            harness.shot(page, "16b-memory-result")
+            print("memory result:", frame.locator(".minigame-end-title").inner_text(), frame.locator(".minigame-end-score").inner_text())
+            frame.locator(".minigame-end-buttons button:visible").last.click()  # the results' way back to the town
         try:
-            page.wait_for_url(f"**/dashboard/weiss/world/{SLOT}/town/**", timeout=30000)
+            page.wait_for_function("() => !document.querySelector('.town-play-frame') || document.querySelector('[data-play-layer]')?.hidden !== false", timeout=30000)
         except PlaywrightTimeout as error:
             harness.shot(page, "stuck-memory-end")
-            raise Stuck("memory: the game ended but the page didn't go back to the town: " + page.locator("body").inner_text()[:300].replace(chr(10), " | ")) from error
+            raise Stuck("memory: the game ended but the town didn't take it back: " + frame.locator("body").inner_text()[:300].replace(chr(10), " | ")) from error
         page.wait_for_timeout(800)
         harness.shot(page, "17-after-minigame")
         print("played the minigame; back in the town")

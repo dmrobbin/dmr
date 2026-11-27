@@ -1,7 +1,7 @@
 # World mode: ideas for the release (on hold)
 
-Proposed 2026-11-25. **On hold:** the user wants to come back to these. Nothing here is approved or started. Each is
-from a look at the code then; check it again before planning.
+Proposed 2026-11-25. **Decided 2026-11-26: see `docs/world-release-plan.md`** for what's in the release, who does
+it, and what waits.
 
 ## Before release: must-dos
 1. **Hide the World tab until a player can use it.** Verified: a regular (non-staff) player sees the tab, and it gives

@@ -1,0 +1,40 @@
+{% extends "core/dashboard_base.html" %}
+
+{% block title %}Player reports · World mode{% endblock %}
+
+{% block content %}
+  {% comment %}The staff list of problems players reported from the town (world_views.world_report; Barry's copy in
+     docs/world-release-plan.md). Open reports first; each shows the save as it was when reported, collapsed. {% endcomment %}
+  <p class="back"><a href="{% url 'weiss:cpu_home' %}?tab=world">← World mode settings</a></p>
+  <h1>Player reports</h1>
+
+  {% if not reports %}
+    <div class="quest-empty">
+      <p>No reports yet. When a player sends one from the town's menu, it shows up here.</p>
+    </div>
+  {% else %}
+    {% if not open_count %}<p class="muted">Nothing open. Resolved reports are below.</p>{% endif %}
+
+    {% for report in reports %}
+      <article class="world-card report{% if report.resolved %} is-resolved{% endif %}" aria-labelledby="report-{{ report.pk }}-title">
+        <h2 class="world-card-title" id="report-{{ report.pk }}-title">{{ report.player }} <span class="muted small">{{ report.created|date:"j M Y, H:i" }}</span></h2>
+        <p class="small muted">{% if report.slot %}Slot {{ report.slot }}{% if report.page %} · {% endif %}{% endif %}{% if report.page %}<span class="report-page">{{ report.page }}</span>{% endif %}</p>
+        <p class="report-text">{{ report.text|linebreaksbr }}</p>
+
+        <details class="report-state-wrap">
+          <summary>Save state when reported</summary>
+          <pre class="report-state">{{ report.state_json }}</pre>
+        </details>
+
+        <form class="report-form" method="post" action="{{ report.update_url }}">
+          {% csrf_token %}
+          <label class="report-note">Staff note
+            <textarea name="staff_note" rows="2">{{ report.staff_note }}</textarea>
+          </label>
+          <label class="report-resolved"><input type="checkbox" name="resolved" value="1"{% if report.resolved %} checked{% endif %}> Resolved</label>
+          <button type="submit" class="button-small secondary">Save note</button>
+        </form>
+      </article>
+    {% endfor %}
+  {% endif %}
+{% endblock %}

@@ -792,6 +792,9 @@ Each CPU's haunts are listed as place (times). Times: m = morning, n = noon, e =
 
 ## Open questions
 
+**Decided 2026-11-26 (`docs/world-release-plan.md`):** the 13 built pairs stay (at most 17% of the cast closed in one
+save, against a 40% ceiling), and Levi's `removes` is gone from the built pack. The notes below are kept as they were.
+
 - **Conflict pairs:** 11 pairs means 22 CPUs can end up with a closed friendship. That's more than the pilot's 2 of 6.
   Fewer pairs keep the town friendlier; more make each save's story its own. Which pairs to keep is a choice for
   whoever approves this plan.

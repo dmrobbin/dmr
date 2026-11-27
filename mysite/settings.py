@@ -156,6 +156,17 @@ AWS_REGION = os.environ.get("AWS_REGION", "us-west-2")
 DOWNLOAD_LINK_SECONDS = 300  # how long a presigned download link stays valid
 IMAGE_LINK_SECONDS = 3600  # images shown on a page, so they keep loading while it's open
 
+# --- Logging ----------------------------------------------------------------
+# With DEBUG off Django only mails a server error's traceback to ADMINS (none are set), so it'd be lost. Everything
+# goes to the console instead: on Elastic Beanstalk that's web.stdout.log.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "root": {"handlers": ["console"], "level": "WARNING"},
+    "loggers": {"django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False}},
+}
+
 # --- Accounts ---------------------------------------------------------------
 LOGIN_URL = "login"
 LOGOUT_REDIRECT_URL = "home"

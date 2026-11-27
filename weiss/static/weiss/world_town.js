@@ -1921,7 +1921,15 @@
     menuPanel.hidden = false;
     menuButton.setAttribute("aria-expanded", "true");
     menuPanel.querySelector("a[href], button:not(:disabled)")?.focus({ preventScroll: true });
+    paintMenuCue();
   }
+
+  // The menu scrolls on a small screen: a fade at its foot says there's more, until its last item is in view.
+  function paintMenuCue() {
+    menuPanel.classList.toggle("has-more", menuPanel.scrollHeight - menuPanel.scrollTop - menuPanel.clientHeight > 2);
+  }
+  menuPanel.addEventListener("scroll", paintMenuCue, { passive: true });
+  addEventListener("resize", paintMenuCue);
 
   function closeMenu(refocus = true) {
     if (menuPanel.hidden) return;
@@ -1937,6 +1945,120 @@
   });
   document.addEventListener("click", (event) => {
     if (!menuPanel.hidden && !menuPanel.contains(event.target) && !menuButton.contains(event.target)) closeMenu(false);
+  });
+
+  // ---- Report a problem: from the menu, a dialog. The player's text goes to the server with where they were; the server
+  // keeps the save as it is now (world_report), so the player needn't describe it. On an error the text stays. ----
+  const report = $("[data-report]");
+  const reportOpen = $("[data-report-open]");
+  const reportForm = $("[data-report-form]");
+  const reportText = $("[data-report-text]");
+  const reportCount = $("[data-report-count]");
+  const reportError = $("[data-report-error]");
+  const reportThanks = $("[data-report-thanks]");
+  const reportSend = $("[data-report-send]");
+  const reportCancel = $("[data-report-cancel]");
+  const REPORT_MAX = 2000; // the server's limit, in characters
+  const REPORT_WARN = 1800; // the count shows from here
+  const REPORT_CLOSE_MS = 2000; // the thanks stay this long, then the dialog closes
+  let reportSent = false;
+  let reportTimer = null;
+
+  const reportLength = () => [...reportText.value].length; // code points, as the server counts them
+
+  function paintReportCount() {
+    const length = reportLength();
+    reportCount.hidden = length < REPORT_WARN;
+    if (reportCount.hidden) return;
+    reportCount.classList.toggle("is-over", length > REPORT_MAX);
+    if (length > REPORT_MAX) reportCount.textContent = `${length - REPORT_MAX} too many`;
+    else if (REPORT_MAX - length === 1) reportCount.textContent = "1 character left";
+    else reportCount.textContent = `${REPORT_MAX - length} characters left`;
+  }
+
+  function showReportError(message) {
+    reportError.textContent = message;
+    reportError.hidden = !message;
+  }
+
+  // The page the report is about: the town, or the page open in its sheet.
+  const reportPage = () => (sheet.hidden ? townPath : sheetFrame.getAttribute("src") || townPath);
+
+  function openReport() {
+    if (report.open) return;
+    closeMenu(false); // the menu shut behind the dialog: closing the dialog lands on the Menu button with it shut
+    showReportError("");
+    report.showModal();
+    reportText.focus({ preventScroll: true });
+  }
+
+  function closeReport() {
+    if (report.open) report.close();
+  }
+
+  function resetReport() {
+    reportSent = false;
+    clearTimeout(reportTimer);
+    reportText.value = "";
+    reportForm.hidden = false;
+    reportThanks.textContent = "";
+    reportSend.hidden = false;
+    reportSend.disabled = false;
+    reportSend.textContent = "Send report";
+    reportCancel.textContent = "Cancel";
+    showReportError("");
+    paintReportCount();
+  }
+
+  // The dialog closes by Cancel, Esc or the thanks' timer; either way focus goes back to the menu's button.
+  report.addEventListener("close", () => {
+    if (reportSent) resetReport();
+    clearTimeout(reportTimer);
+    menuButton.focus({ preventScroll: true });
+  });
+  // Typing here is the report's, not the town's: its keys (M, W, F, Enter) must not act on the town behind it.
+  report.addEventListener("keydown", (event) => event.stopPropagation());
+  reportOpen.addEventListener("click", openReport);
+  reportCancel.addEventListener("click", closeReport);
+  reportText.addEventListener("input", () => {
+    paintReportCount();
+    if (!reportError.hidden) showReportError("");
+  });
+
+  function setReportSent() {
+    reportSent = true;
+    reportForm.hidden = true;
+    reportSend.hidden = true;
+    reportThanks.textContent = "Thanks: we've got it. We'll look into it.";
+    reportCancel.textContent = "Close";
+    reportTimer = setTimeout(closeReport, REPORT_CLOSE_MS);
+  }
+
+  reportForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    // The limits are on the trimmed text, as the server applies them (it trims first).
+    const text = reportText.value.trim();
+    if (!text) return showReportError("Write a few words about what went wrong first.");
+    if ([...text].length > REPORT_MAX) return showReportError("That's over 2,000 characters. Could you shorten it a little?");
+    showReportError("");
+    reportSend.disabled = true;
+    reportSend.textContent = "Sending…";
+    const couldNotSend = "That didn't send. Your text is still here: try again in a moment.";
+    try {
+      const response = await fetch(root.dataset.reportUrl, {
+        method: "POST",
+        headers: { "X-CSRFToken": csrf, Accept: "application/json" },
+        body: new URLSearchParams({ text, page: reportPage() }),
+      });
+      const data = await response.json().catch(() => null);
+      if (response.ok && data && data.said) return setReportSent();
+      if (response.status === 429) showReportError("You've sent a lot of reports this hour. Please try again a bit later.");
+      else showReportError((data && data.error) || couldNotSend); // the server's own words (a closed world, its checks)
+    } catch {
+      showReportError(couldNotSend);
+    }
+    reportSend.disabled = false;
+    reportSend.textContent = "Send report";
   });
 
   // ---- Panels: the town's own pages (quests, the deck, the bounty board), framed in the stage so the town never reloads.

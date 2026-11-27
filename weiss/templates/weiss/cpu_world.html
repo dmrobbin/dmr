@@ -1,4 +1,15 @@
 {# The CPU tab's world mode settings (world_views.world_settings): what a new save starts with, and its coins. One form. #}
+{# The on switch: its own small form, saved straight away (world_views.world_switch). Its status is the saved state only. #}
+<section class="cpu-section world-switch-section">
+  <form method="post" action="{% url 'weiss:world_switch' %}" class="world-switch">
+    {% csrf_token %}
+    <input type="hidden" name="open" value="{% if world_settings.open_to_players %}0{% else %}1{% endif %}">
+    <p class="world-switch-status{% if world_settings.open_to_players %} is-open{% endif %}" data-open-status>{% if world_settings.open_to_players %}Open to every player{% else %}Staff only{% endif %}</p>
+    <button type="submit" class="button-small{% if world_settings.open_to_players %} secondary{% endif %}">{% if world_settings.open_to_players %}Make staff only{% else %}Open to all players{% endif %}</button>
+  </form>
+  <p class="small"><a href="{% url 'weiss:world_reports' %}">Player reports{% if open_reports %} ({{ open_reports }} open){% endif %}</a></p>
+</section>
+
 <form method="post" action="{% url 'weiss:world_settings' %}" class="cpu-form infinite-form">
   {% csrf_token %}
   <section class="cpu-section">
