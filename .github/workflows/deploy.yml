@@ -37,12 +37,12 @@ jobs:
         run: pip install -r requirements.txt
 
       # No DB_HOST here, so the tests run on SQLite. Settings need a secret key outside DEBUG; this one is for CI only.
+      # check_world_pack isn't run here: it needs the CPU export in corpus/, which is gitignored. Packs are checked
+      # locally before an import (CLAUDE.md), and the Import tab checks them again on upload.
       - name: Run tests
         env:
           DJANGO_SECRET_KEY: ci-only-not-a-secret
-        run: |
-          python manage.py test weiss
-          python manage.py check_world_pack world_pack/*.json
+        run: python manage.py test weiss
 
   deploy:
     needs: test

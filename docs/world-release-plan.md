@@ -57,7 +57,7 @@ Diana:
 ### B. Tests before every deploy
 
 Kal'el: a `test` job in `deploy.yml`, and `deploy` gets `needs: test`. Use the Python version EB runs, install
-`requirements.txt`, then `python manage.py test weiss` and `python manage.py check_world_pack world_pack/*.json`. If any
+`requirements.txt`, then `python manage.py test weiss` (not `check_world_pack`: it needs the gitignored `corpus/`). If any
 test needs something the runner hasn't got (MySQL, S3, network), say so rather than skipping it quietly. **Don't push**:
 report the diff, and the user pushes.
 
